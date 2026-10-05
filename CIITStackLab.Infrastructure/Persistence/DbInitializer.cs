@@ -7,16 +7,7 @@ public static class DbInitializer
 {
     public static async Task SeedAsync(ApplicationDbContext dbContext)
     {
-        var migrations = await dbContext.Database.GetMigrationsAsync();
-
-        if (migrations.Any())
-        {
-            await dbContext.Database.MigrateAsync();
-        }
-        else
-        {
-            await dbContext.Database.EnsureCreatedAsync();
-        }
+        await dbContext.Database.MigrateAsync();
 
         if (await dbContext.Courses.AnyAsync())
         {
