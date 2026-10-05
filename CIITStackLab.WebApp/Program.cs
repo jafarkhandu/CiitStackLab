@@ -1,10 +1,22 @@
+using CIITStackLab.Infrastructure;
+using CIITStackLab.Infrastructure.Persistence;
+
 var builder = WebApplication.CreateBuilder(args);
 
 // Add MVC services
 builder.Services.AddControllersWithViews();
 
-// Build application
+// Add application infrastructure
+builder.Services.AddInfrastructure(builder.Configuration);
+
 var app = builder.Build();
+
+// Apply database migrations and seed initial course data.
+using (var scope = app.Services.CreateScope())
+{
+    var dbContext = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
+    await DbInitializer.SeedAsync(dbContext);
+}
 
 // Configure HTTP request pipeline
 if (!app.Environment.IsDevelopment())
