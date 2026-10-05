@@ -1,278 +1,62 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-
     <title>@ViewData["Title"] - CIIT Stack Lab</title>
-
-    <!-- Bootstrap -->
-    <link rel="stylesheet"
-          href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
-
-    <!-- Bootstrap Icons -->
-    <link rel="stylesheet"
-          href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" />
-
-    <!-- CIIT Global CSS -->
-    <link rel="stylesheet"
-          href="~/css/site.css" />
-
+    <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" />
+    <link rel="stylesheet" href="~/css/site.css" />
     @await RenderSectionAsync("Styles", required: false)
 </head>
-
 <body>
-
-    <!-- =========================================================
-         CIIT MAIN NAVBAR
-         ========================================================= -->
-
     <nav class="navbar navbar-expand-lg navbar-light bg-white sticky-top ciit-main-navbar">
-
         <div class="container-fluid">
-
-            <!-- BRAND -->
-            <a class="navbar-brand ciit-brand"
-               asp-controller="Home"
-               asp-action="Index">
-
-                CIIT<span> Stack Lab</span>
-
-            </a>
-
-            <!-- MOBILE TOGGLE -->
-            <button class="navbar-toggler"
-                    type="button"
-                    data-bs-toggle="collapse"
-                    data-bs-target="#ciitNavbar"
-                    aria-controls="ciitNavbar"
-                    aria-expanded="false"
-                    aria-label="Toggle navigation">
-
+            <a class="navbar-brand ciit-brand" asp-controller="Home" asp-action="Index">CIIT<span> Stack Lab</span></a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#ciitNavbar"
+                    aria-controls="ciitNavbar" aria-expanded="false" aria-label="Toggle navigation">
                 <span class="navbar-toggler-icon"></span>
-
             </button>
-
-            <!-- NAVIGATION -->
-            <div class="collapse navbar-collapse"
-                 id="ciitNavbar">
-
+            <div class="collapse navbar-collapse" id="ciitNavbar">
                 <ul class="navbar-nav ms-auto mb-2 mb-lg-0">
-
-                    <li class="nav-item">
-                        <a class="nav-link ciit-nav-link"
-                           href="/learning-path">
-
-                            Learning Paths
-
-                        </a>
-                    </li>
-
+                    <li class="nav-item"><a class="nav-link ciit-nav-link" href="#tutorials">Learning Paths</a></li>
                 </ul>
-
-                <!-- AUTH BUTTONS -->
                 <div class="d-flex gap-2 ms-lg-3">
-
-                    <a asp-controller="Account"
-                       asp-action="Login"
-                       class="btn btn-outline-primary fw-semibold ciit-signin-btn">
-
-                        Sign In
-
-                    </a>
-
+                    <a href="#" class="btn btn-outline-primary fw-semibold ciit-signin-btn">Sign In</a>
                 </div>
-
             </div>
-
         </div>
-
     </nav>
-
-
-    <!-- =========================================================
-         CIIT TOPICS NAVBAR
-         ========================================================= -->
 
     <nav class="ciit-topics-navbar">
-
-        <!-- LEFT ARROW -->
-        <button type="button"
-                class="ciit-topic-arrow"
-                id="topicsPrev"
-                aria-label="Previous topics">
-
-            <i class="bi bi-chevron-left"></i>
-
-        </button>
-
-
-        <!-- TOPICS TITLE -->
-        <div class="ciit-topics-title">
-
-            Topics
-
+        <button type="button" class="ciit-topic-arrow" id="topicsPrev" aria-label="Previous topics"><i class="bi bi-chevron-left"></i></button>
+        <div class="ciit-topics-title">Topics</div>
+        <div class="ciit-topics-scroll" id="ciitTopicsScroll">
+            <a href="#" class="ciit-topic-link">HTML</a><a href="#" class="ciit-topic-link">CSS</a>
+            <a href="#" class="ciit-topic-link disabled-topic">Bootstrap</a><a href="#" class="ciit-topic-link">JavaScript</a>
+            <a href="#" class="ciit-topic-link disabled-topic">TypeScript</a><a href="#" class="ciit-topic-link disabled-topic">React</a>
+            <a href="#" class="ciit-topic-link disabled-topic">Angular</a><a href="#" class="ciit-topic-link disabled-topic">Node.js</a>
+            <a href="#" class="ciit-topic-link">Core Java</a><a href="#" class="ciit-topic-link">Python</a><a href="#" class="ciit-topic-link">C#</a>
+            <a href="#" class="ciit-topic-link">GitHub</a><a href="#" class="ciit-topic-link">Jenkins</a>
+            <a href="#" class="ciit-topic-link disabled-topic">Azure</a><a href="#" class="ciit-topic-link">AWS</a>
+            <a href="#" class="ciit-topic-link disabled-topic">SQL Server</a><a href="#" class="ciit-topic-link disabled-topic">Basic Excel</a>
+            <a href="#" class="ciit-topic-link disabled-topic">Advanced Excel</a><a href="#" class="ciit-topic-link disabled-topic">Power BI</a>
+            <a href="#" class="ciit-topic-link disabled-topic">Tableau</a><a href="#" class="ciit-topic-link disabled-topic">NumPy</a>
+            <a href="#" class="ciit-topic-link disabled-topic">Pandas</a><a href="#" class="ciit-topic-link disabled-topic">Matplotlib</a>
         </div>
-
-
-        <!-- SCROLL AREA -->
-        <div class="ciit-topics-scroll"
-             id="ciitTopicsScroll">
-
-            <a href="#" class="ciit-topic-link">
-                HTML
-            </a>
-
-            <a href="#" class="ciit-topic-link">
-                CSS
-            </a>
-
-            <a href="#" class="ciit-topic-link disabled-topic">
-                Bootstrap
-            </a>
-
-            <a href="#" class="ciit-topic-link">
-                JavaScript
-            </a>
-
-            <a href="#" class="ciit-topic-link disabled-topic">
-                TypeScript
-            </a>
-
-            <a href="#" class="ciit-topic-link disabled-topic">
-                React
-            </a>
-
-            <a href="#" class="ciit-topic-link disabled-topic">
-                Angular
-            </a>
-
-            <a href="#" class="ciit-topic-link disabled-topic">
-                Node.js
-            </a>
-
-            <a href="#" class="ciit-topic-link">
-                Core Java
-            </a>
-
-            <a href="#" class="ciit-topic-link">
-                Python
-            </a>
-
-            <a href="#" class="ciit-topic-link">
-                C#
-            </a>
-
-            <a href="#" class="ciit-topic-link">
-                GitHub
-            </a>
-
-            <a href="#" class="ciit-topic-link">
-                Jenkins
-            </a>
-
-            <a href="#" class="ciit-topic-link disabled-topic">
-                Azure
-            </a>
-
-            <a href="#" class="ciit-topic-link">
-                AWS
-            </a>
-
-            <a href="#" class="ciit-topic-link disabled-topic">
-                SQL Server
-            </a>
-
-            <a href="#" class="ciit-topic-link disabled-topic">
-                Basic Excel
-            </a>
-
-            <a href="#" class="ciit-topic-link disabled-topic">
-                Advanced Excel
-            </a>
-
-            <a href="#" class="ciit-topic-link disabled-topic">
-                Power BI
-            </a>
-
-            <a href="#" class="ciit-topic-link disabled-topic">
-                Tableau
-            </a>
-
-            <a href="#" class="ciit-topic-link disabled-topic">
-                NumPy
-            </a>
-
-            <a href="#" class="ciit-topic-link disabled-topic">
-                Pandas
-            </a>
-
-            <a href="#" class="ciit-topic-link disabled-topic">
-                Matplotlib
-            </a>
-
-        </div>
-
-
-        <!-- RIGHT ARROW -->
-        <button type="button"
-                class="ciit-topic-arrow"
-                id="topicsNext"
-                aria-label="Next topics">
-
-            <i class="bi bi-chevron-right"></i>
-
-        </button>
-
+        <button type="button" class="ciit-topic-arrow" id="topicsNext" aria-label="Next topics"><i class="bi bi-chevron-right"></i></button>
     </nav>
 
-
-    <!-- =========================================================
-         PAGE CONTENT
-         ========================================================= -->
-
-    <main>
-        @RenderBody()
-    </main>
-
-
-    <!-- =========================================================
-         FOOTER
-         ========================================================= -->
+    <main>@RenderBody()</main>
 
     <footer class="ciit-footer">
-
-        <div class="container">
-
-            <div class="d-flex flex-column flex-sm-row
-                justify-content-between
-                align-items-center">
-
-                <span>
-                    © @DateTime.Now.Year - CIIT Stack Lab
-                </span>
-
-                <a asp-controller="Home"
-                   asp-action="Privacy">
-
-                    Privacy
-
-                </a>
-
-            </div>
-
-        </div>
-
+        <div class="container"><div class="d-flex flex-column flex-sm-row justify-content-between align-items-center">
+            <span>&copy; @DateTime.Now.Year - CIIT Stack Lab</span><a href="#">Privacy</a>
+        </div></div>
     </footer>
 
-
-    <!-- Bootstrap JS -->
     <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
-
-    <!-- CIIT Global JS -->
     <script src="~/js/site.js"></script>
-
     @await RenderSectionAsync("Scripts", required: false)
-
 </body>
 </html>
