@@ -1,521 +1,95 @@
-﻿@{
+@{
     ViewData["Title"] = "Home";
 }
 
 <section class="ciit-hero-section">
-
-    <div class="container">
-
-        <div class="row align-items-center g-5">
-
-            <!-- LEFT CONTENT -->
-            <div class="col-lg-6">
-
-                <h1 class="ciit-hero-title">
-                    Master Programming
-                    <br />
-                    with
-                    <span>CIIT</span>
-                </h1>
-
-                <p class="ciit-hero-description">
-                    Learn programming through interactive tutorials,
-                    hands-on coding practice and real-world projects.
-                    Build your skills step by step with CIIT Training Institute.
-                    Designed for beginners, students, developers and career changers.
-                </p>
-
-                <div class="ciit-hero-buttons">
-
-                    <a href="#tutorials"
-                       class="btn btn-primary btn-lg ciit-primary-btn">
-                        Explore All Tutorials
-                    </a>
-
-                    <a href="#compiler"
-                       class="btn btn-outline-dark btn-lg ciit-secondary-btn">
-
-                        <i class="bi bi-play-circle me-2"></i>
-                        Try Code Runner
-
-                    </a>
-
-                </div>
-
-
-                <!-- STATS -->
-                <div class="ciit-stats-row">
-
-                    <div class="ciit-stat">
-
-                        <h4>50K+</h4>
-                        <span>Learners</span>
-
-                    </div>
-
-                    <div class="ciit-stat">
-
-                        <h4>100+</h4>
-                        <span>Projects</span>
-
-                    </div>
-
-                    <div class="ciit-stat">
-
-                        <h4>4.9 ★</h4>
-                        <span>Rating</span>
-
-                    </div>
-
-                </div>
-
+    <div class="container"><div class="row align-items-center g-5">
+        <div class="col-lg-6">
+            <h1 class="ciit-hero-title">Master Programming<br />with <span>CIIT</span></h1>
+            <p class="ciit-hero-description">Learn programming through interactive tutorials, hands-on coding practice and real-world projects. Build your skills step by step with CIIT Training Institute. Designed for beginners, students, developers and career changers.</p>
+            <div class="ciit-hero-buttons">
+                <a href="#tutorials" class="btn btn-primary btn-lg ciit-primary-btn">Explore All Tutorials</a>
+                <a href="#compiler" class="btn btn-outline-dark btn-lg ciit-secondary-btn"><i class="bi bi-play-circle me-2"></i>Try Code Runner</a>
             </div>
-
-
-            <!-- RIGHT SLIDER -->
-            <div class="col-lg-6">
-
-                <div class="ciit-hero-slider" id="ciitHeroSlider">
-
-                    <!-- SLIDE 1 -->
-                    <div class="ciit-hero-slide active">
-
-                        <img src="https://images.unsplash.com/photo-1498050108023-c5249f4df085?auto=format&fit=crop&w=1200&q=80"
-                             alt="Web Development" />
-
-                        <div class="ciit-hero-overlay"></div>
-
-                        <div class="ciit-slide-content">
-
-                            <span class="ciit-slide-category">
-                                WEB DEVELOPMENT
-                            </span>
-
-                            <h2>HTML</h2>
-
-                            <p>
-                                Build the foundation of modern websites.
-                            </p>
-
-                        </div>
-
-                    </div>
-
-
-                    <!-- SLIDE 2 -->
-                    <div class="ciit-hero-slide">
-
-                        <img src="https://images.unsplash.com/photo-1555066931-4365d14bab8c?auto=format&fit=crop&w=1200&q=80"
-                             alt="JavaScript" />
-
-                        <div class="ciit-hero-overlay"></div>
-
-                        <div class="ciit-slide-content">
-
-                            <span class="ciit-slide-category">
-                                PROGRAMMING
-                            </span>
-
-                            <h2>JavaScript</h2>
-
-                            <p>
-                                Create interactive web applications.
-                            </p>
-
-                        </div>
-
-                    </div>
-
-
-                    <!-- SLIDE 3 -->
-                    <div class="ciit-hero-slide">
-
-                        <img src="https://images.unsplash.com/photo-1526379095098-d400fd0bf935?auto=format&fit=crop&w=1200&q=80"
-                             alt="Python Programming" />
-
-                        <div class="ciit-hero-overlay"></div>
-
-                        <div class="ciit-slide-content">
-
-                            <span class="ciit-slide-category">
-                                DATA & AI
-                            </span>
-
-                            <h2>Python</h2>
-
-                            <p>
-                                Learn programming, automation and data science.
-                            </p>
-
-                        </div>
-
-                    </div>
-
-
-                    <!-- SLIDE 4 -->
-                    <div class="ciit-hero-slide">
-
-                        <img src="https://images.unsplash.com/photo-1516116216624-53e697fedbea?auto=format&fit=crop&w=1200&q=80"
-                             alt="C Sharp .NET" />
-
-                        <div class="ciit-hero-overlay"></div>
-
-                        <div class="ciit-slide-content">
-
-                            <span class="ciit-slide-category">
-                                SOFTWARE DEVELOPMENT
-                            </span>
-
-                            <h2>C# .NET</h2>
-
-                            <p>
-                                Build modern enterprise applications.
-                            </p>
-
-                        </div>
-
-                    </div>
-
-
-                    <!-- SLIDE 5 -->
-                    <div class="ciit-hero-slide">
-
-                        <img src="https://images.unsplash.com/photo-1515879218367-8466d910aaa4?auto=format&fit=crop&w=1200&q=80"
-                             alt="Full Stack Development" />
-
-                        <div class="ciit-hero-overlay"></div>
-
-                        <div class="ciit-slide-content">
-
-                            <span class="ciit-slide-category">
-                                FULL STACK
-                            </span>
-
-                            <h2>Full Stack Development</h2>
-
-                            <p>
-                                Learn frontend, backend and modern development tools.
-                            </p>
-
-                        </div>
-
-                    </div>
-
-
-                    <!-- DOTS -->
-                    <div class="ciit-slider-dots">
-
-                        <button type="button"
-                                class="ciit-slider-dot active"
-                                data-slide="0"
-                                aria-label="Slide 1"></button>
-
-                        <button type="button"
-                                class="ciit-slider-dot"
-                                data-slide="1"
-                                aria-label="Slide 2"></button>
-
-                        <button type="button"
-                                class="ciit-slider-dot"
-                                data-slide="2"
-                                aria-label="Slide 3"></button>
-
-                        <button type="button"
-                                class="ciit-slider-dot"
-                                data-slide="3"
-                                aria-label="Slide 4"></button>
-
-                        <button type="button"
-                                class="ciit-slider-dot"
-                                data-slide="4"
-                                aria-label="Slide 5"></button>
-
-                    </div>
-
-                </div>
-
+            <div class="ciit-stats-row">
+                <div class="ciit-stat"><h4>50K+</h4><span>Learners</span></div>
+                <div class="ciit-stat"><h4>100+</h4><span>Projects</span></div>
+                <div class="ciit-stat"><h4>4.9 ★</h4><span>Rating</span></div>
             </div>
-
         </div>
-
-    </div>
-
+        <div class="col-lg-6">
+            <div class="ciit-hero-slider" id="ciitHeroSlider">
+                <div class="ciit-hero-slide active"><img src="https://images.unsplash.com/photo-1498050108023-c5249f4df085?auto=format&fit=crop&w=1200&q=80" alt="Web Development" /><div class="ciit-hero-overlay"></div><div class="ciit-slide-content"><span class="ciit-slide-category">WEB DEVELOPMENT</span><h2>HTML</h2><p>Build the foundation of modern websites.</p></div></div>
+                <div class="ciit-hero-slide"><img src="https://images.unsplash.com/photo-1555066931-4365d14bab8c?auto=format&fit=crop&w=1200&q=80" alt="JavaScript" /><div class="ciit-hero-overlay"></div><div class="ciit-slide-content"><span class="ciit-slide-category">PROGRAMMING</span><h2>JavaScript</h2><p>Create interactive web applications.</p></div></div>
+                <div class="ciit-hero-slide"><img src="https://images.unsplash.com/photo-1526379095098-d400fd0bf935?auto=format&fit=crop&w=1200&q=80" alt="Python Programming" /><div class="ciit-hero-overlay"></div><div class="ciit-slide-content"><span class="ciit-slide-category">DATA &amp; AI</span><h2>Python</h2><p>Learn programming, automation and data science.</p></div></div>
+                <div class="ciit-hero-slide"><img src="https://images.unsplash.com/photo-1516116216624-53e697fedbea?auto=format&fit=crop&w=1200&q=80" alt="C Sharp .NET" /><div class="ciit-hero-overlay"></div><div class="ciit-slide-content"><span class="ciit-slide-category">SOFTWARE DEVELOPMENT</span><h2>C# .NET</h2><p>Build modern enterprise applications.</p></div></div>
+                <div class="ciit-hero-slide"><img src="https://images.unsplash.com/photo-1515879218367-8466d910aaa4?auto=format&fit=crop&w=1200&q=80" alt="Full Stack Development" /><div class="ciit-hero-overlay"></div><div class="ciit-slide-content"><span class="ciit-slide-category">FULL STACK</span><h2>Full Stack Development</h2><p>Learn frontend, backend and modern development tools.</p></div></div>
+                <div class="ciit-slider-dots">
+                    <button type="button" class="ciit-slider-dot active" data-slide="0" aria-label="Slide 1"></button>
+                    <button type="button" class="ciit-slider-dot" data-slide="1" aria-label="Slide 2"></button>
+                    <button type="button" class="ciit-slider-dot" data-slide="2" aria-label="Slide 3"></button>
+                    <button type="button" class="ciit-slider-dot" data-slide="3" aria-label="Slide 4"></button>
+                    <button type="button" class="ciit-slider-dot" data-slide="4" aria-label="Slide 5"></button>
+                </div>
+            </div>
+        </div>
+    </div></div>
 </section>
-<!-- =========================================================
-     TOP TRAINING COURSES
-     ========================================================= -->
 
 <section id="tutorials" class="ciit-courses-section">
-
-    <div class="container">
-
-        <div class="ciit-section-heading text-center">
-
-            <h2>Top Training Courses</h2>
-
-            <p>
-                Choose your course and learn topic by topic with structured
-                tutorials, practical examples and hands-on coding.
-            </p>
-
+<div class="container">
+<div class="ciit-section-heading text-center"><h2>Top Training Courses</h2><p>Choose your course and learn topic by topic with structured tutorials, practical examples and hands-on coding.</p></div>
+<div class="row g-4">
+@{
+    var courses = new[] {
+        new { Name="Java Full Stack", Img="/Course_img/b0998bd1-f159-4388-94ea-66a4be8d1ab2.png", Desc="Learn Java, JDBC and many more.." },
+        new { Name="Python Full Stack", Img="/Course_img/Python_full_stack.png", Desc="Learn Python, Django, FastApi and many more." },
+        new { Name=".Net Full Stack", Img="/Course_img/DotNet_Full_Stack.png", Desc="Build applications using C#, .NET Core and many more." },
+        new { Name="DevOps", Img="/Course_img/DevOps.png", Desc="Learn Jira, Github, Jenkins, AWS, Azure and many more." },
+        new { Name="Data Analytics", Img="/Course_img/Data_Analytics.png", Desc="Learn python, RDBMS, Excel, PowerBI and many more." },
+        new { Name="Data Science", Img="/Course_img/Data_Science.png", Desc="Learn python, AI, ML, Gen AI, LLM, RAG, Agentic AI and many more." },
+        new { Name="Software Testing", Img="/Course_img/748ca555-f359-43c7-838a-4104184ec450.png", Desc="Learn Core Java, Manual Testing, Selenium, Playwright and many more." },
+        new { Name="DevOps with Gen AI", Img="/Course_img/5ae4054a-8bdd-4b84-b913-31a4c879c99f.png", Desc="Learn Azure, AWS DevOps, Gen AI and many more." },
+        new { Name="Full Stack With DevOps", Img="/Course_img/Full_Stack_With_DevOps.png", Desc="Learn Full Stack, Azure, AWS DevOps, Gen AI and many more." }
+    };
+}
+@foreach (var course in courses)
+{
+    <div class="col-12 col-sm-6 col-lg-3">
+        <div class="ciit-course-card">
+            <div class="ciit-course-image"><img src="@course.Img" alt="@course.Name" /></div>
+            <h4>@course.Name</h4>
+            <p>@course.Desc</p>
+            <a href="#" class="ciit-course-btn">Start Tutorial →</a>
         </div>
-
-
-        <div class="row g-4">
-
-            <!-- JAVA FULL STACK -->
-            <div class="col-12 col-sm-6 col-lg-3">
-
-                <div class="ciit-course-card">
-
-                    <div class="ciit-course-image">
-
-                        <img src="~/images/courses/java-full-stack.png"
-                             alt="Java Full Stack" />
-
-                    </div>
-
-                    <h4>Java Full Stack</h4>
-
-                    <p>
-                        Learn Java, JDBC and many more..
-                    </p>
-
-                    <a href="#"
-                       class="ciit-course-btn">
-                        Start Learning →
-                    </a>
-
-                </div>
-
-            </div>
-
-
-            <!-- PYTHON FULL STACK -->
-            <div class="col-12 col-sm-6 col-lg-3">
-
-                <div class="ciit-course-card">
-
-                    <div class="ciit-course-image">
-
-                        <img src="~/images/courses/python-full-stack.png"
-                             alt="Python Full Stack" />
-
-                    </div>
-
-                    <h4>Python Full Stack</h4>
-
-                    <p>
-                        Learn Python, Django, FastApi and many more.
-                    </p>
-
-                    <a href="#"
-                       class="ciit-course-btn">
-                        Start Tutorial →
-                    </a>
-
-                </div>
-
-            </div>
-
-
-            <!-- .NET FULL STACK -->
-            <div class="col-12 col-sm-6 col-lg-3">
-
-                <div class="ciit-course-card">
-
-                    <div class="ciit-course-image">
-
-                        <img src="~/images/courses/dotnet-full-stack.png"
-                             alt=".Net Full Stack" />
-
-                    </div>
-
-                    <h4>.Net Full Stack</h4>
-
-                    <p>
-                        Build applications using C#, .NET Core and many more.
-                    </p>
-
-                    <a href="#"
-                       class="ciit-course-btn">
-                        Start Tutorial →
-                    </a>
-
-                </div>
-
-            </div>
-
-
-            <!-- DEVOPS -->
-            <div class="col-12 col-sm-6 col-lg-3">
-
-                <div class="ciit-course-card">
-
-                    <div class="ciit-course-image">
-
-                        <img src="~/images/courses/devops.png"
-                             alt="DevOps" />
-
-                    </div>
-
-                    <h4>DevOps</h4>
-
-                    <p>
-                        Learn Jira, Github, Jenkins, AWS, Azure and many more.
-                    </p>
-
-                    <a href="#"
-                       class="ciit-course-btn">
-                        Start Tutorial →
-                    </a>
-
-                </div>
-
-            </div>
-
-
-            <!-- DATA ANALYTICS -->
-            <div class="col-12 col-sm-6 col-lg-3">
-
-                <div class="ciit-course-card">
-
-                    <div class="ciit-course-image">
-
-                        <img src="~/images/courses/data-analytics.png"
-                             alt="Data Analytics" />
-
-                    </div>
-
-                    <h4>Data Analytics</h4>
-
-                    <p>
-                        Learn python, RDBMS, Excel, PowerBI and many more.
-                    </p>
-
-                    <a href="#"
-                       class="ciit-course-btn">
-                        Start Tutorial →
-                    </a>
-
-                </div>
-
-            </div>
-
-
-            <!-- DATA SCIENCE -->
-            <div class="col-12 col-sm-6 col-lg-3">
-
-                <div class="ciit-course-card">
-
-                    <div class="ciit-course-image">
-
-                        <img src="~/images/courses/data-science.png"
-                             alt="Data Science" />
-
-                    </div>
-
-                    <h4>Data Science</h4>
-
-                    <p>
-                        Learn python, AI, ML, Gen AI, LLM, RAG, Agentic AI and many more.
-                    </p>
-
-                    <a href="#"
-                       class="ciit-course-btn">
-                        Start Tutorial →
-                    </a>
-
-                </div>
-
-            </div>
-
-
-            <!-- SOFTWARE TESTING -->
-            <div class="col-12 col-sm-6 col-lg-3">
-
-                <div class="ciit-course-card">
-
-                    <div class="ciit-course-image">
-
-                        <img src="~/images/courses/software-testing.png"
-                             alt="Software Testing" />
-
-                    </div>
-
-                    <h4>Software Testing</h4>
-
-                    <p>
-                        Learn Core Java, Manual Testing, Selenium, Playwright and many more.
-                    </p>
-
-                    <a href="#"
-                       class="ciit-course-btn">
-                        Start Tutorial →
-                    </a>
-
-                </div>
-
-            </div>
-
-
-            <!-- DEVOPS WITH GEN AI -->
-            <div class="col-12 col-sm-6 col-lg-3">
-
-                <div class="ciit-course-card">
-
-                    <div class="ciit-course-image">
-
-                        <img src="~/images/courses/devops-with-gen-ai.png"
-                             alt="DevOps with Gen AI" />
-
-                    </div>
-
-                    <h4>DevOps with Gen AI</h4>
-
-                    <p>
-                        Learn Azure, AWS DevOps, Gen AI and many more.
-                    </p>
-
-                    <a href="#"
-                       class="ciit-course-btn">
-                        Start Tutorial →
-                    </a>
-
-                </div>
-
-            </div>
-
-
-            <!-- FULL STACK WITH DEVOPS -->
-            <div class="col-12 col-sm-6 col-lg-3">
-
-                <div class="ciit-course-card">
-
-                    <div class="ciit-course-image">
-
-                        <img src="~/images/courses/full-stack-with-devops.png"
-                             alt="Full Stack With DevOps" />
-
-                    </div>
-
-                    <h4>Full Stack With DevOps</h4>
-
-                    <p>
-                        Learn Full Stack, Azure, AWS DevOps, Gen AI and many more.
-                    </p>
-
-                    <a href="#"
-                       class="ciit-course-btn">
-                        Start Tutorial →
-                    </a>
-
-                </div>
-
-            </div>
-
-        </div>
-
     </div>
+}
+</div>
+</div>
+</section>
 
+<section class="ciit-why-section">
+<div class="container">
+<div class="ciit-section-heading text-center"><h2>Why Learn With CIIT eTutorial?</h2><p>Designed to give you real practical knowledge, not just theoretical concepts.</p></div>
+<div class="row g-4 text-center">
+    <div class="col-md-3"><div class="ciit-feature-item"><div class="ciit-feature-icon"><i class="bi bi-diagram-3"></i></div><h5>Step-by-Step Paths</h5><p>Clear roadmaps tailored for college learners and developers.</p></div></div>
+    <div class="col-md-3"><div class="ciit-feature-item"><div class="ciit-feature-icon"><i class="bi bi-code-slash"></i></div><h5>Browser Compiler</h5><p>Write and test your code directly inside your web browser.</p></div></div>
+    <div class="col-md-3"><div class="ciit-feature-item"><div class="ciit-feature-icon"><i class="bi bi-journal-check"></i></div><h5>Interview Prep</h5><p>Top interview questions with practical code examples.</p></div></div>
+    <div class="col-md-3"><div class="ciit-feature-item"><div class="ciit-feature-icon"><i class="bi bi-award"></i></div><h5>Verified Certificates</h5><p>Earn certificates after completing modules and assignments.</p></div></div>
+</div>
+</div>
+</section>
+
+<section id="compiler" class="ciit-compiler-section">
+<div class="container"><div class="row align-items-center g-5">
+<div class="col-lg-6"><h2>Practice Code Instantly in Your Browser</h2><p>No setup or installation needed. Pick your technology and start writing code immediately.</p><a href="#" class="btn btn-info text-dark fw-bold btn-lg">Open Code Compiler <i class="bi bi-box-arrow-up-right ms-2"></i></a></div>
+<div class="col-lg-6"><div class="ciit-compiler-code">
+<div class="d-flex justify-content-between mb-3"><span class="text-secondary"># Python Example</span><span class="text-success"><i class="bi bi-play-fill"></i> Ready</span></div>
+<pre class="ciit-code-font">def calculate_square(numbers):
+    return [n ** 2 for n in numbers]
+
+print(calculate_square([1, 2, 3, 4, 5]))</pre>
+<hr class="border-secondary" /><div class="text-info">[1, 4, 9, 16, 25]</div>
+</div></div>
+</div></div>
 </section>
