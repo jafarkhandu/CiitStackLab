@@ -1,3 +1,5 @@
+@model IReadOnlyList<CIITStackLab.Application.DTOs.CourseDto>
+
 @{
     ViewData["Title"] = "Home";
 }
@@ -40,29 +42,27 @@
 <div class="container">
 <div class="ciit-section-heading text-center"><h2>Top Training Courses</h2><p>Choose your course and learn topic by topic with structured tutorials, practical examples and hands-on coding.</p></div>
 <div class="row g-4">
-@{
-    var courses = new[] {
-        new { Name="Java Full Stack", Img="/Course_img/b0998bd1-f159-4388-94ea-66a4be8d1ab2.png", Desc="Learn Java, JDBC and many more.." },
-        new { Name="Python Full Stack", Img="/Course_img/Python_full_stack.png", Desc="Learn Python, Django, FastApi and many more." },
-        new { Name=".Net Full Stack", Img="/Course_img/DotNet_Full_Stack.png", Desc="Build applications using C#, .NET Core and many more." },
-        new { Name="DevOps", Img="/Course_img/DevOps.png", Desc="Learn Jira, Github, Jenkins, AWS, Azure and many more." },
-        new { Name="Data Analytics", Img="/Course_img/Data_Analytics.png", Desc="Learn python, RDBMS, Excel, PowerBI and many more." },
-        new { Name="Data Science", Img="/Course_img/Data_Science.png", Desc="Learn python, AI, ML, Gen AI, LLM, RAG, Agentic AI and many more." },
-        new { Name="Software Testing", Img="/Course_img/748ca555-f359-43c7-838a-4104184ec450.png", Desc="Learn Core Java, Manual Testing, Selenium, Playwright and many more." },
-        new { Name="DevOps with Gen AI", Img="/Course_img/5ae4054a-8bdd-4b84-b913-31a4c879c99f.png", Desc="Learn Azure, AWS DevOps, Gen AI and many more." },
-        new { Name="Full Stack With DevOps", Img="/Course_img/Full_Stack_With_DevOps.png", Desc="Learn Full Stack, Azure, AWS DevOps, Gen AI and many more." }
-    };
-}
-@foreach (var course in courses)
+@if (Model.Count == 0)
 {
-    <div class="col-12 col-sm-6 col-lg-3">
-        <div class="ciit-course-card">
-            <div class="ciit-course-image"><img src="@course.Img" alt="@course.Name" /></div>
-            <h4>@course.Name</h4>
-            <p>@course.Desc</p>
-            <a href="#" class="ciit-course-btn">Start Tutorial →</a>
-        </div>
+    <div class="col-12">
+        <div class="alert alert-light border text-center">Courses will appear here once they are published.</div>
     </div>
+}
+else
+{
+    @foreach (var course in Model)
+    {
+        <div class="col-12 col-sm-6 col-lg-3">
+            <div class="ciit-course-card">
+                <div class="ciit-course-image">
+                    <img src="@course.ImageUrl" alt="@course.Title" />
+                </div>
+                <h4>@course.Title</h4>
+                <p>@course.ShortDescription</p>
+                <a asp-controller="Courses" asp-action="Details" asp-route-id="@course.Id" class="ciit-course-btn">Start Tutorial →</a>
+            </div>
+        </div>
+    }
 }
 </div>
 </div>
