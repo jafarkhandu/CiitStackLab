@@ -1,0 +1,6 @@
+<Solution>
+  <Project Path="CIITStackLab.Application/CIITStackLab.Application.csproj" />
+  <Project Path="CIITStackLab.Domain/CIITStackLab.Domain.csproj" />
+  <Project Path="CIITStackLab.Infrastructure/CIITStackLab.Infrastructure.csproj" />
+  <Project Path="CIITStackLab.WebApp/CIITStackLab.WebApp.csproj" />
+</Solution>
