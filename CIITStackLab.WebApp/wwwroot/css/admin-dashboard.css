@@ -1,0 +1,652 @@
+:root{
+    --ciit-admin-primary:#1769ff;
+    --ciit-admin-primary-dark:#0758e8;
+    --ciit-admin-text:#172033;
+    --ciit-admin-muted:#64748b;
+    --ciit-admin-border:#e5e7eb;
+    --ciit-admin-bg:#f6f8fc;
+}
+
+.ciit-admin-body{
+    margin:0;
+    min-height:100vh;
+    font-family:'Plus Jakarta Sans',sans-serif;
+    color:var(--ciit-admin-text);
+    background:var(--ciit-admin-bg);
+}
+
+.ciit-admin-shell{
+    min-height:100vh;
+    display:flex;
+}
+
+.ciit-admin-sidebar{
+    position:fixed;
+    inset:0 auto 0 0;
+    width:268px;
+    display:flex;
+    flex-direction:column;
+    background:#0d1526;
+    color:#e2e8f0;
+    z-index:1200;
+    transition:transform .28s ease;
+}
+
+.ciit-admin-brand{
+    padding:26px 24px 22px;
+    border-bottom:1px solid rgba(255,255,255,.08);
+}
+
+.ciit-admin-brand a{
+    color:#fff;
+    font-size:23px;
+    font-weight:800;
+    text-decoration:none;
+    letter-spacing:-.5px;
+}
+
+.ciit-admin-brand a span{
+    color:#28b7f1;
+}
+
+.ciit-admin-label{
+    margin-top:8px;
+    color:#7f8ca5;
+    font-size:.64rem;
+    font-weight:800;
+    letter-spacing:.14em;
+}
+
+.ciit-admin-nav{
+    flex:1;
+    padding:16px 13px;
+    overflow-y:auto;
+}
+
+.ciit-admin-nav-heading{
+    margin:19px 11px 7px;
+    color:#66748e;
+    font-size:.65rem;
+    font-weight:800;
+    letter-spacing:.14em;
+    text-transform:uppercase;
+}
+
+.ciit-admin-nav-link{
+    display:flex;
+    align-items:center;
+    gap:12px;
+    width:100%;
+    min-height:44px;
+    padding:0 12px;
+    border-radius:10px;
+    color:#aeb9cd;
+    text-decoration:none;
+    font-size:.88rem;
+    font-weight:600;
+    transition:background .18s ease,color .18s ease,transform .18s ease;
+}
+
+.ciit-admin-nav-link i{
+    width:20px;
+    text-align:center;
+    font-size:1rem;
+}
+
+.ciit-admin-nav-link span{
+    flex:1;
+}
+
+.ciit-admin-nav-link.active{
+    color:#fff;
+    background:linear-gradient(135deg,rgba(23,105,255,.95),rgba(7,88,232,.92));
+    box-shadow:0 9px 22px rgba(23,105,255,.22);
+}
+
+.ciit-admin-nav-link:not(.is-disabled):hover{
+    color:#fff;
+    background:rgba(255,255,255,.06);
+}
+
+.ciit-admin-nav-link.is-disabled{
+    cursor:default;
+    opacity:.65;
+}
+
+.ciit-admin-nav-link small{
+    flex:0 0 auto;
+    padding:3px 7px;
+    border:1px solid rgba(255,255,255,.1);
+    border-radius:999px;
+    color:#7f8ca5;
+    font-size:.58rem;
+    font-weight:800;
+    text-transform:uppercase;
+}
+
+.ciit-admin-sidebar-footer{
+    padding:16px 13px;
+    border-top:1px solid rgba(255,255,255,.08);
+}
+
+.ciit-admin-back-link{
+    display:flex;
+    align-items:center;
+    gap:10px;
+    padding:10px 12px;
+    border-radius:10px;
+    color:#96a3bb;
+    font-size:.8rem;
+    font-weight:600;
+    text-decoration:none;
+    transition:background .18s ease,color .18s ease;
+}
+
+.ciit-admin-back-link:hover{
+    color:#fff;
+    background:rgba(255,255,255,.05);
+}
+
+.ciit-admin-main{
+    width:calc(100% - 268px);
+    margin-left:268px;
+    min-height:100vh;
+}
+
+.ciit-admin-topbar{
+    position:sticky;
+    top:0;
+    min-height:76px;
+    display:flex;
+    align-items:center;
+    gap:18px;
+    padding:12px 34px;
+    background:rgba(255,255,255,.94);
+    border-bottom:1px solid var(--ciit-admin-border);
+    backdrop-filter:blur(10px);
+    z-index:1000;
+}
+
+.ciit-admin-menu-toggle{
+    display:none;
+    width:42px;
+    height:42px;
+    border:1px solid var(--ciit-admin-border);
+    border-radius:10px;
+    background:#fff;
+    color:var(--ciit-admin-text);
+}
+
+.ciit-admin-topbar-context{
+    display:flex;
+    flex-direction:column;
+    gap:2px;
+}
+
+.ciit-admin-topbar-kicker{
+    color:#8a96aa;
+    font-size:.62rem;
+    font-weight:800;
+    letter-spacing:.13em;
+}
+
+.ciit-admin-topbar-context strong{
+    font-size:.95rem;
+}
+
+.ciit-admin-user{
+    display:flex;
+    align-items:center;
+    gap:10px;
+    margin-left:auto;
+}
+
+.ciit-admin-user-avatar{
+    width:40px;
+    height:40px;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    border-radius:12px;
+    background:#eef4ff;
+    color:var(--ciit-admin-primary);
+}
+
+.ciit-admin-user-copy{
+    display:flex;
+    flex-direction:column;
+    line-height:1.25;
+}
+
+.ciit-admin-user-copy strong{
+    font-size:.82rem;
+}
+
+.ciit-admin-user-copy span{
+    color:var(--ciit-admin-muted);
+    font-size:.68rem;
+}
+
+.ciit-admin-logout{
+    width:40px;
+    height:40px;
+    border:1px solid var(--ciit-admin-border);
+    border-radius:10px;
+    background:#fff;
+    color:#64748b;
+    transition:border-color .18s ease,color .18s ease,background .18s ease;
+}
+
+.ciit-admin-logout:hover{
+    color:#dc2626;
+    border-color:#fecaca;
+    background:#fffafa;
+}
+
+.ciit-admin-content{
+    padding:34px;
+}
+
+.ciit-admin-dashboard{
+    max-width:1480px;
+    margin:0 auto;
+}
+
+.ciit-admin-page-header{
+    display:flex;
+    align-items:flex-end;
+    justify-content:space-between;
+    gap:24px;
+    margin-bottom:26px;
+}
+
+.ciit-admin-eyebrow,
+.ciit-admin-panel-kicker{
+    display:block;
+    color:var(--ciit-admin-primary);
+    font-size:.68rem;
+    font-weight:800;
+    text-transform:uppercase;
+    letter-spacing:.12em;
+}
+
+.ciit-admin-page-header h1{
+    margin:7px 0 8px;
+    font-size:clamp(1.8rem,3vw,2.45rem);
+    line-height:1.15;
+    font-weight:800;
+    letter-spacing:-1px;
+}
+
+.ciit-admin-page-header p{
+    margin:0;
+    color:var(--ciit-admin-muted);
+    font-size:.9rem;
+}
+
+.ciit-admin-live-pill{
+    display:inline-flex;
+    align-items:center;
+    gap:8px;
+    padding:9px 12px;
+    border:1px solid #dce5ef;
+    border-radius:999px;
+    background:#fff;
+    color:#64748b;
+    font-size:.72rem;
+    font-weight:700;
+    white-space:nowrap;
+}
+
+.ciit-admin-live-pill span{
+    width:7px;
+    height:7px;
+    border-radius:50%;
+    background:#22c55e;
+    box-shadow:0 0 0 4px rgba(34,197,94,.12);
+}
+
+.ciit-admin-stat-grid{
+    display:grid;
+    grid-template-columns:repeat(5,minmax(0,1fr));
+    gap:14px;
+    margin-bottom:18px;
+}
+
+.ciit-admin-stat-card{
+    display:flex;
+    align-items:center;
+    gap:14px;
+    min-height:112px;
+    padding:20px;
+    background:#fff;
+    border:1px solid var(--ciit-admin-border);
+    border-radius:17px;
+    box-shadow:0 8px 24px rgba(15,23,42,.04);
+    transition:transform .22s ease,box-shadow .22s ease,border-color .22s ease;
+}
+
+.ciit-admin-stat-card:hover{
+    transform:translateY(-3px);
+    border-color:#b8d0fb;
+    box-shadow:0 15px 30px rgba(23,105,255,.08);
+}
+
+.ciit-admin-stat-icon{
+    width:46px;
+    height:46px;
+    flex:0 0 46px;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    border-radius:13px;
+    background:#eef4ff;
+    color:var(--ciit-admin-primary);
+    font-size:1.12rem;
+}
+
+.ciit-admin-stat-copy{
+    min-width:0;
+}
+
+.ciit-admin-stat-copy span{
+    display:block;
+    color:var(--ciit-admin-muted);
+    font-size:.7rem;
+    font-weight:700;
+    line-height:1.3;
+}
+
+.ciit-admin-stat-copy strong{
+    display:block;
+    margin-top:4px;
+    font-size:1.7rem;
+    line-height:1;
+    font-weight:800;
+    letter-spacing:-.7px;
+}
+
+.ciit-admin-dashboard-grid{
+    display:grid;
+    grid-template-columns:minmax(0,1.55fr) minmax(320px,.75fr);
+    gap:18px;
+}
+
+.ciit-admin-panel{
+    min-width:0;
+    background:#fff;
+    border:1px solid var(--ciit-admin-border);
+    border-radius:18px;
+    box-shadow:0 8px 24px rgba(15,23,42,.04);
+}
+
+.ciit-admin-panel-header{
+    display:flex;
+    align-items:flex-end;
+    justify-content:space-between;
+    gap:18px;
+    padding:22px 22px 16px;
+    border-bottom:1px solid #eef2f7;
+}
+
+.ciit-admin-panel-header h2{
+    margin:5px 0 0;
+    font-size:1.05rem;
+    font-weight:800;
+}
+
+.ciit-admin-panel-count{
+    color:#94a3b8;
+    font-size:.7rem;
+    font-weight:700;
+}
+
+.ciit-admin-course-list{
+    padding:8px 12px 12px;
+}
+
+.ciit-admin-course-row{
+    display:flex;
+    align-items:center;
+    gap:13px;
+    padding:13px 10px;
+    border-bottom:1px solid #f0f3f7;
+}
+
+.ciit-admin-course-row:last-child{
+    border-bottom:0;
+}
+
+.ciit-admin-course-number{
+    width:38px;
+    height:38px;
+    flex:0 0 38px;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    border-radius:11px;
+    background:#f5f8fe;
+    color:var(--ciit-admin-primary);
+    font-size:.72rem;
+    font-weight:800;
+}
+
+.ciit-admin-course-info{
+    min-width:0;
+    flex:1;
+}
+
+.ciit-admin-course-info strong{
+    display:block;
+    overflow:hidden;
+    text-overflow:ellipsis;
+    white-space:nowrap;
+    font-size:.82rem;
+    font-weight:800;
+}
+
+.ciit-admin-course-info span{
+    display:block;
+    margin-top:3px;
+    color:#94a3b8;
+    font-size:.68rem;
+}
+
+.ciit-admin-status-badge{
+    flex:0 0 auto;
+    padding:5px 8px;
+    border-radius:999px;
+    background:#f0fdf4;
+    color:#15803d;
+    font-size:.62rem;
+    font-weight:800;
+}
+
+.ciit-admin-empty-state{
+    display:flex;
+    align-items:center;
+    flex-direction:column;
+    justify-content:center;
+    min-height:245px;
+    padding:30px;
+    text-align:center;
+}
+
+.ciit-admin-empty-state i{
+    color:#94a3b8;
+    font-size:2rem;
+}
+
+.ciit-admin-empty-state h3{
+    margin:13px 0 5px;
+    font-size:.95rem;
+    font-weight:800;
+}
+
+.ciit-admin-empty-state p{
+    max-width:350px;
+    margin:0;
+    color:#94a3b8;
+    font-size:.72rem;
+    line-height:1.6;
+}
+
+.ciit-admin-panel-quick{
+    overflow:hidden;
+}
+
+.ciit-admin-workflow{
+    padding:18px 22px 22px;
+}
+
+.ciit-admin-workflow-step{
+    display:flex;
+    gap:12px;
+}
+
+.ciit-admin-workflow-dot{
+    width:30px;
+    height:30px;
+    flex:0 0 30px;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    border-radius:10px;
+    background:#eef4ff;
+    color:var(--ciit-admin-primary);
+    font-size:.7rem;
+    font-weight:800;
+}
+
+.ciit-admin-workflow-step strong{
+    display:block;
+    padding-top:3px;
+    font-size:.8rem;
+    font-weight:800;
+}
+
+.ciit-admin-workflow-step p{
+    margin:4px 0 0;
+    color:#7b8799;
+    font-size:.68rem;
+    line-height:1.55;
+}
+
+.ciit-admin-workflow-line{
+    width:1px;
+    height:22px;
+    margin:5px 0 5px 14px;
+    background:#dbe3ed;
+}
+
+.ciit-admin-overlay{
+    display:none;
+}
+
+@media(max-width:1200px){
+    .ciit-admin-stat-grid{
+        grid-template-columns:repeat(3,minmax(0,1fr));
+    }
+}
+
+@media(max-width:992px){
+    .ciit-admin-sidebar{
+        transform:translateX(-100%);
+    }
+
+    .ciit-admin-shell.sidebar-open .ciit-admin-sidebar{
+        transform:translateX(0);
+    }
+
+    .ciit-admin-main{
+        width:100%;
+        margin-left:0;
+    }
+
+    .ciit-admin-menu-toggle{
+        display:inline-flex;
+        align-items:center;
+        justify-content:center;
+    }
+
+    .ciit-admin-shell.sidebar-open ~ .ciit-admin-overlay,
+    .ciit-admin-overlay.is-visible{
+        display:block;
+        position:fixed;
+        inset:0;
+        background:rgba(2,6,23,.45);
+        z-index:1100;
+    }
+
+    .ciit-admin-dashboard-grid{
+        grid-template-columns:1fr;
+    }
+}
+
+@media(max-width:700px){
+    .ciit-admin-topbar{
+        padding:10px 16px;
+    }
+
+    .ciit-admin-user-copy{
+        display:none;
+    }
+
+    .ciit-admin-content{
+        padding:24px 16px 30px;
+    }
+
+    .ciit-admin-page-header{
+        align-items:flex-start;
+        flex-direction:column;
+        gap:12px;
+    }
+
+    .ciit-admin-stat-grid{
+        grid-template-columns:repeat(2,minmax(0,1fr));
+        gap:10px;
+    }
+
+    .ciit-admin-stat-card{
+        min-height:100px;
+        padding:15px;
+        gap:10px;
+    }
+
+    .ciit-admin-stat-icon{
+        width:40px;
+        height:40px;
+        flex-basis:40px;
+    }
+
+    .ciit-admin-stat-copy strong{
+        font-size:1.45rem;
+    }
+}
+
+@media(max-width:430px){
+    .ciit-admin-stat-grid{
+        grid-template-columns:1fr;
+    }
+
+    .ciit-admin-panel-header{
+        align-items:flex-start;
+        flex-direction:column;
+        gap:8px;
+    }
+}
+
+
+/* ==================== TOPICS MODULE ==================== */
+:root{--ciit-topic-primary:#1769ff;--ciit-topic-text:#172033;--ciit-topic-muted:#64748b}
+.ciit-topics-page{max-width:1480px;margin:0 auto;padding-bottom:40px}.ciit-topic-page-header{display:flex;align-items:flex-end;justify-content:space-between;gap:24px;margin-bottom:22px}.ciit-topic-page-header h1{margin:7px 0;font-size:clamp(1.9rem,3vw,2.45rem);font-weight:800;letter-spacing:-1px}.ciit-topic-page-header p{margin:0;color:#64748b;font-size:.9rem}
+.ciit-topic-primary-btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;min-height:42px;padding:0 17px;border:1px solid #1769ff;border-radius:10px;background:#1769ff;color:#fff;font-size:.78rem;font-weight:800;box-shadow:0 10px 22px rgba(23,105,255,.16);transition:.18s ease}.ciit-topic-primary-btn:hover{background:#0758e8;color:#fff;transform:translateY(-1px)}
+.ciit-topic-alert{display:flex;align-items:center;gap:10px;margin-bottom:16px;padding:12px 14px;border:1px solid #dce5ef;border-radius:12px;background:#fff;font-size:.77rem;font-weight:700}.ciit-topic-alert.is-success{border-color:#bbf7d0;color:#15803d;background:#f0fdf4}.ciit-topic-alert.is-error{border-color:#fecaca;color:#b91c1c;background:#fff7f7}.ciit-topic-alert-close{margin-left:auto;border:0;background:transparent;color:inherit}
+.ciit-topic-toolbar{display:flex;align-items:center;justify-content:space-between;gap:18px;margin-bottom:14px}.ciit-topic-search{display:flex;align-items:center;gap:10px;width:min(440px,100%);height:44px;padding:0 13px;border:1px solid #dfe6ef;border-radius:12px;background:#fff}.ciit-topic-search i{color:#94a3b8}.ciit-topic-search input{width:100%;border:0;outline:0;background:transparent;color:#172033;font:600 .78rem 'Plus Jakarta Sans',sans-serif}.ciit-topic-toolbar-meta{display:flex;align-items:center;gap:13px;color:#64748b;font-size:.72rem;font-weight:700}.ciit-topic-toolbar-meta strong{color:#172033}.ciit-topic-archive-toggle{display:inline-flex;align-items:center;gap:7px;padding:9px 11px;border:1px solid #dfe6ef;border-radius:10px;background:#fff;color:#64748b;font-size:.7rem;font-weight:700}.ciit-topic-archive-toggle:hover,.ciit-topic-archive-toggle[aria-expanded=true]{border-color:#b8d0fb;color:#1769ff;background:#f8fbff}
+.ciit-topic-table-card,.ciit-topic-archive-card{background:#fff;border:1px solid #e3e8ef;border-radius:18px;box-shadow:0 8px 24px rgba(15,23,42,.04);overflow:hidden}.ciit-topic-table-wrap{overflow:auto}.ciit-topic-table{width:100%;min-width:780px;border-collapse:collapse}.ciit-topic-table th{padding:15px;background:#fbfcfe;border-bottom:1px solid #e9edf3;color:#7b8799;font-size:.66rem;font-weight:800;text-align:left;text-transform:uppercase;letter-spacing:.08em;white-space:nowrap}.ciit-topic-table td{padding:14px 15px;border-bottom:1px solid #f0f3f7;color:#475569;font-size:.76rem;vertical-align:middle;white-space:nowrap}.ciit-topic-table tbody tr:last-child td{border-bottom:0}.ciit-topic-table tbody tr:hover{background:#fbfdff}
+.topic-id-cell{color:#1769ff!important;font-family:Fira Code,monospace;font-size:.7rem!important;font-weight:700}.topic-name-cell{display:flex;align-items:center;gap:11px;min-width:235px}.topic-name-icon{width:38px;height:38px;flex:0 0 38px;display:flex;align-items:center;justify-content:center;border-radius:11px;background:#eef4ff;color:#1769ff}.topic-name-icon.is-muted{background:#f1f5f9;color:#94a3b8}.topic-name-cell strong{display:block;max-width:330px;overflow:hidden;text-overflow:ellipsis;font-size:.79rem;color:#172033;font-weight:800}.topic-name-cell span{display:block;margin-top:3px;color:#94a3b8;font-size:.65rem}.topic-folder-value{display:block;max-width:300px;overflow:hidden;text-overflow:ellipsis;color:#64748b;font-family:Fira Code,monospace;font-size:.68rem}
+.topic-row-actions{display:flex;justify-content:flex-end;gap:6px}.ciit-topic-icon-btn{width:36px;height:36px;display:inline-flex;align-items:center;justify-content:center;border:1px solid #dfe6ef;border-radius:9px;background:#fff;color:#64748b;text-decoration:none}.ciit-topic-icon-btn:hover{border-color:#b8d0fb;background:#f4f8ff;color:#1769ff}.ciit-topic-icon-btn.is-danger:hover{border-color:#fecaca;background:#fff7f7;color:#dc2626}
+.ciit-topic-empty{display:flex;align-items:center;flex-direction:column;justify-content:center;min-height:250px;padding:30px;text-align:center}.ciit-topic-empty[hidden]{display:none}.ciit-topic-empty i{font-size:2rem;color:#94a3b8}.ciit-topic-empty h3{margin:12px 0 5px;font-size:.95rem;font-weight:800}.ciit-topic-empty p{margin:0;color:#94a3b8;font-size:.72rem;line-height:1.6}
+.ciit-topic-archive-card{margin-top:18px}.ciit-topic-archive-header{padding:20px 22px;border-bottom:1px solid #eef2f7}.ciit-topic-archive-header h2{margin:5px 0;font-size:1.05rem;font-weight:800}.ciit-topic-archive-header p{margin:0;color:#94a3b8;font-size:.7rem}.ciit-topic-archive-list{padding:8px 14px 12px}.ciit-topic-archive-row{display:flex;align-items:center;gap:15px;padding:12px 8px;border-bottom:1px solid #f0f3f7}.ciit-topic-archive-row:last-child{border-bottom:0}.ciit-topic-archive-row .topic-name-cell{flex:1}.ciit-topic-restore-btn,.ciit-topic-secondary-btn{display:inline-flex;align-items:center;justify-content:center;gap:7px;min-height:39px;padding:0 13px;border:1px solid #dfe6ef;border-radius:9px;background:#fff;color:#64748b;font-size:.72rem;font-weight:800}.ciit-topic-restore-btn:hover{border-color:#bbf7d0;background:#f0fdf4;color:#15803d}.ciit-topic-secondary-btn:hover{border-color:#b8d0fb;color:#1769ff;background:#f8fbff}
+.ciit-topic-modal{border:1px solid #e1e7ef;border-radius:18px;box-shadow:0 25px 70px rgba(2,6,23,.18);overflow:hidden}.ciit-topic-modal .modal-header{padding:22px;border-bottom:1px solid #eef2f7}.ciit-topic-modal .modal-title{margin:5px 0 4px;font-size:1.2rem;font-weight:800}.ciit-topic-modal .modal-header p{margin:0;color:#94a3b8;font-size:.68rem}.ciit-topic-modal .modal-body{padding:22px}.ciit-topic-modal .modal-footer{padding:15px 22px;border-top:1px solid #eef2f7}.ciit-topic-form-field{margin-bottom:16px}.ciit-topic-form-field label{display:block;margin-bottom:7px;color:#334155;font-size:.72rem;font-weight:800}.ciit-topic-form-field label span{color:#94a3b8;font-weight:600}.ciit-topic-form-field .form-control{border-color:#dce4ed;border-radius:10px;font-size:.77rem}.ciit-topic-form-field .form-control:focus{border-color:#1769ff;box-shadow:0 0 0 .18rem rgba(23,105,255,.1)}.ciit-topic-form-hint{display:flex;align-items:flex-start;gap:9px;padding:11px 12px;border:1px solid #dce7f7;border-radius:10px;background:#f8fbff;color:#64748b;font-size:.66rem;line-height:1.55}.ciit-topic-form-hint i{color:#1769ff}
+@media(max-width:700px){.ciit-topic-page-header{align-items:flex-start;flex-direction:column}.ciit-topic-primary-btn{width:100%}.ciit-topic-toolbar{align-items:stretch;flex-direction:column}.ciit-topic-toolbar-meta{justify-content:space-between}.ciit-topic-modal .modal-body{padding:18px}.ciit-topic-modal .modal-footer{padding:13px 18px}.ciit-topic-modal .modal-footer .ciit-topic-primary-btn,.ciit-topic-modal .modal-footer .ciit-topic-secondary-btn{flex:1}}

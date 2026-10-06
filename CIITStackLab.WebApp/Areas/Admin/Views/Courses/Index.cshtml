@@ -1,0 +1,193 @@
+@model CIITStackLab.WebApp.Models.AdminCourseIndexViewModel
+
+@{
+    ViewData["Title"] = "Courses";
+    var edit = Model.EditCourse;
+    var message = TempData["AdminCourseMessage"] as string;
+    var messageType = TempData["AdminCourseMessageType"] as string;
+}
+
+<section class="ciit-admin-page ciit-courses-page">
+    <div class="ciit-course-page-header">
+        <div>
+            <span class="ciit-admin-eyebrow">Learning</span>
+            <h1>Courses</h1>
+            <p>Manage the training catalogue using the existing ERP course table.</p>
+        </div>
+        <button type="button" class="ciit-course-primary-btn" data-bs-toggle="modal" data-bs-target="#courseModal" data-course-mode="create">
+            <i class="bi bi-plus-lg"></i><span>Add Course</span>
+        </button>
+    </div>
+
+    @if (!string.IsNullOrWhiteSpace(message))
+    {
+        <div class="ciit-course-alert @(messageType == "success" ? "is-success" : "is-error")" role="alert">
+            <i class="bi @(messageType == "success" ? "bi-check-circle-fill" : "bi-exclamation-circle-fill")"></i>
+            <span>@message</span>
+            <button type="button" class="ciit-course-alert-close" aria-label="Close"><i class="bi bi-x-lg"></i></button>
+        </div>
+    }
+
+    <div class="ciit-course-toolbar">
+        <div class="ciit-course-search">
+            <i class="bi bi-search"></i>
+            <input id="courseSearch" type="search" placeholder="Search courses..." autocomplete="off" aria-label="Search courses" />
+        </div>
+        <div class="ciit-course-toolbar-meta">
+            <span><strong id="courseVisibleCount">@Model.ActiveCourses.Count</strong> active</span>
+            <button type="button" class="ciit-course-archive-toggle" id="archiveToggle" aria-expanded="false">
+                <i class="bi bi-archive"></i><span>Archived (@Model.ArchivedCourses.Count)</span>
+            </button>
+        </div>
+    </div>
+
+    <section class="ciit-course-table-card">
+        <div class="ciit-course-table-wrap">
+            <table class="ciit-course-table" id="courseTable">
+                <thead>
+                    <tr>
+                        <th>ID</th><th>Course</th><th>Fees</th><th>Change Date</th><th>Installment</th><th>Created</th><th class="course-col-actions">Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                @foreach (var course in Model.ActiveCourses)
+                {
+                    <tr data-course-row data-course-name="@course.Title.ToLowerInvariant()">
+                        <td class="course-id-cell">#@course.Id</td>
+                        <td>
+                            <div class="course-name-cell">
+                                <div class="course-name-icon"><i class="bi bi-journal-code"></i></div>
+                                <div><strong>@course.Title</strong><span>Active course</span></div>
+                            </div>
+                        </td>
+                        <td class="course-value">@(course.FeesAmount.HasValue ? course.FeesAmount.Value.ToString("0.##") : "—")</td>
+                        <td>@(course.FeesChangeDate.HasValue ? course.FeesChangeDate.Value.ToString("dd MMM yyyy") : "—")</td>
+                        <td>@(course.InstallmentPercentage.HasValue ? $"{course.InstallmentPercentage:0.##}%" : "—")</td>
+                        <td>@(course.CreatedAt.HasValue ? course.CreatedAt.Value.ToString("dd MMM yyyy") : "—")</td>
+                        <td>
+                            <div class="course-row-actions">
+                                <a asp-area="Admin" asp-controller="Courses" asp-action="Index" asp-route-editId="@course.Id" class="ciit-course-icon-btn" title="Edit">
+                                    <i class="bi bi-pencil-square"></i>
+                                </a>
+                                <form asp-area="Admin" asp-controller="Courses" asp-action="Delete" method="post" class="js-course-delete-form" data-course-name="@course.Title">
+                                    @Html.AntiForgeryToken()
+                                    <input type="hidden" name="id" value="@course.Id" />
+                                    <button type="submit" class="ciit-course-icon-btn is-danger" title="Archive"><i class="bi bi-archive"></i></button>
+                                </form>
+                            </div>
+                        </td>
+                    </tr>
+                }
+                </tbody>
+            </table>
+
+            <div class="ciit-course-empty" id="courseSearchEmpty" hidden>
+                <i class="bi bi-search"></i><h3>No matching courses</h3><p>Try a different course name.</p>
+            </div>
+
+            @if (Model.ActiveCourses.Count == 0)
+            {
+                <div class="ciit-course-empty is-visible">
+                    <i class="bi bi-journal-x"></i><h3>No active courses</h3><p>Create your first course to start the learning catalogue.</p>
+                </div>
+            }
+        </div>
+    </section>
+
+    <section class="ciit-course-archive-card" id="archivePanel" hidden>
+        <div class="ciit-course-archive-header">
+            <span class="ciit-admin-panel-kicker">Recovery</span>
+            <h2>Archived courses</h2>
+            <p>Soft-deleted courses can be restored.</p>
+        </div>
+        @if (Model.ArchivedCourses.Count == 0)
+        {
+            <div class="ciit-course-empty is-visible"><i class="bi bi-archive"></i><h3>Archive is empty</h3><p>Deleted courses will appear here.</p></div>
+        }
+        else
+        {
+            <div class="ciit-course-archive-list">
+            @foreach (var course in Model.ArchivedCourses)
+            {
+                <div class="ciit-course-archive-row">
+                    <div class="course-name-cell">
+                        <div class="course-name-icon is-muted"><i class="bi bi-archive"></i></div>
+                        <div><strong>@course.Title</strong><span>Archived @(course.DeletedAt.HasValue ? course.DeletedAt.Value.ToString("dd MMM yyyy") : "")</span></div>
+                    </div>
+                    <form asp-area="Admin" asp-controller="Courses" asp-action="Restore" method="post">
+                        @Html.AntiForgeryToken()
+                        <input type="hidden" name="id" value="@course.Id" />
+                        <button type="submit" class="ciit-course-restore-btn"><i class="bi bi-arrow-counterclockwise"></i> Restore</button>
+                    </form>
+                </div>
+            }
+            </div>
+        }
+    </section>
+</section>
+
+<div class="modal fade" id="courseModal" tabindex="-1" aria-labelledby="courseModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content ciit-course-modal">
+            <div class="modal-header">
+                <div>
+                    <span class="ciit-admin-panel-kicker">Course setup</span>
+                    <h2 class="modal-title" id="courseModalLabel">Add Course</h2>
+                    <p id="courseModalDescription">Create a new active course.</p>
+                </div>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+
+            <form asp-area="Admin" asp-controller="Courses" asp-action="Save" method="post" id="courseForm">
+                @Html.AntiForgeryToken()
+                <input type="hidden" id="courseId" name="Id" value="0" />
+
+                <div class="modal-body">
+                    <div class="ciit-course-form-field">
+                        <label for="courseName">Course name</label>
+                        <input id="courseName" name="CourseName" class="form-control" maxlength="100" placeholder="e.g. Java Full Stack" required />
+                    </div>
+
+                    <div class="ciit-course-form-grid">
+                        <div class="ciit-course-form-field">
+                            <label for="feesAmount">Fees amount</label>
+                            <input id="feesAmount" name="FeesAmount" type="number" class="form-control" min="0" step="0.01" placeholder="0.00" />
+                        </div>
+                        <div class="ciit-course-form-field">
+                            <label for="installmentPercentage">Installment %</label>
+                            <input id="installmentPercentage" name="InstallmentPercentage" type="number" class="form-control" min="0" max="100" step="0.01" placeholder="0 - 100" />
+                        </div>
+                    </div>
+
+                    <div class="ciit-course-form-field">
+                        <label for="feesChangeDate">Fees change date</label>
+                        <input id="feesChangeDate" name="FeesChangeDate" type="date" class="form-control" />
+                    </div>
+
+                    <div class="ciit-course-form-hint">
+                        <i class="bi bi-shield-check"></i>
+                        <span>Delete uses soft archive. Archived courses remain recoverable.</span>
+                    </div>
+                </div>
+
+                <div class="modal-footer">
+                    <button type="button" class="ciit-course-secondary-btn" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="ciit-course-primary-btn" id="courseSubmitBtn"><i class="bi bi-check2-circle"></i><span>Save Course</span></button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+@if (edit is not null)
+{
+    <script>
+        window.ciitEditCourse = {
+            id: @edit.Id,
+            courseName: @Html.Raw(System.Text.Json.JsonSerializer.Serialize(edit.CourseName)),
+            feesAmount: @(edit.FeesAmount.HasValue ? edit.FeesAmount.Value.ToString(System.Globalization.CultureInfo.InvariantCulture) : "null"),
+            feesChangeDate: @(edit.FeesChangeDate.HasValue ? Html.Raw(System.Text.Json.JsonSerializer.Serialize(edit.FeesChangeDate.Value.ToString("yyyy-MM-dd"))) : Html.Raw("null")),
+            installmentPercentage: @(edit.InstallmentPercentage.HasValue ? edit.InstallmentPercentage.Value.ToString(System.Globalization.CultureInfo.InvariantCulture) : "null")
+        };
+    </script>
+}

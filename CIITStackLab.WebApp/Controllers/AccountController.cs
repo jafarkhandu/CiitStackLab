@@ -36,11 +36,12 @@ public class AccountController : Controller
             return View(model);
         }
 
-        var user = await _userManager.FindByEmailAsync(model.Email.Trim());
+        var userName = model.UserName.Trim();
+        var user = await _userManager.FindByNameAsync(userName);
 
         if (user is null || !user.IsActive)
         {
-            ModelState.AddModelError(string.Empty, "Invalid email or password.");
+            ModelState.AddModelError(string.Empty, "Invalid username or password.");
             return View(model);
         }
 
@@ -49,16 +50,29 @@ public class AccountController : Controller
             model.Password,
             lockoutOnFailure: true);
 
-        if (result.Succeeded)
+        if (!result.Succeeded)
         {
-            await _signInManager.SignInAsync(
-                user,
-                isPersistent: model.RememberMe);
-            
-            return RedirectToLocal(model.ReturnUrl);
+            ModelState.AddModelError(string.Empty, "Invalid username or password.");
+            return View(model);
         }
 
-        ModelState.AddModelError(string.Empty, "Invalid email or password.");
+        await _signInManager.SignInAsync(user, isPersistent: model.RememberMe);
+
+        if (await _userManager.IsInRoleAsync(user, "Admin"))
+        {
+            return RedirectToAction("Index", "Dashboard", new { area = "Admin" });
+        }
+
+        if (await _userManager.IsInRoleAsync(user, "Student"))
+        {
+            return RedirectToAction("Index", "Home");
+        }
+
+        await _signInManager.SignOutAsync();
+        ModelState.AddModelError(
+            string.Empty,
+            "Your account does not have an assigned application role.");
+
         return View(model);
     }
 
@@ -79,15 +93,28 @@ public class AccountController : Controller
             return View(model);
         }
 
+        var userName = model.UserName.Trim();
         var email = model.Email.Trim();
+
+        if (await _userManager.FindByNameAsync(userName) is not null)
+        {
+            ModelState.AddModelError(nameof(model.UserName), "This username is already in use.");
+            return View(model);
+        }
+
+        if (await _userManager.FindByEmailAsync(email) is not null)
+        {
+            ModelState.AddModelError(nameof(model.Email), "This email is already registered.");
+            return View(model);
+        }
 
         var user = new ApplicationUser
         {
-            FullName = model.FullName.Trim(),
+            UserName = userName,
             Email = email,
-            UserName = email,
             EmailConfirmed = true,
-            IsActive = true
+            IsActive = true,
+            FullName = model.FullName.Trim()
         };
 
         var result = await _userManager.CreateAsync(user, model.Password);
@@ -102,6 +129,8 @@ public class AccountController : Controller
             return View(model);
         }
 
+        // Public registration can never create an Admin.
+        // Every newly registered account is assigned the Student role only.
         var roleResult = await _userManager.AddToRoleAsync(user, "Student");
 
         if (!roleResult.Succeeded)
@@ -132,14 +161,4 @@ public class AccountController : Controller
     [HttpGet]
     [AllowAnonymous]
     public IActionResult AccessDenied() => View();
-
-    private IActionResult RedirectToLocal(string? returnUrl)
-    {
-        if (!string.IsNullOrWhiteSpace(returnUrl) && Url.IsLocalUrl(returnUrl))
-        {
-            return Redirect(returnUrl);
-        }
-
-        return RedirectToAction("Index", "Home")!;
-    }
 }
