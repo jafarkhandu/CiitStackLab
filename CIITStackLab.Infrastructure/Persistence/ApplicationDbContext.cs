@@ -19,6 +19,7 @@ public class ApplicationDbContext : IdentityDbContext<ApplicationUser>
     public DbSet<CourseModule> CourseModules => Set<CourseModule>();
     public DbSet<Lesson> Lessons => Set<Lesson>();
     public DbSet<Topic> Topics => Set<Topic>();
+    public DbSet<ContentQuestion> ContentQuestions => Set<ContentQuestion>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -145,6 +146,56 @@ public class ApplicationDbContext : IdentityDbContext<ApplicationUser>
             entity.HasMany(x => x.Lessons)
                 .WithOne(x => x.Topic)
                 .HasForeignKey(x => x.TopicId)
+                .OnDelete(DeleteBehavior.NoAction);
+        });
+
+        modelBuilder.Entity<ContentQuestion>(entity =>
+        {
+            entity.ToTable("tblcontent_questions", ExistingSchema);
+            entity.HasKey(x => x.Id);
+
+            entity.Property(x => x.Id)
+                .HasColumnName("question_id");
+
+            entity.Property(x => x.ContentId)
+                .HasColumnName("content_id");
+
+            entity.Property(x => x.Question)
+                .HasColumnName("question");
+
+            entity.Property(x => x.Option1)
+                .HasColumnName("option1");
+
+            entity.Property(x => x.Option2)
+                .HasColumnName("option2");
+
+            entity.Property(x => x.Option3)
+                .HasColumnName("option3");
+
+            entity.Property(x => x.Option4)
+                .HasColumnName("option4");
+
+            entity.Property(x => x.CorrectOptionNumber)
+                .HasColumnName("correct_option_number");
+
+            entity.Property(x => x.Flag)
+                .HasColumnName("flag");
+
+            entity.Property(x => x.CreatedAt)
+                .HasColumnName("InsertedAt");
+
+            entity.Property(x => x.UpdatedAt)
+                .HasColumnName("UpdatedAt");
+
+            entity.Property(x => x.DeletedAt)
+                .HasColumnName("DeletedAt");
+
+            entity.Property(x => x.RestoredAt)
+                .HasColumnName("RestoredAt");
+
+            entity.HasOne(x => x.Content)
+                .WithMany()
+                .HasForeignKey(x => x.ContentId)
                 .OnDelete(DeleteBehavior.NoAction);
         });
 
