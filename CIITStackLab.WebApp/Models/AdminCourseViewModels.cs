@@ -9,6 +9,8 @@ public sealed class AdminCourseIndexViewModel
 
     public IReadOnlyList<CIITStackLab.Application.DTOs.AdminArchivedCourseDto> ArchivedCourses { get; init; } =
         Array.Empty<CIITStackLab.Application.DTOs.AdminArchivedCourseDto>();
+
+    public AdminCourseFormModel? EditCourse { get; init; }
 }
 
 public sealed class AdminCourseFormModel
