@@ -480,3 +480,7 @@ $RECYCLE.BIN/
 
 # Vim temporary swap files
 *.swp
+
+# Local database configuration
+CIITStackLab.WebApp/appsettings.Development.json
+CIITStackLab.WebApp/appsettings.Local.json
