@@ -24,8 +24,18 @@
                 <ul class="navbar-nav ms-auto mb-2 mb-lg-0">
                     <li class="nav-item"><a class="nav-link ciit-nav-link" href="#tutorials">Learning Paths</a></li>
                 </ul>
-                <div class="d-flex gap-2 ms-lg-3">
-                    <a href="#" class="btn btn-outline-primary fw-semibold ciit-signin-btn">Sign In</a>
+                <div class="d-flex gap-2 ms-lg-3 align-items-center">
+                    @if (User.Identity?.IsAuthenticated == true)
+                    {
+                        <span class="text-secondary small d-none d-xl-inline">Hi, @User.Identity.Name</span>
+                        <form asp-controller="Account" asp-action="Logout" method="post" class="m-0">
+                            <button type="submit" class="btn btn-outline-primary fw-semibold ciit-signin-btn">Sign Out</button>
+                        </form>
+                    }
+                    else
+                    {
+                        <a asp-controller="Account" asp-action="Login" class="btn btn-outline-primary fw-semibold ciit-signin-btn">Sign In</a>
+                    }
                 </div>
             </div>
         </div>

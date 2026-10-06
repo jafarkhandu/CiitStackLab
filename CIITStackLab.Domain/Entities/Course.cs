@@ -6,21 +6,21 @@ public class Course
 
     public string Title { get; set; } = string.Empty;
 
-    public string ShortDescription { get; set; } = string.Empty;
+    public double? FeesAmount { get; set; }
 
-    public string Description { get; set; } = string.Empty;
+    public DateTime? FeesChangeDate { get; set; }
 
-    public string ImageUrl { get; set; } = string.Empty;
+    public double? InstallmentPercentage { get; set; }
 
-    public string Category { get; set; } = string.Empty;
+    public int? Flag { get; set; }
 
-    public string Level { get; set; } = string.Empty;
+    public DateTime? CreatedAt { get; set; }
 
-    public int DurationHours { get; set; }
+    public DateTime? UpdatedAt { get; set; }
 
-    public bool IsPublished { get; set; }
+    public DateTime? DeletedAt { get; set; }
 
-    public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
+    public DateTime? RestoredAt { get; set; }
 
     public ICollection<CourseModule> Modules { get; set; } = new List<CourseModule>();
 }

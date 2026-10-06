@@ -1,0 +1,32 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 700" role="img" aria-labelledby="title desc">
+<title id="title">Full Stack with DevOps — CIIT Stack Lab</title>
+<desc id="desc">Frontend • Backend • Cloud • CI/CD</desc>
+<defs>
+  <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="#08111f"/><stop offset="55%" stop-color="#101d33"/><stop offset="100%" stop-color="#07101c"/></linearGradient>
+  <linearGradient id="accent" x1="0" y1="0" x2="1" y2="0"><stop offset="0%" stop-color="#51cf66"/><stop offset="100%" stop-color="#339af0"/></linearGradient>
+  <filter id="glow"><feGaussianBlur stdDeviation="14" result="blur"/><feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
+</defs>
+<rect width="1200" height="700" rx="36" fill="url(#bg)"/>
+<circle cx="1020" cy="120" r="170" fill="#51cf66" opacity=".10"/><circle cx="1140" cy="610" r="260" fill="#339af0" opacity=".08"/>
+<path d="M0 560 C260 470 430 700 720 575 S1060 480 1200 530" fill="none" stroke="#51cf66" stroke-width="3" opacity=".32"/>
+<rect x="60" y="62" width="1080" height="576" rx="30" fill="none" stroke="#ffffff" stroke-opacity=".09"/>
+<text x="88" y="115" fill="#aebbd0" font-family="Arial,Helvetica,sans-serif" font-size="24" font-weight="700" letter-spacing="4">CIIT STACK LAB</text>
+<text x="88" y="205" fill="#ffffff" font-family="Arial,Helvetica,sans-serif" font-size="64" font-weight="800">Full Stack with DevOps</text>
+<text x="88" y="255" fill="#b9c5d6" font-family="Arial,Helvetica,sans-serif" font-size="27">Frontend • Backend • Cloud • CI/CD</text>
+<g transform="translate(88 310)">
+<rect width="530" height="225" rx="24" fill="#ffffff" fill-opacity=".045" stroke="#ffffff" stroke-opacity=".08"/>
+<rect x="28" y="28" width="474" height="38" rx="12" fill="#050b14" stroke="#ffffff" stroke-opacity=".08"/>
+<circle cx="52" cy="47" r="6" fill="#ff6b6b"/><circle cx="72" cy="47" r="6" fill="#ffd166"/><circle cx="92" cy="47" r="6" fill="#06d6a0"/>
+<text x="32" y="104" fill="#51cf66" font-family="Courier New,monospace" font-size="20">&lt;learn /&gt;</text>
+<text x="32" y="136" fill="#dae4f2" font-family="Courier New,monospace" font-size="20">build.real.projects()</text>
+<text x="32" y="168" fill="#8ea0b9" font-family="Courier New,monospace" font-size="20">practice → master → deploy</text>
+<text x="32" y="200" fill="#339af0" font-family="Courier New,monospace" font-size="20"># career-ready skills</text>
+</g>
+<g transform="translate(735 304)">
+<circle cx="150" cy="108" r="104" fill="#07101e" stroke="url(#accent)" stroke-width="8" filter="url(#glow)"/>
+<circle cx="150" cy="108" r="82" fill="none" stroke="#ffffff" stroke-opacity=".10" stroke-width="2"/>
+<text x="150" y="130" text-anchor="middle" fill="#ffffff" font-family="Arial,Helvetica,sans-serif" font-size="62" font-weight="800">FS</text>
+</g>
+<g transform="translate(735 540)">
+<rect x="0" y="0" width="110" height="40" rx="20" fill="#51cf66" opacity=".16" stroke="#51cf66" stroke-opacity=".45"/><text x="55" y="26" text-anchor="middle" fill="#eaf1fb" font-family="Arial,Helvetica,sans-serif" font-size="14" font-weight="700">FULL STACK</text><rect x="126" y="0" width="110" height="40" rx="20" fill="#339af0" opacity=".16" stroke="#339af0" stroke-opacity=".45"/><text x="181" y="26" text-anchor="middle" fill="#eaf1fb" font-family="Arial,Helvetica,sans-serif" font-size="14" font-weight="700">DEVOPS</text><rect x="252" y="0" width="110" height="40" rx="20" fill="#51cf66" opacity=".16" stroke="#51cf66" stroke-opacity=".45"/><text x="307" y="26" text-anchor="middle" fill="#eaf1fb" font-family="Arial,Helvetica,sans-serif" font-size="14" font-weight="700">CLOUD</text>
+</g></svg>

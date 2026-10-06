@@ -4,19 +4,23 @@ public class Lesson
 {
     public int Id { get; set; }
 
-    public int CourseModuleId { get; set; }
+    public int? TopicId { get; set; }
 
     public string Title { get; set; } = string.Empty;
 
-    public string ShortDescription { get; set; } = string.Empty;
+    public string? Slides { get; set; }
 
-    public string Content { get; set; } = string.Empty;
+    public string? VideoName { get; set; }
 
-    public int DisplayOrder { get; set; }
+    public int? Flag { get; set; }
 
-    public int EstimatedMinutes { get; set; }
+    public DateTime? CreatedAt { get; set; }
 
-    public CourseModule CourseModule { get; set; } = null!;
+    public DateTime? UpdatedAt { get; set; }
 
-    public ICollection<Topic> Topics { get; set; } = new List<Topic>();
+    public DateTime? DeletedAt { get; set; }
+
+    public DateTime? RestoredAt { get; set; }
+
+    public Topic Topic { get; set; } = null!;
 }
