@@ -9,7 +9,7 @@
         <div class="ciit-auth-card">
             <div class="text-center mb-4">
                 <h1>Create your account</h1>
-                <p>Start your learning journey with CIIT Stack Lab.</p>
+                <p>Register as a student and start your learning journey with CIIT Stack Lab.</p>
             </div>
 
             <form asp-action="Register" method="post">
@@ -19,6 +19,12 @@
                     <label asp-for="FullName" class="form-label fw-semibold"></label>
                     <input asp-for="FullName" class="form-control form-control-lg" autocomplete="name" />
                     <span asp-validation-for="FullName" class="text-danger small"></span>
+                </div>
+
+                <div class="mb-3">
+                    <label asp-for="UserName" class="form-label fw-semibold"></label>
+                    <input asp-for="UserName" class="form-control form-control-lg" autocomplete="username" />
+                    <span asp-validation-for="UserName" class="text-danger small"></span>
                 </div>
 
                 <div class="mb-3">
@@ -39,7 +45,7 @@
                     <span asp-validation-for="ConfirmPassword" class="text-danger small"></span>
                 </div>
 
-                <button type="submit" class="btn btn-primary btn-lg w-100 fw-bold">Create Account</button>
+                <button type="submit" class="btn btn-primary btn-lg w-100 fw-bold">Create Student Account</button>
             </form>
 
             <div class="text-center mt-4">

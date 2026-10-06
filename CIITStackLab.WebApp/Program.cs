@@ -13,7 +13,7 @@ using (var scope = app.Services.CreateScope())
 {
     var dbContext = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
     await DbInitializer.VerifyAsync(dbContext);
-    await IdentitySeeder.SeedAsync(scope.ServiceProvider, app.Configuration);
+    await IdentitySeeder.VerifyAsync(scope.ServiceProvider);
 }
 
 if (!app.Environment.IsDevelopment())
@@ -28,6 +28,10 @@ app.UseRouting();
 
 app.UseAuthentication();
 app.UseAuthorization();
+
+app.MapControllerRoute(
+    name: "areas",
+    pattern: "{area:exists}/{controller=Dashboard}/{action=Index}/{id?}");
 
 app.MapControllerRoute(
     name: "default",

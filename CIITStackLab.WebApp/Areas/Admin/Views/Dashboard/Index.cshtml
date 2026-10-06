@@ -1,0 +1,45 @@
+@{
+    ViewData["Title"] = "Admin Dashboard";
+}
+
+<section class="py-5">
+    <div class="container">
+        <div class="mb-4">
+            <span class="text-uppercase text-primary fw-bold small">Administration</span>
+            <h1 class="display-6 fw-bold mb-2">Admin Dashboard</h1>
+            <p class="text-secondary mb-0">
+                Welcome, @User.Identity?.Name. This is the admin workspace for CIIT Stack Lab.
+            </p>
+        </div>
+
+        <div class="row g-4">
+            <div class="col-md-4">
+                <div class="card h-100 border-0 shadow-sm">
+                    <div class="card-body p-4">
+                        <i class="bi bi-journal-code fs-2 text-primary"></i>
+                        <h5 class="mt-3">Learning</h5>
+                        <p class="text-secondary mb-0">Courses, topics and learning structure.</p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="card h-100 border-0 shadow-sm">
+                    <div class="card-body p-4">
+                        <i class="bi bi-clipboard-check fs-2 text-primary"></i>
+                        <h5 class="mt-3">Assessment</h5>
+                        <p class="text-secondary mb-0">MCQs, interview questions and practice programs.</p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="card h-100 border-0 shadow-sm">
+                    <div class="card-body p-4">
+                        <i class="bi bi-people fs-2 text-primary"></i>
+                        <h5 class="mt-3">Students</h5>
+                        <p class="text-secondary mb-0">Student management and reporting workspace.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
