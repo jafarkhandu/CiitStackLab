@@ -13,7 +13,7 @@ document.addEventListener('DOMContentLoaded', () => {
             }
 
             try {
-                const response = await fetch(`/Admin/AdminContent/Topics?courseId=${encodeURIComponent(courseId)}`, {
+                const response = await fetch(`/Admin/Content/Topics?courseId=${encodeURIComponent(courseId)}`, {
                     headers: { 'Accept': 'application/json' }
                 });
 
@@ -21,7 +21,6 @@ document.addEventListener('DOMContentLoaded', () => {
 
                 const topics = await response.json();
                 topicSelect.innerHTML = '<option value="0">Select topic</option>';
-
                 topics.forEach(topic => {
                     const option = document.createElement('option');
                     option.value = topic.id;
@@ -31,9 +30,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 });
 
                 topicSelect.disabled = topics.length === 0;
-                if (topics.length === 0) {
-                    topicSelect.innerHTML = '<option value="0">No mapped topics</option>';
-                }
+                if (topics.length === 0) topicSelect.innerHTML = '<option value="0">No mapped topics</option>';
             } catch {
                 topicSelect.innerHTML = '<option value="0">Unable to load topics</option>';
                 topicSelect.disabled = true;
@@ -41,10 +38,7 @@ document.addEventListener('DOMContentLoaded', () => {
         };
 
         courseSelect.addEventListener('change', () => loadTopics(courseSelect.value));
-
-        if (courseSelect.value && courseSelect.value !== '0') {
-            topicSelect.disabled = false;
-        }
+        if (courseSelect.value && courseSelect.value !== '0') topicSelect.disabled = false;
     }
 
     const search = document.getElementById('contentSearch');
@@ -56,26 +50,21 @@ document.addEventListener('DOMContentLoaded', () => {
         const updateSearch = () => {
             const term = search.value.trim().toLowerCase();
             let count = 0;
-
             rows.forEach(row => {
                 const match = !term || (row.dataset.search || '').toLowerCase().includes(term);
                 row.hidden = !match;
                 if (match) count++;
             });
-
             if (visibleCount) visibleCount.textContent = count;
             if (empty) empty.hidden = count !== 0 || rows.length === 0;
         };
-
         search.addEventListener('input', updateSearch);
     }
 
     document.querySelectorAll('.js-content-delete-form').forEach(form => {
         form.addEventListener('submit', event => {
             const name = form.dataset.contentName || 'this content';
-            if (!window.confirm(`Move "${name}" to the archive?`)) {
-                event.preventDefault();
-            }
+            if (!window.confirm(`Move "${name}" to the archive?`)) event.preventDefault();
         });
     });
 });
