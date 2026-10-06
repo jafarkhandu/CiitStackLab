@@ -111,3 +111,40 @@ main{min-height:calc(100vh - 120px)}.ciit-footer{background:#0b0f19;color:#94a3b
     .ciit-course-details-image,
     .ciit-course-details-image img { min-height: 220px; height: 220px; }
 }
+
+/* Authentication */
+.ciit-auth-section{
+    min-height:calc(100vh - 120px);
+    display:flex;
+    align-items:center;
+    padding:64px 0;
+    background:linear-gradient(135deg,#f8fafc 0%,#eef8ff 100%);
+}
+.ciit-auth-card{
+    width:min(100%,500px);
+    margin:0 auto;
+    background:#fff;
+    border:1px solid #e2e8f0;
+    border-radius:20px;
+    padding:32px;
+    box-shadow:0 18px 40px rgba(15,23,42,.08);
+}
+.ciit-auth-card h1{
+    font-size:2rem;
+    font-weight:800;
+    color:#172033;
+    margin-bottom:8px;
+}
+.ciit-auth-card p{color:#64748b}
+.ciit-auth-card .form-control{
+    border-color:#dbe3ed;
+    border-radius:10px;
+}
+.ciit-auth-card .form-control:focus{
+    border-color:#1769ff;
+    box-shadow:0 0 0 .2rem rgba(23,105,255,.12);
+}
+@media(max-width:768px){
+    .ciit-auth-section{padding:40px 0}
+    .ciit-auth-card{padding:24px 20px;border-radius:16px}
+}
