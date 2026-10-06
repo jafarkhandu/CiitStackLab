@@ -11,6 +11,7 @@
     <link href="https://fonts.googleapis.com/css2?family=Fira+Code:wght@400;500;600&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
     <link rel="stylesheet" href="~/css/admin-dashboard.css" />
     <link rel="stylesheet" href="~/css/admin-courses.css" />
+    <link rel="stylesheet" href="~/css/admin-mapping.css" />
     @await RenderSectionAsync("Styles", required: false)
 </head>
 <body class="ciit-admin-body">
@@ -35,6 +36,9 @@
                 </a>
                 <a asp-area="Admin" asp-controller="Topics" asp-action="Index" class="ciit-admin-nav-link @(currentAdminController == "Topics" ? "active" : "")">
                     <i class="bi bi-diagram-3"></i><span>Topics</span>
+                </a>
+                <a asp-area="Admin" asp-controller="CourseTopicMapping" asp-action="Index" class="ciit-admin-nav-link @(currentAdminController == "CourseTopicMapping" ? "active" : "")">
+                    <i class="bi bi-diagram-2"></i><span>Course Mapping</span>
                 </a>
 
                 <div class="ciit-admin-nav-heading">Assessment</div>
@@ -104,6 +108,7 @@
     <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
     <script src="~/js/admin-dashboard.js"></script>
     <script src="~/js/admin-courses.js"></script>
+    <script src="~/js/admin-mapping.js"></script>
     @await RenderSectionAsync("Scripts", required: false)
 </body>
 </html>
