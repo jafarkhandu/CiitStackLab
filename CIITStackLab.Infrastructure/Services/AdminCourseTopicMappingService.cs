@@ -97,84 +97,64 @@ public sealed class AdminCourseTopicMappingService : IAdminCourseTopicMappingSer
             return (false, "The selected course is no longer active.");
         }
 
+        var requestedTopicIds = topicIds
+            .Distinct()
+            .ToHashSet();
+
+        if (requestedTopicIds.Count == 0)
+        {
+            return (false, "Select at least one new topic before saving.");
+        }
+
         var activeTopicIds = await _dbContext.Topics
             .AsNoTracking()
             .Where(x => x.Flag == 0)
             .Select(x => x.Id)
             .ToListAsync(cancellationToken);
 
-        var requestedTopicIds = topicIds
-            .Where(activeTopicIds.Contains)
-            .Distinct()
-            .ToHashSet();
+        requestedTopicIds.IntersectWith(activeTopicIds);
 
-        var mappings = await _dbContext.CourseModules
-            .Where(x => x.CourseId == courseId)
-            .OrderBy(x => x.Id)
+        if (requestedTopicIds.Count == 0)
+        {
+            return (false, "The selected topics are no longer active.");
+        }
+
+        // A course-topic pair may exist only once. The existing ERP database
+        // enforces a unique constraint on (course_id, topic_id), so previously
+        // mapped pairs are never inserted again.
+        var existingTopicIds = await _dbContext.CourseModules
+            .AsNoTracking()
+            .Where(x => x.CourseId == courseId && requestedTopicIds.Contains(x.TopicId))
+            .Select(x => x.TopicId)
+            .Distinct()
             .ToListAsync(cancellationToken);
 
-        await using var transaction = await _dbContext.Database.BeginTransactionAsync(cancellationToken);
+        requestedTopicIds.ExceptWith(existingTopicIds);
+
+        if (requestedTopicIds.Count == 0)
+        {
+            return (false, "All selected topics are already mapped to this course.");
+        }
+
+        foreach (var topicId in requestedTopicIds)
+        {
+            _dbContext.CourseModules.Add(new Domain.Entities.CourseModule
+            {
+                CourseId = courseId,
+                TopicId = topicId,
+                Flag = 0,
+                CreatedAt = DateTime.Now
+            });
+        }
 
         try
         {
-            foreach (var topicId in activeTopicIds)
-            {
-                var topicMappings = mappings
-                    .Where(x => x.TopicId == topicId)
-                    .ToList();
-
-                var activeMapping = topicMappings.FirstOrDefault(x => x.Flag == 0);
-
-                if (requestedTopicIds.Contains(topicId))
-                {
-                    if (activeMapping is not null)
-                    {
-                        continue;
-                    }
-
-                    var archivedMapping = topicMappings
-                        .Where(x => x.Flag == 1)
-                        .OrderByDescending(x => x.Id)
-                        .FirstOrDefault();
-
-                    if (archivedMapping is not null)
-                    {
-                        archivedMapping.Flag = 0;
-                        archivedMapping.DeletedAt = null;
-                        archivedMapping.RestoredAt = DateTime.Now;
-                        archivedMapping.UpdatedAt = DateTime.Now;
-                    }
-                    else
-                    {
-                        _dbContext.CourseModules.Add(new Domain.Entities.CourseModule
-                        {
-                            CourseId = courseId,
-                            TopicId = topicId,
-                            Flag = 0,
-                            CreatedAt = DateTime.Now
-                        });
-                    }
-
-                    continue;
-                }
-
-                if (activeMapping is not null)
-                {
-                    activeMapping.Flag = 1;
-                    activeMapping.DeletedAt = DateTime.Now;
-                    activeMapping.UpdatedAt = DateTime.Now;
-                }
-            }
-
             await _dbContext.SaveChangesAsync(cancellationToken);
-            await transaction.CommitAsync(cancellationToken);
-
             return (true, null);
         }
         catch (DbUpdateException)
         {
-            await transaction.RollbackAsync(cancellationToken);
-            return (false, "The course-topic mapping could not be saved.");
+            return (false, "The course-topic mapping could not be saved. A duplicate mapping may already exist.");
         }
     }
 }

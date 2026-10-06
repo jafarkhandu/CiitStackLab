@@ -11,22 +11,18 @@ document.addEventListener("DOMContentLoaded", function () {
             courseItems.forEach(function (item) {
                 const matches = !query || item.dataset.courseName.includes(query);
                 item.hidden = !matches;
-
-                if (matches) {
-                    shown++;
-                }
+                if (matches) shown++;
             });
 
-            if (courseEmpty) {
-                courseEmpty.hidden = shown !== 0;
-            }
+            if (courseEmpty) courseEmpty.hidden = shown !== 0;
         });
     }
 
     const topicSearch = document.getElementById("mappingTopicSearch");
     const cards = Array.from(document.querySelectorAll("[data-topic-card]"));
-    const selectedCount = document.getElementById("mappingSelectedCount");
     const noTopics = document.getElementById("mappingNoTopics");
+    const saveButton = document.getElementById("mappingSaveBtn");
+    const saveLabel = document.getElementById("mappingSaveLabel");
 
     function refreshTopics() {
         let visible = 0;
@@ -38,30 +34,24 @@ document.addEventListener("DOMContentLoaded", function () {
 
             card.classList.toggle("is-assigned", checked);
 
-            if (!card.hidden) {
-                visible++;
-            }
-
-            if (checked) {
-                selected++;
-            }
+            if (!card.hidden) visible++;
+            if (checked) selected++;
         });
 
-        if (selectedCount) {
-            selectedCount.textContent = selected.toLocaleString();
-        }
+        if (noTopics) noTopics.hidden = visible !== 0;
 
-        if (noTopics) {
-            noTopics.hidden = visible !== 0;
+        if (saveButton) {
+            saveButton.disabled = selected === 0;
+            if (saveLabel) {
+                saveLabel.textContent = selected === 0
+                    ? "Select Topics"
+                    : "Add " + selected + (selected === 1 ? " Topic" : " Topics");
+            }
         }
     }
 
     cards.forEach(function (card) {
         const input = card.querySelector("input[type='checkbox']");
-
-        // Let the <label> perform native checkbox toggling.
-        // Avoid calling input.click() from the card click handler, which
-        // would toggle the checkbox twice and make it appear unclickable.
         input?.addEventListener("change", refreshTopics);
     });
 
@@ -78,28 +68,18 @@ document.addEventListener("DOMContentLoaded", function () {
     }
 
     document.getElementById("mappingSelectAll")?.addEventListener("click", function () {
-        cards
-            .filter(function (card) { return !card.hidden; })
-            .forEach(function (card) {
-                const input = card.querySelector("input[type='checkbox']");
-                if (input) {
-                    input.checked = true;
-                }
-            });
-
+        cards.filter(c => !c.hidden).forEach(function (card) {
+            const input = card.querySelector("input[type='checkbox']");
+            if (input) input.checked = true;
+        });
         refreshTopics();
     });
 
     document.getElementById("mappingClearAll")?.addEventListener("click", function () {
-        cards
-            .filter(function (card) { return !card.hidden; })
-            .forEach(function (card) {
-                const input = card.querySelector("input[type='checkbox']");
-                if (input) {
-                    input.checked = false;
-                }
-            });
-
+        cards.filter(c => !c.hidden).forEach(function (card) {
+            const input = card.querySelector("input[type='checkbox']");
+            if (input) input.checked = false;
+        });
         refreshTopics();
     });
 
@@ -112,7 +92,6 @@ document.addEventListener("DOMContentLoaded", function () {
     document.querySelectorAll(".ciit-mapping-alert").forEach(function (alert) {
         window.setTimeout(function () {
             alert.classList.add("is-fading");
-
             window.setTimeout(function () {
                 alert.remove();
             }, 650);
@@ -120,11 +99,9 @@ document.addEventListener("DOMContentLoaded", function () {
     });
 
     document.getElementById("mappingForm")?.addEventListener("submit", function () {
-        const button = document.getElementById("mappingSaveBtn");
-
-        if (button) {
-            button.disabled = true;
-            button.querySelector("span").textContent = "Saving...";
+        if (saveButton) {
+            saveButton.disabled = true;
+            if (saveLabel) saveLabel.textContent = "Saving...";
         }
     });
 

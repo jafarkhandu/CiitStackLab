@@ -81,55 +81,101 @@
                                 <p>Select the topics that belong to this course.</p>
                             </div>
                             <div class="ciit-mapping-selected-count">
-                                <strong id="mappingSelectedCount">@Model.AssignedTopicCount</strong>
+                                <strong>@Model.AssignedTopicCount</strong>
                                 <span>assigned</span>
                             </div>
                         </div>
 
-                        <div class="ciit-mapping-topic-toolbar">
-                            <div class="ciit-mapping-topic-search">
-                                <i class="bi bi-search"></i>
-                                <input id="mappingTopicSearch" type="search" placeholder="Search topics..." autocomplete="off" />
+                        @{
+                            var assignedTopics = Model.Topics.Where(x => x.IsAssigned).ToList();
+                            var availableTopics = Model.Topics.Where(x => !x.IsAssigned).ToList();
+                        }
+
+                        @if (assignedTopics.Count > 0)
+                        {
+                            <div class="ciit-mapping-assigned-section">
+                                <div class="ciit-mapping-section-label">
+                                    <div>
+                                        <span class="ciit-admin-panel-kicker">Already assigned</span>
+                                        <h3>Course Topics</h3>
+                                    </div>
+                                    <span class="ciit-mapping-readonly-pill"><i class="bi bi-lock-fill"></i> Saved</span>
+                                </div>
+
+                                <div class="ciit-mapping-assigned-list">
+                                    @foreach (var topic in assignedTopics)
+                                    {
+                                        <div class="ciit-mapping-assigned-chip">
+                                            <span class="ciit-mapping-assigned-icon"><i class="bi bi-check-lg"></i></span>
+                                            <span>
+                                                <strong>@topic.Title</strong>
+                                                <small>Topic #@topic.Id</small>
+                                            </span>
+                                            <span class="ciit-mapping-assigned-badge">Already added</span>
+                                        </div>
+                                    }
+                                </div>
                             </div>
-                            <button type="button" class="ciit-mapping-select-all" id="mappingSelectAll">
-                                Select visible
-                            </button>
-                            <button type="button" class="ciit-mapping-clear-all" id="mappingClearAll">
-                                Clear visible
-                            </button>
-                        </div>
+                        }
 
-                        <div class="ciit-mapping-topic-grid" id="mappingTopicGrid">
-                            @foreach (var topic in Model.Topics)
-                            {
-                                <label class="ciit-mapping-topic-card @(topic.IsAssigned ? "is-assigned" : "")"
-                                       data-topic-card
-                                       data-topic-name="@topic.Title.ToLowerInvariant()">
-                                    <input type="checkbox"
-                                           name="TopicIds"
-                                           value="@topic.Id"
-                                           @(topic.IsAssigned ? "checked" : "") />
-                                    <span class="ciit-mapping-check"><i class="bi bi-check-lg"></i></span>
-                                    <span class="ciit-mapping-topic-icon"><i class="bi bi-diagram-3"></i></span>
-                                    <span class="ciit-mapping-topic-copy">
-                                        <strong>@topic.Title</strong>
-                                        <small>Topic #@topic.Id</small>
-                                    </span>
-                                </label>
-                            }
-                        </div>
+                        @if (availableTopics.Count > 0)
+                        {
+                            <div class="ciit-mapping-available-section">
+                                <div class="ciit-mapping-section-label">
+                                    <div>
+                                        <span class="ciit-admin-panel-kicker">Available topics</span>
+                                        <h3>Add New Topics</h3>
+                                    </div>
+                                    <span class="ciit-mapping-available-count">@availableTopics.Count available</span>
+                                </div>
 
-                        <div class="ciit-mapping-no-topics" id="mappingNoTopics" hidden>
-                            <i class="bi bi-search"></i><strong>No matching topics</strong><span>Try a different search.</span>
-                        </div>
+                                <div class="ciit-mapping-topic-toolbar">
+                                    <div class="ciit-mapping-topic-search">
+                                        <i class="bi bi-search"></i>
+                                        <input id="mappingTopicSearch" type="search" placeholder="Search available topics..." autocomplete="off" />
+                                    </div>
+                                    <button type="button" class="ciit-mapping-select-all" id="mappingSelectAll">Select visible</button>
+                                    <button type="button" class="ciit-mapping-clear-all" id="mappingClearAll">Clear visible</button>
+                                </div>
+
+                                <div class="ciit-mapping-topic-grid" id="mappingTopicGrid">
+                                    @foreach (var topic in availableTopics)
+                                    {
+                                        <label class="ciit-mapping-topic-card"
+                                               data-topic-card
+                                               data-topic-name="@topic.Title.ToLowerInvariant()">
+                                            <input type="checkbox" name="TopicIds" value="@topic.Id" />
+                                            <span class="ciit-mapping-check"><i class="bi bi-check-lg"></i></span>
+                                            <span class="ciit-mapping-topic-icon"><i class="bi bi-diagram-3"></i></span>
+                                            <span class="ciit-mapping-topic-copy">
+                                                <strong>@topic.Title</strong>
+                                                <small>Topic #@topic.Id</small>
+                                            </span>
+                                        </label>
+                                    }
+                                </div>
+
+                                <div class="ciit-mapping-no-topics" id="mappingNoTopics" hidden>
+                                    <i class="bi bi-search"></i><strong>No matching topics</strong><span>Try a different search.</span>
+                                </div>
+                            </div>
+                        }
+                        else
+                        {
+                            <div class="ciit-mapping-all-assigned">
+                                <i class="bi bi-check2-circle"></i>
+                                <strong>All active topics are already assigned</strong>
+                                <span>Create a new topic from the Topics module to add another learning topic later.</span>
+                            </div>
+                        }
 
                         <div class="ciit-mapping-footer">
                             <div class="ciit-mapping-footer-note">
                                 <i class="bi bi-info-circle"></i>
-                                <span>Unchecking a topic removes only the active mapping. The existing mapping record is soft-deleted and can be restored.</span>
+                                <span>Already assigned topics cannot be selected again. Select only new topics here; they will appear in the saved list after mapping.</span>
                             </div>
                             <button type="submit" class="ciit-mapping-save-btn" id="mappingSaveBtn">
-                                <i class="bi bi-check2-circle"></i><span>Save Mapping</span>
+                                <i class="bi bi-plus-circle"></i><span id="mappingSaveLabel">Add Selected Topics</span>
                             </button>
                         </div>
                     </form>
