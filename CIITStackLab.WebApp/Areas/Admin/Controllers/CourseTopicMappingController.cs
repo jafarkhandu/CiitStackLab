@@ -6,7 +6,7 @@ using Microsoft.AspNetCore.Mvc;
 namespace CIITStackLab.WebApp.Areas.Admin.Controllers;
 
 [Area("Admin")]
-[Authorize(Roles = "Admin")]
+[Authorize(Roles = "Admin,Super User")]
 public class CourseTopicMappingController : Controller
 {
     private readonly IAdminCourseTopicMappingService _mappingService;
