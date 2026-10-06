@@ -89,27 +89,107 @@
                                         <div class="list-group list-group-flush">
                                             @foreach (var content in topic.Contents)
                                             {
-                                                <div class="list-group-item px-0">
+                                                <article class="ciit-content-item">
                                                     <div class="d-flex justify-content-between align-items-start gap-3">
                                                         <div>
                                                             <div class="fw-semibold">@content.Title</div>
+
                                                             @if (!string.IsNullOrWhiteSpace(content.Slides) || !string.IsNullOrWhiteSpace(content.VideoName))
                                                             {
                                                                 <div class="small text-secondary mt-1">
                                                                     @if (!string.IsNullOrWhiteSpace(content.Slides))
                                                                     {
-                                                                        <span class="me-3"><i class="bi bi-file-earmark-slides me-1"></i>@content.Slides</span>
+                                                                        <span class="me-3">
+                                                                            <i class="bi bi-file-earmark-slides me-1"></i>@content.Slides
+                                                                        </span>
                                                                     }
                                                                     @if (!string.IsNullOrWhiteSpace(content.VideoName))
                                                                     {
-                                                                        <span><i class="bi bi-play-circle me-1"></i>@content.VideoName</span>
+                                                                        <span>
+                                                                            <i class="bi bi-play-circle me-1"></i>@content.VideoName
+                                                                        </span>
                                                                     }
                                                                 </div>
                                                             }
                                                         </div>
-                                                        <span class="badge rounded-pill text-bg-light border">Content</span>
+
+                                                        <div class="d-flex align-items-center gap-2 flex-shrink-0">
+                                                            <span class="badge rounded-pill text-bg-light border">Content</span>
+                                                            @if (content.Questions.Count > 0)
+                                                            {
+                                                                <span class="badge rounded-pill text-bg-primary">
+                                                                    @content.Questions.Count MCQ@(content.Questions.Count == 1 ? "" : "s")
+                                                                </span>
+                                                            }
+                                                        </div>
                                                     </div>
-                                                </div>
+
+                                                    @if (content.Questions.Count > 0)
+                                                    {
+                                                        <div class="ciit-mcq-panel" data-mcq-panel>
+                                                            <div class="ciit-mcq-header">
+                                                                <div>
+                                                                    <span class="ciit-mcq-kicker">
+                                                                        <i class="bi bi-patch-question-fill me-1"></i> Knowledge Check
+                                                                    </span>
+                                                                    <h4>@content.Questions.Count MCQ@(content.Questions.Count == 1 ? "" : "s")</h4>
+                                                                </div>
+                                                                <span class="ciit-mcq-progress" data-mcq-progress>
+                                                                    0 / @content.Questions.Count
+                                                                </span>
+                                                            </div>
+
+                                                            @for (var questionIndex = 0; questionIndex < content.Questions.Count; questionIndex++)
+                                                            {
+                                                                var question = content.Questions[questionIndex];
+                                                                var questionId = $"mcq-{content.Id}-{question.Id}";
+
+                                                                <div class="ciit-mcq-question" data-mcq-question data-correct-option="@question.CorrectOptionNumber">
+                                                                    <div class="ciit-mcq-question-title">
+                                                                        <span>@(questionIndex + 1)</span>
+                                                                        <p>@question.Question</p>
+                                                                    </div>
+
+                                                                    <div class="ciit-mcq-options">
+                                                                        @for (var optionIndex = 0; optionIndex < question.Options.Count; optionIndex++)
+                                                                        {
+                                                                            var optionNumber = optionIndex + 1;
+                                                                            var optionValue = question.Options[optionIndex];
+
+                                                                            if (!string.IsNullOrWhiteSpace(optionValue))
+                                                                            {
+                                                                                var inputId = $"{questionId}-option-{optionNumber}";
+
+                                                                                <label class="ciit-mcq-option" for="@inputId" data-option-label>
+                                                                                    <input id="@inputId"
+                                                                                           type="radio"
+                                                                                           name="@questionId"
+                                                                                           value="@optionNumber"
+                                                                                           data-mcq-option />
+                                                                                    <span class="ciit-mcq-option-marker">@((char)('A' + optionIndex))</span>
+                                                                                    <span class="ciit-mcq-option-text">@optionValue</span>
+                                                                                    <i class="bi bi-check-lg ciit-mcq-option-icon"></i>
+                                                                                </label>
+                                                                            }
+                                                                        }
+                                                                    </div>
+
+                                                                    <div class="ciit-mcq-feedback" data-mcq-feedback aria-live="polite"></div>
+                                                                </div>
+                                                            }
+
+                                                            <div class="ciit-mcq-actions">
+                                                                <span class="ciit-mcq-result" data-mcq-result></span>
+                                                                <button type="button" class="btn btn-primary ciit-mcq-check" data-mcq-check>
+                                                                    <i class="bi bi-check2-circle me-1"></i>Check Answers
+                                                                </button>
+                                                                <button type="button" class="btn btn-outline-secondary ciit-mcq-reset" data-mcq-reset>
+                                                                    <i class="bi bi-arrow-counterclockwise me-1"></i>Try Again
+                                                                </button>
+                                                            </div>
+                                                        </div>
+                                                    }
+                                                </article>
                                             }
                                         </div>
                                     }
@@ -122,3 +202,124 @@
         </div>
     </div>
 </section>
+
+@section Scripts {
+<script>
+(() => {
+    const initializeMcqPanel = (panel) => {
+        const questions = [...panel.querySelectorAll('[data-mcq-question]')];
+        const checkButton = panel.querySelector('[data-mcq-check]');
+        const resetButton = panel.querySelector('[data-mcq-reset]');
+        const result = panel.querySelector('[data-mcq-result]');
+        const progress = panel.querySelector('[data-mcq-progress]');
+
+        if (!questions.length || !checkButton || !resetButton) {
+            return;
+        }
+
+        const clearQuestionState = (question) => {
+            question.classList.remove('is-correct', 'is-wrong');
+            question.querySelectorAll('[data-option-label]').forEach(label => {
+                label.classList.remove('is-correct-option', 'is-wrong-option');
+            });
+            const feedback = question.querySelector('[data-mcq-feedback]');
+            if (feedback) {
+                feedback.textContent = '';
+                feedback.className = 'ciit-mcq-feedback';
+            }
+        };
+
+        const updateProgress = () => {
+            const answered = questions.filter(question =>
+                question.querySelector('input[type="radio"]:checked')
+            ).length;
+
+            if (progress) {
+                progress.textContent = answered + ' / ' + questions.length;
+            }
+        };
+
+        panel.addEventListener('change', updateProgress);
+
+        checkButton.addEventListener('click', () => {
+            let score = 0;
+            let unanswered = 0;
+
+            questions.forEach(question => {
+                clearQuestionState(question);
+
+                const correctOption = Number(question.dataset.correctOption);
+                const selectedInput = question.querySelector('input[type="radio"]:checked');
+                const feedback = question.querySelector('[data-mcq-feedback]');
+                const optionLabels = [...question.querySelectorAll('[data-option-label]')];
+
+                optionLabels.forEach(label => {
+                    const input = label.querySelector('input[type="radio"]');
+                    if (Number(input.value) === correctOption) {
+                        label.classList.add('is-correct-option');
+                    }
+                });
+
+                if (!selectedInput) {
+                    unanswered++;
+                    question.classList.add('is-wrong');
+
+                    if (feedback) {
+                        feedback.classList.add('is-wrong');
+                        feedback.textContent = 'Choose an option to answer this question.';
+                    }
+                    return;
+                }
+
+                const selectedOption = Number(selectedInput.value);
+                const selectedLabel = selectedInput.closest('[data-option-label]');
+
+                if (selectedOption === correctOption) {
+                    score++;
+                    question.classList.add('is-correct');
+
+                    if (feedback) {
+                        feedback.classList.add('is-correct');
+                        feedback.textContent = 'Correct answer.';
+                    }
+                } else {
+                    question.classList.add('is-wrong');
+
+                    if (selectedLabel) {
+                        selectedLabel.classList.add('is-wrong-option');
+                    }
+
+                    if (feedback) {
+                        feedback.classList.add('is-wrong');
+                        feedback.textContent = 'Not quite. The correct option is highlighted above.';
+                    }
+                }
+            });
+
+            result.textContent = score + ' / ' + questions.length + ' correct'
+                + (unanswered ? ' • ' + unanswered + ' unanswered' : '');
+
+            result.classList.add('is-visible');
+        });
+
+        resetButton.addEventListener('click', () => {
+            questions.forEach(question => {
+                clearQuestionState(question);
+                question.querySelectorAll('input[type="radio"]').forEach(input => {
+                    input.checked = false;
+                });
+            });
+
+            if (result) {
+                result.textContent = '';
+                result.classList.remove('is-visible');
+            }
+
+            updateProgress();
+        });
+    };
+
+    document.querySelectorAll('[data-mcq-panel]').forEach(initializeMcqPanel);
+})();
+</script>
+}
