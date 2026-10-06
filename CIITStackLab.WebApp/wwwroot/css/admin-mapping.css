@@ -18,3 +18,9 @@
 .ciit-mapping-available-section{padding-top:20px}.ciit-mapping-all-assigned{display:flex;align-items:center;flex-direction:column;justify-content:center;min-height:210px;margin-top:20px;padding:25px;border:1px dashed #cbd5e1;border-radius:13px;background:#fbfdff;text-align:center}.ciit-mapping-all-assigned i{color:#22c55e;font-size:2rem}.ciit-mapping-all-assigned strong{margin-top:10px;color:#172033;font-size:.8rem}.ciit-mapping-all-assigned span{max-width:380px;margin-top:5px;color:#94a3b8;font-size:.65rem;line-height:1.6}
 .ciit-mapping-save-btn:disabled{opacity:.65;cursor:not-allowed;transform:none}
 @media(max-width:700px){.ciit-mapping-assigned-list{grid-template-columns:1fr}.ciit-mapping-section-label{align-items:flex-start;flex-direction:column;gap:8px}}
+
+.ciit-mapping-topics-section{padding-top:20px}
+.ciit-mapping-topic-state{margin-left:auto;flex:0 0 auto;padding:5px 8px;border-radius:999px;background:#f1f5f9;color:#94a3b8;font-size:.58rem;font-weight:800}
+.ciit-mapping-topic-card.is-assigned .ciit-mapping-topic-state{background:#e9f2ff;color:#1769ff}
+.ciit-mapping-topic-card .ciit-mapping-check{pointer-events:none}
+.ciit-mapping-topic-card input[type="checkbox"]{position:absolute;opacity:0;pointer-events:none}
