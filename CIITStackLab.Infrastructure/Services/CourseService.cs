@@ -107,6 +107,81 @@ public sealed class CourseService : ICourseService
         return course is null ? null : Map(course);
     }
 
+    public async Task<CourseDetailsDto?> GetDetailsAsync(
+        int id,
+        CancellationToken cancellationToken = default)
+    {
+        var course = await _dbContext.Courses
+            .AsNoTracking()
+            .SingleOrDefaultAsync(
+                x => x.Id == id && x.Flag == 0,
+                cancellationToken);
+
+        if (course is null)
+        {
+            return null;
+        }
+
+        var rows = await (
+            from courseTopic in _dbContext.CourseModules.AsNoTracking()
+            join topic in _dbContext.Topics.AsNoTracking()
+                on courseTopic.TopicId equals topic.Id
+            join content in _dbContext.Lessons.AsNoTracking()
+                on topic.Id equals content.TopicId into contentGroup
+            from content in contentGroup.DefaultIfEmpty()
+            where courseTopic.CourseId == id
+                  && courseTopic.Flag == 0
+                  && topic.Flag == 0
+                  && (content == null || content.Flag == 0)
+            orderby topic.Id, content.Id
+            select new
+            {
+                TopicId = topic.Id,
+                TopicTitle = topic.Title,
+                ContentId = (int?)content.Id,
+                ContentTitle = content.Title,
+                Slides = content.Slides,
+                VideoName = content.VideoName
+            })
+            .ToListAsync(cancellationToken);
+
+        var topics = rows
+            .GroupBy(x => new { x.TopicId, x.TopicTitle })
+            .Select(group => new CourseTopicDto
+            {
+                Id = group.Key.TopicId,
+                Title = group.Key.TopicTitle,
+                Contents = group
+                    .Where(x => x.ContentId.HasValue)
+                    .Select(x => new CourseContentDto
+                    {
+                        Id = x.ContentId!.Value,
+                        Title = x.ContentTitle ?? string.Empty,
+                        Slides = x.Slides,
+                        VideoName = x.VideoName
+                    })
+                    .ToList()
+            })
+            .ToList();
+
+        var presentation = Presentations.TryGetValue(course.Title, out var known)
+            ? known
+            : CoursePresentation.Default;
+
+        return new CourseDetailsDto
+        {
+            Id = course.Id,
+            Title = course.Title,
+            ShortDescription = presentation.ShortDescription,
+            Description = presentation.Description,
+            ImageUrl = presentation.ImageUrl,
+            Category = presentation.Category,
+            Level = presentation.Level,
+            DurationHours = presentation.DurationHours,
+            Topics = topics
+        };
+    }
+
     private static CourseDto Map(CIITStackLab.Domain.Entities.Course course)
     {
         var presentation = Presentations.TryGetValue(course.Title, out var known)
