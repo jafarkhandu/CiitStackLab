@@ -76,6 +76,80 @@ public class AccountController : Controller
         return View(model);
     }
 
+    [HttpGet]
+    [AllowAnonymous]
+    public IActionResult Register()
+    {
+        return View(new RegisterViewModel());
+    }
+
+    [HttpPost]
+    [AllowAnonymous]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> Register(RegisterViewModel model)
+    {
+        if (!ModelState.IsValid)
+        {
+            return View(model);
+        }
+
+        var userName = model.UserName.Trim();
+        var email = model.Email.Trim();
+
+        if (await _userManager.FindByNameAsync(userName) is not null)
+        {
+            ModelState.AddModelError(nameof(model.UserName), "This username is already in use.");
+            return View(model);
+        }
+
+        if (await _userManager.FindByEmailAsync(email) is not null)
+        {
+            ModelState.AddModelError(nameof(model.Email), "This email is already registered.");
+            return View(model);
+        }
+
+        var user = new ApplicationUser
+        {
+            UserName = userName,
+            Email = email,
+            EmailConfirmed = true,
+            IsActive = true,
+            FullName = model.FullName.Trim()
+        };
+
+        var result = await _userManager.CreateAsync(user, model.Password);
+
+        if (!result.Succeeded)
+        {
+            foreach (var error in result.Errors)
+            {
+                ModelState.AddModelError(string.Empty, error.Description);
+            }
+
+            return View(model);
+        }
+
+        // Public registration can never create an Admin.
+        // Every newly registered account is assigned the Student role only.
+        var roleResult = await _userManager.AddToRoleAsync(user, "Student");
+
+        if (!roleResult.Succeeded)
+        {
+            await _userManager.DeleteAsync(user);
+
+            foreach (var error in roleResult.Errors)
+            {
+                ModelState.AddModelError(string.Empty, error.Description);
+            }
+
+            return View(model);
+        }
+
+        await _signInManager.SignInAsync(user, isPersistent: false);
+
+        return RedirectToAction("Index", "Home");
+    }
+
     [HttpPost]
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> Logout()
