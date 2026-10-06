@@ -36,14 +36,25 @@ public class AccountController : Controller
             return View(model);
         }
 
-        var result = await _signInManager.PasswordSignInAsync(
-            model.Email,
+        var user = await _userManager.FindByEmailAsync(model.Email.Trim());
+
+        if (user is null || !user.IsActive)
+        {
+            ModelState.AddModelError(string.Empty, "Invalid email or password.");
+            return View(model);
+        }
+
+        var result = await _signInManager.CheckPasswordSignInAsync(
+            user,
             model.Password,
-            model.RememberMe,
             lockoutOnFailure: true);
 
         if (result.Succeeded)
         {
+            await _signInManager.SignInAsync(
+                user,
+                isPersistent: model.RememberMe);
+            
             return RedirectToLocal(model.ReturnUrl);
         }
 
@@ -68,12 +79,15 @@ public class AccountController : Controller
             return View(model);
         }
 
+        var email = model.Email.Trim();
+
         var user = new ApplicationUser
         {
             FullName = model.FullName.Trim(),
-            Email = model.Email.Trim(),
-            UserName = model.Email.Trim(),
-            EmailConfirmed = true
+            Email = email,
+            UserName = email,
+            EmailConfirmed = true,
+            IsActive = true
         };
 
         var result = await _userManager.CreateAsync(user, model.Password);
@@ -88,7 +102,20 @@ public class AccountController : Controller
             return View(model);
         }
 
-        await _userManager.AddToRoleAsync(user, "Student");
+        var roleResult = await _userManager.AddToRoleAsync(user, "Student");
+
+        if (!roleResult.Succeeded)
+        {
+            await _userManager.DeleteAsync(user);
+
+            foreach (var error in roleResult.Errors)
+            {
+                ModelState.AddModelError(string.Empty, error.Description);
+            }
+
+            return View(model);
+        }
+
         await _signInManager.SignInAsync(user, isPersistent: false);
 
         return RedirectToAction("Index", "Home");
