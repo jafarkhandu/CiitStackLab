@@ -9,3 +9,6 @@
 .ciit-mapping-empty{min-height:360px;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:30px}.ciit-mapping-empty i{font-size:2rem;color:#94a3b8}.ciit-mapping-empty h2{margin:12px 0 5px;font-size:1rem;font-weight:800}.ciit-mapping-empty p{margin:0;color:#94a3b8;font-size:.7rem}
 @media(max-width:1050px){.ciit-mapping-workspace{grid-template-columns:1fr}.ciit-mapping-course-panel{position:static}.ciit-mapping-course-list{max-height:260px;display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:4px}.ciit-mapping-course-item{margin:0}}
 @media(max-width:700px){.ciit-mapping-header{align-items:flex-start;flex-direction:column}.ciit-mapping-live-pill{display:none}.ciit-mapping-topic-panel{padding:18px}.ciit-mapping-topic-toolbar{flex-wrap:wrap}.ciit-mapping-topic-search{flex-basis:100%}.ciit-mapping-topic-grid{grid-template-columns:1fr}.ciit-mapping-footer{align-items:stretch;flex-direction:column}.ciit-mapping-save-btn{width:100%}.ciit-mapping-course-list{grid-template-columns:1fr}}
+
+/* Auto-dismiss animation for mapping feedback */
+.ciit-mapping-alert{transition:opacity .65s ease,transform .65s ease;overflow:hidden}.ciit-mapping-alert.is-fading{opacity:0;transform:translateY(-5px);pointer-events:none}
