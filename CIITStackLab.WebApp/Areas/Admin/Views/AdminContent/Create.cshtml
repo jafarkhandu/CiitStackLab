@@ -1,0 +1,70 @@
+@model CIITStackLab.Application.DTOs.AdminContentInputDto
+
+@{
+    ViewData["Title"] = "Add Content";
+}
+
+@section Styles { <link rel="stylesheet" href="~/css/admin-content.css" asp-append-version="true" /> }
+
+<section class="ciit-content-form-page">
+    <div class="ciit-content-form-header">
+        <div>
+            <a asp-action="Index" class="ciit-content-back"><i class="bi bi-arrow-left"></i> Back to Content</a>
+            <span class="ciit-content-eyebrow">Learning content</span>
+            <h1>Add Content</h1>
+            <p>Create content under an existing topic. Course selection is used to validate the topic mapping.</p>
+        </div>
+    </div>
+
+    <form asp-action="Create" method="post" class="ciit-content-form-card">
+        @Html.AntiForgeryToken()
+        <div asp-validation-summary="ModelOnly" class="ciit-content-validation"></div>
+
+        <div class="ciit-content-form-grid">
+            <div class="ciit-content-field">
+                <label asp-for="CourseId">Course</label>
+                <select asp-for="CourseId" asp-items="ViewBag.Courses" class="form-select" id="contentCourse">
+                    <option value="0">Select course</option>
+                </select>
+                <span asp-validation-for="CourseId" class="text-danger"></span>
+            </div>
+
+            <div class="ciit-content-field">
+                <label asp-for="TopicId">Topic</label>
+                <select asp-for="TopicId" asp-items="ViewBag.Topics" class="form-select" id="contentTopic" disabled>
+                    <option value="0">Select topic</option>
+                </select>
+                <span asp-validation-for="TopicId" class="text-danger"></span>
+                <small>Select a course first. Only topics mapped to that course are available.</small>
+            </div>
+
+            <div class="ciit-content-field full-width">
+                <label asp-for="Title">Content Name</label>
+                <input asp-for="Title" class="form-control" maxlength="100" placeholder="e.g. Introduction to Dependency Injection" autocomplete="off" />
+                <span asp-validation-for="Title" class="text-danger"></span>
+            </div>
+
+            <div class="ciit-content-field">
+                <label asp-for="Slides">Slides</label>
+                <textarea asp-for="Slides" class="form-control" rows="5" placeholder="Slide file name or existing slide reference"></textarea>
+                <small>Stored in the existing content table; no file upload is performed here.</small>
+            </div>
+
+            <div class="ciit-content-field">
+                <label asp-for="VideoName">Video Name</label>
+                <input asp-for="VideoName" class="form-control" maxlength="100" placeholder="e.g. dependency-injection.mp4" autocomplete="off" />
+                <span asp-validation-for="VideoName" class="text-danger"></span>
+            </div>
+        </div>
+
+        <div class="ciit-content-form-footer">
+            <a asp-action="Index" class="ciit-content-secondary-btn">Cancel</a>
+            <button type="submit" class="ciit-content-primary-btn"><i class="bi bi-check2-circle"></i> Create Content</button>
+        </div>
+    </form>
+</section>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+    <script src="~/js/admin-content.js" asp-append-version="true"></script>
+}
