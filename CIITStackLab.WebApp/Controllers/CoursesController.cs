@@ -20,7 +20,7 @@ public class CoursesController : Controller
             return NotFound();
         }
 
-        var course = await _courseService.GetByIdAsync(id, cancellationToken);
+        var course = await _courseService.GetDetailsAsync(id, cancellationToken);
 
         return course is null
             ? NotFound()
