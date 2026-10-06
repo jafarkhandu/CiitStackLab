@@ -1,0 +1,61 @@
+@model CIITStackLab.Application.DTOs.AdminContentIndexDto
+
+@{
+    ViewData["Title"] = "Content";
+    var message = TempData["AdminContentMessage"] as string;
+    var messageType = TempData["AdminContentMessageType"] as string;
+}
+
+@section Styles { <link rel="stylesheet" href="~/css/admin-content.css" asp-append-version="true" /> }
+
+<section class="ciit-content-page">
+    <div class="ciit-content-header">
+        <div><span class="ciit-content-eyebrow">Learning</span><h1>Content</h1><p>Manage learning content attached to existing course topics.</p></div>
+        <a asp-area="Admin" asp-controller="Content" asp-action="Create" class="ciit-content-primary-btn"><i class="bi bi-plus-lg"></i><span>Add Content</span></a>
+    </div>
+
+    @if (!string.IsNullOrWhiteSpace(message))
+    {
+        <div class="ciit-content-alert @(messageType == "success" ? "is-success" : "is-error")" role="alert"><i class="bi @(messageType == "success" ? "bi-check-circle-fill" : "bi-exclamation-circle-fill")"></i><span>@message</span></div>
+    }
+
+    <div class="ciit-content-toolbar"><div class="ciit-content-search"><i class="bi bi-search"></i><input id="contentSearch" type="search" placeholder="Search content, topic or course..." autocomplete="off" /></div><div class="ciit-content-count"><strong id="contentVisibleCount">@Model.ActiveContents.Count</strong> active</div></div>
+
+    <section class="ciit-content-card">
+        <div class="ciit-content-table-wrap">
+            <table class="ciit-content-table">
+                <thead><tr><th>Content</th><th>Course</th><th>Topic</th><th>Media</th><th>Updated</th><th>Actions</th></tr></thead>
+                <tbody id="contentRows">
+                @foreach (var content in Model.ActiveContents)
+                {
+                    <tr data-content-row data-search="@($"{content.Title} {content.CourseTitle} {content.TopicTitle}")">
+                        <td><div class="ciit-content-name"><div class="ciit-content-icon"><i class="bi bi-file-earmark-text"></i></div><div><strong>@content.Title</strong><span>#@content.Id</span></div></div></td>
+                        <td>@content.CourseTitle</td><td><span class="ciit-content-topic">@content.TopicTitle</span></td>
+                        <td><div class="ciit-content-media">@if (!string.IsNullOrWhiteSpace(content.Slides)) { <span title="Slides"><i class="bi bi-file-slides"></i></span> } @if (!string.IsNullOrWhiteSpace(content.VideoName)) { <span title="Video"><i class="bi bi-play-circle"></i></span> } @if (string.IsNullOrWhiteSpace(content.Slides) && string.IsNullOrWhiteSpace(content.VideoName)) { <span class="is-muted">None</span> }</div></td>
+                        <td>@((content.UpdatedAt ?? content.CreatedAt)?.ToString("dd MMM yyyy") ?? "—")</td>
+                        <td><div class="ciit-content-actions"><a asp-area="Admin" asp-controller="Content" asp-action="Details" asp-route-id="@content.Id" title="Details"><i class="bi bi-eye"></i></a><a asp-area="Admin" asp-controller="Content" asp-action="Edit" asp-route-id="@content.Id" title="Edit"><i class="bi bi-pencil-square"></i></a><form asp-area="Admin" asp-controller="Content" asp-action="Delete" method="post" class="js-content-delete-form" data-content-name="@content.Title">@Html.AntiForgeryToken()<input type="hidden" name="id" value="@content.Id" /><button type="submit" title="Archive"><i class="bi bi-archive"></i></button></form></div></td>
+                    </tr>
+                }
+                </tbody>
+            </table>
+            <div id="contentSearchEmpty" class="ciit-content-empty" hidden><i class="bi bi-search"></i><h3>No matching content</h3><p>Try another course, topic or content name.</p></div>
+            @if (Model.ActiveContents.Count == 0) { <div class="ciit-content-empty is-visible"><i class="bi bi-file-earmark-text"></i><h3>No active content</h3><p>Add content to an existing mapped course topic.</p></div> }
+        </div>
+    </section>
+
+    <section class="ciit-content-archive">
+        <div class="ciit-content-archive-header"><div><span class="ciit-content-eyebrow">Recovery</span><h2>Archived content</h2><p>Soft-deleted content remains available for restoration.</p></div><span class="ciit-content-archive-count">@Model.ArchivedContents.Count</span></div>
+        @if (Model.ArchivedContents.Count == 0) { <div class="ciit-content-empty is-visible"><i class="bi bi-archive"></i><h3>Archive is empty</h3><p>Deleted content will appear here.</p></div> }
+        else
+        {
+            <div class="ciit-content-archive-list">
+            @foreach (var content in Model.ArchivedContents)
+            {
+                <div class="ciit-content-archive-row"><div class="ciit-content-name"><div class="ciit-content-icon is-muted"><i class="bi bi-archive"></i></div><div><strong>@content.Title</strong><span>@content.CourseTitle / @content.TopicTitle</span></div></div><form asp-area="Admin" asp-controller="Content" asp-action="Restore" method="post">@Html.AntiForgeryToken()<input type="hidden" name="id" value="@content.Id" /><button type="submit" class="ciit-content-restore"><i class="bi bi-arrow-counterclockwise"></i> Restore</button></form></div>
+            }
+            </div>
+        }
+    </section>
+</section>
+
+@section Scripts { <script src="~/js/admin-content.js" asp-append-version="true"></script> }

@@ -1,0 +1,186 @@
+@model CIITStackLab.WebApp.Models.AdminCourseTopicMappingViewModel
+
+@{
+    ViewData["Title"] = "Course Mapping";
+    var message = TempData["AdminMappingMessage"] as string;
+    var messageType = TempData["AdminMappingMessageType"] as string;
+}
+
+<section class="ciit-admin-page ciit-mapping-page">
+    <div class="ciit-mapping-header">
+        <div>
+            <span class="ciit-admin-eyebrow">Learning Structure</span>
+            <h1>Course ↔ Topic Mapping</h1>
+            <p>Connect reusable topics to each active course.</p>
+        </div>
+        <div class="ciit-mapping-live-pill"><span></span> Live ERP mapping</div>
+    </div>
+
+    @if (!string.IsNullOrWhiteSpace(message))
+    {
+        <div class="ciit-mapping-alert @(messageType == "success" ? "is-success" : "is-error")">
+            <i class="bi @(messageType == "success" ? "bi-check-circle-fill" : "bi-exclamation-circle-fill")"></i>
+            <span>@message</span>
+            <button type="button" class="ciit-mapping-alert-close" aria-label="Close"><i class="bi bi-x-lg"></i></button>
+        </div>
+    }
+
+    @if (Model.Courses.Count == 0)
+    {
+        <section class="ciit-mapping-empty">
+            <i class="bi bi-journal-x"></i>
+            <h2>No active courses</h2>
+            <p>Create an active course before assigning topics.</p>
+        </section>
+    }
+    else
+    {
+        <section class="ciit-mapping-workspace">
+            <aside class="ciit-mapping-course-panel">
+                <div class="ciit-mapping-panel-heading">
+                    <span class="ciit-admin-panel-kicker">Courses</span>
+                    <h2>Select a course</h2>
+                </div>
+                <div class="ciit-mapping-course-search">
+                    <i class="bi bi-search"></i>
+                    <input id="mappingCourseSearch" type="search" placeholder="Search courses..." autocomplete="off" />
+                </div>
+                <div class="ciit-mapping-course-list" id="mappingCourseList">
+                    @foreach (var course in Model.Courses)
+                    {
+                        <a asp-area="Admin"
+                           asp-controller="CourseTopicMapping"
+                           asp-action="Index"
+                           asp-route-courseId="@course.Id"
+                           class="ciit-mapping-course-item @(course.Id == Model.SelectedCourseId ? "active" : "")"
+                           data-course-name="@course.Title.ToLowerInvariant()">
+                            <span class="ciit-mapping-course-icon"><i class="bi bi-journal-code"></i></span>
+                            <span class="ciit-mapping-course-copy"><strong>@course.Title</strong><small>Course #@course.Id</small></span>
+                            <i class="bi bi-chevron-right"></i>
+                        </a>
+                    }
+                </div>
+                <div class="ciit-mapping-course-empty" id="mappingCourseEmpty" hidden>No course found.</div>
+            </aside>
+
+            <section class="ciit-mapping-topic-panel">
+                @if (!Model.SelectedCourseId.HasValue)
+                {
+                    <div class="ciit-mapping-empty"><i class="bi bi-arrow-left-circle"></i><h2>Select a course</h2><p>Choose a course to manage its topic structure.</p></div>
+                }
+                else
+                {
+                    <form asp-area="Admin" asp-controller="CourseTopicMapping" asp-action="Save" method="post" id="mappingForm">
+                        @Html.AntiForgeryToken()
+                        <input type="hidden" name="CourseId" value="@Model.SelectedCourseId" />
+
+                        <div class="ciit-mapping-topic-header">
+                            <div>
+                                <span class="ciit-admin-panel-kicker">Selected course</span>
+                                <h2>@Model.SelectedCourseName</h2>
+                                <p>Select the topics that belong to this course.</p>
+                            </div>
+                            <div class="ciit-mapping-selected-count">
+                                <strong>@Model.AssignedTopicCount</strong>
+                                <span>assigned</span>
+                            </div>
+                        </div>
+
+                        @{
+                            var assignedTopics = Model.Topics.Where(x => x.IsAssigned).ToList();
+                            var availableTopics = Model.Topics.Where(x => !x.IsAssigned).ToList();
+                        }
+
+                        @if (assignedTopics.Count > 0)
+                        {
+                            <div class="ciit-mapping-assigned-section">
+                                <div class="ciit-mapping-section-label">
+                                    <div>
+                                        <span class="ciit-admin-panel-kicker">Already assigned</span>
+                                        <h3>Course Topics</h3>
+                                    </div>
+                                    <span class="ciit-mapping-readonly-pill"><i class="bi bi-lock-fill"></i> Saved</span>
+                                </div>
+
+                                <div class="ciit-mapping-assigned-list">
+                                    @foreach (var topic in assignedTopics)
+                                    {
+                                        <div class="ciit-mapping-assigned-chip">
+                                            <span class="ciit-mapping-assigned-icon"><i class="bi bi-check-lg"></i></span>
+                                            <span>
+                                                <strong>@topic.Title</strong>
+                                                <small>Topic #@topic.Id</small>
+                                            </span>
+                                            <span class="ciit-mapping-assigned-badge">Already added</span>
+                                        </div>
+                                    }
+                                </div>
+                            </div>
+                        }
+
+                        @if (availableTopics.Count > 0)
+                        {
+                            <div class="ciit-mapping-available-section">
+                                <div class="ciit-mapping-section-label">
+                                    <div>
+                                        <span class="ciit-admin-panel-kicker">Available topics</span>
+                                        <h3>Add New Topics</h3>
+                                    </div>
+                                    <span class="ciit-mapping-available-count">@availableTopics.Count available</span>
+                                </div>
+
+                                <div class="ciit-mapping-topic-toolbar">
+                                    <div class="ciit-mapping-topic-search">
+                                        <i class="bi bi-search"></i>
+                                        <input id="mappingTopicSearch" type="search" placeholder="Search available topics..." autocomplete="off" />
+                                    </div>
+                                    <button type="button" class="ciit-mapping-select-all" id="mappingSelectAll">Select visible</button>
+                                    <button type="button" class="ciit-mapping-clear-all" id="mappingClearAll">Clear visible</button>
+                                </div>
+
+                                <div class="ciit-mapping-topic-grid" id="mappingTopicGrid">
+                                    @foreach (var topic in availableTopics)
+                                    {
+                                        <label class="ciit-mapping-topic-card"
+                                               data-topic-card
+                                               data-topic-name="@topic.Title.ToLowerInvariant()">
+                                            <input type="checkbox" name="TopicIds" value="@topic.Id" />
+                                            <span class="ciit-mapping-check"><i class="bi bi-check-lg"></i></span>
+                                            <span class="ciit-mapping-topic-icon"><i class="bi bi-diagram-3"></i></span>
+                                            <span class="ciit-mapping-topic-copy">
+                                                <strong>@topic.Title</strong>
+                                                <small>Topic #@topic.Id</small>
+                                            </span>
+                                        </label>
+                                    }
+                                </div>
+
+                                <div class="ciit-mapping-no-topics" id="mappingNoTopics" hidden>
+                                    <i class="bi bi-search"></i><strong>No matching topics</strong><span>Try a different search.</span>
+                                </div>
+                            </div>
+                        }
+                        else
+                        {
+                            <div class="ciit-mapping-all-assigned">
+                                <i class="bi bi-check2-circle"></i>
+                                <strong>All active topics are already assigned</strong>
+                                <span>Create a new topic from the Topics module to add another learning topic later.</span>
+                            </div>
+                        }
+
+                        <div class="ciit-mapping-footer">
+                            <div class="ciit-mapping-footer-note">
+                                <i class="bi bi-info-circle"></i>
+                                <span>Already assigned topics cannot be selected again. Select only new topics here; they will appear in the saved list after mapping.</span>
+                            </div>
+                            <button type="submit" class="ciit-mapping-save-btn" id="mappingSaveBtn">
+                                <i class="bi bi-plus-circle"></i><span id="mappingSaveLabel">Add Selected Topics</span>
+                            </button>
+                        </div>
+                    </form>
+                }
+            </section>
+        </section>
+    }
+</section>
