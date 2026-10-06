@@ -33,9 +33,9 @@
                 <a asp-area="Admin" asp-controller="Courses" asp-action="Index" class="ciit-admin-nav-link @(currentAdminController == "Courses" ? "active" : "")">
                     <i class="bi bi-journal-code"></i><span>Courses</span>
                 </a>
-                <span class="ciit-admin-nav-link is-disabled" title="Topics module will be enabled next">
-                    <i class="bi bi-diagram-3"></i><span>Topics</span><small>Next</small>
-                </span>
+                <a asp-area="Admin" asp-controller="Topics" asp-action="Index" class="ciit-admin-nav-link @(currentAdminController == "Topics" ? "active" : "")">
+                    <i class="bi bi-diagram-3"></i><span>Topics</span>
+                </a>
 
                 <div class="ciit-admin-nav-heading">Assessment</div>
                 <span class="ciit-admin-nav-link is-disabled" title="Assessment modules are under development">
