@@ -45,6 +45,7 @@ public static class DependencyInjection
         services.AddScoped<ICourseService, CourseService>();
         services.AddScoped<IAdminDashboardService, AdminDashboardService>();
         services.AddScoped<IAdminCourseService, AdminCourseService>();
+        services.AddScoped<IAdminTopicService, AdminTopicService>();
 
         return services;
     }
