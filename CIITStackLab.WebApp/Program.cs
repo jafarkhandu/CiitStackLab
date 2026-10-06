@@ -1,5 +1,6 @@
 using CIITStackLab.Infrastructure;
 using CIITStackLab.Infrastructure.Persistence;
+using CIITStackLab.Infrastructure.Identity;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -16,6 +17,7 @@ using (var scope = app.Services.CreateScope())
 {
     var dbContext = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
     await DbInitializer.SeedAsync(dbContext);
+    await IdentitySeeder.SeedAsync(scope.ServiceProvider, app.Configuration);
 }
 
 // Configure HTTP request pipeline
@@ -31,6 +33,7 @@ app.UseStaticFiles();
 
 app.UseRouting();
 
+app.UseAuthentication();
 app.UseAuthorization();
 
 app.MapControllerRoute(
