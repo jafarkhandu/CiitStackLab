@@ -1,0 +1,172 @@
+@model CIITStackLab.WebApp.Models.AdminTopicIndexViewModel
+
+@{
+    ViewData["Title"] = "Topics";
+    var edit = Model.EditTopic;
+    var message = TempData["AdminTopicMessage"] as string;
+    var messageType = TempData["AdminTopicMessageType"] as string;
+}
+
+<section class="ciit-admin-page ciit-topics-page">
+    <div class="ciit-topic-page-header">
+        <div>
+            <span class="ciit-admin-eyebrow">Learning</span>
+            <h1>Topics</h1>
+            <p>Manage reusable learning topics from the existing ERP training table.</p>
+        </div>
+        <button type="button" class="ciit-topic-primary-btn" data-bs-toggle="modal" data-bs-target="#topicModal" data-topic-mode="create">
+            <i class="bi bi-plus-lg"></i><span>Add Topic</span>
+        </button>
+    </div>
+
+    @if (!string.IsNullOrWhiteSpace(message))
+    {
+        <div class="ciit-topic-alert @(messageType == "success" ? "is-success" : "is-error")">
+            <i class="bi @(messageType == "success" ? "bi-check-circle-fill" : "bi-exclamation-circle-fill")"></i>
+            <span>@message</span>
+            <button type="button" class="ciit-topic-alert-close" aria-label="Close"><i class="bi bi-x-lg"></i></button>
+        </div>
+    }
+
+    <div class="ciit-topic-toolbar">
+        <div class="ciit-topic-search">
+            <i class="bi bi-search"></i>
+            <input id="topicSearch" type="search" placeholder="Search topics..." autocomplete="off" />
+        </div>
+        <div class="ciit-topic-toolbar-meta">
+            <span><strong id="topicVisibleCount">@Model.ActiveTopics.Count</strong> active</span>
+            <button type="button" class="ciit-topic-archive-toggle" id="topicArchiveToggle" aria-expanded="false">
+                <i class="bi bi-archive"></i><span>Archived (@Model.ArchivedTopics.Count)</span>
+            </button>
+        </div>
+    </div>
+
+    <section class="ciit-topic-table-card">
+        <div class="ciit-topic-table-wrap">
+            <table class="ciit-topic-table">
+                <thead>
+                    <tr><th>ID</th><th>Topic</th><th>Public Folder ID</th><th>Created</th><th>Updated</th><th>Actions</th></tr>
+                </thead>
+                <tbody id="topicRows">
+                    @foreach (var topic in Model.ActiveTopics)
+                    {
+                        <tr data-topic-row data-topic-name="@topic.Title.ToLowerInvariant()">
+                            <td class="topic-id-cell">#@topic.Id</td>
+                            <td>
+                                <div class="topic-name-cell">
+                                    <div class="topic-name-icon"><i class="bi bi-diagram-3"></i></div>
+                                    <div><strong>@topic.Title</strong><span>Active topic</span></div>
+                                </div>
+                            </td>
+                            <td><span class="topic-folder-value">@(string.IsNullOrWhiteSpace(topic.PublicFolderId) ? "—" : topic.PublicFolderId)</span></td>
+                            <td>@(topic.CreatedAt.HasValue ? topic.CreatedAt.Value.ToString("dd MMM yyyy") : "—")</td>
+                            <td>@(topic.UpdatedAt.HasValue ? topic.UpdatedAt.Value.ToString("dd MMM yyyy") : "—")</td>
+                            <td>
+                                <div class="topic-row-actions">
+                                    <a asp-area="Admin" asp-controller="Topics" asp-action="Index" asp-route-editId="@topic.Id" class="ciit-topic-icon-btn" title="Edit">
+                                        <i class="bi bi-pencil-square"></i>
+                                    </a>
+                                    <form asp-area="Admin" asp-controller="Topics" asp-action="Delete" method="post" class="js-topic-delete-form" data-topic-name="@topic.Title">
+                                        @Html.AntiForgeryToken()
+                                        <input type="hidden" name="id" value="@topic.Id" />
+                                        <button type="submit" class="ciit-topic-icon-btn is-danger" title="Archive">
+                                            <i class="bi bi-archive"></i>
+                                        </button>
+                                    </form>
+                                </div>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+            <div class="ciit-topic-empty" id="topicSearchEmpty" hidden>
+                <i class="bi bi-search"></i><h3>No matching topics</h3><p>Try a different topic name.</p>
+            </div>
+            @if (Model.ActiveTopics.Count == 0)
+            {
+                <div class="ciit-topic-empty is-visible">
+                    <i class="bi bi-diagram-3"></i><h3>No active topics</h3><p>Create your first topic to build the learning catalogue.</p>
+                </div>
+            }
+        </div>
+    </section>
+
+    <section class="ciit-topic-archive-card" id="topicArchivePanel" hidden>
+        <div class="ciit-topic-archive-header">
+            <span class="ciit-admin-panel-kicker">Recovery</span>
+            <h2>Archived topics</h2>
+            <p>Soft-deleted topics remain available for restoration.</p>
+        </div>
+        @if (Model.ArchivedTopics.Count == 0)
+        {
+            <div class="ciit-topic-empty is-visible"><i class="bi bi-archive"></i><h3>Archive is empty</h3><p>Deleted topics will appear here.</p></div>
+        }
+        else
+        {
+            <div class="ciit-topic-archive-list">
+                @foreach (var topic in Model.ArchivedTopics)
+                {
+                    <div class="ciit-topic-archive-row">
+                        <div class="topic-name-cell">
+                            <div class="topic-name-icon is-muted"><i class="bi bi-archive"></i></div>
+                            <div><strong>@topic.Title</strong><span>Archived @(topic.DeletedAt.HasValue ? topic.DeletedAt.Value.ToString("dd MMM yyyy") : "")</span></div>
+                        </div>
+                        <form asp-area="Admin" asp-controller="Topics" asp-action="Restore" method="post">
+                            @Html.AntiForgeryToken()
+                            <input type="hidden" name="id" value="@topic.Id" />
+                            <button type="submit" class="ciit-topic-restore-btn"><i class="bi bi-arrow-counterclockwise"></i> Restore</button>
+                        </form>
+                    </div>
+                }
+            </div>
+        }
+    </section>
+</section>
+
+<div class="modal fade" id="topicModal" tabindex="-1" aria-labelledby="topicModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content ciit-topic-modal">
+            <div class="modal-header">
+                <div>
+                    <span class="ciit-admin-panel-kicker">Topic setup</span>
+                    <h2 class="modal-title" id="topicModalLabel">Add Topic</h2>
+                    <p id="topicModalDescription">Create a new active learning topic.</p>
+                </div>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+
+            <form asp-area="Admin" asp-controller="Topics" asp-action="Save" method="post" id="topicForm">
+                @Html.AntiForgeryToken()
+                <input type="hidden" id="topicId" name="Id" value="0" />
+                <div class="modal-body">
+                    <div class="ciit-topic-form-field">
+                        <label for="topicName">Topic name</label>
+                        <input id="topicName" name="TopicName" class="form-control" maxlength="100" placeholder="e.g. ASP.NET Core" required />
+                    </div>
+                    <div class="ciit-topic-form-field">
+                        <label for="publicFolderId">Public folder ID <span>(optional)</span></label>
+                        <textarea id="publicFolderId" name="PublicFolderId" class="form-control" rows="3" placeholder="Optional public folder identifier"></textarea>
+                    </div>
+                    <div class="ciit-topic-form-hint">
+                        <i class="bi bi-info-circle"></i><span>Course mapping stays separate so one topic can be reused across learning paths.</span>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="ciit-topic-secondary-btn" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="ciit-topic-primary-btn" id="topicSubmitBtn"><i class="bi bi-check2-circle"></i><span>Save Topic</span></button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+@if (edit is not null)
+{
+    <script>
+        window.ciitEditTopic = {
+            id: @edit.Id,
+            topicName: @Html.Raw(System.Text.Json.JsonSerializer.Serialize(edit.TopicName)),
+            publicFolderId: @Html.Raw(System.Text.Json.JsonSerializer.Serialize(edit.PublicFolderId))
+        };
+    </script>
+}
