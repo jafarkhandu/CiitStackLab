@@ -17,29 +17,46 @@ public sealed class AdminDashboardService : IAdminDashboardService
     public async Task<AdminDashboardDto> GetOverviewAsync(
         CancellationToken cancellationToken = default)
     {
-        var courseCountTask = _dbContext.Courses
+        // Keep database operations sequential because ApplicationDbContext is not
+        // safe for concurrent database operations on the same scoped instance.
+        var courseCount = await _dbContext.Courses
             .AsNoTracking()
             .CountAsync(x => x.Flag == 0, cancellationToken);
 
-        var topicCountTask = _dbContext.Topics
+        var topicCount = await _dbContext.Topics
             .AsNoTracking()
             .CountAsync(x => x.Flag == 0, cancellationToken);
 
-        var contentCountTask = _dbContext.Lessons
+        var contentCount = await _dbContext.Lessons
             .AsNoTracking()
             .CountAsync(x => x.Flag == 0, cancellationToken);
 
-        var mcqCountTask = _dbContext.ContentQuestions
+        var mcqCount = await _dbContext.ContentQuestions
             .AsNoTracking()
             .CountAsync(x => x.Flag == 0, cancellationToken);
 
-        var studentRoleIdTask = _dbContext.Roles
+        var studentRoleId = await _dbContext.Roles
             .AsNoTracking()
             .Where(x => x.NormalizedName == "STUDENT")
             .Select(x => x.Id)
             .SingleOrDefaultAsync(cancellationToken);
 
-        var recentCoursesTask = _dbContext.Courses
+        var studentCount = 0;
+
+        if (!string.IsNullOrWhiteSpace(studentRoleId))
+        {
+            studentCount = await (
+                from userRole in _dbContext.UserRoles.AsNoTracking()
+                join user in _dbContext.Users.AsNoTracking()
+                    on userRole.UserId equals user.Id
+                where userRole.RoleId == studentRoleId
+                      && user.IsActive
+                select user.Id)
+                .Distinct()
+                .CountAsync(cancellationToken);
+        }
+
+        var recentCourses = await _dbContext.Courses
             .AsNoTracking()
             .Where(x => x.Flag == 0)
             .OrderByDescending(x => x.UpdatedAt ?? x.CreatedAt)
@@ -53,32 +70,14 @@ public sealed class AdminDashboardService : IAdminDashboardService
             })
             .ToListAsync(cancellationToken);
 
-        await Task.WhenAll(
-            courseCountTask,
-            topicCountTask,
-            contentCountTask,
-            mcqCountTask,
-            studentRoleIdTask,
-            recentCoursesTask);
-
-        var studentRoleId = await studentRoleIdTask;
-
-        var studentCount = 0;
-        if (!string.IsNullOrWhiteSpace(studentRoleId))
-        {
-            studentCount = await _dbContext.UserRoles
-                .AsNoTracking()
-                .CountAsync(x => x.RoleId == studentRoleId, cancellationToken);
-        }
-
         return new AdminDashboardDto
         {
-            CourseCount = await courseCountTask,
-            TopicCount = await topicCountTask,
-            ContentCount = await contentCountTask,
-            McqCount = await mcqCountTask,
+            CourseCount = courseCount,
+            TopicCount = topicCount,
+            ContentCount = contentCount,
+            McqCount = mcqCount,
             StudentCount = studentCount,
-            RecentCourses = await recentCoursesTask
+            RecentCourses = recentCourses
         };
     }
 }
