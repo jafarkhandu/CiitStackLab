@@ -17,13 +17,8 @@ public sealed class AdminContentService : IAdminContentService
 
     public async Task<AdminContentIndexDto> GetIndexAsync(CancellationToken cancellationToken = default)
     {
-        var active = await BuildContentQuery(0)
-            .OrderByDescending(x => x.Id)
-            .ToListAsync(cancellationToken);
-
-        var archived = await BuildArchivedQuery()
-            .OrderByDescending(x => x.Id)
-            .ToListAsync(cancellationToken);
+        var active = await BuildContentQuery(0).OrderByDescending(x => x.Id).ToListAsync(cancellationToken);
+        var archived = await BuildArchivedQuery().OrderByDescending(x => x.Id).ToListAsync(cancellationToken);
 
         return new AdminContentIndexDto
         {
@@ -34,10 +29,7 @@ public sealed class AdminContentService : IAdminContentService
 
     public async Task<AdminContentDto?> GetByIdAsync(int id, CancellationToken cancellationToken = default)
     {
-        var row = await BuildContentQuery(null)
-            .Where(x => x.Id == id)
-            .FirstOrDefaultAsync(cancellationToken);
-
+        var row = await BuildContentQuery(null).Where(x => x.Id == id).FirstOrDefaultAsync(cancellationToken);
         return row is null ? null : ToContentDto(row);
     }
 
@@ -51,9 +43,7 @@ public sealed class AdminContentService : IAdminContentService
             .ToListAsync(cancellationToken);
     }
 
-    public async Task<IReadOnlyList<AdminLookupDto>> GetTopicsForCourseAsync(
-        int courseId,
-        CancellationToken cancellationToken = default)
+    public async Task<IReadOnlyList<AdminLookupDto>> GetTopicsForCourseAsync(int courseId, CancellationToken cancellationToken = default)
     {
         return await (
             from cm in _dbContext.CourseModules.AsNoTracking()
@@ -64,18 +54,13 @@ public sealed class AdminContentService : IAdminContentService
         ).Distinct().ToListAsync(cancellationToken);
     }
 
-    public async Task<(bool Succeeded, string? Error)> CreateAsync(
-        AdminContentInputDto input,
-        CancellationToken cancellationToken = default)
+    public async Task<(bool Succeeded, string? Error)> CreateAsync(AdminContentInputDto input, CancellationToken cancellationToken = default)
     {
         var validationError = await ValidateInputAsync(input, cancellationToken);
-        if (validationError is not null)
-        {
-            return (false, validationError);
-        }
+        if (validationError is not null) return (false, validationError);
 
         var now = DateTime.Now;
-        var lesson = new Lesson
+        _dbContext.Lessons.Add(new Lesson
         {
             TopicId = input.TopicId,
             Title = input.Title.Trim(),
@@ -83,31 +68,19 @@ public sealed class AdminContentService : IAdminContentService
             VideoName = NormalizeOptional(input.VideoName),
             Flag = 0,
             CreatedAt = now
-        };
+        });
 
-        _dbContext.Lessons.Add(lesson);
         await _dbContext.SaveChangesAsync(cancellationToken);
         return (true, null);
     }
 
-    public async Task<(bool Succeeded, string? Error)> UpdateAsync(
-        int id,
-        AdminContentInputDto input,
-        CancellationToken cancellationToken = default)
+    public async Task<(bool Succeeded, string? Error)> UpdateAsync(int id, AdminContentInputDto input, CancellationToken cancellationToken = default)
     {
-        var lesson = await _dbContext.Lessons
-            .SingleOrDefaultAsync(x => x.Id == id && x.Flag == 0, cancellationToken);
-
-        if (lesson is null)
-        {
-            return (false, "The selected content was not found.");
-        }
+        var lesson = await _dbContext.Lessons.SingleOrDefaultAsync(x => x.Id == id && x.Flag == 0, cancellationToken);
+        if (lesson is null) return (false, "The selected content was not found.");
 
         var validationError = await ValidateInputAsync(input, cancellationToken);
-        if (validationError is not null)
-        {
-            return (false, validationError);
-        }
+        if (validationError is not null) return (false, validationError);
 
         lesson.TopicId = input.TopicId;
         lesson.Title = input.Title.Trim();
@@ -119,70 +92,44 @@ public sealed class AdminContentService : IAdminContentService
         return (true, null);
     }
 
-    public async Task<(bool Succeeded, string? Error)> SoftDeleteAsync(
-        int id,
-        CancellationToken cancellationToken = default)
+    public async Task<(bool Succeeded, string? Error)> SoftDeleteAsync(int id, CancellationToken cancellationToken = default)
     {
-        var lesson = await _dbContext.Lessons
-            .SingleOrDefaultAsync(x => x.Id == id && x.Flag == 0, cancellationToken);
-
-        if (lesson is null)
-        {
-            return (false, "The selected content was not found.");
-        }
+        var lesson = await _dbContext.Lessons.SingleOrDefaultAsync(x => x.Id == id && x.Flag == 0, cancellationToken);
+        if (lesson is null) return (false, "The selected content was not found.");
 
         var now = DateTime.Now;
         lesson.Flag = 1;
         lesson.DeletedAt = now;
         lesson.UpdatedAt = now;
-
         await _dbContext.SaveChangesAsync(cancellationToken);
         return (true, null);
     }
 
-    public async Task<(bool Succeeded, string? Error)> RestoreAsync(
-        int id,
-        CancellationToken cancellationToken = default)
+    public async Task<(bool Succeeded, string? Error)> RestoreAsync(int id, CancellationToken cancellationToken = default)
     {
-        var lesson = await _dbContext.Lessons
-            .SingleOrDefaultAsync(x => x.Id == id && x.Flag == 1, cancellationToken);
-
-        if (lesson is null)
-        {
-            return (false, "The selected archived content was not found.");
-        }
+        var lesson = await _dbContext.Lessons.SingleOrDefaultAsync(x => x.Id == id && x.Flag == 1, cancellationToken);
+        if (lesson is null) return (false, "The selected archived content was not found.");
 
         var now = DateTime.Now;
         lesson.Flag = 0;
         lesson.DeletedAt = null;
         lesson.RestoredAt = now;
         lesson.UpdatedAt = now;
-
         await _dbContext.SaveChangesAsync(cancellationToken);
         return (true, null);
     }
 
-    private async Task<string?> ValidateInputAsync(
-        AdminContentInputDto input,
-        CancellationToken cancellationToken)
+    private async Task<string?> ValidateInputAsync(AdminContentInputDto input, CancellationToken cancellationToken)
     {
         input.Title = input.Title?.Trim() ?? string.Empty;
         input.VideoName = NormalizeOptional(input.VideoName);
         input.Slides = NormalizeOptional(input.Slides);
 
-        if (string.IsNullOrWhiteSpace(input.Title))
-        {
-            return "Content name is required.";
-        }
+        if (string.IsNullOrWhiteSpace(input.Title)) return "Content name is required.";
 
-        var courseExists = await _dbContext.Courses
-            .AsNoTracking()
+        var courseExists = await _dbContext.Courses.AsNoTracking()
             .AnyAsync(x => x.Id == input.CourseId && x.Flag == 0, cancellationToken);
-
-        if (!courseExists)
-        {
-            return "The selected course was not found or is inactive.";
-        }
+        if (!courseExists) return "The selected course was not found or is inactive.";
 
         var topicBelongsToCourse = await (
             from cm in _dbContext.CourseModules.AsNoTracking()
@@ -194,23 +141,18 @@ public sealed class AdminContentService : IAdminContentService
             select cm.Id
         ).AnyAsync(cancellationToken);
 
-        return topicBelongsToCourse
-            ? null
-            : "The selected topic is not mapped to the selected course.";
+        return topicBelongsToCourse ? null : "The selected topic is not mapped to the selected course.";
     }
 
     private IQueryable<ContentRow> BuildContentQuery(int? flag)
     {
         var query =
             from l in _dbContext.Lessons.AsNoTracking()
-            join t in _dbContext.Topics.AsNoTracking() on l.TopicId equals t.Id
+            where l.TopicId.HasValue
+            join t in _dbContext.Topics.AsNoTracking() on l.TopicId!.Value equals t.Id
             join cm in _dbContext.CourseModules.AsNoTracking() on t.Id equals cm.TopicId
             join c in _dbContext.Courses.AsNoTracking() on cm.CourseId equals c.Id
-            where l.TopicId.HasValue
-                  && t.Flag == 0
-                  && cm.Flag == 0
-                  && c.Flag == 0
-                  && (flag == null || l.Flag == flag)
+            where t.Flag == 0 && cm.Flag == 0 && c.Flag == 0 && (flag == null || l.Flag == flag)
             select new ContentRow
             {
                 Id = l.Id,
@@ -235,14 +177,11 @@ public sealed class AdminContentService : IAdminContentService
     {
         var query =
             from l in _dbContext.Lessons.AsNoTracking()
-            join t in _dbContext.Topics.AsNoTracking() on l.TopicId equals t.Id
+            where l.TopicId.HasValue
+            join t in _dbContext.Topics.AsNoTracking() on l.TopicId!.Value equals t.Id
             join cm in _dbContext.CourseModules.AsNoTracking() on t.Id equals cm.TopicId
             join c in _dbContext.Courses.AsNoTracking() on cm.CourseId equals c.Id
-            where l.TopicId.HasValue
-                  && l.Flag == 1
-                  && t.Flag == 0
-                  && cm.Flag == 0
-                  && c.Flag == 0
+            where l.Flag == 1 && t.Flag == 0 && cm.Flag == 0 && c.Flag == 0
             select new ArchivedContentRow
             {
                 Id = l.Id,
@@ -257,8 +196,7 @@ public sealed class AdminContentService : IAdminContentService
         return query.Distinct();
     }
 
-    private static string? NormalizeOptional(string? value)
-        => string.IsNullOrWhiteSpace(value) ? null : value.Trim();
+    private static string? NormalizeOptional(string? value) => string.IsNullOrWhiteSpace(value) ? null : value.Trim();
 
     private static AdminContentDto ToContentDto(ContentRow row) => new()
     {
