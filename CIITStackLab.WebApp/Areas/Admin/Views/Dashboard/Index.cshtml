@@ -1,45 +1,136 @@
+@model CIITStackLab.Application.DTOs.AdminDashboardDto
+
 @{
-    ViewData["Title"] = "Admin Dashboard";
+    ViewData["Title"] = "Dashboard";
 }
 
-<section class="py-5">
-    <div class="container">
-        <div class="mb-4">
-            <span class="text-uppercase text-primary fw-bold small">Administration</span>
-            <h1 class="display-6 fw-bold mb-2">Admin Dashboard</h1>
-            <p class="text-secondary mb-0">
-                Welcome, @User.Identity?.Name. This is the admin workspace for CIIT Stack Lab.
-            </p>
+<section class="ciit-admin-dashboard">
+    <div class="ciit-admin-page-header">
+        <div>
+            <span class="ciit-admin-eyebrow">Overview</span>
+            <h1>Good to see you, @User.Identity?.Name.</h1>
+            <p>Here is the current learning-platform snapshot from your ERP database.</p>
         </div>
+        <div class="ciit-admin-live-pill">
+            <span></span> Live data
+        </div>
+    </div>
 
-        <div class="row g-4">
-            <div class="col-md-4">
-                <div class="card h-100 border-0 shadow-sm">
-                    <div class="card-body p-4">
-                        <i class="bi bi-journal-code fs-2 text-primary"></i>
-                        <h5 class="mt-3">Learning</h5>
-                        <p class="text-secondary mb-0">Courses, topics and learning structure.</p>
+    <div class="ciit-admin-stat-grid">
+        <article class="ciit-admin-stat-card">
+            <div class="ciit-admin-stat-icon"><i class="bi bi-journal-code"></i></div>
+            <div class="ciit-admin-stat-copy">
+                <span>Active Courses</span>
+                <strong data-count="@Model.CourseCount">@Model.CourseCount</strong>
+            </div>
+        </article>
+
+        <article class="ciit-admin-stat-card">
+            <div class="ciit-admin-stat-icon"><i class="bi bi-diagram-3"></i></div>
+            <div class="ciit-admin-stat-copy">
+                <span>Active Topics</span>
+                <strong data-count="@Model.TopicCount">@Model.TopicCount</strong>
+            </div>
+        </article>
+
+        <article class="ciit-admin-stat-card">
+            <div class="ciit-admin-stat-icon"><i class="bi bi-file-earmark-text"></i></div>
+            <div class="ciit-admin-stat-copy">
+                <span>Learning Content</span>
+                <strong data-count="@Model.ContentCount">@Model.ContentCount</strong>
+            </div>
+        </article>
+
+        <article class="ciit-admin-stat-card">
+            <div class="ciit-admin-stat-icon"><i class="bi bi-ui-checks"></i></div>
+            <div class="ciit-admin-stat-copy">
+                <span>Active MCQs</span>
+                <strong data-count="@Model.McqCount">@Model.McqCount</strong>
+            </div>
+        </article>
+
+        <article class="ciit-admin-stat-card">
+            <div class="ciit-admin-stat-icon"><i class="bi bi-people"></i></div>
+            <div class="ciit-admin-stat-copy">
+                <span>Students</span>
+                <strong data-count="@Model.StudentCount">@Model.StudentCount</strong>
+            </div>
+        </article>
+    </div>
+
+    <div class="ciit-admin-dashboard-grid">
+        <section class="ciit-admin-panel">
+            <div class="ciit-admin-panel-header">
+                <div>
+                    <span class="ciit-admin-panel-kicker">Learning inventory</span>
+                    <h2>Recently updated courses</h2>
+                </div>
+                <span class="ciit-admin-panel-count">@Model.RecentCourses.Count items</span>
+            </div>
+
+            @if (Model.RecentCourses.Count == 0)
+            {
+                <div class="ciit-admin-empty-state">
+                    <i class="bi bi-journal-x"></i>
+                    <h3>No active courses</h3>
+                    <p>Active courses from the ERP training catalog will appear here.</p>
+                </div>
+            }
+            else
+            {
+                <div class="ciit-admin-course-list">
+                    @foreach (var course in Model.RecentCourses)
+                    {
+                        <div class="ciit-admin-course-row">
+                            <div class="ciit-admin-course-number">@course.Id</div>
+                            <div class="ciit-admin-course-info">
+                                <strong>@course.Title</strong>
+                                <span>
+                                    @(course.UpdatedAt.HasValue
+                                        ? $"Updated {course.UpdatedAt.Value:dd MMM yyyy}"
+                                        : "Updated date not available")
+                                </span>
+                            </div>
+                            <span class="ciit-admin-status-badge">Active</span>
+                        </div>
+                    }
+                </div>
+            }
+        </section>
+
+        <aside class="ciit-admin-panel ciit-admin-panel-quick">
+            <div class="ciit-admin-panel-header">
+                <div>
+                    <span class="ciit-admin-panel-kicker">Workflow</span>
+                    <h2>What is next?</h2>
+                </div>
+            </div>
+
+            <div class="ciit-admin-workflow">
+                <div class="ciit-admin-workflow-step">
+                    <span class="ciit-admin-workflow-dot">1</span>
+                    <div>
+                        <strong>Courses</strong>
+                        <p>Create, edit and organize the training catalog.</p>
+                    </div>
+                </div>
+                <div class="ciit-admin-workflow-line"></div>
+                <div class="ciit-admin-workflow-step">
+                    <span class="ciit-admin-workflow-dot">2</span>
+                    <div>
+                        <strong>Topics & Mapping</strong>
+                        <p>Connect topics to the right learning paths.</p>
+                    </div>
+                </div>
+                <div class="ciit-admin-workflow-line"></div>
+                <div class="ciit-admin-workflow-step">
+                    <span class="ciit-admin-workflow-dot">3</span>
+                    <div>
+                        <strong>Content & Assessment</strong>
+                        <p>Build lessons, MCQs, interviews and practice material.</p>
                     </div>
                 </div>
             </div>
-            <div class="col-md-4">
-                <div class="card h-100 border-0 shadow-sm">
-                    <div class="card-body p-4">
-                        <i class="bi bi-clipboard-check fs-2 text-primary"></i>
-                        <h5 class="mt-3">Assessment</h5>
-                        <p class="text-secondary mb-0">MCQs, interview questions and practice programs.</p>
-                    </div>
-                </div>
-            </div>
-            <div class="col-md-4">
-                <div class="card h-100 border-0 shadow-sm">
-                    <div class="card-body p-4">
-                        <i class="bi bi-people fs-2 text-primary"></i>
-                        <h5 class="mt-3">Students</h5>
-                        <p class="text-secondary mb-0">Student management and reporting workspace.</p>
-                    </div>
-                </div>
-            </div>
-        </div>
+        </aside>
     </div>
 </section>

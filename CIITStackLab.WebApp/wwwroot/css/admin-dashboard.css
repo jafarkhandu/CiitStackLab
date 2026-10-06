@@ -1,0 +1,637 @@
+:root{
+    --ciit-admin-primary:#1769ff;
+    --ciit-admin-primary-dark:#0758e8;
+    --ciit-admin-text:#172033;
+    --ciit-admin-muted:#64748b;
+    --ciit-admin-border:#e5e7eb;
+    --ciit-admin-bg:#f6f8fc;
+}
+
+.ciit-admin-body{
+    margin:0;
+    min-height:100vh;
+    font-family:'Plus Jakarta Sans',sans-serif;
+    color:var(--ciit-admin-text);
+    background:var(--ciit-admin-bg);
+}
+
+.ciit-admin-shell{
+    min-height:100vh;
+    display:flex;
+}
+
+.ciit-admin-sidebar{
+    position:fixed;
+    inset:0 auto 0 0;
+    width:268px;
+    display:flex;
+    flex-direction:column;
+    background:#0d1526;
+    color:#e2e8f0;
+    z-index:1200;
+    transition:transform .28s ease;
+}
+
+.ciit-admin-brand{
+    padding:26px 24px 22px;
+    border-bottom:1px solid rgba(255,255,255,.08);
+}
+
+.ciit-admin-brand a{
+    color:#fff;
+    font-size:23px;
+    font-weight:800;
+    text-decoration:none;
+    letter-spacing:-.5px;
+}
+
+.ciit-admin-brand a span{
+    color:#28b7f1;
+}
+
+.ciit-admin-label{
+    margin-top:8px;
+    color:#7f8ca5;
+    font-size:.64rem;
+    font-weight:800;
+    letter-spacing:.14em;
+}
+
+.ciit-admin-nav{
+    flex:1;
+    padding:16px 13px;
+    overflow-y:auto;
+}
+
+.ciit-admin-nav-heading{
+    margin:19px 11px 7px;
+    color:#66748e;
+    font-size:.65rem;
+    font-weight:800;
+    letter-spacing:.14em;
+    text-transform:uppercase;
+}
+
+.ciit-admin-nav-link{
+    display:flex;
+    align-items:center;
+    gap:12px;
+    width:100%;
+    min-height:44px;
+    padding:0 12px;
+    border-radius:10px;
+    color:#aeb9cd;
+    text-decoration:none;
+    font-size:.88rem;
+    font-weight:600;
+    transition:background .18s ease,color .18s ease,transform .18s ease;
+}
+
+.ciit-admin-nav-link i{
+    width:20px;
+    text-align:center;
+    font-size:1rem;
+}
+
+.ciit-admin-nav-link span{
+    flex:1;
+}
+
+.ciit-admin-nav-link.active{
+    color:#fff;
+    background:linear-gradient(135deg,rgba(23,105,255,.95),rgba(7,88,232,.92));
+    box-shadow:0 9px 22px rgba(23,105,255,.22);
+}
+
+.ciit-admin-nav-link:not(.is-disabled):hover{
+    color:#fff;
+    background:rgba(255,255,255,.06);
+}
+
+.ciit-admin-nav-link.is-disabled{
+    cursor:default;
+    opacity:.65;
+}
+
+.ciit-admin-nav-link small{
+    flex:0 0 auto;
+    padding:3px 7px;
+    border:1px solid rgba(255,255,255,.1);
+    border-radius:999px;
+    color:#7f8ca5;
+    font-size:.58rem;
+    font-weight:800;
+    text-transform:uppercase;
+}
+
+.ciit-admin-sidebar-footer{
+    padding:16px 13px;
+    border-top:1px solid rgba(255,255,255,.08);
+}
+
+.ciit-admin-back-link{
+    display:flex;
+    align-items:center;
+    gap:10px;
+    padding:10px 12px;
+    border-radius:10px;
+    color:#96a3bb;
+    font-size:.8rem;
+    font-weight:600;
+    text-decoration:none;
+    transition:background .18s ease,color .18s ease;
+}
+
+.ciit-admin-back-link:hover{
+    color:#fff;
+    background:rgba(255,255,255,.05);
+}
+
+.ciit-admin-main{
+    width:calc(100% - 268px);
+    margin-left:268px;
+    min-height:100vh;
+}
+
+.ciit-admin-topbar{
+    position:sticky;
+    top:0;
+    min-height:76px;
+    display:flex;
+    align-items:center;
+    gap:18px;
+    padding:12px 34px;
+    background:rgba(255,255,255,.94);
+    border-bottom:1px solid var(--ciit-admin-border);
+    backdrop-filter:blur(10px);
+    z-index:1000;
+}
+
+.ciit-admin-menu-toggle{
+    display:none;
+    width:42px;
+    height:42px;
+    border:1px solid var(--ciit-admin-border);
+    border-radius:10px;
+    background:#fff;
+    color:var(--ciit-admin-text);
+}
+
+.ciit-admin-topbar-context{
+    display:flex;
+    flex-direction:column;
+    gap:2px;
+}
+
+.ciit-admin-topbar-kicker{
+    color:#8a96aa;
+    font-size:.62rem;
+    font-weight:800;
+    letter-spacing:.13em;
+}
+
+.ciit-admin-topbar-context strong{
+    font-size:.95rem;
+}
+
+.ciit-admin-user{
+    display:flex;
+    align-items:center;
+    gap:10px;
+    margin-left:auto;
+}
+
+.ciit-admin-user-avatar{
+    width:40px;
+    height:40px;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    border-radius:12px;
+    background:#eef4ff;
+    color:var(--ciit-admin-primary);
+}
+
+.ciit-admin-user-copy{
+    display:flex;
+    flex-direction:column;
+    line-height:1.25;
+}
+
+.ciit-admin-user-copy strong{
+    font-size:.82rem;
+}
+
+.ciit-admin-user-copy span{
+    color:var(--ciit-admin-muted);
+    font-size:.68rem;
+}
+
+.ciit-admin-logout{
+    width:40px;
+    height:40px;
+    border:1px solid var(--ciit-admin-border);
+    border-radius:10px;
+    background:#fff;
+    color:#64748b;
+    transition:border-color .18s ease,color .18s ease,background .18s ease;
+}
+
+.ciit-admin-logout:hover{
+    color:#dc2626;
+    border-color:#fecaca;
+    background:#fffafa;
+}
+
+.ciit-admin-content{
+    padding:34px;
+}
+
+.ciit-admin-dashboard{
+    max-width:1480px;
+    margin:0 auto;
+}
+
+.ciit-admin-page-header{
+    display:flex;
+    align-items:flex-end;
+    justify-content:space-between;
+    gap:24px;
+    margin-bottom:26px;
+}
+
+.ciit-admin-eyebrow,
+.ciit-admin-panel-kicker{
+    display:block;
+    color:var(--ciit-admin-primary);
+    font-size:.68rem;
+    font-weight:800;
+    text-transform:uppercase;
+    letter-spacing:.12em;
+}
+
+.ciit-admin-page-header h1{
+    margin:7px 0 8px;
+    font-size:clamp(1.8rem,3vw,2.45rem);
+    line-height:1.15;
+    font-weight:800;
+    letter-spacing:-1px;
+}
+
+.ciit-admin-page-header p{
+    margin:0;
+    color:var(--ciit-admin-muted);
+    font-size:.9rem;
+}
+
+.ciit-admin-live-pill{
+    display:inline-flex;
+    align-items:center;
+    gap:8px;
+    padding:9px 12px;
+    border:1px solid #dce5ef;
+    border-radius:999px;
+    background:#fff;
+    color:#64748b;
+    font-size:.72rem;
+    font-weight:700;
+    white-space:nowrap;
+}
+
+.ciit-admin-live-pill span{
+    width:7px;
+    height:7px;
+    border-radius:50%;
+    background:#22c55e;
+    box-shadow:0 0 0 4px rgba(34,197,94,.12);
+}
+
+.ciit-admin-stat-grid{
+    display:grid;
+    grid-template-columns:repeat(5,minmax(0,1fr));
+    gap:14px;
+    margin-bottom:18px;
+}
+
+.ciit-admin-stat-card{
+    display:flex;
+    align-items:center;
+    gap:14px;
+    min-height:112px;
+    padding:20px;
+    background:#fff;
+    border:1px solid var(--ciit-admin-border);
+    border-radius:17px;
+    box-shadow:0 8px 24px rgba(15,23,42,.04);
+    transition:transform .22s ease,box-shadow .22s ease,border-color .22s ease;
+}
+
+.ciit-admin-stat-card:hover{
+    transform:translateY(-3px);
+    border-color:#b8d0fb;
+    box-shadow:0 15px 30px rgba(23,105,255,.08);
+}
+
+.ciit-admin-stat-icon{
+    width:46px;
+    height:46px;
+    flex:0 0 46px;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    border-radius:13px;
+    background:#eef4ff;
+    color:var(--ciit-admin-primary);
+    font-size:1.12rem;
+}
+
+.ciit-admin-stat-copy{
+    min-width:0;
+}
+
+.ciit-admin-stat-copy span{
+    display:block;
+    color:var(--ciit-admin-muted);
+    font-size:.7rem;
+    font-weight:700;
+    line-height:1.3;
+}
+
+.ciit-admin-stat-copy strong{
+    display:block;
+    margin-top:4px;
+    font-size:1.7rem;
+    line-height:1;
+    font-weight:800;
+    letter-spacing:-.7px;
+}
+
+.ciit-admin-dashboard-grid{
+    display:grid;
+    grid-template-columns:minmax(0,1.55fr) minmax(320px,.75fr);
+    gap:18px;
+}
+
+.ciit-admin-panel{
+    min-width:0;
+    background:#fff;
+    border:1px solid var(--ciit-admin-border);
+    border-radius:18px;
+    box-shadow:0 8px 24px rgba(15,23,42,.04);
+}
+
+.ciit-admin-panel-header{
+    display:flex;
+    align-items:flex-end;
+    justify-content:space-between;
+    gap:18px;
+    padding:22px 22px 16px;
+    border-bottom:1px solid #eef2f7;
+}
+
+.ciit-admin-panel-header h2{
+    margin:5px 0 0;
+    font-size:1.05rem;
+    font-weight:800;
+}
+
+.ciit-admin-panel-count{
+    color:#94a3b8;
+    font-size:.7rem;
+    font-weight:700;
+}
+
+.ciit-admin-course-list{
+    padding:8px 12px 12px;
+}
+
+.ciit-admin-course-row{
+    display:flex;
+    align-items:center;
+    gap:13px;
+    padding:13px 10px;
+    border-bottom:1px solid #f0f3f7;
+}
+
+.ciit-admin-course-row:last-child{
+    border-bottom:0;
+}
+
+.ciit-admin-course-number{
+    width:38px;
+    height:38px;
+    flex:0 0 38px;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    border-radius:11px;
+    background:#f5f8fe;
+    color:var(--ciit-admin-primary);
+    font-size:.72rem;
+    font-weight:800;
+}
+
+.ciit-admin-course-info{
+    min-width:0;
+    flex:1;
+}
+
+.ciit-admin-course-info strong{
+    display:block;
+    overflow:hidden;
+    text-overflow:ellipsis;
+    white-space:nowrap;
+    font-size:.82rem;
+    font-weight:800;
+}
+
+.ciit-admin-course-info span{
+    display:block;
+    margin-top:3px;
+    color:#94a3b8;
+    font-size:.68rem;
+}
+
+.ciit-admin-status-badge{
+    flex:0 0 auto;
+    padding:5px 8px;
+    border-radius:999px;
+    background:#f0fdf4;
+    color:#15803d;
+    font-size:.62rem;
+    font-weight:800;
+}
+
+.ciit-admin-empty-state{
+    display:flex;
+    align-items:center;
+    flex-direction:column;
+    justify-content:center;
+    min-height:245px;
+    padding:30px;
+    text-align:center;
+}
+
+.ciit-admin-empty-state i{
+    color:#94a3b8;
+    font-size:2rem;
+}
+
+.ciit-admin-empty-state h3{
+    margin:13px 0 5px;
+    font-size:.95rem;
+    font-weight:800;
+}
+
+.ciit-admin-empty-state p{
+    max-width:350px;
+    margin:0;
+    color:#94a3b8;
+    font-size:.72rem;
+    line-height:1.6;
+}
+
+.ciit-admin-panel-quick{
+    overflow:hidden;
+}
+
+.ciit-admin-workflow{
+    padding:18px 22px 22px;
+}
+
+.ciit-admin-workflow-step{
+    display:flex;
+    gap:12px;
+}
+
+.ciit-admin-workflow-dot{
+    width:30px;
+    height:30px;
+    flex:0 0 30px;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    border-radius:10px;
+    background:#eef4ff;
+    color:var(--ciit-admin-primary);
+    font-size:.7rem;
+    font-weight:800;
+}
+
+.ciit-admin-workflow-step strong{
+    display:block;
+    padding-top:3px;
+    font-size:.8rem;
+    font-weight:800;
+}
+
+.ciit-admin-workflow-step p{
+    margin:4px 0 0;
+    color:#7b8799;
+    font-size:.68rem;
+    line-height:1.55;
+}
+
+.ciit-admin-workflow-line{
+    width:1px;
+    height:22px;
+    margin:5px 0 5px 14px;
+    background:#dbe3ed;
+}
+
+.ciit-admin-overlay{
+    display:none;
+}
+
+@media(max-width:1200px){
+    .ciit-admin-stat-grid{
+        grid-template-columns:repeat(3,minmax(0,1fr));
+    }
+}
+
+@media(max-width:992px){
+    .ciit-admin-sidebar{
+        transform:translateX(-100%);
+    }
+
+    .ciit-admin-shell.sidebar-open .ciit-admin-sidebar{
+        transform:translateX(0);
+    }
+
+    .ciit-admin-main{
+        width:100%;
+        margin-left:0;
+    }
+
+    .ciit-admin-menu-toggle{
+        display:inline-flex;
+        align-items:center;
+        justify-content:center;
+    }
+
+    .ciit-admin-shell.sidebar-open ~ .ciit-admin-overlay,
+    .ciit-admin-overlay.is-visible{
+        display:block;
+        position:fixed;
+        inset:0;
+        background:rgba(2,6,23,.45);
+        z-index:1100;
+    }
+
+    .ciit-admin-dashboard-grid{
+        grid-template-columns:1fr;
+    }
+}
+
+@media(max-width:700px){
+    .ciit-admin-topbar{
+        padding:10px 16px;
+    }
+
+    .ciit-admin-user-copy{
+        display:none;
+    }
+
+    .ciit-admin-content{
+        padding:24px 16px 30px;
+    }
+
+    .ciit-admin-page-header{
+        align-items:flex-start;
+        flex-direction:column;
+        gap:12px;
+    }
+
+    .ciit-admin-stat-grid{
+        grid-template-columns:repeat(2,minmax(0,1fr));
+        gap:10px;
+    }
+
+    .ciit-admin-stat-card{
+        min-height:100px;
+        padding:15px;
+        gap:10px;
+    }
+
+    .ciit-admin-stat-icon{
+        width:40px;
+        height:40px;
+        flex-basis:40px;
+    }
+
+    .ciit-admin-stat-copy strong{
+        font-size:1.45rem;
+    }
+}
+
+@media(max-width:430px){
+    .ciit-admin-stat-grid{
+        grid-template-columns:1fr;
+    }
+
+    .ciit-admin-panel-header{
+        align-items:flex-start;
+        flex-direction:column;
+        gap:8px;
+    }
+}
