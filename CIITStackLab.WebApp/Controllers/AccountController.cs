@@ -8,6 +8,8 @@ namespace CIITStackLab.WebApp.Controllers;
 
 public class AccountController : Controller
 {
+    private const string AdminRole = "Admin";
+    private const string SuperUserRole = "Super User";
     private readonly UserManager<ApplicationUser> _userManager;
     private readonly SignInManager<ApplicationUser> _signInManager;
 
@@ -58,7 +60,8 @@ public class AccountController : Controller
 
         await _signInManager.SignInAsync(user, isPersistent: model.RememberMe);
 
-        if (await _userManager.IsInRoleAsync(user, "Admin"))
+        if (await _userManager.IsInRoleAsync(user, AdminRole) ||
+            await _userManager.IsInRoleAsync(user, SuperUserRole))
         {
             return RedirectToAction("Index", "Dashboard", new { area = "Admin" });
         }
