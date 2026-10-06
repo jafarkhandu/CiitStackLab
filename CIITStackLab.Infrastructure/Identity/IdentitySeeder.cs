@@ -5,23 +5,12 @@ namespace CIITStackLab.Infrastructure.Identity;
 
 public static class IdentitySeeder
 {
-    // Student is required because public registration assigns this role.
-    // Admin and Super User are optional runtime roles in the existing ERP database.
-    // Their absence must never prevent the application from starting.
-    private static readonly string[] RequiredRoles = ["Student"];
-
-    // Read-only verification. Existing ERP Identity data is reused.
-    public static async Task VerifyAsync(IServiceProvider services)
+    // The application must start even when the ERP database currently has
+    // no application-specific Student/Admin roles. Existing roles are reused
+    // when present; Student is created lazily only when the first public
+    // registration requires it.
+    public static Task VerifyAsync(IServiceProvider services)
     {
-        var roleManager = services.GetRequiredService<RoleManager<IdentityRole>>();
-
-        foreach (var role in RequiredRoles)
-        {
-            if (!await roleManager.RoleExistsAsync(role))
-            {
-                throw new InvalidOperationException(
-                    $"Required Identity role '{role}' was not found in the existing ERP database.");
-            }
-        }
+        return Task.CompletedTask;
     }
 }
