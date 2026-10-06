@@ -36,11 +36,12 @@ public class AccountController : Controller
             return View(model);
         }
 
-        var user = await _userManager.FindByEmailAsync(model.Email.Trim());
+        var userName = model.UserName.Trim();
+        var user = await _userManager.FindByNameAsync(userName);
 
         if (user is null || !user.IsActive)
         {
-            ModelState.AddModelError(string.Empty, "Invalid email or password.");
+            ModelState.AddModelError(string.Empty, "Invalid username or password.");
             return View(model);
         }
 
@@ -49,76 +50,30 @@ public class AccountController : Controller
             model.Password,
             lockoutOnFailure: true);
 
-        if (result.Succeeded)
-        {
-            await _signInManager.SignInAsync(
-                user,
-                isPersistent: model.RememberMe);
-            
-            return RedirectToLocal(model.ReturnUrl);
-        }
-
-        ModelState.AddModelError(string.Empty, "Invalid email or password.");
-        return View(model);
-    }
-
-    [HttpGet]
-    [AllowAnonymous]
-    public IActionResult Register()
-    {
-        return View(new RegisterViewModel());
-    }
-
-    [HttpPost]
-    [AllowAnonymous]
-    [ValidateAntiForgeryToken]
-    public async Task<IActionResult> Register(RegisterViewModel model)
-    {
-        if (!ModelState.IsValid)
-        {
-            return View(model);
-        }
-
-        var email = model.Email.Trim();
-
-        var user = new ApplicationUser
-        {
-            FullName = model.FullName.Trim(),
-            Email = email,
-            UserName = email,
-            EmailConfirmed = true,
-            IsActive = true
-        };
-
-        var result = await _userManager.CreateAsync(user, model.Password);
-
         if (!result.Succeeded)
         {
-            foreach (var error in result.Errors)
-            {
-                ModelState.AddModelError(string.Empty, error.Description);
-            }
-
+            ModelState.AddModelError(string.Empty, "Invalid username or password.");
             return View(model);
         }
 
-        var roleResult = await _userManager.AddToRoleAsync(user, "Student");
+        await _signInManager.SignInAsync(user, isPersistent: model.RememberMe);
 
-        if (!roleResult.Succeeded)
+        if (await _userManager.IsInRoleAsync(user, "Admin"))
         {
-            await _userManager.DeleteAsync(user);
-
-            foreach (var error in roleResult.Errors)
-            {
-                ModelState.AddModelError(string.Empty, error.Description);
-            }
-
-            return View(model);
+            return RedirectToAction("Index", "Dashboard", new { area = "Admin" });
         }
 
-        await _signInManager.SignInAsync(user, isPersistent: false);
+        if (await _userManager.IsInRoleAsync(user, "Student"))
+        {
+            return RedirectToAction("Index", "Home");
+        }
 
-        return RedirectToAction("Index", "Home");
+        await _signInManager.SignOutAsync();
+        ModelState.AddModelError(
+            string.Empty,
+            "Your account does not have an assigned application role.");
+
+        return View(model);
     }
 
     [HttpPost]
@@ -132,14 +87,4 @@ public class AccountController : Controller
     [HttpGet]
     [AllowAnonymous]
     public IActionResult AccessDenied() => View();
-
-    private IActionResult RedirectToLocal(string? returnUrl)
-    {
-        if (!string.IsNullOrWhiteSpace(returnUrl) && Url.IsLocalUrl(returnUrl))
-        {
-            return Redirect(returnUrl);
-        }
-
-        return RedirectToAction("Index", "Home")!;
-    }
 }
