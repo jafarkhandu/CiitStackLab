@@ -145,6 +145,34 @@ public sealed class CourseService : ICourseService
             })
             .ToListAsync(cancellationToken);
 
+        var contentIds = rows
+            .Where(x => x.ContentId.HasValue)
+            .Select(x => x.ContentId!.Value)
+            .Distinct()
+            .ToList();
+
+        var questions = contentIds.Count == 0
+            ? []
+            : await _dbContext.ContentQuestions
+                .AsNoTracking()
+                .Where(x => x.ContentId.HasValue
+                            && contentIds.Contains(x.ContentId.Value)
+                            && x.Flag == 0)
+                .OrderBy(x => x.Id)
+                .ToListAsync(cancellationToken);
+
+        var questionsByContentId = questions
+            .GroupBy(x => x.ContentId!.Value)
+            .ToDictionary(
+                group => group.Key,
+                group => (IReadOnlyList<ContentQuestionDto>)group.Select(x => new ContentQuestionDto
+                {
+                    Id = x.Id,
+                    Question = x.Question ?? string.Empty,
+                    Options = new[] { x.Option1, x.Option2, x.Option3, x.Option4 },
+                    CorrectOptionNumber = x.CorrectOptionNumber
+                }).ToList());
+
         var topics = rows
             .GroupBy(x => new { x.TopicId, x.TopicTitle })
             .Select(group => new CourseTopicDto
@@ -158,7 +186,10 @@ public sealed class CourseService : ICourseService
                         Id = x.ContentId!.Value,
                         Title = x.ContentTitle ?? string.Empty,
                         Slides = x.Slides,
-                        VideoName = x.VideoName
+                        VideoName = x.VideoName,
+                        Questions = questionsByContentId.TryGetValue(x.ContentId.Value, out var contentQuestions)
+                            ? contentQuestions
+                            : Array.Empty<ContentQuestionDto>()
                     })
                     .ToList()
             })
