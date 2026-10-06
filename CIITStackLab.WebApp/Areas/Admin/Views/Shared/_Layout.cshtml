@@ -10,9 +10,11 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="anonymous" />
     <link href="https://fonts.googleapis.com/css2?family=Fira+Code:wght@400;500;600&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
     <link rel="stylesheet" href="~/css/admin-dashboard.css" />
+    <link rel="stylesheet" href="~/css/admin-courses.css" />
     @await RenderSectionAsync("Styles", required: false)
 </head>
 <body class="ciit-admin-body">
+@{ var currentAdminController = ViewContext.RouteData.Values["controller"]?.ToString(); }
     <div class="ciit-admin-shell" id="ciitAdminShell">
         <aside class="ciit-admin-sidebar" id="ciitAdminSidebar">
             <div class="ciit-admin-brand">
@@ -23,14 +25,14 @@
             </div>
 
             <nav class="ciit-admin-nav" aria-label="Admin navigation">
-                <a asp-area="Admin" asp-controller="Dashboard" asp-action="Index" class="ciit-admin-nav-link active">
+                <a asp-area="Admin" asp-controller="Dashboard" asp-action="Index" class="ciit-admin-nav-link @(currentAdminController == "Dashboard" ? "active" : "")">
                     <i class="bi bi-grid-1x2-fill"></i><span>Dashboard</span>
                 </a>
 
                 <div class="ciit-admin-nav-heading">Learning</div>
-                <span class="ciit-admin-nav-link is-disabled" title="Courses module will be enabled next">
-                    <i class="bi bi-journal-code"></i><span>Courses</span><small>Next</small>
-                </span>
+                <a asp-area="Admin" asp-controller="Courses" asp-action="Index" class="ciit-admin-nav-link @(currentAdminController == "Courses" ? "active" : "")">
+                    <i class="bi bi-journal-code"></i><span>Courses</span>
+                </a>
                 <span class="ciit-admin-nav-link is-disabled" title="Topics module will be enabled next">
                     <i class="bi bi-diagram-3"></i><span>Topics</span><small>Next</small>
                 </span>
@@ -101,6 +103,7 @@
 
     <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
     <script src="~/js/admin-dashboard.js"></script>
+    <script src="~/js/admin-courses.js"></script>
     @await RenderSectionAsync("Scripts", required: false)
 </body>
 </html>
