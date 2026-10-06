@@ -41,18 +41,32 @@ document.addEventListener("DOMContentLoaded", function () {
         if (noTopics) noTopics.hidden = visible !== 0;
 
         if (saveButton) {
-            saveButton.disabled = selected === 0;
+            saveButton.disabled = false;
             if (saveLabel) {
                 saveLabel.textContent = selected === 0
-                    ? "Select Topics"
-                    : "Add " + selected + (selected === 1 ? " Topic" : " Topics");
+                    ? "Save Changes"
+                    : "Save Mapping";
             }
         }
     }
 
     cards.forEach(function (card) {
         const input = card.querySelector("input[type='checkbox']");
+
         input?.addEventListener("change", refreshTopics);
+
+        // The card itself toggles its checkbox. Saved topics are enabled too,
+        // so unchecking one removes that mapping on the next save.
+        card.addEventListener("click", function (event) {
+            if (event.target.closest("input")) {
+                return;
+            }
+
+            if (input) {
+                input.checked = !input.checked;
+                refreshTopics();
+            }
+        });
     });
 
     if (topicSearch) {
