@@ -17,26 +17,53 @@ public class CoursesController : Controller
     }
 
     [HttpGet]
-    public async Task<IActionResult> Index(CancellationToken cancellationToken)
+    public async Task<IActionResult> Index(
+        int? editId = null,
+        CancellationToken cancellationToken = default)
     {
-        var model = new AdminCourseIndexViewModel
-        {
-            ActiveCourses = await _courseService.GetActiveAsync(cancellationToken),
-            ArchivedCourses = await _courseService.GetArchivedAsync(cancellationToken)
-        };
+        var activeCourses = await _courseService.GetActiveAsync(cancellationToken);
+        var archivedCourses = await _courseService.GetArchivedAsync(cancellationToken);
 
-        return View(model);
+        AdminCourseFormModel? editCourse = null;
+
+        if (editId.HasValue)
+        {
+            var course = activeCourses.FirstOrDefault(x => x.Id == editId.Value);
+
+            if (course is not null)
+            {
+                editCourse = new AdminCourseFormModel
+                {
+                    Id = course.Id,
+                    CourseName = course.Title,
+                    FeesAmount = course.FeesAmount,
+                    FeesChangeDate = course.FeesChangeDate,
+                    InstallmentPercentage = course.InstallmentPercentage
+                };
+            }
+        }
+
+        return View(new AdminCourseIndexViewModel
+        {
+            ActiveCourses = activeCourses,
+            ArchivedCourses = archivedCourses,
+            EditCourse = editCourse
+        });
     }
 
     [HttpPost]
     [ValidateAntiForgeryToken]
-    public async Task<IActionResult> Save(AdminCourseFormModel model, CancellationToken cancellationToken)
+    public async Task<IActionResult> Save(
+        AdminCourseFormModel model,
+        CancellationToken cancellationToken)
     {
         model.CourseName = model.CourseName?.Trim() ?? string.Empty;
 
         if (!ModelState.IsValid)
         {
-            return RedirectToIndexWithMessage("Please correct the course form and try again.", "error");
+            TempData["AdminCourseMessage"] = "Please check the course details.";
+            TempData["AdminCourseMessageType"] = "error";
+            return RedirectToAction(nameof(Index), new { editId = model.Id == 0 ? (int?)null : model.Id });
         }
 
         var duplicate = await _courseService.CourseNameExistsAsync(
@@ -46,10 +73,9 @@ public class CoursesController : Controller
 
         if (duplicate)
         {
-            return RedirectToIndexWithMessage(
-                "A course with this name already exists.",
-                "error",
-                model.Id == 0 ? null : model.Id);
+            TempData["AdminCourseMessage"] = "A course with this name already exists.";
+            TempData["AdminCourseMessageType"] = "error";
+            return RedirectToAction(nameof(Index), new { editId = model.Id == 0 ? (int?)null : model.Id });
         }
 
         if (model.Id == 0)
@@ -76,7 +102,7 @@ public class CoursesController : Controller
 
         return updated.Succeeded
             ? RedirectToIndexWithMessage("Course updated successfully.", "success")
-            : RedirectToIndexWithMessage(updated.Error ?? "Unable to update the course.", "error");
+            : RedirectToIndexWithMessage(updated.Error ?? "Unable to update the course.", "error", model.Id);
     }
 
     [HttpPost]
@@ -101,13 +127,16 @@ public class CoursesController : Controller
             : RedirectToIndexWithMessage(result.Error ?? "Unable to restore the course.", "error");
     }
 
-    private IActionResult RedirectToIndexWithMessage(string message, string type, int? editId = null)
+    private IActionResult RedirectToIndexWithMessage(
+        string message,
+        string type,
+        int? editId = null)
     {
         TempData["AdminCourseMessage"] = message;
         TempData["AdminCourseMessageType"] = type;
 
-        return RedirectToAction(nameof(Index), editId.HasValue
-            ? new { editId }
-            : null)!;
+        return RedirectToAction(
+            nameof(Index),
+            editId.HasValue ? new { editId } : null)!;
     }
 }
