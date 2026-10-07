@@ -350,3 +350,37 @@ main{min-height:calc(100vh - 120px)}.ciit-footer{background:#0b0f19;color:#94a3b
     .ciit-mcq-result{width:100%;margin-right:0}
     .ciit-mcq-check,.ciit-mcq-reset{flex:1 1 0}
 }
+
+.ciit-admin-return-btn{
+    display:inline-flex;
+    align-items:center;
+    justify-content:center;
+    gap:7px;
+    min-height:40px;
+    padding:0 13px;
+    border:1px solid #1769ff;
+    border-radius:9px;
+    background:#1769ff;
+    color:#fff!important;
+    text-decoration:none;
+    font-size:.82rem;
+    font-weight:700;
+    white-space:nowrap;
+    box-shadow:0 7px 18px rgba(23,105,255,.16);
+    transition:transform .18s ease,box-shadow .18s ease,background .18s ease;
+}
+.ciit-admin-return-btn:hover{
+    color:#fff!important;
+    background:#0758e8;
+    transform:translateY(-1px);
+    box-shadow:0 10px 22px rgba(23,105,255,.22);
+}
+.ciit-admin-return-btn i{font-size:.86rem}
+@media(max-width:576px){
+    .ciit-admin-return-btn{
+        min-height:38px;
+        padding:0 10px;
+        font-size:.76rem;
+    }
+    .ciit-admin-return-btn span{display:none}
+}

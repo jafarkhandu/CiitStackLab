@@ -19,7 +19,10 @@ public static class DependencyInjection
             ?? throw new InvalidOperationException("DefaultConnection is not configured.");
 
         services.AddDbContext<ApplicationDbContext>(options =>
-            options.UseSqlServer(connectionString));
+            options.UseSqlServer(connectionString, sqlOptions =>
+            {
+                sqlOptions.EnableRetryOnFailure();
+            }));
 
         services.AddIdentity<ApplicationUser, IdentityRole>(options =>
         {
@@ -48,6 +51,8 @@ public static class DependencyInjection
         services.AddScoped<IAdminTopicService, AdminTopicService>();
         services.AddScoped<IAdminCourseTopicMappingService, AdminCourseTopicMappingService>();
         services.AddScoped<IAdminContentService, AdminContentService>();
+        services.AddScoped<IAdminStudentService, AdminStudentService>();
+        services.AddScoped<IAdminSettingsService, AdminSettingsService>();
 
         return services;
     }

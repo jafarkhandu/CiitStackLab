@@ -8,10 +8,12 @@
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" />
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="anonymous" />
-    <link href="https://fonts.googleapis.com/css2?family=Fira+Code:wght@400;500;600&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+    <link href="https://fonts.googleapis.com/css2?family=Fira+Code:wght@400;500;600;700;800&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
     <link rel="stylesheet" href="~/css/admin-dashboard.css" />
     <link rel="stylesheet" href="~/css/admin-courses.css" />
     <link rel="stylesheet" href="~/css/admin-mapping.css" />
+    <link rel="stylesheet" href="~/css/admin-students.css" />
+    <link rel="stylesheet" href="~/css/admin-settings.css" />
     @await RenderSectionAsync("Styles", required: false)
 </head>
 <body class="ciit-admin-body">
@@ -19,96 +21,47 @@
     <div class="ciit-admin-shell" id="ciitAdminShell">
         <aside class="ciit-admin-sidebar" id="ciitAdminSidebar">
             <div class="ciit-admin-brand">
-                <a asp-area="" asp-controller="Home" asp-action="Index">
-                    CIIT<span> Stack Lab</span>
-                </a>
+                <a asp-area="" asp-controller="Home" asp-action="Index">CIIT<span> Stack Lab</span></a>
                 <div class="ciit-admin-label">ADMIN CONSOLE</div>
             </div>
-
             <nav class="ciit-admin-nav" aria-label="Admin navigation">
-                <a asp-area="Admin" asp-controller="Dashboard" asp-action="Index" class="ciit-admin-nav-link @(currentAdminController == "Dashboard" ? "active" : "")">
-                    <i class="bi bi-grid-1x2-fill"></i><span>Dashboard</span>
-                </a>
-
+                <a asp-area="Admin" asp-controller="Dashboard" asp-action="Index" class="ciit-admin-nav-link @(currentAdminController == "Dashboard" ? "active" : "")"><i class="bi bi-grid-1x2-fill"></i><span>Dashboard</span></a>
                 <div class="ciit-admin-nav-heading">Learning</div>
-                <a asp-area="Admin" asp-controller="Courses" asp-action="Index" class="ciit-admin-nav-link @(currentAdminController == "Courses" ? "active" : "")">
-                    <i class="bi bi-journal-code"></i><span>Courses</span>
-                </a>
-                <a asp-area="Admin" asp-controller="Topics" asp-action="Index" class="ciit-admin-nav-link @(currentAdminController == "Topics" ? "active" : "")">
-                    <i class="bi bi-diagram-3"></i><span>Topics</span>
-                </a>
-                <a asp-area="Admin" asp-controller="CourseTopicMapping" asp-action="Index" class="ciit-admin-nav-link @(currentAdminController == "CourseTopicMapping" ? "active" : "")">
-                    <i class="bi bi-diagram-2"></i><span>Course Mapping</span>
-                </a>
-
+                <a asp-area="Admin" asp-controller="Courses" asp-action="Index" class="ciit-admin-nav-link @(currentAdminController == "Courses" ? "active" : "")"><i class="bi bi-journal-code"></i><span>Courses</span></a>
+                <a asp-area="Admin" asp-controller="Topics" asp-action="Index" class="ciit-admin-nav-link @(currentAdminController == "Topics" ? "active" : "")"><i class="bi bi-diagram-3"></i><span>Topics</span></a>
+                <a asp-area="Admin" asp-controller="CourseTopicMapping" asp-action="Index" class="ciit-admin-nav-link @(currentAdminController == "CourseTopicMapping" ? "active" : "")"><i class="bi bi-diagram-2"></i><span>Course Mapping</span></a>
                 <div class="ciit-admin-nav-heading">Assessment</div>
-                <span class="ciit-admin-nav-link is-disabled" title="Assessment modules are under development">
-                    <i class="bi bi-ui-checks-grid"></i><span>Assessments</span><small>Next</small>
-                </span>
-
+                <a asp-area="Admin" asp-controller="Content" asp-action="Index" class="ciit-admin-nav-link @(currentAdminController == "Content" ? "active" : "")"><i class="bi bi-file-earmark-text"></i><span>Content</span></a>
+                <span class="ciit-admin-nav-link is-disabled" title="Assessment modules are under development"><i class="bi bi-ui-checks-grid"></i><span>Assessments</span><small>Next</small></span>
                 <div class="ciit-admin-nav-heading">Management</div>
-                <span class="ciit-admin-nav-link is-disabled" title="Student management module will be enabled next">
-                    <i class="bi bi-people"></i><span>Students</span><small>Next</small>
-                </span>
-                <span class="ciit-admin-nav-link is-disabled" title="Reports module will be enabled next">
-                    <i class="bi bi-bar-chart-line"></i><span>Reports</span><small>Next</small>
-                </span>
-                <span class="ciit-admin-nav-link is-disabled" title="Settings module will be enabled next">
-                    <i class="bi bi-gear"></i><span>Settings</span><small>Next</small>
-                </span>
+                <a asp-area="Admin" asp-controller="Students" asp-action="Index" class="ciit-admin-nav-link @(currentAdminController == "Students" ? "active" : "")"><i class="bi bi-people"></i><span>Students</span></a>
+                <span class="ciit-admin-nav-link is-disabled" title="Reports module will be enabled next"><i class="bi bi-bar-chart-line"></i><span>Reports</span><small>Next</small></span>
+                <a asp-area="Admin" asp-controller="Settings" asp-action="Index" class="ciit-admin-nav-link @(currentAdminController == "Settings" ? "active" : "")"><i class="bi bi-gear"></i><span>Settings</span></a>
             </nav>
-
             <div class="ciit-admin-sidebar-footer">
-                <a asp-area="" asp-controller="Home" asp-action="Index" class="ciit-admin-back-link">
-                    <i class="bi bi-arrow-left"></i><span>Back to Learning Site</span>
-                </a>
+                <a asp-area="" asp-controller="Home" asp-action="Index" class="ciit-admin-back-link"><i class="bi bi-arrow-left"></i><span>Back to Learning Site</span></a>
             </div>
         </aside>
-
         <div class="ciit-admin-main">
             <header class="ciit-admin-topbar">
-                <button type="button"
-                        class="ciit-admin-menu-toggle"
-                        id="ciitAdminMenuToggle"
-                        aria-label="Toggle admin menu"
-                        aria-controls="ciitAdminSidebar"
-                        aria-expanded="false">
-                    <i class="bi bi-list"></i>
-                </button>
-
-                <div class="ciit-admin-topbar-context">
-                    <span class="ciit-admin-topbar-kicker">ADMIN CONSOLE</span>
-                    <strong>@ViewData["Title"]</strong>
-                </div>
-
+                <button type="button" class="ciit-admin-menu-toggle" id="ciitAdminMenuToggle" aria-label="Toggle admin menu" aria-controls="ciitAdminSidebar" aria-expanded="false"><i class="bi bi-list"></i></button>
+                <div class="ciit-admin-topbar-context"><span class="ciit-admin-topbar-kicker">ADMIN CONSOLE</span><strong>@ViewData["Title"]</strong></div>
                 <div class="ciit-admin-user">
-                    <div class="ciit-admin-user-avatar">
-                        <i class="bi bi-person-fill"></i>
-                    </div>
-                    <div class="ciit-admin-user-copy">
-                        <strong>@User.Identity?.Name</strong>
-                        <span>Administrator</span>
-                    </div>
-                    <form asp-area="" asp-controller="Account" asp-action="Logout" method="post">
-                        <button type="submit" class="ciit-admin-logout" title="Sign out">
-                            <i class="bi bi-box-arrow-right"></i>
-                        </button>
-                    </form>
+                    <div class="ciit-admin-user-avatar"><i class="bi bi-person-fill"></i></div>
+                    <div class="ciit-admin-user-copy"><strong>@User.Identity?.Name</strong><span>Administrator</span></div>
+                    <form asp-area="" asp-controller="Account" asp-action="Logout" method="post"><button type="submit" class="ciit-admin-logout" title="Sign out"><i class="bi bi-box-arrow-right"></i></button></form>
                 </div>
             </header>
-
-            <main class="ciit-admin-content">
-                @RenderBody()
-            </main>
+            <main class="ciit-admin-content">@RenderBody()</main>
         </div>
     </div>
-
     <div class="ciit-admin-overlay" id="ciitAdminOverlay"></div>
-
     <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
     <script src="~/js/admin-dashboard.js"></script>
     <script src="~/js/admin-courses.js"></script>
     <script src="~/js/admin-mapping.js"></script>
+    <script src="~/js/admin-students.js"></script>
+    <script src="~/js/admin-settings.js"></script>
     @await RenderSectionAsync("Scripts", required: false)
 </body>
 </html>

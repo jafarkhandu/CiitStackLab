@@ -28,6 +28,18 @@
                     @if (User.Identity?.IsAuthenticated == true)
                     {
                         <span class="text-secondary small d-none d-xl-inline">Hi, @User.Identity.Name</span>
+
+                        @if (User.IsInRole("Admin") || User.IsInRole("Super User"))
+                        {
+                            <a asp-area="Admin"
+                               asp-controller="Dashboard"
+                               asp-action="Index"
+                               class="ciit-admin-return-btn">
+                                <i class="bi bi-grid-1x2-fill"></i>
+                                <span>Admin Dashboard</span>
+                            </a>
+                        }
+
                         <form asp-controller="Account" asp-action="Logout" method="post" class="m-0">
                             <button type="submit" class="btn btn-outline-primary fw-semibold ciit-signin-btn">Sign Out</button>
                         </form>
