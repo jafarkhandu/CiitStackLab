@@ -19,7 +19,10 @@ public static class DependencyInjection
             ?? throw new InvalidOperationException("DefaultConnection is not configured.");
 
         services.AddDbContext<ApplicationDbContext>(options =>
-            options.UseSqlServer(connectionString));
+            options.UseSqlServer(connectionString, sqlOptions =>
+            {
+                sqlOptions.EnableRetryOnFailure();
+            }));
 
         services.AddIdentity<ApplicationUser, IdentityRole>(options =>
         {
