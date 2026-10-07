@@ -24,3 +24,11 @@
 .ciit-mapping-topic-card.is-assigned .ciit-mapping-topic-state{background:#e9f2ff;color:#1769ff}
 .ciit-mapping-topic-card .ciit-mapping-check{pointer-events:none}
 .ciit-mapping-topic-card input[type="checkbox"]{position:absolute;opacity:0;pointer-events:none}
+
+.ciit-mapping-topic-card input[type="checkbox"]{position:absolute;left:13px;top:50%;width:24px;height:24px;margin:0;transform:translateY(-50%);opacity:1;pointer-events:auto;cursor:pointer;accent-color:#1769ff;z-index:2}
+.ciit-mapping-topic-card{padding-left:50px}
+.ciit-mapping-topic-card input[type="checkbox"]:disabled{cursor:not-allowed}
+.ciit-mapping-topic-card input[type="checkbox"]:disabled + .ciit-mapping-check{opacity:.55}
+.ciit-mapping-topic-card .ciit-mapping-check{position:absolute;left:13px;top:50%;transform:translateY(-50%);pointer-events:none}
+.ciit-mapping-topic-card.is-assigned .ciit-mapping-topic-state{background:#e9f2ff;color:#1769ff}
+.ciit-mapping-topic-state.is-removed{background:#fef2f2;color:#b91c1c}

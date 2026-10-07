@@ -50,23 +50,12 @@ document.addEventListener("DOMContentLoaded", function () {
         }
     }
 
+    // The native checkbox is now the only control that changes state.
+    // This prevents the label/card from toggling the checkbox twice.
     cards.forEach(function (card) {
         const input = card.querySelector("input[type='checkbox']");
 
         input?.addEventListener("change", refreshTopics);
-
-        // The card itself toggles its checkbox. Saved topics are enabled too,
-        // so unchecking one removes that mapping on the next save.
-        card.addEventListener("click", function (event) {
-            if (event.target.closest("input")) {
-                return;
-            }
-
-            if (input) {
-                input.checked = !input.checked;
-                refreshTopics();
-            }
-        });
     });
 
     if (topicSearch) {
@@ -82,18 +71,28 @@ document.addEventListener("DOMContentLoaded", function () {
     }
 
     document.getElementById("mappingSelectAll")?.addEventListener("click", function () {
-        cards.filter(c => !c.hidden).forEach(function (card) {
-            const input = card.querySelector("input[type='checkbox']");
-            if (input) input.checked = true;
-        });
+        cards
+            .filter(function (card) {
+                const input = card.querySelector("input[type='checkbox']");
+                return !card.hidden && input && !input.disabled;
+            })
+            .forEach(function (card) {
+                card.querySelector("input[type='checkbox']").checked = true;
+            });
+
         refreshTopics();
     });
 
     document.getElementById("mappingClearAll")?.addEventListener("click", function () {
-        cards.filter(c => !c.hidden).forEach(function (card) {
-            const input = card.querySelector("input[type='checkbox']");
-            if (input) input.checked = false;
-        });
+        cards
+            .filter(function (card) {
+                const input = card.querySelector("input[type='checkbox']");
+                return !card.hidden && input && !input.disabled;
+            })
+            .forEach(function (card) {
+                card.querySelector("input[type='checkbox']").checked = false;
+            });
+
         refreshTopics();
     });
 
@@ -106,6 +105,7 @@ document.addEventListener("DOMContentLoaded", function () {
     document.querySelectorAll(".ciit-mapping-alert").forEach(function (alert) {
         window.setTimeout(function () {
             alert.classList.add("is-fading");
+
             window.setTimeout(function () {
                 alert.remove();
             }, 650);
