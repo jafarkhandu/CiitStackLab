@@ -45,7 +45,8 @@ public static class DependencyInjection
             options.SlidingExpiration = true;
         });
 
-        services.AddScoped<ICourseService, CourseService>();
+        services.AddScoped<CourseService>();
+        services.AddScoped<ICourseService, DynamicCourseService>();
         services.AddScoped<IAdminDashboardService, AdminDashboardService>();
         services.AddScoped<IAdminCourseService, AdminCourseService>();
         services.AddScoped<IAdminTopicService, AdminTopicService>();
