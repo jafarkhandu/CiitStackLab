@@ -12,8 +12,6 @@ public class Lesson
 
     public string? VideoName { get; set; }
 
-    public string? HtmlContent { get; set; }
-
     public int? Flag { get; set; }
 
     public DateTime? CreatedAt { get; set; }
