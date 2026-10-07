@@ -5,6 +5,18 @@
     var edit = Model.EditTopic;
     var message = TempData["AdminTopicMessage"] as string;
     var messageType = TempData["AdminTopicMessageType"] as string;
+
+    string FormatDuration(int? minutes)
+    {
+        if (!minutes.HasValue) return "—";
+
+        var hours = minutes.Value / 60;
+        var remainingMinutes = minutes.Value % 60;
+
+        if (hours > 0 && remainingMinutes > 0) return $"{hours}h {remainingMinutes}m";
+        if (hours > 0) return $"{hours}h";
+        return $"{remainingMinutes}m";
+    }
 }
 
 <section class="ciit-admin-page ciit-topics-page">
@@ -12,7 +24,7 @@
         <div>
             <span class="ciit-admin-eyebrow">Learning</span>
             <h1>Topics</h1>
-            <p>Manage reusable learning topics from the existing ERP training table.</p>
+            <p>Manage reusable learning topics, pricing and duration.</p>
         </div>
         <button type="button" class="ciit-topic-primary-btn" data-bs-toggle="modal" data-bs-target="#topicModal" data-topic-mode="create">
             <i class="bi bi-plus-lg"></i><span>Add Topic</span>
@@ -45,7 +57,7 @@
         <div class="ciit-topic-table-wrap">
             <table class="ciit-topic-table">
                 <thead>
-                    <tr><th>ID</th><th>Topic</th><th>Public Folder ID</th><th>Created</th><th>Updated</th><th>Actions</th></tr>
+                    <tr><th>ID</th><th>Topic</th><th>Price</th><th>Duration</th><th>Public Folder ID</th><th>Actions</th></tr>
                 </thead>
                 <tbody id="topicRows">
                     @foreach (var topic in Model.ActiveTopics)
@@ -58,9 +70,9 @@
                                     <div><strong>@topic.Title</strong><span>Active topic</span></div>
                                 </div>
                             </td>
+                            <td class="topic-value">₹@topic.Price.ToString("N2")</td>
+                            <td class="topic-value">@FormatDuration(topic.DurationMinutes)</td>
                             <td><span class="topic-folder-value">@(string.IsNullOrWhiteSpace(topic.PublicFolderId) ? "—" : topic.PublicFolderId)</span></td>
-                            <td>@(topic.CreatedAt.HasValue ? topic.CreatedAt.Value.ToString("dd MMM yyyy") : "—")</td>
-                            <td>@(topic.UpdatedAt.HasValue ? topic.UpdatedAt.Value.ToString("dd MMM yyyy") : "—")</td>
                             <td>
                                 <div class="topic-row-actions">
                                     <a asp-area="Admin" asp-controller="Topics" asp-action="Index" asp-route-editId="@topic.Id" class="ciit-topic-icon-btn" title="Edit">
@@ -109,7 +121,7 @@
                     <div class="ciit-topic-archive-row">
                         <div class="topic-name-cell">
                             <div class="topic-name-icon is-muted"><i class="bi bi-archive"></i></div>
-                            <div><strong>@topic.Title</strong><span>Archived @(topic.DeletedAt.HasValue ? topic.DeletedAt.Value.ToString("dd MMM yyyy") : "")</span></div>
+                            <div><strong>@topic.Title</strong><span>₹@topic.Price.ToString("N2") · Archived @(topic.DeletedAt.HasValue ? topic.DeletedAt.Value.ToString("dd MMM yyyy") : "")</span></div>
                         </div>
                         <form asp-area="Admin" asp-controller="Topics" asp-action="Restore" method="post">
                             @Html.AntiForgeryToken()
@@ -143,14 +155,34 @@
                         <label for="topicName">Topic name</label>
                         <input id="topicName" name="TopicName" class="form-control" maxlength="100" placeholder="e.g. ASP.NET Core" required />
                     </div>
+
+                    <div class="ciit-topic-form-grid">
+                        <div class="ciit-topic-form-field">
+                            <label for="topicPrice">Price</label>
+                            <input id="topicPrice" name="Price" type="number" class="form-control" min="0" step="0.01" placeholder="e.g. 500" required />
+                        </div>
+                        <div class="ciit-topic-form-field">
+                            <label for="topicDuration">Duration <span>(minutes, optional)</span></label>
+                            <input id="topicDuration" name="DurationMinutes" type="number" class="form-control" min="1" max="100000" step="1" placeholder="e.g. 240" />
+                        </div>
+                    </div>
+
                     <div class="ciit-topic-form-field">
                         <label for="publicFolderId">Public folder ID <span>(optional)</span></label>
                         <textarea id="publicFolderId" name="PublicFolderId" class="form-control" rows="3" placeholder="Optional public folder identifier"></textarea>
                     </div>
+
                     <div class="ciit-topic-form-hint">
-                        <i class="bi bi-info-circle"></i><span>Course mapping stays separate so one topic can be reused across learning paths.</span>
+                        <i class="bi bi-calculator"></i>
+                        <span>This topic price is included automatically in every active course where the topic is mapped.</span>
+                    </div>
+
+                    <div class="ciit-topic-form-hint mt-3">
+                        <i class="bi bi-info-circle"></i>
+                        <span>Course mapping stays separate so one topic can be reused across learning paths.</span>
                     </div>
                 </div>
+
                 <div class="modal-footer">
                     <button type="button" class="ciit-topic-secondary-btn" data-bs-dismiss="modal">Cancel</button>
                     <button type="submit" class="ciit-topic-primary-btn" id="topicSubmitBtn"><i class="bi bi-check2-circle"></i><span>Save Topic</span></button>
@@ -166,7 +198,9 @@
         window.ciitEditTopic = {
             id: @edit.Id,
             topicName: @Html.Raw(System.Text.Json.JsonSerializer.Serialize(edit.TopicName)),
-            publicFolderId: @Html.Raw(System.Text.Json.JsonSerializer.Serialize(edit.PublicFolderId))
+            publicFolderId: @Html.Raw(System.Text.Json.JsonSerializer.Serialize(edit.PublicFolderId)),
+            price: @edit.Price.ToString(System.Globalization.CultureInfo.InvariantCulture),
+            durationMinutes: @(edit.DurationMinutes.HasValue ? edit.DurationMinutes.Value.ToString(System.Globalization.CultureInfo.InvariantCulture) : "null")
         };
     </script>
 }
