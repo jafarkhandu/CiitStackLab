@@ -12,6 +12,7 @@
     <link rel="stylesheet" href="~/css/admin-dashboard.css" />
     <link rel="stylesheet" href="~/css/admin-courses.css" />
     <link rel="stylesheet" href="~/css/admin-mapping.css" />
+    <link rel="stylesheet" href="~/css/admin-students.css" />
     @await RenderSectionAsync("Styles", required: false)
 </head>
 <body class="ciit-admin-body">
@@ -47,9 +48,9 @@
                 </span>
 
                 <div class="ciit-admin-nav-heading">Management</div>
-                <span class="ciit-admin-nav-link is-disabled" title="Student management module will be enabled next">
-                    <i class="bi bi-people"></i><span>Students</span><small>Next</small>
-                </span>
+                <a asp-area="Admin" asp-controller="Students" asp-action="Index" class="ciit-admin-nav-link @(currentAdminController == "Students" ? "active" : "")">
+                    <i class="bi bi-people"></i><span>Students</span>
+                </a>
                 <span class="ciit-admin-nav-link is-disabled" title="Reports module will be enabled next">
                     <i class="bi bi-bar-chart-line"></i><span>Reports</span><small>Next</small>
                 </span>
@@ -109,6 +110,7 @@
     <script src="~/js/admin-dashboard.js"></script>
     <script src="~/js/admin-courses.js"></script>
     <script src="~/js/admin-mapping.js"></script>
+    <script src="~/js/admin-students.js"></script>
     @await RenderSectionAsync("Scripts", required: false)
 </body>
 </html>
