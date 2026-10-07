@@ -1,0 +1,148 @@
+@model CIITStackLab.WebApp.Models.AdminStudentIndexViewModel
+
+@{
+    ViewData["Title"] = "Students";
+    var message = TempData["AdminStudentMessage"] as string;
+    var messageType = TempData["AdminStudentMessageType"] as string;
+}
+
+<section class="ciit-admin-page ciit-students-page">
+    <div class="ciit-student-page-header">
+        <div>
+            <span class="ciit-admin-eyebrow">Management</span>
+            <h1>Students</h1>
+            <p>Manage registered CIIT Stack Lab student accounts from the existing Identity database.</p>
+        </div>
+        <div class="ciit-student-summary">
+            <div class="ciit-student-summary-item">
+                <strong>@Model.ActiveStudents.Count</strong>
+                <span>Active</span>
+            </div>
+            <div class="ciit-student-summary-divider"></div>
+            <div class="ciit-student-summary-item is-muted">
+                <strong>@Model.InactiveStudents.Count</strong>
+                <span>Inactive</span>
+            </div>
+        </div>
+    </div>
+
+    @if (!string.IsNullOrWhiteSpace(message))
+    {
+        <div class="ciit-student-alert @(messageType == "success" ? "is-success" : "is-error")" role="alert">
+            <i class="bi @(messageType == "success" ? "bi-check-circle-fill" : "bi-exclamation-circle-fill")"></i>
+            <span>@message</span>
+            <button type="button" class="ciit-student-alert-close" aria-label="Close">
+                <i class="bi bi-x-lg"></i>
+            </button>
+        </div>
+    }
+
+    <div class="ciit-student-toolbar">
+        <div class="ciit-student-search">
+            <i class="bi bi-search"></i>
+            <input id="studentSearch"
+                   type="search"
+                   placeholder="Search username, email or phone..."
+                   autocomplete="off"
+                   aria-label="Search students" />
+        </div>
+
+        <div class="ciit-student-toolbar-actions">
+            <button type="button"
+                    class="ciit-student-filter active"
+                    data-student-filter="active">
+                Active <span>@Model.ActiveStudents.Count</span>
+            </button>
+            <button type="button"
+                    class="ciit-student-filter"
+                    data-student-filter="inactive">
+                Inactive <span>@Model.InactiveStudents.Count</span>
+            </button>
+            <button type="button"
+                    class="ciit-student-filter"
+                    data-student-filter="all">
+                All <span>@(Model.ActiveStudents.Count + Model.InactiveStudents.Count)</span>
+            </button>
+        </div>
+    </div>
+
+    <section class="ciit-student-table-card">
+        <div class="ciit-student-table-wrap">
+            <table class="ciit-student-table" id="studentTable">
+                <thead>
+                    <tr>
+                        <th>Student</th>
+                        <th>Email</th>
+                        <th>Phone</th>
+                        <th>Email status</th>
+                        <th>Status</th>
+                        <th class="student-col-actions">Action</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var student in Model.ActiveStudents.Concat(Model.InactiveStudents))
+                    {
+                        <tr data-student-row
+                            data-student-status="@(student.IsActive ? "active" : "inactive")"
+                            data-student-search="@($"{student.UserName} {student.Email} {student.PhoneNumber}".ToLowerInvariant())">
+                            <td>
+                                <div class="student-name-cell">
+                                    <div class="student-avatar">
+                                        @student.UserName.Substring(0, 1).ToUpperInvariant()
+                                    </div>
+                                    <div>
+                                        <strong>@student.UserName</strong>
+                                        <span>Student account</span>
+                                    </div>
+                                </div>
+                            </td>
+                            <td>@(string.IsNullOrWhiteSpace(student.Email) ? "—" : student.Email)</td>
+                            <td>@(string.IsNullOrWhiteSpace(student.PhoneNumber) ? "—" : student.PhoneNumber)</td>
+                            <td>
+                                <span class="student-email-status @(student.EmailConfirmed ? "is-confirmed" : "is-unconfirmed")">
+                                    <i class="bi @(student.EmailConfirmed ? "bi-check-circle" : "bi-dash-circle")"></i>
+                                    @(student.EmailConfirmed ? "Confirmed" : "Not confirmed")
+                                </span>
+                            </td>
+                            <td>
+                                <span class="student-status-pill @(student.IsActive ? "is-active" : "is-inactive")">
+                                    <span></span>@(student.IsActive ? "Active" : "Inactive")
+                                </span>
+                            </td>
+                            <td>
+                                <div class="student-action-cell">
+                                    <form asp-area="Admin"
+                                          asp-controller="Students"
+                                          asp-action="SetStatus"
+                                          method="post"
+                                          class="js-student-status-form"
+                                          data-student-name="@student.UserName">
+                                        @Html.AntiForgeryToken()
+                                        <input type="hidden" name="userId" value="@student.Id" />
+                                        <input type="hidden" name="isActive" value="@(!student.IsActive)" />
+                                        <button type="submit"
+                                                class="ciit-student-status-btn @(student.IsActive ? "is-deactivate" : "is-activate")">
+                                            <i class="bi @(student.IsActive ? "bi-person-dash" : "bi-person-check")"></i>
+                                            @(student.IsActive ? "Deactivate" : "Activate")
+                                        </button>
+                                    </form>
+                                </div>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+
+            <div class="ciit-student-empty" id="studentEmpty" hidden>
+                <i class="bi bi-people"></i>
+                <h3>No students found</h3>
+                <p>Try changing the search or status filter.</p>
+            </div>
+        </div>
+    </section>
+
+    <div class="ciit-student-note">
+        <i class="bi bi-info-circle"></i>
+        <span>Only accounts assigned to the existing <strong>Student</strong> Identity role are shown here. Deactivation changes the existing account's <strong>IsActive</strong> value and does not delete the user.</span>
+    </div>
+</section>
