@@ -47,6 +47,7 @@ public class ApplicationDbContext : IdentityDbContext<ApplicationUser>
                 .HasMaxLength(100)
                 .IsRequired();
 
+            // Existing ERP fee columns remain mapped for compatibility and data preservation.
             entity.Property(x => x.FeesAmount)
                 .HasColumnName("fees_amount");
 
@@ -127,6 +128,14 @@ public class ApplicationDbContext : IdentityDbContext<ApplicationUser>
 
             entity.Property(x => x.PublicFolderId)
                 .HasColumnName("publicfolderid");
+
+            entity.Property(x => x.Price)
+                .HasColumnName("price")
+                .HasPrecision(18, 2)
+                .HasDefaultValue(0m);
+
+            entity.Property(x => x.DurationMinutes)
+                .HasColumnName("duration_minutes");
 
             entity.Property(x => x.Flag)
                 .HasColumnName("flag");
