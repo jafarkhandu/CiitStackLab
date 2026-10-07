@@ -124,6 +124,13 @@
                                                         </div>
                                                     </div>
 
+                                                    @if (!string.IsNullOrWhiteSpace(content.HtmlContent))
+                                                    {
+                                                        <div class="ciit-course-html-content mt-4">
+                                                            @Html.Raw(content.HtmlContent)
+                                                        </div>
+                                                    }
+
                                                     @if (content.Questions.Count > 0)
                                                     {
                                                         <div class="ciit-mcq-panel" data-mcq-panel>
