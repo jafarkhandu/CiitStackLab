@@ -52,6 +52,7 @@ public static class DependencyInjection
         services.AddScoped<IAdminCourseTopicMappingService, AdminCourseTopicMappingService>();
         services.AddScoped<IAdminContentService, AdminContentService>();
         services.AddScoped<IAdminStudentService, AdminStudentService>();
+        services.AddScoped<IAdminSettingsService, AdminSettingsService>();
 
         return services;
     }
