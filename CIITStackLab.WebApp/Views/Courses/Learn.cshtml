@@ -65,8 +65,15 @@ else
                     {
                         <section class="ciit-learning-topic @(topic.Contents.Any(x => x.Id == currentContent.Id) ? "is-active-topic" : "")">
                             <div class="ciit-learning-topic-heading">
-                                <strong>@topic.Title</strong>
-                                <span>@topic.Contents.Count lesson@(topic.Contents.Count == 1 ? "" : "s")</span>
+                                <div>
+                                    <strong>@topic.Title</strong>
+                                    <span>@topic.Contents.Count lesson@(topic.Contents.Count == 1 ? "" : "s")</span>
+                                </div>
+                                <a asp-controller="Notes" asp-action="Index"
+                                   asp-route-courseId="@Model.Id" asp-route-topicId="@topic.Id"
+                                   class="ciit-learning-topic-notes" title="Open topic notes">
+                                    <i class="bi bi-journal-text"></i> Notes
+                                </a>
                             </div>
                             @foreach (var content in topic.Contents)
                             {
