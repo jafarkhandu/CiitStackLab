@@ -7,7 +7,7 @@ using Microsoft.AspNetCore.Mvc.Rendering;
 namespace CIITStackLab.WebApp.Areas.Admin.Controllers;
 
 [Area("Admin")]
-[Authorize(Roles = "Admin")]
+[Authorize(Roles = "Admin,Super User")]
 public sealed class ContentController : Controller
 {
     private readonly IAdminContentService _contentService;
