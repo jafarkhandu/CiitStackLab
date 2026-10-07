@@ -99,7 +99,7 @@
                                         <span class="ciit-admin-panel-kicker">Course topics</span>
                                         <h3>Manage Topics</h3>
                                     </div>
-                                    <span class="ciit-mapping-available-count" id="mappingSelectionHint">Check to assign</span>
+                                    <span class="ciit-mapping-available-count" id="mappingSelectionHint">Available to assign</span>
                                 </div>
 
                                 <div class="ciit-mapping-topic-toolbar">
@@ -120,15 +120,16 @@
                                             <input type="checkbox"
                                                    name="TopicIds"
                                                    value="@topic.Id"
-                                                   @(topic.IsAssigned ? "checked" : "") />
+                                                   @(topic.IsAssigned ? "checked" : "")
+                                                   @((topic.WasEverMapped && !topic.IsAssigned) ? "disabled" : "") />
                                             <span class="ciit-mapping-check"><i class="bi bi-check-lg"></i></span>
                                             <span class="ciit-mapping-topic-icon"><i class="bi bi-diagram-3"></i></span>
                                             <span class="ciit-mapping-topic-copy">
                                                 <strong>@topic.Title</strong>
                                                 <small>Topic #@topic.Id</small>
                                             </span>
-                                            <span class="ciit-mapping-topic-state">
-                                                @(topic.IsAssigned ? "Assigned" : "Available")
+                                            <span class="ciit-mapping-topic-state @(topic.WasEverMapped && !topic.IsAssigned ? "is-removed" : "")">
+                                                @(topic.IsAssigned ? "Assigned" : topic.WasEverMapped ? "Removed" : "Available")
                                             </span>
                                         </label>
                                     }
@@ -153,10 +154,10 @@
                         <div class="ciit-mapping-footer">
                             <div class="ciit-mapping-footer-note">
                                 <i class="bi bi-info-circle"></i>
-                                <span>Checked topics stay assigned. Uncheck a saved topic to remove its course mapping; it will become available again and can be re-added later.</span>
+                                <span>New topics can be assigned once. Uncheck a saved topic to remove its course mapping; removed topics cannot be assigned again later.</span>
                             </div>
                             <button type="submit" class="ciit-mapping-save-btn" id="mappingSaveBtn">
-                                <i class="bi bi-plus-circle"></i><span id="mappingSaveLabel">Save Mapping</span>
+                                <i class="bi bi-check2-circle"></i><span id="mappingSaveLabel">Save Mapping</span>
                             </button>
                         </div>
                     </form>
