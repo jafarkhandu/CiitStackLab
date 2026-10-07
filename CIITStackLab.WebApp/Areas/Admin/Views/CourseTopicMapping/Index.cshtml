@@ -80,53 +80,79 @@
                                 <h2>@Model.SelectedCourseName</h2>
                                 <p>Select the topics that belong to this course.</p>
                             </div>
-                            <div class="ciit-mapping-topic-actions">
-                                <button type="button" class="ciit-mapping-secondary-btn" id="mappingSelectVisible">Select visible</button>
-                                <button type="button" class="ciit-mapping-secondary-btn" id="mappingClearVisible">Clear visible</button>
+                            <div class="ciit-mapping-selected-count">
+                                <strong>@Model.AssignedTopicCount</strong>
+                                <span>assigned</span>
                             </div>
                         </div>
 
-                        <div class="ciit-mapping-topic-toolbar">
-                            <div class="ciit-mapping-topic-search">
-                                <i class="bi bi-search"></i>
-                                <input id="mappingTopicSearch" type="search" placeholder="Search topics..." autocomplete="off" />
+                        @if (Model.Topics.Count > 0)
+                        {
+                            <div class="ciit-mapping-topics-section">
+                                <div class="ciit-mapping-section-label">
+                                    <div>
+                                        <span class="ciit-admin-panel-kicker">Course topics</span>
+                                        <h3>Manage Topics</h3>
+                                    </div>
+                                    <span class="ciit-mapping-available-count" id="mappingSelectionHint">Available to assign</span>
+                                </div>
+
+                                <div class="ciit-mapping-topic-toolbar">
+                                    <div class="ciit-mapping-topic-search">
+                                        <i class="bi bi-search"></i>
+                                        <input id="mappingTopicSearch" type="search" placeholder="Search topics..." autocomplete="off" />
+                                    </div>
+                                    <button type="button" class="ciit-mapping-select-all" id="mappingSelectAll">Select visible</button>
+                                    <button type="button" class="ciit-mapping-clear-all" id="mappingClearAll">Clear visible</button>
+                                </div>
+
+                                <div class="ciit-mapping-topic-grid" id="mappingTopicGrid">
+                                    @foreach (var topic in Model.Topics)
+                                    {
+                                        <label class="ciit-mapping-topic-card @(topic.IsAssigned ? "is-assigned" : "")"
+                                               data-topic-card
+                                               data-topic-name="@topic.Title.ToLowerInvariant()">
+                                            <input type="checkbox"
+                                                   name="TopicIds"
+                                                   value="@topic.Id"
+                                                   @(topic.IsAssigned ? "checked" : "") />
+                                            <span class="ciit-mapping-check"><i class="bi bi-check-lg"></i></span>
+                                            <span class="ciit-mapping-topic-icon"><i class="bi bi-diagram-3"></i></span>
+                                            <span class="ciit-mapping-topic-copy">
+                                                <strong>@topic.Title</strong>
+                                                <small>Topic #@topic.Id</small>
+                                            </span>
+                                            <span class="ciit-mapping-topic-state @(topic.IsAssigned ? "" : topic.WasEverMapped ? "is-removed" : "")">
+                                                @(topic.IsAssigned ? "Assigned" : topic.WasEverMapped ? "Removed — can reassign" : "Available")
+                                            </span>
+                                        </label>
+                                    }
+                                </div>
+
+                                <div class="ciit-mapping-no-topics" id="mappingNoTopics" hidden>
+                                    <i class="bi bi-search"></i>
+                                    <strong>No matching topics</strong>
+                                    <span>Try a different search.</span>
+                                </div>
                             </div>
-                            <div class="ciit-mapping-assigned-count"><strong id="mappingAssignedCount">@Model.AssignedTopicCount</strong> assigned</div>
-                        </div>
-
-                        <div class="ciit-mapping-topic-grid" id="mappingTopicGrid">
-                            @foreach (var topic in Model.Topics)
-                            {
-                                var stateClass = topic.IsAssigned ? "is-assigned" : topic.WasEverMapped ? "is-removed" : "";
-                                <label class="ciit-mapping-topic-card @stateClass" data-topic-name="@topic.Title.ToLowerInvariant()">
-                                    <input type="checkbox"
-                                           name="TopicIds"
-                                           value="@topic.Id"
-                                           @(topic.IsAssigned ? "checked" : "") />
-                                    <span class="ciit-mapping-topic-check"><i class="bi bi-check"></i></span>
-                                    <span class="ciit-mapping-topic-copy">
-                                        <strong>@topic.Title</strong>
-                                        <small>Topic #@topic.Id</small>
-                                    </span>
-                                    <span class="ciit-mapping-topic-state @(topic.WasEverMapped && !topic.IsAssigned ? "is-removed" : "")">
-                                        @(topic.IsAssigned ? "Assigned" : topic.WasEverMapped ? "Removed — can reassign" : "Available")
-                                    </span>
-                                </label>
-                            }
-                        </div>
-
-                        <div class="ciit-mapping-no-topics" id="mappingNoTopics" hidden>
-                            <i class="bi bi-search"></i>
-                            <strong>No topics found</strong>
-                            <span>Try a different search term.</span>
-                        </div>
+                        }
+                        else
+                        {
+                            <div class="ciit-mapping-all-assigned">
+                                <i class="bi bi-journal-x"></i>
+                                <strong>No active topics available</strong>
+                                <span>Create an active topic from the Topics module before mapping it to a course.</span>
+                            </div>
+                        }
 
                         <div class="ciit-mapping-footer">
-                            <div>
+                            <div class="ciit-mapping-footer-note">
                                 <i class="bi bi-info-circle"></i>
-                                <span>Removing a topic only removes the current course mapping. The same topic can be assigned to this course again later.</span>
+                                <span>Uncheck a saved topic to remove its course mapping. Removed topics can be assigned again later.</span>
                             </div>
-                            <button type="submit" class="ciit-mapping-save-btn"><i class="bi bi-check2-circle"></i> Save Mapping</button>
+                            <button type="submit" class="ciit-mapping-save-btn" id="mappingSaveBtn">
+                                <i class="bi bi-check2-circle"></i><span id="mappingSaveLabel">Save Mapping</span>
+                            </button>
                         </div>
                     </form>
                 }
