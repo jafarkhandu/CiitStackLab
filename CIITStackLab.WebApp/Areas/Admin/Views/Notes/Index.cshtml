@@ -1,0 +1,137 @@
+@model IReadOnlyList<CIITStackLab.Application.DTOs.AdminNotesDto>
+
+@{
+    ViewData["Title"] = "Notes";
+}
+
+@section Styles {
+    <link rel="stylesheet" href="~/css/admin-notes.css" asp-append-version="true" />
+}
+
+<section class="ciit-notes-page">
+    <div class="ciit-notes-header">
+        <div>
+            <span class="ciit-notes-eyebrow">Learning</span>
+            <h1>Notes</h1>
+            <p>Manage the HTML body rendered inside each course lesson.</p>
+        </div>
+        <div class="ciit-notes-header-meta">
+            <strong>@Model.Count</strong>
+            <span>active lessons</span>
+        </div>
+    </div>
+
+    <div class="ciit-notes-info">
+        <i class="bi bi-code-square"></i>
+        <div>
+            <strong>Paste the lesson HTML directly</strong>
+            <span>The saved HTML is rendered for learners under the matching course topic. Keep the content as an HTML fragment rather than a full document.</span>
+        </div>
+    </div>
+
+    <section class="ciit-notes-card">
+        <div class="ciit-notes-toolbar">
+            <div class="ciit-notes-search">
+                <i class="bi bi-search"></i>
+                <input id="notesSearch" type="search" placeholder="Search lesson, topic or course..." autocomplete="off" />
+            </div>
+            <span id="notesVisibleCount" class="ciit-notes-count">@Model.Count lessons</span>
+        </div>
+
+        <div class="table-responsive">
+            <table class="ciit-notes-table">
+                <thead>
+                    <tr>
+                        <th>Lesson</th>
+                        <th>Course</th>
+                        <th>Topic</th>
+                        <th>HTML</th>
+                        <th>Updated</th>
+                        <th></th>
+                    </tr>
+                </thead>
+                <tbody id="notesRows">
+                @foreach (var note in Model)
+                {
+                    var hasHtml = !string.IsNullOrWhiteSpace(note.HtmlContent);
+                    <tr data-note-row data-search="@($"{note.Title} {note.CourseTitle} {note.TopicTitle}")">
+                        <td>
+                            <div class="ciit-notes-name">
+                                <span class="ciit-notes-icon"><i class="bi bi-journal-code"></i></span>
+                                <div>
+                                    <strong>@note.Title</strong>
+                                    <small>#@note.Id</small>
+                                </div>
+                            </div>
+                        </td>
+                        <td>@note.CourseTitle</td>
+                        <td><span class="ciit-notes-topic">@note.TopicTitle</span></td>
+                        <td>
+                            <span class="ciit-notes-status @(hasHtml ? "is-ready" : "is-empty")">
+                                <i class="bi @(hasHtml ? "bi-check-circle-fill" : "bi-dash-circle")"></i>
+                                @(hasHtml ? "Added" : "Not added")
+                            </span>
+                        </td>
+                        <td>@((note.UpdatedAt ?? note.CreatedAt)?.ToString("dd MMM yyyy") ?? "—")</td>
+                        <td>
+                            <a asp-area="Admin" asp-controller="Notes" asp-action="Edit" asp-route-id="@note.Id" class="ciit-notes-edit-btn">
+                                <i class="bi bi-pencil-square"></i>
+                                <span>@(hasHtml ? "Edit HTML" : "Add HTML")</span>
+                            </a>
+                        </td>
+                    </tr>
+                }
+                </tbody>
+            </table>
+        </div>
+
+        <div id="notesSearchEmpty" class="ciit-notes-empty" hidden>
+            <i class="bi bi-search"></i>
+            <h3>No matching lessons</h3>
+            <p>Try another lesson, topic or course name.</p>
+        </div>
+
+        @if (Model.Count == 0)
+        {
+            <div class="ciit-notes-empty is-visible">
+                <i class="bi bi-journal-x"></i>
+                <h3>No active lessons</h3>
+                <p>Create active course content first, then add its HTML body here.</p>
+            </div>
+        }
+    </section>
+</section>
+
+@section Scripts {
+    <script>
+        (() => {
+            const input = document.getElementById('notesSearch');
+            const rows = [...document.querySelectorAll('[data-note-row]')];
+            const count = document.getElementById('notesVisibleCount');
+            const empty = document.getElementById('notesSearchEmpty');
+
+            if (!input) return;
+
+            const update = () => {
+                const query = input.value.trim().toLowerCase();
+                let visible = 0;
+
+                rows.forEach(row => {
+                    const matches = !query || (row.dataset.search || '').toLowerCase().includes(query);
+                    row.hidden = !matches;
+                    if (matches) visible++;
+                });
+
+                if (count) {
+                    count.textContent = `${visible} lesson${visible === 1 ? '' : 's'}`;
+                }
+
+                if (empty) {
+                    empty.hidden = visible !== 0;
+                }
+            };
+
+            input.addEventListener('input', update);
+        })();
+    </script>
+}
