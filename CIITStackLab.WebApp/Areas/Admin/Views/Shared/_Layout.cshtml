@@ -14,6 +14,7 @@
     <link rel="stylesheet" href="~/css/admin-mapping.css" />
     <link rel="stylesheet" href="~/css/admin-students.css" />
     <link rel="stylesheet" href="~/css/admin-settings.css" />
+    <link rel="stylesheet" href="~/css/admin-shell-fixes.css" />
     @await RenderSectionAsync("Styles", required: false)
 </head>
 <body class="ciit-admin-body">
@@ -29,7 +30,7 @@
                 <div class="ciit-admin-nav-heading">Learning</div>
                 <a asp-area="Admin" asp-controller="Courses" asp-action="Index" class="ciit-admin-nav-link @(currentAdminController == "Courses" ? "active" : "")"><i class="bi bi-journal-code"></i><span>Courses</span></a>
                 <a asp-area="Admin" asp-controller="Topics" asp-action="Index" class="ciit-admin-nav-link @(currentAdminController == "Topics" ? "active" : "")"><i class="bi bi-diagram-3"></i><span>Topics</span></a>
-                <a asp-area="Admin" asp-controller="CourseTopicMapping" asp-action="Index" class="ciit-admin-nav-link @(currentAdminController == "CourseTopicMapping" ? "active" : "")"><i class="bi bi-diagram-2"></i><span>Course Mapping</span></a>
+                <a asp-area="Admin" asp-controller="CourseTopicMapping" asp-action="Index" class="ciit-admin-nav-link @(currentAdminController == "CourseTopicMapping" ? "active" : "")"><i class="bi bi-diagram-2"></i><span>Course Content Manager</span></a>
                 <div class="ciit-admin-nav-heading">Assessment</div>
                 <a asp-area="Admin" asp-controller="Content" asp-action="Index" class="ciit-admin-nav-link @(currentAdminController == "Content" ? "active" : "")"><i class="bi bi-file-earmark-text"></i><span>Content</span></a>
                 <span class="ciit-admin-nav-link is-disabled" title="Assessment modules are under development"><i class="bi bi-ui-checks-grid"></i><span>Assessments</span><small>Next</small></span>
