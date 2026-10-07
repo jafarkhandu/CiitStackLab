@@ -101,50 +101,71 @@ public sealed class AdminCourseTopicMappingService : IAdminCourseTopicMappingSer
             .Distinct()
             .ToHashSet();
 
-        if (requestedTopicIds.Count == 0)
-        {
-            return (false, "Select at least one new topic before saving.");
-        }
-
         var activeTopicIds = await _dbContext.Topics
             .AsNoTracking()
             .Where(x => x.Flag == 0)
             .Select(x => x.Id)
             .ToListAsync(cancellationToken);
 
+        // Only currently active topics can participate in a mapping.
         requestedTopicIds.IntersectWith(activeTopicIds);
 
-        if (requestedTopicIds.Count == 0)
-        {
-            return (false, "The selected topics are no longer active.");
-        }
-
-        // A course-topic pair may exist only once. The existing ERP database
-        // enforces a unique constraint on (course_id, topic_id), so previously
-        // mapped pairs are never inserted again.
-        var existingTopicIds = await _dbContext.CourseModules
-            .AsNoTracking()
-            .Where(x => x.CourseId == courseId && requestedTopicIds.Contains(x.TopicId))
-            .Select(x => x.TopicId)
-            .Distinct()
+        var allMappings = await _dbContext.CourseModules
+            .Where(x => x.CourseId == courseId)
+            .OrderBy(x => x.Id)
             .ToListAsync(cancellationToken);
 
-        requestedTopicIds.ExceptWith(existingTopicIds);
+        var currentActiveMappings = allMappings
+            .Where(x => x.Flag == 0)
+            .ToList();
 
-        if (requestedTopicIds.Count == 0)
+        // Synchronize the selected checkboxes with the active mappings:
+        // checked = keep/create/restore; unchecked = soft-delete.
+        foreach (var activeMapping in currentActiveMappings)
         {
-            return (false, "All selected topics are already mapped to this course.");
+            if (!requestedTopicIds.Contains(activeMapping.TopicId))
+            {
+                activeMapping.Flag = 1;
+                activeMapping.DeletedAt = DateTime.Now;
+                activeMapping.UpdatedAt = DateTime.Now;
+            }
         }
 
         foreach (var topicId in requestedTopicIds)
         {
-            _dbContext.CourseModules.Add(new Domain.Entities.CourseModule
+            var activeMapping = currentActiveMappings
+                .FirstOrDefault(x => x.TopicId == topicId);
+
+            if (activeMapping is not null)
             {
-                CourseId = courseId,
-                TopicId = topicId,
-                Flag = 0,
-                CreatedAt = DateTime.Now
-            });
+                continue;
+            }
+
+            // Reuse an archived mapping for the same pair when possible.
+            // This prevents multiple rows for the same Course + Topic pair
+            // while allowing a previously removed topic to be added again.
+            var archivedMapping = allMappings
+                .Where(x => x.TopicId == topicId && x.Flag == 1)
+                .OrderByDescending(x => x.Id)
+                .FirstOrDefault();
+
+            if (archivedMapping is not null)
+            {
+                archivedMapping.Flag = 0;
+                archivedMapping.DeletedAt = null;
+                archivedMapping.RestoredAt = DateTime.Now;
+                archivedMapping.UpdatedAt = DateTime.Now;
+            }
+            else
+            {
+                _dbContext.CourseModules.Add(new Domain.Entities.CourseModule
+                {
+                    CourseId = courseId,
+                    TopicId = topicId,
+                    Flag = 0,
+                    CreatedAt = DateTime.Now
+                });
+            }
         }
 
         try
@@ -154,7 +175,7 @@ public sealed class AdminCourseTopicMappingService : IAdminCourseTopicMappingSer
         }
         catch (DbUpdateException)
         {
-            return (false, "The course-topic mapping could not be saved. A duplicate mapping may already exist.");
+            return (false, "The course-topic mapping could not be saved. Please try again.");
         }
     }
 }

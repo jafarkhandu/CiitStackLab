@@ -8,15 +8,20 @@ namespace CIITStackLab.WebApp.Controllers;
 
 public class AccountController : Controller
 {
+    private const string AdminRole = "Admin";
+    private const string SuperUserRole = "Super User";
     private readonly UserManager<ApplicationUser> _userManager;
+    private readonly RoleManager<IdentityRole> _roleManager;
     private readonly SignInManager<ApplicationUser> _signInManager;
 
     public AccountController(
         UserManager<ApplicationUser> userManager,
-        SignInManager<ApplicationUser> signInManager)
+        SignInManager<ApplicationUser> signInManager,
+        RoleManager<IdentityRole> roleManager)
     {
         _userManager = userManager;
         _signInManager = signInManager;
+        _roleManager = roleManager;
     }
 
     [HttpGet]
@@ -58,7 +63,8 @@ public class AccountController : Controller
 
         await _signInManager.SignInAsync(user, isPersistent: model.RememberMe);
 
-        if (await _userManager.IsInRoleAsync(user, "Admin"))
+        if (await _userManager.IsInRoleAsync(user, AdminRole) ||
+            await _userManager.IsInRoleAsync(user, SuperUserRole))
         {
             return RedirectToAction("Index", "Dashboard", new { area = "Admin" });
         }
@@ -129,8 +135,27 @@ public class AccountController : Controller
             return View(model);
         }
 
-        // Public registration can never create an Admin.
-        // Every newly registered account is assigned the Student role only.
+        // Public registration can never create Admin or Super User access.
+        // The Student role is created lazily on first registration if the
+        // current ERP database does not contain it yet.
+        if (!await _roleManager.RoleExistsAsync("Student"))
+        {
+            var createRoleResult = await _roleManager.CreateAsync(
+                new IdentityRole("Student"));
+
+            if (!createRoleResult.Succeeded && !await _roleManager.RoleExistsAsync("Student"))
+            {
+                await _userManager.DeleteAsync(user);
+
+                foreach (var error in createRoleResult.Errors)
+                {
+                    ModelState.AddModelError(string.Empty, error.Description);
+                }
+
+                return View(model);
+            }
+        }
+
         var roleResult = await _userManager.AddToRoleAsync(user, "Student");
 
         if (!roleResult.Succeeded)
