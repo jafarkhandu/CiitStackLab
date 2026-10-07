@@ -10,133 +10,70 @@ namespace CIITStackLab.WebApp.Areas.Admin.Controllers;
 public class CoursesController : Controller
 {
     private readonly IAdminCourseService _courseService;
-
-    public CoursesController(IAdminCourseService courseService)
-    {
-        _courseService = courseService;
-    }
+    public CoursesController(IAdminCourseService courseService) => _courseService = courseService;
 
     [HttpGet]
-    public async Task<IActionResult> Index(
-        int? editId = null,
-        CancellationToken cancellationToken = default)
+    public async Task<IActionResult> Index(int? editId = null, CancellationToken cancellationToken = default)
     {
         var activeCourses = await _courseService.GetActiveAsync(cancellationToken);
         var archivedCourses = await _courseService.GetArchivedAsync(cancellationToken);
 
         AdminCourseFormModel? editCourse = null;
-
         if (editId.HasValue)
         {
             var course = activeCourses.FirstOrDefault(x => x.Id == editId.Value);
-
-            if (course is not null)
-            {
-                editCourse = new AdminCourseFormModel
-                {
-                    Id = course.Id,
-                    CourseName = course.Title,
-                    FeesAmount = course.FeesAmount,
-                    FeesChangeDate = course.FeesChangeDate,
-                    InstallmentPercentage = course.InstallmentPercentage
-                };
-            }
+            if (course is not null) editCourse = new AdminCourseFormModel { Id = course.Id, CourseName = course.Title };
         }
 
-        return View(new AdminCourseIndexViewModel
-        {
-            ActiveCourses = activeCourses,
-            ArchivedCourses = archivedCourses,
-            EditCourse = editCourse
-        });
+        return View(new AdminCourseIndexViewModel { ActiveCourses = activeCourses, ArchivedCourses = archivedCourses, EditCourse = editCourse });
     }
 
     [HttpPost]
     [ValidateAntiForgeryToken]
-    public async Task<IActionResult> Save(
-        AdminCourseFormModel model,
-        CancellationToken cancellationToken)
+    public async Task<IActionResult> Save(AdminCourseFormModel model, CancellationToken cancellationToken)
     {
         model.CourseName = model.CourseName?.Trim() ?? string.Empty;
 
         if (!ModelState.IsValid)
-        {
-            TempData["AdminCourseMessage"] = "Please check the course details.";
-            TempData["AdminCourseMessageType"] = "error";
-            return RedirectToAction(nameof(Index), new { editId = model.Id == 0 ? (int?)null : model.Id });
-        }
+            return Fail("Please check the course details.", model.Id);
 
-        var duplicate = await _courseService.CourseNameExistsAsync(
-            model.CourseName,
-            model.Id == 0 ? null : model.Id,
-            cancellationToken);
-
-        if (duplicate)
-        {
-            TempData["AdminCourseMessage"] = "A course with this name already exists.";
-            TempData["AdminCourseMessageType"] = "error";
-            return RedirectToAction(nameof(Index), new { editId = model.Id == 0 ? (int?)null : model.Id });
-        }
+        if (await _courseService.CourseNameExistsAsync(model.CourseName, model.Id == 0 ? null : model.Id, cancellationToken))
+            return Fail("A course with this name already exists.", model.Id);
 
         if (model.Id == 0)
         {
-            var created = await _courseService.CreateAsync(
-                model.CourseName,
-                model.FeesAmount,
-                model.FeesChangeDate,
-                model.InstallmentPercentage,
-                cancellationToken);
-
-            return created.Succeeded
-                ? RedirectToIndexWithMessage("Course created successfully.", "success")
-                : RedirectToIndexWithMessage(created.Error ?? "Unable to create the course.", "error");
+            var created = await _courseService.CreateAsync(model.CourseName, cancellationToken);
+            return created.Succeeded ? Success("Course created successfully.") : Fail(created.Error ?? "Unable to create the course.");
         }
 
-        var updated = await _courseService.UpdateAsync(
-            model.Id,
-            model.CourseName,
-            model.FeesAmount,
-            model.FeesChangeDate,
-            model.InstallmentPercentage,
-            cancellationToken);
-
-        return updated.Succeeded
-            ? RedirectToIndexWithMessage("Course updated successfully.", "success")
-            : RedirectToIndexWithMessage(updated.Error ?? "Unable to update the course.", "error", model.Id);
+        var updated = await _courseService.UpdateAsync(model.Id, model.CourseName, cancellationToken);
+        return updated.Succeeded ? Success("Course updated successfully.") : Fail(updated.Error ?? "Unable to update the course.", model.Id);
     }
 
     [HttpPost]
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> Delete(int id, CancellationToken cancellationToken)
-    {
-        var result = await _courseService.DeleteAsync(id, cancellationToken);
-
-        return result.Succeeded
-            ? RedirectToIndexWithMessage("Course moved to archive.", "success")
-            : RedirectToIndexWithMessage(result.Error ?? "Unable to archive the course.", "error");
-    }
+        => Result(await _courseService.DeleteAsync(id, cancellationToken), "Course moved to archive.", "Unable to archive the course.");
 
     [HttpPost]
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> Restore(int id, CancellationToken cancellationToken)
-    {
-        var result = await _courseService.RestoreAsync(id, cancellationToken);
+        => Result(await _courseService.RestoreAsync(id, cancellationToken), "Course restored successfully.", "Unable to restore the course.");
 
-        return result.Succeeded
-            ? RedirectToIndexWithMessage("Course restored successfully.", "success")
-            : RedirectToIndexWithMessage(result.Error ?? "Unable to restore the course.", "error");
-    }
-
-    private IActionResult RedirectToIndexWithMessage(
-        string message,
-        string type,
-        int? editId = null)
+    private IActionResult Success(string message, int? editId = null)
     {
         TempData["AdminCourseMessage"] = message;
-        TempData["AdminCourseMessageType"] = type;
-
-        return RedirectToAction(
-            nameof(Index),
-            editId.HasValue ? new { editId } : null)!;
+        TempData["AdminCourseMessageType"] = "success";
+        return RedirectToAction(nameof(Index), editId.HasValue ? new { editId } : null)!;
     }
+
+    private IActionResult Fail(string message, int? editId = null)
+    {
+        TempData["AdminCourseMessage"] = message;
+        TempData["AdminCourseMessageType"] = "error";
+        return RedirectToAction(nameof(Index), editId.HasValue ? new { editId } : null)!;
+    }
+
+    private IActionResult Result((bool Succeeded, string? Error) result, string success, string failure)
+        => result.Succeeded ? Success(success) : Fail(result.Error ?? failure);
 }
