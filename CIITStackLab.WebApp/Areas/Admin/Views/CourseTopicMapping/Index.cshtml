@@ -86,11 +86,6 @@
                             </div>
                         </div>
 
-                        @{
-                            var assignedTopics = Model.Topics.Where(x => x.IsAssigned).ToList();
-                            var availableTopics = Model.Topics.Where(x => !x.IsAssigned).ToList();
-                        }
-
                         @if (Model.Topics.Count > 0)
                         {
                             <div class="ciit-mapping-topics-section">
@@ -120,16 +115,15 @@
                                             <input type="checkbox"
                                                    name="TopicIds"
                                                    value="@topic.Id"
-                                                   @(topic.IsAssigned ? "checked" : "")
-                                                   @((topic.WasEverMapped && !topic.IsAssigned) ? "disabled" : "") />
+                                                   @(topic.IsAssigned ? "checked" : "") />
                                             <span class="ciit-mapping-check"><i class="bi bi-check-lg"></i></span>
                                             <span class="ciit-mapping-topic-icon"><i class="bi bi-diagram-3"></i></span>
                                             <span class="ciit-mapping-topic-copy">
                                                 <strong>@topic.Title</strong>
                                                 <small>Topic #@topic.Id</small>
                                             </span>
-                                            <span class="ciit-mapping-topic-state @(topic.WasEverMapped && !topic.IsAssigned ? "is-removed" : "")">
-                                                @(topic.IsAssigned ? "Assigned" : topic.WasEverMapped ? "Removed" : "Available")
+                                            <span class="ciit-mapping-topic-state @(topic.IsAssigned ? "" : topic.WasEverMapped ? "is-removed" : "")">
+                                                @(topic.IsAssigned ? "Assigned" : topic.WasEverMapped ? "Removed — can reassign" : "Available")
                                             </span>
                                         </label>
                                     }
@@ -154,7 +148,7 @@
                         <div class="ciit-mapping-footer">
                             <div class="ciit-mapping-footer-note">
                                 <i class="bi bi-info-circle"></i>
-                                <span>New topics can be assigned once. Uncheck a saved topic to remove its course mapping; removed topics cannot be assigned again later.</span>
+                                <span>Uncheck a saved topic to remove its course mapping. Removed topics can be assigned again later.</span>
                             </div>
                             <button type="submit" class="ciit-mapping-save-btn" id="mappingSaveBtn">
                                 <i class="bi bi-check2-circle"></i><span id="mappingSaveLabel">Save Mapping</span>
