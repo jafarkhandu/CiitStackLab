@@ -18,6 +18,7 @@ public class ApplicationDbContext : IdentityDbContext<ApplicationUser>
     public DbSet<Lesson> Lessons => Set<Lesson>();
     public DbSet<Topic> Topics => Set<Topic>();
     public DbSet<ContentQuestion> ContentQuestions => Set<ContentQuestion>();
+    public DbSet<TrainingNote> TrainingNotes => Set<TrainingNote>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -116,12 +117,33 @@ public class ApplicationDbContext : IdentityDbContext<ApplicationUser>
             entity.Property(x => x.Title).HasColumnName("content_name").HasMaxLength(100);
             entity.Property(x => x.Slides).HasColumnName("slides");
             entity.Property(x => x.VideoName).HasColumnName("video_name").HasMaxLength(100);
-            entity.Property(x => x.HtmlContent).HasColumnName("html_content");
             entity.Property(x => x.Flag).HasColumnName("flag");
             entity.Property(x => x.CreatedAt).HasColumnName("InsertedAt");
             entity.Property(x => x.UpdatedAt).HasColumnName("UpdatedAt");
             entity.Property(x => x.DeletedAt).HasColumnName("DeletedAt");
             entity.Property(x => x.RestoredAt).HasColumnName("RestoredAt");
+        });
+
+        modelBuilder.Entity<TrainingNote>(entity =>
+        {
+            entity.ToTable("tbltraining_notes", ExistingSchema);
+            entity.HasKey(x => x.Id);
+            entity.Property(x => x.Id).HasColumnName("note_id");
+            entity.Property(x => x.CourseId).HasColumnName("course_id").IsRequired();
+            entity.Property(x => x.TopicId).HasColumnName("topic_id").IsRequired();
+            entity.Property(x => x.PageId).HasColumnName("page_id").HasMaxLength(50).IsRequired();
+            entity.Property(x => x.Title).HasColumnName("title").HasMaxLength(100).IsRequired();
+            entity.Property(x => x.TitleWithNumber).HasColumnName("title_with_number").HasMaxLength(150).IsRequired();
+            entity.Property(x => x.HtmlContent).HasColumnName("html_content").IsRequired();
+            entity.Property(x => x.SortOrder).HasColumnName("sort_order").IsRequired();
+            entity.Property(x => x.Flag).HasColumnName("flag");
+            entity.Property(x => x.CreatedAt).HasColumnName("InsertedAt");
+            entity.Property(x => x.UpdatedAt).HasColumnName("UpdatedAt");
+            entity.Property(x => x.DeletedAt).HasColumnName("DeletedAt");
+            entity.Property(x => x.RestoredAt).HasColumnName("RestoredAt");
+            entity.HasIndex(x => new { x.CourseId, x.TopicId, x.PageId }).IsUnique().HasDatabaseName("UX_tbltraining_notes_course_topic_page");
+            entity.HasOne(x => x.Course).WithMany().HasForeignKey(x => x.CourseId).OnDelete(DeleteBehavior.NoAction);
+            entity.HasOne(x => x.Topic).WithMany().HasForeignKey(x => x.TopicId).OnDelete(DeleteBehavior.NoAction);
         });
     }
 }
