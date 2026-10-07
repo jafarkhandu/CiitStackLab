@@ -18,6 +18,7 @@ public sealed class AdminNotesService : IAdminNotesService
         CancellationToken cancellationToken = default)
     {
         return await BuildQuery()
+            .Distinct()
             .OrderBy(x => x.CourseTitle)
             .ThenBy(x => x.TopicTitle)
             .ThenBy(x => x.Title)
