@@ -1,0 +1,21 @@
+@model CIITStackLab.Application.DTOs.AdminContentDto
+
+@{ ViewData["Title"] = "Content Details"; }
+
+@section Styles { <link rel="stylesheet" href="~/css/admin-content.css" asp-append-version="true" /> }
+
+<section class="ciit-content-form-page">
+    <div class="ciit-content-form-header"><div><a asp-action="Index" class="ciit-content-back"><i class="bi bi-arrow-left"></i> Back to Content</a><span class="ciit-content-eyebrow">Content details</span><h1>@Model.Title</h1><p>@Model.CourseTitle / @Model.TopicTitle</p></div><a asp-action="Edit" asp-route-id="@Model.Id" class="ciit-content-primary-btn"><i class="bi bi-pencil-square"></i> Edit</a></div>
+
+    <div class="ciit-content-detail-grid">
+        <div class="ciit-content-detail-card"><span>Course</span><strong>@Model.CourseTitle</strong><small>ID @Model.CourseId</small></div>
+        <div class="ciit-content-detail-card"><span>Topic</span><strong>@Model.TopicTitle</strong><small>ID @Model.TopicId</small></div>
+        <div class="ciit-content-detail-card"><span>Status</span><strong>@(Model.Flag == 0 ? "Active" : "Archived")</strong><small>Content ID @Model.Id</small></div>
+        <div class="ciit-content-detail-card"><span>Created</span><strong>@(Model.CreatedAt?.ToString("dd MMM yyyy") ?? "—")</strong><small>@(Model.CreatedAt?.ToString("hh:mm tt") ?? "")</small></div>
+    </div>
+
+    <div class="ciit-content-detail-body">
+        <div class="ciit-content-detail-section"><span class="ciit-content-eyebrow">Media</span><h2>Learning resources</h2><div class="ciit-content-resource-grid"><div><i class="bi bi-file-slides"></i><span>Slides</span><strong>@(string.IsNullOrWhiteSpace(Model.Slides) ? "Not specified" : Model.Slides)</strong></div><div><i class="bi bi-play-circle"></i><span>Video</span><strong>@(string.IsNullOrWhiteSpace(Model.VideoName) ? "Not specified" : Model.VideoName)</strong></div></div></div>
+        <div class="ciit-content-detail-section"><span class="ciit-content-eyebrow">History</span><h2>Record timestamps</h2><dl class="ciit-content-history"><dt>Created</dt><dd>@(Model.CreatedAt?.ToString("dd MMM yyyy, hh:mm tt") ?? "—")</dd><dt>Updated</dt><dd>@(Model.UpdatedAt?.ToString("dd MMM yyyy, hh:mm tt") ?? "—")</dd><dt>Deleted</dt><dd>@(Model.DeletedAt?.ToString("dd MMM yyyy, hh:mm tt") ?? "—")</dd><dt>Restored</dt><dd>@(Model.RestoredAt?.ToString("dd MMM yyyy, hh:mm tt") ?? "—")</dd></dl></div>
+    </div>
+</section>

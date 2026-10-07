@@ -11,9 +11,7 @@ public class ApplicationDbContext : IdentityDbContext<ApplicationUser>
     private const string ExistingSchema = "erpsystem";
 
     public ApplicationDbContext(DbContextOptions<ApplicationDbContext> options)
-        : base(options)
-    {
-    }
+        : base(options) { }
 
     public DbSet<Course> Courses => Set<Course>();
     public DbSet<CourseModule> CourseModules => Set<CourseModule>();
@@ -25,7 +23,6 @@ public class ApplicationDbContext : IdentityDbContext<ApplicationUser>
     {
         base.OnModelCreating(modelBuilder);
 
-        // The existing ERP database already contains the ASP.NET Identity tables.
         modelBuilder.Entity<ApplicationUser>().ToTable("AspNetUsers", ExistingSchema);
         modelBuilder.Entity<IdentityRole>().ToTable("AspNetRoles", ExistingSchema);
         modelBuilder.Entity<IdentityUserClaim<string>>().ToTable("AspNetUserClaims", ExistingSchema);
@@ -38,38 +35,19 @@ public class ApplicationDbContext : IdentityDbContext<ApplicationUser>
         {
             entity.ToTable("tbltraining_courses", ExistingSchema);
             entity.HasKey(x => x.Id);
+            entity.Property(x => x.Id).HasColumnName("course_id");
+            entity.Property(x => x.Title).HasColumnName("course_name").HasMaxLength(100).IsRequired();
 
-            entity.Property(x => x.Id)
-                .HasColumnName("course_id");
+            // Legacy ERP fee fields are preserved in the model/database but are no longer exposed in Admin UI.
+            entity.Property(x => x.FeesAmount).HasColumnName("fees_amount");
+            entity.Property(x => x.FeesChangeDate).HasColumnName("fees_change_date");
+            entity.Property(x => x.InstallmentPercentage).HasColumnName("installment_percentage");
 
-            entity.Property(x => x.Title)
-                .HasColumnName("course_name")
-                .HasMaxLength(100)
-                .IsRequired();
-
-            entity.Property(x => x.FeesAmount)
-                .HasColumnName("fees_amount");
-
-            entity.Property(x => x.FeesChangeDate)
-                .HasColumnName("fees_change_date");
-
-            entity.Property(x => x.InstallmentPercentage)
-                .HasColumnName("installment_percentage");
-
-            entity.Property(x => x.Flag)
-                .HasColumnName("flag");
-
-            entity.Property(x => x.CreatedAt)
-                .HasColumnName("InsertedAt");
-
-            entity.Property(x => x.UpdatedAt)
-                .HasColumnName("UpdatedAt");
-
-            entity.Property(x => x.DeletedAt)
-                .HasColumnName("DeletedAt");
-
-            entity.Property(x => x.RestoredAt)
-                .HasColumnName("RestoredAt");
+            entity.Property(x => x.Flag).HasColumnName("flag");
+            entity.Property(x => x.CreatedAt).HasColumnName("InsertedAt");
+            entity.Property(x => x.UpdatedAt).HasColumnName("UpdatedAt");
+            entity.Property(x => x.DeletedAt).HasColumnName("DeletedAt");
+            entity.Property(x => x.RestoredAt).HasColumnName("RestoredAt");
 
             entity.HasMany(x => x.Modules)
                 .WithOne(x => x.Course)
@@ -81,33 +59,15 @@ public class ApplicationDbContext : IdentityDbContext<ApplicationUser>
         {
             entity.ToTable("tbltraining_course_topics", ExistingSchema);
             entity.HasKey(x => x.Id);
-
-            entity.Property(x => x.Id)
-                .HasColumnName("course_topic_id");
-
-            entity.Property(x => x.CourseId)
-                .HasColumnName("course_id");
-
-            entity.Property(x => x.TopicId)
-                .HasColumnName("topic_id");
-
-            entity.Property(x => x.Flag)
-                .HasColumnName("flag");
-
-            entity.Property(x => x.CreatedAt)
-                .HasColumnName("InsertedAt");
-
-            entity.Property(x => x.UpdatedAt)
-                .HasColumnName("UpdatedAt");
-
-            entity.Property(x => x.DeletedAt)
-                .HasColumnName("DeletedAt");
-
-            entity.Property(x => x.RestoredAt)
-                .HasColumnName("RestoredAt");
-
-            entity.HasOne(x => x.Topic)
-                .WithMany(x => x.CourseModules)
+            entity.Property(x => x.Id).HasColumnName("course_topic_id");
+            entity.Property(x => x.CourseId).HasColumnName("course_id");
+            entity.Property(x => x.TopicId).HasColumnName("topic_id");
+            entity.Property(x => x.Flag).HasColumnName("flag");
+            entity.Property(x => x.CreatedAt).HasColumnName("InsertedAt");
+            entity.Property(x => x.UpdatedAt).HasColumnName("UpdatedAt");
+            entity.Property(x => x.DeletedAt).HasColumnName("DeletedAt");
+            entity.Property(x => x.RestoredAt).HasColumnName("RestoredAt");
+            entity.HasOne(x => x.Topic).WithMany(x => x.CourseModules)
                 .HasForeignKey(x => x.TopicId)
                 .OnDelete(DeleteBehavior.NoAction);
         });
@@ -116,35 +76,23 @@ public class ApplicationDbContext : IdentityDbContext<ApplicationUser>
         {
             entity.ToTable("tbltraining_topics", ExistingSchema);
             entity.HasKey(x => x.Id);
+            entity.Property(x => x.Id).HasColumnName("topic_id");
+            entity.Property(x => x.Title).HasColumnName("topic_name").HasMaxLength(100).IsRequired();
+            entity.Property(x => x.PublicFolderId).HasColumnName("publicfolderid");
 
-            entity.Property(x => x.Id)
-                .HasColumnName("topic_id");
+            entity.Property(x => x.Price)
+                .HasColumnName("price")
+                .HasPrecision(18, 2)
+                .HasDefaultValue(0m);
 
-            entity.Property(x => x.Title)
-                .HasColumnName("topic_name")
-                .HasMaxLength(100)
-                .IsRequired();
+            entity.Property(x => x.DurationMinutes).HasColumnName("duration_minutes");
+            entity.Property(x => x.Flag).HasColumnName("flag");
+            entity.Property(x => x.CreatedAt).HasColumnName("InsertedAt");
+            entity.Property(x => x.UpdatedAt).HasColumnName("UpdatedAt");
+            entity.Property(x => x.DeletedAt).HasColumnName("DeletedAt");
+            entity.Property(x => x.RestoredAt).HasColumnName("RestoredAt");
 
-            entity.Property(x => x.PublicFolderId)
-                .HasColumnName("publicfolderid");
-
-            entity.Property(x => x.Flag)
-                .HasColumnName("flag");
-
-            entity.Property(x => x.CreatedAt)
-                .HasColumnName("InsertedAt");
-
-            entity.Property(x => x.UpdatedAt)
-                .HasColumnName("UpdatedAt");
-
-            entity.Property(x => x.DeletedAt)
-                .HasColumnName("DeletedAt");
-
-            entity.Property(x => x.RestoredAt)
-                .HasColumnName("RestoredAt");
-
-            entity.HasMany(x => x.Lessons)
-                .WithOne(x => x.Topic)
+            entity.HasMany(x => x.Lessons).WithOne(x => x.Topic)
                 .HasForeignKey(x => x.TopicId)
                 .OnDelete(DeleteBehavior.NoAction);
         });
@@ -153,88 +101,36 @@ public class ApplicationDbContext : IdentityDbContext<ApplicationUser>
         {
             entity.ToTable("tblcontent_questions", ExistingSchema);
             entity.HasKey(x => x.Id);
-
-            entity.Property(x => x.Id)
-                .HasColumnName("question_id");
-
-            entity.Property(x => x.ContentId)
-                .HasColumnName("content_id");
-
-            entity.Property(x => x.Question)
-                .HasColumnName("question");
-
-            entity.Property(x => x.Option1)
-                .HasColumnName("option1");
-
-            entity.Property(x => x.Option2)
-                .HasColumnName("option2");
-
-            entity.Property(x => x.Option3)
-                .HasColumnName("option3");
-
-            entity.Property(x => x.Option4)
-                .HasColumnName("option4");
-
-            entity.Property(x => x.CorrectOptionNumber)
-                .HasColumnName("correct_option_number");
-
-            entity.Property(x => x.Flag)
-                .HasColumnName("flag");
-
-            entity.Property(x => x.CreatedAt)
-                .HasColumnName("InsertedAt");
-
-            entity.Property(x => x.UpdatedAt)
-                .HasColumnName("UpdatedAt");
-
-            entity.Property(x => x.DeletedAt)
-                .HasColumnName("DeletedAt");
-
-            entity.Property(x => x.RestoredAt)
-                .HasColumnName("RestoredAt");
-
-            entity.HasOne(x => x.Content)
-                .WithMany()
-                .HasForeignKey(x => x.ContentId)
-                .OnDelete(DeleteBehavior.NoAction);
+            entity.Property(x => x.Id).HasColumnName("question_id");
+            entity.Property(x => x.ContentId).HasColumnName("content_id");
+            entity.Property(x => x.Question).HasColumnName("question");
+            entity.Property(x => x.Option1).HasColumnName("option1");
+            entity.Property(x => x.Option2).HasColumnName("option2");
+            entity.Property(x => x.Option3).HasColumnName("option3");
+            entity.Property(x => x.Option4).HasColumnName("option4");
+            entity.Property(x => x.CorrectOptionNumber).HasColumnName("correct_option_number");
+            entity.Property(x => x.Flag).HasColumnName("flag");
+            entity.Property(x => x.CreatedAt).HasColumnName("InsertedAt");
+            entity.Property(x => x.UpdatedAt).HasColumnName("UpdatedAt");
+            entity.Property(x => x.DeletedAt).HasColumnName("DeletedAt");
+            entity.Property(x => x.RestoredAt).HasColumnName("RestoredAt");
+            entity.HasOne(x => x.Content).WithMany().HasForeignKey(x => x.ContentId).OnDelete(DeleteBehavior.NoAction);
         });
 
         modelBuilder.Entity<Lesson>(entity =>
         {
             entity.ToTable("tbltraining_topic_contents", ExistingSchema);
             entity.HasKey(x => x.Id);
-
-            entity.Property(x => x.Id)
-                .HasColumnName("content_id");
-
-            entity.Property(x => x.TopicId)
-                .HasColumnName("topic_id");
-
-            entity.Property(x => x.Title)
-                .HasColumnName("content_name")
-                .HasMaxLength(100);
-
-            entity.Property(x => x.Slides)
-                .HasColumnName("slides");
-
-            entity.Property(x => x.VideoName)
-                .HasColumnName("video_name")
-                .HasMaxLength(100);
-
-            entity.Property(x => x.Flag)
-                .HasColumnName("flag");
-
-            entity.Property(x => x.CreatedAt)
-                .HasColumnName("InsertedAt");
-
-            entity.Property(x => x.UpdatedAt)
-                .HasColumnName("UpdatedAt");
-
-            entity.Property(x => x.DeletedAt)
-                .HasColumnName("DeletedAt");
-
-            entity.Property(x => x.RestoredAt)
-                .HasColumnName("RestoredAt");
+            entity.Property(x => x.Id).HasColumnName("content_id");
+            entity.Property(x => x.TopicId).HasColumnName("topic_id");
+            entity.Property(x => x.Title).HasColumnName("content_name").HasMaxLength(100);
+            entity.Property(x => x.Slides).HasColumnName("slides");
+            entity.Property(x => x.VideoName).HasColumnName("video_name").HasMaxLength(100);
+            entity.Property(x => x.Flag).HasColumnName("flag");
+            entity.Property(x => x.CreatedAt).HasColumnName("InsertedAt");
+            entity.Property(x => x.UpdatedAt).HasColumnName("UpdatedAt");
+            entity.Property(x => x.DeletedAt).HasColumnName("DeletedAt");
+            entity.Property(x => x.RestoredAt).HasColumnName("RestoredAt");
         });
     }
 }

@@ -12,7 +12,7 @@
         <div>
             <span class="ciit-admin-eyebrow">Learning</span>
             <h1>Courses</h1>
-            <p>Manage the training catalogue using the existing ERP course table.</p>
+            <p>Manage courses. Price is calculated automatically from active topic prices.</p>
         </div>
         <button type="button" class="ciit-course-primary-btn" data-bs-toggle="modal" data-bs-target="#courseModal" data-course-mode="create">
             <i class="bi bi-plus-lg"></i><span>Add Course</span>
@@ -45,9 +45,7 @@
         <div class="ciit-course-table-wrap">
             <table class="ciit-course-table" id="courseTable">
                 <thead>
-                    <tr>
-                        <th>ID</th><th>Course</th><th>Fees</th><th>Change Date</th><th>Installment</th><th>Created</th><th class="course-col-actions">Actions</th>
-                    </tr>
+                    <tr><th>ID</th><th>Course</th><th>Topics</th><th>Total Price</th><th class="course-col-actions">Actions</th></tr>
                 </thead>
                 <tbody>
                 @foreach (var course in Model.ActiveCourses)
@@ -60,10 +58,8 @@
                                 <div><strong>@course.Title</strong><span>Active course</span></div>
                             </div>
                         </td>
-                        <td class="course-value">@(course.FeesAmount.HasValue ? course.FeesAmount.Value.ToString("0.##") : "—")</td>
-                        <td>@(course.FeesChangeDate.HasValue ? course.FeesChangeDate.Value.ToString("dd MMM yyyy") : "—")</td>
-                        <td>@(course.InstallmentPercentage.HasValue ? $"{course.InstallmentPercentage:0.##}%" : "—")</td>
-                        <td>@(course.CreatedAt.HasValue ? course.CreatedAt.Value.ToString("dd MMM yyyy") : "—")</td>
+                        <td class="course-value">@course.TopicCount</td>
+                        <td class="course-value">₹@course.TotalPrice.ToString("N2")</td>
                         <td>
                             <div class="course-row-actions">
                                 <a asp-area="Admin" asp-controller="Courses" asp-action="Index" asp-route-editId="@course.Id" class="ciit-course-icon-btn" title="Edit">
@@ -148,23 +144,12 @@
                         <input id="courseName" name="CourseName" class="form-control" maxlength="100" placeholder="e.g. Java Full Stack" required />
                     </div>
 
-                    <div class="ciit-course-form-grid">
-                        <div class="ciit-course-form-field">
-                            <label for="feesAmount">Fees amount</label>
-                            <input id="feesAmount" name="FeesAmount" type="number" class="form-control" min="0" step="0.01" placeholder="0.00" />
-                        </div>
-                        <div class="ciit-course-form-field">
-                            <label for="installmentPercentage">Installment %</label>
-                            <input id="installmentPercentage" name="InstallmentPercentage" type="number" class="form-control" min="0" max="100" step="0.01" placeholder="0 - 100" />
-                        </div>
-                    </div>
-
-                    <div class="ciit-course-form-field">
-                        <label for="feesChangeDate">Fees change date</label>
-                        <input id="feesChangeDate" name="FeesChangeDate" type="date" class="form-control" />
-                    </div>
-
                     <div class="ciit-course-form-hint">
+                        <i class="bi bi-calculator"></i>
+                        <span>Course price is calculated automatically from the prices of its active mapped topics.</span>
+                    </div>
+
+                    <div class="ciit-course-form-hint mt-3">
                         <i class="bi bi-shield-check"></i>
                         <span>Delete uses soft archive. Archived courses remain recoverable.</span>
                     </div>
@@ -184,10 +169,7 @@
     <script>
         window.ciitEditCourse = {
             id: @edit.Id,
-            courseName: @Html.Raw(System.Text.Json.JsonSerializer.Serialize(edit.CourseName)),
-            feesAmount: @(edit.FeesAmount.HasValue ? edit.FeesAmount.Value.ToString(System.Globalization.CultureInfo.InvariantCulture) : "null"),
-            feesChangeDate: @(edit.FeesChangeDate.HasValue ? Html.Raw(System.Text.Json.JsonSerializer.Serialize(edit.FeesChangeDate.Value.ToString("yyyy-MM-dd"))) : Html.Raw("null")),
-            installmentPercentage: @(edit.InstallmentPercentage.HasValue ? edit.InstallmentPercentage.Value.ToString(System.Globalization.CultureInfo.InvariantCulture) : "null")
+            courseName: @Html.Raw(System.Text.Json.JsonSerializer.Serialize(edit.CourseName))
         };
     </script>
 }
