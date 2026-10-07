@@ -1,0 +1,151 @@
+@model CIITStackLab.Application.DTOs.AdminSettingsDto
+
+@{
+    ViewData["Title"] = "Settings";
+    var message = TempData["AdminSettingsMessage"] as string;
+    var messageType = TempData["AdminSettingsMessageType"] as string;
+}
+
+<section class="ciit-admin-page ciit-settings-page">
+    <div class="ciit-settings-header">
+        <div>
+            <span class="ciit-admin-eyebrow">Administration</span>
+            <h1>Settings</h1>
+            <p>Manage your CIIT Stack Lab administrator account using the existing ERP Identity database.</p>
+        </div>
+        <div class="ciit-settings-account-badge">
+            <span class="ciit-settings-account-avatar"><i class="bi bi-person-fill"></i></span>
+            <span><strong>@Model.UserName</strong><small>Signed-in account</small></span>
+        </div>
+    </div>
+
+    @if (!string.IsNullOrWhiteSpace(message))
+    {
+        <div class="ciit-settings-alert @(messageType == "success" ? "is-success" : "is-error")" role="alert">
+            <i class="bi @(messageType == "success" ? "bi-check-circle-fill" : "bi-exclamation-circle-fill")"></i>
+            <span>@message</span>
+            <button type="button" class="ciit-settings-alert-close" aria-label="Close"><i class="bi bi-x-lg"></i></button>
+        </div>
+    }
+
+    <div class="ciit-settings-layout">
+        <aside class="ciit-settings-nav">
+            <button type="button" class="ciit-settings-tab active" data-settings-tab="profile">
+                <span><i class="bi bi-person"></i></span>
+                <div><strong>Profile</strong><small>Contact details</small></div>
+            </button>
+            <button type="button" class="ciit-settings-tab" data-settings-tab="security">
+                <span><i class="bi bi-shield-lock"></i></span>
+                <div><strong>Security</strong><small>Password & access</small></div>
+            </button>
+        </aside>
+
+        <div class="ciit-settings-content">
+            <section class="ciit-settings-panel active" data-settings-panel="profile">
+                <div class="ciit-settings-panel-heading">
+                    <div>
+                        <span class="ciit-admin-panel-kicker">Account profile</span>
+                        <h2>Profile settings</h2>
+                        <p>Update contact information associated with your existing Identity account.</p>
+                    </div>
+                    <span class="ciit-settings-readonly"><i class="bi bi-lock-fill"></i> Username locked</span>
+                </div>
+
+                <div class="ciit-settings-identity-card">
+                    <div class="ciit-settings-big-avatar"><i class="bi bi-person-fill"></i></div>
+                    <div>
+                        <span>Username</span>
+                        <strong>@Model.UserName</strong>
+                        <small>Your username is managed by the existing ERP account and cannot be changed here.</small>
+                    </div>
+                </div>
+
+                <form asp-area="Admin" asp-controller="Settings" asp-action="UpdateProfile" method="post" class="ciit-settings-form">
+                    @Html.AntiForgeryToken()
+
+                    <div class="ciit-settings-form-grid">
+                        <div class="ciit-settings-field">
+                            <label asp-for="@Model.Email">Email address</label>
+                            <div class="ciit-settings-input">
+                                <i class="bi bi-envelope"></i>
+                                <input asp-for="@Model.Email" name="Email" type="email" autocomplete="email" placeholder="name@example.com" />
+                            </div>
+                            <span asp-validation-for="@Model.Email" class="text-danger"></span>
+                        </div>
+
+                        <div class="ciit-settings-field">
+                            <label asp-for="@Model.PhoneNumber">Phone number</label>
+                            <div class="ciit-settings-input">
+                                <i class="bi bi-telephone"></i>
+                                <input asp-for="@Model.PhoneNumber" name="PhoneNumber" autocomplete="tel" placeholder="Optional" />
+                            </div>
+                            <span asp-validation-for="@Model.PhoneNumber" class="text-danger"></span>
+                        </div>
+                    </div>
+
+                    <div class="ciit-settings-form-footer">
+                        <span><i class="bi bi-info-circle"></i> Changes are saved directly to the existing ERP Identity record.</span>
+                        <button type="submit" class="ciit-settings-primary-btn"><i class="bi bi-check2-circle"></i> Save Profile</button>
+                    </div>
+                </form>
+            </section>
+
+            <section class="ciit-settings-panel" data-settings-panel="security">
+                <div class="ciit-settings-panel-heading">
+                    <div>
+                        <span class="ciit-admin-panel-kicker">Security</span>
+                        <h2>Change password</h2>
+                        <p>Update the password for the currently signed-in administrator account.</p>
+                    </div>
+                    <span class="ciit-settings-security-state"><i class="bi bi-shield-check"></i> Identity managed</span>
+                </div>
+
+                <form asp-area="Admin" asp-controller="Settings" asp-action="ChangePassword" method="post" class="ciit-settings-form">
+                    @Html.AntiForgeryToken()
+
+                    <div class="ciit-settings-password-list">
+                        <div class="ciit-settings-field">
+                            <label for="CurrentPassword">Current password</label>
+                            <div class="ciit-settings-input">
+                                <i class="bi bi-key"></i>
+                                <input id="CurrentPassword" name="CurrentPassword" type="password" autocomplete="current-password" placeholder="Enter current password" required />
+                                <button type="button" class="ciit-settings-password-toggle" data-password-toggle="#CurrentPassword" aria-label="Show current password"><i class="bi bi-eye"></i></button>
+                            </div>
+                        </div>
+
+                        <div class="ciit-settings-field">
+                            <label for="NewPassword">New password</label>
+                            <div class="ciit-settings-input">
+                                <i class="bi bi-lock"></i>
+                                <input id="NewPassword" name="NewPassword" type="password" autocomplete="new-password" placeholder="Enter new password" required />
+                                <button type="button" class="ciit-settings-password-toggle" data-password-toggle="#NewPassword" aria-label="Show new password"><i class="bi bi-eye"></i></button>
+                            </div>
+                        </div>
+
+                        <div class="ciit-settings-field">
+                            <label for="ConfirmPassword">Confirm new password</label>
+                            <div class="ciit-settings-input">
+                                <i class="bi bi-shield-lock"></i>
+                                <input id="ConfirmPassword" name="ConfirmPassword" type="password" autocomplete="new-password" placeholder="Re-enter new password" required />
+                                <button type="button" class="ciit-settings-password-toggle" data-password-toggle="#ConfirmPassword" aria-label="Show new password confirmation"><i class="bi bi-eye"></i></button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="ciit-settings-password-rules">
+                        <i class="bi bi-info-circle"></i>
+                        <div>
+                            <strong>Use a strong password</strong>
+                            <span>It must satisfy the application's existing Identity password policy.</span>
+                        </div>
+                    </div>
+
+                    <div class="ciit-settings-form-footer">
+                        <span><i class="bi bi-shield-check"></i> Password is handled by ASP.NET Core Identity.</span>
+                        <button type="submit" class="ciit-settings-primary-btn"><i class="bi bi-key-fill"></i> Change Password</button>
+                    </div>
+                </form>
+            </section>
+        </div>
+    </div>
+</section>
