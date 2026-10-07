@@ -30,20 +30,6 @@ public sealed class DynamicCourseService : ICourseService
             return null;
         }
 
-        var contentIds = details.Topics
-            .SelectMany(topic => topic.Contents)
-            .Select(content => content.Id)
-            .Distinct()
-            .ToList();
-
-        var htmlByContentId = contentIds.Count == 0
-            ? new Dictionary<int, string?>()
-            : await _dbContext.Lessons
-                .AsNoTracking()
-                .Where(x => contentIds.Contains(x.Id))
-                .Select(x => new { x.Id, x.HtmlContent })
-                .ToDictionaryAsync(x => x.Id, x => x.HtmlContent, cancellationToken);
-
         return new CourseDetailsDto
         {
             Id = details.Id,
@@ -64,7 +50,6 @@ public sealed class DynamicCourseService : ICourseService
                     Title = content.Title,
                     Slides = content.Slides,
                     VideoName = content.VideoName,
-                    HtmlContent = htmlByContentId.TryGetValue(content.Id, out var html) ? html : null,
                     Questions = content.Questions
                 }).ToList()
             }).ToList()
@@ -127,8 +112,7 @@ public sealed class DynamicCourseService : ICourseService
                     x.TopicId,
                     x.Title,
                     x.Slides,
-                    x.VideoName,
-                    x.HtmlContent
+                    x.VideoName
                 })
                 .ToListAsync(cancellationToken);
 
@@ -171,7 +155,6 @@ public sealed class DynamicCourseService : ICourseService
                         Title = content.Title ?? string.Empty,
                         Slides = content.Slides,
                         VideoName = content.VideoName,
-                        HtmlContent = content.HtmlContent,
                         Questions = questionsByContentId.TryGetValue(content.Id, out var contentQuestions)
                             ? contentQuestions
                             : Array.Empty<ContentQuestionDto>()
