@@ -33,6 +33,5 @@ public sealed class CourseLearningContentDto
     public string Title { get; init; } = string.Empty;
     public string? Slides { get; init; }
     public string? VideoName { get; init; }
-    public string? HtmlContent { get; init; }
     public IReadOnlyList<ContentQuestionDto> Questions { get; init; } = Array.Empty<ContentQuestionDto>();
 }
