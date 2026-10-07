@@ -8,6 +8,10 @@ public class Topic
 
     public string? PublicFolderId { get; set; }
 
+    public decimal Price { get; set; }
+
+    public int? DurationMinutes { get; set; }
+
     public int? Flag { get; set; }
 
     public DateTime? CreatedAt { get; set; }
