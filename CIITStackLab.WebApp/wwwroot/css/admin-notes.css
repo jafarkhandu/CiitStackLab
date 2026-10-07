@@ -1,0 +1,442 @@
+.ciit-notes-page {
+    max-width: 1440px;
+    margin: 0 auto;
+    padding: 28px 30px 42px;
+}
+
+.ciit-notes-header {
+    display: flex;
+    align-items: flex-end;
+    justify-content: space-between;
+    gap: 24px;
+    margin-bottom: 22px;
+}
+
+.ciit-notes-header h1 {
+    margin: 6px 0 6px;
+    font-size: clamp(1.8rem, 2.6vw, 2.45rem);
+    font-weight: 800;
+    letter-spacing: -0.035em;
+}
+
+.ciit-notes-header p {
+    margin: 0;
+    color: #6b7280;
+}
+
+.ciit-notes-header p span {
+    margin: 0 5px;
+    color: #c3c7cf;
+}
+
+.ciit-notes-eyebrow {
+    display: block;
+    color: #6c63ff;
+    font: 700 .72rem/1.2 "Fira Code", monospace;
+    letter-spacing: .08em;
+    text-transform: uppercase;
+}
+
+.ciit-notes-header-meta {
+    min-width: 145px;
+    padding: 14px 18px;
+    border: 1px solid #e7e9ee;
+    border-radius: 14px;
+    background: #fff;
+    text-align: right;
+    box-shadow: 0 8px 24px rgba(20, 24, 40, .05);
+}
+
+.ciit-notes-header-meta strong,
+.ciit-notes-header-meta span {
+    display: block;
+}
+
+.ciit-notes-header-meta strong {
+    font-size: 1.35rem;
+    font-weight: 800;
+}
+
+.ciit-notes-header-meta span {
+    color: #737987;
+    font-size: .78rem;
+}
+
+.ciit-notes-info,
+.ciit-notes-alert {
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+    padding: 14px 16px;
+    margin-bottom: 18px;
+    border-radius: 12px;
+}
+
+.ciit-notes-info {
+    border: 1px solid #dfe4ff;
+    background: #f7f8ff;
+    color: #454b65;
+}
+
+.ciit-notes-info > i {
+    color: #635bff;
+    font-size: 1.05rem;
+    margin-top: 2px;
+}
+
+.ciit-notes-info strong,
+.ciit-notes-info span {
+    display: block;
+}
+
+.ciit-notes-info strong {
+    margin-bottom: 2px;
+}
+
+.ciit-notes-info span {
+    font-size: .86rem;
+    line-height: 1.55;
+}
+
+.ciit-notes-alert {
+    border: 1px solid #dce7dd;
+    background: #f4fbf5;
+    color: #24552d;
+}
+
+.ciit-notes-alert.is-error {
+    border-color: #f0d5d5;
+    background: #fff7f7;
+    color: #8c2d2d;
+}
+
+.ciit-notes-card,
+.ciit-notes-editor-card,
+.ciit-notes-context-card {
+    border: 1px solid #e7e9ee;
+    border-radius: 16px;
+    background: #fff;
+    box-shadow: 0 10px 30px rgba(20, 24, 40, .05);
+}
+
+.ciit-notes-toolbar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+    padding: 16px 18px;
+    border-bottom: 1px solid #edf0f3;
+}
+
+.ciit-notes-search {
+    position: relative;
+    width: min(440px, 100%);
+}
+
+.ciit-notes-search i {
+    position: absolute;
+    left: 13px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: #9aa1ad;
+}
+
+.ciit-notes-search input {
+    width: 100%;
+    min-height: 42px;
+    padding: 0 14px 0 38px;
+    border: 1px solid #dfe3e9;
+    border-radius: 10px;
+    outline: 0;
+    font: inherit;
+    color: #252936;
+    background: #fbfcfd;
+}
+
+.ciit-notes-search input:focus {
+    border-color: #8d87ff;
+    box-shadow: 0 0 0 3px rgba(108, 99, 255, .1);
+}
+
+.ciit-notes-count {
+    color: #737987;
+    font-size: .82rem;
+    white-space: nowrap;
+}
+
+.ciit-notes-table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+.ciit-notes-table th,
+.ciit-notes-table td {
+    padding: 14px 16px;
+    border-bottom: 1px solid #eef0f3;
+    vertical-align: middle;
+    text-align: left;
+    font-size: .86rem;
+}
+
+.ciit-notes-table th {
+    color: #6e7481;
+    background: #fafbfc;
+    font-size: .72rem;
+    font-weight: 800;
+    letter-spacing: .06em;
+    text-transform: uppercase;
+}
+
+.ciit-notes-table tbody tr:last-child td {
+    border-bottom: 0;
+}
+
+.ciit-notes-name {
+    display: flex;
+    align-items: center;
+    gap: 11px;
+    min-width: 210px;
+}
+
+.ciit-notes-name strong,
+.ciit-notes-name small {
+    display: block;
+}
+
+.ciit-notes-name strong {
+    color: #20232d;
+    font-weight: 700;
+}
+
+.ciit-notes-name small {
+    margin-top: 2px;
+    color: #9aa0ab;
+    font: .72rem "Fira Code", monospace;
+}
+
+.ciit-notes-icon {
+    display: grid;
+    width: 36px;
+    height: 36px;
+    flex: 0 0 36px;
+    place-items: center;
+    border-radius: 10px;
+    color: #635bff;
+    background: #f0efff;
+}
+
+.ciit-notes-topic {
+    display: inline-flex;
+    max-width: 230px;
+    padding: 5px 9px;
+    border-radius: 999px;
+    color: #555c6a;
+    background: #f4f5f7;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.ciit-notes-status {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-size: .78rem;
+    font-weight: 700;
+}
+
+.ciit-notes-status.is-ready { color: #26723c; }
+.ciit-notes-status.is-empty { color: #8a909b; }
+
+.ciit-notes-edit-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+    min-height: 36px;
+    padding: 0 11px;
+    border: 1px solid #dfe2e8;
+    border-radius: 9px;
+    color: #3f4653;
+    background: #fff;
+    text-decoration: none;
+    font-size: .78rem;
+    font-weight: 700;
+    transition: .18s ease;
+}
+
+.ciit-notes-edit-btn:hover {
+    color: #554cff;
+    border-color: #bbb7ff;
+    background: #f8f7ff;
+}
+
+.ciit-notes-empty {
+    padding: 54px 24px;
+    text-align: center;
+    color: #777e8a;
+}
+
+.ciit-notes-empty[hidden] { display: none !important; }
+
+.ciit-notes-empty i {
+    display: block;
+    margin-bottom: 10px;
+    font-size: 1.9rem;
+    color: #a2a8b2;
+}
+
+.ciit-notes-empty h3 {
+    margin: 0 0 5px;
+    color: #303440;
+    font-size: 1rem;
+}
+
+.ciit-notes-empty p {
+    margin: 0;
+    font-size: .84rem;
+}
+
+.ciit-notes-back-link {
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+    margin-bottom: 18px;
+    color: #686f7d;
+    text-decoration: none;
+    font-size: .82rem;
+    font-weight: 700;
+}
+
+.ciit-notes-back-link:hover { color: #554cff; }
+
+.ciit-notes-editor-layout {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) 300px;
+    gap: 20px;
+    align-items: start;
+}
+
+.ciit-notes-editor-card { padding: 22px; }
+.ciit-notes-context-card { padding: 20px; }
+
+.ciit-notes-editor-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+    padding-bottom: 16px;
+    border-bottom: 1px solid #edf0f3;
+}
+
+.ciit-notes-editor-head h2,
+.ciit-notes-context-card h2 {
+    margin: 4px 0 0;
+    color: #252936;
+    font-size: 1.08rem;
+    font-weight: 800;
+}
+
+.ciit-notes-content-id {
+    color: #8b919d;
+    font: .72rem "Fira Code", monospace;
+}
+
+.ciit-notes-editor-help {
+    display: flex;
+    gap: 10px;
+    margin: 16px 0;
+    padding: 12px 14px;
+    border-radius: 10px;
+    background: #f7f8fa;
+    color: #606774;
+    font-size: .8rem;
+    line-height: 1.55;
+}
+
+.ciit-notes-editor-help > i { color: #635bff; margin-top: 2px; }
+.ciit-notes-editor-help code { color: #4e48b7; }
+
+.ciit-notes-field label {
+    display: block;
+    margin-bottom: 8px;
+    color: #333744;
+    font-size: .82rem;
+    font-weight: 800;
+}
+
+.ciit-notes-field textarea {
+    display: block;
+    width: 100%;
+    min-height: 560px;
+    resize: vertical;
+    padding: 16px;
+    border: 1px solid #dfe3e9;
+    border-radius: 10px;
+    outline: 0;
+    color: #20232d;
+    background: #fbfcfd;
+    font: 13px/1.65 "Fira Code", Consolas, monospace;
+    tab-size: 2;
+}
+
+.ciit-notes-field textarea:focus {
+    border-color: #8d87ff;
+    box-shadow: 0 0 0 3px rgba(108, 99, 255, .1);
+}
+
+.ciit-notes-field-footer {
+    display: flex;
+    justify-content: space-between;
+    gap: 16px;
+    margin-top: 7px;
+    color: #8a909b;
+    font-size: .72rem;
+}
+
+.ciit-notes-editor-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 10px;
+    margin-top: 18px;
+}
+
+.ciit-notes-save-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+    min-height: 40px;
+    padding: 0 15px;
+    border: 0;
+    border-radius: 9px;
+    color: #fff;
+    background: #635bff;
+    font-weight: 800;
+}
+
+.ciit-notes-save-btn:hover { background: #554cff; }
+
+.ciit-notes-context-card dl { margin: 18px 0; }
+.ciit-notes-context-card dl > div { padding: 11px 0; border-bottom: 1px solid #edf0f3; }
+.ciit-notes-context-card dl > div:last-child { border-bottom: 0; }
+.ciit-notes-context-card dt { color: #8a909b; font-size: .7rem; font-weight: 800; text-transform: uppercase; letter-spacing: .06em; }
+.ciit-notes-context-card dd { margin: 3px 0 0; color: #303440; font-size: .82rem; font-weight: 700; }
+.ciit-notes-context-card p { margin: 0; color: #747b87; font-size: .8rem; line-height: 1.6; }
+
+@media (max-width: 900px) {
+    .ciit-notes-page { padding: 22px 18px 34px; }
+    .ciit-notes-editor-layout { grid-template-columns: 1fr; }
+    .ciit-notes-context-card { order: -1; }
+}
+
+@media (max-width: 700px) {
+    .ciit-notes-header { align-items: flex-start; flex-direction: column; }
+    .ciit-notes-header-meta { width: 100%; text-align: left; }
+    .ciit-notes-toolbar { align-items: stretch; flex-direction: column; }
+    .ciit-notes-search { width: 100%; }
+    .ciit-notes-table th:nth-child(2),
+    .ciit-notes-table td:nth-child(2),
+    .ciit-notes-table th:nth-child(5),
+    .ciit-notes-table td:nth-child(5) { display: none; }
+    .ciit-notes-editor-card { padding: 16px; }
+    .ciit-notes-field textarea { min-height: 440px; }
+}
