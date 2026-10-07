@@ -55,21 +55,34 @@ public sealed class AdminCourseTopicMappingService : IAdminCourseTopicMappingSer
             })
             .ToListAsync(cancellationToken);
 
-        var assignedTopicIds = await _dbContext.CourseModules
+        var mappings = await _dbContext.CourseModules
             .AsNoTracking()
-            .Where(x => x.CourseId == effectiveCourseId.Value && x.Flag == 0)
-            .Select(x => x.TopicId)
-            .Distinct()
+            .Where(x => x.CourseId == effectiveCourseId.Value)
+            .Select(x => new
+            {
+                x.TopicId,
+                x.Flag
+            })
             .ToListAsync(cancellationToken);
 
-        var assignedSet = assignedTopicIds.ToHashSet();
+        var assignedTopicIds = mappings
+            .Where(x => x.Flag == 0)
+            .Select(x => x.TopicId)
+            .Distinct()
+            .ToHashSet();
+
+        var historicalTopicIds = mappings
+            .Select(x => x.TopicId)
+            .Distinct()
+            .ToHashSet();
 
         var topicDtos = topics
             .Select(x => new AdminMappingTopicDto
             {
                 Id = x.Id,
                 Title = x.Title,
-                IsAssigned = assignedSet.Contains(x.Id)
+                IsAssigned = assignedTopicIds.Contains(x.Id),
+                WasEverMapped = historicalTopicIds.Contains(x.Id)
             })
             .ToList();
 
@@ -97,18 +110,16 @@ public sealed class AdminCourseTopicMappingService : IAdminCourseTopicMappingSer
             return (false, "The selected course is no longer active.");
         }
 
-        var requestedTopicIds = topicIds
-            .Distinct()
-            .ToHashSet();
-
         var activeTopicIds = await _dbContext.Topics
             .AsNoTracking()
             .Where(x => x.Flag == 0)
             .Select(x => x.Id)
             .ToListAsync(cancellationToken);
 
-        // Only currently active topics can participate in a mapping.
-        requestedTopicIds.IntersectWith(activeTopicIds);
+        var requestedTopicIds = topicIds
+            .Intersect(activeTopicIds)
+            .Distinct()
+            .ToHashSet();
 
         var allMappings = await _dbContext.CourseModules
             .Where(x => x.CourseId == courseId)
@@ -119,8 +130,7 @@ public sealed class AdminCourseTopicMappingService : IAdminCourseTopicMappingSer
             .Where(x => x.Flag == 0)
             .ToList();
 
-        // Synchronize the selected checkboxes with the active mappings:
-        // checked = keep/create/restore; unchecked = soft-delete.
+        // Existing active mappings may be removed by unchecking them.
         foreach (var activeMapping in currentActiveMappings)
         {
             if (!requestedTopicIds.Contains(activeMapping.TopicId))
@@ -131,41 +141,27 @@ public sealed class AdminCourseTopicMappingService : IAdminCourseTopicMappingSer
             }
         }
 
-        foreach (var topicId in requestedTopicIds)
+        // Only topics that have never been mapped to this course may be added.
+        // A previously removed Course + Topic pair is permanently blocked from
+        // being re-added, per the admin workflow requirement.
+        var historicalTopicIds = allMappings
+            .Select(x => x.TopicId)
+            .Distinct()
+            .ToHashSet();
+
+        var newTopicIds = requestedTopicIds
+            .Where(topicId => !historicalTopicIds.Contains(topicId))
+            .ToList();
+
+        foreach (var topicId in newTopicIds)
         {
-            var activeMapping = currentActiveMappings
-                .FirstOrDefault(x => x.TopicId == topicId);
-
-            if (activeMapping is not null)
+            _dbContext.CourseModules.Add(new Domain.Entities.CourseModule
             {
-                continue;
-            }
-
-            // Reuse an archived mapping for the same pair when possible.
-            // This prevents multiple rows for the same Course + Topic pair
-            // while allowing a previously removed topic to be added again.
-            var archivedMapping = allMappings
-                .Where(x => x.TopicId == topicId && x.Flag == 1)
-                .OrderByDescending(x => x.Id)
-                .FirstOrDefault();
-
-            if (archivedMapping is not null)
-            {
-                archivedMapping.Flag = 0;
-                archivedMapping.DeletedAt = null;
-                archivedMapping.RestoredAt = DateTime.Now;
-                archivedMapping.UpdatedAt = DateTime.Now;
-            }
-            else
-            {
-                _dbContext.CourseModules.Add(new Domain.Entities.CourseModule
-                {
-                    CourseId = courseId,
-                    TopicId = topicId,
-                    Flag = 0,
-                    CreatedAt = DateTime.Now
-                });
-            }
+                CourseId = courseId,
+                TopicId = topicId,
+                Flag = 0,
+                CreatedAt = DateTime.Now
+            });
         }
 
         try

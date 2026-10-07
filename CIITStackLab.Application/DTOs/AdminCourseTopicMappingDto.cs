@@ -25,5 +25,11 @@ public sealed class AdminMappingTopicDto
 {
     public int Id { get; init; }
     public string Title { get; init; } = string.Empty;
+
+    // True when this course currently has an active mapping for the topic.
     public bool IsAssigned { get; init; }
+
+    // True when this course has ever been mapped to this topic.
+    // Historical mappings cannot be created again after removal.
+    public bool WasEverMapped { get; init; }
 }
