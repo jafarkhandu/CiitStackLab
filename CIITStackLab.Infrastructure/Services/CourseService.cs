@@ -1,11 +1,10 @@
 using CIITStackLab.Application.DTOs;
-using CIITStackLab.Application.Interfaces;
 using CIITStackLab.Infrastructure.Persistence;
 using Microsoft.EntityFrameworkCore;
 
 namespace CIITStackLab.Infrastructure.Services;
 
-public sealed class CourseService : ICourseService
+public sealed class CourseService
 {
     private static readonly IReadOnlyDictionary<string, CoursePresentation> Presentations =
         new Dictionary<string, CoursePresentation>(StringComparer.OrdinalIgnoreCase)
