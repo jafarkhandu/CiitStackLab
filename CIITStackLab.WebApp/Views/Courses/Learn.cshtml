@@ -111,12 +111,6 @@ else
                         </div>
                     </div>
 
-                    @if (!string.IsNullOrWhiteSpace(currentContent.HtmlContent))
-                    {
-                        <section class="ciit-course-html-content" aria-label="Lesson content">
-                            @Html.Raw(currentContent.HtmlContent)
-                        </section>
-                    }
 
                     @if (!string.IsNullOrWhiteSpace(currentContent.VideoName))
                     {
