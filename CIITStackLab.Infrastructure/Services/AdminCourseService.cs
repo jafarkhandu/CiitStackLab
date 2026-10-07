@@ -29,23 +29,31 @@ public sealed class AdminCourseService : IAdminCourseService
             })
             .ToListAsync(cancellationToken);
 
-        var pricing = await (
-            from mapping in _dbContext.CourseModules.AsNoTracking()
-            join topic in _dbContext.Topics.AsNoTracking() on mapping.TopicId equals topic.Id
-            where mapping.Flag == 0 && topic.Flag == 0
-            group topic by mapping.CourseId
-            into grouped
-            select new
+        var pricedMappings = _dbContext.CourseModules
+            .AsNoTracking()
+            .Where(x => x.Flag == 0 && x.Course.Flag == 0 && x.Topic.Flag == 0)
+            .Select(x => new
             {
-                CourseId = grouped.Key,
-                TotalPrice = grouped.Select(x => x.Id).Distinct().Sum(x => grouped.Where(t => t.Id == x).Select(t => t.Price).First()),
-                TopicCount = grouped.Select(x => x.Id).Distinct().Count()
+                x.CourseId,
+                TopicId = x.TopicId,
+                Price = x.Topic.Price
+            })
+            .Distinct();
+
+        var pricing = await pricedMappings
+            .GroupBy(x => x.CourseId)
+            .Select(group => new
+            {
+                CourseId = group.Key,
+                TotalPrice = group.Sum(x => x.Price),
+                TopicCount = group.Count()
             })
             .ToDictionaryAsync(x => x.CourseId, cancellationToken);
 
         return courses.Select(course =>
         {
             pricing.TryGetValue(course.Id, out var total);
+
             return new AdminCourseDto
             {
                 Id = course.Id,
@@ -62,7 +70,8 @@ public sealed class AdminCourseService : IAdminCourseService
     }
 
     public async Task<IReadOnlyList<AdminArchivedCourseDto>> GetArchivedAsync(CancellationToken cancellationToken = default)
-        => await _dbContext.Courses.AsNoTracking().Where(x => x.Flag == 1)
+        => await _dbContext.Courses.AsNoTracking()
+            .Where(x => x.Flag == 1)
             .OrderByDescending(x => x.Id)
             .Select(x => new AdminArchivedCourseDto { Id = x.Id, Title = x.Title, DeletedAt = x.DeletedAt })
             .ToListAsync(cancellationToken);
