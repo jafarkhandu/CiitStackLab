@@ -1,0 +1,10 @@
+.ciit-admin-nav {
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+}
+
+.ciit-admin-nav::-webkit-scrollbar {
+    width: 0;
+    height: 0;
+    display: none;
+}
