@@ -8,6 +8,9 @@ public sealed class AdminContentDto
     public int CourseId { get; init; }
     public string CourseTitle { get; init; } = string.Empty;
     public int TopicId { get; init; }
+    public int? NoteId { get; init; }
+    public string NoteChapterId { get; init; } = string.Empty;
+    public string NoteTitle { get; init; } = string.Empty;
     public string TopicTitle { get; init; } = string.Empty;
     public string Title { get; init; } = string.Empty;
     public string? Slides { get; init; }
@@ -46,6 +49,9 @@ public sealed class AdminContentInputDto
     [Range(1, int.MaxValue, ErrorMessage = "Please select a topic.")]
     public int TopicId { get; set; }
 
+    [Range(1, int.MaxValue, ErrorMessage = "Please select a note chapter.")]
+    public int NoteId { get; set; }
+
     [Required(ErrorMessage = "Content name is required.")]
     [StringLength(100, ErrorMessage = "Content name cannot exceed 100 characters.")]
     public string Title { get; set; } = string.Empty;
@@ -60,4 +66,12 @@ public sealed class AdminLookupDto
 {
     public int Id { get; init; }
     public string Title { get; init; } = string.Empty;
+}
+
+public sealed class AdminNoteLookupDto
+{
+    public int Id { get; init; }
+    public string ChapterId { get; init; } = string.Empty;
+    public string Title { get; init; } = string.Empty;
+    public int SortOrder { get; init; }
 }
