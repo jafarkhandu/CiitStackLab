@@ -3,7 +3,6 @@ document.addEventListener("DOMContentLoaded", function () {
         form = document.getElementById("topicForm"),
         idInput = document.getElementById("topicId"),
         nameInput = document.getElementById("topicName"),
-        folderInput = document.getElementById("publicFolderId"),
         priceInput = document.getElementById("topicPrice"),
         durationInput = document.getElementById("topicDuration"),
         title = document.getElementById("topicModalLabel"),
@@ -27,7 +26,6 @@ document.addEventListener("DOMContentLoaded", function () {
 
         idInput.value = topic.id;
         nameInput.value = topic.topicName || "";
-        folderInput.value = topic.publicFolderId || "";
         priceInput.value = topic.price ?? "";
         durationInput.value = topic.durationMinutes ?? "";
         title.textContent = "Edit Topic";
