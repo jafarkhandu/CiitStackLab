@@ -86,6 +86,35 @@
                     @Html.Raw(Model.CurrentChapter?.HtmlContent)
                 </div>
 
+                @if (Model.CurrentChapter?.Media.Count > 0)
+                {
+                    <section class="ciit-notes-reader-media">
+                        <div class="ciit-notes-reader-media-head">
+                            <span>Chapter Resources</span>
+                            <strong>Slides &amp; Video</strong>
+                        </div>
+                        @foreach (var media in Model.CurrentChapter.Media)
+                        {
+                            <div class="ciit-notes-reader-media-row">
+                                <div>
+                                    <strong>@media.Title</strong>
+                                    <small>Resources attached to this chapter</small>
+                                </div>
+                                <div class="d-flex gap-2 flex-wrap">
+                                    @if (!string.IsNullOrWhiteSpace(media.Slides))
+                                    {
+                                        <a href="@media.Slides" target="_blank" rel="noopener" class="btn btn-outline-primary btn-sm"><i class="bi bi-file-earmark-slides me-1"></i>Slides</a>
+                                    }
+                                    @if (!string.IsNullOrWhiteSpace(media.VideoName))
+                                    {
+                                        <a href="@media.VideoName" target="_blank" rel="noopener" class="btn btn-primary btn-sm"><i class="bi bi-play-circle me-1"></i>Video</a>
+                                    }
+                                </div>
+                            </div>
+                        }
+                    </section>
+                }
+
                 <nav class="ciit-notes-reader-pager">
                     @if (previous is not null)
                     {
