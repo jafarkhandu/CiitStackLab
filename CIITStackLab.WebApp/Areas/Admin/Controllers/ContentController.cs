@@ -85,6 +85,14 @@ public sealed class ContentController : Controller
             return View(input);
         }
 
+        var existing = await _contentService.GetByIdAsync(id, cancellationToken);
+        if (existing is null || existing.Flag != 0) return NotFound();
+
+        if (slidesFile is null || slidesFile.Length == 0)
+            input.Slides = existing.Slides;
+        if (videoFile is null || videoFile.Length == 0)
+            input.VideoName = existing.VideoName;
+
         await SaveUploadedFilesAsync(input, slidesFile, videoFile, cancellationToken);
         var result = await _contentService.UpdateAsync(id, input, cancellationToken);
         if (!result.Succeeded)
