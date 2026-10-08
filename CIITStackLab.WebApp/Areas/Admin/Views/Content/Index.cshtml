@@ -24,13 +24,13 @@
     <section class="ciit-content-card">
         <div class="ciit-content-table-wrap">
             <table class="ciit-content-table">
-                <thead><tr><th>Content</th><th>Course</th><th>Topic</th><th>Media</th><th>Updated</th><th>Actions</th></tr></thead>
+                <thead><tr><th>Content</th><th>Course</th><th>Topic</th><th>Notes Chapter</th><th>Media</th><th>Updated</th><th>Actions</th></tr></thead>
                 <tbody id="contentRows">
                 @foreach (var content in Model.ActiveContents)
                 {
                     <tr data-content-row data-search="@($"{content.Title} {content.CourseTitle} {content.TopicTitle}")">
                         <td><div class="ciit-content-name"><div class="ciit-content-icon"><i class="bi bi-file-earmark-text"></i></div><div><strong>@content.Title</strong><span>#@content.Id</span></div></div></td>
-                        <td>@content.CourseTitle</td><td><span class="ciit-content-topic">@content.TopicTitle</span></td>
+                        <td>@content.CourseTitle</td><td><span class="ciit-content-topic">@content.TopicTitle</span></td><td>@(string.IsNullOrWhiteSpace(content.NoteTitle) ? "—" : $"Chapter: {content.NoteTitle}")</td>
                         <td><div class="ciit-content-media">@if (!string.IsNullOrWhiteSpace(content.Slides)) { <span title="Slides"><i class="bi bi-file-slides"></i></span> } @if (!string.IsNullOrWhiteSpace(content.VideoName)) { <span title="Video"><i class="bi bi-play-circle"></i></span> } @if (string.IsNullOrWhiteSpace(content.Slides) && string.IsNullOrWhiteSpace(content.VideoName)) { <span class="is-muted">None</span> }</div></td>
                         <td>@((content.UpdatedAt ?? content.CreatedAt)?.ToString("dd MMM yyyy") ?? "—")</td>
                         <td><div class="ciit-content-actions"><a asp-area="Admin" asp-controller="Content" asp-action="Details" asp-route-id="@content.Id" title="Details"><i class="bi bi-eye"></i></a><a asp-area="Admin" asp-controller="Content" asp-action="Edit" asp-route-id="@content.Id" title="Edit"><i class="bi bi-pencil-square"></i></a><form asp-area="Admin" asp-controller="Content" asp-action="Delete" method="post" class="js-content-delete-form" data-content-name="@content.Title">@Html.AntiForgeryToken()<input type="hidden" name="id" value="@content.Id" /><button type="submit" title="Archive"><i class="bi bi-archive"></i></button></form></div></td>
