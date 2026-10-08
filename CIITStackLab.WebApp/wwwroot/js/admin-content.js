@@ -1,44 +1,47 @@
 document.addEventListener('DOMContentLoaded', () => {
-    const courseSelect = document.getElementById('contentCourse');
     const topicSelect = document.getElementById('contentTopic');
+    const noteSelect = document.getElementById('contentNote');
 
-    if (courseSelect && topicSelect) {
-        const loadTopics = async (courseId, selectedTopicId = '') => {
-            topicSelect.innerHTML = '<option value="0">Loading topics...</option>';
-            topicSelect.disabled = true;
+    if (topicSelect && noteSelect) {
+        const loadNotes = async (topicId, selectedNoteId = '') => {
+            noteSelect.innerHTML = '<option value="0">Loading note chapters...</option>';
+            noteSelect.disabled = true;
 
-            if (!courseId || courseId === '0') {
-                topicSelect.innerHTML = '<option value="0">Select topic</option>';
+            if (!topicId || topicId === '0') {
+                noteSelect.innerHTML = '<option value="0">Select note chapter</option>';
                 return;
             }
 
             try {
-                const response = await fetch(`/Admin/Content/Topics?courseId=${encodeURIComponent(courseId)}`, {
+                const response = await fetch(`/Admin/Content/Notes?topicId=${encodeURIComponent(topicId)}`, {
                     headers: { 'Accept': 'application/json' }
                 });
+                if (!response.ok) throw new Error('Unable to load note chapters.');
 
-                if (!response.ok) throw new Error('Unable to load topics.');
-
-                const topics = await response.json();
-                topicSelect.innerHTML = '<option value="0">Select topic</option>';
-                topics.forEach(topic => {
+                const notes = await response.json();
+                noteSelect.innerHTML = '<option value="0">Select note chapter</option>';
+                notes.forEach(note => {
                     const option = document.createElement('option');
-                    option.value = topic.id;
-                    option.textContent = topic.title;
-                    option.selected = String(topic.id) === String(selectedTopicId);
-                    topicSelect.appendChild(option);
+                    option.value = note.id;
+                    option.textContent = `Chapter ${note.sortOrder}: ${note.title}`;
+                    option.selected = String(note.id) === String(selectedNoteId);
+                    noteSelect.appendChild(option);
                 });
 
-                topicSelect.disabled = topics.length === 0;
-                if (topics.length === 0) topicSelect.innerHTML = '<option value="0">No mapped topics</option>';
+                noteSelect.disabled = notes.length === 0;
+                if (notes.length === 0) {
+                    noteSelect.innerHTML = '<option value="0">No notes available for this topic</option>';
+                }
             } catch {
-                topicSelect.innerHTML = '<option value="0">Unable to load topics</option>';
-                topicSelect.disabled = true;
+                noteSelect.innerHTML = '<option value="0">Unable to load notes</option>';
+                noteSelect.disabled = true;
             }
         };
 
-        courseSelect.addEventListener('change', () => loadTopics(courseSelect.value));
-        if (courseSelect.value && courseSelect.value !== '0') topicSelect.disabled = false;
+        topicSelect.addEventListener('change', () => loadNotes(topicSelect.value));
+        if (topicSelect.value && topicSelect.value !== '0') {
+            loadNotes(topicSelect.value, noteSelect.value);
+        }
     }
 
     const search = document.getElementById('contentSearch');
