@@ -27,7 +27,10 @@
                     </div>
 
                     <div class="d-flex flex-wrap gap-3 mt-4">
-                        <a href="#course-roadmap" class="btn btn-primary btn-lg">
+                        <a asp-controller="Courses"
+                           asp-action="Learn"
+                           asp-route-id="@Model.Id"
+                           class="btn btn-primary btn-lg">
                             Start Learning
                         </a>
                         <a asp-controller="Home" asp-action="Index" asp-fragment="tutorials" class="btn btn-outline-dark btn-lg">
