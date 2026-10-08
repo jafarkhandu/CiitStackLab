@@ -57,7 +57,7 @@
         <div class="ciit-topic-table-wrap">
             <table class="ciit-topic-table">
                 <thead>
-                    <tr><th>ID</th><th>Topic</th><th>Price</th><th>Duration</th><th>Public Folder ID</th><th>Actions</th></tr>
+                    <tr><th>ID</th><th>Topic</th><th>Price</th><th>Duration</th><th>Actions</th></tr>
                 </thead>
                 <tbody id="topicRows">
                     @foreach (var topic in Model.ActiveTopics)
@@ -72,7 +72,6 @@
                             </td>
                             <td class="topic-value">₹@topic.Price.ToString("N2")</td>
                             <td class="topic-value">@FormatDuration(topic.DurationMinutes)</td>
-                            <td><span class="topic-folder-value">@(string.IsNullOrWhiteSpace(topic.PublicFolderId) ? "—" : topic.PublicFolderId)</span></td>
                             <td>
                                 <div class="topic-row-actions">
                                     <a asp-area="Admin" asp-controller="Topics" asp-action="Index" asp-route-editId="@topic.Id" class="ciit-topic-icon-btn" title="Edit">
@@ -167,11 +166,6 @@
                         </div>
                     </div>
 
-                    <div class="ciit-topic-form-field">
-                        <label for="publicFolderId">Public folder ID <span>(optional)</span></label>
-                        <textarea id="publicFolderId" name="PublicFolderId" class="form-control" rows="3" placeholder="Optional public folder identifier"></textarea>
-                    </div>
-
                     <div class="ciit-topic-form-hint">
                         <i class="bi bi-calculator"></i>
                         <span>This topic price is included automatically in every active course where the topic is mapped.</span>
@@ -198,7 +192,6 @@
         window.ciitEditTopic = {
             id: @edit.Id,
             topicName: @Html.Raw(System.Text.Json.JsonSerializer.Serialize(edit.TopicName)),
-            publicFolderId: @Html.Raw(System.Text.Json.JsonSerializer.Serialize(edit.PublicFolderId)),
             price: @edit.Price.ToString(System.Globalization.CultureInfo.InvariantCulture),
             durationMinutes: @(edit.DurationMinutes.HasValue ? edit.DurationMinutes.Value.ToString(System.Globalization.CultureInfo.InvariantCulture) : "null")
         };
