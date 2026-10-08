@@ -1,0 +1,169 @@
+@model CIITStackLab.Application.DTOs.CourseLearningDto
+
+@{
+    ViewData["Title"] = $"Learn — {Model.Title}";
+    var orderedContents = Model.Topics.SelectMany(topic => topic.Contents.Select(content => new { Topic = topic, Content = content })).ToList();
+    var currentIndex = Model.CurrentContentId.HasValue
+        ? orderedContents.FindIndex(x => x.Content.Id == Model.CurrentContentId.Value)
+        : 0;
+    if (currentIndex < 0) currentIndex = 0;
+    var currentItem = orderedContents.ElementAtOrDefault(currentIndex);
+    var currentContent = currentItem?.Content;
+    var previousItem = currentIndex > 0 ? orderedContents[currentIndex - 1] : null;
+    var nextItem = currentIndex >= 0 && currentIndex < orderedContents.Count - 1 ? orderedContents[currentIndex + 1] : null;
+}
+
+@section Styles {
+    <link rel="stylesheet" href="~/css/course-learning.css" asp-append-version="true" />
+}
+
+@if (currentContent is null)
+{
+    <main class="ciit-learning-empty container py-5">
+        <div class="card border-0 shadow-sm p-5 text-center">
+            <h1 class="h3">Learning content is not available yet</h1>
+            <p class="text-secondary mb-4">This course has no active lessons.</p>
+            <a asp-action="Details" asp-route-id="@Model.Id" class="btn btn-primary">Back to Course</a>
+        </div>
+    </main>
+}
+else
+{
+    <section class="ciit-learning-page">
+        <header class="ciit-learning-header">
+            <div class="container">
+                <a asp-action="Details" asp-route-id="@Model.Id" class="ciit-learning-back-link">
+                    <i class="bi bi-arrow-left"></i> Course Overview
+                </a>
+                <div class="ciit-learning-header-row">
+                    <div>
+                        <div class="ciit-learning-pills">
+                            <span class="ciit-learning-badge">@Model.Category</span>
+                            <span class="ciit-learning-meta-pill">@Model.Level</span>
+                            <span class="ciit-learning-meta-pill">@Model.DurationHours hrs</span>
+                            <span class="ciit-learning-meta-pill">@Model.ContentCount Lessons</span>
+                        </div>
+                        <h1>@Model.Title</h1>
+                        <p>@Model.ShortDescription</p>
+                    </div>
+                    <div class="ciit-learning-price-card">
+                        <span>Total Course Price</span>
+                        <strong>₹@Model.TotalPrice.ToString("N2")</strong>
+                    </div>
+                </div>
+            </div>
+        </header>
+
+        <div class="container ciit-learning-shell">
+            <aside class="ciit-learning-sidebar" aria-label="Course lessons">
+                <div class="ciit-learning-sidebar-head">
+                    <div><span>Course Contents</span><h2>Learning Roadmap</h2></div>
+                    <strong>@Model.ContentCount</strong>
+                </div>
+                <div class="ciit-learning-sidebar-scroll">
+                    @foreach (var topic in Model.Topics)
+                    {
+                        <section class="ciit-learning-topic @(topic.Contents.Any(x => x.Id == currentContent.Id) ? "is-active-topic" : "")">
+                            <div class="ciit-learning-topic-heading">
+                                <div>
+                                    <strong>@topic.Title</strong>
+                                    <span>@topic.Contents.Count lesson@(topic.Contents.Count == 1 ? "" : "s")</span>
+                                </div>
+                                <a asp-controller="Notes" asp-action="Index"
+                                   asp-route-courseId="@Model.Id" asp-route-topicId="@topic.Id"
+                                   class="ciit-learning-topic-notes" title="Open topic notes">
+                                    <i class="bi bi-journal-text"></i> Notes
+                                </a>
+                            </div>
+                            @foreach (var content in topic.Contents)
+                            {
+                                var isCurrent = content.Id == currentContent.Id;
+                                <a asp-action="Learn" asp-route-id="@Model.Id" asp-route-contentId="@content.Id"
+                                   class="ciit-learning-content-link @(isCurrent ? "is-current" : "")"
+                                   aria-current="@(isCurrent ? "page" : null)">
+                                    <i class="bi @(isCurrent ? "bi-play-fill" : "bi-play-circle")"></i>
+                                    <span>@content.Title</span>
+                                    @if (content.Questions.Count > 0)
+                                    {
+                                        <small>@content.Questions.Count</small>
+                                    }
+                                </a>
+                            }
+                        </section>
+                    }
+                </div>
+            </aside>
+
+            <main class="ciit-learning-main">
+                <article class="ciit-learning-main-card">
+                    <div class="ciit-learning-lesson-header">
+                        <div>
+                            <span>Lesson @(currentIndex + 1) of @orderedContents.Count</span>
+                            <h2>@currentContent.Title</h2>
+                            <p>@currentItem?.Topic.Title</p>
+                        </div>
+                        <div class="ciit-learning-lesson-actions">
+                            @if (previousItem is not null)
+                            {
+                                <a asp-action="Learn" asp-route-id="@Model.Id" asp-route-contentId="@previousItem.Content.Id" class="btn btn-outline-secondary">
+                                    <i class="bi bi-chevron-left"></i> Previous
+                                </a>
+                            }
+                            @if (nextItem is not null)
+                            {
+                                <a asp-action="Learn" asp-route-id="@Model.Id" asp-route-contentId="@nextItem.Content.Id" class="btn btn-primary">
+                                    Next <i class="bi bi-chevron-right"></i>
+                                </a>
+                            }
+                        </div>
+                    </div>
+
+
+                    @if (!string.IsNullOrWhiteSpace(currentContent.VideoName))
+                    {
+                        <section class="ciit-learning-resource">
+                            <h3><i class="bi bi-play-circle me-2"></i>Video Lesson</h3>
+                            <div class="ratio ratio-16x9">
+                                <iframe src="@currentContent.VideoName" title="@currentContent.Title video" loading="lazy" allowfullscreen></iframe>
+                            </div>
+                        </section>
+                    }
+
+                    @if (!string.IsNullOrWhiteSpace(currentContent.Slides))
+                    {
+                        <section class="ciit-learning-resource">
+                            <h3><i class="bi bi-file-earmark-slides me-2"></i>Study Material</h3>
+                            <a href="@currentContent.Slides" target="_blank" rel="noopener noreferrer" class="btn btn-outline-primary">
+                                Open Slides <i class="bi bi-box-arrow-up-right"></i>
+                            </a>
+                        </section>
+                    }
+
+                    @if (currentContent.Questions.Count > 0)
+                    {
+                        <section class="ciit-learning-resource">
+                            <h3><i class="bi bi-patch-question-fill me-2"></i>Knowledge Check</h3>
+                            @for (var i = 0; i < currentContent.Questions.Count; i++)
+                            {
+                                var question = currentContent.Questions[i];
+                                <div class="ciit-learning-question">
+                                    <strong>@(i + 1). @question.Question</strong>
+                                    <div class="ciit-learning-options">
+                                        @for (var optionIndex = 0; optionIndex < question.Options.Count; optionIndex++)
+                                        {
+                                            var option = question.Options[optionIndex];
+                                            if (!string.IsNullOrWhiteSpace(option))
+                                            {
+                                                <label><input type="radio" name="q-@question.Id" value="@(optionIndex + 1)" /> @option</label>
+                                            }
+                                        }
+                                    </div>
+                                </div>
+                            }
+                        </section>
+                    }
+                </article>
+            </main>
+        </div>
+    </section>
+}

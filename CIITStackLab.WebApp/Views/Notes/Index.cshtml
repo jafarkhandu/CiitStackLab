@@ -1,0 +1,159 @@
+@model CIITStackLab.Application.DTOs.TopicNotesDto
+
+@{
+    ViewData["Title"] = $"Notes — {Model.TopicTitle}";
+
+    var chapters = Model.Chapters.ToList();
+    var currentIndex = chapters.FindIndex(
+        x => x.ChapterId == Model.CurrentChapterId);
+
+    if (currentIndex < 0)
+    {
+        currentIndex = 0;
+    }
+
+    var previous = currentIndex > 0
+        ? chapters[currentIndex - 1]
+        : null;
+
+    var next = currentIndex < chapters.Count - 1
+        ? chapters[currentIndex + 1]
+        : null;
+}
+
+@section Styles {
+    <link rel="stylesheet"
+          href="~/css/notes.css"
+          asp-append-version="true" />
+}
+
+<section class="ciit-notes-reader">
+    <header class="ciit-notes-reader-header">
+        <div class="container">
+            <a asp-controller="Home"
+               asp-action="Index"
+               class="ciit-notes-back">
+                <i class="bi bi-arrow-left"></i>
+                Back to Learning Site
+            </a>
+
+            <span class="ciit-notes-reader-kicker">Notes</span>
+
+            <h1>@Model.TopicTitle</h1>
+
+            <p>Structured Notes chapters for this topic.</p>
+        </div>
+    </header>
+
+    <div class="container ciit-notes-reader-shell">
+        <aside class="ciit-notes-reader-sidebar">
+            <div class="ciit-notes-reader-sidebar-head">
+                <span>Notes</span>
+                <strong>@chapters.Count chapters</strong>
+            </div>
+
+            <div class="ciit-notes-reader-list">
+                @for (var chapterIndex = 0; chapterIndex < chapters.Count; chapterIndex++)
+                {
+                    var chapter = chapters[chapterIndex];
+
+                    <a class="@(chapter.ChapterId == Model.CurrentChapterId ? "is-active" : "")"
+                       asp-controller="Notes"
+                       asp-action="Index"
+                       asp-route-topicId="@Model.TopicId"
+                       asp-route-chapterId="@chapter.ChapterId">
+
+                        <span>
+                            Chapter @(chapterIndex + 1): @chapter.Title
+                        </span>
+
+                        <small>@chapter.ChapterId</small>
+                    </a>
+                }
+            </div>
+        </aside>
+
+        <main class="ciit-notes-reader-main">
+            <article class="ciit-notes-reader-card">
+                <div class="ciit-notes-reader-title">
+                    <span>Chapter @(currentIndex + 1) of @chapters.Count</span>
+                    <h2>
+                        Chapter @(currentIndex + 1): @Model.CurrentChapter?.Title
+                    </h2>
+                </div>
+
+                <div class="ciit-notes-reader-content">
+                    @Html.Raw(Model.CurrentChapter?.HtmlContent)
+                </div>
+
+                @if (Model.CurrentChapter?.Media.Count > 0)
+                {
+                    <section class="ciit-notes-reader-media">
+                        <div class="ciit-notes-reader-media-head">
+                            <span>Chapter Resources</span>
+                            <strong>Slides &amp; Video</strong>
+                        </div>
+                        @foreach (var media in Model.CurrentChapter.Media)
+                        {
+                            <div class="ciit-notes-reader-media-row">
+                                <div>
+                                    <strong>@media.Title</strong>
+                                    <small>Resources attached to this chapter</small>
+                                </div>
+                                <div class="d-flex gap-2 flex-wrap">
+                                    @if (!string.IsNullOrWhiteSpace(media.Slides))
+                                    {
+                                        <a href="@media.Slides" target="_blank" rel="noopener" class="btn btn-outline-primary btn-sm"><i class="bi bi-file-earmark-slides me-1"></i>Slides</a>
+                                    }
+                                    @if (!string.IsNullOrWhiteSpace(media.VideoName))
+                                    {
+                                        <a href="@media.VideoName" target="_blank" rel="noopener" class="btn btn-primary btn-sm"><i class="bi bi-play-circle me-1"></i>Video</a>
+                                    }
+                                </div>
+                            </div>
+                        }
+                    </section>
+                }
+
+                <nav class="ciit-notes-reader-pager">
+                    @if (previous is not null)
+                    {
+                        <a asp-controller="Notes"
+                           asp-action="Index"
+                           asp-route-topicId="@Model.TopicId"
+                           asp-route-chapterId="@previous.ChapterId">
+
+                            <i class="bi bi-chevron-left"></i>
+
+                            <span>
+                                <small>Previous</small>
+                                Chapter @(currentIndex): @previous.Title
+                            </span>
+                        </a>
+                    }
+                    else
+                    {
+                        <span></span>
+                    }
+
+                    @if (next is not null)
+                    {
+                        <a class="next"
+                           asp-controller="Notes"
+                           asp-action="Index"
+                           asp-route-topicId="@Model.TopicId"
+                           asp-route-chapterId="@next.ChapterId">
+
+                            <span>
+                                <small>Next</small>
+                                Chapter @(currentIndex + 2): @next.Title
+                            </span>
+
+                            <i class="bi bi-chevron-right"></i>
+                        </a>
+                    }
+                </nav>
+            </article>
+        </main>
+    </div>
+</section>

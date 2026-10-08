@@ -4,6 +4,7 @@ using CIITStackLab.Infrastructure.Persistence;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -11,9 +12,11 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace CIITStackLab.Infrastructure.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    partial class ApplicationDbContextModelSnapshot : ModelSnapshot
+    [Migration("20261007122009_AddTrainingNotesAndRemoveLessonHtmlContent")]
+    partial class AddTrainingNotesAndRemoveLessonHtmlContent
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -205,10 +208,6 @@ namespace CIITStackLab.Infrastructure.Migrations
                         .HasColumnType("int")
                         .HasColumnName("flag");
 
-                    b.Property<int?>("NoteId")
-                        .HasColumnType("int")
-                        .HasColumnName("note_id");
-
                     b.Property<DateTime?>("RestoredAt")
                         .HasColumnType("datetime2")
                         .HasColumnName("RestoredAt");
@@ -237,8 +236,6 @@ namespace CIITStackLab.Infrastructure.Migrations
                         .HasColumnName("video_name");
 
                     b.HasKey("Id");
-
-                    b.HasIndex("NoteId");
 
                     b.HasIndex("TopicId");
 
@@ -309,11 +306,9 @@ namespace CIITStackLab.Infrastructure.Migrations
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
 
-                    b.Property<string>("ChapterId")
-                        .IsRequired()
-                        .HasMaxLength(50)
-                        .HasColumnType("nvarchar(50)")
-                        .HasColumnName("chapter_id");
+                    b.Property<int>("CourseId")
+                        .HasColumnType("int")
+                        .HasColumnName("course_id");
 
                     b.Property<DateTime?>("CreatedAt")
                         .HasColumnType("datetime2")
@@ -332,8 +327,15 @@ namespace CIITStackLab.Infrastructure.Migrations
                         .HasColumnType("nvarchar(max)")
                         .HasColumnName("html_content");
 
+                    b.Property<string>("PageId")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("nvarchar(50)")
+                        .HasColumnName("page_id");
+
                     b.Property<DateTime?>("RestoredAt")
-                        .HasColumnType("datetime2");
+                        .HasColumnType("datetime2")
+                        .HasColumnName("RestoredAt");
 
                     b.Property<int>("SortOrder")
                         .HasColumnType("int")
@@ -345,6 +347,12 @@ namespace CIITStackLab.Infrastructure.Migrations
                         .HasColumnType("nvarchar(100)")
                         .HasColumnName("title");
 
+                    b.Property<string>("TitleWithNumber")
+                        .IsRequired()
+                        .HasMaxLength(150)
+                        .HasColumnType("nvarchar(150)")
+                        .HasColumnName("title_with_number");
+
                     b.Property<int>("TopicId")
                         .HasColumnType("int")
                         .HasColumnName("topic_id");
@@ -355,9 +363,11 @@ namespace CIITStackLab.Infrastructure.Migrations
 
                     b.HasKey("Id");
 
-                    b.HasIndex("TopicId", "ChapterId")
+                    b.HasIndex("TopicId");
+
+                    b.HasIndex("CourseId", "TopicId", "PageId")
                         .IsUnique()
-                        .HasDatabaseName("UX_tbltraining_notes_topic_chapter");
+                        .HasDatabaseName("UX_tbltraining_notes_course_topic_page");
 
                     b.ToTable("tbltraining_notes", "erpsystem");
                 });
@@ -594,11 +604,6 @@ namespace CIITStackLab.Infrastructure.Migrations
 
             modelBuilder.Entity("CIITStackLab.Domain.Entities.Lesson", b =>
                 {
-                    b.HasOne("CIITStackLab.Domain.Entities.TrainingNote", null)
-                        .WithMany()
-                        .HasForeignKey("NoteId")
-                        .OnDelete(DeleteBehavior.NoAction);
-
                     b.HasOne("CIITStackLab.Domain.Entities.Topic", "Topic")
                         .WithMany("Lessons")
                         .HasForeignKey("TopicId")
@@ -609,11 +614,19 @@ namespace CIITStackLab.Infrastructure.Migrations
 
             modelBuilder.Entity("CIITStackLab.Domain.Entities.TrainingNote", b =>
                 {
+                    b.HasOne("CIITStackLab.Domain.Entities.Course", "Course")
+                        .WithMany()
+                        .HasForeignKey("CourseId")
+                        .OnDelete(DeleteBehavior.NoAction)
+                        .IsRequired();
+
                     b.HasOne("CIITStackLab.Domain.Entities.Topic", "Topic")
                         .WithMany()
                         .HasForeignKey("TopicId")
                         .OnDelete(DeleteBehavior.NoAction)
                         .IsRequired();
+
+                    b.Navigation("Course");
 
                     b.Navigation("Topic");
                 });

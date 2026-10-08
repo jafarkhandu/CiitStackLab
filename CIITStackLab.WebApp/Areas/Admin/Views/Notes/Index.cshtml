@@ -1,0 +1,189 @@
+@model IReadOnlyList<CIITStackLab.Application.DTOs.AdminNoteDto>
+
+@{
+    ViewData["Title"] = "Notes";
+
+    var message = TempData["AdminNotesMessage"] as string;
+    var type = TempData["AdminNotesMessageType"] as string;
+}
+
+<section class="ciit-notes-page">
+    <div class="ciit-notes-header">
+        <div>
+            <span class="ciit-notes-eyebrow">Learning</span>
+            <h1>Notes Chapters</h1>
+            <p>Manage independent Notes chapters for each topic.</p>
+        </div>
+
+        <a asp-area="Admin"
+           asp-controller="Notes"
+           asp-action="Create"
+           class="ciit-notes-primary-btn">
+            <i class="bi bi-plus-lg"></i>
+            Add Chapter
+        </a>
+    </div>
+
+    @if (!string.IsNullOrWhiteSpace(message))
+    {
+        <div class="ciit-notes-alert @(type == "success" ? "is-success" : "is-error")">
+            <i class="bi @(type == "success" ? "bi-check-circle-fill" : "bi-exclamation-circle-fill")"></i>
+            <span>@message</span>
+        </div>
+    }
+
+    <section class="ciit-notes-card">
+        <div class="ciit-notes-toolbar">
+            <div class="ciit-notes-search">
+                <i class="bi bi-search"></i>
+
+                <input id="notesSearch"
+                       type="search"
+                       placeholder="Search topic, chapter or title..." />
+            </div>
+
+            <span id="notesVisibleCount"
+                  class="ciit-notes-count">
+                @Model.Count chapters
+            </span>
+        </div>
+
+        <div class="table-responsive">
+            <table class="ciit-notes-table">
+                <thead>
+                    <tr>
+                        <th>Topic</th>
+                        <th>Chapter ID</th>
+                        <th>Title</th>
+                        <th>Order</th>
+                        <th>Updated</th>
+                        <th></th>
+                    </tr>
+                </thead>
+
+                <tbody>
+                    @foreach (var note in Model)
+                    {
+                        <tr data-note-row
+                            data-search="@($"{note.TopicTitle} {note.ChapterId} {note.Title}")">
+
+                            <td>
+                                <span class="ciit-notes-topic">
+                                    @note.TopicTitle
+                                </span>
+
+                                <small class="d-block text-secondary">
+                                    #@note.TopicId
+                                </small>
+                            </td>
+
+                            <td>
+                                <code>@note.ChapterId</code>
+                            </td>
+
+                            <td>
+                                <div class="ciit-notes-name">
+                                    <span class="ciit-notes-icon">
+                                        <i class="bi bi-journal-text"></i>
+                                    </span>
+
+                                    <div>
+                                        <strong>@note.Title</strong>
+                                    </div>
+                                </div>
+                            </td>
+
+                            <td>@note.SortOrder</td>
+
+                            <td>
+                                @((note.UpdatedAt ?? note.CreatedAt)?.ToString("dd MMM yyyy") ?? "—")
+                            </td>
+
+                            <td class="text-nowrap">
+                                <a asp-area="Admin"
+                                   asp-controller="Notes"
+                                   asp-action="Edit"
+                                   asp-route-id="@note.Id"
+                                   class="ciit-notes-edit-btn">
+                                    <i class="bi bi-pencil-square"></i>
+                                    Edit
+                                </a>
+
+                                <form asp-area="Admin"
+                                      asp-controller="Notes"
+                                      asp-action="Delete"
+                                      asp-route-id="@note.Id"
+                                      method="post"
+                                      class="d-inline"
+                                      onsubmit="return confirm('Delete this Notes chapter?');">
+
+                                    @Html.AntiForgeryToken()
+
+                                    <button class="ciit-notes-delete-btn"
+                                            type="submit">
+                                        <i class="bi bi-trash3"></i>
+                                    </button>
+                                </form>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+
+        <div id="notesSearchEmpty"
+             class="ciit-notes-empty"
+             hidden>
+            <i class="bi bi-search"></i>
+            <h3>No matching chapters</h3>
+        </div>
+
+        @if (Model.Count == 0)
+        {
+            <div class="ciit-notes-empty is-visible">
+                <i class="bi bi-journal-plus"></i>
+                <h3>No Notes chapters yet</h3>
+                <p>
+                    Create your first chapter and attach it to a topic.
+                </p>
+            </div>
+        }
+    </section>
+</section>
+
+@section Scripts {
+    <script>
+        (() => {
+            const searchInput = document.getElementById("notesSearch");
+            const rows = [...document.querySelectorAll("[data-note-row]")];
+            const count = document.getElementById("notesVisibleCount");
+            const empty = document.getElementById("notesSearchEmpty");
+
+            searchInput?.addEventListener("input", () => {
+                const query = searchInput.value.trim().toLowerCase();
+                let visibleCount = 0;
+
+                rows.forEach(row => {
+                    const matches =
+                        !query ||
+                        (row.dataset.search || "").toLowerCase().includes(query);
+
+                    row.hidden = !matches;
+
+                    if (matches) {
+                        visibleCount++;
+                    }
+                });
+
+                if (count) {
+                    count.textContent =
+                        visibleCount + " chapter" + (visibleCount === 1 ? "" : "s");
+                }
+
+                if (empty) {
+                    empty.hidden = visibleCount !== 0;
+                }
+            });
+        })();
+    </script>
+}

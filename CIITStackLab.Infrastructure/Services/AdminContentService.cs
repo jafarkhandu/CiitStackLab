@@ -43,6 +43,23 @@ public sealed class AdminContentService : IAdminContentService
             .ToListAsync(cancellationToken);
     }
 
+    public async Task<IReadOnlyList<AdminLookupDto>> GetTopicsAsync(CancellationToken cancellationToken = default)
+    {
+        return await _dbContext.Topics.AsNoTracking()
+            .Where(x => x.Flag == 0).OrderBy(x => x.Title)
+            .Select(x => new AdminLookupDto { Id = x.Id, Title = x.Title })
+            .ToListAsync(cancellationToken);
+    }
+
+    public async Task<IReadOnlyList<AdminNoteLookupDto>> GetNotesForTopicAsync(int topicId, CancellationToken cancellationToken = default)
+    {
+        return await _dbContext.TrainingNotes.AsNoTracking()
+            .Where(x => x.TopicId == topicId && x.Flag == 0)
+            .OrderBy(x => x.SortOrder).ThenBy(x => x.Id)
+            .Select(x => new AdminNoteLookupDto { Id = x.Id, ChapterId = x.ChapterId, Title = x.Title, SortOrder = x.SortOrder })
+            .ToListAsync(cancellationToken);
+    }
+
     public async Task<IReadOnlyList<AdminLookupDto>> GetTopicsForCourseAsync(int courseId, CancellationToken cancellationToken = default)
     {
         return await (
@@ -63,6 +80,7 @@ public sealed class AdminContentService : IAdminContentService
         _dbContext.Lessons.Add(new Lesson
         {
             TopicId = input.TopicId,
+            NoteId = input.NoteId,
             Title = input.Title.Trim(),
             Slides = NormalizeOptional(input.Slides),
             VideoName = NormalizeOptional(input.VideoName),
@@ -83,6 +101,7 @@ public sealed class AdminContentService : IAdminContentService
         if (validationError is not null) return (false, validationError);
 
         lesson.TopicId = input.TopicId;
+        lesson.NoteId = input.NoteId;
         lesson.Title = input.Title.Trim();
         lesson.Slides = NormalizeOptional(input.Slides);
         lesson.VideoName = NormalizeOptional(input.VideoName);
@@ -127,21 +146,13 @@ public sealed class AdminContentService : IAdminContentService
 
         if (string.IsNullOrWhiteSpace(input.Title)) return "Content name is required.";
 
-        var courseExists = await _dbContext.Courses.AsNoTracking()
-            .AnyAsync(x => x.Id == input.CourseId && x.Flag == 0, cancellationToken);
-        if (!courseExists) return "The selected course was not found or is inactive.";
+        var topicExists = await _dbContext.Topics.AsNoTracking()
+            .AnyAsync(x => x.Id == input.TopicId && x.Flag == 0, cancellationToken);
+        if (!topicExists) return "The selected topic was not found or is inactive.";
 
-        var topicBelongsToCourse = await (
-            from cm in _dbContext.CourseModules.AsNoTracking()
-            join t in _dbContext.Topics.AsNoTracking() on cm.TopicId equals t.Id
-            where cm.CourseId == input.CourseId
-                  && cm.TopicId == input.TopicId
-                  && cm.Flag == 0
-                  && t.Flag == 0
-            select cm.Id
-        ).AnyAsync(cancellationToken);
-
-        return topicBelongsToCourse ? null : "The selected topic is not mapped to the selected course.";
+        var noteExists = await _dbContext.TrainingNotes.AsNoTracking()
+            .AnyAsync(x => x.Id == input.NoteId && x.TopicId == input.TopicId && x.Flag == 0, cancellationToken);
+        return noteExists ? null : "The selected note chapter was not found for this topic.";
     }
 
     private IQueryable<ContentRow> BuildContentQuery(int? flag)
@@ -150,6 +161,8 @@ public sealed class AdminContentService : IAdminContentService
             from l in _dbContext.Lessons.AsNoTracking()
             where l.TopicId.HasValue
             join t in _dbContext.Topics.AsNoTracking() on l.TopicId!.Value equals t.Id
+            join note in _dbContext.TrainingNotes.AsNoTracking() on l.NoteId equals (int?)note.Id into noteGroup
+            from note in noteGroup.DefaultIfEmpty()
             join cm in _dbContext.CourseModules.AsNoTracking() on t.Id equals cm.TopicId
             join c in _dbContext.Courses.AsNoTracking() on cm.CourseId equals c.Id
             where t.Flag == 0 && cm.Flag == 0 && c.Flag == 0 && (flag == null || l.Flag == flag)
@@ -159,6 +172,9 @@ public sealed class AdminContentService : IAdminContentService
                 CourseId = c.Id,
                 CourseTitle = c.Title,
                 TopicId = t.Id,
+                NoteId = l.NoteId,
+                NoteChapterId = note.ChapterId,
+                NoteTitle = note.Title,
                 TopicTitle = t.Title,
                 Title = l.Title,
                 Slides = l.Slides,
@@ -204,6 +220,9 @@ public sealed class AdminContentService : IAdminContentService
         CourseId = row.CourseId,
         CourseTitle = row.CourseTitle,
         TopicId = row.TopicId,
+        NoteId = row.NoteId,
+        NoteChapterId = row.NoteChapterId,
+        NoteTitle = row.NoteTitle,
         TopicTitle = row.TopicTitle,
         Title = row.Title,
         Slides = row.Slides,
@@ -232,6 +251,9 @@ public sealed class AdminContentService : IAdminContentService
         public int CourseId { get; init; }
         public string CourseTitle { get; init; } = string.Empty;
         public int TopicId { get; init; }
+        public int? NoteId { get; init; }
+        public string NoteChapterId { get; init; } = string.Empty;
+        public string NoteTitle { get; init; } = string.Empty;
         public string TopicTitle { get; init; } = string.Empty;
         public string Title { get; init; } = string.Empty;
         public string? Slides { get; init; }

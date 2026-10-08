@@ -1,0 +1,140 @@
+@model CIITStackLab.Application.DTOs.AdminNoteInputDto
+@using CIITStackLab.Application.DTOs
+
+@{
+    var options = (IReadOnlyList<NoteTopicOptionDto>)(ViewBag.Options ?? Array.Empty<NoteTopicOptionDto>());
+    var edit = Model.Id > 0;
+}
+
+<section class="ciit-notes-page ciit-notes-editor-page">
+    <div class="ciit-notes-header">
+        <div>
+            <a asp-area="Admin"
+               asp-controller="Notes"
+               asp-action="Index"
+               class="ciit-notes-back-link">
+                <i class="bi bi-arrow-left"></i>
+                Back to Notes
+            </a>
+
+            <span class="ciit-notes-eyebrow">
+                @(edit ? "Edit chapter" : "New chapter")
+            </span>
+
+            <h1>@ViewData["Title"]</h1>
+
+            <p>
+                Notes are independent from lessons, videos, slides and MCQs.
+            </p>
+        </div>
+    </div>
+
+    <section class="ciit-notes-editor-card">
+        <form asp-area="Admin"
+              asp-controller="Notes"
+              asp-action="@(edit ? "Edit" : "Create")"
+              method="post">
+
+            @Html.AntiForgeryToken()
+
+            @if (edit)
+            {
+                <input type="hidden" asp-for="Id" />
+            }
+
+            <div asp-validation-summary="ModelOnly"
+                 class="text-danger mb-3"></div>
+
+            <div class="ciit-notes-form-grid">
+                <div class="ciit-notes-field">
+                    <label asp-for="TopicId">Topic</label>
+
+                    <select asp-for="TopicId"
+                            class="form-select"
+                            required>
+                        <option value="">Select topic</option>
+
+                        @foreach (var option in options)
+                        {
+                            <option value="@option.TopicId">
+                                @option.TopicTitle
+                            </option>
+                        }
+                    </select>
+
+                    <span asp-validation-for="TopicId"
+                          class="text-danger"></span>
+                </div>
+
+                <div class="ciit-notes-field">
+                    <label asp-for="ChapterId"></label>
+
+                    <input asp-for="ChapterId"
+                           class="form-control"
+                           placeholder="ch1" />
+
+                    <span asp-validation-for="ChapterId"
+                          class="text-danger"></span>
+                </div>
+
+                <div class="ciit-notes-field">
+                    <label asp-for="Title"></label>
+
+                    <input asp-for="Title"
+                           class="form-control"
+                           placeholder="Introduction" />
+
+                    <span asp-validation-for="Title"
+                          class="text-danger"></span>
+                </div>
+
+                <div class="ciit-notes-field">
+                    <label asp-for="SortOrder"></label>
+
+                    <input asp-for="SortOrder"
+                           class="form-control"
+                           type="number"
+                           min="1" />
+
+                    <span asp-validation-for="SortOrder"
+                          class="text-danger"></span>
+
+                    <small class="text-secondary">
+                        Chapters are displayed in ascending order by default.
+                    </small>
+                </div>
+            </div>
+
+            <div class="ciit-notes-field">
+                <label asp-for="HtmlContent">Chapter Content</label>
+
+                <textarea asp-for="HtmlContent"
+                          class="ciit-notes-html-editor"
+                          spellcheck="false"
+                          placeholder="Paste the Notes HTML fragment here..."></textarea>
+
+                <span asp-validation-for="HtmlContent"
+                      class="text-danger"></span>
+            </div>
+
+            <div class="ciit-notes-editor-actions">
+                <a asp-area="Admin"
+                   asp-controller="Notes"
+                   asp-action="Index"
+                   class="btn btn-outline-secondary">
+                    Cancel
+                </a>
+
+                <button class="ciit-notes-primary-btn"
+                        type="submit">
+                    <i class="bi bi-check2-circle"></i>
+                    @(edit ? "Save Changes" : "Create Chapter")
+                </button>
+            </div>
+        </form>
+    </section>
+</section>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}

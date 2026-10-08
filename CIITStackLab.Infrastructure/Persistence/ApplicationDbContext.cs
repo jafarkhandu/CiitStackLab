@@ -18,6 +18,7 @@ public class ApplicationDbContext : IdentityDbContext<ApplicationUser>
     public DbSet<Lesson> Lessons => Set<Lesson>();
     public DbSet<Topic> Topics => Set<Topic>();
     public DbSet<ContentQuestion> ContentQuestions => Set<ContentQuestion>();
+    public DbSet<TrainingNote> TrainingNotes => Set<TrainingNote>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -37,18 +38,14 @@ public class ApplicationDbContext : IdentityDbContext<ApplicationUser>
             entity.HasKey(x => x.Id);
             entity.Property(x => x.Id).HasColumnName("course_id");
             entity.Property(x => x.Title).HasColumnName("course_name").HasMaxLength(100).IsRequired();
-
-            // Legacy ERP fee fields are preserved in the model/database but are no longer exposed in Admin UI.
             entity.Property(x => x.FeesAmount).HasColumnName("fees_amount");
             entity.Property(x => x.FeesChangeDate).HasColumnName("fees_change_date");
             entity.Property(x => x.InstallmentPercentage).HasColumnName("installment_percentage");
-
             entity.Property(x => x.Flag).HasColumnName("flag");
             entity.Property(x => x.CreatedAt).HasColumnName("InsertedAt");
             entity.Property(x => x.UpdatedAt).HasColumnName("UpdatedAt");
             entity.Property(x => x.DeletedAt).HasColumnName("DeletedAt");
             entity.Property(x => x.RestoredAt).HasColumnName("RestoredAt");
-
             entity.HasMany(x => x.Modules)
                 .WithOne(x => x.Course)
                 .HasForeignKey(x => x.CourseId)
@@ -79,19 +76,13 @@ public class ApplicationDbContext : IdentityDbContext<ApplicationUser>
             entity.Property(x => x.Id).HasColumnName("topic_id");
             entity.Property(x => x.Title).HasColumnName("topic_name").HasMaxLength(100).IsRequired();
             entity.Property(x => x.PublicFolderId).HasColumnName("publicfolderid");
-
-            entity.Property(x => x.Price)
-                .HasColumnName("price")
-                .HasPrecision(18, 2)
-                .HasDefaultValue(0m);
-
+            entity.Property(x => x.Price).HasColumnName("price").HasPrecision(18, 2).HasDefaultValue(0m);
             entity.Property(x => x.DurationMinutes).HasColumnName("duration_minutes");
             entity.Property(x => x.Flag).HasColumnName("flag");
             entity.Property(x => x.CreatedAt).HasColumnName("InsertedAt");
             entity.Property(x => x.UpdatedAt).HasColumnName("UpdatedAt");
             entity.Property(x => x.DeletedAt).HasColumnName("DeletedAt");
             entity.Property(x => x.RestoredAt).HasColumnName("RestoredAt");
-
             entity.HasMany(x => x.Lessons).WithOne(x => x.Topic)
                 .HasForeignKey(x => x.TopicId)
                 .OnDelete(DeleteBehavior.NoAction);
@@ -123,6 +114,7 @@ public class ApplicationDbContext : IdentityDbContext<ApplicationUser>
             entity.HasKey(x => x.Id);
             entity.Property(x => x.Id).HasColumnName("content_id");
             entity.Property(x => x.TopicId).HasColumnName("topic_id");
+            entity.Property(x => x.NoteId).HasColumnName("note_id");
             entity.Property(x => x.Title).HasColumnName("content_name").HasMaxLength(100);
             entity.Property(x => x.Slides).HasColumnName("slides");
             entity.Property(x => x.VideoName).HasColumnName("video_name").HasMaxLength(100);
@@ -131,6 +123,31 @@ public class ApplicationDbContext : IdentityDbContext<ApplicationUser>
             entity.Property(x => x.UpdatedAt).HasColumnName("UpdatedAt");
             entity.Property(x => x.DeletedAt).HasColumnName("DeletedAt");
             entity.Property(x => x.RestoredAt).HasColumnName("RestoredAt");
+            entity.HasOne(x => x.Topic).WithMany(x => x.Lessons).HasForeignKey(x => x.TopicId).OnDelete(DeleteBehavior.NoAction);
+            entity.HasOne<TrainingNote>().WithMany().HasForeignKey(x => x.NoteId).OnDelete(DeleteBehavior.NoAction);
+        });
+
+        modelBuilder.Entity<TrainingNote>(entity =>
+        {
+            entity.ToTable("tbltraining_notes", ExistingSchema);
+            entity.HasKey(x => x.Id);
+            entity.Property(x => x.Id).HasColumnName("note_id");
+            entity.Property(x => x.TopicId).HasColumnName("topic_id").IsRequired();
+            entity.Property(x => x.ChapterId).HasColumnName("chapter_id").HasMaxLength(50).IsRequired();
+            entity.Property(x => x.Title).HasColumnName("title").HasMaxLength(100).IsRequired();
+            entity.Property(x => x.HtmlContent).HasColumnName("html_content").IsRequired();
+            entity.Property(x => x.SortOrder).HasColumnName("sort_order").IsRequired();
+            entity.Property(x => x.Flag).HasColumnName("flag");
+            entity.Property(x => x.CreatedAt).HasColumnName("InsertedAt");
+            entity.Property(x => x.UpdatedAt).HasColumnName("UpdatedAt");
+            entity.Property(x => x.DeletedAt).HasColumnName("DeletedAt");
+            entity.HasIndex(x => new { x.TopicId, x.ChapterId })
+                .IsUnique()
+                .HasDatabaseName("UX_tbltraining_notes_topic_chapter");
+            entity.HasOne(x => x.Topic)
+                .WithMany()
+                .HasForeignKey(x => x.TopicId)
+                .OnDelete(DeleteBehavior.NoAction);
         });
     }
 }

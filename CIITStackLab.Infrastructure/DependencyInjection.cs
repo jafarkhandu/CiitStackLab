@@ -45,12 +45,14 @@ public static class DependencyInjection
             options.SlidingExpiration = true;
         });
 
-        services.AddScoped<ICourseService, CourseService>();
+        services.AddScoped<CourseService>();
+        services.AddScoped<ICourseService, DynamicCourseService>();
         services.AddScoped<IAdminDashboardService, AdminDashboardService>();
         services.AddScoped<IAdminCourseService, AdminCourseService>();
         services.AddScoped<IAdminTopicService, AdminTopicService>();
         services.AddScoped<IAdminCourseTopicMappingService, AdminCourseTopicMappingService>();
         services.AddScoped<IAdminContentService, AdminContentService>();
+        services.AddScoped<INotesService, NotesService>();
         services.AddScoped<IAdminStudentService, AdminStudentService>();
         services.AddScoped<IAdminSettingsService, AdminSettingsService>();
 

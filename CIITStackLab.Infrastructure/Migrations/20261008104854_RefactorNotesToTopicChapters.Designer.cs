@@ -4,6 +4,7 @@ using CIITStackLab.Infrastructure.Persistence;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -11,9 +12,11 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace CIITStackLab.Infrastructure.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    partial class ApplicationDbContextModelSnapshot : ModelSnapshot
+    [Migration("20261008104854_RefactorNotesToTopicChapters")]
+    partial class RefactorNotesToTopicChapters
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -205,10 +208,6 @@ namespace CIITStackLab.Infrastructure.Migrations
                         .HasColumnType("int")
                         .HasColumnName("flag");
 
-                    b.Property<int?>("NoteId")
-                        .HasColumnType("int")
-                        .HasColumnName("note_id");
-
                     b.Property<DateTime?>("RestoredAt")
                         .HasColumnType("datetime2")
                         .HasColumnName("RestoredAt");
@@ -237,8 +236,6 @@ namespace CIITStackLab.Infrastructure.Migrations
                         .HasColumnName("video_name");
 
                     b.HasKey("Id");
-
-                    b.HasIndex("NoteId");
 
                     b.HasIndex("TopicId");
 
@@ -594,11 +591,6 @@ namespace CIITStackLab.Infrastructure.Migrations
 
             modelBuilder.Entity("CIITStackLab.Domain.Entities.Lesson", b =>
                 {
-                    b.HasOne("CIITStackLab.Domain.Entities.TrainingNote", null)
-                        .WithMany()
-                        .HasForeignKey("NoteId")
-                        .OnDelete(DeleteBehavior.NoAction);
-
                     b.HasOne("CIITStackLab.Domain.Entities.Topic", "Topic")
                         .WithMany("Lessons")
                         .HasForeignKey("TopicId")
