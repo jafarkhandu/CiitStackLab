@@ -6,6 +6,8 @@ public class Lesson
 
     public int? TopicId { get; set; }
 
+    public int? NoteId { get; set; }
+
     public string Title { get; set; } = string.Empty;
 
     public string? Slides { get; set; }
