@@ -67,6 +67,7 @@ public sealed class ContentController : Controller
             Id = content.Id,
             CourseId = content.CourseId,
             TopicId = content.TopicId,
+            NoteId = content.NoteId ?? 0,
             Title = content.Title,
             Slides = content.Slides,
             VideoName = content.VideoName
@@ -80,7 +81,7 @@ public sealed class ContentController : Controller
         input.Id = id;
         if (!ModelState.IsValid)
         {
-            await LoadFormDataAsync(input.CourseId, cancellationToken);
+            await LoadFormDataAsync(input.TopicId, cancellationToken);
             return View(input);
         }
 
