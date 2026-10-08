@@ -114,6 +114,7 @@ public class ApplicationDbContext : IdentityDbContext<ApplicationUser>
             entity.HasKey(x => x.Id);
             entity.Property(x => x.Id).HasColumnName("content_id");
             entity.Property(x => x.TopicId).HasColumnName("topic_id");
+            entity.Property(x => x.NoteId).HasColumnName("note_id");
             entity.Property(x => x.Title).HasColumnName("content_name").HasMaxLength(100);
             entity.Property(x => x.Slides).HasColumnName("slides");
             entity.Property(x => x.VideoName).HasColumnName("video_name").HasMaxLength(100);
@@ -122,6 +123,8 @@ public class ApplicationDbContext : IdentityDbContext<ApplicationUser>
             entity.Property(x => x.UpdatedAt).HasColumnName("UpdatedAt");
             entity.Property(x => x.DeletedAt).HasColumnName("DeletedAt");
             entity.Property(x => x.RestoredAt).HasColumnName("RestoredAt");
+            entity.HasOne(x => x.Topic).WithMany(x => x.Lessons).HasForeignKey(x => x.TopicId).OnDelete(DeleteBehavior.NoAction);
+            entity.HasOne<TrainingNote>().WithMany().HasForeignKey(x => x.NoteId).OnDelete(DeleteBehavior.NoAction);
         });
 
         modelBuilder.Entity<TrainingNote>(entity =>
