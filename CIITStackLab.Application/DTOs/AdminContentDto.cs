@@ -43,7 +43,7 @@ public sealed class AdminContentInputDto
 {
     public int Id { get; set; }
 
-    [Range(1, int.MaxValue, ErrorMessage = "Please select a course.")]
+    // Retained for existing data compatibility; Course is not selected in the new Content UI.
     public int CourseId { get; set; }
 
     [Range(1, int.MaxValue, ErrorMessage = "Please select a topic.")]
