@@ -211,6 +211,40 @@ public sealed class NotesService : INotesService
             return null;
         }
 
+        var chapterIds = chapters.Select(x => x.Id).ToList();
+        var mediaRows = await _dbContext.Lessons
+            .AsNoTracking()
+            .Where(x => x.NoteId.HasValue && chapterIds.Contains(x.NoteId.Value) && x.Flag == 0)
+            .OrderBy(x => x.Id)
+            .Select(x => new
+            {
+                x.NoteId,
+                Media = new NoteMediaDto
+                {
+                    ContentId = x.Id,
+                    Title = x.Title,
+                    Slides = x.Slides,
+                    VideoName = x.VideoName
+                }
+            })
+            .ToListAsync(cancellationToken);
+
+        var mediaByNote = mediaRows
+            .GroupBy(x => x.NoteId!.Value)
+            .ToDictionary(x => x.Key, x => (IReadOnlyList<NoteMediaDto>)x.Select(y => y.Media).ToList());
+
+        chapters = chapters.Select(chapter => new NoteChapterDto
+        {
+            Id = chapter.Id,
+            ChapterId = chapter.ChapterId,
+            Title = chapter.Title,
+            HtmlContent = chapter.HtmlContent,
+            SortOrder = chapter.SortOrder,
+            Media = mediaByNote.TryGetValue(chapter.Id, out var media)
+                ? media
+                : Array.Empty<NoteMediaDto>()
+        }).ToList();
+
         var current = !string.IsNullOrWhiteSpace(chapterId)
             ? chapters.FirstOrDefault(x => x.ChapterId == chapterId) ?? chapters[0]
             : chapters[0];
