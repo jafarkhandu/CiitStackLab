@@ -140,10 +140,10 @@ public sealed class ContentController : Controller
     }
 
     [HttpGet]
-    public async Task<IActionResult> Topics(int courseId, CancellationToken cancellationToken)
+    public async Task<IActionResult> Notes(int topicId, CancellationToken cancellationToken)
     {
-        if (courseId <= 0) return BadRequest();
-        return Json(await _contentService.GetTopicsForCourseAsync(courseId, cancellationToken));
+        if (topicId <= 0) return BadRequest();
+        return Json(await _contentService.GetNotesForTopicAsync(topicId, cancellationToken));
     }
 
     private async Task LoadTopicsAsync(CancellationToken cancellationToken)
