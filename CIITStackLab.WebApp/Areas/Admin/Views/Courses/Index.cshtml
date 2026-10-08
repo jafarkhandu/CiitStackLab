@@ -45,7 +45,7 @@
         <div class="ciit-course-table-wrap">
             <table class="ciit-course-table" id="courseTable">
                 <thead>
-                    <tr><th>ID</th><th>Course</th><th>Topics</th><th>Total Price</th><th class="course-col-actions">Actions</th></tr>
+                    <tr><th>ID</th><th>Course</th><th>Topics</th><th>Total Price</th><th>Discount Price</th><th class="course-col-actions">Actions</th></tr>
                 </thead>
                 <tbody>
                 @foreach (var course in Model.ActiveCourses)
@@ -60,6 +60,7 @@
                         </td>
                         <td class="course-value">@course.TopicCount</td>
                         <td class="course-value">₹@course.TotalPrice.ToString("N2")</td>
+                        <td class="course-value">—</td>
                         <td>
                             <div class="course-row-actions">
                                 <a asp-area="Admin" asp-controller="Courses" asp-action="Index" asp-route-editId="@course.Id" class="ciit-course-icon-btn" title="Edit">
@@ -142,6 +143,12 @@
                     <div class="ciit-course-form-field">
                         <label for="courseName">Course name</label>
                         <input id="courseName" name="CourseName" class="form-control" maxlength="100" placeholder="e.g. Java Full Stack" required />
+                    </div>
+
+                    <div class="ciit-course-form-field mt-3">
+                        <label for="discountPrice">Discount price</label>
+                        <input id="discountPrice" name="DiscountPrice" class="form-control" type="number" min="0" step="0.01" placeholder="e.g. 4999.00" />
+                        <small class="text-muted">UI only for now; backend saving will be connected separately.</small>
                     </div>
 
                     <div class="ciit-course-form-hint">
