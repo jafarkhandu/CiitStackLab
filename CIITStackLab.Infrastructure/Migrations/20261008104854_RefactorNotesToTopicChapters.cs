@@ -35,6 +35,11 @@ namespace CIITStackLab.Infrastructure.Migrations
                 schema: "erpsystem",
                 table: "tbltraining_notes");
 
+            migrationBuilder.DropColumn(
+                name: "RestoredAt",
+                schema: "erpsystem",
+                table: "tbltraining_notes");
+
             migrationBuilder.RenameColumn(
                 name: "page_id",
                 schema: "erpsystem",
