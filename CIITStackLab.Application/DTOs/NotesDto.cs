@@ -59,4 +59,13 @@ public sealed class NoteChapterDto
     public string Title { get; init; } = string.Empty;
     public string HtmlContent { get; init; } = string.Empty;
     public int SortOrder { get; init; }
+    public IReadOnlyList<NoteMediaDto> Media { get; init; } = Array.Empty<NoteMediaDto>();
+}
+
+public sealed class NoteMediaDto
+{
+    public int ContentId { get; init; }
+    public string Title { get; init; } = string.Empty;
+    public string? Slides { get; init; }
+    public string? VideoName { get; init; }
 }
