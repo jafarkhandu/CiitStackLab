@@ -1,4 +1,7 @@
 @model CIITStackLab.Application.DTOs.AdminNoteInputDto
-@using CIITStackLab.Application.DTOs
-@{ViewData["Title"]="Add Note Chapter";var options=(IReadOnlyList<NoteCourseTopicOptionDto>)(ViewBag.Options??Array.Empty<NoteCourseTopicOptionDto>());}
+
+@{
+    ViewData["Title"] = "Add Note Chapter";
+}
+
 <partial name="_NoteForm" model="Model" />
