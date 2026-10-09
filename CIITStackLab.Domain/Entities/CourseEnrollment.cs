@@ -8,7 +8,7 @@ public sealed class CourseEnrollment
 
     public int CourseId { get; set; }
 
-    public string Status { get; set; } = CourseEnrollmentStatuses.PendingPayment;
+    public string Status { get; set; } = CourseEnrollmentStatuses.PendingApproval;
 
     public decimal PriceAtEnrollment { get; set; }
 
@@ -21,7 +21,7 @@ public sealed class CourseEnrollment
 
 public static class CourseEnrollmentStatuses
 {
-    public const string PendingPayment = "PendingPayment";
+    public const string PendingApproval = "PendingApproval";
     public const string Active = "Active";
     public const string Rejected = "Rejected";
 }
