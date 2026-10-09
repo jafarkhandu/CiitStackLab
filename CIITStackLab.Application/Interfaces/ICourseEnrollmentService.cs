@@ -14,6 +14,20 @@ public interface ICourseEnrollmentService
         int courseId,
         CancellationToken cancellationToken = default);
 
+    Task<decimal> GetCoursePriceAsync(
+        int courseId,
+        CancellationToken cancellationToken = default);
+
+    Task<bool> CanAccessCourseAsync(
+        string? userId,
+        int courseId,
+        CancellationToken cancellationToken = default);
+
+    Task<bool> CanAccessTopicAsync(
+        string? userId,
+        int topicId,
+        CancellationToken cancellationToken = default);
+
     Task<CourseEnrollmentRequestResultDto> RequestEnrollmentAsync(
         string userId,
         int courseId,
