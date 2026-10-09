@@ -574,3 +574,92 @@ main{min-height:calc(100vh - 120px)}.ciit-footer{background:#0b0f19;color:#94a3b
         width: 100%;
     }
 }
+
+
+/* Dynamic course pricing and enrollment status */
+.ciit-course-price-card {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    width: fit-content;
+    min-width: 245px;
+    margin-top: 23px;
+    padding: 15px 18px;
+    border: 1px solid #dce7f8;
+    border-radius: 15px;
+    background: linear-gradient(115deg, #f4f8ff 0%, #ffffff 100%);
+}
+
+.ciit-course-price-card > span {
+    display: block;
+    color: #73819a;
+    font-size: .77rem;
+    font-weight: 700;
+}
+
+.ciit-course-price-card strong {
+    color: #172744;
+    font-size: 1.4rem;
+    font-weight: 800;
+    letter-spacing: -.035em;
+    white-space: nowrap;
+}
+
+.ciit-course-price-card small {
+    display: block;
+    margin-left: auto;
+    color: #7c8ba2;
+    font-size: .7rem;
+    text-align: right;
+}
+
+.ciit-course-enrollment-status {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 11px 14px;
+    border: 1px solid #e1e8f3;
+    border-radius: 11px;
+    background: #f8faff;
+    color: #63748f;
+    font-size: .8rem;
+    font-weight: 750;
+}
+
+.ciit-course-enrollment-status.is-pending {
+    border-color: #f1dfb2;
+    background: #fff9e9;
+    color: #8d681a;
+}
+
+.ciit-course-enrollment-status i {
+    font-size: .95rem;
+}
+
+.ciit-course-details-section .alert[role="status"] {
+    max-width: 690px;
+    border-radius: 12px;
+    font-size: .84rem;
+    line-height: 1.65;
+}
+
+@media (max-width: 575.98px) {
+    .ciit-course-price-card {
+        align-items: flex-start;
+        flex-direction: column;
+        gap: 5px;
+        width: 100%;
+        min-width: 0;
+    }
+
+    .ciit-course-price-card small {
+        margin-left: 0;
+        text-align: left;
+    }
+
+    .ciit-course-enrollment-status {
+        width: 100%;
+        justify-content: center;
+        text-align: center;
+    }
+}
