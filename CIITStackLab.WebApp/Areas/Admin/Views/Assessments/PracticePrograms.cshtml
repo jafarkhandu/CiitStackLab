@@ -1,13 +1,174 @@
+@model CIITStackLab.Application.DTOs.AdminPracticeProgramIndexDto
+
 @{
     ViewData["Title"] = "Practice Programs";
+    var message = ViewBag.PracticeMessage as string;
+    var messageType = ViewBag.PracticeMessageType as string;
 }
 
-<section class="ciit-admin-page assessment-page">
-    <div class="ciit-admin-page-header">
+@section Styles { <link rel="stylesheet" href="~/css/admin-practice.css" asp-append-version="true" /> }
+
+<section class="ciit-practice-page">
+    <div class="ciit-practice-header">
         <div>
             <span class="ciit-admin-eyebrow">Assessment</span>
             <h1>Practice Programs</h1>
-            <p>Practice program management screen is ready. The detailed workflow will be added next.</p>
+            <p>Manage programming problems and their associated solutions using the existing assessment data.</p>
+        </div>
+        <div class="ciit-practice-header-actions">
+            <a asp-area="Admin" asp-controller="Assessments" asp-action="CreatePracticeAnswer" class="ciit-practice-secondary-btn"><i class="bi bi-lightbulb"></i><span>Add Solution</span></a>
+            <a asp-area="Admin" asp-controller="Assessments" asp-action="CreatePracticeProgram" class="ciit-practice-primary-btn"><i class="bi bi-plus-lg"></i><span>Add Program</span></a>
         </div>
     </div>
+
+    @if (!string.IsNullOrWhiteSpace(message))
+    {
+        <div class="ciit-practice-alert @(messageType == "success" ? "is-success" : "is-error")" role="alert">
+            <i class="bi @(messageType == "success" ? "bi-check-circle-fill" : "bi-exclamation-circle-fill")"></i>
+            <span>@message</span>
+        </div>
+    }
+
+    <section class="ciit-practice-card">
+        <div class="ciit-practice-card-header">
+            <div>
+                <h2>Active Practice Programs</h2>
+                <p>@Model.ActivePrograms.Count active program@(Model.ActivePrograms.Count == 1 ? "" : "s")</p>
+            </div>
+        </div>
+
+        @if (Model.ActivePrograms.Count == 0)
+        {
+            <div class="ciit-practice-empty">
+                <i class="bi bi-code-square"></i>
+                <h3>No active practice programs</h3>
+                <p>Create a program and attach it to existing learning content.</p>
+                <a asp-area="Admin" asp-controller="Assessments" asp-action="CreatePracticeProgram" class="ciit-practice-secondary-btn">Add Program</a>
+            </div>
+        }
+        else
+        {
+            <div class="ciit-practice-list">
+                @foreach (var program in Model.ActivePrograms)
+                {
+                    <article class="ciit-practice-program">
+                        <div class="ciit-practice-program-header">
+                            <div>
+                                <span class="ciit-practice-id">#@program.Id</span>
+                                <h3>@program.QuestionTitle</h3>
+                                <p class="ciit-practice-meta">@program.TopicTitle / @program.ContentTitle</p>
+                            </div>
+                            <div class="ciit-practice-actions">
+                                <a asp-area="Admin" asp-controller="Assessments" asp-action="EditPracticeProgram" asp-route-id="@program.Id" title="Edit program"><i class="bi bi-pencil-square"></i></a>
+                                <a asp-area="Admin" asp-controller="Assessments" asp-action="CreatePracticeAnswer" asp-route-programQuestionId="@program.Id" title="Add solution"><i class="bi bi-plus-circle"></i></a>
+                                <form asp-area="Admin" asp-controller="Assessments" asp-action="DeletePracticeProgram" method="post" onsubmit="return confirm('Archive this practice program?');">
+                                    @Html.AntiForgeryToken()
+                                    <input type="hidden" name="id" value="@program.Id" />
+                                    <button type="submit" title="Archive"><i class="bi bi-archive"></i></button>
+                                </form>
+                            </div>
+                        </div>
+                        <div class="ciit-practice-description">@program.QuestionDescription</div>
+
+                        <div class="ciit-practice-solutions">
+                            <div class="ciit-practice-solutions-header">
+                                <h4>Solutions</h4>
+                                <span>@program.Answers.Count</span>
+                            </div>
+                            @if (program.Answers.Count == 0)
+                            {
+                                <p class="ciit-practice-no-solution">No active solution has been added yet.</p>
+                            }
+                            else
+                            {
+                                foreach (var answer in program.Answers)
+                                {
+                                    <div class="ciit-practice-solution">
+                                        <div>
+                                            <strong>@answer.Answer</strong>
+                                            <p>@answer.Description</p>
+                                        </div>
+                                        <div class="ciit-practice-actions">
+                                            <a asp-area="Admin" asp-controller="Assessments" asp-action="EditPracticeAnswer" asp-route-id="@answer.Id" title="Edit solution"><i class="bi bi-pencil-square"></i></a>
+                                            <form asp-area="Admin" asp-controller="Assessments" asp-action="DeletePracticeAnswer" method="post" onsubmit="return confirm('Archive this solution?');">
+                                                @Html.AntiForgeryToken()
+                                                <input type="hidden" name="id" value="@answer.Id" />
+                                                <button type="submit" title="Archive solution"><i class="bi bi-archive"></i></button>
+                                            </form>
+                                        </div>
+                                    </div>
+                                }
+                            }
+                        </div>
+                    </article>
+                }
+            </div>
+        }
+    </section>
+
+    <section class="ciit-practice-card ciit-practice-archive">
+        <div class="ciit-practice-card-header">
+            <div>
+                <h2>Archived Practice Programs</h2>
+                <p>Archived programs can be restored.</p>
+            </div>
+            <span class="ciit-practice-count">@Model.ArchivedPrograms.Count</span>
+        </div>
+        @if (Model.ArchivedPrograms.Count == 0)
+        {
+            <div class="ciit-practice-empty compact"><p>No archived practice programs.</p></div>
+        }
+        else
+        {
+            <div class="ciit-practice-archive-list">
+                @foreach (var program in Model.ArchivedPrograms)
+                {
+                    <div class="ciit-practice-archive-row">
+                        <div>
+                            <strong>@program.QuestionTitle</strong>
+                            <span>@program.TopicTitle / @program.ContentTitle</span>
+                        </div>
+                        <form asp-area="Admin" asp-controller="Assessments" asp-action="RestorePracticeProgram" method="post">
+                            @Html.AntiForgeryToken()
+                            <input type="hidden" name="id" value="@program.Id" />
+                            <button type="submit" class="ciit-practice-restore"><i class="bi bi-arrow-counterclockwise"></i> Restore</button>
+                        </form>
+                    </div>
+                }
+            </div>
+        }
+    </section>
+
+    <section class="ciit-practice-card ciit-practice-archive">
+        <div class="ciit-practice-card-header">
+            <div>
+                <h2>Archived Solutions</h2>
+                <p>Solutions can be restored while their parent program is active.</p>
+            </div>
+            <span class="ciit-practice-count">@Model.ArchivedAnswers.Count</span>
+        </div>
+        @if (Model.ArchivedAnswers.Count == 0)
+        {
+            <div class="ciit-practice-empty compact"><p>No archived solutions.</p></div>
+        }
+        else
+        {
+            <div class="ciit-practice-archive-list">
+                @foreach (var answer in Model.ArchivedAnswers)
+                {
+                    <div class="ciit-practice-archive-row">
+                        <div>
+                            <strong>@answer.Answer</strong>
+                            <span>@answer.QuestionTitle</span>
+                        </div>
+                        <form asp-area="Admin" asp-controller="Assessments" asp-action="RestorePracticeAnswer" method="post">
+                            @Html.AntiForgeryToken()
+                            <input type="hidden" name="id" value="@answer.Id" />
+                            <button type="submit" class="ciit-practice-restore"><i class="bi bi-arrow-counterclockwise"></i> Restore</button>
+                        </form>
+                    </div>
+                }
+            </div>
+        }
+    </section>
 </section>
