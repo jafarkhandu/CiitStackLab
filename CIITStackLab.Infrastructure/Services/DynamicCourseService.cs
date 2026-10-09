@@ -40,10 +40,12 @@ public sealed class DynamicCourseService : ICourseService
             Category = details.Category,
             Level = details.Level,
             DurationHours = details.DurationHours,
+            TotalPrice = details.TotalPrice,
             Topics = details.Topics.Select(topic => new CourseTopicDto
             {
                 Id = topic.Id,
                 Title = topic.Title,
+                Price = topic.Price,
                 HasNotes = topic.HasNotes,
                 Contents = topic.Contents.Select(content => new CourseContentDto
                 {
