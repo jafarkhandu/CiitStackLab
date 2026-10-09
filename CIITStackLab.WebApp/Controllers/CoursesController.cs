@@ -61,17 +61,16 @@ public class CoursesController : Controller
             ? User.FindFirstValue(ClaimTypes.NameIdentifier)
             : null;
 
-        if (!string.IsNullOrWhiteSpace(studentUserId))
+        if (!string.IsNullOrWhiteSpace(studentUserId) && !contentId.HasValue)
         {
-            var savedProgress = await _studentProgressService.GetProgressAsync(
+            var resumeContentId = await _studentProgressService.GetResumeContentIdAsync(
                 studentUserId,
                 id,
                 cancellationToken);
 
-            if (!contentId.HasValue
-                && savedProgress.LastAccessedContentId.HasValue)
+            if (resumeContentId.HasValue)
             {
-                contentId = savedProgress.LastAccessedContentId.Value;
+                contentId = resumeContentId.Value;
             }
         }
 
