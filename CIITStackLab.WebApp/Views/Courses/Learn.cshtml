@@ -106,6 +106,28 @@ else
 
                         <h1>@Model.Title</h1>
                         <p>@Model.ShortDescription</p>
+
+                        @if (User.IsInRole("Student") && Model.Progress is not null)
+                        {
+                            <div class="ciit-learning-course-progress"
+                                 role="group"
+                                 aria-label="Course completion progress">
+                                <div class="ciit-learning-course-progress-heading">
+                                    <span><i class="bi bi-graph-up-arrow me-2"></i>Your progress</span>
+                                    <strong>@Model.Progress.Percentage%</strong>
+                                </div>
+                                <div class="progress ciit-learning-course-progress-track"
+                                     role="progressbar"
+                                     aria-label="Course completion"
+                                     aria-valuenow="@Model.Progress.Percentage"
+                                     aria-valuemin="0"
+                                     aria-valuemax="100">
+                                    <div class="progress-bar"
+                                         style="width: @Model.Progress.Percentage%"></div>
+                                </div>
+                                <small>@Model.Progress.CompletedLessons of @Model.Progress.TotalLessons lessons completed</small>
+                            </div>
+                        }
                     </div>
 
                     <div class="ciit-learning-price-card">
@@ -210,6 +232,12 @@ else
                                                             </span>
                                                             <span class="ciit-learning-resource-name">
                                                                 <strong>@content.Title</strong>
+                                                                @if (Model.Progress?.CompletedContentIds.Contains(content.Id) == true)
+                                                                {
+                                                                    <small class="ciit-learning-completed-indicator">
+                                                                        <i class="bi bi-check-circle-fill me-1"></i>Completed
+                                                                    </small>
+                                                                }
                                                                 @if (content.Questions.Count > 0)
                                                                 {
                                                                     <small>
@@ -334,6 +362,14 @@ else
                                                     <span>@content.Title</span>
                                                 </a>
 
+                                                @if (Model.Progress?.CompletedContentIds.Contains(content.Id) == true)
+                                                {
+                                                    <span class="ciit-learning-completed-indicator"
+                                                          title="Lesson completed">
+                                                        <i class="bi bi-check-circle-fill"></i>
+                                                    </span>
+                                                }
+
                                                 <div class="ciit-learning-additional-meta">
                                                     @if (!string.IsNullOrWhiteSpace(content.VideoName))
                                                     {
@@ -405,6 +441,54 @@ else
                             }
                         </div>
                     </div>
+
+                    @if (User.IsInRole("Student") && Model.Progress is not null)
+                    {
+                        var isCurrentLessonCompleted =
+                            Model.Progress.CompletedContentIds.Contains(currentContent.Id);
+
+                        <div class="ciit-learning-lesson-status">
+                            <div class="ciit-learning-lesson-status-copy">
+                                <span class="ciit-learning-lesson-status-icon @(isCurrentLessonCompleted ? "is-completed" : "")">
+                                    <i class="bi @(isCurrentLessonCompleted ? "bi-check2-circle" : "bi-hourglass-split")"></i>
+                                </span>
+                                <div>
+                                    <strong>@(isCurrentLessonCompleted ? "Lesson completed" : "Keep your progress moving")</strong>
+                                    <small>
+                                        @(isCurrentLessonCompleted
+                                            ? "This lesson is saved as complete."
+                                            : "Mark this lesson complete when you are done.")
+                                    </small>
+                                </div>
+                            </div>
+
+                            @if (isCurrentLessonCompleted)
+                            {
+                                <span class="ciit-learning-completed-pill">
+                                    <i class="bi bi-check-lg"></i> Completed
+                                </span>
+                            }
+                            else
+                            {
+                                <form asp-action="CompleteLesson"
+                                      asp-route-id="@Model.Id"
+                                      asp-route-contentId="@currentContent.Id"
+                                      method="post"
+                                      class="ciit-learning-completion-form">
+                                    <button type="submit" class="btn btn-primary">
+                                        <i class="bi bi-check2-circle me-2"></i>Mark as complete
+                                    </button>
+                                </form>
+                            }
+                        </div>
+
+                        @if (TempData["LearningProgressMessage"] is string progressMessage)
+                        {
+                            <div class="alert alert-success ciit-learning-progress-alert" role="status">
+                                <i class="bi bi-check-circle-fill me-2"></i>@progressMessage
+                            </div>
+                        }
+                    }
 
                     @if (!string.IsNullOrWhiteSpace(currentContent.VideoName))
                     {
