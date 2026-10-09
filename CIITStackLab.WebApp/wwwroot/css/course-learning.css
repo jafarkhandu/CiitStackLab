@@ -1611,3 +1611,48 @@ details[open] > summary .ciit-learning-disclosure-icon {
         align-self: flex-start;
     }
 }
+
+
+.ciit-learning-topic-progress {
+    margin: 0 7px 10px;
+    padding: 10px 11px;
+    border: 1px solid #e9eef7;
+    border-radius: 10px;
+    background: #fbfcff;
+}
+
+.ciit-learning-topic-progress-labels {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+    margin-bottom: 7px;
+}
+
+.ciit-learning-topic-progress-labels span {
+    color: #7a899f;
+    font-size: .67rem;
+    font-weight: 700;
+}
+
+.ciit-learning-topic-progress-labels strong {
+    color: #536783;
+    font-size: .68rem;
+    font-weight: 800;
+    font-variant-numeric: tabular-nums;
+}
+
+.ciit-learning-topic-progress-track {
+    height: 5px;
+    overflow: hidden;
+    border-radius: 999px;
+    background: #e9eff8;
+}
+
+.ciit-learning-topic-progress-track span {
+    display: block;
+    height: 100%;
+    border-radius: inherit;
+    background: linear-gradient(90deg, #1769ff 0%, #62a4ff 100%);
+    transition: width .3s ease;
+}
