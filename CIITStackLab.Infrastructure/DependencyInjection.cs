@@ -49,6 +49,7 @@ public static class DependencyInjection
         services.AddScoped<IAdminContentService, AdminContentService>();
         services.AddScoped<IAdminMcqService, AdminMcqService>();
         services.AddScoped<IAdminInterviewQuestionService, AdminInterviewQuestionService>();
+        services.AddScoped<IAdminPracticeProgramService, AdminPracticeProgramService>();
         services.AddScoped<INotesService, NotesService>();
         services.AddScoped<IAdminStudentService, AdminStudentService>();
         services.AddScoped<IAdminSettingsService, AdminSettingsService>();
