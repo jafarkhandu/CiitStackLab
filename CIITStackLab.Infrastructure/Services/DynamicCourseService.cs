@@ -171,6 +171,11 @@ public sealed class DynamicCourseService : ICourseService
             ? allContents.FirstOrDefault(content => content.Id == contentId.Value)
             : allContents.FirstOrDefault();
 
+        if (contentId.HasValue && currentContent is null)
+        {
+            return null;
+        }
+
         return new CourseLearningDto
         {
             Id = course.Id,
