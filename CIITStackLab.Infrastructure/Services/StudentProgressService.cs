@@ -226,7 +226,7 @@ public sealed class StudentProgressService : IStudentProgressService
             join topic in _dbContext.Topics.AsNoTracking()
                 on courseTopic.TopicId equals topic.Id
             join lesson in _dbContext.Lessons.AsNoTracking()
-                on topic.Id equals lesson.TopicId
+                on (int?)topic.Id equals lesson.TopicId
             where course.Id == courseId
                   && course.Flag == 0
                   && courseTopic.Flag == 0
@@ -250,7 +250,7 @@ public sealed class StudentProgressService : IStudentProgressService
             join topic in _dbContext.Topics.AsNoTracking()
                 on courseTopic.TopicId equals topic.Id
             join lesson in _dbContext.Lessons.AsNoTracking()
-                on topic.Id equals lesson.TopicId
+                on (int?)topic.Id equals lesson.TopicId
             where course.Id == courseId
                   && course.Flag == 0
                   && courseTopic.Flag == 0
