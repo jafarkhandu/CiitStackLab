@@ -1,7 +1,6 @@
 using System.Security.Claims;
 using CIITStackLab.Application.Interfaces;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.AspNetCore.Mvc;
 
 namespace CIITStackLab.WebApp.Controllers;
 
