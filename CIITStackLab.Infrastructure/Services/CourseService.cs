@@ -144,6 +144,20 @@ public sealed class CourseService
             })
             .ToListAsync(cancellationToken);
 
+        var topicIds = rows
+            .Select(x => x.TopicId)
+            .Distinct()
+            .ToList();
+
+        var topicsWithNotes = topicIds.Count == 0
+            ? new HashSet<int>()
+            : new HashSet<int>(await _dbContext.TrainingNotes
+                .AsNoTracking()
+                .Where(note => topicIds.Contains(note.TopicId) && note.Flag == 0)
+                .Select(note => note.TopicId)
+                .Distinct()
+                .ToListAsync(cancellationToken));
+
         var contentIds = rows
             .Where(x => x.ContentId.HasValue)
             .Select(x => x.ContentId!.Value)
@@ -178,6 +192,7 @@ public sealed class CourseService
             {
                 Id = group.Key.TopicId,
                 Title = group.Key.TopicTitle,
+                HasNotes = topicsWithNotes.Contains(group.Key.TopicId),
                 Contents = group
                     .Where(x => x.ContentId.HasValue)
                     .Select(x => new CourseContentDto
