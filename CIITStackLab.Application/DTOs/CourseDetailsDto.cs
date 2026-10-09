@@ -35,5 +35,4 @@ public sealed class ContentQuestionDto
     public int Id { get; init; }
     public string Question { get; init; } = string.Empty;
     public IReadOnlyList<string?> Options { get; init; } = Array.Empty<string?>();
-    public int? CorrectOptionNumber { get; init; }
 }
