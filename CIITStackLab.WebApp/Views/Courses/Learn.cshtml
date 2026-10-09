@@ -164,6 +164,17 @@ else
                         var topicHasCurrentContent = topic.Contents.Any(
                             content => content.Id == currentContent.Id);
 
+                        var completedTopicLessons = Model.Progress is null
+                            ? 0
+                            : topic.Contents.Count(content =>
+                                Model.Progress.CompletedContentIds.Contains(content.Id));
+
+                        var topicProgressPercentage = topic.Contents.Count == 0
+                            ? 0
+                            : (int)Math.Round(
+                                completedTopicLessons * 100d / topic.Contents.Count,
+                                MidpointRounding.AwayFromZero);
+
                         <section class="ciit-learning-topic @(topicHasCurrentContent ? "is-active-topic" : "")">
                             <div class="ciit-learning-topic-heading">
                                 <div class="ciit-learning-topic-icon">
@@ -178,6 +189,24 @@ else
                                     </span>
                                 </div>
                             </div>
+
+                            @if (User.IsInRole("Student") && Model.Progress is not null && topic.Contents.Count > 0)
+                            {
+                                <div class="ciit-learning-topic-progress">
+                                    <div class="ciit-learning-topic-progress-labels">
+                                        <span>Topic progress</span>
+                                        <strong>@completedTopicLessons / @topic.Contents.Count</strong>
+                                    </div>
+                                    <div class="ciit-learning-topic-progress-track"
+                                         role="progressbar"
+                                         aria-label="@topic.Title completion"
+                                         aria-valuenow="@topicProgressPercentage"
+                                         aria-valuemin="0"
+                                         aria-valuemax="100">
+                                        <span style="width: @topicProgressPercentage%"></span>
+                                    </div>
+                                </div>
+                            }
 
                             @if (topic.Chapters.Count > 0)
                             {
