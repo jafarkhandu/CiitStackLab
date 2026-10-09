@@ -1,13 +1,54 @@
+@model CIITStackLab.Application.DTOs.AdminMcqIndexDto
+
 @{
     ViewData["Title"] = "MCQs";
+    var message = ViewBag.McqMessage as string;
+    var messageType = ViewBag.McqMessageType as string;
 }
 
-<section class="ciit-admin-page assessment-page">
-    <div class="ciit-admin-page-header">
-        <div>
-            <span class="ciit-admin-eyebrow">Assessment</span>
-            <h1>MCQs</h1>
-            <p>MCQ management screen is ready. The detailed MCQ workflow will be added next.</p>
-        </div>
+@section Styles { <link rel="stylesheet" href="~/css/admin-mcqs.css" asp-append-version="true" /> }
+
+<section class="ciit-mcq-page">
+    <div class="ciit-mcq-header">
+        <div><span class="ciit-admin-eyebrow">Assessment</span><h1>MCQs</h1><p>Manage multiple-choice questions linked to existing learning content.</p></div>
+        <a asp-area="Admin" asp-controller="Assessments" asp-action="CreateMcq" class="ciit-mcq-primary-btn"><i class="bi bi-plus-lg"></i><span>Add MCQ</span></a>
     </div>
+
+    @if (!string.IsNullOrWhiteSpace(message))
+    {
+        <div class="ciit-mcq-alert @(messageType == "success" ? "is-success" : "is-error")" role="alert"><i class="bi @(messageType == "success" ? "bi-check-circle-fill" : "bi-exclamation-circle-fill")"></i><span>@message</span></div>
+    }
+
+    <section class="ciit-mcq-card">
+        <div class="ciit-mcq-card-header"><div><h2>Active MCQs</h2><p>@Model.ActiveMcqs.Count active question@(Model.ActiveMcqs.Count == 1 ? "" : "s")</p></div></div>
+        @if (Model.ActiveMcqs.Count == 0)
+        {
+            <div class="ciit-mcq-empty"><i class="bi bi-ui-checks-grid"></i><h3>No active MCQs</h3><p>Create an MCQ and attach it to an existing content item.</p><a asp-area="Admin" asp-controller="Assessments" asp-action="CreateMcq" class="ciit-mcq-secondary-btn">Add MCQ</a></div>
+        }
+        else
+        {
+            <div class="ciit-mcq-table-wrap">
+                <table class="ciit-mcq-table"><thead><tr><th>Question</th><th>Content</th><th>Topic</th><th>Correct</th><th>Actions</th></tr></thead><tbody>
+                @foreach (var mcq in Model.ActiveMcqs)
+                {
+                    <tr><td><div class="ciit-mcq-question"><strong>@mcq.Question</strong><span>#@mcq.Id</span></div></td><td>@mcq.ContentTitle</td><td>@mcq.TopicTitle</td><td>Option @mcq.CorrectOptionNumber</td><td><div class="ciit-mcq-actions"><a asp-area="Admin" asp-controller="Assessments" asp-action="EditMcq" asp-route-id="@mcq.Id" title="Edit"><i class="bi bi-pencil-square"></i></a><form asp-area="Admin" asp-controller="Assessments" asp-action="DeleteMcq" method="post" onsubmit="return confirm('Archive this MCQ?');">@Html.AntiForgeryToken()<input type="hidden" name="id" value="@mcq.Id" /><button type="submit" title="Archive"><i class="bi bi-archive"></i></button></form></div></td></tr>
+                }
+                </tbody></table>
+            </div>
+        }
+    </section>
+
+    <section class="ciit-mcq-card ciit-mcq-archive">
+        <div class="ciit-mcq-card-header"><div><h2>Archived MCQs</h2><p>Archived questions can be restored.</p></div><span class="ciit-mcq-count">@Model.ArchivedMcqs.Count</span></div>
+        @if (Model.ArchivedMcqs.Count == 0) { <div class="ciit-mcq-empty compact"><p>No archived MCQs.</p></div> }
+        else
+        {
+            <div class="ciit-mcq-archive-list">
+            @foreach (var mcq in Model.ArchivedMcqs)
+            {
+                <div class="ciit-mcq-archive-row"><div><strong>@mcq.Question</strong><span>@mcq.TopicTitle / @mcq.ContentTitle</span></div><form asp-area="Admin" asp-controller="Assessments" asp-action="RestoreMcq" method="post">@Html.AntiForgeryToken()<input type="hidden" name="id" value="@mcq.Id" /><button type="submit" class="ciit-mcq-restore"><i class="bi bi-arrow-counterclockwise"></i> Restore</button></form></div>
+            }
+            </div>
+        }
+    </section>
 </section>
