@@ -2,15 +2,64 @@
 
 @{
     ViewData["Title"] = $"Learn — {Model.Title}";
-    var orderedContents = Model.Topics.SelectMany(topic => topic.Contents.Select(content => new { Topic = topic, Content = content })).ToList();
+
+    var orderedContents = Model.Topics
+        .SelectMany(topic => topic.Contents.Select(content => new
+        {
+            Topic = topic,
+            Content = content
+        }))
+        .ToList();
+
     var currentIndex = Model.CurrentContentId.HasValue
         ? orderedContents.FindIndex(x => x.Content.Id == Model.CurrentContentId.Value)
         : 0;
-    if (currentIndex < 0) currentIndex = 0;
+
+    if (currentIndex < 0)
+    {
+        currentIndex = 0;
+    }
+
     var currentItem = orderedContents.ElementAtOrDefault(currentIndex);
     var currentContent = currentItem?.Content;
     var previousItem = currentIndex > 0 ? orderedContents[currentIndex - 1] : null;
-    var nextItem = currentIndex >= 0 && currentIndex < orderedContents.Count - 1 ? orderedContents[currentIndex + 1] : null;
+    var nextItem = currentIndex < orderedContents.Count - 1
+        ? orderedContents.ElementAtOrDefault(currentIndex + 1)
+        : null;
+
+    string ResolveResourceUrl(string? value, string folder)
+    {
+        if (string.IsNullOrWhiteSpace(value))
+        {
+            return string.Empty;
+        }
+
+        var resource = value.Trim().Replace('\\', '/');
+
+        if (Uri.TryCreate(resource, UriKind.Absolute, out var absoluteUri)
+            && (absoluteUri.Scheme == Uri.UriSchemeHttp
+                || absoluteUri.Scheme == Uri.UriSchemeHttps))
+        {
+            return resource;
+        }
+
+        if (resource.StartsWith("~/", StringComparison.Ordinal))
+        {
+            return resource[1..];
+        }
+
+        if (resource.StartsWith("/", StringComparison.Ordinal))
+        {
+            return resource;
+        }
+
+        if (resource.StartsWith("uploads/", StringComparison.OrdinalIgnoreCase))
+        {
+            return "/" + resource;
+        }
+
+        return $"/uploads/{folder}/{Uri.EscapeDataString(Path.GetFileName(resource))}";
+    }
 }
 
 @section Styles {
@@ -20,10 +69,13 @@
 @if (currentContent is null)
 {
     <main class="ciit-learning-empty container py-5">
-        <div class="card border-0 shadow-sm p-5 text-center">
-            <h1 class="h3">Learning content is not available yet</h1>
-            <p class="text-secondary mb-4">This course has no active lessons.</p>
-            <a asp-action="Details" asp-route-id="@Model.Id" class="btn btn-primary">Back to Course</a>
+        <div class="ciit-learning-empty-card text-center">
+            <span class="ciit-learning-eyebrow">COURSE MATERIAL</span>
+            <h1>Learning content is not available yet</h1>
+            <p>This course does not have any active lessons at the moment.</p>
+            <a asp-action="Details" asp-route-id="@Model.Id" class="btn btn-primary">
+                <i class="bi bi-arrow-left me-2"></i>Back to Course
+            </a>
         </div>
     </main>
 }
@@ -32,62 +84,288 @@ else
     <section class="ciit-learning-page">
         <header class="ciit-learning-header">
             <div class="container">
-                <a asp-action="Details" asp-route-id="@Model.Id" class="ciit-learning-back-link">
-                    <i class="bi bi-arrow-left"></i> Course Overview
+                <a asp-action="Details"
+                   asp-route-id="@Model.Id"
+                   class="ciit-learning-back-link">
+                    <i class="bi bi-arrow-left"></i>
+                    <span>Course Overview</span>
                 </a>
+
                 <div class="ciit-learning-header-row">
-                    <div>
+                    <div class="ciit-learning-course-intro">
                         <div class="ciit-learning-pills">
                             <span class="ciit-learning-badge">@Model.Category</span>
                             <span class="ciit-learning-meta-pill">@Model.Level</span>
-                            <span class="ciit-learning-meta-pill">@Model.DurationHours hrs</span>
-                            <span class="ciit-learning-meta-pill">@Model.ContentCount Lessons</span>
+                            <span class="ciit-learning-meta-pill">
+                                <i class="bi bi-clock me-1"></i>@Model.DurationHours hrs
+                            </span>
+                            <span class="ciit-learning-meta-pill">
+                                <i class="bi bi-play-circle me-1"></i>@Model.ContentCount lessons
+                            </span>
                         </div>
+
                         <h1>@Model.Title</h1>
                         <p>@Model.ShortDescription</p>
                     </div>
+
                     <div class="ciit-learning-price-card">
-                        <span>Total Course Price</span>
+                        <span>Course value</span>
                         <strong>₹@Model.TotalPrice.ToString("N2")</strong>
+                        <small><i class="bi bi-journal-check me-1"></i>Learn at your own pace</small>
                     </div>
                 </div>
             </div>
         </header>
 
         <div class="container ciit-learning-shell">
-            <aside class="ciit-learning-sidebar" aria-label="Course lessons">
+            <aside class="ciit-learning-sidebar" aria-label="Course chapters and resources">
                 <div class="ciit-learning-sidebar-head">
-                    <div><span>Course Contents</span><h2>Learning Roadmap</h2></div>
-                    <strong>@Model.ContentCount</strong>
+                    <div>
+                        <span class="ciit-learning-eyebrow">YOUR LEARNING PATH</span>
+                        <h2>Chapters &amp; Resources</h2>
+                    </div>
+                    <span class="ciit-learning-count">@Model.ContentCount</span>
                 </div>
+
                 <div class="ciit-learning-sidebar-scroll">
                     @foreach (var topic in Model.Topics)
                     {
-                        <section class="ciit-learning-topic @(topic.Contents.Any(x => x.Id == currentContent.Id) ? "is-active-topic" : "")">
+                        var chapterContentIds = topic.Chapters
+                            .SelectMany(chapter => chapter.Contents)
+                            .Select(content => content.Id)
+                            .ToHashSet();
+
+                        var additionalContents = topic.Contents
+                            .Where(content => !chapterContentIds.Contains(content.Id))
+                            .ToList();
+
+                        var topicHasCurrentContent = topic.Contents.Any(
+                            content => content.Id == currentContent.Id);
+
+                        <section class="ciit-learning-topic @(topicHasCurrentContent ? "is-active-topic" : "")">
                             <div class="ciit-learning-topic-heading">
-                                <div>
-                                    <strong>@topic.Title</strong>
-                                    <span>@topic.Contents.Count lesson@(topic.Contents.Count == 1 ? "" : "s")</span>
+                                <div class="ciit-learning-topic-icon">
+                                    <i class="bi bi-collection-play"></i>
                                 </div>
-                                <a asp-controller="Notes" asp-action="Index"
-                                   asp-route-courseId="@Model.Id" asp-route-topicId="@topic.Id"
-                                   class="ciit-learning-topic-notes" title="Open topic notes">
-                                    <i class="bi bi-journal-text"></i> Notes
-                                </a>
+                                <div class="ciit-learning-topic-heading-text">
+                                    <strong>@topic.Title</strong>
+                                    <span>
+                                        @topic.Chapters.Count chapter@(topic.Chapters.Count == 1 ? "" : "s")
+                                        <span class="ciit-learning-dot">·</span>
+                                        @topic.Contents.Count lesson@(topic.Contents.Count == 1 ? "" : "s")
+                                    </span>
+                                </div>
                             </div>
-                            @foreach (var content in topic.Contents)
+
+                            @if (topic.Chapters.Count > 0)
                             {
-                                var isCurrent = content.Id == currentContent.Id;
-                                <a asp-action="Learn" asp-route-id="@Model.Id" asp-route-contentId="@content.Id"
-                                   class="ciit-learning-content-link @(isCurrent ? "is-current" : "")"
-                                   aria-current="@(isCurrent ? "page" : null)">
-                                    <i class="bi @(isCurrent ? "bi-play-fill" : "bi-play-circle")"></i>
-                                    <span>@content.Title</span>
-                                    @if (content.Questions.Count > 0)
-                                    {
-                                        <small>@content.Questions.Count</small>
-                                    }
-                                </a>
+                                @for (var chapterIndex = 0; chapterIndex < topic.Chapters.Count; chapterIndex++)
+                                {
+                                    var chapter = topic.Chapters[chapterIndex];
+                                    var chapterHasCurrentContent = chapter.Contents.Any(
+                                        content => content.Id == currentContent.Id);
+
+                                    <details class="ciit-learning-chapter"
+                                             open="@(chapterHasCurrentContent ? "open" : null)">
+                                        <summary class="ciit-learning-chapter-summary">
+                                            <span class="ciit-learning-chapter-number">
+                                                @((chapterIndex + 1).ToString("00"))
+                                            </span>
+                                            <span class="ciit-learning-chapter-title">
+                                                <strong>@chapter.Title</strong>
+                                                <small>
+                                                    @chapter.Contents.Count resource@(chapter.Contents.Count == 1 ? "" : "s")
+                                                </small>
+                                            </span>
+                                            <i class="bi bi-chevron-down ciit-learning-disclosure-icon" aria-hidden="true"></i>
+                                        </summary>
+
+                                        <div class="ciit-learning-chapter-body">
+                                            <a asp-controller="Notes"
+                                               asp-action="Index"
+                                               asp-route-topicId="@topic.Id"
+                                               asp-route-chapterId="@chapter.ChapterId"
+                                               class="ciit-learning-read-notes">
+                                                <span><i class="bi bi-journal-text"></i> Read chapter notes</span>
+                                                <i class="bi bi-arrow-up-right"></i>
+                                            </a>
+
+                                            @if (chapter.Contents.Count == 0)
+                                            {
+                                                <p class="ciit-learning-no-resources">
+                                                    Notes are ready for this chapter. Learning resources will appear here when linked.
+                                                </p>
+                                            }
+                                            else
+                                            {
+                                                @foreach (var content in chapter.Contents)
+                                                {
+                                                    var isCurrentChapterLesson = content.Id == currentContent.Id;
+
+                                                    <details class="ciit-learning-resource-node"
+                                                             open="@(isCurrentChapterLesson ? "open" : null)">
+                                                        <summary class="ciit-learning-resource-summary">
+                                                            <span class="ciit-learning-resource-play">
+                                                                <i class="bi bi-play-fill"></i>
+                                                            </span>
+                                                            <span class="ciit-learning-resource-name">
+                                                                <strong>@content.Title</strong>
+                                                                @if (content.Questions.Count > 0)
+                                                                {
+                                                                    <small>
+                                                                        <i class="bi bi-patch-question me-1"></i>
+                                                                        @content.Questions.Count assessment question@(content.Questions.Count == 1 ? "" : "s")
+                                                                    </small>
+                                                                }
+                                                            </span>
+                                                            <i class="bi bi-chevron-down ciit-learning-disclosure-icon" aria-hidden="true"></i>
+                                                        </summary>
+
+                                                        <div class="ciit-learning-resource-body">
+                                                            <div class="ciit-learning-resource-links">
+                                                                @if (!string.IsNullOrWhiteSpace(content.VideoName))
+                                                                {
+                                                                    <a href="@ResolveResourceUrl(content.VideoName, "videos")"
+                                                                       target="_blank"
+                                                                       rel="noopener noreferrer">
+                                                                        <i class="bi bi-play-circle"></i>
+                                                                        Watch video
+                                                                    </a>
+                                                                }
+
+                                                                @if (!string.IsNullOrWhiteSpace(content.Slides))
+                                                                {
+                                                                    <a href="@ResolveResourceUrl(content.Slides, "slides")"
+                                                                       target="_blank"
+                                                                       rel="noopener noreferrer">
+                                                                        <i class="bi bi-file-earmark-slides"></i>
+                                                                        Open slides
+                                                                    </a>
+                                                                }
+
+                                                                @if (string.IsNullOrWhiteSpace(content.VideoName)
+                                                                     && string.IsNullOrWhiteSpace(content.Slides))
+                                                                {
+                                                                    <span class="ciit-learning-resource-unavailable">
+                                                                        <i class="bi bi-info-circle"></i>
+                                                                        No video or slides linked
+                                                                    </span>
+                                                                }
+                                                            </div>
+
+                                                            @if (content.Questions.Count > 0)
+                                                            {
+                                                                <div class="ciit-learning-assessment-preview">
+                                                                    <div class="ciit-learning-assessment-heading">
+                                                                        <span><i class="bi bi-patch-check"></i> Assessment</span>
+                                                                        <small>@content.Questions.Count question@(content.Questions.Count == 1 ? "" : "s")</small>
+                                                                    </div>
+
+                                                                    @for (var questionIndex = 0; questionIndex < content.Questions.Count; questionIndex++)
+                                                                    {
+                                                                        var question = content.Questions[questionIndex];
+
+                                                                        <div class="ciit-learning-assessment-question">
+                                                                            <strong>@(questionIndex + 1). @question.Question</strong>
+                                                                            <ol type="A">
+                                                                                @foreach (var option in question.Options)
+                                                                                {
+                                                                                    if (!string.IsNullOrWhiteSpace(option))
+                                                                                    {
+                                                                                        <li>@option</li>
+                                                                                    }
+                                                                                }
+                                                                            </ol>
+                                                                        </div>
+                                                                    }
+
+                                                                    <a asp-action="Learn"
+                                                                       asp-route-id="@Model.Id"
+                                                                       asp-route-contentId="@content.Id"
+                                                                       asp-fragment="lesson-assessment"
+                                                                       class="ciit-learning-practice-link">
+                                                                        Open lesson to practise
+                                                                        <i class="bi bi-arrow-right"></i>
+                                                                    </a>
+                                                                </div>
+                                                            }
+
+                                                            <a asp-action="Learn"
+                                                               asp-route-id="@Model.Id"
+                                                               asp-route-contentId="@content.Id"
+                                                               class="ciit-learning-open-lesson @(isCurrentChapterLesson ? "is-current" : "")">
+                                                                <i class="bi bi-play-circle"></i>
+                                                                @(isCurrentChapterLesson ? "Currently learning" : "Open lesson")
+                                                            </a>
+                                                        </div>
+                                                    </details>
+                                                }
+                                            }
+                                        </div>
+                                    </details>
+                                }
+                            }
+
+                            @if (additionalContents.Count > 0)
+                            {
+                                <details class="ciit-learning-chapter ciit-learning-additional">
+                                    <summary class="ciit-learning-chapter-summary">
+                                        <span class="ciit-learning-chapter-number">
+                                            <i class="bi bi-collection"></i>
+                                        </span>
+                                        <span class="ciit-learning-chapter-title">
+                                            <strong>Additional lessons</strong>
+                                            <small>@additionalContents.Count lesson@(additionalContents.Count == 1 ? "" : "s")</small>
+                                        </span>
+                                        <i class="bi bi-chevron-down ciit-learning-disclosure-icon" aria-hidden="true"></i>
+                                    </summary>
+
+                                    <div class="ciit-learning-chapter-body">
+                                        @foreach (var content in additionalContents)
+                                        {
+                                            var isCurrentAdditionalLesson = content.Id == currentContent.Id;
+
+                                            <div class="ciit-learning-additional-row">
+                                                <a asp-action="Learn"
+                                                   asp-route-id="@Model.Id"
+                                                   asp-route-contentId="@content.Id"
+                                                   class="ciit-learning-additional-link @(isCurrentAdditionalLesson ? "is-current" : "")">
+                                                    <i class="bi bi-play-circle"></i>
+                                                    <span>@content.Title</span>
+                                                </a>
+
+                                                <div class="ciit-learning-additional-meta">
+                                                    @if (!string.IsNullOrWhiteSpace(content.VideoName))
+                                                    {
+                                                        <a href="@ResolveResourceUrl(content.VideoName, "videos")"
+                                                           target="_blank"
+                                                           rel="noopener noreferrer"
+                                                           aria-label="Open video for @content.Title"
+                                                           title="Open video">
+                                                            <i class="bi bi-play-btn"></i>
+                                                        </a>
+                                                    }
+                                                    @if (!string.IsNullOrWhiteSpace(content.Slides))
+                                                    {
+                                                        <a href="@ResolveResourceUrl(content.Slides, "slides")"
+                                                           target="_blank"
+                                                           rel="noopener noreferrer"
+                                                           aria-label="Open slides for @content.Title"
+                                                           title="Open slides">
+                                                            <i class="bi bi-file-earmark-slides"></i>
+                                                        </a>
+                                                    }
+                                                    @if (content.Questions.Count > 0)
+                                                    {
+                                                        <span title="Assessment questions">
+                                                            <i class="bi bi-patch-question"></i> @content.Questions.Count
+                                                        </span>
+                                                    }
+                                                </div>
+                                            </div>
+                                        }
+                                    </div>
+                                </details>
                             }
                         </section>
                     }
@@ -97,64 +375,148 @@ else
             <main class="ciit-learning-main">
                 <article class="ciit-learning-main-card">
                     <div class="ciit-learning-lesson-header">
-                        <div>
-                            <span>Lesson @(currentIndex + 1) of @orderedContents.Count</span>
+                        <div class="ciit-learning-lesson-heading">
+                            <span class="ciit-learning-eyebrow">
+                                LESSON @(currentIndex + 1) OF @orderedContents.Count
+                            </span>
                             <h2>@currentContent.Title</h2>
-                            <p>@currentItem?.Topic.Title</p>
+                            <p><i class="bi bi-collection me-1"></i>@currentItem?.Topic.Title</p>
                         </div>
+
                         <div class="ciit-learning-lesson-actions">
                             @if (previousItem is not null)
                             {
-                                <a asp-action="Learn" asp-route-id="@Model.Id" asp-route-contentId="@previousItem.Content.Id" class="btn btn-outline-secondary">
+                                <a asp-action="Learn"
+                                   asp-route-id="@Model.Id"
+                                   asp-route-contentId="@previousItem.Content.Id"
+                                   class="btn btn-outline-secondary">
                                     <i class="bi bi-chevron-left"></i> Previous
                                 </a>
                             }
+
                             @if (nextItem is not null)
                             {
-                                <a asp-action="Learn" asp-route-id="@Model.Id" asp-route-contentId="@nextItem.Content.Id" class="btn btn-primary">
+                                <a asp-action="Learn"
+                                   asp-route-id="@Model.Id"
+                                   asp-route-contentId="@nextItem.Content.Id"
+                                   class="btn btn-primary">
                                     Next <i class="bi bi-chevron-right"></i>
                                 </a>
                             }
                         </div>
                     </div>
 
-
                     @if (!string.IsNullOrWhiteSpace(currentContent.VideoName))
                     {
-                        <section class="ciit-learning-resource">
-                            <h3><i class="bi bi-play-circle me-2"></i>Video Lesson</h3>
-                            <div class="ratio ratio-16x9">
-                                <iframe src="@currentContent.VideoName" title="@currentContent.Title video" loading="lazy" allowfullscreen></iframe>
+                        var videoUrl = ResolveResourceUrl(currentContent.VideoName, "videos");
+                        var isUploadedVideo = videoUrl.StartsWith("/uploads/videos/", StringComparison.OrdinalIgnoreCase)
+                            && (videoUrl.EndsWith(".mp4", StringComparison.OrdinalIgnoreCase)
+                                || videoUrl.EndsWith(".webm", StringComparison.OrdinalIgnoreCase)
+                                || videoUrl.EndsWith(".mov", StringComparison.OrdinalIgnoreCase));
+
+                        <section class="ciit-learning-resource ciit-learning-video-section">
+                            <div class="ciit-learning-resource-title">
+                                <span class="ciit-learning-resource-icon"><i class="bi bi-play-circle"></i></span>
+                                <div>
+                                    <h3>Video lesson</h3>
+                                    <p>Watch the lesson at your own pace.</p>
+                                </div>
                             </div>
+
+                            @if (isUploadedVideo)
+                            {
+                                var videoType = videoUrl.EndsWith(".webm", StringComparison.OrdinalIgnoreCase)
+                                    ? "video/webm"
+                                    : videoUrl.EndsWith(".mov", StringComparison.OrdinalIgnoreCase)
+                                        ? "video/quicktime"
+                                        : "video/mp4";
+
+                                <div class="ciit-learning-video-frame">
+                                    <video controls preload="metadata" playsinline>
+                                        <source src="@videoUrl" type="@videoType" />
+                                        Your browser does not support embedded video.
+                                    </video>
+                                </div>
+                            }
+                            else
+                            {
+                                <div class="ratio ratio-16x9 ciit-learning-video-frame">
+                                    <iframe src="@videoUrl"
+                                            title="@currentContent.Title video"
+                                            loading="lazy"
+                                            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+                                            referrerpolicy="strict-origin-when-cross-origin"
+                                            allowfullscreen></iframe>
+                                </div>
+                            }
                         </section>
                     }
 
                     @if (!string.IsNullOrWhiteSpace(currentContent.Slides))
                     {
                         <section class="ciit-learning-resource">
-                            <h3><i class="bi bi-file-earmark-slides me-2"></i>Study Material</h3>
-                            <a href="@currentContent.Slides" target="_blank" rel="noopener noreferrer" class="btn btn-outline-primary">
-                                Open Slides <i class="bi bi-box-arrow-up-right"></i>
+                            <div class="ciit-learning-resource-title">
+                                <span class="ciit-learning-resource-icon"><i class="bi bi-file-earmark-slides"></i></span>
+                                <div>
+                                    <h3>Study material</h3>
+                                    <p>Review the slides and keep your learning on track.</p>
+                                </div>
+                            </div>
+
+                            <a href="@ResolveResourceUrl(currentContent.Slides, "slides")"
+                               target="_blank"
+                               rel="noopener noreferrer"
+                               class="ciit-learning-open-resource">
+                                <span class="ciit-learning-open-resource-icon">
+                                    <i class="bi bi-file-earmark-pdf"></i>
+                                </span>
+                                <span>
+                                    <strong>Open lesson slides</strong>
+                                    <small>Opens in a new tab</small>
+                                </span>
+                                <i class="bi bi-arrow-up-right ms-auto"></i>
                             </a>
                         </section>
                     }
 
                     @if (currentContent.Questions.Count > 0)
                     {
-                        <section class="ciit-learning-resource">
-                            <h3><i class="bi bi-patch-question-fill me-2"></i>Knowledge Check</h3>
+                        <section id="lesson-assessment" class="ciit-learning-resource ciit-learning-assessment-section">
+                            <div class="ciit-learning-resource-title">
+                                <span class="ciit-learning-resource-icon"><i class="bi bi-patch-check"></i></span>
+                                <div>
+                                    <h3>Knowledge check</h3>
+                                    <p>Review the key ideas covered in this lesson.</p>
+                                </div>
+                                <span class="ciit-learning-question-count">
+                                    @currentContent.Questions.Count question@(currentContent.Questions.Count == 1 ? "" : "s")
+                                </span>
+                            </div>
+
                             @for (var i = 0; i < currentContent.Questions.Count; i++)
                             {
                                 var question = currentContent.Questions[i];
+
                                 <div class="ciit-learning-question">
-                                    <strong>@(i + 1). @question.Question</strong>
+                                    <strong class="ciit-learning-question-title">
+                                        <span>@(i + 1)</span>
+                                        @question.Question
+                                    </strong>
+
                                     <div class="ciit-learning-options">
                                         @for (var optionIndex = 0; optionIndex < question.Options.Count; optionIndex++)
                                         {
                                             var option = question.Options[optionIndex];
+
                                             if (!string.IsNullOrWhiteSpace(option))
                                             {
-                                                <label><input type="radio" name="q-@question.Id" value="@(optionIndex + 1)" /> @option</label>
+                                                <label>
+                                                    <input type="radio"
+                                                           name="q-@question.Id"
+                                                           value="@(optionIndex + 1)" />
+                                                    <span class="ciit-learning-option-letter">@((char)('A' + optionIndex))</span>
+                                                    <span>@option</span>
+                                                </label>
                                             }
                                         }
                                     </div>
