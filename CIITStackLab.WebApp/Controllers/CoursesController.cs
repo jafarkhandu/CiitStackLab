@@ -11,15 +11,18 @@ public class CoursesController : Controller
     private readonly ICourseService _courseService;
     private readonly IStudentProgressService _studentProgressService;
     private readonly ICourseAssessmentService _courseAssessmentService;
+    private readonly ICourseEnrollmentService _courseEnrollmentService;
 
     public CoursesController(
         ICourseService courseService,
         IStudentProgressService studentProgressService,
-        ICourseAssessmentService courseAssessmentService)
+        ICourseAssessmentService courseAssessmentService,
+        ICourseEnrollmentService courseEnrollmentService)
     {
         _courseService = courseService;
         _studentProgressService = studentProgressService;
         _courseAssessmentService = courseAssessmentService;
+        _courseEnrollmentService = courseEnrollmentService;
     }
 
     [HttpGet]
@@ -36,9 +39,26 @@ public class CoursesController : Controller
             id,
             cancellationToken);
 
-        return course is null
-            ? NotFound()
-            : View(course);
+        if (course is null)
+        {
+            return NotFound();
+        }
+
+        course.IsStudent = User.IsInRole("Student");
+
+        var userId = course.IsStudent
+            ? User.FindFirstValue(ClaimTypes.NameIdentifier)
+            : null;
+
+        if (!string.IsNullOrWhiteSpace(userId))
+        {
+            course.Enrollment = await _courseEnrollmentService.GetStudentEnrollmentAsync(
+                userId,
+                id,
+                cancellationToken);
+        }
+
+        return View(course);
     }
 
     [HttpGet("Courses/Learn/{id:int}")]
@@ -64,6 +84,32 @@ public class CoursesController : Controller
         var studentUserId = User.IsInRole("Student")
             ? User.FindFirstValue(ClaimTypes.NameIdentifier)
             : null;
+        var accessUserId = User.Identity?.IsAuthenticated == true
+            ? User.FindFirstValue(ClaimTypes.NameIdentifier)
+            : null;
+
+        var hasCourseAccess = await _courseEnrollmentService.CanAccessCourseAsync(
+            accessUserId,
+            id,
+            cancellationToken);
+
+        if (!hasCourseAccess)
+        {
+            if (User.Identity?.IsAuthenticated != true)
+            {
+                var returnUrl = Url.Action(nameof(Details), new { id });
+                return RedirectToAction(
+                    "Login",
+                    "Account",
+                    new { returnUrl });
+            }
+
+            TempData["CourseEnrollmentMessage"] = User.IsInRole("Student")
+                ? "This course requires an approved enrollment before learning content can be opened."
+                : "Paid course access is available to enrolled student accounts.";
+
+            return RedirectToAction(nameof(Details), new { id });
+        }
 
         if (!string.IsNullOrWhiteSpace(studentUserId) && !contentId.HasValue)
         {
@@ -126,6 +172,15 @@ public class CoursesController : Controller
             return Unauthorized();
         }
 
+        if (!await _courseEnrollmentService.CanAccessCourseAsync(
+            userId,
+            id,
+            cancellationToken))
+        {
+            TempData["CourseEnrollmentMessage"] = "An approved enrollment is required to update paid-course progress.";
+            return RedirectToAction(nameof(Details), new { id });
+        }
+
         var markedCompleted = await _studentProgressService.MarkCompletedAsync(
             userId,
             id,
@@ -167,6 +222,15 @@ public class CoursesController : Controller
         if (string.IsNullOrWhiteSpace(userId))
         {
             return Unauthorized();
+        }
+
+        if (!await _courseEnrollmentService.CanAccessCourseAsync(
+            userId,
+            id,
+            cancellationToken))
+        {
+            TempData["CourseEnrollmentMessage"] = "An approved enrollment is required to submit this assessment.";
+            return RedirectToAction(nameof(Details), new { id });
         }
 
         var outcome = await _courseAssessmentService.SubmitAsync(
@@ -219,6 +283,14 @@ public class CoursesController : Controller
             return Unauthorized();
         }
 
+        if (!await _courseEnrollmentService.CanAccessCourseAsync(
+            userId,
+            id,
+            cancellationToken))
+        {
+            return Forbid();
+        }
+
         var attempt = await _courseAssessmentService.GetAttemptAsync(
             userId,
             id,
@@ -228,5 +300,36 @@ public class CoursesController : Controller
         return attempt is null
             ? NotFound()
             : View(attempt);
+    }
+
+    [HttpPost("Courses/Enroll/{id:int}")]
+    [Authorize(Roles = "Student")]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> RequestEnrollment(
+        int id,
+        CancellationToken cancellationToken)
+    {
+        if (id <= 0)
+        {
+            return NotFound();
+        }
+
+        var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+
+        if (string.IsNullOrWhiteSpace(userId))
+        {
+            return Unauthorized();
+        }
+
+        var outcome = await _courseEnrollmentService.RequestEnrollmentAsync(
+            userId,
+            id,
+            cancellationToken);
+
+        TempData["CourseEnrollmentMessage"] = outcome.Message;
+        TempData["CourseEnrollmentMessageType"] =
+            outcome.Succeeded ? "success" : "error";
+
+        return RedirectToAction(nameof(Details), new { id });
     }
 }
