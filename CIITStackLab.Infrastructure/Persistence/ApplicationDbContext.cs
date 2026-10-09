@@ -212,6 +212,7 @@ public class ApplicationDbContext : IdentityDbContext<ApplicationUser>
                 .IsRequired();
 
             entity.HasIndex(x => new { x.UserId, x.CourseId, x.ContentId, x.SubmittedAt })
+                .IsDescending(false, false, false, true)
                 .HasDatabaseName("IX_tblstudent_assessment_attempts_user_course_content_date");
         });
 
