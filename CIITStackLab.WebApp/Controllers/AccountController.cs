@@ -71,6 +71,12 @@ public class AccountController : Controller
 
         if (await _userManager.IsInRoleAsync(user, "Student"))
         {
+            if (!string.IsNullOrWhiteSpace(model.ReturnUrl)
+                && Url.IsLocalUrl(model.ReturnUrl))
+            {
+                return LocalRedirect(model.ReturnUrl);
+            }
+
             return RedirectToAction("Index", "Home");
         }
 
