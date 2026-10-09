@@ -12,11 +12,16 @@ public sealed class AssessmentsController : Controller
 {
     private readonly IAdminMcqService _mcqService;
     private readonly IAdminInterviewQuestionService _interviewQuestionService;
+    private readonly IAdminPracticeProgramService _practiceProgramService;
 
-    public AssessmentsController(IAdminMcqService mcqService, IAdminInterviewQuestionService interviewQuestionService)
+    public AssessmentsController(
+        IAdminMcqService mcqService,
+        IAdminInterviewQuestionService interviewQuestionService,
+        IAdminPracticeProgramService practiceProgramService)
     {
         _mcqService = mcqService;
         _interviewQuestionService = interviewQuestionService;
+        _practiceProgramService = practiceProgramService;
     }
 
     [HttpGet]
@@ -219,7 +224,188 @@ public sealed class AssessmentsController : Controller
     }
 
     [HttpGet]
-    public IActionResult PracticePrograms() => View();
+    public async Task<IActionResult> PracticePrograms(CancellationToken cancellationToken)
+    {
+        ViewBag.PracticeMessage = TempData["AdminPracticeMessage"] as string;
+        ViewBag.PracticeMessageType = TempData["AdminPracticeMessageType"] as string;
+        return View(await _practiceProgramService.GetIndexAsync(cancellationToken));
+    }
+
+    [HttpGet]
+    public async Task<IActionResult> CreatePracticeProgram(CancellationToken cancellationToken)
+    {
+        await LoadPracticeProgramContentAsync(cancellationToken);
+        return View(new AdminPracticeProgramInputDto());
+    }
+
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> CreatePracticeProgram(AdminPracticeProgramInputDto input, CancellationToken cancellationToken)
+    {
+        if (!ModelState.IsValid)
+        {
+            await LoadPracticeProgramContentAsync(cancellationToken);
+            return View(input);
+        }
+
+        var result = await _practiceProgramService.CreateAsync(input, cancellationToken);
+        if (!result.Succeeded)
+        {
+            ModelState.AddModelError(string.Empty, result.Error!);
+            await LoadPracticeProgramContentAsync(cancellationToken);
+            return View(input);
+        }
+
+        TempData["AdminPracticeMessage"] = "Practice program created successfully.";
+        TempData["AdminPracticeMessageType"] = "success";
+        return RedirectToAction(nameof(PracticePrograms));
+    }
+
+    [HttpGet]
+    public async Task<IActionResult> EditPracticeProgram(int id, CancellationToken cancellationToken)
+    {
+        var program = await _practiceProgramService.GetByIdAsync(id, cancellationToken);
+        if (program is null) return NotFound();
+
+        await LoadPracticeProgramContentAsync(cancellationToken);
+        return View(new AdminPracticeProgramInputDto
+        {
+            ContentId = program.ContentId ?? 0,
+            QuestionTitle = program.QuestionTitle,
+            QuestionDescription = program.QuestionDescription
+        });
+    }
+
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> EditPracticeProgram(int id, AdminPracticeProgramInputDto input, CancellationToken cancellationToken)
+    {
+        if (!ModelState.IsValid)
+        {
+            await LoadPracticeProgramContentAsync(cancellationToken);
+            return View(input);
+        }
+
+        var result = await _practiceProgramService.UpdateAsync(id, input, cancellationToken);
+        if (!result.Succeeded)
+        {
+            ModelState.AddModelError(string.Empty, result.Error!);
+            await LoadPracticeProgramContentAsync(cancellationToken);
+            return View(input);
+        }
+
+        TempData["AdminPracticeMessage"] = "Practice program updated successfully.";
+        TempData["AdminPracticeMessageType"] = "success";
+        return RedirectToAction(nameof(PracticePrograms));
+    }
+
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> DeletePracticeProgram(int id, CancellationToken cancellationToken)
+    {
+        var result = await _practiceProgramService.SoftDeleteAsync(id, cancellationToken);
+        TempData["AdminPracticeMessage"] = result.Succeeded ? "Practice program moved to archive." : result.Error;
+        TempData["AdminPracticeMessageType"] = result.Succeeded ? "success" : "error";
+        return RedirectToAction(nameof(PracticePrograms));
+    }
+
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> RestorePracticeProgram(int id, CancellationToken cancellationToken)
+    {
+        var result = await _practiceProgramService.RestoreAsync(id, cancellationToken);
+        TempData["AdminPracticeMessage"] = result.Succeeded ? "Practice program restored successfully." : result.Error;
+        TempData["AdminPracticeMessageType"] = result.Succeeded ? "success" : "error";
+        return RedirectToAction(nameof(PracticePrograms));
+    }
+
+    [HttpGet]
+    public async Task<IActionResult> CreatePracticeAnswer(CancellationToken cancellationToken)
+    {
+        await LoadPracticeProgramLookupAsync(cancellationToken);
+        return View(new AdminPracticeProgramAnswerInputDto());
+    }
+
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> CreatePracticeAnswer(AdminPracticeProgramAnswerInputDto input, CancellationToken cancellationToken)
+    {
+        if (!ModelState.IsValid)
+        {
+            await LoadPracticeProgramLookupAsync(cancellationToken);
+            return View(input);
+        }
+
+        var result = await _practiceProgramService.CreateAnswerAsync(input, cancellationToken);
+        if (!result.Succeeded)
+        {
+            ModelState.AddModelError(string.Empty, result.Error!);
+            await LoadPracticeProgramLookupAsync(cancellationToken);
+            return View(input);
+        }
+
+        TempData["AdminPracticeMessage"] = "Practice program solution added successfully.";
+        TempData["AdminPracticeMessageType"] = "success";
+        return RedirectToAction(nameof(PracticePrograms));
+    }
+
+    [HttpGet]
+    public async Task<IActionResult> EditPracticeAnswer(int id, CancellationToken cancellationToken)
+    {
+        var answer = await _practiceProgramService.GetAnswerByIdAsync(id, cancellationToken);
+        if (answer is null) return NotFound();
+
+        await LoadPracticeProgramLookupAsync(cancellationToken);
+        return View(new AdminPracticeProgramAnswerInputDto
+        {
+            ProgramQuestionId = answer.ProgramQuestionId ?? 0,
+            Answer = answer.Answer,
+            Description = answer.Description
+        });
+    }
+
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> EditPracticeAnswer(int id, AdminPracticeProgramAnswerInputDto input, CancellationToken cancellationToken)
+    {
+        if (!ModelState.IsValid)
+        {
+            await LoadPracticeProgramLookupAsync(cancellationToken);
+            return View(input);
+        }
+
+        var result = await _practiceProgramService.UpdateAnswerAsync(id, input, cancellationToken);
+        if (!result.Succeeded)
+        {
+            ModelState.AddModelError(string.Empty, result.Error!);
+            await LoadPracticeProgramLookupAsync(cancellationToken);
+            return View(input);
+        }
+
+        TempData["AdminPracticeMessage"] = "Practice program solution updated successfully.";
+        TempData["AdminPracticeMessageType"] = "success";
+        return RedirectToAction(nameof(PracticePrograms));
+    }
+
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> DeletePracticeAnswer(int id, CancellationToken cancellationToken)
+    {
+        var result = await _practiceProgramService.SoftDeleteAnswerAsync(id, cancellationToken);
+        TempData["AdminPracticeMessage"] = result.Succeeded ? "Practice program solution moved to archive." : result.Error;
+        TempData["AdminPracticeMessageType"] = result.Succeeded ? "success" : "error";
+        return RedirectToAction(nameof(PracticePrograms));
+    }
+
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> RestorePracticeAnswer(int id, CancellationToken cancellationToken)
+    {
+        var result = await _practiceProgramService.RestoreAnswerAsync(id, cancellationToken);
+        TempData["AdminPracticeMessage"] = result.Succeeded ? "Practice program solution restored successfully." : result.Error;
+        TempData["AdminPracticeMessageType"] = result.Succeeded ? "success" : "error";
+        return RedirectToAction(nameof(PracticePrograms));
+    }
 
     private async Task LoadMcqContentAsync(CancellationToken cancellationToken)
     {
@@ -231,5 +417,17 @@ public sealed class AssessmentsController : Controller
     {
         var content = await _interviewQuestionService.GetContentLookupAsync(cancellationToken);
         ViewBag.InterviewQuestionContent = content.Select(x => new SelectListItem($"{x.TopicTitle} / {x.Title}", x.Id.ToString())).ToList();
+    }
+
+    private async Task LoadPracticeProgramContentAsync(CancellationToken cancellationToken)
+    {
+        var content = await _practiceProgramService.GetContentLookupAsync(cancellationToken);
+        ViewBag.PracticeProgramContent = content.Select(x => new SelectListItem($"{x.TopicTitle} / {x.Title}", x.Id.ToString())).ToList();
+    }
+
+    private async Task LoadPracticeProgramLookupAsync(CancellationToken cancellationToken)
+    {
+        var programs = await _practiceProgramService.GetProgramLookupAsync(cancellationToken);
+        ViewBag.PracticePrograms = programs.Select(x => new SelectListItem(x.QuestionTitle, x.Id.ToString())).ToList();
     }
 }
