@@ -1,4 +1,5 @@
 using System.Security.Claims;
+using CIITStackLab.Application.DTOs;
 using CIITStackLab.Application.Interfaces;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -9,13 +10,16 @@ public class CoursesController : Controller
 {
     private readonly ICourseService _courseService;
     private readonly IStudentProgressService _studentProgressService;
+    private readonly ICourseAssessmentService _courseAssessmentService;
 
     public CoursesController(
         ICourseService courseService,
-        IStudentProgressService studentProgressService)
+        IStudentProgressService studentProgressService,
+        ICourseAssessmentService courseAssessmentService)
     {
         _courseService = courseService;
         _studentProgressService = studentProgressService;
+        _courseAssessmentService = courseAssessmentService;
     }
 
     [HttpGet]
@@ -142,5 +146,86 @@ public class CoursesController : Controller
                 id,
                 contentId
             });
+    }
+
+    [HttpPost("Courses/Learn/{id:int}/Assessment/{contentId:int}")]
+    [Authorize(Roles = "Student")]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> SubmitAssessment(
+        int id,
+        int contentId,
+        [FromForm] List<AssessmentAnswerDto> answers,
+        CancellationToken cancellationToken)
+    {
+        if (id <= 0 || contentId <= 0)
+        {
+            return NotFound();
+        }
+
+        var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+
+        if (string.IsNullOrWhiteSpace(userId))
+        {
+            return Unauthorized();
+        }
+
+        var outcome = await _courseAssessmentService.SubmitAsync(
+            userId,
+            id,
+            contentId,
+            answers ?? new List<AssessmentAnswerDto>(),
+            cancellationToken);
+
+        if (!outcome.Succeeded || outcome.Result is null)
+        {
+            TempData["AssessmentError"] = outcome.ErrorMessage
+                ?? "The assessment could not be submitted. Please try again.";
+
+            return RedirectToAction(
+                nameof(Learn),
+                new
+                {
+                    id,
+                    contentId
+                });
+        }
+
+        return RedirectToAction(
+            nameof(AssessmentResult),
+            new
+            {
+                id,
+                attemptId = outcome.Result.Id
+            });
+    }
+
+    [HttpGet("Courses/Learn/{id:int}/AssessmentResult/{attemptId:int}")]
+    [Authorize(Roles = "Student")]
+    public async Task<IActionResult> AssessmentResult(
+        int id,
+        int attemptId,
+        CancellationToken cancellationToken)
+    {
+        if (id <= 0 || attemptId <= 0)
+        {
+            return NotFound();
+        }
+
+        var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+
+        if (string.IsNullOrWhiteSpace(userId))
+        {
+            return Unauthorized();
+        }
+
+        var attempt = await _courseAssessmentService.GetAttemptAsync(
+            userId,
+            id,
+            attemptId,
+            cancellationToken);
+
+        return attempt is null
+            ? NotFound()
+            : View(attempt);
     }
 }
