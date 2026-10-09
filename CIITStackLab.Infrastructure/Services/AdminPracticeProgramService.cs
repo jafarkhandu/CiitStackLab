@@ -328,10 +328,13 @@ public sealed class AdminPracticeProgramService : IAdminPracticeProgramService
         return (true, null);
     }
 
-    private Task<bool> ContentExistsAsync(int contentId, CancellationToken cancellationToken)
+    private Task<bool> ContentExistsAsync(int? contentId, CancellationToken cancellationToken)
     {
+        if (!contentId.HasValue)
+            return Task.FromResult(false);
+
         return _dbContext.Lessons.AnyAsync(
-            x => x.Id == contentId && x.Flag == 0 && x.Topic != null && x.Topic.Flag == 0,
+            x => x.Id == contentId.Value && x.Flag == 0 && x.Topic != null && x.Topic.Flag == 0,
             cancellationToken);
     }
 
