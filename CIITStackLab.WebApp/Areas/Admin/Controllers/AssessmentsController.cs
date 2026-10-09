@@ -12,4 +12,22 @@ public sealed class AssessmentsController : Controller
     {
         return View();
     }
+
+    [HttpGet]
+    public IActionResult Mcqs()
+    {
+        return View();
+    }
+
+    [HttpGet]
+    public IActionResult InterviewQuestions()
+    {
+        return View();
+    }
+
+    [HttpGet]
+    public IActionResult PracticePrograms()
+    {
+        return View();
+    }
 }
