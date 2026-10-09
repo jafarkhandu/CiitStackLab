@@ -603,45 +603,87 @@ else
                                 <span class="ciit-learning-resource-icon"><i class="bi bi-patch-check"></i></span>
                                 <div>
                                     <h3>Knowledge check</h3>
-                                    <p>Review the key ideas covered in this lesson.</p>
+                                    <p>Your answers are evaluated securely when you submit.</p>
                                 </div>
                                 <span class="ciit-learning-question-count">
                                     @currentContent.Questions.Count question@(currentContent.Questions.Count == 1 ? "" : "s")
                                 </span>
                             </div>
 
-                            @for (var i = 0; i < currentContent.Questions.Count; i++)
+                            @if (TempData["AssessmentError"] is string assessmentError)
                             {
-                                var question = currentContent.Questions[i];
+                                <div class="alert alert-warning ciit-assessment-error" role="alert">
+                                    <i class="bi bi-exclamation-triangle-fill me-2"></i>@assessmentError
+                                </div>
+                            }
 
-                                <div class="ciit-learning-question">
-                                    <strong class="ciit-learning-question-title">
-                                        <span>@(i + 1)</span>
-                                        @question.Question
-                                    </strong>
+                            @if (User.IsInRole("Student"))
+                            {
+                                <form asp-controller="Courses"
+                                      asp-action="SubmitAssessment"
+                                      asp-route-id="@Model.Id"
+                                      asp-route-contentId="@currentContent.Id"
+                                      method="post"
+                                      class="ciit-assessment-form">
+                                    @for (var i = 0; i < currentContent.Questions.Count; i++)
+                                    {
+                                        var question = currentContent.Questions[i];
 
-                                    <div class="ciit-learning-options">
-                                        @for (var optionIndex = 0; optionIndex < question.Options.Count; optionIndex++)
-                                        {
-                                            var option = question.Options[optionIndex];
+                                        <input type="hidden"
+                                               name="answers[@i].QuestionId"
+                                               value="@question.Id" />
 
-                                            if (!string.IsNullOrWhiteSpace(option))
-                                            {
-                                                <label>
-                                                    <input type="radio"
-                                                           name="q-@question.Id"
-                                                           value="@(optionIndex + 1)" />
-                                                    <span class="ciit-learning-option-letter">@((char)('A' + optionIndex))</span>
-                                                    <span>@option</span>
-                                                </label>
-                                            }
-                                        }
+                                        <div class="ciit-learning-question">
+                                            <strong class="ciit-learning-question-title">
+                                                <span>@(i + 1)</span>
+                                                @question.Question
+                                            </strong>
+
+                                            <div class="ciit-learning-options">
+                                                @for (var optionIndex = 0; optionIndex < question.Options.Count; optionIndex++)
+                                                {
+                                                    var option = question.Options[optionIndex];
+
+                                                    if (!string.IsNullOrWhiteSpace(option))
+                                                    {
+                                                        <label>
+                                                            <input type="radio"
+                                                                   name="answers[@i].SelectedOptionNumber"
+                                                                   value="@(optionIndex + 1)"
+                                                                   required />
+                                                            <span class="ciit-learning-option-letter">@((char)('A' + optionIndex))</span>
+                                                            <span>@option</span>
+                                                        </label>
+                                                    }
+                                                }
+                                            </div>
+                                        </div>
+                                    }
+
+                                    <div class="ciit-assessment-submit-row">
+                                        <p><i class="bi bi-shield-check me-2"></i>Correct answers stay hidden until after submission.</p>
+                                        <button type="submit" class="btn btn-primary">
+                                            <i class="bi bi-send-check me-2"></i>Submit assessment
+                                        </button>
                                     </div>
+                                </form>
+                            }
+                            else
+                            {
+                                <div class="ciit-assessment-signin">
+                                    <div>
+                                        <strong>Ready to test your knowledge?</strong>
+                                        <p>Sign in with your student account to submit answers and save your result.</p>
+                                    </div>
+                                    <a asp-controller="Account"
+                                       asp-action="Login"
+                                       class="btn btn-primary">
+                                        <i class="bi bi-box-arrow-in-right me-2"></i>Student sign in
+                                    </a>
                                 </div>
                             }
                         </section>
-                    }
-                </article>
+                    }            </article>
             </main>
         </div>
     </section>
