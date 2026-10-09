@@ -3,6 +3,11 @@
 @{
     ViewData["Title"] = "Add Practice Solution";
     var programs = ViewBag.PracticePrograms as IEnumerable<Microsoft.AspNetCore.Mvc.Rendering.SelectListItem> ?? Array.Empty<Microsoft.AspNetCore.Mvc.Rendering.SelectListItem>();
+    var preselectedProgramId = Context.Request.Query["programQuestionId"].ToString();
+    foreach (var program in programs)
+    {
+        program.Selected = program.Value == preselectedProgramId;
+    }
 }
 
 @section Styles { <link rel="stylesheet" href="~/css/admin-practice.css" asp-append-version="true" /> }
