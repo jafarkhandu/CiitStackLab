@@ -1,0 +1,42 @@
+@model CIITStackLab.Application.DTOs.AdminPracticeProgramInputDto
+
+@{
+    ViewData["Title"] = "Edit Practice Program";
+    var contentItems = ViewBag.PracticeProgramContent as IEnumerable<Microsoft.AspNetCore.Mvc.Rendering.SelectListItem> ?? Array.Empty<Microsoft.AspNetCore.Mvc.Rendering.SelectListItem>();
+}
+
+@section Styles { <link rel="stylesheet" href="~/css/admin-practice.css" asp-append-version="true" /> }
+
+<section class="ciit-practice-form-page">
+    <div class="ciit-practice-header">
+        <div><span class="ciit-admin-eyebrow">Assessment</span><h1>Edit Practice Program</h1><p>Update the existing programming problem without changing its database relationship.</p></div>
+    </div>
+
+    <div class="ciit-practice-form-card">
+        <form asp-area="Admin" asp-controller="Assessments" asp-action="EditPracticeProgram" method="post" class="ciit-practice-form">
+            @Html.AntiForgeryToken()
+            <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+            <div class="ciit-practice-field">
+                <label asp-for="ContentId">Content</label>
+                <select asp-for="ContentId" asp-items="contentItems"><option value="">Select content</option></select>
+                <span asp-validation-for="ContentId" class="text-danger"></span>
+            </div>
+            <div class="ciit-practice-field">
+                <label asp-for="QuestionTitle">Problem Title</label>
+                <input asp-for="QuestionTitle" />
+                <span asp-validation-for="QuestionTitle" class="text-danger"></span>
+            </div>
+            <div class="ciit-practice-field">
+                <label asp-for="QuestionDescription">Problem Description</label>
+                <textarea asp-for="QuestionDescription" rows="8"></textarea>
+                <span asp-validation-for="QuestionDescription" class="text-danger"></span>
+            </div>
+            <div class="ciit-practice-form-actions">
+                <a asp-area="Admin" asp-controller="Assessments" asp-action="PracticePrograms" class="ciit-practice-secondary-btn">Cancel</a>
+                <button type="submit" class="ciit-practice-primary-btn"><i class="bi bi-check-lg"></i> Save Changes</button>
+            </div>
+        </form>
+    </div>
+</section>
+
+@section Scripts { <partial name="_ValidationScriptsPartial" /> }
