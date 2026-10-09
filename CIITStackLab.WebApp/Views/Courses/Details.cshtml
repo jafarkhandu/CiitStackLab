@@ -41,15 +41,6 @@
                         }
                     </div>
 
-                    @if (TempData["CourseEnrollmentMessage"] is string enrollmentMessage)
-                    {
-                        var messageType = TempData["CourseEnrollmentMessageType"] as string;
-                        <div class="alert @(messageType == "success" ? "alert-success" : messageType == "error" ? "alert-danger" : "alert-info") mt-3"
-                             role="status">
-                            @enrollmentMessage
-                        </div>
-                    }
-
                     <div class="d-flex flex-wrap gap-3 mt-4">
                         @if (Model.TotalPrice <= 0m || Model.Enrollment?.HasAccess == true)
                         {
