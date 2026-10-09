@@ -7,18 +7,18 @@
 .assessment-list {
     display: flex;
     flex-direction: column;
-    gap: 14px;
+    gap: 16px;
     width: 100%;
-    max-width: 820px;
+    max-width: 1100px;
 }
 
 .assessment-item {
     display: flex;
     align-items: center;
-    gap: 16px;
+    gap: 18px;
     width: 100%;
-    min-height: 82px;
-    padding: 18px 20px;
+    min-height: 104px;
+    padding: 24px 26px;
     border: 1px solid rgba(148, 163, 184, 0.24);
     border-radius: 16px;
     background: var(--ciit-admin-card-bg, #fff);
@@ -42,46 +42,51 @@
 
 .assessment-item-icon {
     display: grid;
-    flex: 0 0 46px;
-    width: 46px;
-    height: 46px;
+    flex: 0 0 50px;
+    width: 50px;
+    height: 50px;
     place-items: center;
     border-radius: 12px;
     background: rgba(37, 99, 235, 0.1);
-    font-size: 1.2rem;
+    font-size: 1.25rem;
 }
 
 .assessment-item-content {
     display: flex;
     flex: 1;
     flex-direction: column;
-    gap: 3px;
+    gap: 4px;
     min-width: 0;
 }
 
 .assessment-item-content strong {
-    font-size: 1rem;
+    font-size: 1.05rem;
 }
 
 .assessment-item-content span {
     color: #64748b;
-    font-size: 0.88rem;
+    font-size: 0.9rem;
 }
 
 .assessment-item-arrow {
     flex: 0 0 auto;
     color: #64748b;
+    font-size: 1.05rem;
 }
 
 @media (max-width: 600px) {
+    .assessment-list {
+        max-width: 100%;
+    }
+
     .assessment-item {
-        min-height: 74px;
-        padding: 15px 16px;
+        min-height: 88px;
+        padding: 18px 16px;
     }
 
     .assessment-item-icon {
-        flex-basis: 40px;
-        width: 40px;
-        height: 40px;
+        flex-basis: 44px;
+        width: 44px;
+        height: 44px;
     }
 }
