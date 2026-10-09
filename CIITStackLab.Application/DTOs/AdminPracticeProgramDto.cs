@@ -10,7 +10,7 @@ public sealed class AdminPracticeProgramDto
     public string TopicTitle { get; init; } = string.Empty;
     public string QuestionTitle { get; init; } = string.Empty;
     public string QuestionDescription { get; init; } = string.Empty;
-    public IReadOnlyList<AdminPracticeProgramAnswerDto> Answers { get; init; } = Array.Empty<AdminPracticeProgramAnswerDto>();
+    public IReadOnlyList<AdminPracticeProgramAnswerDto> Answers { get; set; } = Array.Empty<AdminPracticeProgramAnswerDto>();
     public DateTime? CreatedAt { get; init; }
     public DateTime? UpdatedAt { get; init; }
 }
