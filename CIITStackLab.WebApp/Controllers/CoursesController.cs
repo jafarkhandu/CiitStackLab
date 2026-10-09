@@ -88,10 +88,14 @@ public class CoursesController : Controller
             ? User.FindFirstValue(ClaimTypes.NameIdentifier)
             : null;
 
-        var hasCourseAccess = await _courseEnrollmentService.CanAccessCourseAsync(
-            accessUserId,
-            id,
-            cancellationToken);
+        var hasCourseAccess = User.IsInRole("Student")
+            ? await _courseEnrollmentService.CanAccessCourseAsync(
+                accessUserId,
+                id,
+                cancellationToken)
+            : await _courseEnrollmentService.GetCoursePriceAsync(
+                id,
+                cancellationToken) <= 0m;
 
         if (!hasCourseAccess)
         {
