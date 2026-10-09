@@ -11,17 +11,16 @@ namespace CIITStackLab.WebApp.Areas.Admin.Controllers;
 public sealed class AssessmentsController : Controller
 {
     private readonly IAdminMcqService _mcqService;
+    private readonly IAdminInterviewQuestionService _interviewQuestionService;
 
-    public AssessmentsController(IAdminMcqService mcqService)
+    public AssessmentsController(IAdminMcqService mcqService, IAdminInterviewQuestionService interviewQuestionService)
     {
         _mcqService = mcqService;
+        _interviewQuestionService = interviewQuestionService;
     }
 
     [HttpGet]
-    public IActionResult Index()
-    {
-        return View();
-    }
+    public IActionResult Index() => View();
 
     [HttpGet]
     public async Task<IActionResult> Mcqs(CancellationToken cancellationToken)
@@ -124,22 +123,113 @@ public sealed class AssessmentsController : Controller
     }
 
     [HttpGet]
-    public IActionResult InterviewQuestions()
+    public async Task<IActionResult> InterviewQuestions(CancellationToken cancellationToken)
     {
-        return View();
+        ViewBag.InterviewMessage = TempData["AdminInterviewMessage"] as string;
+        ViewBag.InterviewMessageType = TempData["AdminInterviewMessageType"] as string;
+        return View(await _interviewQuestionService.GetIndexAsync(cancellationToken));
     }
 
     [HttpGet]
-    public IActionResult PracticePrograms()
+    public async Task<IActionResult> CreateInterviewQuestion(CancellationToken cancellationToken)
     {
-        return View();
+        await LoadInterviewQuestionContentAsync(cancellationToken);
+        return View(new AdminInterviewQuestionInputDto());
     }
+
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> CreateInterviewQuestion(AdminInterviewQuestionInputDto input, CancellationToken cancellationToken)
+    {
+        if (!ModelState.IsValid)
+        {
+            await LoadInterviewQuestionContentAsync(cancellationToken);
+            return View(input);
+        }
+
+        var result = await _interviewQuestionService.CreateAsync(input, cancellationToken);
+        if (!result.Succeeded)
+        {
+            ModelState.AddModelError(string.Empty, result.Error!);
+            await LoadInterviewQuestionContentAsync(cancellationToken);
+            return View(input);
+        }
+
+        TempData["AdminInterviewMessage"] = "Interview question created successfully.";
+        TempData["AdminInterviewMessageType"] = "success";
+        return RedirectToAction(nameof(InterviewQuestions));
+    }
+
+    [HttpGet]
+    public async Task<IActionResult> EditInterviewQuestion(int id, CancellationToken cancellationToken)
+    {
+        var question = await _interviewQuestionService.GetByIdAsync(id, cancellationToken);
+        if (question is null) return NotFound();
+
+        await LoadInterviewQuestionContentAsync(cancellationToken);
+        return View(new AdminInterviewQuestionInputDto
+        {
+            ContentId = question.ContentId ?? 0,
+            Question = question.Question,
+            Answer = question.Answer
+        });
+    }
+
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> EditInterviewQuestion(int id, AdminInterviewQuestionInputDto input, CancellationToken cancellationToken)
+    {
+        if (!ModelState.IsValid)
+        {
+            await LoadInterviewQuestionContentAsync(cancellationToken);
+            return View(input);
+        }
+
+        var result = await _interviewQuestionService.UpdateAsync(id, input, cancellationToken);
+        if (!result.Succeeded)
+        {
+            ModelState.AddModelError(string.Empty, result.Error!);
+            await LoadInterviewQuestionContentAsync(cancellationToken);
+            return View(input);
+        }
+
+        TempData["AdminInterviewMessage"] = "Interview question updated successfully.";
+        TempData["AdminInterviewMessageType"] = "success";
+        return RedirectToAction(nameof(InterviewQuestions));
+    }
+
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> DeleteInterviewQuestion(int id, CancellationToken cancellationToken)
+    {
+        var result = await _interviewQuestionService.SoftDeleteAsync(id, cancellationToken);
+        TempData["AdminInterviewMessage"] = result.Succeeded ? "Interview question moved to archive." : result.Error;
+        TempData["AdminInterviewMessageType"] = result.Succeeded ? "success" : "error";
+        return RedirectToAction(nameof(InterviewQuestions));
+    }
+
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> RestoreInterviewQuestion(int id, CancellationToken cancellationToken)
+    {
+        var result = await _interviewQuestionService.RestoreAsync(id, cancellationToken);
+        TempData["AdminInterviewMessage"] = result.Succeeded ? "Interview question restored successfully." : result.Error;
+        TempData["AdminInterviewMessageType"] = result.Succeeded ? "success" : "error";
+        return RedirectToAction(nameof(InterviewQuestions));
+    }
+
+    [HttpGet]
+    public IActionResult PracticePrograms() => View();
 
     private async Task LoadMcqContentAsync(CancellationToken cancellationToken)
     {
         var content = await _mcqService.GetContentLookupAsync(cancellationToken);
-        ViewBag.McqContent = content
-            .Select(x => new SelectListItem($"{x.TopicTitle} / {x.Title}", x.Id.ToString()))
-            .ToList();
+        ViewBag.McqContent = content.Select(x => new SelectListItem($"{x.TopicTitle} / {x.Title}", x.Id.ToString())).ToList();
+    }
+
+    private async Task LoadInterviewQuestionContentAsync(CancellationToken cancellationToken)
+    {
+        var content = await _interviewQuestionService.GetContentLookupAsync(cancellationToken);
+        ViewBag.InterviewQuestionContent = content.Select(x => new SelectListItem($"{x.TopicTitle} / {x.Title}", x.Id.ToString())).ToList();
     }
 }

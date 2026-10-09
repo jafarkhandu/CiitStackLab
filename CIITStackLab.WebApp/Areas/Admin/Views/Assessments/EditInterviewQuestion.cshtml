@@ -1,0 +1,19 @@
+@model CIITStackLab.Application.DTOs.AdminInterviewQuestionInputDto
+
+@{ ViewData["Title"] = "Edit Interview Question"; }
+
+@section Styles { <link rel="stylesheet" href="~/css/admin-mcqs.css" asp-append-version="true" /> }
+
+<section class="ciit-mcq-form-page">
+    <div class="ciit-mcq-header"><div><span class="ciit-admin-eyebrow">Assessment</span><h1>Edit Interview Question</h1><p>Update the existing interview question and its linked learning content.</p></div></div>
+    <form asp-area="Admin" asp-controller="Assessments" asp-action="EditInterviewQuestion" method="post" class="ciit-mcq-form">
+        @Html.AntiForgeryToken()
+        <div asp-validation-summary="ModelOnly" class="ciit-mcq-validation"></div>
+        <label>Content<select asp-for="ContentId" asp-items="ViewBag.InterviewQuestionContent"><option value="0">Select content</option></select><span asp-validation-for="ContentId"></span></label>
+        <label>Question<textarea asp-for="Question" rows="4"></textarea><span asp-validation-for="Question"></span></label>
+        <label>Answer<textarea asp-for="Answer" rows="8"></textarea><span asp-validation-for="Answer"></span></label>
+        <div class="ciit-mcq-form-actions"><a asp-action="InterviewQuestions">Cancel</a><button type="submit">Save Changes</button></div>
+    </form>
+</section>
+
+@section Scripts { <partial name="_ValidationScriptsPartial" /> }

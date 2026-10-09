@@ -1,13 +1,54 @@
+@model CIITStackLab.Application.DTOs.AdminInterviewQuestionIndexDto
+
 @{
     ViewData["Title"] = "Interview Questions";
+    var message = ViewBag.InterviewMessage as string;
+    var messageType = ViewBag.InterviewMessageType as string;
 }
 
-<section class="ciit-admin-page assessment-page">
-    <div class="ciit-admin-page-header">
-        <div>
-            <span class="ciit-admin-eyebrow">Assessment</span>
-            <h1>Interview Questions</h1>
-            <p>Interview question management screen is ready. The detailed workflow will be added next.</p>
-        </div>
+@section Styles { <link rel="stylesheet" href="~/css/admin-mcqs.css" asp-append-version="true" /> }
+
+<section class="ciit-mcq-page">
+    <div class="ciit-mcq-header">
+        <div><span class="ciit-admin-eyebrow">Assessment</span><h1>Interview Questions</h1><p>Manage interview questions linked to existing learning content.</p></div>
+        <a asp-area="Admin" asp-controller="Assessments" asp-action="CreateInterviewQuestion" class="ciit-mcq-primary-btn"><i class="bi bi-plus-lg"></i><span>Add Interview Question</span></a>
     </div>
+
+    @if (!string.IsNullOrWhiteSpace(message))
+    {
+        <div class="ciit-mcq-alert @(messageType == "success" ? "is-success" : "is-error")" role="alert"><i class="bi @(messageType == "success" ? "bi-check-circle-fill" : "bi-exclamation-circle-fill")"></i><span>@message</span></div>
+    }
+
+    <section class="ciit-mcq-card">
+        <div class="ciit-mcq-card-header"><div><h2>Active Interview Questions</h2><p>@Model.ActiveQuestions.Count active question@(Model.ActiveQuestions.Count == 1 ? "" : "s")</p></div></div>
+        @if (Model.ActiveQuestions.Count == 0)
+        {
+            <div class="ciit-mcq-empty"><i class="bi bi-chat-left-text"></i><h3>No active interview questions</h3><p>Create an interview question and attach it to an existing content item.</p><a asp-area="Admin" asp-controller="Assessments" asp-action="CreateInterviewQuestion" class="ciit-mcq-secondary-btn">Add Interview Question</a></div>
+        }
+        else
+        {
+            <div class="ciit-mcq-table-wrap">
+                <table class="ciit-mcq-table"><thead><tr><th>Question</th><th>Content</th><th>Topic</th><th>Answer</th><th>Actions</th></tr></thead><tbody>
+                @foreach (var question in Model.ActiveQuestions)
+                {
+                    <tr><td><div class="ciit-mcq-question"><strong>@question.Question</strong><span>#@question.Id</span></div></td><td>@question.ContentTitle</td><td>@question.TopicTitle</td><td>@question.Answer</td><td><div class="ciit-mcq-actions"><a asp-area="Admin" asp-controller="Assessments" asp-action="EditInterviewQuestion" asp-route-id="@question.Id" title="Edit"><i class="bi bi-pencil-square"></i></a><form asp-area="Admin" asp-controller="Assessments" asp-action="DeleteInterviewQuestion" method="post" onsubmit="return confirm('Archive this interview question?');">@Html.AntiForgeryToken()<input type="hidden" name="id" value="@question.Id" /><button type="submit" title="Archive"><i class="bi bi-archive"></i></button></form></div></td></tr>
+                }
+                </tbody></table>
+            </div>
+        }
+    </section>
+
+    <section class="ciit-mcq-card ciit-mcq-archive">
+        <div class="ciit-mcq-card-header"><div><h2>Archived Interview Questions</h2><p>Archived questions can be restored.</p></div><span class="ciit-mcq-count">@Model.ArchivedQuestions.Count</span></div>
+        @if (Model.ArchivedQuestions.Count == 0) { <div class="ciit-mcq-empty compact"><p>No archived interview questions.</p></div> }
+        else
+        {
+            <div class="ciit-mcq-archive-list">
+            @foreach (var question in Model.ArchivedQuestions)
+            {
+                <div class="ciit-mcq-archive-row"><div><strong>@question.Question</strong><span>@question.TopicTitle / @question.ContentTitle</span></div><form asp-area="Admin" asp-controller="Assessments" asp-action="RestoreInterviewQuestion" method="post">@Html.AntiForgeryToken()<input type="hidden" name="id" value="@question.Id" /><button type="submit" class="ciit-mcq-restore"><i class="bi bi-arrow-counterclockwise"></i> Restore</button></form></div>
+            }
+            </div>
+        }
+    </section>
 </section>
