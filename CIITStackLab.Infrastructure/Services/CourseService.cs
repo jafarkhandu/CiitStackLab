@@ -224,7 +224,7 @@ public sealed class CourseService
             Category = presentation.Category,
             Level = presentation.Level,
             DurationHours = presentation.DurationHours,
-            TotalPrice = topics.Sum(topic => topic.Price),
+            TotalPrice = topics.Sum(topic => Math.Max(0m, topic.Price)),
             Topics = topics
         };
     }
