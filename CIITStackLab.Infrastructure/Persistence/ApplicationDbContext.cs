@@ -21,6 +21,7 @@ public class ApplicationDbContext : IdentityDbContext<ApplicationUser>
     public DbSet<TrainingNote> TrainingNotes => Set<TrainingNote>();
     public DbSet<StudentLessonProgress> StudentLessonProgress => Set<StudentLessonProgress>();
     public DbSet<StudentAssessmentAttempt> StudentAssessmentAttempts => Set<StudentAssessmentAttempt>();
+    public DbSet<CourseEnrollment> CourseEnrollments => Set<CourseEnrollment>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -212,6 +213,55 @@ public class ApplicationDbContext : IdentityDbContext<ApplicationUser>
 
             entity.HasIndex(x => new { x.UserId, x.CourseId, x.ContentId, x.SubmittedAt })
                 .HasDatabaseName("IX_tblstudent_assessment_attempts_user_course_content_date");
+        });
+
+        modelBuilder.Entity<CourseEnrollment>(entity =>
+        {
+            entity.ToTable("tblstudent_course_enrollments", ExistingSchema);
+            entity.HasKey(x => x.Id);
+
+            entity.Property(x => x.Id)
+                .HasColumnName("enrollment_id")
+                .ValueGeneratedOnAdd();
+
+            entity.Property(x => x.UserId)
+                .HasColumnName("user_id")
+                .HasMaxLength(450)
+                .IsRequired();
+
+            entity.Property(x => x.CourseId)
+                .HasColumnName("course_id")
+                .IsRequired();
+
+            entity.Property(x => x.Status)
+                .HasColumnName("status")
+                .HasMaxLength(30)
+                .IsRequired();
+
+            entity.Property(x => x.PriceAtEnrollment)
+                .HasColumnName("price_at_enrollment")
+                .HasPrecision(18, 2)
+                .IsRequired();
+
+            entity.Property(x => x.RequestedAt)
+                .HasColumnName("requested_at")
+                .HasColumnType("datetime2")
+                .IsRequired();
+
+            entity.Property(x => x.ReviewedAt)
+                .HasColumnName("reviewed_at")
+                .HasColumnType("datetime2");
+
+            entity.Property(x => x.ReviewedByUserId)
+                .HasColumnName("reviewed_by_user_id")
+                .HasMaxLength(450);
+
+            entity.HasIndex(x => new { x.UserId, x.CourseId })
+                .IsUnique()
+                .HasDatabaseName("UX_tblstudent_course_enrollments_user_course");
+
+            entity.HasIndex(x => new { x.Status, x.RequestedAt })
+                .HasDatabaseName("IX_tblstudent_course_enrollments_status_date");
         });
 
         modelBuilder.Entity<TrainingNote>(entity =>
