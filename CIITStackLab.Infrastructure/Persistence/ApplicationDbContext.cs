@@ -20,6 +20,7 @@ public class ApplicationDbContext : IdentityDbContext<ApplicationUser>
     public DbSet<ContentQuestion> ContentQuestions => Set<ContentQuestion>();
     public DbSet<TrainingNote> TrainingNotes => Set<TrainingNote>();
     public DbSet<StudentLessonProgress> StudentLessonProgress => Set<StudentLessonProgress>();
+    public DbSet<StudentAssessmentAttempt> StudentAssessmentAttempts => Set<StudentAssessmentAttempt>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -167,6 +168,50 @@ public class ApplicationDbContext : IdentityDbContext<ApplicationUser>
             entity.HasIndex(x => new { x.UserId, x.CourseId, x.ContentId })
                 .IsUnique()
                 .HasDatabaseName("UX_tblstudent_lesson_progress_user_course_content");
+        });
+
+        modelBuilder.Entity<StudentAssessmentAttempt>(entity =>
+        {
+            entity.ToTable("tblstudent_assessment_attempts", ExistingSchema);
+            entity.HasKey(x => x.Id);
+
+            entity.Property(x => x.Id)
+                .HasColumnName("attempt_id")
+                .ValueGeneratedOnAdd();
+
+            entity.Property(x => x.UserId)
+                .HasColumnName("user_id")
+                .HasMaxLength(450)
+                .IsRequired();
+
+            entity.Property(x => x.CourseId)
+                .HasColumnName("course_id")
+                .IsRequired();
+
+            entity.Property(x => x.ContentId)
+                .HasColumnName("content_id")
+                .IsRequired();
+
+            entity.Property(x => x.Score)
+                .HasColumnName("score")
+                .IsRequired();
+
+            entity.Property(x => x.TotalQuestions)
+                .HasColumnName("total_questions")
+                .IsRequired();
+
+            entity.Property(x => x.AnswersJson)
+                .HasColumnName("answers_json")
+                .HasColumnType("nvarchar(max)")
+                .IsRequired();
+
+            entity.Property(x => x.SubmittedAt)
+                .HasColumnName("submitted_at")
+                .HasColumnType("datetime2")
+                .IsRequired();
+
+            entity.HasIndex(x => new { x.UserId, x.CourseId, x.ContentId, x.SubmittedAt })
+                .HasDatabaseName("IX_tblstudent_assessment_attempts_user_course_content_date");
         });
 
         modelBuilder.Entity<TrainingNote>(entity =>
