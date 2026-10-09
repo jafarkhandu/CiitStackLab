@@ -44,6 +44,7 @@ public sealed class DynamicCourseService : ICourseService
             {
                 Id = topic.Id,
                 Title = topic.Title,
+                HasNotes = topic.HasNotes,
                 Contents = topic.Contents.Select(content => new CourseContentDto
                 {
                     Id = content.Id,
@@ -110,9 +111,28 @@ public sealed class DynamicCourseService : ICourseService
                 {
                     x.Id,
                     x.TopicId,
+                    x.NoteId,
                     x.Title,
                     x.Slides,
                     x.VideoName
+                })
+                .ToListAsync(cancellationToken);
+
+        var chapterRows = topicIds.Count == 0
+            ? []
+            : await _dbContext.TrainingNotes
+                .AsNoTracking()
+                .Where(note => topicIds.Contains(note.TopicId) && note.Flag == 0)
+                .OrderBy(note => note.TopicId)
+                .ThenBy(note => note.SortOrder)
+                .ThenBy(note => note.Id)
+                .Select(note => new
+                {
+                    note.Id,
+                    note.TopicId,
+                    note.ChapterId,
+                    note.Title,
+                    note.SortOrder
                 })
                 .ToListAsync(cancellationToken);
 
@@ -158,6 +178,30 @@ public sealed class DynamicCourseService : ICourseService
                         Questions = questionsByContentId.TryGetValue(content.Id, out var contentQuestions)
                             ? contentQuestions
                             : Array.Empty<ContentQuestionDto>()
+                    })
+                    .ToList(),
+                Chapters = chapterRows
+                    .Where(chapter => chapter.TopicId == topic.TopicId)
+                    .Select(chapter => new CourseLearningChapterDto
+                    {
+                        Id = chapter.Id,
+                        ChapterId = chapter.ChapterId,
+                        Title = chapter.Title ?? string.Empty,
+                        SortOrder = chapter.SortOrder,
+                        Contents = contentRows
+                            .Where(content => content.TopicId == topic.TopicId
+                                              && content.NoteId == chapter.Id)
+                            .Select(content => new CourseLearningContentDto
+                            {
+                                Id = content.Id,
+                                Title = content.Title ?? string.Empty,
+                                Slides = content.Slides,
+                                VideoName = content.VideoName,
+                                Questions = questionsByContentId.TryGetValue(content.Id, out var chapterQuestions)
+                                    ? chapterQuestions
+                                    : Array.Empty<ContentQuestionDto>()
+                            })
+                            .ToList()
                     })
                     .ToList()
             })
