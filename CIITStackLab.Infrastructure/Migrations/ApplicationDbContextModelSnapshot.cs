@@ -362,6 +362,156 @@ namespace CIITStackLab.Infrastructure.Migrations
                     b.ToTable("tbltraining_notes", "erpsystem");
                 });
 
+            modelBuilder.Entity("CIITStackLab.Domain.Entities.StudentLessonProgress", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int")
+                        .HasColumnName("progress_id");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<int>("ContentId")
+                        .HasColumnType("int")
+                        .HasColumnName("content_id");
+
+                    b.Property<int>("CourseId")
+                        .HasColumnType("int")
+                        .HasColumnName("course_id");
+
+                    b.Property<DateTime?>("CompletedAt")
+                        .HasColumnType("datetime2")
+                        .HasColumnName("completed_at");
+
+                    b.Property<bool>("IsCompleted")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("bit")
+                        .HasDefaultValue(false)
+                        .HasColumnName("is_completed");
+
+                    b.Property<DateTime>("LastAccessedAt")
+                        .HasColumnType("datetime2")
+                        .HasColumnName("last_accessed_at");
+
+                    b.Property<string>("UserId")
+                        .IsRequired()
+                        .HasMaxLength(450)
+                        .HasColumnType("nvarchar(450)")
+                        .HasColumnName("user_id");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("UserId", "CourseId", "ContentId")
+                        .IsUnique()
+                        .HasDatabaseName("UX_tblstudent_lesson_progress_user_course_content");
+
+                    b.ToTable("tblstudent_lesson_progress", "erpsystem");
+                });
+
+            modelBuilder.Entity("CIITStackLab.Domain.Entities.StudentAssessmentAttempt", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int")
+                        .HasColumnName("attempt_id");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("AnswersJson")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)")
+                        .HasColumnName("answers_json");
+
+                    b.Property<int>("ContentId")
+                        .HasColumnType("int")
+                        .HasColumnName("content_id");
+
+                    b.Property<int>("CourseId")
+                        .HasColumnType("int")
+                        .HasColumnName("course_id");
+
+                    b.Property<int>("Score")
+                        .HasColumnType("int")
+                        .HasColumnName("score");
+
+                    b.Property<DateTime>("SubmittedAt")
+                        .HasColumnType("datetime2")
+                        .HasColumnName("submitted_at");
+
+                    b.Property<int>("TotalQuestions")
+                        .HasColumnType("int")
+                        .HasColumnName("total_questions");
+
+                    b.Property<string>("UserId")
+                        .IsRequired()
+                        .HasMaxLength(450)
+                        .HasColumnType("nvarchar(450)")
+                        .HasColumnName("user_id");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("UserId", "CourseId", "ContentId", "SubmittedAt")
+                        .IsDescending(false, false, false, true)
+                        .HasDatabaseName("IX_tblstudent_assessment_attempts_user_course_content_date");
+
+                    b.ToTable("tblstudent_assessment_attempts", "erpsystem");
+                });
+
+            modelBuilder.Entity("CIITStackLab.Domain.Entities.CourseEnrollment", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int")
+                        .HasColumnName("enrollment_id");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<int>("CourseId")
+                        .HasColumnType("int")
+                        .HasColumnName("course_id");
+
+                    b.Property<decimal>("PriceAtEnrollment")
+                        .HasPrecision(18, 2)
+                        .HasColumnType("decimal(18,2)")
+                        .HasColumnName("price_at_enrollment");
+
+                    b.Property<DateTime>("RequestedAt")
+                        .HasColumnType("datetime2")
+                        .HasColumnName("requested_at");
+
+                    b.Property<DateTime?>("ReviewedAt")
+                        .HasColumnType("datetime2")
+                        .HasColumnName("reviewed_at");
+
+                    b.Property<string>("ReviewedByUserId")
+                        .HasMaxLength(450)
+                        .HasColumnType("nvarchar(450)")
+                        .HasColumnName("reviewed_by_user_id");
+
+                    b.Property<string>("Status")
+                        .IsRequired()
+                        .HasMaxLength(30)
+                        .HasColumnType("nvarchar(30)")
+                        .HasColumnName("status");
+
+                    b.Property<string>("UserId")
+                        .IsRequired()
+                        .HasMaxLength(450)
+                        .HasColumnType("nvarchar(450)")
+                        .HasColumnName("user_id");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("Status", "RequestedAt")
+                        .HasDatabaseName("IX_tblstudent_course_enrollments_status_date");
+
+                    b.HasIndex("UserId", "CourseId")
+                        .IsUnique()
+                        .HasDatabaseName("UX_tblstudent_course_enrollments_user_course");
+
+                    b.ToTable("tblstudent_course_enrollments", "erpsystem");
+                });
+
             modelBuilder.Entity("CIITStackLab.Infrastructure.Identity.ApplicationUser", b =>
                 {
                     b.Property<string>("Id")
