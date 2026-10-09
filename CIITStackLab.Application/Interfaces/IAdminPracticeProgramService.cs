@@ -9,12 +9,12 @@ public interface IAdminPracticeProgramService
     Task<AdminPracticeProgramAnswerDto?> GetAnswerByIdAsync(int id, CancellationToken cancellationToken = default);
     Task<IReadOnlyList<AdminPracticeProgramContentLookupDto>> GetContentLookupAsync(CancellationToken cancellationToken = default);
     Task<IReadOnlyList<AdminPracticeProgramLookupDto>> GetProgramLookupAsync(CancellationToken cancellationToken = default);
-    Task<AdminOperationResult> CreateAsync(AdminPracticeProgramInputDto input, CancellationToken cancellationToken = default);
-    Task<AdminOperationResult> UpdateAsync(int id, AdminPracticeProgramInputDto input, CancellationToken cancellationToken = default);
-    Task<AdminOperationResult> SoftDeleteAsync(int id, CancellationToken cancellationToken = default);
-    Task<AdminOperationResult> RestoreAsync(int id, CancellationToken cancellationToken = default);
-    Task<AdminOperationResult> CreateAnswerAsync(AdminPracticeProgramAnswerInputDto input, CancellationToken cancellationToken = default);
-    Task<AdminOperationResult> UpdateAnswerAsync(int id, AdminPracticeProgramAnswerInputDto input, CancellationToken cancellationToken = default);
-    Task<AdminOperationResult> SoftDeleteAnswerAsync(int id, CancellationToken cancellationToken = default);
-    Task<AdminOperationResult> RestoreAnswerAsync(int id, CancellationToken cancellationToken = default);
+    Task<(bool Succeeded, string? Error)> CreateAsync(AdminPracticeProgramInputDto input, CancellationToken cancellationToken = default);
+    Task<(bool Succeeded, string? Error)> UpdateAsync(int id, AdminPracticeProgramInputDto input, CancellationToken cancellationToken = default);
+    Task<(bool Succeeded, string? Error)> SoftDeleteAsync(int id, CancellationToken cancellationToken = default);
+    Task<(bool Succeeded, string? Error)> RestoreAsync(int id, CancellationToken cancellationToken = default);
+    Task<(bool Succeeded, string? Error)> CreateAnswerAsync(AdminPracticeProgramAnswerInputDto input, CancellationToken cancellationToken = default);
+    Task<(bool Succeeded, string? Error)> UpdateAnswerAsync(int id, AdminPracticeProgramAnswerInputDto input, CancellationToken cancellationToken = default);
+    Task<(bool Succeeded, string? Error)> SoftDeleteAnswerAsync(int id, CancellationToken cancellationToken = default);
+    Task<(bool Succeeded, string? Error)> RestoreAnswerAsync(int id, CancellationToken cancellationToken = default);
 }
