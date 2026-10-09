@@ -4,25 +4,43 @@
     gap: 28px;
 }
 
-.assessment-grid {
-    display: grid;
-    grid-template-columns: repeat(3, minmax(0, 1fr));
-    gap: 20px;
-}
-
-.assessment-card {
+.assessment-list {
     display: flex;
-    gap: 16px;
-    align-items: flex-start;
-    min-height: 180px;
-    padding: 24px;
-    border: 1px solid rgba(148, 163, 184, 0.24);
-    border-radius: 18px;
-    background: var(--ciit-admin-card-bg, #fff);
-    box-shadow: 0 10px 30px rgba(15, 23, 42, 0.06);
+    flex-direction: column;
+    gap: 14px;
+    width: 100%;
+    max-width: 820px;
 }
 
-.assessment-card-icon {
+.assessment-item {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    width: 100%;
+    min-height: 82px;
+    padding: 18px 20px;
+    border: 1px solid rgba(148, 163, 184, 0.24);
+    border-radius: 16px;
+    background: var(--ciit-admin-card-bg, #fff);
+    box-shadow: 0 8px 24px rgba(15, 23, 42, 0.05);
+    color: inherit;
+    text-decoration: none;
+    transition: transform 0.16s ease, box-shadow 0.16s ease, border-color 0.16s ease;
+}
+
+.assessment-item:hover,
+.assessment-item:focus-visible {
+    transform: translateY(-1px);
+    border-color: rgba(37, 99, 235, 0.38);
+    box-shadow: 0 12px 28px rgba(15, 23, 42, 0.09);
+}
+
+.assessment-item:focus-visible {
+    outline: 3px solid rgba(37, 99, 235, 0.2);
+    outline-offset: 2px;
+}
+
+.assessment-item-icon {
     display: grid;
     flex: 0 0 46px;
     width: 46px;
@@ -33,19 +51,37 @@
     font-size: 1.2rem;
 }
 
-.assessment-card h2 {
-    margin: 0 0 8px;
-    font-size: 1.05rem;
+.assessment-item-content {
+    display: flex;
+    flex: 1;
+    flex-direction: column;
+    gap: 3px;
+    min-width: 0;
 }
 
-.assessment-card p {
-    margin: 0;
+.assessment-item-content strong {
+    font-size: 1rem;
+}
+
+.assessment-item-content span {
     color: #64748b;
-    line-height: 1.6;
+    font-size: 0.88rem;
 }
 
-@media (max-width: 900px) {
-    .assessment-grid {
-        grid-template-columns: 1fr;
+.assessment-item-arrow {
+    flex: 0 0 auto;
+    color: #64748b;
+}
+
+@media (max-width: 600px) {
+    .assessment-item {
+        min-height: 74px;
+        padding: 15px 16px;
+    }
+
+    .assessment-item-icon {
+        flex-basis: 40px;
+        width: 40px;
+        height: 40px;
     }
 }
