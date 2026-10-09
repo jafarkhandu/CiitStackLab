@@ -1,0 +1,51 @@
+.assessment-page {
+    display: flex;
+    flex-direction: column;
+    gap: 28px;
+}
+
+.assessment-grid {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 20px;
+}
+
+.assessment-card {
+    display: flex;
+    gap: 16px;
+    align-items: flex-start;
+    min-height: 180px;
+    padding: 24px;
+    border: 1px solid rgba(148, 163, 184, 0.24);
+    border-radius: 18px;
+    background: var(--ciit-admin-card-bg, #fff);
+    box-shadow: 0 10px 30px rgba(15, 23, 42, 0.06);
+}
+
+.assessment-card-icon {
+    display: grid;
+    flex: 0 0 46px;
+    width: 46px;
+    height: 46px;
+    place-items: center;
+    border-radius: 12px;
+    background: rgba(37, 99, 235, 0.1);
+    font-size: 1.2rem;
+}
+
+.assessment-card h2 {
+    margin: 0 0 8px;
+    font-size: 1.05rem;
+}
+
+.assessment-card p {
+    margin: 0;
+    color: #64748b;
+    line-height: 1.6;
+}
+
+@media (max-width: 900px) {
+    .assessment-grid {
+        grid-template-columns: 1fr;
+    }
+}
