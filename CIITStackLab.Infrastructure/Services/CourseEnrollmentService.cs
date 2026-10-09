@@ -42,23 +42,26 @@ public sealed class CourseEnrollmentService : ICourseEnrollmentService
         return enrollment;
     }
 
-    public Task<bool> HasActiveEnrollmentAsync(
+    public async Task<bool> HasActiveEnrollmentAsync(
         string userId,
         int courseId,
         CancellationToken cancellationToken = default)
     {
         if (string.IsNullOrWhiteSpace(userId) || courseId <= 0)
         {
-            return Task.FromResult(false);
+            return false;
         }
 
-        return _dbContext.CourseEnrollments
-            .AsNoTracking()
-            .AnyAsync(
-                row => row.UserId == userId
-                    && row.CourseId == courseId
-                    && row.Status == CourseEnrollmentStatuses.Active,
-                cancellationToken);
+        return await (
+            from enrollment in _dbContext.CourseEnrollments.AsNoTracking()
+            join user in _dbContext.Users.AsNoTracking()
+                on enrollment.UserId equals user.Id
+            where enrollment.UserId == userId
+                  && enrollment.CourseId == courseId
+                  && enrollment.Status == CourseEnrollmentStatuses.Active
+                  && user.IsActive
+            select enrollment.Id)
+            .AnyAsync(cancellationToken);
     }
 
     public async Task<decimal> GetCoursePriceAsync(
