@@ -1,0 +1,27 @@
+@model CIITStackLab.Application.DTOs.AdminMcqInputDto
+
+@{
+    ViewData["Title"] = "Add MCQ";
+}
+
+@section Styles { <link rel="stylesheet" href="~/css/admin-mcqs.css" asp-append-version="true" /> }
+
+<section class="ciit-mcq-form-page">
+    <div class="ciit-mcq-header"><div><span class="ciit-admin-eyebrow">Assessment</span><h1>Add MCQ</h1><p>Create a question using an existing learning content item.</p></div></div>
+    <form asp-area="Admin" asp-controller="Assessments" asp-action="CreateMcq" method="post" class="ciit-mcq-form">
+        @Html.AntiForgeryToken()
+        <div asp-validation-summary="ModelOnly" class="ciit-mcq-validation"></div>
+        <label>Content<select asp-for="ContentId" asp-items="ViewBag.McqContent"><option value="0">Select content</option></select><span asp-validation-for="ContentId"></span></label>
+        <label>Question<textarea asp-for="Question" rows="4"></textarea><span asp-validation-for="Question"></span></label>
+        <div class="ciit-mcq-option-grid">
+            <label>Option 1<input asp-for="Option1" /><span asp-validation-for="Option1"></span></label>
+            <label>Option 2<input asp-for="Option2" /><span asp-validation-for="Option2"></span></label>
+            <label>Option 3<input asp-for="Option3" /><span asp-validation-for="Option3"></span></label>
+            <label>Option 4<input asp-for="Option4" /><span asp-validation-for="Option4"></span></label>
+        </div>
+        <label>Correct Option<select asp-for="CorrectOptionNumber"><option value="0">Select correct option</option><option value="1">Option 1</option><option value="2">Option 2</option><option value="3">Option 3</option><option value="4">Option 4</option></select><span asp-validation-for="CorrectOptionNumber"></span></label>
+        <div class="ciit-mcq-form-actions"><a asp-action="Mcqs">Cancel</a><button type="submit">Create MCQ</button></div>
+    </form>
+</section>
+
+@section Scripts { <partial name="_ValidationScriptsPartial" /> }
