@@ -22,6 +22,7 @@
 
     var currentItem = orderedContents.ElementAtOrDefault(currentIndex);
     var currentContent = currentItem?.Content;
+    var learningProgress = Model.Progress;
     var previousItem = currentIndex > 0 ? orderedContents[currentIndex - 1] : null;
     var nextItem = currentIndex < orderedContents.Count - 1
         ? orderedContents.ElementAtOrDefault(currentIndex + 1)
@@ -107,25 +108,25 @@ else
                         <h1>@Model.Title</h1>
                         <p>@Model.ShortDescription</p>
 
-                        @if (User.IsInRole("Student") && Model.Progress is not null)
+                        @if (User.IsInRole("Student") && learningProgress is not null)
                         {
                             <div class="ciit-learning-course-progress"
                                  role="group"
                                  aria-label="Course completion progress">
                                 <div class="ciit-learning-course-progress-heading">
                                     <span><i class="bi bi-graph-up-arrow me-2"></i>Your progress</span>
-                                    <strong>@Model.Progress.Percentage%</strong>
+                                    <strong>@learningProgress.Percentage%</strong>
                                 </div>
                                 <div class="progress ciit-learning-course-progress-track"
                                      role="progressbar"
                                      aria-label="Course completion"
-                                     aria-valuenow="@Model.Progress.Percentage"
+                                     aria-valuenow="@learningProgress.Percentage"
                                      aria-valuemin="0"
                                      aria-valuemax="100">
                                     <div class="progress-bar"
-                                         style="width: @Model.Progress.Percentage%"></div>
+                                         style="width: @learningProgress.Percentage%"></div>
                                 </div>
-                                <small>@Model.Progress.CompletedLessons of @Model.Progress.TotalLessons lessons completed</small>
+                                <small>@learningProgress.CompletedLessons of @learningProgress.TotalLessons lessons completed</small>
                             </div>
                         }
                     </div>
@@ -164,10 +165,10 @@ else
                         var topicHasCurrentContent = topic.Contents.Any(
                             content => content.Id == currentContent.Id);
 
-                        var completedTopicLessons = Model.Progress is null
+                        var completedTopicLessons = learningProgress is null
                             ? 0
                             : topic.Contents.Count(content =>
-                                Model.Progress.CompletedContentIds.Contains(content.Id));
+                                learningProgress.CompletedContentIds.Contains(content.Id));
 
                         var topicProgressPercentage = topic.Contents.Count == 0
                             ? 0
@@ -190,7 +191,7 @@ else
                                 </div>
                             </div>
 
-                            @if (User.IsInRole("Student") && Model.Progress is not null && topic.Contents.Count > 0)
+                            @if (User.IsInRole("Student") && learningProgress is not null && topic.Contents.Count > 0)
                             {
                                 <div class="ciit-learning-topic-progress">
                                     <div class="ciit-learning-topic-progress-labels">
@@ -261,7 +262,7 @@ else
                                                             </span>
                                                             <span class="ciit-learning-resource-name">
                                                                 <strong>@content.Title</strong>
-                                                                @if (Model.Progress?.CompletedContentIds.Contains(content.Id) == true)
+                                                                @if (learningProgress?.CompletedContentIds.Contains(content.Id) == true)
                                                                 {
                                                                     <small class="ciit-learning-completed-indicator">
                                                                         <i class="bi bi-check-circle-fill me-1"></i>Completed
@@ -391,7 +392,7 @@ else
                                                     <span>@content.Title</span>
                                                 </a>
 
-                                                @if (Model.Progress?.CompletedContentIds.Contains(content.Id) == true)
+                                                @if (learningProgress?.CompletedContentIds.Contains(content.Id) == true)
                                                 {
                                                     <span class="ciit-learning-completed-indicator"
                                                           title="Lesson completed">
@@ -471,10 +472,10 @@ else
                         </div>
                     </div>
 
-                    @if (User.IsInRole("Student") && Model.Progress is not null)
+                    @if (User.IsInRole("Student") && learningProgress is not null)
                     {
                         var isCurrentLessonCompleted =
-                            Model.Progress.CompletedContentIds.Contains(currentContent.Id);
+                            learningProgress.CompletedContentIds.Contains(currentContent.Id);
 
                         <div class="ciit-learning-lesson-status">
                             <div class="ciit-learning-lesson-status-copy">
