@@ -1,0 +1,377 @@
+.ciit-practice-page,
+.ciit-practice-form-page {
+    display: grid;
+    gap: 24px;
+}
+
+.ciit-practice-header {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 20px;
+}
+
+.ciit-practice-header h1 {
+    margin: 6px 0 8px;
+    font-size: clamp(1.7rem, 3vw, 2.35rem);
+}
+
+.ciit-practice-header p {
+    margin: 0;
+    color: #6b7280;
+}
+
+.ciit-practice-header-actions,
+.ciit-practice-form-actions {
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 10px;
+    flex-wrap: wrap;
+}
+
+.ciit-practice-primary-btn,
+.ciit-practice-secondary-btn,
+.ciit-practice-restore {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    min-height: 42px;
+    padding: 9px 15px;
+    border-radius: 10px;
+    text-decoration: none;
+    border: 1px solid transparent;
+    font-weight: 700;
+    cursor: pointer;
+}
+
+.ciit-practice-primary-btn {
+    background: #111827;
+    color: #fff;
+}
+
+.ciit-practice-secondary-btn {
+    background: #fff;
+    color: #111827;
+    border-color: #d1d5db;
+}
+
+.ciit-practice-primary-btn:hover,
+.ciit-practice-primary-btn:focus-visible {
+    color: #fff;
+    opacity: .92;
+}
+
+.ciit-practice-secondary-btn:hover,
+.ciit-practice-secondary-btn:focus-visible {
+    color: #111827;
+    background: #f9fafb;
+}
+
+.ciit-practice-alert {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 12px 14px;
+    border-radius: 10px;
+}
+
+.ciit-practice-alert.is-success {
+    background: #ecfdf3;
+    color: #166534;
+}
+
+.ciit-practice-alert.is-error {
+    background: #fef2f2;
+    color: #b91c1c;
+}
+
+.ciit-practice-card {
+    overflow: hidden;
+    border: 1px solid #e5e7eb;
+    border-radius: 16px;
+    background: #fff;
+    box-shadow: 0 8px 28px rgba(15, 23, 42, .05);
+}
+
+.ciit-practice-card-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+    padding: 20px 22px;
+    border-bottom: 1px solid #eef0f3;
+}
+
+.ciit-practice-card-header h2 {
+    margin: 0 0 4px;
+    font-size: 1.1rem;
+}
+
+.ciit-practice-card-header p {
+    margin: 0;
+    color: #6b7280;
+    font-size: .9rem;
+}
+
+.ciit-practice-count,
+.ciit-practice-solutions-header span {
+    display: inline-flex;
+    min-width: 30px;
+    height: 30px;
+    align-items: center;
+    justify-content: center;
+    padding: 0 8px;
+    border-radius: 999px;
+    background: #f3f4f6;
+    color: #374151;
+    font-weight: 700;
+}
+
+.ciit-practice-list {
+    display: grid;
+}
+
+.ciit-practice-program {
+    padding: 22px;
+    border-bottom: 1px solid #eef0f3;
+}
+
+.ciit-practice-program:last-child {
+    border-bottom: 0;
+}
+
+.ciit-practice-program-header,
+.ciit-practice-solution,
+.ciit-practice-archive-row {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 18px;
+}
+
+.ciit-practice-id {
+    color: #6b7280;
+    font-size: .78rem;
+    font-weight: 700;
+}
+
+.ciit-practice-program h3 {
+    margin: 3px 0 6px;
+    font-size: 1.15rem;
+}
+
+.ciit-practice-meta,
+.ciit-practice-solution p,
+.ciit-practice-archive-row span {
+    margin: 0;
+    color: #6b7280;
+    font-size: .88rem;
+}
+
+.ciit-practice-description {
+    margin: 16px 0;
+    padding: 14px;
+    border-radius: 10px;
+    background: #f8fafc;
+    color: #374151;
+    white-space: pre-wrap;
+}
+
+.ciit-practice-actions {
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+    flex-shrink: 0;
+}
+
+.ciit-practice-actions a,
+.ciit-practice-actions button {
+    width: 36px;
+    height: 36px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border: 1px solid #e5e7eb;
+    border-radius: 9px;
+    background: #fff;
+    color: #374151;
+    text-decoration: none;
+    cursor: pointer;
+}
+
+.ciit-practice-actions a:hover,
+.ciit-practice-actions button:hover {
+    background: #f9fafb;
+}
+
+.ciit-practice-actions form {
+    margin: 0;
+}
+
+.ciit-practice-solutions {
+    margin-top: 18px;
+    padding: 16px;
+    border: 1px solid #eef0f3;
+    border-radius: 12px;
+    background: #fbfcfd;
+}
+
+.ciit-practice-solutions-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    margin-bottom: 10px;
+}
+
+.ciit-practice-solutions-header h4 {
+    margin: 0;
+    font-size: .95rem;
+}
+
+.ciit-practice-solution {
+    padding: 13px 0;
+    border-top: 1px solid #e5e7eb;
+}
+
+.ciit-practice-solution strong {
+    display: block;
+    margin-bottom: 4px;
+    color: #111827;
+}
+
+.ciit-practice-no-solution,
+.ciit-practice-empty p {
+    margin: 0;
+    color: #6b7280;
+}
+
+.ciit-practice-empty {
+    padding: 48px 24px;
+    text-align: center;
+}
+
+.ciit-practice-empty i {
+    font-size: 2rem;
+    color: #9ca3af;
+}
+
+.ciit-practice-empty h3 {
+    margin: 12px 0 6px;
+}
+
+.ciit-practice-empty .ciit-practice-secondary-btn {
+    margin-top: 18px;
+}
+
+.ciit-practice-empty.compact {
+    padding: 24px;
+}
+
+.ciit-practice-archive-list {
+    display: grid;
+}
+
+.ciit-practice-archive-row {
+    padding: 15px 22px;
+    border-bottom: 1px solid #eef0f3;
+}
+
+.ciit-practice-archive-row:last-child {
+    border-bottom: 0;
+}
+
+.ciit-practice-archive-row strong,
+.ciit-practice-archive-row span {
+    display: block;
+}
+
+.ciit-practice-archive-row strong {
+    margin-bottom: 4px;
+}
+
+.ciit-practice-restore {
+    min-height: 36px;
+    padding: 7px 12px;
+    background: #fff;
+    color: #374151;
+    border-color: #d1d5db;
+}
+
+.ciit-practice-form-card {
+    max-width: 900px;
+    padding: 24px;
+    border: 1px solid #e5e7eb;
+    border-radius: 16px;
+    background: #fff;
+    box-shadow: 0 8px 28px rgba(15, 23, 42, .05);
+}
+
+.ciit-practice-form {
+    display: grid;
+    gap: 18px;
+}
+
+.ciit-practice-field {
+    display: grid;
+    gap: 7px;
+}
+
+.ciit-practice-field label {
+    font-weight: 700;
+    color: #111827;
+}
+
+.ciit-practice-field input,
+.ciit-practice-field select,
+.ciit-practice-field textarea {
+    width: 100%;
+    padding: 11px 12px;
+    border: 1px solid #d1d5db;
+    border-radius: 10px;
+    background: #fff;
+    color: #111827;
+    font: inherit;
+}
+
+.ciit-practice-field textarea {
+    resize: vertical;
+    min-height: 120px;
+}
+
+.ciit-practice-field input:focus,
+.ciit-practice-field select:focus,
+.ciit-practice-field textarea:focus {
+    outline: 2px solid rgba(17, 24, 39, .12);
+    border-color: #9ca3af;
+}
+
+@media (max-width: 760px) {
+    .ciit-practice-header,
+    .ciit-practice-program-header,
+    .ciit-practice-solution,
+    .ciit-practice-archive-row {
+        flex-direction: column;
+    }
+
+    .ciit-practice-header-actions,
+    .ciit-practice-form-actions {
+        width: 100%;
+        justify-content: stretch;
+    }
+
+    .ciit-practice-header-actions > *,
+    .ciit-practice-form-actions > * {
+        flex: 1 1 auto;
+    }
+
+    .ciit-practice-actions {
+        align-self: flex-end;
+    }
+
+    .ciit-practice-archive-row .ciit-practice-restore {
+        width: 100%;
+    }
+}
