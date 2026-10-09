@@ -43,7 +43,7 @@
                     @if (TempData["CourseEnrollmentMessage"] is string enrollmentMessage)
                     {
                         var messageType = TempData["CourseEnrollmentMessageType"] as string;
-                        <div class="alert @(messageType == "success" ? "alert-success" : "alert-info") mt-3"
+                        <div class="alert @(messageType == "success" ? "alert-success" : messageType == "error" ? "alert-danger" : "alert-info") mt-3"
                              role="status">
                             @enrollmentMessage
                         </div>
