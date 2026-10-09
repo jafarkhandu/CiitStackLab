@@ -19,6 +19,8 @@ public class ApplicationDbContext : IdentityDbContext<ApplicationUser>
     public DbSet<Topic> Topics => Set<Topic>();
     public DbSet<ContentQuestion> ContentQuestions => Set<ContentQuestion>();
     public DbSet<ContentInterviewQuestion> ContentInterviewQuestions => Set<ContentInterviewQuestion>();
+    public DbSet<ContentProgramQuestion> ContentProgramQuestions => Set<ContentProgramQuestion>();
+    public DbSet<ContentProgramAnswer> ContentProgramAnswers => Set<ContentProgramAnswer>();
     public DbSet<TrainingNote> TrainingNotes => Set<TrainingNote>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
@@ -116,6 +118,38 @@ public class ApplicationDbContext : IdentityDbContext<ApplicationUser>
             entity.Property(x => x.DeletedAt).HasColumnName("DeletedAt");
             entity.Property(x => x.RestoredAt).HasColumnName("RestoredAt");
             entity.HasOne(x => x.Content).WithMany().HasForeignKey(x => x.ContentId).OnDelete(DeleteBehavior.NoAction);
+        });
+
+        modelBuilder.Entity<ContentProgramQuestion>(entity =>
+        {
+            entity.ToTable("tblcontent_program_questions", ExistingSchema);
+            entity.HasKey(x => x.Id);
+            entity.Property(x => x.Id).HasColumnName("program_question_id");
+            entity.Property(x => x.ContentId).HasColumnName("content_id");
+            entity.Property(x => x.QuestionTitle).HasColumnName("question_title");
+            entity.Property(x => x.QuestionDescription).HasColumnName("question_description");
+            entity.Property(x => x.Flag).HasColumnName("flag");
+            entity.Property(x => x.CreatedAt).HasColumnName("InsertedAt");
+            entity.Property(x => x.UpdatedAt).HasColumnName("UpdatedAt");
+            entity.Property(x => x.DeletedAt).HasColumnName("DeletedAt");
+            entity.Property(x => x.RestoredAt).HasColumnName("RestoredAt");
+            entity.HasOne(x => x.Content).WithMany().HasForeignKey(x => x.ContentId).OnDelete(DeleteBehavior.NoAction);
+            entity.HasMany(x => x.Answers).WithOne(x => x.ProgramQuestion).HasForeignKey(x => x.ProgramQuestionId).OnDelete(DeleteBehavior.NoAction);
+        });
+
+        modelBuilder.Entity<ContentProgramAnswer>(entity =>
+        {
+            entity.ToTable("tblcontent_program_answers", ExistingSchema);
+            entity.HasKey(x => x.Id);
+            entity.Property(x => x.Id).HasColumnName("program_answer_id");
+            entity.Property(x => x.ProgramQuestionId).HasColumnName("program_question_id");
+            entity.Property(x => x.Answer).HasColumnName("program_answer");
+            entity.Property(x => x.Description).HasColumnName("program_description");
+            entity.Property(x => x.Flag).HasColumnName("flag");
+            entity.Property(x => x.CreatedAt).HasColumnName("InsertedAt");
+            entity.Property(x => x.UpdatedAt).HasColumnName("UpdatedAt");
+            entity.Property(x => x.DeletedAt).HasColumnName("DeletedAt");
+            entity.Property(x => x.RestoredAt).HasColumnName("RestoredAt");
         });
 
         modelBuilder.Entity<Lesson>(entity =>
