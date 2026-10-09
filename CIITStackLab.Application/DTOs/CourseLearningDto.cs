@@ -16,6 +16,7 @@ public sealed class CourseLearningDto
     public IReadOnlyList<CourseLearningTopicDto> Topics { get; init; } = Array.Empty<CourseLearningTopicDto>();
     public int? CurrentContentId { get; init; }
     public CourseLearningContentDto? CurrentContent { get; init; }
+    public CourseLearningProgressDto? Progress { get; set; }
 }
 
 public sealed class CourseLearningTopicDto
@@ -44,4 +45,17 @@ public sealed class CourseLearningContentDto
     public string? Slides { get; init; }
     public string? VideoName { get; init; }
     public IReadOnlyList<ContentQuestionDto> Questions { get; init; } = Array.Empty<ContentQuestionDto>();
+}
+
+public sealed class CourseLearningProgressDto
+{
+    public int TotalLessons { get; init; }
+
+    public int CompletedLessons { get; init; }
+
+    public int Percentage { get; init; }
+
+    public int? LastAccessedContentId { get; init; }
+
+    public IReadOnlyCollection<int> CompletedContentIds { get; init; } = Array.Empty<int>();
 }
