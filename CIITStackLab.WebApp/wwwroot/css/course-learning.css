@@ -1429,3 +1429,185 @@ details[open] > summary .ciit-learning-disclosure-icon {
     }
 
 }
+
+
+/* Student progress and lesson completion */
+.ciit-learning-course-progress {
+    width: min(100%, 590px);
+    margin-top: 22px;
+    padding: 16px 17px;
+    border: 1px solid #e0e9f7;
+    border-radius: 15px;
+    background: rgba(255, 255, 255, .82);
+}
+
+.ciit-learning-course-progress-heading {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 15px;
+    margin-bottom: 10px;
+}
+
+.ciit-learning-course-progress-heading span {
+    color: #536783;
+    font-size: .81rem;
+    font-weight: 800;
+}
+
+.ciit-learning-course-progress-heading span i {
+    color: #1769ff;
+}
+
+.ciit-learning-course-progress-heading strong {
+    color: #1769ff;
+    font-size: .92rem;
+    font-weight: 800;
+    font-variant-numeric: tabular-nums;
+}
+
+.ciit-learning-course-progress-track {
+    height: 8px;
+    overflow: hidden;
+    border-radius: 999px;
+    background: #eaf0f8;
+}
+
+.ciit-learning-course-progress-track .progress-bar {
+    border-radius: inherit;
+    background: linear-gradient(90deg, #1769ff 0%, #49a2ff 100%);
+    transition: width .35s ease;
+}
+
+.ciit-learning-course-progress > small {
+    display: block;
+    margin-top: 8px;
+    color: #7a899f;
+    font-size: .73rem;
+}
+
+.ciit-learning-lesson-status {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 17px;
+    margin-top: 20px;
+    padding: 15px 17px;
+    border: 1px solid #e0e9f7;
+    border-radius: 15px;
+    background: linear-gradient(115deg, #f8fbff 0%, #ffffff 100%);
+}
+
+.ciit-learning-lesson-status-copy {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    min-width: 0;
+}
+
+.ciit-learning-lesson-status-icon {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 38px;
+    height: 38px;
+    flex: 0 0 38px;
+    border: 1px solid #dce8ff;
+    border-radius: 12px;
+    background: #edf4ff;
+    color: #1769ff;
+    font-size: 1rem;
+}
+
+.ciit-learning-lesson-status-icon.is-completed {
+    border-color: #c9efdb;
+    background: #eaf9f0;
+    color: #16804b;
+}
+
+.ciit-learning-lesson-status-copy strong,
+.ciit-learning-lesson-status-copy small {
+    display: block;
+}
+
+.ciit-learning-lesson-status-copy strong {
+    color: #263854;
+    font-size: .82rem;
+    font-weight: 800;
+    line-height: 1.45;
+}
+
+.ciit-learning-lesson-status-copy small {
+    margin-top: 3px;
+    color: #7b899f;
+    font-size: .73rem;
+    line-height: 1.5;
+}
+
+.ciit-learning-completion-form {
+    margin: 0;
+    flex: 0 0 auto;
+}
+
+.ciit-learning-completion-form .btn {
+    min-height: 40px;
+    border-radius: 10px;
+    padding: 9px 13px;
+    background: linear-gradient(135deg, #1769ff 0%, #367cff 100%);
+    border-color: #1769ff;
+    font-size: .78rem;
+    font-weight: 800;
+    white-space: nowrap;
+    box-shadow: 0 6px 16px rgba(23, 105, 255, .15);
+}
+
+.ciit-learning-completed-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    flex: 0 0 auto;
+    padding: 8px 11px;
+    border: 1px solid #c9efdb;
+    border-radius: 999px;
+    background: #eaf9f0;
+    color: #167747;
+    font-size: .73rem;
+    font-weight: 800;
+}
+
+.ciit-learning-completed-indicator {
+    display: inline-flex !important;
+    align-items: center;
+    margin-top: 5px !important;
+    color: #198754 !important;
+    font-size: .66rem !important;
+    font-weight: 800;
+}
+
+.ciit-learning-progress-alert {
+    margin: 13px 0 0;
+    padding: 11px 14px;
+    border: 1px solid #cdebd8;
+    border-radius: 11px;
+    font-size: .82rem;
+}
+
+@media (max-width: 575.98px) {
+    .ciit-learning-course-progress {
+        padding: 13px;
+    }
+
+    .ciit-learning-lesson-status {
+        align-items: stretch;
+        flex-direction: column;
+        padding: 13px;
+    }
+
+    .ciit-learning-completion-form .btn {
+        width: 100%;
+    }
+
+    .ciit-learning-completed-pill {
+        align-self: flex-start;
+    }
+}
