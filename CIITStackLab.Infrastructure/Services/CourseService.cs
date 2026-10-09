@@ -183,7 +183,6 @@ public sealed class CourseService
                     Id = x.Id,
                     Question = x.Question ?? string.Empty,
                     Options = new[] { x.Option1, x.Option2, x.Option3, x.Option4 },
-                    CorrectOptionNumber = x.CorrectOptionNumber
                 }).ToList());
 
         var topics = rows
