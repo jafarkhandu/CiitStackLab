@@ -66,7 +66,8 @@ public sealed class CourseAssessmentService : ICourseAssessmentService
 
         foreach (var answer in answers)
         {
-            if (answer.QuestionId <= 0
+            if (answer is null
+                || answer.QuestionId <= 0
                 || !answersByQuestionId.TryAdd(answer.QuestionId, answer))
             {
                 return AssessmentSubmissionOutcomeDto.Failure(
