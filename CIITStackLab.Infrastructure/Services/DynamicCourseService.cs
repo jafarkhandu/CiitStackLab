@@ -231,7 +231,7 @@ public sealed class DynamicCourseService : ICourseService
             Category = course.Category,
             Level = course.Level,
             DurationHours = course.DurationHours,
-            TotalPrice = topics.Sum(x => x.Price),
+            TotalPrice = topics.Sum(x => Math.Max(0m, x.Price)),
             TopicCount = topics.Count,
             ContentCount = allContents.Count,
             Topics = topics,
