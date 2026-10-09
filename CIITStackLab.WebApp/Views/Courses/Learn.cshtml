@@ -58,7 +58,7 @@
             return "/" + resource;
         }
 
-        return $"/uploads/{folder}/{Uri.EscapeDataString(Path.GetFileName(resource))}";
+        return $"/uploads/{folder}/{Uri.EscapeDataString(System.IO.Path.GetFileName(resource))}";
     }
 }
 
@@ -412,7 +412,7 @@ else
                         var videoPath = Uri.TryCreate(videoUrl, UriKind.Absolute, out var absoluteVideoUri)
                             ? absoluteVideoUri.AbsolutePath
                             : videoUrl;
-                        var videoExtension = Path.GetExtension(videoPath);
+                        var videoExtension = System.IO.Path.GetExtension(videoPath);
                         var isDirectVideoFile = videoExtension.Equals(".mp4", StringComparison.OrdinalIgnoreCase)
                             || videoExtension.Equals(".webm", StringComparison.OrdinalIgnoreCase)
                             || videoExtension.Equals(".mov", StringComparison.OrdinalIgnoreCase);
