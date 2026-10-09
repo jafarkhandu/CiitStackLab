@@ -10,6 +10,9 @@ public sealed class CourseDetailsDto
     public string Category { get; init; } = string.Empty;
     public string Level { get; init; } = string.Empty;
     public int DurationHours { get; init; }
+    public decimal TotalPrice { get; set; }
+    public bool IsStudent { get; set; }
+    public CourseEnrollmentDto? Enrollment { get; set; }
     public IReadOnlyList<CourseTopicDto> Topics { get; init; } = Array.Empty<CourseTopicDto>();
 }
 
@@ -17,6 +20,7 @@ public sealed class CourseTopicDto
 {
     public int Id { get; init; }
     public string Title { get; init; } = string.Empty;
+    public decimal Price { get; init; }
     public bool HasNotes { get; init; }
     public IReadOnlyList<CourseContentDto> Contents { get; init; } = Array.Empty<CourseContentDto>();
 }
