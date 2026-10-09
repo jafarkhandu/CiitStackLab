@@ -504,3 +504,73 @@ main{min-height:calc(100vh - 120px)}.ciit-footer{background:#0b0f19;color:#94a3b
         padding: 4px 12px 12px;
     }
 }
+
+
+/* Secure assessment launch from the course roadmap */
+.ciit-assessment-launch {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 14px;
+    margin-top: 16px;
+    padding: 14px;
+    border: 1px solid #e2eaf7;
+    border-radius: 14px;
+    background: linear-gradient(115deg, #f8fbff 0%, #ffffff 100%);
+}
+
+.ciit-assessment-launch-copy {
+    display: flex;
+    align-items: center;
+    gap: 11px;
+    min-width: 0;
+}
+
+.ciit-assessment-launch-icon {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 39px;
+    height: 39px;
+    flex: 0 0 39px;
+    border: 1px solid #dce8ff;
+    border-radius: 12px;
+    background: #eef4ff;
+    color: #1769ff;
+    font-size: 1.05rem;
+}
+
+.ciit-assessment-launch-copy strong,
+.ciit-assessment-launch-copy small {
+    display: block;
+}
+
+.ciit-assessment-launch-copy strong {
+    color: #23344f;
+    font-size: .85rem;
+    font-weight: 800;
+}
+
+.ciit-assessment-launch-copy small {
+    margin-top: 4px;
+    color: #7d8aa0;
+    font-size: .72rem;
+}
+
+.ciit-assessment-launch-button {
+    border-radius: 10px;
+    font-size: .76rem;
+    font-weight: 800;
+}
+
+@media (max-width: 575.98px) {
+    .ciit-assessment-launch {
+        align-items: stretch;
+        flex-direction: column;
+    }
+
+    .ciit-assessment-launch-button {
+        width: 100%;
+    }
+}
