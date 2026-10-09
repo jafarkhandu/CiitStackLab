@@ -19,6 +19,7 @@ public class ApplicationDbContext : IdentityDbContext<ApplicationUser>
     public DbSet<Topic> Topics => Set<Topic>();
     public DbSet<ContentQuestion> ContentQuestions => Set<ContentQuestion>();
     public DbSet<TrainingNote> TrainingNotes => Set<TrainingNote>();
+    public DbSet<StudentLessonProgress> StudentLessonProgress => Set<StudentLessonProgress>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -125,6 +126,47 @@ public class ApplicationDbContext : IdentityDbContext<ApplicationUser>
             entity.Property(x => x.RestoredAt).HasColumnName("RestoredAt");
             entity.HasOne(x => x.Topic).WithMany(x => x.Lessons).HasForeignKey(x => x.TopicId).OnDelete(DeleteBehavior.NoAction);
             entity.HasOne<TrainingNote>().WithMany().HasForeignKey(x => x.NoteId).OnDelete(DeleteBehavior.NoAction);
+        });
+
+        modelBuilder.Entity<StudentLessonProgress>(entity =>
+        {
+            entity.ToTable("tblstudent_lesson_progress", ExistingSchema);
+            entity.HasKey(x => x.Id);
+
+            entity.Property(x => x.Id)
+                .HasColumnName("progress_id")
+                .ValueGeneratedOnAdd();
+
+            entity.Property(x => x.UserId)
+                .HasColumnName("user_id")
+                .HasMaxLength(450)
+                .IsRequired();
+
+            entity.Property(x => x.CourseId)
+                .HasColumnName("course_id")
+                .IsRequired();
+
+            entity.Property(x => x.ContentId)
+                .HasColumnName("content_id")
+                .IsRequired();
+
+            entity.Property(x => x.IsCompleted)
+                .HasColumnName("is_completed")
+                .HasDefaultValue(false)
+                .IsRequired();
+
+            entity.Property(x => x.LastAccessedAt)
+                .HasColumnName("last_accessed_at")
+                .HasColumnType("datetime2")
+                .IsRequired();
+
+            entity.Property(x => x.CompletedAt)
+                .HasColumnName("completed_at")
+                .HasColumnType("datetime2");
+
+            entity.HasIndex(x => new { x.UserId, x.CourseId, x.ContentId })
+                .IsUnique()
+                .HasDatabaseName("UX_tblstudent_lesson_progress_user_course_content");
         });
 
         modelBuilder.Entity<TrainingNote>(entity =>
