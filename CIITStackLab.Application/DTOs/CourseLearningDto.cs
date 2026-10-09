@@ -25,6 +25,16 @@ public sealed class CourseLearningTopicDto
     public decimal Price { get; init; }
     public int? DurationMinutes { get; init; }
     public IReadOnlyList<CourseLearningContentDto> Contents { get; init; } = Array.Empty<CourseLearningContentDto>();
+    public IReadOnlyList<CourseLearningChapterDto> Chapters { get; init; } = Array.Empty<CourseLearningChapterDto>();
+}
+
+public sealed class CourseLearningChapterDto
+{
+    public int Id { get; init; }
+    public string ChapterId { get; init; } = string.Empty;
+    public string Title { get; init; } = string.Empty;
+    public int SortOrder { get; init; }
+    public IReadOnlyList<CourseLearningContentDto> Contents { get; init; } = Array.Empty<CourseLearningContentDto>();
 }
 
 public sealed class CourseLearningContentDto
