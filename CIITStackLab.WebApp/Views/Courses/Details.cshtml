@@ -2,6 +2,7 @@
 
 @{
     ViewData["Title"] = Model.Title;
+    var courseDetailsReturnUrl = Url.Action("Details", "Courses", new { id = Model.Id });
 }
 
 <section class="ciit-course-details-section">
@@ -92,7 +93,7 @@
                         {
                             <a asp-controller="Account"
                                asp-action="Login"
-                               asp-route-returnUrl="@Url.Action("Details", "Courses", new { id = Model.Id })"
+                               asp-route-returnUrl="@courseDetailsReturnUrl"
                                class="btn btn-primary btn-lg">
                                 <i class="bi bi-box-arrow-in-right me-2"></i>Sign in to enroll
                             </a>
