@@ -74,6 +74,24 @@
 
     <main>@RenderBody()</main>
 
+    @if (TempData["CourseEnrollmentMessage"] is string courseEnrollmentMessage)
+    {
+        var enrollmentMessageType = TempData["CourseEnrollmentMessageType"] as string;
+        var enrollmentAlertClass = enrollmentMessageType == "success"
+            ? "alert-success"
+            : enrollmentMessageType == "error"
+                ? "alert-danger"
+                : "alert-info";
+
+        <div class="container mt-3">
+            <div class="alert @enrollmentAlertClass d-flex align-items-start gap-2"
+                 role="status">
+                <i class="bi bi-info-circle-fill mt-1"></i>
+                <span>@courseEnrollmentMessage</span>
+            </div>
+        </div>
+    }
+
     <footer class="ciit-footer">
         <div class="container"><div class="d-flex flex-column flex-sm-row justify-content-between align-items-center">
             <span>&copy; @DateTime.Now.Year - CIIT Stack Lab</span><a href="#">Privacy</a>
