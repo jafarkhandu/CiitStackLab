@@ -137,6 +137,7 @@ public sealed class CourseService
             {
                 TopicId = topic.Id,
                 TopicTitle = topic.Title,
+                TopicPrice = topic.Price,
                 ContentId = (int?)content.Id,
                 ContentTitle = content.Title,
                 Slides = content.Slides,
@@ -186,11 +187,12 @@ public sealed class CourseService
                 }).ToList());
 
         var topics = rows
-            .GroupBy(x => new { x.TopicId, x.TopicTitle })
+            .GroupBy(x => new { x.TopicId, x.TopicTitle, x.TopicPrice })
             .Select(group => new CourseTopicDto
             {
                 Id = group.Key.TopicId,
                 Title = group.Key.TopicTitle,
+                Price = group.Key.TopicPrice,
                 HasNotes = topicsWithNotes.Contains(group.Key.TopicId),
                 Contents = group
                     .Where(x => x.ContentId.HasValue)
@@ -222,6 +224,7 @@ public sealed class CourseService
             Category = presentation.Category,
             Level = presentation.Level,
             DurationHours = presentation.DurationHours,
+            TotalPrice = topics.Sum(topic => topic.Price),
             Topics = topics
         };
     }
