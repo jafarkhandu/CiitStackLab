@@ -201,6 +201,7 @@ public class CoursesController : Controller
 
     [HttpGet("Courses/Learn/{id:int}/AssessmentResult/{attemptId:int}")]
     [Authorize(Roles = "Student")]
+    [ResponseCache(Duration = 0, Location = ResponseCacheLocation.None, NoStore = true)]
     public async Task<IActionResult> AssessmentResult(
         int id,
         int attemptId,
