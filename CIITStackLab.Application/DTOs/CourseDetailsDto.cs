@@ -17,6 +17,7 @@ public sealed class CourseTopicDto
 {
     public int Id { get; init; }
     public string Title { get; init; } = string.Empty;
+    public bool HasNotes { get; init; }
     public IReadOnlyList<CourseContentDto> Contents { get; init; } = Array.Empty<CourseContentDto>();
 }
 
