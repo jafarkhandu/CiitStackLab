@@ -156,15 +156,15 @@
             <div class="ciit-admin-report-breakdown-list">
                 <div class="breakdown-item">
                     <div class="breakdown-heading"><span><i class="breakdown-dot course-dot"></i> Courses</span><strong>@Model.CourseActivityCount</strong></div>
-                    <div class="breakdown-track"><span class="course-fill" style="width:@(Model.CourseActivityCount * 100.0 / maxBreakdownValue).ToString("0.#", System.Globalization.CultureInfo.InvariantCulture)%"></span></div>
+                    <div class="breakdown-track"><span class="course-fill" style="width:@((Model.CourseActivityCount * 100.0 / maxBreakdownValue).ToString("0.#", System.Globalization.CultureInfo.InvariantCulture))%"></span></div>
                 </div>
                 <div class="breakdown-item">
                     <div class="breakdown-heading"><span><i class="breakdown-dot content-dot"></i> Learning Content</span><strong>@Model.ContentActivityCount</strong></div>
-                    <div class="breakdown-track"><span class="content-fill" style="width:@(Model.ContentActivityCount * 100.0 / maxBreakdownValue).ToString("0.#", System.Globalization.CultureInfo.InvariantCulture)%"></span></div>
+                    <div class="breakdown-track"><span class="content-fill" style="width:@((Model.ContentActivityCount * 100.0 / maxBreakdownValue).ToString("0.#", System.Globalization.CultureInfo.InvariantCulture))%"></span></div>
                 </div>
                 <div class="breakdown-item">
                     <div class="breakdown-heading"><span><i class="breakdown-dot assessment-dot"></i> Assessments</span><strong>@Model.AssessmentActivityCount</strong></div>
-                    <div class="breakdown-track"><span class="assessment-fill" style="width:@(Model.AssessmentActivityCount * 100.0 / maxBreakdownValue).ToString("0.#", System.Globalization.CultureInfo.InvariantCulture)%"></span></div>
+                    <div class="breakdown-track"><span class="assessment-fill" style="width:@((Model.AssessmentActivityCount * 100.0 / maxBreakdownValue).ToString("0.#", System.Globalization.CultureInfo.InvariantCulture))%"></span></div>
                 </div>
             </div>
 
