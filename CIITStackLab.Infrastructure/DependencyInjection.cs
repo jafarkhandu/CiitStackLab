@@ -53,6 +53,7 @@ public static class DependencyInjection
         services.AddScoped<INotesService, NotesService>();
         services.AddScoped<IAdminStudentService, AdminStudentService>();
         services.AddScoped<IAdminSettingsService, AdminSettingsService>();
+        services.AddScoped<IAdminReportsService, AdminReportsService>();
 
         return services;
     }
