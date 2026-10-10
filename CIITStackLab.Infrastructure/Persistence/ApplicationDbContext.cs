@@ -22,6 +22,8 @@ public class ApplicationDbContext : IdentityDbContext<ApplicationUser>
     public DbSet<ContentProgramQuestion> ContentProgramQuestions => Set<ContentProgramQuestion>();
     public DbSet<ContentProgramAnswer> ContentProgramAnswers => Set<ContentProgramAnswer>();
     public DbSet<TrainingNote> TrainingNotes => Set<TrainingNote>();
+    public DbSet<StudentPayment> StudentPayments => Set<StudentPayment>();
+    public DbSet<StudentLoginActivity> StudentLoginActivities => Set<StudentLoginActivity>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -187,6 +189,32 @@ public class ApplicationDbContext : IdentityDbContext<ApplicationUser>
             entity.Property(x => x.DeletedAt).HasColumnName("DeletedAt");
             entity.HasIndex(x => new { x.TopicId, x.ChapterId }).IsUnique().HasDatabaseName("UX_tbltraining_notes_topic_chapter");
             entity.HasOne(x => x.Topic).WithMany().HasForeignKey(x => x.TopicId).OnDelete(DeleteBehavior.NoAction);
+        });
+
+        modelBuilder.Entity<StudentPayment>(entity =>
+        {
+            entity.ToTable("tblstudent_payments", ExistingSchema);
+            entity.HasKey(x => x.Id);
+            entity.Property(x => x.Id).HasColumnName("payment_id");
+            entity.Property(x => x.RegistrationId).HasColumnName("registration_id");
+            entity.Property(x => x.PaymentDate).HasColumnName("payment_date");
+            entity.Property(x => x.PaymentAmount).HasColumnName("payment_amount").HasPrecision(18, 2);
+            entity.Property(x => x.PaymentMode).HasColumnName("payment_mode");
+            entity.Property(x => x.PaymentDescription).HasColumnName("payment_description");
+            entity.Property(x => x.Flag).HasColumnName("flag");
+            entity.Property(x => x.IsPaid).HasColumnName("is_paid");
+        });
+
+        modelBuilder.Entity<StudentLoginActivity>(entity =>
+        {
+            entity.ToTable("tblstudent_logins", ExistingSchema);
+            entity.HasKey(x => x.Id);
+            entity.Property(x => x.Id).HasColumnName("activity_id");
+            entity.Property(x => x.StudentId).HasColumnName("student_id");
+            entity.Property(x => x.LoginTime).HasColumnName("login_time");
+            entity.Property(x => x.LogoutTime).HasColumnName("logout_time");
+            entity.Property(x => x.IpAddress).HasColumnName("ip_address");
+            entity.Property(x => x.Flag).HasColumnName("flag");
         });
     }
 }
