@@ -1,0 +1,49 @@
+@model CIITStackLab.Application.DTOs.AdminAssessmentReportPageDto
+
+@{
+    ViewData["Title"] = "Assessment Reports";
+    ViewData["ReportSection"] = "Assessments";
+}
+
+<section class="ciit-admin-reports">
+    <header class="ciit-admin-reports-page-header">
+        <div><span class="ciit-admin-eyebrow">ASSESSMENT ANALYTICS</span><h1>Assessment Reports</h1><p>Monitor the assessment inventory and see what has changed during the selected period.</p></div>
+        <div class="ciit-admin-report-page-stat"><strong>@(Model.McqCount + Model.InterviewCount + Model.PracticeCount)</strong><span>Active assessment items</span></div>
+    </header>
+
+    <partial name="_ReportSectionNav" />
+
+    <form method="get" class="ciit-admin-report-filter-bar">
+        <div class="ciit-admin-report-date-field"><label for="startDate">From</label><input id="startDate" name="startDate" type="date" value="@Model.StartDate.ToString("yyyy-MM-dd")" /></div>
+        <div class="ciit-admin-report-date-field"><label for="endDate">To</label><input id="endDate" name="endDate" type="date" value="@Model.EndDate.ToString("yyyy-MM-dd")" /></div>
+        <button type="submit" class="ciit-admin-report-filter-button"><i class="bi bi-filter"></i> Update</button>
+    </form>
+
+    <section class="ciit-admin-report-stat-grid">
+        <article class="ciit-admin-report-stat-card"><span>MCQs</span><strong>@Model.McqCount</strong><small>@Model.McqChanges changes in period</small></article>
+        <article class="ciit-admin-report-stat-card"><span>Interview questions</span><strong>@Model.InterviewCount</strong><small>@Model.InterviewChanges changes in period</small></article>
+        <article class="ciit-admin-report-stat-card"><span>Practice programs</span><strong>@Model.PracticeCount</strong><small>@Model.PracticeChanges changes in period</small></article>
+    </section>
+
+    <section class="ciit-admin-report-panel ciit-admin-report-table-panel">
+        <div class="ciit-admin-report-panel-header"><div><span class="ciit-admin-panel-kicker">RECENT ASSESSMENT ACTIVITY</span><h2>Latest assessment changes</h2><p>@Model.StartDate.ToString("dd MMM yyyy") to @Model.EndDate.ToString("dd MMM yyyy")</p></div><span class="ciit-admin-report-panel-badge">20 latest</span></div>
+        <div class="ciit-admin-report-table-wrap">
+            <table class="ciit-admin-report-table">
+                <thead><tr><th>TYPE</th><th>ITEM</th><th>UPDATED</th></tr></thead>
+                <tbody>
+                @if (Model.RecentItems.Count == 0)
+                {
+                    <tr><td colspan="3"><div class="ciit-admin-report-empty"><i class="bi bi-ui-checks"></i><strong>No assessment changes</strong><span>Try a wider reporting period.</span></div></td></tr>
+                }
+                else
+                {
+                    foreach (var item in Model.RecentItems)
+                    {
+                        <tr><td><span class="ciit-admin-report-type-badge">@item.Type</span></td><td><strong>@item.Title</strong></td><td>@(item.UpdatedAt?.ToString("dd MMM yyyy HH:mm") ?? "—")</td></tr>
+                    }
+                }
+                </tbody>
+            </table>
+        </div>
+    </section>
+</section>
