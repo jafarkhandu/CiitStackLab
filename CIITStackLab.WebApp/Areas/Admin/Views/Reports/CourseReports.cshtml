@@ -1,0 +1,65 @@
+@model CIITStackLab.Application.DTOs.AdminCourseReportPageDto
+
+@{
+    ViewData["Title"] = "Course Reports";
+    ViewData["ReportSection"] = "Courses";
+}
+
+<section class="ciit-admin-reports">
+    <header class="ciit-admin-reports-page-header">
+        <div>
+            <span class="ciit-admin-eyebrow">COURSE ANALYTICS</span>
+            <h1>Course Reports</h1>
+            <p>Review course structure, learning content and assessment coverage from the current catalog.</p>
+        </div>
+        <div class="ciit-admin-report-page-stat"><strong>@Model.ActiveCourses</strong><span>Active courses</span></div>
+    </header>
+
+    <partial name="_ReportSectionNav" />
+
+    <form method="get" class="ciit-admin-report-filter-bar">
+        <div class="ciit-admin-report-search-field">
+            <i class="bi bi-search"></i>
+            <input name="search" value="@Model.Search" placeholder="Search courses..." aria-label="Search courses" />
+        </div>
+        <label class="ciit-admin-report-check"><input type="checkbox" name="includeArchived" value="true" @(Model.IncludeArchived ? "checked" : null) /> Include archived</label>
+        <button type="submit" class="ciit-admin-report-filter-button"><i class="bi bi-search"></i> Search</button>
+        <a class="ciit-admin-report-reset" asp-area="Admin" asp-controller="Reports" asp-action="CourseReports">Reset</a>
+    </form>
+
+    <section class="ciit-admin-report-stat-grid">
+        <article class="ciit-admin-report-stat-card"><span>Total catalog</span><strong>@Model.TotalCourses</strong><small>All courses</small></article>
+        <article class="ciit-admin-report-stat-card"><span>Active</span><strong>@Model.ActiveCourses</strong><small>Available in catalog</small></article>
+        <article class="ciit-admin-report-stat-card"><span>Archived</span><strong>@Model.ArchivedCourses</strong><small>Inactive courses</small></article>
+    </section>
+
+    <section class="ciit-admin-report-panel ciit-admin-report-table-panel">
+        <div class="ciit-admin-report-panel-header">
+            <div><span class="ciit-admin-panel-kicker">COURSE INVENTORY</span><h2>Catalog performance snapshot</h2><p>Topic, content and assessment coverage for each course.</p></div>
+            <span class="ciit-admin-report-panel-badge">@Model.Courses.Count courses shown</span>
+        </div>
+        <div class="ciit-admin-report-table-wrap">
+            <table class="ciit-admin-report-table">
+                <thead><tr><th>COURSE</th><th>TOPICS</th><th>CONTENT</th><th>MCQs</th><th>INTERVIEW</th><th>PRACTICE</th><th>UPDATED</th><th>STATUS</th></tr></thead>
+                <tbody>
+                @if (Model.Courses.Count == 0)
+                {
+                    <tr><td colspan="8"><div class="ciit-admin-report-empty"><i class="bi bi-inbox"></i><strong>No courses found</strong><span>Try another search or include archived courses.</span></div></td></tr>
+                }
+                else
+                {
+                    foreach (var course in Model.Courses)
+                    {
+                        <tr>
+                            <td><strong>@course.Title</strong><small class="ciit-report-muted">#@course.Id</small></td>
+                            <td>@course.TopicCount</td><td>@course.ContentCount</td><td>@course.McqCount</td><td>@course.InterviewCount</td><td>@course.PracticeCount</td>
+                            <td>@(course.UpdatedAt?.ToString("dd MMM yyyy") ?? "—")</td>
+                            <td><span class="ciit-admin-status-pill @(course.IsActive ? "" : "inactive")">@(course.IsActive ? "Active" : "Archived")</span></td>
+                        </tr>
+                    }
+                }
+                </tbody>
+            </table>
+        </div>
+    </section>
+</section>
