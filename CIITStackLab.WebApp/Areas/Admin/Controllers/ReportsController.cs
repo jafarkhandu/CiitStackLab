@@ -17,34 +17,67 @@ public class ReportsController : Controller
     }
 
     [HttpGet]
-    public async Task<IActionResult> Index(
-        DateTime? startDate,
-        DateTime? endDate,
-        CancellationToken cancellationToken)
+    public async Task<IActionResult> Index(DateTime? startDate, DateTime? endDate, CancellationToken cancellationToken)
+    {
+        var (start, end) = ResolveDateRange(startDate, endDate);
+        var overview = await _reportsService.GetOverviewAsync(start, end, cancellationToken);
+        return View(overview);
+    }
+
+    [HttpGet]
+    public async Task<IActionResult> CourseReports(string? search, bool includeArchived, CancellationToken cancellationToken)
+    {
+        var model = await _reportsService.GetCourseReportsAsync(search, includeArchived, cancellationToken);
+        return View(model);
+    }
+
+    [HttpGet]
+    public async Task<IActionResult> StudentReports(string? search, string? status, CancellationToken cancellationToken)
+    {
+        var model = await _reportsService.GetStudentReportsAsync(search, status, cancellationToken);
+        return View(model);
+    }
+
+    [HttpGet]
+    public async Task<IActionResult> AssessmentReports(DateTime? startDate, DateTime? endDate, CancellationToken cancellationToken)
+    {
+        var (start, end) = ResolveDateRange(startDate, endDate);
+        var model = await _reportsService.GetAssessmentReportsAsync(start, end, cancellationToken);
+        return View(model);
+    }
+
+    [HttpGet]
+    public async Task<IActionResult> RevenuePayments(DateTime? startDate, DateTime? endDate, CancellationToken cancellationToken)
+    {
+        var (start, end) = ResolveDateRange(startDate, endDate);
+        var model = await _reportsService.GetRevenueReportsAsync(start, end, cancellationToken);
+        return View(model);
+    }
+
+    [HttpGet]
+    public async Task<IActionResult> ActivityReports(DateTime? startDate, DateTime? endDate, CancellationToken cancellationToken)
+    {
+        var (start, end) = ResolveDateRange(startDate, endDate);
+        var model = await _reportsService.GetActivityReportsAsync(start, end, cancellationToken);
+        return View(model);
+    }
+
+    private static (DateTime Start, DateTime End) ResolveDateRange(DateTime? startDate, DateTime? endDate)
     {
         var today = DateTime.Today;
-        var selectedEnd = endDate?.Date ?? today;
-        var selectedStart = startDate?.Date ?? selectedEnd.AddDays(-29);
+        var end = endDate?.Date ?? today;
+        var start = startDate?.Date ?? end.AddDays(-29);
 
-        if (selectedStart > selectedEnd)
+        if (start > end)
         {
-            ModelState.AddModelError(string.Empty, "Start date cannot be after the end date.");
-            selectedStart = selectedEnd.AddDays(-29);
+            (start, end) = (end.AddDays(-29), end);
         }
 
-        if ((selectedEnd - selectedStart).TotalDays + 1 > MaxReportDays)
+        if ((end - start).TotalDays + 1 > MaxReportDays)
         {
-            ModelState.AddModelError(
-                string.Empty,
-                $"Please select a date range of {MaxReportDays} days or less.");
-            selectedStart = selectedEnd.AddDays(-(MaxReportDays - 1));
+            start = end.AddDays(-(MaxReportDays - 1));
         }
 
-        var overview = await _reportsService.GetOverviewAsync(
-            selectedStart,
-            selectedEnd,
-            cancellationToken);
-
-        return View(overview);
+        return (start, end);
     }
 }
