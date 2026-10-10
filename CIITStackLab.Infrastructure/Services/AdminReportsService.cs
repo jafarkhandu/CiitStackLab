@@ -87,7 +87,7 @@ public sealed class AdminReportsService : IAdminReportsService
             .ToListAsync(cancellationToken);
         var topicIds = modules.Select(x => x.TopicId).Distinct().ToList();
         var content = await _dbContext.Lessons.AsNoTracking()
-            .Where(x => topicIds.Contains(x.TopicId) && x.Flag == 0)
+            .Where(x => x.TopicId.HasValue && topicIds.Contains(x.TopicId.Value) && x.Flag == 0)
             .Select(x => new { x.Id, x.TopicId })
             .ToListAsync(cancellationToken);
         var contentIds = content.Select(x => x.Id).ToList();
@@ -108,7 +108,10 @@ public sealed class AdminReportsService : IAdminReportsService
         var result = courses.Select(course =>
         {
             var courseTopicIds = modules.Where(x => x.CourseId == course.Id).Select(x => x.TopicId).Distinct().ToList();
-            var courseContentIds = content.Where(x => courseTopicIds.Contains(x.TopicId)).Select(x => x.Id).ToList();
+            var courseContentIds = content
+                .Where(x => x.TopicId.HasValue && courseTopicIds.Contains(x.TopicId.Value))
+                .Select(x => x.Id)
+                .ToList();
             return new AdminCourseReportRowDto
             {
                 Id = course.Id,
