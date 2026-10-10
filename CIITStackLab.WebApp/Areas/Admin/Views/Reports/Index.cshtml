@@ -2,6 +2,7 @@
 
 @{
     ViewData["Title"] = "Reports";
+    ViewData["ReportSection"] = "Overview";
     var maxTrendValue = Math.Max(1, Model.Trend.Any() ? Model.Trend.Max(x => x.TotalChanges) : 0);
     var maxBreakdownValue = Math.Max(1, Math.Max(Model.CourseActivityCount, Math.Max(Model.ContentActivityCount, Model.AssessmentActivityCount)));
     var totalPeriodActivity = Model.CourseActivityCount + Model.ContentActivityCount + Model.AssessmentActivityCount;
@@ -14,222 +15,73 @@
             <h1>Reports &amp; Insights</h1>
             <p>See what is changing across your learning platform and where activity is concentrated.</p>
         </div>
-
         <div class="ciit-admin-reports-hero-tools">
             <span class="ciit-admin-live-pill"><span></span> Live data</span>
             <form method="get" asp-area="Admin" asp-controller="Reports" asp-action="Index" class="ciit-admin-report-filter">
-                <div class="ciit-admin-report-date-field">
-                    <label for="startDate">From</label>
-                    <input id="startDate" name="startDate" type="date" value="@Model.StartDate.ToString("yyyy-MM-dd")" />
-                </div>
-                <div class="ciit-admin-report-date-field">
-                    <label for="endDate">To</label>
-                    <input id="endDate" name="endDate" type="date" value="@Model.EndDate.ToString("yyyy-MM-dd")" />
-                </div>
-                <button type="submit" class="ciit-admin-report-filter-button">
-                    <i class="bi bi-sliders2"></i>
-                    Update report
-                </button>
+                <div class="ciit-admin-report-date-field"><label for="startDate">From</label><input id="startDate" name="startDate" type="date" value="@Model.StartDate.ToString("yyyy-MM-dd")" /></div>
+                <div class="ciit-admin-report-date-field"><label for="endDate">To</label><input id="endDate" name="endDate" type="date" value="@Model.EndDate.ToString("yyyy-MM-dd")" /></div>
+                <button type="submit" class="ciit-admin-report-filter-button"><i class="bi bi-sliders2"></i> Update report</button>
             </form>
         </div>
     </header>
 
-    @if (!ViewData.ModelState.IsValid)
-    {
-        <div class="ciit-admin-report-validation" role="alert">
-            <i class="bi bi-exclamation-circle"></i>
-            <div asp-validation-summary="All"></div>
-        </div>
-    }
-
-    <nav class="ciit-admin-report-nav" aria-label="Report sections">
-        <a class="active" asp-area="Admin" asp-controller="Reports" asp-action="Index"><i class="bi bi-bar-chart-line"></i> Overview</a>
-        <span><i class="bi bi-journal-text"></i> Course Reports</span>
-        <span><i class="bi bi-people"></i> Student Reports</span>
-        <span><i class="bi bi-ui-checks"></i> Assessment Reports</span>
-        <span><i class="bi bi-wallet2"></i> Revenue &amp; Payments</span>
-        <span><i class="bi bi-clock-history"></i> Activity Reports</span>
-    </nav>
+    <partial name="_ReportSectionNav" />
 
     <section class="ciit-admin-report-window">
-        <div>
-            <span>REPORTING WINDOW</span>
-            <strong>@Model.StartDate.ToString("dd MMM yyyy") <b>→</b> @Model.EndDate.ToString("dd MMM yyyy")</strong>
-        </div>
-        <div class="ciit-admin-report-window-meta">
-            <i class="bi bi-database-check"></i>
-            <span>Live database snapshot</span>
-        </div>
+        <div><span>REPORTING WINDOW</span><strong>@Model.StartDate.ToString("dd MMM yyyy") <b>→</b> @Model.EndDate.ToString("dd MMM yyyy")</strong></div>
+        <div class="ciit-admin-report-window-meta"><i class="bi bi-database-check"></i><span>Live database snapshot</span></div>
     </section>
 
     <section class="ciit-admin-report-summary">
-        <article class="ciit-admin-report-summary-primary">
-            <span>PERIOD ACTIVITY</span>
-            <strong>@totalPeriodActivity</strong>
-            <p>Total course, content and assessment changes in the selected window.</p>
-            <div class="summary-primary-footer">
-                <span><i class="bi bi-calendar3"></i> @Model.Trend.Count days</span>
-                <span><i class="bi bi-activity"></i> Live activity</span>
-            </div>
-        </article>
-
-        <article class="ciit-admin-report-summary-card">
-            <div class="summary-card-icon"><i class="bi bi-people"></i></div>
-            <div>
-                <span>ACTIVE STUDENTS</span>
-                <strong>@Model.ActiveStudentCount</strong>
-                <small>Current active accounts</small>
-            </div>
-        </article>
-
-        <article class="ciit-admin-report-summary-card">
-            <div class="summary-card-icon"><i class="bi bi-layers"></i></div>
-            <div>
-                <span>LEARNING INVENTORY</span>
-                <strong>@(Model.ActiveCourseCount + Model.ActiveTopicCount + Model.ActiveContentCount)</strong>
-                <small>Courses, topics and content</small>
-            </div>
-        </article>
-
-        <article class="ciit-admin-report-summary-card">
-            <div class="summary-card-icon"><i class="bi bi-ui-checks-grid"></i></div>
-            <div>
-                <span>ASSESSMENT ITEMS</span>
-                <strong>@Model.ActiveAssessmentCount</strong>
-                <small>MCQs, interviews &amp; programs</small>
-            </div>
-        </article>
+        <article class="ciit-admin-report-summary-primary"><span>PERIOD ACTIVITY</span><strong>@totalPeriodActivity</strong><p>Total course, content and assessment changes in the selected window.</p><div class="summary-primary-footer"><span><i class="bi bi-calendar3"></i> @Model.Trend.Count days</span><span><i class="bi bi-activity"></i> Live activity</span></div></article>
+        <article class="ciit-admin-report-summary-card"><div class="summary-card-icon"><i class="bi bi-people"></i></div><div><span>ACTIVE STUDENTS</span><strong>@Model.ActiveStudentCount</strong><small>Current active accounts</small></div></article>
+        <article class="ciit-admin-report-summary-card"><div class="summary-card-icon"><i class="bi bi-layers"></i></div><div><span>LEARNING INVENTORY</span><strong>@(Model.ActiveCourseCount + Model.ActiveTopicCount + Model.ActiveContentCount)</strong><small>Courses, topics and content</small></div></article>
+        <article class="ciit-admin-report-summary-card"><div class="summary-card-icon"><i class="bi bi-ui-checks-grid"></i></div><div><span>ASSESSMENT ITEMS</span><strong>@Model.ActiveAssessmentCount</strong><small>MCQs, interviews &amp; programs</small></div></article>
     </section>
 
     <section class="ciit-admin-report-main-grid">
         <article class="ciit-admin-report-panel ciit-admin-report-trend-panel">
-            <div class="ciit-admin-report-panel-header">
-                <div>
-                    <span class="ciit-admin-panel-kicker">ACTIVITY TIMELINE</span>
-                    <h2>Platform activity</h2>
-                    <p>Daily changes across courses, learning content and assessments.</p>
-                </div>
-                <span class="ciit-admin-report-panel-badge">@Model.Trend.Count days</span>
-            </div>
-
+            <div class="ciit-admin-report-panel-header"><div><span class="ciit-admin-panel-kicker">ACTIVITY TIMELINE</span><h2>Platform activity</h2><p>Daily changes across courses, learning content and assessments.</p></div><span class="ciit-admin-report-panel-badge">@Model.Trend.Count days</span></div>
             <div class="ciit-admin-report-chart-area">
-                <div class="ciit-admin-report-chart-scale">
-                    <span>@maxTrendValue</span>
-                    <span>@Math.Max(1, maxTrendValue / 2)</span>
-                    <span>0</span>
-                </div>
+                <div class="ciit-admin-report-chart-scale"><span>@maxTrendValue</span><span>@Math.Max(1, maxTrendValue / 2)</span><span>0</span></div>
                 <div class="ciit-admin-report-chart-wrap">
                     @foreach (var point in Model.Trend)
                     {
                         var courseHeight = point.CourseChanges == 0 ? 0 : Math.Max(7, point.CourseChanges * 100.0 / maxTrendValue);
                         var contentHeight = point.ContentChanges == 0 ? 0 : Math.Max(7, point.ContentChanges * 100.0 / maxTrendValue);
                         var assessmentHeight = point.AssessmentChanges == 0 ? 0 : Math.Max(7, point.AssessmentChanges * 100.0 / maxTrendValue);
-
-                        <div class="ciit-admin-report-chart-day" title="@point.Date.ToString("dd MMM yyyy") — Courses: @point.CourseChanges, Content: @point.ContentChanges, Assessments: @point.AssessmentChanges">
-                            <div class="ciit-admin-report-bars">
-                                <span class="course-bar" style="height:@courseHeight.ToString("0.#", System.Globalization.CultureInfo.InvariantCulture)%"></span>
-                                <span class="content-bar" style="height:@contentHeight.ToString("0.#", System.Globalization.CultureInfo.InvariantCulture)%"></span>
-                                <span class="assessment-bar" style="height:@assessmentHeight.ToString("0.#", System.Globalization.CultureInfo.InvariantCulture)%"></span>
-                            </div>
-                            <span class="ciit-admin-report-day-label">@point.Date.ToString("dd")</span>
-                        </div>
+                        <div class="ciit-admin-report-chart-day" title="@point.Date.ToString("dd MMM yyyy") — Courses: @point.CourseChanges, Content: @point.ContentChanges, Assessments: @point.AssessmentChanges"><div class="ciit-admin-report-bars"><span class="course-bar" style="height:@courseHeight.ToString("0.#", System.Globalization.CultureInfo.InvariantCulture)%"></span><span class="content-bar" style="height:@contentHeight.ToString("0.#", System.Globalization.CultureInfo.InvariantCulture)%"></span><span class="assessment-bar" style="height:@assessmentHeight.ToString("0.#", System.Globalization.CultureInfo.InvariantCulture)%"></span></div><span class="ciit-admin-report-day-label">@point.Date.ToString("dd")</span></div>
                     }
                 </div>
             </div>
-
-            <div class="ciit-admin-report-legend">
-                <span><i class="legend-course"></i> Courses</span>
-                <span><i class="legend-content"></i> Learning Content</span>
-                <span><i class="legend-assessment"></i> Assessments</span>
-            </div>
+            <div class="ciit-admin-report-legend"><span><i class="legend-course"></i> Courses</span><span><i class="legend-content"></i> Learning Content</span><span><i class="legend-assessment"></i> Assessments</span></div>
         </article>
 
         <aside class="ciit-admin-report-panel ciit-admin-report-breakdown-panel">
-            <div class="ciit-admin-report-panel-header">
-                <div>
-                    <span class="ciit-admin-panel-kicker">ACTIVITY MIX</span>
-                    <h2>Where changes happen</h2>
-                    <p>Breakdown for the selected period.</p>
-                </div>
-            </div>
-
+            <div class="ciit-admin-report-panel-header"><div><span class="ciit-admin-panel-kicker">ACTIVITY MIX</span><h2>Where changes happen</h2><p>Breakdown for the selected period.</p></div></div>
             <div class="ciit-admin-report-breakdown-list">
-                <div class="breakdown-item">
-                    <div class="breakdown-heading"><span><i class="breakdown-dot course-dot"></i> Courses</span><strong>@Model.CourseActivityCount</strong></div>
-                    <div class="breakdown-track"><span class="course-fill" style="width:@((Model.CourseActivityCount * 100.0 / maxBreakdownValue).ToString("0.#", System.Globalization.CultureInfo.InvariantCulture))%"></span></div>
-                </div>
-                <div class="breakdown-item">
-                    <div class="breakdown-heading"><span><i class="breakdown-dot content-dot"></i> Learning Content</span><strong>@Model.ContentActivityCount</strong></div>
-                    <div class="breakdown-track"><span class="content-fill" style="width:@((Model.ContentActivityCount * 100.0 / maxBreakdownValue).ToString("0.#", System.Globalization.CultureInfo.InvariantCulture))%"></span></div>
-                </div>
-                <div class="breakdown-item">
-                    <div class="breakdown-heading"><span><i class="breakdown-dot assessment-dot"></i> Assessments</span><strong>@Model.AssessmentActivityCount</strong></div>
-                    <div class="breakdown-track"><span class="assessment-fill" style="width:@((Model.AssessmentActivityCount * 100.0 / maxBreakdownValue).ToString("0.#", System.Globalization.CultureInfo.InvariantCulture))%"></span></div>
-                </div>
+                <div class="breakdown-item"><div class="breakdown-heading"><span><i class="breakdown-dot course-dot"></i> Courses</span><strong>@Model.CourseActivityCount</strong></div><div class="breakdown-track"><span class="course-fill" style="width:@((Model.CourseActivityCount * 100.0 / maxBreakdownValue).ToString("0.#", System.Globalization.CultureInfo.InvariantCulture))%"></span></div></div>
+                <div class="breakdown-item"><div class="breakdown-heading"><span><i class="breakdown-dot content-dot"></i> Learning Content</span><strong>@Model.ContentActivityCount</strong></div><div class="breakdown-track"><span class="content-fill" style="width:@((Model.ContentActivityCount * 100.0 / maxBreakdownValue).ToString("0.#", System.Globalization.CultureInfo.InvariantCulture))%"></span></div></div>
+                <div class="breakdown-item"><div class="breakdown-heading"><span><i class="breakdown-dot assessment-dot"></i> Assessments</span><strong>@Model.AssessmentActivityCount</strong></div><div class="breakdown-track"><span class="assessment-fill" style="width:@((Model.AssessmentActivityCount * 100.0 / maxBreakdownValue).ToString("0.#", System.Globalization.CultureInfo.InvariantCulture))%"></span></div></div>
             </div>
-
-            <div class="ciit-admin-report-breakdown-footer">
-                <span>Total tracked changes</span>
-                <strong>@totalPeriodActivity</strong>
-            </div>
+            <div class="ciit-admin-report-breakdown-footer"><span>Total tracked changes</span><strong>@totalPeriodActivity</strong></div>
         </aside>
     </section>
 
     <section class="ciit-admin-report-panel ciit-admin-report-table-panel">
-        <div class="ciit-admin-report-panel-header">
-            <div>
-                <span class="ciit-admin-panel-kicker">RECENT CHANGES</span>
-                <h2>Latest platform activity</h2>
-                <p>Recent updates detected in the selected reporting window.</p>
-            </div>
-            <span class="ciit-admin-report-panel-badge">10 latest</span>
-        </div>
-
+        <div class="ciit-admin-report-panel-header"><div><span class="ciit-admin-panel-kicker">RECENT CHANGES</span><h2>Latest platform activity</h2><p>Recent updates detected in the selected reporting window.</p></div><span class="ciit-admin-report-panel-badge">10 latest</span></div>
         @if (Model.RecentActivity.Count == 0)
         {
-            <div class="ciit-admin-report-empty">
-                <i class="bi bi-inbox"></i>
-                <strong>No activity in this period</strong>
-                <span>Try a wider date range.</span>
-            </div>
+            <div class="ciit-admin-report-empty"><i class="bi bi-inbox"></i><strong>No activity in this period</strong><span>Try a wider date range.</span></div>
         }
         else
         {
-            <div class="ciit-admin-report-table-wrap">
-                <table class="ciit-admin-report-table">
-                    <thead>
-                        <tr>
-                            <th>TYPE</th>
-                            <th>ACTIVITY</th>
-                            <th>DATE</th>
-                            <th>STATUS</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        @foreach (var activity in Model.RecentActivity)
-                        {
-                            <tr>
-                                <td>
-                                    <span class="ciit-admin-report-type-badge @(activity.Type.Replace(" ", "-").ToLowerInvariant())">
-                                        <i class="@(activity.Type switch
-                                        {
-                                            "Course" => "bi bi-journal-code",
-                                            "Learning Content" => "bi bi-file-earmark-text",
-                                            "MCQ" => "bi bi-ui-checks",
-                                            "Interview Question" => "bi bi-chat-square-text",
-                                            _ => "bi bi-code-slash"
-                                        })"></i>
-                                        @activity.Type
-                                    </span>
-                                </td>
-                                <td class="activity-title" title="@activity.Title">@activity.Title</td>
-                                <td class="activity-date">@activity.Date.ToString("dd MMM yyyy")</td>
-                                <td><span class="ciit-admin-status-pill">Active</span></td>
-                            </tr>
-                        }
-                    </tbody>
-                </table>
-            </div>
+            <div class="ciit-admin-report-table-wrap"><table class="ciit-admin-report-table"><thead><tr><th>TYPE</th><th>ACTIVITY</th><th>DATE</th><th>STATUS</th></tr></thead><tbody>
+                @foreach (var activity in Model.RecentActivity)
+                {
+                    <tr><td><span class="ciit-admin-report-type-badge @(activity.Type.Replace(" ", "-").ToLowerInvariant())"><i class="@(activity.Type switch { "Course" => "bi bi-journal-code", "Learning Content" => "bi bi-file-earmark-text", "MCQ" => "bi bi-ui-checks", "Interview Question" => "bi bi-chat-square-text", _ => "bi bi-code-slash" })"></i> @activity.Type</span></td><td class="activity-title" title="@activity.Title">@activity.Title</td><td class="activity-date">@activity.Date.ToString("dd MMM yyyy")</td><td><span class="ciit-admin-status-pill">Active</span></td></tr>
+                }
+            </tbody></table></div>
         }
     </section>
 </section>
