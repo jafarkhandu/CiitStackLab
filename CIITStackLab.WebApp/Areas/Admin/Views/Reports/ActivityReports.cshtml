@@ -1,0 +1,57 @@
+@model CIITStackLab.Application.DTOs.AdminActivityReportPageDto
+
+@{
+    ViewData["Title"] = "Activity Reports";
+    ViewData["ReportSection"] = "Activity";
+}
+
+<section class="ciit-admin-reports">
+    <header class="ciit-admin-reports-page-header">
+        <div><span class="ciit-admin-eyebrow">PLATFORM ACTIVITY</span><h1>Activity Reports</h1><p>Review student login activity and platform content changes during the selected period.</p></div>
+        <div class="ciit-admin-report-page-stat"><strong>@Model.LoginCount</strong><span>Student logins</span></div>
+    </header>
+
+    <partial name="_ReportSectionNav" />
+
+    <form method="get" class="ciit-admin-report-filter-bar">
+        <div class="ciit-admin-report-date-field"><label for="startDate">From</label><input id="startDate" name="startDate" type="date" value="@Model.StartDate.ToString("yyyy-MM-dd")" /></div>
+        <div class="ciit-admin-report-date-field"><label for="endDate">To</label><input id="endDate" name="endDate" type="date" value="@Model.EndDate.ToString("yyyy-MM-dd")" /></div>
+        <button type="submit" class="ciit-admin-report-filter-button"><i class="bi bi-filter"></i> Update</button>
+    </form>
+
+    <section class="ciit-admin-report-stat-grid">
+        <article class="ciit-admin-report-stat-card"><span>Student logins</span><strong>@Model.LoginCount</strong><small>Sessions started in period</small></article>
+        <article class="ciit-admin-report-stat-card"><span>Open sessions</span><strong>@Model.ActiveSessions</strong><small>Sessions without logout time</small></article>
+        <article class="ciit-admin-report-stat-card"><span>Content changes</span><strong>@Model.CourseChanges + @Model.ContentChanges</strong><small>Course and learning-content updates</small></article>
+        <article class="ciit-admin-report-stat-card"><span>Assessment changes</span><strong>@Model.AssessmentChanges</strong><small>MCQ, interview and practice updates</small></article>
+    </section>
+
+    <section class="ciit-admin-report-panel ciit-admin-report-table-panel">
+        <div class="ciit-admin-report-panel-header"><div><span class="ciit-admin-panel-kicker">LOGIN ACTIVITY</span><h2>Recent student sessions</h2><p>Login activity recorded in the selected reporting window.</p></div><span class="ciit-admin-report-panel-badge">@Model.RecentLogins.Count shown</span></div>
+        <div class="ciit-admin-report-table-wrap">
+            <table class="ciit-admin-report-table">
+                <thead><tr><th>ACTIVITY</th><th>STUDENT ID</th><th>LOGIN</th><th>LOGOUT</th><th>IP ADDRESS</th><th>STATUS</th></tr></thead>
+                <tbody>
+                @if (Model.RecentLogins.Count == 0)
+                {
+                    <tr><td colspan="6"><div class="ciit-admin-report-empty"><i class="bi bi-clock-history"></i><strong>No login activity found</strong><span>Try a wider reporting period.</span></div></td></tr>
+                }
+                else
+                {
+                    foreach (var login in Model.RecentLogins)
+                    {
+                        <tr>
+                            <td><strong>#@login.ActivityId</strong></td>
+                            <td>#@login.StudentId</td>
+                            <td>@login.LoginTime.ToString("dd MMM yyyy HH:mm")</td>
+                            <td>@(login.LogoutTime?.ToString("dd MMM yyyy HH:mm") ?? "Still open")</td>
+                            <td>@login.IpAddress</td>
+                            <td><span class="ciit-admin-status-pill @(login.LogoutTime is null ? "" : "inactive")">@(login.LogoutTime is null ? "Open" : "Closed")</span></td>
+                        </tr>
+                    }
+                }
+                </tbody>
+            </table>
+        </div>
+    </section>
+</section>
