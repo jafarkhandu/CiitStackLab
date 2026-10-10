@@ -76,7 +76,7 @@ public sealed class AdminReportsService : IAdminReportsService
             {
                 Type = "Course",
                 Title = x.Title,
-                Date = x.UpdatedAt ?? x.CreatedAt
+                Date = (x.UpdatedAt ?? x.CreatedAt)!.Value
             })
             .ToListAsync(cancellationToken);
 
@@ -89,7 +89,7 @@ public sealed class AdminReportsService : IAdminReportsService
             {
                 Type = "Learning Content",
                 Title = x.Title ?? "Untitled content",
-                Date = x.UpdatedAt ?? x.CreatedAt
+                Date = (x.UpdatedAt ?? x.CreatedAt)!.Value
             })
             .ToListAsync(cancellationToken);
 
@@ -101,8 +101,8 @@ public sealed class AdminReportsService : IAdminReportsService
             .Select(x => new ReportActivityRow
             {
                 Type = "MCQ",
-                Title = x.Question,
-                Date = x.UpdatedAt ?? x.CreatedAt
+                Title = x.Question ?? "Untitled MCQ",
+                Date = (x.UpdatedAt ?? x.CreatedAt)!.Value
             })
             .ToListAsync(cancellationToken);
 
@@ -114,8 +114,8 @@ public sealed class AdminReportsService : IAdminReportsService
             .Select(x => new ReportActivityRow
             {
                 Type = "Interview Question",
-                Title = x.Question,
-                Date = x.UpdatedAt ?? x.CreatedAt
+                Title = x.Question ?? "Untitled interview question",
+                Date = (x.UpdatedAt ?? x.CreatedAt)!.Value
             })
             .ToListAsync(cancellationToken);
 
@@ -127,8 +127,8 @@ public sealed class AdminReportsService : IAdminReportsService
             .Select(x => new ReportActivityRow
             {
                 Type = "Practice Program",
-                Title = x.QuestionTitle,
-                Date = x.UpdatedAt ?? x.CreatedAt
+                Title = x.QuestionTitle ?? "Untitled practice program",
+                Date = (x.UpdatedAt ?? x.CreatedAt)!.Value
             })
             .ToListAsync(cancellationToken);
 
