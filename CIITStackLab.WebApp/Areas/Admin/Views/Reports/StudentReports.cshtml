@@ -1,0 +1,60 @@
+@model CIITStackLab.Application.DTOs.AdminStudentReportPageDto
+
+@{
+    ViewData["Title"] = "Student Reports";
+    ViewData["ReportSection"] = "Students";
+}
+
+<section class="ciit-admin-reports">
+    <header class="ciit-admin-reports-page-header">
+        <div><span class="ciit-admin-eyebrow">STUDENT ANALYTICS</span><h1>Student Reports</h1><p>Search student accounts and review account status and verification at a glance.</p></div>
+        <div class="ciit-admin-report-page-stat"><strong>@Model.ActiveStudents</strong><span>Active students</span></div>
+    </header>
+
+    <partial name="_ReportSectionNav" />
+
+    <form method="get" class="ciit-admin-report-filter-bar">
+        <div class="ciit-admin-report-search-field"><i class="bi bi-search"></i><input name="search" value="@Model.Search" placeholder="Search username, email or phone..." aria-label="Search students" /></div>
+        <select name="status" class="ciit-admin-report-select" aria-label="Student status">
+            <option value="all" selected="@(Model.Status == "all" ? "selected" : null)">All students</option>
+            <option value="active" selected="@(Model.Status == "active" ? "selected" : null)">Active</option>
+            <option value="inactive" selected="@(Model.Status == "inactive" ? "selected" : null)">Inactive</option>
+        </select>
+        <button type="submit" class="ciit-admin-report-filter-button"><i class="bi bi-filter"></i> Apply</button>
+        <a class="ciit-admin-report-reset" asp-area="Admin" asp-controller="Reports" asp-action="StudentReports">Reset</a>
+    </form>
+
+    <section class="ciit-admin-report-stat-grid">
+        <article class="ciit-admin-report-stat-card"><span>Total students</span><strong>@Model.TotalStudents</strong><small>Student-role accounts</small></article>
+        <article class="ciit-admin-report-stat-card"><span>Active</span><strong>@Model.ActiveStudents</strong><small>Currently enabled</small></article>
+        <article class="ciit-admin-report-stat-card"><span>Inactive</span><strong>@Model.InactiveStudents</strong><small>Currently disabled</small></article>
+    </section>
+
+    <section class="ciit-admin-report-panel ciit-admin-report-table-panel">
+        <div class="ciit-admin-report-panel-header"><div><span class="ciit-admin-panel-kicker">STUDENT DIRECTORY</span><h2>Student accounts</h2><p>Current Identity accounts assigned to the Student role.</p></div><span class="ciit-admin-report-panel-badge">@Model.Students.Count shown</span></div>
+        <div class="ciit-admin-report-table-wrap">
+            <table class="ciit-admin-report-table">
+                <thead><tr><th>USERNAME</th><th>EMAIL</th><th>PHONE</th><th>EMAIL STATUS</th><th>ACCOUNT</th></tr></thead>
+                <tbody>
+                @if (Model.Students.Count == 0)
+                {
+                    <tr><td colspan="5"><div class="ciit-admin-report-empty"><i class="bi bi-person-x"></i><strong>No students found</strong><span>Try another search or status filter.</span></div></td></tr>
+                }
+                else
+                {
+                    foreach (var student in Model.Students)
+                    {
+                        <tr>
+                            <td><strong>@student.UserName</strong><small class="ciit-report-muted">@student.Id</small></td>
+                            <td>@(string.IsNullOrWhiteSpace(student.Email) ? "—" : student.Email)</td>
+                            <td>@(string.IsNullOrWhiteSpace(student.PhoneNumber) ? "—" : student.PhoneNumber)</td>
+                            <td><span class="ciit-admin-status-pill @(student.EmailConfirmed ? "" : "inactive")">@(student.EmailConfirmed ? "Verified" : "Unverified")</span></td>
+                            <td><span class="ciit-admin-status-pill @(student.IsActive ? "" : "inactive")">@(student.IsActive ? "Active" : "Inactive")</span></td>
+                        </tr>
+                    }
+                }
+                </tbody>
+            </table>
+        </div>
+    </section>
+</section>
