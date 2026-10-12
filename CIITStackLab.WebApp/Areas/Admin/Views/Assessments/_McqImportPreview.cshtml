@@ -1,0 +1,161 @@
+@model CIITStackLab.Application.DTOs.McqImportPreviewDto
+
+<section class="ciit-mcq-import-modal-preview" id="mcqImportPreviewResults" aria-labelledby="mcqImportPreviewTitle">
+    <header class="ciit-mcq-import-preview-header">
+        <div>
+            <span class="ciit-mcq-import-step">02</span>
+            <div>
+                <span class="ciit-admin-eyebrow">Analysis results</span>
+                <h3 id="mcqImportPreviewTitle">Review detected questions</h3>
+                <p>@Model.FileName <span>·</span> @Model.TopicLabel</p>
+            </div>
+        </div>
+        <span class="ciit-mcq-import-review-pill">
+            <i class="bi bi-shield-check"></i>
+            Nothing saved yet
+        </span>
+    </header>
+
+    <div class="ciit-mcq-import-stats">
+        <div class="ciit-mcq-import-stat">
+            <span>Total detected</span>
+            <strong>@Model.Questions.Count</strong>
+        </div>
+        <div class="ciit-mcq-import-stat is-valid">
+            <span>Valid questions</span>
+            <strong>@Model.ValidQuestionCount</strong>
+        </div>
+        <div class="ciit-mcq-import-stat @(Model.InvalidQuestionCount > 0 ? "is-invalid" : string.Empty)">
+            <span>Needs attention</span>
+            <strong>@Model.InvalidQuestionCount</strong>
+        </div>
+        <div class="ciit-mcq-import-stat">
+            <span>Database duplicates</span>
+            <strong>@Model.Questions.Count(question => question.IsDuplicateInDatabase)</strong>
+        </div>
+    </div>
+
+    @if (Model.FileErrors.Count > 0)
+    {
+        <div class="ciit-mcq-import-global-errors" role="alert">
+            <strong><i class="bi bi-exclamation-triangle-fill me-2"></i>File-level issues</strong>
+            <ul>
+                @foreach (var error in Model.FileErrors)
+                {
+                    <li>@error</li>
+                }
+            </ul>
+        </div>
+    }
+
+    <div class="ciit-mcq-import-question-list" aria-label="Parsed MCQ list">
+        @foreach (var question in Model.Questions)
+        {
+            <article class="ciit-mcq-import-question @(question.IsValid ? "is-valid" : "is-invalid")">
+                <header class="ciit-mcq-import-question-header">
+                    <span class="ciit-mcq-import-question-number">Q@question.Number</span>
+                    <div class="ciit-mcq-import-question-status">
+                        @if (question.IsValid)
+                        {
+                            <span class="is-valid"><i class="bi bi-check-circle-fill"></i>Ready to import</span>
+                        }
+                        else
+                        {
+                            <span class="is-invalid"><i class="bi bi-exclamation-circle-fill"></i>Needs attention</span>
+                        }
+                    </div>
+                    @if (question.IsDuplicateInDatabase)
+                    {
+                        <span class="ciit-mcq-import-duplicate-pill">Database duplicate</span>
+                    }
+                </header>
+
+                <div class="ciit-mcq-import-question-body">
+                    <h4>@question.Question</h4>
+
+                    <div class="ciit-mcq-import-options">
+                        <div class="@(question.CorrectOptionNumber == 1 ? "is-correct" : string.Empty)">
+                            <span>A</span>
+                            <p>@question.Option1</p>
+                            @if (question.CorrectOptionNumber == 1)
+                            {
+                                <i class="bi bi-check-circle-fill" title="Correct answer"></i>
+                            }
+                        </div>
+                        <div class="@(question.CorrectOptionNumber == 2 ? "is-correct" : string.Empty)">
+                            <span>B</span>
+                            <p>@question.Option2</p>
+                            @if (question.CorrectOptionNumber == 2)
+                            {
+                                <i class="bi bi-check-circle-fill" title="Correct answer"></i>
+                            }
+                        </div>
+                        <div class="@(question.CorrectOptionNumber == 3 ? "is-correct" : string.Empty)">
+                            <span>C</span>
+                            <p>@question.Option3</p>
+                            @if (question.CorrectOptionNumber == 3)
+                            {
+                                <i class="bi bi-check-circle-fill" title="Correct answer"></i>
+                            }
+                        </div>
+                        <div class="@(question.CorrectOptionNumber == 4 ? "is-correct" : string.Empty)">
+                            <span>D</span>
+                            <p>@question.Option4</p>
+                            @if (question.CorrectOptionNumber == 4)
+                            {
+                                <i class="bi bi-check-circle-fill" title="Correct answer"></i>
+                            }
+                        </div>
+                    </div>
+
+                    <div class="ciit-mcq-import-question-footer">
+                        <span>Correct answer: <strong>@question.CorrectOptionLabel</strong></span>
+                        <span>Source line @question.SourceLine</span>
+                    </div>
+
+                    @if (question.Issues.Count > 0)
+                    {
+                        <div class="ciit-mcq-import-row-errors" role="alert">
+                            <strong>Validation details</strong>
+                            <ul>
+                                @foreach (var issue in question.Issues)
+                                {
+                                    <li>@issue</li>
+                                }
+                            </ul>
+                        </div>
+                    }
+                </div>
+            </article>
+        }
+    </div>
+
+    <footer class="ciit-mcq-import-confirm-card">
+        <div>
+            @if (Model.CanImport)
+            {
+                <strong><i class="bi bi-check-circle-fill me-2"></i>Ready to import</strong>
+                <p>@Model.Questions.Count MCQs will be saved to chapter <b>@Model.TopicLabel</b> after confirmation.</p>
+            }
+            else
+            {
+                <strong><i class="bi bi-exclamation-triangle-fill me-2"></i>Import is blocked</strong>
+                <p>Fix the validation errors or duplicates before importing. No questions have been saved.</p>
+            }
+        </div>
+
+        <form asp-area="Admin"
+              asp-controller="Assessments"
+              asp-action="ConfirmBulkMcq"
+              method="post">
+            @Html.AntiForgeryToken()
+            <input type="hidden" name="previewToken" value="@Model.PreviewToken" />
+            <button type="submit"
+                    class="ciit-mcq-import-primary"
+                    disabled="@(!Model.CanImport)">
+                <i class="bi bi-database-check"></i>
+                Import all @Model.Questions.Count MCQs
+            </button>
+        </form>
+    </footer>
+</section>
