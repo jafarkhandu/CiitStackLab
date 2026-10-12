@@ -159,7 +159,7 @@ ANSWER: C</pre>
                         <p>Answers can be A–D or 1–4. Chapter heading such as <code>CHAPTER: Core Java</code> is allowed.</p>
                     </div>
 
-                    @if (preview?.FileErrors.Count > 0 && preview.Questions.Count == 0)
+                    @if (preview is not null && preview.FileErrors.Count > 0 && preview.Questions.Count == 0)
                     {
                         <div class="ciit-mcq-import-file-errors" role="alert">
                             <strong><i class="bi bi-exclamation-triangle-fill me-2"></i>File needs attention</strong>
