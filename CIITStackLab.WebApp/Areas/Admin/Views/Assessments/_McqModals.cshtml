@@ -33,7 +33,7 @@
                             <option value="0">Select chapter</option>
                             @foreach (var chapter in chapters)
                             {
-                                <option value="@chapter.Id" selected="@(addInput.TopicId == chapter.Id)">
+                                <option value="@chapter.Id" selected="@(addInput.TopicId == chapter.Id ? "selected" : null)">
                                     @chapter.Title
                                 </option>
                             }
@@ -68,10 +68,10 @@
                         <label for="AddMcqCorrectOption">Correct option <span>*</span></label>
                         <select id="AddMcqCorrectOption" name="CorrectOptionNumber" required>
                             <option value="0">Select correct answer</option>
-                            <option value="1" selected="@(addInput.CorrectOptionNumber == 1)">A</option>
-                            <option value="2" selected="@(addInput.CorrectOptionNumber == 2)">B</option>
-                            <option value="3" selected="@(addInput.CorrectOptionNumber == 3)">C</option>
-                            <option value="4" selected="@(addInput.CorrectOptionNumber == 4)">D</option>
+                            <option value="1" selected="@(addInput.CorrectOptionNumber == 1 ? "selected" : null)">A</option>
+                            <option value="2" selected="@(addInput.CorrectOptionNumber == 2 ? "selected" : null)">B</option>
+                            <option value="3" selected="@(addInput.CorrectOptionNumber == 3 ? "selected" : null)">C</option>
+                            <option value="4" selected="@(addInput.CorrectOptionNumber == 4 ? "selected" : null)">D</option>
                         </select>
                     </div>
                 </div>
@@ -119,7 +119,7 @@
                                 <option value="0">Select chapter</option>
                                 @foreach (var chapter in chapters)
                                 {
-                                    <option value="@chapter.Id" selected="@(preview?.TopicId == chapter.Id)">
+                                    <option value="@chapter.Id" selected="@(preview?.TopicId == chapter.Id ? "selected" : null)">
                                         @chapter.Title
                                     </option>
                                 }
