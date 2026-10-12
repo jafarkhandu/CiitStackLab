@@ -61,7 +61,7 @@
         catch { throw new Error("The server returned an unreadable analysis update."); }
 
         if (event.type === "progress") {
-            setStatus("Analyzing interview notes", event.message, "loading");
+            setStatus("Validating interview workbook", event.message, "loading");
             appendProgress(event.message);
         } else if (event.type === "result") {
             setResult(event);
@@ -87,7 +87,7 @@
         preview.replaceChildren();
         log.replaceChildren();
         setStatus("Uploading and starting analysis", "The file is being read locally. Validation steps will appear as they run.", "loading");
-        appendProgress("Preparing the selected content and uploaded file...");
+        appendProgress("Preparing the selected chapter and Excel workbook...");
 
         try {
             const response = await fetch(form.dataset.analyzeUrl, {
@@ -135,7 +135,7 @@
             preview.scrollIntoView({ behavior: "smooth", block: "start" });
         } catch (error) {
             setStatus("Analysis could not be completed",
-                error instanceof Error ? error.message : "The notes could not be analyzed. Please try again.", "error");
+                error instanceof Error ? error.message : "The Excel workbook could not be validated. Please try again.", "error");
         } finally {
             running = false;
             content.disabled = false;
