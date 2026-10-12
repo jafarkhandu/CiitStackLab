@@ -324,7 +324,17 @@ internal static class McqImportParser
                 continue;
             }
 
-            if (current.Options.Count == 0)
+            var looksLikeMalformedOptionOrAnswer = Regex.IsMatch(
+                line,
+                @"^(?:[A-Z]\s*[).:\-]|OPTION\s*\d+\s*[:).:\-]|(?:CORRECT\s+)?ANSWER\b)",
+                RegexOptions.IgnoreCase | RegexOptions.CultureInvariant);
+
+            if (looksLikeMalformedOptionOrAnswer)
+            {
+                current.Issues.Add(
+                    $"Line {lineNumber}: '{LimitText(line, 70)}' has an unrecognized option or answer label. Use A), B), C), D) and ANSWER:.");
+            }
+            else if (current.Options.Count == 0 && !current.HasAnswerLine)
             {
                 current.Question = string.Join(
                     ' ',
