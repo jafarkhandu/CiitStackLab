@@ -265,6 +265,74 @@
     text-align: center;
 }
 
+.ciit-payment-state {
+    min-height: 390px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: .55rem;
+    padding: 2rem 1rem;
+    text-align: center;
+}
+
+.ciit-payment-state strong {
+    color: #202b3c;
+    font-size: 1.25rem;
+    font-weight: 800;
+}
+
+.ciit-payment-state span,
+.ciit-payment-state small {
+    color: #748195;
+    font-size: .85rem;
+}
+
+.ciit-payment-spinner {
+    width: 58px;
+    height: 58px;
+    margin-bottom: .65rem;
+    border: 4px solid #dbe8fb;
+    border-top-color: #0d6efd;
+    border-radius: 50%;
+    animation: ciit-payment-spin .8s linear infinite;
+}
+
+.ciit-payment-success-icon {
+    display: grid;
+    place-items: center;
+    width: 68px;
+    height: 68px;
+    margin-bottom: .7rem;
+    border-radius: 50%;
+    background: #dff7e9;
+    color: #198754;
+    font-size: 2rem;
+    animation: ciit-payment-success-pop .35s ease-out;
+}
+
+.ciit-payment-success-state strong {
+    color: #198754;
+}
+
+@keyframes ciit-payment-spin {
+    to {
+        transform: rotate(360deg);
+    }
+}
+
+@keyframes ciit-payment-success-pop {
+    0% {
+        transform: scale(.65);
+        opacity: .3;
+    }
+
+    100% {
+        transform: scale(1);
+        opacity: 1;
+    }
+}
+
 @media (max-width: 575.98px) {
     .ciit-payment-modal .modal-header,
     .ciit-payment-modal .modal-body {
@@ -279,5 +347,9 @@
     .ciit-payment-course-summary img {
         width: 100%;
         height: 150px;
+    }
+
+    .ciit-payment-state {
+        min-height: 330px;
     }
 }
