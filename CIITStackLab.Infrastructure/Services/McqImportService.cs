@@ -337,14 +337,30 @@ public sealed class McqImportService : IMcqImportService
                 _dbContext.Entry(question).State = EntityState.Detached;
             }
 
+            const string databaseFailureMessage =
+                "The database rejected the import. No partial batch was committed. Check the database setup and review the error before retrying.";
+
+            AddFileError(preview, databaseFailureMessage);
+            RefreshCachedPreview(previewToken, cacheEntry);
+
             return McqImportOutcomeDto.Failure(
-                "The database rejected the import. No partial batch was committed. Review the content and try again.",
+                databaseFailureMessage,
                 preview);
         }
 
         _cache.Remove(GetCacheKey(previewToken));
 
         return McqImportOutcomeDto.Success(questionsToInsert.Count);
+    }
+
+    private static void AddFileError(
+        McqImportPreviewDto preview,
+        string error)
+    {
+        if (!preview.FileErrors.Contains(error, StringComparer.Ordinal))
+        {
+            preview.FileErrors.Add(error);
+        }
     }
 
     private void RefreshCachedPreview(
