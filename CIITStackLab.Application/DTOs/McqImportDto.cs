@@ -10,6 +10,8 @@ public sealed class McqImportPreviewDto
 
     public string FileName { get; set; } = string.Empty;
 
+    public bool IsAiGenerated { get; set; }
+
     public List<string> FileErrors { get; set; } = new();
 
     public List<McqImportQuestionDto> Questions { get; set; } = new();

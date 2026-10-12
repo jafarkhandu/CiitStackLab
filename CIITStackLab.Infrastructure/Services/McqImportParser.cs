@@ -36,29 +36,8 @@ internal static class McqImportParser
 
         try
         {
-            if (extension.Equals(".txt", StringComparison.OrdinalIgnoreCase))
-            {
-                using var reader = new StreamReader(
-                    stream,
-                    new UTF8Encoding(
-                        encoderShouldEmitUTF8Identifier: false,
-                        throwOnInvalidBytes: true),
-                    detectEncodingFromByteOrderMarks: true,
-                    bufferSize: 1024,
-                    leaveOpen: true);
-
-                var text = await reader.ReadToEndAsync(cancellationToken);
-                lines = SplitTextLines(text);
-            }
-            else if (extension.Equals(".docx", StringComparison.OrdinalIgnoreCase))
-            {
-                lines = ReadWordParagraphs(stream);
-            }
-            else
-            {
-                result.FileErrors.Add("Only .txt and .docx files are supported.");
-                return result;
-            }
+            var text = await ExtractTextAsync(stream, extension, cancellationToken);
+            lines = SplitTextLines(text);
         }
         catch (DecoderFallbackException)
         {
@@ -107,6 +86,33 @@ internal static class McqImportParser
         }
 
         return result;
+    }
+
+    public static async Task<string> ExtractTextAsync(
+        Stream stream,
+        string extension,
+        CancellationToken cancellationToken = default)
+    {
+        if (extension.Equals(".txt", StringComparison.OrdinalIgnoreCase))
+        {
+            using var reader = new StreamReader(
+                stream,
+                new UTF8Encoding(
+                    encoderShouldEmitUTF8Identifier: false,
+                    throwOnInvalidBytes: true),
+                detectEncodingFromByteOrderMarks: true,
+                bufferSize: 1024,
+                leaveOpen: true);
+
+            return await reader.ReadToEndAsync(cancellationToken);
+        }
+
+        if (extension.Equals(".docx", StringComparison.OrdinalIgnoreCase))
+        {
+            return string.Join(Environment.NewLine, ReadWordParagraphs(stream));
+        }
+
+        throw new InvalidDataException("Only .txt and .docx files are supported.");
     }
 
     private static IReadOnlyList<string> SplitTextLines(string text)

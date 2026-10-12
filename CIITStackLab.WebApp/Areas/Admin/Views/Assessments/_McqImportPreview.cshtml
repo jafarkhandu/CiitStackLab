@@ -6,13 +6,13 @@
             <span class="ciit-mcq-import-step">02</span>
             <div>
                 <span class="ciit-admin-eyebrow">Analysis results</span>
-                <h3 id="mcqImportPreviewTitle">Review detected questions</h3>
+                <h3 id="mcqImportPreviewTitle">@(Model.IsAiGenerated ? "Review AI-generated chapter MCQs" : "Review detected questions")</h3>
                 <p>@Model.FileName <span>·</span> @Model.TopicLabel</p>
             </div>
         </div>
         <span class="ciit-mcq-import-review-pill">
-            <i class="bi bi-shield-check"></i>
-            Nothing saved yet
+            <i class="bi @(Model.IsAiGenerated ? "bi-stars" : "bi-shield-check")"></i>
+            @(Model.IsAiGenerated ? "Generated from chapter" : "Nothing saved yet")
         </span>
     </header>
 
@@ -110,7 +110,14 @@
 
                     <div class="ciit-mcq-import-question-footer">
                         <span>Correct answer: <strong>@question.CorrectOptionLabel</strong></span>
-                        <span>Source line @question.SourceLine</span>
+                        @if (question.SourceLine > 0)
+                        {
+                            <span>Source line @question.SourceLine</span>
+                        }
+                        else if (Model.IsAiGenerated)
+                        {
+                            <span>Generated from chapter material</span>
+                        }
                     </div>
 
                     @if (question.Issues.Count > 0)
