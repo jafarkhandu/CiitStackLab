@@ -1,4 +1,5 @@
 using System.Security.Claims;
+using System.Data.Common;
 using Microsoft.AspNetCore.Http;
 using CIITStackLab.Application.DTOs;
 using CIITStackLab.Application.Interfaces;
@@ -96,7 +97,6 @@ public sealed class AssessmentsController : Controller
         IFormFile? file,
         CancellationToken cancellationToken)
     {
-        var model = await LoadMcqIndexAsync(cancellationToken);
         var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
 
         if (string.IsNullOrWhiteSpace(userId))
@@ -104,36 +104,74 @@ public sealed class AssessmentsController : Controller
             return Unauthorized();
         }
 
-        McqImportPreviewDto preview;
+        McqImportPreviewDto? preview = null;
 
-        if (file is null || file.Length == 0)
+        try
         {
-            preview = new McqImportPreviewDto { TopicId = topicId };
-            preview.FileErrors.Add("Choose a non-empty .txt or .docx file.");
+            ViewBag.McqTopics = await _mcqService.GetTopicLookupAsync(cancellationToken);
+
+            if (file is null || file.Length == 0)
+            {
+                preview = new McqImportPreviewDto
+                {
+                    TopicId = topicId
+                };
+                preview.FileErrors.Add("Choose a non-empty .txt or .docx file.");
+            }
+            else if (file.Length > 5 * 1024 * 1024)
+            {
+                preview = new McqImportPreviewDto
+                {
+                    TopicId = topicId,
+                    FileName = Path.GetFileName(file.FileName)
+                };
+                preview.FileErrors.Add(
+                    "The upload is larger than 5 MB. Split the file into smaller batches.");
+            }
+            else
+            {
+                await using var fileStream = file.OpenReadStream();
+
+                preview = await _mcqImportService.PreviewAsync(
+                    topicId,
+                    file.FileName,
+                    fileStream,
+                    userId,
+                    cancellationToken);
+            }
+
+            var model = await LoadMcqIndexAsync(cancellationToken);
+
+            ViewBag.McqImportPreview = preview;
+            ViewBag.OpenMcqModal = "import";
+
+            return View("Mcqs", model);
         }
-        else if (file.Length > 5 * 1024 * 1024)
+        catch (DbException)
         {
-            preview = new McqImportPreviewDto
+            preview ??= new McqImportPreviewDto
             {
                 TopicId = topicId,
-                FileName = Path.GetFileName(file.FileName)
+                FileName = file is null ? string.Empty : Path.GetFileName(file.FileName)
             };
-            preview.FileErrors.Add("The upload is larger than 5 MB. Split the file into smaller batches.");
-        }
-        else
-        {
-            await using var fileStream = file.OpenReadStream();
-            preview = await _mcqImportService.PreviewAsync(
-                topicId,
-                file.FileName,
-                fileStream,
-                userId,
-                cancellationToken);
-        }
 
-        ViewBag.McqImportPreview = preview;
-        ViewBag.OpenMcqModal = "import";
-        return View("Mcqs", model);
+            preview.FileErrors.Add(
+                "The database could not read the MCQ data. Confirm that Database/20261012_AddTopicIdToContentQuestions.sql has been executed against the same database used by this application, then analyze the file again. Analyze never saves questions.");
+
+            try
+            {
+                ViewBag.McqTopics = await _mcqService.GetTopicLookupAsync(cancellationToken);
+            }
+            catch (DbException)
+            {
+                ViewBag.McqTopics = Array.Empty<AdminMcqTopicLookupDto>();
+            }
+
+            ViewBag.McqImportPreview = preview;
+            ViewBag.OpenMcqModal = "import";
+
+            return View("Mcqs", new AdminMcqIndexDto());
+        }
     }
 
     [HttpPost]
