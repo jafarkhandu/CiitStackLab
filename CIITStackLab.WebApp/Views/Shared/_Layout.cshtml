@@ -73,6 +73,16 @@
     </nav>
 
     <main>
+        @if (TempData["CoursePaymentMessage"] is string coursePaymentMessage)
+        {
+            <div class="container mt-3">
+                <div class="alert alert-info d-flex align-items-start gap-2" role="status">
+                    <i class="bi bi-credit-card mt-1"></i>
+                    <span>@coursePaymentMessage</span>
+                </div>
+            </div>
+        }
+
         @RenderBody()
     </main>
 
