@@ -83,7 +83,7 @@
                 <span>Maximum size: 5 MB · Up to 500 MCQs per batch</span>
             </label>
 
-            @if (Model.FileErrors.Count > 0)
+            @if (Model.FileErrors.Count > 0 && Model.Questions.Count == 0)
             {
                 <div class="ciit-mcq-import-file-errors" role="alert">
                     <strong><i class="bi bi-exclamation-triangle-fill me-2"></i>File needs attention</strong>
