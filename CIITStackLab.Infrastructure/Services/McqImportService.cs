@@ -154,21 +154,66 @@ public sealed class McqImportService : IMcqImportService
         }
 
         await ReportProgressAsync(
-            "Reading the uploaded document and checking whether it already contains formatted MCQs...");
+            "Extracting readable text from the uploaded chapter...");
 
         using var documentBuffer = new MemoryStream();
         await fileStream.CopyToAsync(documentBuffer, cancellationToken);
         documentBuffer.Position = 0;
 
-        var parsed = await McqImportParser.ParseAsync(
-            documentBuffer,
-            extension,
-            cancellationToken);
+        string sourceText;
 
-        if (parsed.Questions.Count > 0)
+        try
+        {
+            sourceText = await McqImportParser.ExtractTextAsync(
+                documentBuffer,
+                extension,
+                cancellationToken);
+        }
+        catch (DecoderFallbackException)
+        {
+            preview.FileErrors.Add(
+                "The text file is not valid UTF-8. Save it as UTF-8 and upload it again.");
+            return preview;
+        }
+        catch (InvalidDataException)
+        {
+            preview.FileErrors.Add(
+                "The Word document is invalid or could not be opened. Upload a valid .docx file.");
+            return preview;
+        }
+        catch (XmlException)
+        {
+            preview.FileErrors.Add(
+                "The Word document contains invalid document XML.");
+            return preview;
+        }
+        catch (IOException)
+        {
+            preview.FileErrors.Add(
+                "The uploaded file could not be read. Please try again.");
+            return preview;
+        }
+
+        if (string.IsNullOrWhiteSpace(sourceText))
+        {
+            preview.FileErrors.Add(
+                "The document did not contain readable text. Upload a non-empty .txt or .docx chapter.");
+            return preview;
+        }
+
+        var containsFormattedMcqs =
+            McqImportParser.LooksLikeFormattedMcqDocument(sourceText);
+
+        if (containsFormattedMcqs)
         {
             await ReportProgressAsync(
-                "Reviewing the supplied questions, options A–D, and answer keys...");
+                "Detected a preformatted MCQ set. Validating the questions, four options, and answer keys...");
+
+            documentBuffer.Position = 0;
+            var parsed = await McqImportParser.ParseAsync(
+                documentBuffer,
+                extension,
+                cancellationToken);
 
             preview.FileErrors.AddRange(parsed.FileErrors);
 
@@ -192,73 +237,31 @@ public sealed class McqImportService : IMcqImportService
         }
         else
         {
-            // A document without preformatted MCQs is treated as chapter material.
-            // Parser format warnings are therefore intentionally replaced with extraction/generation errors.
-            preview.FileErrors.Clear();
-
-            string sourceText;
+            await ReportProgressAsync(
+                "No complete preformatted MCQ set was detected. Analyzing chapter concepts and generating exactly 20 MCQs...");
 
             try
             {
-                documentBuffer.Position = 0;
-                sourceText = await McqImportParser.ExtractTextAsync(
-                    documentBuffer,
-                    extension,
-                    cancellationToken);
-            }
-            catch (DecoderFallbackException)
-            {
-                preview.FileErrors.Add(
-                    "The text file is not valid UTF-8. Save it as UTF-8 and upload it again.");
-                sourceText = string.Empty;
-            }
-            catch (InvalidDataException)
-            {
-                preview.FileErrors.Add(
-                    "The Word document is invalid or could not be opened. Upload a valid .docx file.");
-                sourceText = string.Empty;
-            }
-            catch (XmlException)
-            {
-                preview.FileErrors.Add(
-                    "The Word document contains invalid document XML.");
-                sourceText = string.Empty;
-            }
-            catch (IOException)
-            {
-                preview.FileErrors.Add(
-                    "The uploaded file could not be read. Please try again.");
-                sourceText = string.Empty;
-            }
+                var generatedQuestions = await _chapterMcqGenerationService.GenerateAsync(
+                    topic.Title,
+                    sourceText,
+                    cancellationToken,
+                    ReportProgressAsync);
 
-            if (preview.FileErrors.Count == 0)
-            {
+                preview.Questions.AddRange(generatedQuestions);
+                preview.IsAiGenerated = true;
+
                 await ReportProgressAsync(
-                    "Extracted the readable chapter text. Preparing source concepts for question generation...");
-
-                try
-                {
-                    var generatedQuestions = await _chapterMcqGenerationService.GenerateAsync(
-                        topic.Title,
-                        sourceText,
-                        cancellationToken,
-                        ReportProgressAsync);
-
-                    preview.Questions.AddRange(generatedQuestions);
-                    preview.IsAiGenerated = true;
-
-                    await ReportProgressAsync(
-                        "All 20 generated MCQs were received. Checking the chapter question set for duplicates...");
-                }
-                catch (InvalidOperationException exception)
-                {
-                    preview.FileErrors.Add(exception.Message);
-                }
-                catch (HttpRequestException)
-                {
-                    preview.FileErrors.Add(
-                        "The AI question generator could not be reached. Check server network access and the AI provider configuration. No MCQs were saved.");
-                }
+                    "All 20 generated MCQs were received. Checking the set for repeated questions and existing chapter duplicates...");
+            }
+            catch (InvalidOperationException exception)
+            {
+                preview.FileErrors.Add(exception.Message);
+            }
+            catch (HttpRequestException)
+            {
+                preview.FileErrors.Add(
+                    "The AI question generator could not be reached. Check server network access and the AI provider configuration. No MCQs were saved.");
             }
         }
 

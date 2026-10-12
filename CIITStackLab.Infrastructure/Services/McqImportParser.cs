@@ -115,6 +115,58 @@ internal static class McqImportParser
         throw new InvalidDataException("Only .txt and .docx files are supported.");
     }
 
+    public static bool LooksLikeFormattedMcqDocument(string text)
+    {
+        var hasCurrentQuestion = false;
+        var optionLabels = new HashSet<char>();
+        var hasAnswer = false;
+
+        foreach (var rawLine in SplitTextLines(text))
+        {
+            var line = rawLine.Trim();
+
+            if (QuestionHeaderPattern.IsMatch(line))
+            {
+                if (hasCurrentQuestion && optionLabels.Count == 4 && hasAnswer)
+                {
+                    return true;
+                }
+
+                hasCurrentQuestion = true;
+                optionLabels.Clear();
+                hasAnswer = false;
+                continue;
+            }
+
+            if (!hasCurrentQuestion)
+            {
+                continue;
+            }
+
+            var optionMatch = OptionPattern.Match(line);
+            if (optionMatch.Success)
+            {
+                optionLabels.Add(char.ToUpperInvariant(optionMatch.Groups[1].Value[0]));
+            }
+
+            if (AnswerPattern.IsMatch(line)
+                && optionLabels.Contains('A')
+                && optionLabels.Contains('B')
+                && optionLabels.Contains('C')
+                && optionLabels.Contains('D'))
+            {
+                hasAnswer = true;
+            }
+
+            if (optionLabels.Count == 4 && hasAnswer)
+            {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
     private static IReadOnlyList<string> SplitTextLines(string text)
     {
         return text

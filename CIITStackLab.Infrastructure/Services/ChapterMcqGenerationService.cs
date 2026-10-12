@@ -36,8 +36,11 @@ public sealed class ChapterMcqGenerationService : IChapterMcqGenerationService
         CancellationToken cancellationToken = default,
         Func<string, CancellationToken, Task>? reportProgress = null)
     {
-        var apiKey = _configuration["OpenAI:ApiKey"]
-            ?? Environment.GetEnvironmentVariable("OPENAI_API_KEY");
+        var apiKey = _configuration["OpenAI:ApiKey"];
+        if (string.IsNullOrWhiteSpace(apiKey))
+        {
+            apiKey = Environment.GetEnvironmentVariable("OPENAI_API_KEY");
+        }
 
         if (string.IsNullOrWhiteSpace(apiKey))
         {
@@ -396,7 +399,7 @@ public sealed class ChapterMcqGenerationService : IChapterMcqGenerationService
             (HttpStatusCode)429 =>
                 new InvalidOperationException(
                     "The AI provider rate limit or billing quota was reached. Wait or check the API account, then try again. No MCQs were saved."),
-            >= HttpStatusCode.InternalServerError =>
+            _ when (int)statusCode >= 500 =>
                 new InvalidOperationException(
                     "The AI provider is temporarily unavailable. Try again shortly. No MCQs were saved."),
             _ =>
