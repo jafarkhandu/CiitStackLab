@@ -132,6 +132,7 @@ public sealed class AdminInterviewQuestionService : IAdminInterviewQuestionServi
             return (false, "The selected content is not available.");
 
         question.ContentId = input.ContentId;
+        question.TopicId = null;
         question.Question = input.Question.Trim();
         question.Answer = input.Answer.Trim();
         question.UpdatedAt = DateTime.Now;
