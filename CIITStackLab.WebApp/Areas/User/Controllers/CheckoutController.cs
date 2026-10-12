@@ -1,4 +1,4 @@
-using CIITStackLab.Application.DTOs;
+using System.Security.Claims;
 using CIITStackLab.Application.Interfaces;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -42,7 +42,7 @@ public sealed class CheckoutController : Controller
             return RedirectToAction("Learn", "Courses", new { area = "", id });
         }
 
-        var userId = User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
+        var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
 
         if (string.IsNullOrWhiteSpace(userId))
         {
