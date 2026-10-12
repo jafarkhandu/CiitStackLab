@@ -181,6 +181,14 @@ ANSWER: C</pre>
 
                 @if (preview is not null && preview.Questions.Count > 0)
                 {
+                    <div class="ciit-mcq-import-analysis-notice" role="status">
+                        <i class="bi bi-clipboard-check-fill"></i>
+                        <div>
+                            <strong>Analysis complete — @preview.Questions.Count question(s) detected.</strong>
+                            <span>Nothing has been saved yet. Check validation results below, then click Import all to write to the database.</span>
+                        </div>
+                    </div>
+
                     <section class="ciit-mcq-import-modal-preview">
                         <header class="ciit-mcq-import-preview-header">
                             <div>
