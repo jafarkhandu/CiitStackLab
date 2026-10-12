@@ -1,7 +1,7 @@
 @model CIITStackLab.Application.DTOs.AdminInterviewQuestionIndexDto
 @{
-    var contentOptions = ViewBag.InterviewQuestionContent as IEnumerable<Microsoft.AspNetCore.Mvc.Rendering.SelectListItem>
-        ?? Array.Empty<Microsoft.AspNetCore.Mvc.Rendering.SelectListItem>();
+    var topicOptions = ViewBag.InterviewQuestionTopics as IEnumerable<CIITStackLab.Application.DTOs.InterviewQuestionTopicLookupDto>
+        ?? Array.Empty<CIITStackLab.Application.DTOs.InterviewQuestionTopicLookupDto>();
     var preview = ViewBag.InterviewImportPreview as CIITStackLab.Application.DTOs.InterviewQuestionImportPreviewDto;
     var importMessage = ViewBag.InterviewImportMessage as string;
 }
@@ -34,7 +34,7 @@
                             <strong id="interviewImportLiveTitle">Preparing analysis...</strong>
                             <span id="interviewImportLiveState">READY</span>
                         </div>
-                        <p id="interviewImportLiveDetail">Choose learning content and upload notes to begin.</p>
+                        <p id="interviewImportLiveDetail">Choose a chapter and upload notes to begin.</p>
                         <ol id="interviewImportProgressLog" class="ciit-interview-import-progress-log"></ol>
                         <div class="ciit-interview-import-live-track" aria-hidden="true"><span></span></div>
                     </div>
@@ -52,16 +52,16 @@
                     @Html.AntiForgeryToken()
                     <div class="ciit-interview-import-upload-fields">
                         <div class="ciit-interview-import-field">
-                            <label for="ImportInterviewContentId">Learning content <span>*</span></label>
-                            <select id="ImportInterviewContentId" name="contentId" required>
-                                <option value="0">Select content</option>
-                                @foreach (var item in contentOptions)
+                            <label for="ImportInterviewTopicId">Chapter <span>*</span></label>
+                            <select id="ImportInterviewTopicId" name="topicId" required>
+                                <option value="0">Select chapter</option>
+                                @foreach (var item in topicOptions)
                                 {
-                                    <option value="@item.Value"
-                                            selected="@(preview?.ContentId.ToString() == item.Value ? "selected" : null)">@item.Text</option>
+                                    <option value="@item.Id"
+                                            selected="@(preview?.TopicId == item.Id ? "selected" : null)">@item.Title</option>
                                 }
                             </select>
-                            <small>All questions will be linked to this content and its topic.</small>
+                            <small>All imported interview questions will be linked directly to this chapter.</small>
                         </div>
                         <label class="ciit-interview-import-file-drop">
                             <input type="file" name="file" id="ImportInterviewFile" accept=".txt,.docx" required />
