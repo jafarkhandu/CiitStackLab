@@ -5,6 +5,7 @@
         ?? Array.Empty<CIITStackLab.Application.DTOs.AdminMcqTopicLookupDto>();
     var addInput = ViewBag.AddMcqInput as CIITStackLab.Application.DTOs.AdminTopicMcqInputDto
         ?? new CIITStackLab.Application.DTOs.AdminTopicMcqInputDto();
+    var addMcqError = ViewBag.AddMcqError as string;
     var preview = ViewBag.McqImportPreview as CIITStackLab.Application.DTOs.McqImportPreviewDto;
     var importMessage = ViewBag.McqImportMessage as string;
 }
@@ -25,6 +26,13 @@
             <form asp-area="Admin" asp-controller="Assessments" asp-action="CreateMcq" method="post">
                 @Html.AntiForgeryToken()
                 <div class="modal-body ciit-mcq-modal-body">
+                    @if (!string.IsNullOrWhiteSpace(addMcqError))
+                    {
+                        <div class="ciit-mcq-import-alert is-error mb-3" role="alert">
+                            <i class="bi bi-exclamation-circle-fill"></i>
+                            <span>@addMcqError</span>
+                        </div>
+                    }
                     <div asp-validation-summary="All" class="text-danger small mb-3"></div>
 
                     <div class="ciit-mcq-modal-field">
