@@ -1,0 +1,103 @@
+@model CIITStackLab.Application.DTOs.AdminPracticeProgramIndexDto
+@{
+    var contentOptions = ViewBag.PracticeProgramContent as IEnumerable<Microsoft.AspNetCore.Mvc.Rendering.SelectListItem>
+        ?? Array.Empty<Microsoft.AspNetCore.Mvc.Rendering.SelectListItem>();
+    var preview = ViewBag.PracticeProgramImportPreview as CIITStackLab.Application.DTOs.PracticeProgramImportPreviewDto;
+    var importMessage = ViewBag.PracticeProgramImportMessage as string;
+}
+<div class="modal fade ciit-mcq-modal ciit-mcq-import-modal" id="practiceProgramImportModal" tabindex="-1"
+     aria-labelledby="practiceProgramImportModalTitle" aria-hidden="true">
+    <div class="modal-dialog modal-xl modal-dialog-centered modal-dialog-scrollable">
+        <div class="modal-content">
+            <div class="modal-header">
+                <div>
+                    <span class="ciit-admin-eyebrow">Assessment tools</span>
+                    <h2 class="modal-title" id="practiceProgramImportModalTitle">Practice Questions Analyzer</h2>
+                    <p class="mb-0">Analyze programming problems from Excel, review each question, then confirm import. Solutions are added separately by question ID.</p>
+                </div>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+
+            <div class="modal-body ciit-mcq-import-modal-body">
+                <div id="practiceProgramImportPreviewHost"
+                     data-preview-url="@Url.Action("GetPracticeProgramImportPreview", "Assessments", new { area = "Admin" })">
+                    @if (preview is not null && (preview.Programs.Count > 0 || preview.FileErrors.Count > 0))
+                    {
+                        @await Html.PartialAsync("_PracticeProgramImportPreview", preview)
+                    }
+                </div>
+
+                <div class="ciit-mcq-import-live-status d-none"
+                     id="practiceProgramImportLiveStatus"
+                     role="status" aria-live="polite">
+                    <div class="ciit-mcq-import-live-orbit" aria-hidden="true">
+                        <span></span><span></span><i class="bi bi-file-earmark-code"></i>
+                    </div>
+                    <div class="ciit-mcq-import-live-content">
+                        <div class="ciit-mcq-import-live-heading">
+                            <strong id="practiceProgramImportLiveTitle">Preparing analysis...</strong>
+                            <span id="practiceProgramImportLiveState">READY</span>
+                        </div>
+                        <p id="practiceProgramImportLiveDetail">Select content and upload an Excel workbook to begin.</p>
+                        <ol id="practiceProgramImportProgressLog" class="ciit-mcq-import-progress-log"></ol>
+                        <div class="ciit-mcq-import-live-track" aria-hidden="true"><span></span></div>
+                    </div>
+                </div>
+
+                @if (!string.IsNullOrWhiteSpace(importMessage))
+                {
+                    <div class="ciit-mcq-import-alert is-error" role="alert">
+                        <i class="bi bi-exclamation-circle-fill"></i><span>@importMessage</span>
+                    </div>
+                }
+
+                <form asp-area="Admin" asp-controller="Assessments" asp-action="PreviewPracticePrograms"
+                      method="post" enctype="multipart/form-data"
+                      id="practiceProgramImportUploadForm"
+                      class="ciit-mcq-import-upload"
+                      data-analyze-url="@Url.Action("AnalyzePracticePrograms", "Assessments", new { area = "Admin" })">
+                    @Html.AntiForgeryToken()
+                    <div class="ciit-mcq-import-upload-fields">
+                        <div class="ciit-mcq-import-field">
+                            <label for="PracticeProgramImportContentId">Learning content <span>*</span></label>
+                            <select id="PracticeProgramImportContentId" name="contentId" required>
+                                <option value="0">Select content</option>
+                                @foreach (var item in contentOptions)
+                                {
+                                    <option value="@item.Value"
+                                            selected="@(preview?.ContentId.ToString() == item.Value ? "selected" : null)">@item.Text</option>
+                                }
+                            </select>
+                            <small>Each problem will be linked to this content and its topic.</small>
+                        </div>
+                        <label class="ciit-mcq-import-file-drop">
+                            <input type="file" name="file" id="PracticeProgramImportFile" accept=".xlsx" required />
+                            <span class="ciit-mcq-import-file-icon"><i class="bi bi-cloud-arrow-up"></i></span>
+                            <strong>Choose an Excel .xlsx file</strong>
+                            <span>Maximum 5 MB · Up to 500 programming problems</span>
+                        </label>
+                    </div>
+
+                    <div class="ciit-mcq-import-format">
+                        <div class="ciit-mcq-import-format-heading">
+                            <span><i class="bi bi-shield-check"></i></span>
+                            <div>
+                                <strong>Fixed-column programming question import</strong>
+                                <p>No answers or solutions are read or created. Each imported problem gets its own database question ID.</p>
+                            </div>
+                        </div>
+                        <pre class="ciit-practice-import-template">Question Title | Question Description
+Title of the problem | Full problem statement, constraints, examples and multiline code</pre>
+                        <p class="ciit-practice-import-help">Row 1 must contain <b>Question Title</b> in column A and <b>Question Description</b> in column B. Each following row is one question; multiline text stays inside its cell.</p>
+                    </div>
+
+                    <div class="ciit-mcq-import-upload-actions">
+                        <button type="submit" class="ciit-mcq-import-primary">
+                            <i class="bi bi-search"></i> Analyze questions
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
