@@ -1,0 +1,55 @@
+.ciit-practice-import-template {
+    margin: 0;
+    padding: 14px 18px;
+    overflow-x: auto;
+    border-top: 1px solid #e5ecf6;
+    background: #fff;
+    color: #465875;
+    font-size: .76rem;
+    line-height: 1.75;
+    white-space: pre-wrap;
+    overflow-wrap: anywhere;
+}
+
+.ciit-practice-import-help {
+    margin: 0;
+    padding: 0 18px 16px;
+    color: #7a899f;
+    font-size: .75rem;
+    line-height: 1.7;
+}
+
+.ciit-practice-import-description {
+    margin-top: 13px;
+    padding: 15px 16px;
+    border: 1px solid #e3ebf5;
+    border-radius: 12px;
+    background: #f8faff;
+    color: #53647f;
+    font-size: .82rem;
+    line-height: 1.8;
+    white-space: pre-wrap;
+    overflow-wrap: anywhere;
+    tab-size: 4;
+}
+
+.ciit-practice-import-preview .ciit-mcq-import-question-body h4 {
+    white-space: pre-wrap;
+    overflow-wrap: anywhere;
+}
+
+@media (max-width: 767.98px) {
+    .ciit-practice-import-template {
+        padding: 12px 14px;
+        font-size: .72rem;
+    }
+
+    .ciit-practice-import-help {
+        padding-inline: 14px;
+    }
+
+    .ciit-practice-import-description {
+        padding: 12px;
+        font-size: .78rem;
+    }
+}
