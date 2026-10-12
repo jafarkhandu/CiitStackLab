@@ -1,0 +1,120 @@
+@model CIITStackLab.Application.DTOs.PracticeProgramImportPreviewDto
+
+<section class="ciit-mcq-import-modal-preview ciit-practice-import-preview"
+         id="practiceProgramImportResults" aria-labelledby="practiceProgramImportResultsTitle">
+    <header class="ciit-mcq-import-preview-header">
+        <div>
+            <span class="ciit-mcq-import-step">02</span>
+            <div>
+                <span class="ciit-admin-eyebrow">Analysis results</span>
+                <h3 id="practiceProgramImportResultsTitle">Review programming questions</h3>
+                <p>@Model.FileName <span>·</span> @Model.TopicTitle / @Model.ContentTitle</p>
+            </div>
+        </div>
+        <span class="ciit-mcq-import-review-pill"><i class="bi bi-shield-check"></i> Nothing saved yet</span>
+    </header>
+
+    <div class="ciit-mcq-import-stats">
+        <div class="ciit-mcq-import-stat">
+            <span>Total detected</span><strong>@Model.Programs.Count</strong>
+        </div>
+        <div class="ciit-mcq-import-stat is-valid">
+            <span>Valid questions</span><strong>@Model.ValidQuestionCount</strong>
+        </div>
+        <div class="ciit-mcq-import-stat @(Model.InvalidQuestionCount > 0 || Model.FileErrors.Count > 0 ? "is-invalid" : string.Empty)">
+            <span>Needs attention</span><strong>@(Model.InvalidQuestionCount + Model.FileErrors.Count)</strong>
+        </div>
+        <div class="ciit-mcq-import-stat">
+            <span>Database duplicates</span><strong>@Model.Programs.Count(item => item.IsDuplicateInDatabase)</strong>
+        </div>
+    </div>
+
+    @if (Model.FileErrors.Count > 0)
+    {
+        <div class="ciit-mcq-import-global-errors" role="alert">
+            <strong><i class="bi bi-exclamation-triangle-fill me-2"></i>File-level issues</strong>
+            <ul>
+                @foreach (var error in Model.FileErrors)
+                {
+                    <li>@error</li>
+                }
+            </ul>
+        </div>
+    }
+
+    <div class="ciit-mcq-import-question-list" aria-label="Practice-program question preview">
+        @foreach (var program in Model.Programs)
+        {
+            <article class="ciit-mcq-import-question @(program.IsValid ? "is-valid" : "is-invalid")">
+                <header class="ciit-mcq-import-question-header">
+                    <span class="ciit-mcq-import-question-number">Q@(program.Number)</span>
+                    <div class="ciit-mcq-import-question-status">
+                        @if (program.IsValid)
+                        {
+                            <span class="is-valid"><i class="bi bi-check-circle-fill"></i>Ready to import</span>
+                        }
+                        else
+                        {
+                            <span class="is-invalid"><i class="bi bi-exclamation-circle-fill"></i>Needs attention</span>
+                        }
+                    </div>
+                    @if (program.IsDuplicateInDatabase)
+                    {
+                        <span class="ciit-mcq-import-duplicate-pill">Database duplicate</span>
+                    }
+                    @if (program.IsDuplicateInUpload)
+                    {
+                        <span class="ciit-mcq-import-duplicate-pill">Repeated in workbook</span>
+                    }
+                </header>
+
+                <div class="ciit-mcq-import-question-body">
+                    <h4>@program.QuestionTitle</h4>
+                    <div class="ciit-practice-import-description">@program.QuestionDescription</div>
+                    <div class="ciit-mcq-import-question-footer">
+                        <span>Solution: <strong>Not included</strong></span>
+                        @if (program.SourceRow > 0)
+                        {
+                            <span>Excel row @program.SourceRow</span>
+                        }
+                    </div>
+
+                    @if (program.Issues.Count > 0)
+                    {
+                        <div class="ciit-mcq-import-row-errors" role="alert">
+                            <strong>Validation details</strong>
+                            <ul>
+                                @foreach (var issue in program.Issues)
+                                {
+                                    <li>@issue</li>
+                                }
+                            </ul>
+                        </div>
+                    }
+                </div>
+            </article>
+        }
+    </div>
+
+    <footer class="ciit-mcq-import-confirm-card">
+        <div>
+            @if (Model.CanImport)
+            {
+                <strong><i class="bi bi-check-circle-fill me-2"></i>Ready to import</strong>
+                <p>@Model.Programs.Count programming question(s) will be saved under <b>@Model.TopicTitle / @Model.ContentTitle</b>. No solutions will be created.</p>
+            }
+            else
+            {
+                <strong><i class="bi bi-exclamation-triangle-fill me-2"></i>Import is blocked</strong>
+                <p>Resolve required-cell errors or duplicate questions before importing. Nothing has been saved.</p>
+            }
+        </div>
+        <form asp-area="Admin" asp-controller="Assessments" asp-action="ConfirmPracticeProgramImport" method="post">
+            @Html.AntiForgeryToken()
+            <input type="hidden" name="previewToken" value="@Model.PreviewToken" />
+            <button type="submit" class="ciit-mcq-import-primary" disabled="@(!Model.CanImport)">
+                <i class="bi bi-database-check"></i> Add Questions (@Model.Programs.Count)
+            </button>
+        </form>
+    </footer>
+</section>
