@@ -1,6 +1,5 @@
 using System.Text;
 using System.Text.RegularExpressions;
-using System.Xml;
 using CIITStackLab.Application.DTOs;
 using CIITStackLab.Application.Interfaces;
 using CIITStackLab.Domain.Entities;
@@ -20,16 +19,13 @@ public sealed class McqImportService : IMcqImportService
 
     private readonly ApplicationDbContext _dbContext;
     private readonly IMemoryCache _cache;
-    private readonly IChapterMcqAnalyzerService _chapterMcqAnalyzerService;
 
     public McqImportService(
         ApplicationDbContext dbContext,
-        IMemoryCache cache,
-        IChapterMcqAnalyzerService chapterMcqAnalyzerService)
+        IMemoryCache cache)
     {
         _dbContext = dbContext;
         _cache = cache;
-        _chapterMcqAnalyzerService = chapterMcqAnalyzerService;
     }
 
     public void CachePreview(
