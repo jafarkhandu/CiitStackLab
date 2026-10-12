@@ -1,3 +1,5 @@
+using System.Security.Claims;
+using Microsoft.AspNetCore.Http;
 using CIITStackLab.Application.DTOs;
 using CIITStackLab.Application.Interfaces;
 using Microsoft.AspNetCore.Authorization;
@@ -11,15 +13,18 @@ namespace CIITStackLab.WebApp.Areas.Admin.Controllers;
 public sealed class AssessmentsController : Controller
 {
     private readonly IAdminMcqService _mcqService;
+    private readonly IMcqImportService _mcqImportService;
     private readonly IAdminInterviewQuestionService _interviewQuestionService;
     private readonly IAdminPracticeProgramService _practiceProgramService;
 
     public AssessmentsController(
         IAdminMcqService mcqService,
+        IMcqImportService mcqImportService,
         IAdminInterviewQuestionService interviewQuestionService,
         IAdminPracticeProgramService practiceProgramService)
     {
         _mcqService = mcqService;
+        _mcqImportService = mcqImportService;
         _interviewQuestionService = interviewQuestionService;
         _practiceProgramService = practiceProgramService;
     }
@@ -63,6 +68,98 @@ public sealed class AssessmentsController : Controller
         TempData["AdminMcqMessage"] = "MCQ created successfully.";
         TempData["AdminMcqMessageType"] = "success";
         return RedirectToAction(nameof(Mcqs));
+    }
+
+    [HttpGet]
+    public async Task<IActionResult> BulkImportMcq(CancellationToken cancellationToken)
+    {
+        await LoadMcqContentAsync(cancellationToken);
+        return View(new McqImportPreviewDto());
+    }
+
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    [RequestSizeLimit(6 * 1024 * 1024)]
+    [RequestFormLimits(MultipartBodyLengthLimit = 6 * 1024 * 1024)]
+    public async Task<IActionResult> PreviewBulkMcq(
+        int contentId,
+        IFormFile? file,
+        CancellationToken cancellationToken)
+    {
+        await LoadMcqContentAsync(cancellationToken);
+
+        var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+
+        if (string.IsNullOrWhiteSpace(userId))
+        {
+            return Unauthorized();
+        }
+
+        if (file is null || file.Length == 0)
+        {
+            var emptyPreview = new McqImportPreviewDto
+            {
+                ContentId = contentId
+            };
+            emptyPreview.FileErrors.Add("Choose a non-empty .txt or .docx file.");
+            return View("BulkImportMcq", emptyPreview);
+        }
+
+        const long maximumFileSize = 5 * 1024 * 1024;
+
+        if (file.Length > maximumFileSize)
+        {
+            var oversizedPreview = new McqImportPreviewDto
+            {
+                ContentId = contentId,
+                FileName = Path.GetFileName(file.FileName)
+            };
+            oversizedPreview.FileErrors.Add("The upload is larger than 5 MB. Split the file into smaller batches.");
+            return View("BulkImportMcq", oversizedPreview);
+        }
+
+        await using var fileStream = file.OpenReadStream();
+
+        var preview = await _mcqImportService.PreviewAsync(
+            contentId,
+            file.FileName,
+            fileStream,
+            userId,
+            cancellationToken);
+
+        return View("BulkImportMcq", preview);
+    }
+
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> ConfirmBulkMcq(
+        string previewToken,
+        CancellationToken cancellationToken)
+    {
+        var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+
+        if (string.IsNullOrWhiteSpace(userId))
+        {
+            return Unauthorized();
+        }
+
+        var result = await _mcqImportService.ConfirmAsync(
+            previewToken,
+            userId,
+            cancellationToken);
+
+        if (result.Succeeded)
+        {
+            TempData["AdminMcqMessage"] = result.Message;
+            TempData["AdminMcqMessageType"] = "success";
+            return RedirectToAction(nameof(Mcqs));
+        }
+
+        ViewBag.McqImportMessage = result.Message;
+        ViewBag.McqImportMessageType = "error";
+        await LoadMcqContentAsync(cancellationToken);
+
+        return View("BulkImportMcq", result.Preview ?? new McqImportPreviewDto());
     }
 
     [HttpGet]
