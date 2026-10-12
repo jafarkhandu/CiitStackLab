@@ -31,6 +31,8 @@ public sealed class McqImportQuestionDto
 {
     public int Number { get; set; }
 
+    public int SourceLine { get; set; }
+
     public string Question { get; set; } = string.Empty;
 
     public string Option1 { get; set; } = string.Empty;
