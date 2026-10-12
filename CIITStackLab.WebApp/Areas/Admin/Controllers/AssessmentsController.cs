@@ -6,6 +6,7 @@ using CIITStackLab.Application.Interfaces;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
+using Microsoft.EntityFrameworkCore;
 
 namespace CIITStackLab.WebApp.Areas.Admin.Controllers;
 
@@ -122,7 +123,34 @@ public sealed class AssessmentsController : Controller
             return View("Mcqs", invalidModel);
         }
 
-        var result = await _mcqService.CreateForTopicAsync(input, cancellationToken);
+        (bool Succeeded, string? Error) result;
+
+        try
+        {
+            result = await _mcqService.CreateForTopicAsync(input, cancellationToken);
+        }
+        catch (Exception exception) when (
+            exception is DbException or DbUpdateException)
+        {
+            var failedModel = new AdminMcqIndexDto();
+
+            try
+            {
+                ViewBag.McqTopics = await _mcqService.GetTopicLookupAsync(cancellationToken);
+            }
+            catch (Exception lookupException) when (
+                lookupException is DbException or DbUpdateException)
+            {
+                ViewBag.McqTopics = Array.Empty<AdminMcqTopicLookupDto>();
+            }
+
+            ViewBag.AddMcqInput = input;
+            ViewBag.AddMcqError =
+                "The MCQ could not be saved to the database. Check that Database/20261012_AddTopicIdToContentQuestions.sql has been executed against the database used by this application, then try again.";
+            ViewBag.OpenMcqModal = "add";
+
+            return View("Mcqs", failedModel);
+        }
 
         if (!result.Succeeded)
         {
