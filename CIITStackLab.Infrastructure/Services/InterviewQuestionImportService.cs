@@ -32,6 +32,20 @@ public sealed class InterviewQuestionImportService : IInterviewQuestionImportSer
         _analyzerService = analyzerService;
     }
 
+    public async Task<IReadOnlyList<InterviewQuestionTopicLookupDto>> GetTopicLookupAsync(
+        CancellationToken cancellationToken = default)
+    {
+        return await _dbContext.Topics.AsNoTracking()
+            .Where(topic => topic.Flag == 0)
+            .OrderBy(topic => topic.Title)
+            .Select(topic => new InterviewQuestionTopicLookupDto
+            {
+                Id = topic.Id,
+                Title = topic.Title
+            })
+            .ToListAsync(cancellationToken);
+    }
+
     public void CachePreview(InterviewQuestionImportPreviewDto preview, string userId)
     {
         ArgumentNullException.ThrowIfNull(preview);
@@ -78,7 +92,7 @@ public sealed class InterviewQuestionImportService : IInterviewQuestionImportSer
     }
 
     public async Task<InterviewQuestionImportPreviewDto> PreviewAsync(
-        int contentId,
+        int topicId,
         string fileName,
         Stream fileStream,
         string userId,
@@ -95,7 +109,7 @@ public sealed class InterviewQuestionImportService : IInterviewQuestionImportSer
 
         var preview = new InterviewQuestionImportPreviewDto
         {
-            ContentId = contentId,
+            TopicId = topicId,
             FileName = Path.GetFileName(fileName)
         };
 
@@ -105,34 +119,25 @@ public sealed class InterviewQuestionImportService : IInterviewQuestionImportSer
             return preview;
         }
 
-        if (contentId <= 0)
+        if (topicId <= 0)
         {
-            preview.FileErrors.Add("Select the target learning content before uploading the notes.");
+            preview.FileErrors.Add("Select the chapter before uploading the notes.");
             return preview;
         }
 
-        await ReportProgressAsync("Checking the selected learning content...");
-
-        var content = await _dbContext.Lessons
-            .AsNoTracking()
-            .Where(item => item.Id == contentId && item.Flag == 0
-                && item.Topic != null && item.Topic.Flag == 0)
-            .Select(item => new
-            {
-                item.Id,
-                Title = item.Title ?? string.Empty,
-                TopicTitle = item.Topic!.Title
-            })
+        await ReportProgressAsync("Checking the selected chapter...");
+        var topic = await _dbContext.Topics.AsNoTracking()
+            .Where(item => item.Id == topicId && item.Flag == 0)
+            .Select(item => new { item.Id, item.Title })
             .SingleOrDefaultAsync(cancellationToken);
 
-        if (content is null)
+        if (topic is null)
         {
-            preview.FileErrors.Add("The selected content is no longer active. Refresh the page and choose another item.");
+            preview.FileErrors.Add("The selected chapter is no longer active. Refresh the page and choose another chapter.");
             return preview;
         }
 
-        preview.ContentTitle = content.Title;
-        preview.TopicTitle = content.TopicTitle;
+        preview.TopicTitle = topic.Title;
 
         var extension = Path.GetExtension(fileName);
         if (!extension.Equals(".txt", StringComparison.OrdinalIgnoreCase)
@@ -188,7 +193,7 @@ public sealed class InterviewQuestionImportService : IInterviewQuestionImportSer
         try
         {
             var analyzedQuestions = await _analyzerService.AnalyzeAsync(
-                content.Title,
+                topic.Title,
                 sourceText,
                 cancellationToken,
                 (message, _) => ReportProgressAsync(message));
@@ -204,11 +209,11 @@ public sealed class InterviewQuestionImportService : IInterviewQuestionImportSer
         {
             MarkDuplicatesWithinUpload(preview.Questions);
 
-            await ReportProgressAsync("Checking for questions already linked to this learning content...");
-
+            await ReportProgressAsync("Checking for questions already linked to this chapter...");
             var existingQuestions = await _dbContext.ContentInterviewQuestions
                 .AsNoTracking()
-                .Where(question => question.ContentId == contentId)
+                .Where(question => question.TopicId == topicId
+                    || (question.Content != null && question.Content.TopicId == topicId))
                 .Select(question => question.Question)
                 .ToListAsync(cancellationToken);
 
@@ -222,7 +227,7 @@ public sealed class InterviewQuestionImportService : IInterviewQuestionImportSer
                 if (existingKeys.Contains(NormalizeQuestion(item.Question)))
                 {
                     item.IsDuplicateInDatabase = true;
-                    AddIssue(item, "This question already exists for the selected content, including archived questions.");
+                    AddIssue(item, "This question already exists for the selected chapter, including archived questions.");
                 }
             }
         }
@@ -264,21 +269,19 @@ public sealed class InterviewQuestionImportService : IInterviewQuestionImportSer
                 preview);
         }
 
-        var contentExists = await _dbContext.Lessons
-            .AsNoTracking()
-            .AnyAsync(item => item.Id == preview.ContentId && item.Flag == 0
-                && item.Topic != null && item.Topic.Flag == 0, cancellationToken);
-
-        if (!contentExists)
+        var topicExists = await _dbContext.Topics.AsNoTracking()
+            .AnyAsync(item => item.Id == preview.TopicId && item.Flag == 0, cancellationToken);
+        if (!topicExists)
         {
-            AddFileError(preview, "The selected learning content is no longer active. Nothing was imported.");
+            AddFileError(preview, "The selected chapter is no longer active. Nothing was imported.");
             RefreshCachedPreview(previewToken, entry);
             return InterviewQuestionImportOutcomeDto.Failure(preview.FileErrors[0], preview);
         }
 
         var existingQuestions = await _dbContext.ContentInterviewQuestions
             .AsNoTracking()
-            .Where(question => question.ContentId == preview.ContentId)
+            .Where(question => question.TopicId == preview.TopicId
+                || (question.Content != null && question.Content.TopicId == preview.TopicId))
             .Select(question => question.Question)
             .ToListAsync(cancellationToken);
 
@@ -292,7 +295,7 @@ public sealed class InterviewQuestionImportService : IInterviewQuestionImportSer
             if (currentKeys.Contains(NormalizeQuestion(item.Question)))
             {
                 item.IsDuplicateInDatabase = true;
-                AddIssue(item, "This question now exists for the selected content. Nothing was imported; review the duplicate and upload again.");
+                AddIssue(item, "This question now exists for the selected chapter. Nothing was imported; review the duplicate and upload again.");
             }
         }
 
@@ -308,7 +311,8 @@ public sealed class InterviewQuestionImportService : IInterviewQuestionImportSer
         var questionsToInsert = preview.Questions
             .Select(item => new ContentInterviewQuestion
             {
-                ContentId = preview.ContentId,
+                ContentId = null,
+                TopicId = preview.TopicId,
                 Question = item.Question.Trim(),
                 Answer = item.Answer.Trim(),
                 Flag = 0,
