@@ -4,9 +4,14 @@
     ViewData["Title"] = "Practice Programs";
     var message = ViewBag.PracticeMessage as string;
     var messageType = ViewBag.PracticeMessageType as string;
+    var openImportModal = ViewBag.OpenPracticeProgramImportModal as string;
 }
 
-@section Styles { <link rel="stylesheet" href="~/css/admin-practice.css" asp-append-version="true" /> }
+@section Styles {
+    <link rel="stylesheet" href="~/css/admin-practice.css" asp-append-version="true" />
+    <link rel="stylesheet" href="~/css/admin-mcq-import.css" asp-append-version="true" />
+    <link rel="stylesheet" href="~/css/admin-practice-import.css" asp-append-version="true" />
+}
 
 <section class="ciit-practice-page">
     <div class="ciit-practice-header">
@@ -16,6 +21,12 @@
             <p>Manage programming problems and their associated solutions using the existing assessment data.</p>
         </div>
         <div class="ciit-practice-header-actions">
+            <button type="button"
+                    class="ciit-practice-secondary-btn"
+                    data-bs-toggle="modal"
+                    data-bs-target="#practiceProgramImportModal">
+                <i class="bi bi-file-earmark-arrow-up"></i><span>Analyze Questions</span>
+            </button>
             <a asp-area="Admin" asp-controller="Assessments" asp-action="CreatePracticeAnswer" class="ciit-practice-secondary-btn"><i class="bi bi-lightbulb"></i><span>Add Solution</span></a>
             <a asp-area="Admin" asp-controller="Assessments" asp-action="CreatePracticeProgram" class="ciit-practice-primary-btn"><i class="bi bi-plus-lg"></i><span>Add Program</span></a>
         </div>
@@ -171,4 +182,21 @@
             </div>
         }
     </section>
+    @await Html.PartialAsync("_PracticeProgramImportModal", Model)
 </section>
+
+@section Scripts {
+    <script src="~/js/admin-practice-import.js" asp-append-version="true"></script>
+    <partial name="_ValidationScriptsPartial" />
+    @if (string.Equals(openImportModal, "import", StringComparison.OrdinalIgnoreCase))
+    {
+        <script>
+            document.addEventListener("DOMContentLoaded", function () {
+                const element = document.getElementById("practiceProgramImportModal");
+                if (element && window.bootstrap) {
+                    bootstrap.Modal.getOrCreateInstance(element).show();
+                }
+            });
+        </script>
+    }
+}
