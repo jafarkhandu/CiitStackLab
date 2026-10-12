@@ -199,7 +199,7 @@
 }
 
 .ciit-payment-method:hover,
-.ciit-payment-method.is-selected {
+.ciit-payment-method:has(input:checked) {
     border-color: #a9c9fb;
     background: #f7faff;
 }
@@ -242,7 +242,7 @@
     opacity: 0;
 }
 
-.ciit-payment-method.is-selected .ciit-payment-method-check {
+.ciit-payment-method:has(input:checked) .ciit-payment-method-check {
     opacity: 1;
 }
 
