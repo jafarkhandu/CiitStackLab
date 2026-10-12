@@ -40,10 +40,13 @@ public sealed class DynamicCourseService : ICourseService
             Category = details.Category,
             Level = details.Level,
             DurationHours = details.DurationHours,
+            TotalPrice = details.TotalPrice,
             Topics = details.Topics.Select(topic => new CourseTopicDto
             {
                 Id = topic.Id,
                 Title = topic.Title,
+                Price = topic.Price,
+                HasNotes = topic.HasNotes,
                 Contents = topic.Contents.Select(content => new CourseContentDto
                 {
                     Id = content.Id,
@@ -110,9 +113,28 @@ public sealed class DynamicCourseService : ICourseService
                 {
                     x.Id,
                     x.TopicId,
+                    x.NoteId,
                     x.Title,
                     x.Slides,
                     x.VideoName
+                })
+                .ToListAsync(cancellationToken);
+
+        var chapterRows = topicIds.Count == 0
+            ? []
+            : await _dbContext.TrainingNotes
+                .AsNoTracking()
+                .Where(note => topicIds.Contains(note.TopicId) && note.Flag == 0)
+                .OrderBy(note => note.TopicId)
+                .ThenBy(note => note.SortOrder)
+                .ThenBy(note => note.Id)
+                .Select(note => new
+                {
+                    note.Id,
+                    note.TopicId,
+                    note.ChapterId,
+                    note.Title,
+                    note.SortOrder
                 })
                 .ToListAsync(cancellationToken);
 
@@ -137,7 +159,6 @@ public sealed class DynamicCourseService : ICourseService
                     Id = x.Id,
                     Question = x.Question ?? string.Empty,
                     Options = new[] { x.Option1, x.Option2, x.Option3, x.Option4 },
-                    CorrectOptionNumber = x.CorrectOptionNumber
                 }).ToList());
 
         var topics = topicData
@@ -159,6 +180,30 @@ public sealed class DynamicCourseService : ICourseService
                             ? contentQuestions
                             : Array.Empty<ContentQuestionDto>()
                     })
+                    .ToList(),
+                Chapters = chapterRows
+                    .Where(chapter => chapter.TopicId == topic.TopicId)
+                    .Select(chapter => new CourseLearningChapterDto
+                    {
+                        Id = chapter.Id,
+                        ChapterId = chapter.ChapterId,
+                        Title = chapter.Title ?? string.Empty,
+                        SortOrder = chapter.SortOrder,
+                        Contents = contentRows
+                            .Where(content => content.TopicId == topic.TopicId
+                                              && content.NoteId == chapter.Id)
+                            .Select(content => new CourseLearningContentDto
+                            {
+                                Id = content.Id,
+                                Title = content.Title ?? string.Empty,
+                                Slides = content.Slides,
+                                VideoName = content.VideoName,
+                                Questions = questionsByContentId.TryGetValue(content.Id, out var chapterQuestions)
+                                    ? chapterQuestions
+                                    : Array.Empty<ContentQuestionDto>()
+                            })
+                            .ToList()
+                    })
                     .ToList()
             })
             .ToList();
@@ -171,6 +216,11 @@ public sealed class DynamicCourseService : ICourseService
             ? allContents.FirstOrDefault(content => content.Id == contentId.Value)
             : allContents.FirstOrDefault();
 
+        if (contentId.HasValue && currentContent is null)
+        {
+            return null;
+        }
+
         return new CourseLearningDto
         {
             Id = course.Id,
@@ -181,7 +231,7 @@ public sealed class DynamicCourseService : ICourseService
             Category = course.Category,
             Level = course.Level,
             DurationHours = course.DurationHours,
-            TotalPrice = topics.Sum(x => x.Price),
+            TotalPrice = topics.Sum(x => Math.Max(0m, x.Price)),
             TopicCount = topics.Count,
             ContentCount = allContents.Count,
             Topics = topics,

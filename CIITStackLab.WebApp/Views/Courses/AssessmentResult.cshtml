@@ -1,0 +1,141 @@
+@model CIITStackLab.Application.DTOs.AssessmentAttemptResultDto
+
+@{
+    ViewData["Title"] = "Assessment Result";
+}
+
+@section Styles {
+    <link rel="stylesheet"
+          href="~/css/course-learning.css"
+          asp-append-version="true" />
+}
+
+<section class="ciit-assessment-result-page">
+    <div class="container ciit-assessment-result-shell">
+        <a asp-controller="Courses"
+           asp-action="Learn"
+           asp-route-id="@Model.CourseId"
+           asp-route-contentId="@Model.ContentId"
+           class="ciit-learning-back-link">
+            <i class="bi bi-arrow-left"></i>
+            Back to lesson
+        </a>
+
+        <header class="ciit-assessment-result-hero">
+            <span class="ciit-assessment-result-icon">
+                <i class="bi bi-patch-check-fill"></i>
+            </span>
+            <span class="ciit-learning-eyebrow">ASSESSMENT SUBMITTED</span>
+            <h1>Your result</h1>
+            <p>Your answers were graded by the server. Review each question and its correct answer below.</p>
+
+            <div class="ciit-assessment-score">
+                <div>
+                    <strong>@Model.Score <span>/ @Model.TotalQuestions</span></strong>
+                    <small>Correct answers</small>
+                </div>
+                <div class="ciit-assessment-score-percentage">
+                    <strong>@Model.Percentage%</strong>
+                    <small>Score</small>
+                </div>
+            </div>
+
+            <div class="ciit-assessment-result-progress"
+                 role="progressbar"
+                 aria-label="Assessment score"
+                 aria-valuenow="@Model.Percentage"
+                 aria-valuemin="0"
+                 aria-valuemax="100">
+                <span style="width: @Model.Percentage%"></span>
+            </div>
+
+            <small class="ciit-assessment-submitted-at">
+                Submitted @Model.SubmittedAt.ToLocalTime().ToString("dd MMM yyyy, hh:mm tt")
+            </small>
+        </header>
+
+        <section class="ciit-assessment-review">
+            <div class="ciit-assessment-review-header">
+                <div>
+                    <h2>Answer review</h2>
+                    <p>Correct answers are revealed here, after submission.</p>
+                </div>
+                <span>@Model.Questions.Count question@(Model.Questions.Count == 1 ? "" : "s")</span>
+            </div>
+
+            @for (var questionIndex = 0; questionIndex < Model.Questions.Count; questionIndex++)
+            {
+                var question = Model.Questions[questionIndex];
+
+                <article class="ciit-assessment-review-question">
+                    <div class="ciit-assessment-review-question-head">
+                        <span class="ciit-assessment-review-number">@(questionIndex + 1)</span>
+                        <div>
+                            <strong>@question.Question</strong>
+                            <small class="@(question.IsCorrect ? "is-correct" : "is-incorrect")">
+                                <i class="bi @(question.IsCorrect ? "bi-check-circle-fill" : "bi-x-circle-fill") me-1"></i>
+                                @(question.IsCorrect ? "Correct" : "Incorrect")
+                            </small>
+                        </div>
+                    </div>
+
+                    <div class="ciit-assessment-review-options">
+                        @for (var optionIndex = 0; optionIndex < question.Options.Count; optionIndex++)
+                        {
+                            var option = question.Options[optionIndex];
+                            var optionNumber = optionIndex + 1;
+                            var isCorrectOption = question.CorrectOptionNumber == optionNumber;
+                            var isSelectedOption = question.SelectedOptionNumber == optionNumber;
+
+                            if (!string.IsNullOrWhiteSpace(option))
+                            {
+                                <div class="ciit-assessment-review-option @(isCorrectOption ? "is-correct-option" : "") @(isSelectedOption && !isCorrectOption ? "is-wrong-option" : "")">
+                                    <span class="ciit-learning-option-letter">@((char)('A' + optionIndex))</span>
+                                    <span>@option</span>
+
+                                    @if (isCorrectOption)
+                                    {
+                                        <span class="ciit-assessment-option-status">
+                                            <i class="bi bi-check-circle-fill"></i> Correct answer
+                                        </span>
+                                    }
+                                    else if (isSelectedOption)
+                                    {
+                                        <span class="ciit-assessment-option-status">
+                                            <i class="bi bi-x-circle-fill"></i> Your answer
+                                        </span>
+                                    }
+                                </div>
+                            }
+                        }
+                    </div>
+
+                    @if (!question.SelectedOptionNumber.HasValue)
+                    {
+                        <p class="ciit-assessment-unanswered">
+                            <i class="bi bi-info-circle me-1"></i>You did not select an answer.
+                        </p>
+                    }
+                </article>
+            }
+        </section>
+
+        <div class="ciit-assessment-result-actions">
+            <a asp-controller="Courses"
+               asp-action="Learn"
+               asp-route-id="@Model.CourseId"
+               asp-route-contentId="@Model.ContentId"
+               asp-fragment="lesson-assessment"
+               class="btn btn-outline-primary">
+                <i class="bi bi-arrow-repeat me-2"></i>Try again
+            </a>
+            <a asp-controller="Courses"
+               asp-action="Learn"
+               asp-route-id="@Model.CourseId"
+               asp-route-contentId="@Model.ContentId"
+               class="btn btn-primary">
+                Continue learning <i class="bi bi-arrow-right ms-2"></i>
+            </a>
+        </div>
+    </div>
+</section>
