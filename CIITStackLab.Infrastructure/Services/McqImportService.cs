@@ -29,7 +29,7 @@ public sealed class McqImportService : IMcqImportService
     }
 
     public async Task<McqImportPreviewDto> PreviewAsync(
-        int contentId,
+        int topicId,
         string fileName,
         Stream fileStream,
         string userId,
@@ -37,7 +37,7 @@ public sealed class McqImportService : IMcqImportService
     {
         var preview = new McqImportPreviewDto
         {
-            ContentId = contentId,
+            TopicId = topicId,
             FileName = Path.GetFileName(fileName)
         };
 
@@ -47,34 +47,29 @@ public sealed class McqImportService : IMcqImportService
             return preview;
         }
 
-        if (contentId <= 0)
+        if (topicId <= 0)
         {
-            preview.FileErrors.Add("Select an active content item before uploading the MCQ file.");
+            preview.FileErrors.Add("Select an active chapter before uploading the MCQ file.");
             return preview;
         }
 
-        var content = await _dbContext.Lessons
+        var topic = await _dbContext.Topics
             .AsNoTracking()
-            .Where(lesson =>
-                lesson.Id == contentId
-                && lesson.Flag == 0
-                && lesson.Topic != null
-                && lesson.Topic.Flag == 0)
-            .Select(lesson => new
+            .Where(chapter => chapter.Id == topicId && chapter.Flag == 0)
+            .Select(chapter => new
             {
-                lesson.Id,
-                ContentTitle = lesson.Title ?? string.Empty,
-                TopicTitle = lesson.Topic!.Title
+                chapter.Id,
+                chapter.Title
             })
             .SingleOrDefaultAsync(cancellationToken);
 
-        if (content is null)
+        if (topic is null)
         {
-            preview.FileErrors.Add("The selected content is no longer active. Refresh the page and select another item.");
+            preview.FileErrors.Add("The selected chapter is no longer active. Refresh the page and select another chapter.");
             return preview;
         }
 
-        preview.ContentLabel = $"{content.TopicTitle} / {content.ContentTitle}";
+        preview.TopicLabel = topic.Title;
 
         var extension = Path.GetExtension(fileName);
 
@@ -114,7 +109,12 @@ public sealed class McqImportService : IMcqImportService
 
         var existingQuestions = await _dbContext.ContentQuestions
             .AsNoTracking()
-            .Where(question => question.ContentId == contentId)
+            .Where(question =>
+                question.TopicId == topicId
+                || (question.ContentId.HasValue
+                    && _dbContext.Lessons.Any(lesson =>
+                        lesson.Id == question.ContentId.Value
+                        && lesson.TopicId == topicId)))
             .Select(question => new
             {
                 question.Id,
@@ -137,7 +137,7 @@ public sealed class McqImportService : IMcqImportService
                 question.IsDuplicateInDatabase = true;
                 AddIssue(
                     question,
-                    "This question already exists for the selected content, including archived MCQs.");
+                    "This question already exists for the selected chapter, including archived MCQs.");
             }
         }
 
@@ -202,20 +202,18 @@ public sealed class McqImportService : IMcqImportService
                 preview);
         }
 
-        var contentExists = await _dbContext.Lessons
+        var topicExists = await _dbContext.Topics
             .AsNoTracking()
             .AnyAsync(
-                lesson =>
-                    lesson.Id == preview.ContentId
-                    && lesson.Flag == 0
-                    && lesson.Topic != null
-                    && lesson.Topic.Flag == 0,
+                topic =>
+                    topic.Id == preview.TopicId
+                    && topic.Flag == 0,
                 cancellationToken);
 
-        if (!contentExists)
+        if (!topicExists)
         {
             preview.FileErrors.Add(
-                "The target content is no longer active. Nothing was imported.");
+                "The target chapter is no longer active. Nothing was imported.");
             RefreshCachedPreview(previewToken, cacheEntry);
             return McqImportOutcomeDto.Failure(
                 preview.FileErrors[0],
@@ -224,7 +222,12 @@ public sealed class McqImportService : IMcqImportService
 
         var existingQuestions = await _dbContext.ContentQuestions
             .AsNoTracking()
-            .Where(question => question.ContentId == preview.ContentId)
+            .Where(question =>
+                question.TopicId == preview.TopicId
+                || (question.ContentId.HasValue
+                    && _dbContext.Lessons.Any(lesson =>
+                        lesson.Id == question.ContentId.Value
+                        && lesson.TopicId == preview.TopicId)))
             .Select(question => question.Question)
             .ToListAsync(cancellationToken);
 
@@ -242,7 +245,7 @@ public sealed class McqImportService : IMcqImportService
                 question.IsDuplicateInDatabase = true;
                 AddIssue(
                     question,
-                    "This question now exists in the database. Nothing was imported; remove or edit the duplicate and upload again.");
+                    "This question now exists for the selected chapter. Nothing was imported; remove or edit the duplicate and upload again.");
             }
         }
 
@@ -258,7 +261,8 @@ public sealed class McqImportService : IMcqImportService
         var questionsToInsert = preview.Questions
             .Select(question => new ContentQuestion
             {
-                ContentId = preview.ContentId,
+                TopicId = preview.TopicId,
+                ContentId = null,
                 Question = question.Question.Trim(),
                 Option1 = question.Option1.Trim(),
                 Option2 = question.Option2.Trim(),
