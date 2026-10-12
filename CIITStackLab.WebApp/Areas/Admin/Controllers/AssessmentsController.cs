@@ -519,7 +519,7 @@ public sealed class AssessmentsController : Controller
         {
             ViewBag.InterviewImportPreview = _interviewQuestionImportService.GetPreview(previewToken, userId);
             if (ViewBag.InterviewImportPreview is null)
-                ViewBag.InterviewImportMessage = "This preview has expired or is no longer available. Upload the content file again.";
+                ViewBag.InterviewImportMessage = "This preview has expired or is no longer available. Upload the chapter file again.";
         }
         if (string.Equals(ViewBag.OpenInterviewImportModal as string, "import", StringComparison.OrdinalIgnoreCase)
             && string.Equals(ViewBag.InterviewMessageType as string, "error", StringComparison.OrdinalIgnoreCase))
@@ -727,10 +727,16 @@ public sealed class AssessmentsController : Controller
         var question = await _interviewQuestionService.GetByIdAsync(id, cancellationToken);
         if (question is null) return NotFound();
 
-        await LoadInterviewQuestionContentAsync(cancellationToken);
+        var availableContent = await _interviewQuestionService.GetContentLookupAsync(cancellationToken);
+        ViewBag.InterviewQuestionContent = availableContent
+            .Select(x => new SelectListItem($"{x.TopicTitle} / {x.Title}", x.Id.ToString()))
+            .ToList();
+        var selectedContentId = question.ContentId
+            ?? availableContent.FirstOrDefault(x => x.TopicId == question.TopicId)?.Id
+            ?? 0;
         return View(new AdminInterviewQuestionInputDto
         {
-            ContentId = question.ContentId ?? 0,
+            ContentId = selectedContentId,
             Question = question.Question,
             Answer = question.Answer
         });
