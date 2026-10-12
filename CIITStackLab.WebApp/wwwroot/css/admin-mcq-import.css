@@ -752,3 +752,224 @@
         white-space: normal;
     }
 }
+
+
+/* In-page Add MCQ and Smart Import modals */
+.ciit-mcq-modal .modal-content {
+    overflow: hidden;
+    border: 1px solid #e1e7f0;
+    border-radius: 18px;
+    box-shadow: 0 24px 70px rgba(15, 23, 42, .2);
+}
+
+.ciit-mcq-modal .modal-header {
+    align-items: flex-start;
+    padding: 22px 24px;
+    border-bottom: 1px solid #e9eef6;
+    background: linear-gradient(115deg, #fbfcff 0%, #ffffff 100%);
+}
+
+.ciit-mcq-modal .modal-title {
+    margin: 5px 0 5px;
+    color: #1d2d48;
+    font-size: 1.25rem;
+    font-weight: 850;
+    letter-spacing: -.025em;
+}
+
+.ciit-mcq-modal .modal-header p {
+    color: #7b899f;
+    font-size: .8rem;
+}
+
+.ciit-mcq-modal .modal-body {
+    padding: 23px 24px;
+}
+
+.ciit-mcq-modal .modal-footer {
+    padding: 15px 24px;
+    border-top: 1px solid #e9eef6;
+    background: #fbfcff;
+}
+
+.ciit-mcq-modal-field {
+    display: grid;
+    gap: 7px;
+    margin-bottom: 17px;
+    color: #334155;
+    font-size: .82rem;
+    font-weight: 750;
+}
+
+.ciit-mcq-modal-field:last-child {
+    margin-bottom: 0;
+}
+
+.ciit-mcq-modal-field label {
+    color: #334155;
+    font-size: .82rem;
+    font-weight: 750;
+}
+
+.ciit-mcq-modal-field label span {
+    color: #dc3348;
+}
+
+.ciit-mcq-modal-field input,
+.ciit-mcq-modal-field select,
+.ciit-mcq-modal-field textarea {
+    width: 100%;
+    min-height: 43px;
+    padding: 10px 12px;
+    border: 1px solid #ced9e8;
+    border-radius: 10px;
+    background: #fff;
+    color: #263650;
+    font: inherit;
+    font-weight: 500;
+}
+
+.ciit-mcq-modal-field textarea {
+    min-height: 92px;
+    resize: vertical;
+}
+
+.ciit-mcq-modal-field input:focus,
+.ciit-mcq-modal-field select:focus,
+.ciit-mcq-modal-field textarea:focus {
+    outline: 3px solid rgba(37, 99, 235, .12);
+    border-color: #2563eb;
+}
+
+.ciit-mcq-modal-field small {
+    color: #8793a6;
+    font-size: .72rem;
+    font-weight: 500;
+}
+
+.ciit-mcq-modal-option-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 0 16px;
+}
+
+.ciit-mcq-header-actions .ciit-mcq-import-header-btn {
+    font-family: inherit;
+    cursor: pointer;
+}
+
+.ciit-mcq-header-actions .ciit-mcq-primary-btn {
+    font-family: inherit;
+    cursor: pointer;
+}
+
+.ciit-mcq-import-modal .modal-dialog {
+    --bs-modal-width: 1080px;
+}
+
+.ciit-mcq-import-modal-body {
+    display: grid;
+    gap: 18px;
+    background: #f8faff;
+}
+
+.ciit-mcq-import-modal-upload {
+    display: grid;
+    gap: 17px;
+    padding: 17px;
+    border: 1px solid #e1e8f2;
+    border-radius: 14px;
+    background: #ffffff;
+}
+
+.ciit-mcq-import-modal-fields {
+    display: grid;
+    grid-template-columns: minmax(220px, .8fr) minmax(280px, 1.2fr);
+    align-items: stretch;
+    gap: 17px;
+}
+
+.ciit-mcq-import-modal-fields .ciit-mcq-modal-field {
+    margin-bottom: 0;
+}
+
+.ciit-mcq-import-modal-fields .ciit-mcq-import-file-drop {
+    min-height: 150px;
+    margin: 0;
+}
+
+.ciit-mcq-import-modal-upload .ciit-mcq-import-format {
+    background: #f8faff;
+}
+
+.ciit-mcq-import-modal-upload .ciit-mcq-import-upload-actions {
+    justify-content: flex-end;
+}
+
+.ciit-mcq-import-modal-preview {
+    overflow: hidden;
+    border: 1px solid #e1e8f2;
+    border-radius: 14px;
+    background: #fff;
+}
+
+.ciit-mcq-import-modal-preview .ciit-mcq-import-preview-header {
+    padding: 18px;
+}
+
+.ciit-mcq-import-modal-preview .ciit-mcq-import-stats {
+    padding: 14px 18px;
+}
+
+.ciit-mcq-import-modal-preview .ciit-mcq-import-question-list {
+    gap: 10px;
+    max-height: 42vh;
+    overflow: auto;
+    padding: 15px 18px;
+}
+
+.ciit-mcq-import-modal-preview .ciit-mcq-import-question-body h4 {
+    margin: 0 0 14px;
+    color: #253651;
+    font-size: .92rem;
+    font-weight: 800;
+    line-height: 1.7;
+    white-space: pre-wrap;
+    overflow-wrap: anywhere;
+}
+
+.ciit-mcq-import-modal-preview .ciit-mcq-import-confirm-card {
+    padding: 17px 18px;
+}
+
+@media (max-width: 767.98px) {
+    .ciit-mcq-modal .modal-header,
+    .ciit-mcq-modal .modal-body,
+    .ciit-mcq-modal .modal-footer {
+        padding: 17px;
+    }
+
+    .ciit-mcq-modal-option-grid,
+    .ciit-mcq-import-modal-fields {
+        grid-template-columns: minmax(0, 1fr);
+    }
+
+    .ciit-mcq-import-modal-preview .ciit-mcq-import-stats {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    .ciit-mcq-import-modal-preview .ciit-mcq-import-question-list {
+        max-height: 36vh;
+        padding: 11px;
+    }
+
+    .ciit-mcq-import-modal-upload .ciit-mcq-import-upload-actions > button {
+        width: 100%;
+    }
+}
+
+@media (max-width: 440px) {
+    .ciit-mcq-import-modal-preview .ciit-mcq-import-stats {
+        grid-template-columns: minmax(0, 1fr);
+    }
+}
