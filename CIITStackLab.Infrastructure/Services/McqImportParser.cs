@@ -326,7 +326,7 @@ internal static class McqImportParser
 
             var looksLikeMalformedOptionOrAnswer = Regex.IsMatch(
                 line,
-                @"^(?:[A-Z]\s*[).:\-]|OPTION\s*\d+\s*[:).:\-]|(?:CORRECT\s+)?ANSWER\b)",
+                @"^(?:[A-Z]\s*[).:\-]|OPTION\s*[A-Z0-9]+\s*[:).:\-]|(?:CORRECT\s+)?ANSWER\b)",
                 RegexOptions.IgnoreCase | RegexOptions.CultureInvariant);
 
             if (looksLikeMalformedOptionOrAnswer)
