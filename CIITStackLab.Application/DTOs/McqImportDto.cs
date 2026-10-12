@@ -4,9 +4,9 @@ public sealed class McqImportPreviewDto
 {
     public string PreviewToken { get; set; } = string.Empty;
 
-    public int ContentId { get; set; }
+    public int TopicId { get; set; }
 
-    public string ContentLabel { get; set; } = string.Empty;
+    public string TopicLabel { get; set; } = string.Empty;
 
     public string FileName { get; set; } = string.Empty;
 
