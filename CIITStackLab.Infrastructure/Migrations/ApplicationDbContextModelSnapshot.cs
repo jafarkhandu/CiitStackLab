@@ -35,6 +35,10 @@ namespace CIITStackLab.Infrastructure.Migrations
                         .HasColumnType("int")
                         .HasColumnName("content_id");
 
+                    b.Property<int?>("TopicId")
+                        .HasColumnType("int")
+                        .HasColumnName("topic_id");
+
                     b.Property<int?>("CorrectOptionNumber")
                         .HasColumnType("int")
                         .HasColumnName("correct_option_number");
@@ -82,6 +86,9 @@ namespace CIITStackLab.Infrastructure.Migrations
                     b.HasKey("Id");
 
                     b.HasIndex("ContentId");
+
+                    b.HasIndex("TopicId")
+                        .HasDatabaseName("IX_tblcontent_questions_topic_id");
 
                     b.ToTable("tblcontent_questions", "erpsystem");
                 });
@@ -977,7 +984,14 @@ namespace CIITStackLab.Infrastructure.Migrations
                         .HasForeignKey("ContentId")
                         .OnDelete(DeleteBehavior.NoAction);
 
+                    b.HasOne("CIITStackLab.Domain.Entities.Topic", "Topic")
+                        .WithMany()
+                        .HasForeignKey("TopicId")
+                        .OnDelete(DeleteBehavior.NoAction);
+
                     b.Navigation("Content");
+
+                    b.Navigation("Topic");
                 });
 
             modelBuilder.Entity("CIITStackLab.Domain.Entities.CourseModule", b =>
