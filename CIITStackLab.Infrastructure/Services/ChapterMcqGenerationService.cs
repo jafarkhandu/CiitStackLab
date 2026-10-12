@@ -67,8 +67,7 @@ public sealed class ChapterMcqGenerationService : IChapterMcqGenerationService
         }
 
         if (!Uri.TryCreate(endpoint, UriKind.Absolute, out var endpointUri)
-            || (endpointUri.Scheme != Uri.UriSchemeHttps
-                && endpointUri.Scheme != Uri.UriSchemeHttp))
+            || endpointUri.Scheme != Uri.UriSchemeHttps)
         {
             throw new InvalidOperationException(
                 "The configured OpenAI:BaseUrl is invalid. Use an HTTPS Chat Completions endpoint.");
