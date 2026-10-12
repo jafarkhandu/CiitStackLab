@@ -134,7 +134,7 @@ internal static class ExcelQuestionSheetParser
                 if (rows.Count > MaximumRows)
                 {
                     throw new InvalidDataException(
-                        "The spreadsheet contains too many populated rows. MCQ uploads are limited to 500 questions.");
+                        "The spreadsheet contains too many populated rows. Excel question uploads are limited to 500 rows.");
                 }
             }
         }
