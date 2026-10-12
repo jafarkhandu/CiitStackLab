@@ -140,26 +140,73 @@ public sealed class DynamicCourseService : ICourseService
 
         var contentIds = contentRows.Select(x => x.Id).Distinct().ToList();
 
-        var questions = contentIds.Count == 0
-            ? []
-            : await _dbContext.ContentQuestions
-                .AsNoTracking()
-                .Where(x => x.ContentId.HasValue
-                            && contentIds.Contains(x.ContentId.Value)
-                            && x.Flag == 0)
-                .OrderBy(x => x.Id)
-                .ToListAsync(cancellationToken);
+        var questions = await _dbContext.ContentQuestions
+            .AsNoTracking()
+            .Where(question =>
+                question.Flag == 0
+                && ((question.ContentId.HasValue
+                     && contentIds.Contains(question.ContentId.Value))
+                    || (question.TopicId.HasValue
+                        && topicIds.Contains(question.TopicId.Value))))
+            .OrderBy(question => question.Id)
+            .ToListAsync(cancellationToken);
 
         var questionsByContentId = questions
-            .GroupBy(x => x.ContentId!.Value)
+            .Where(question => question.ContentId.HasValue)
+            .GroupBy(question => question.ContentId!.Value)
             .ToDictionary(
                 group => group.Key,
-                group => (IReadOnlyList<ContentQuestionDto>)group.Select(x => new ContentQuestionDto
+                group => (IReadOnlyList<ContentQuestionDto>)group.Select(MapLearningQuestion).ToList());
+
+        var questionsByTopicId = questions
+            .Where(question => question.TopicId.HasValue)
+            .GroupBy(question => question.TopicId!.Value)
+            .ToDictionary(
+                group => group.Key,
+                group => (IReadOnlyList<ContentQuestionDto>)group.Select(MapLearningQuestion).ToList());
+
+        var firstContentIdByTopicId = contentRows
+            .Where(content => content.TopicId.HasValue)
+            .GroupBy(content => content.TopicId!.Value)
+            .ToDictionary(
+                group => group.Key,
+                group => group.Min(content => content.Id));
+
+        IReadOnlyList<ContentQuestionDto> GetQuestionsForContent(int contentId, int? topicId)
+        {
+            var mappedQuestions = new List<ContentQuestionDto>();
+
+            if (questionsByContentId.TryGetValue(contentId, out var contentQuestions))
+            {
+                mappedQuestions.AddRange(contentQuestions);
+            }
+
+            if (topicId.HasValue
+                && firstContentIdByTopicId.TryGetValue(topicId.Value, out var firstContentId)
+                && firstContentId == contentId
+                && questionsByTopicId.TryGetValue(topicId.Value, out var topicQuestions))
+            {
+                foreach (var question in topicQuestions)
                 {
-                    Id = x.Id,
-                    Question = x.Question ?? string.Empty,
-                    Options = new[] { x.Option1, x.Option2, x.Option3, x.Option4 },
-                }).ToList());
+                    if (mappedQuestions.All(existingQuestion => existingQuestion.Id != question.Id))
+                    {
+                        mappedQuestions.Add(question);
+                    }
+                }
+            }
+
+            return mappedQuestions;
+        }
+
+        ContentQuestionDto MapLearningQuestion(ContentQuestion question)
+        {
+            return new ContentQuestionDto
+            {
+                Id = question.Id,
+                Question = question.Question ?? string.Empty,
+                Options = new[] { question.Option1, question.Option2, question.Option3, question.Option4 }
+            };
+        }
 
         var topics = topicData
             .Select(topic => new CourseLearningTopicDto
@@ -176,9 +223,7 @@ public sealed class DynamicCourseService : ICourseService
                         Title = content.Title ?? string.Empty,
                         Slides = content.Slides,
                         VideoName = content.VideoName,
-                        Questions = questionsByContentId.TryGetValue(content.Id, out var contentQuestions)
-                            ? contentQuestions
-                            : Array.Empty<ContentQuestionDto>()
+                        Questions = GetQuestionsForContent(content.Id, content.TopicId)
                     })
                     .ToList(),
                 Chapters = chapterRows
@@ -198,9 +243,7 @@ public sealed class DynamicCourseService : ICourseService
                                 Title = content.Title ?? string.Empty,
                                 Slides = content.Slides,
                                 VideoName = content.VideoName,
-                                Questions = questionsByContentId.TryGetValue(content.Id, out var chapterQuestions)
-                                    ? chapterQuestions
-                                    : Array.Empty<ContentQuestionDto>()
+                                Questions = GetQuestionsForContent(content.Id, content.TopicId)
                             })
                             .ToList()
                     })
