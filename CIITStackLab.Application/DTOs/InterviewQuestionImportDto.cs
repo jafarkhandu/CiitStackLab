@@ -4,9 +4,7 @@ public sealed class InterviewQuestionImportPreviewDto
 {
     public string PreviewToken { get; set; } = string.Empty;
 
-    public int ContentId { get; set; }
-
-    public string ContentTitle { get; set; } = string.Empty;
+    public int TopicId { get; set; }
 
     public string TopicTitle { get; set; } = string.Empty;
 
@@ -75,4 +73,10 @@ public sealed class InterviewQuestionImportOutcomeDto
             Preview = preview
         };
     }
+}
+
+public sealed class InterviewQuestionTopicLookupDto
+{
+    public int Id { get; init; }
+    public string Title { get; init; } = string.Empty;
 }
