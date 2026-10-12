@@ -4,14 +4,25 @@
     ViewData["Title"] = "Interview Questions";
     var message = ViewBag.InterviewMessage as string;
     var messageType = ViewBag.InterviewMessageType as string;
+    var openImportModal = ViewBag.OpenInterviewImportModal as string;
 }
 
-@section Styles { <link rel="stylesheet" href="~/css/admin-mcqs.css" asp-append-version="true" /> }
+@section Styles {
+    <link rel="stylesheet" href="~/css/admin-mcqs.css" asp-append-version="true" />
+    <link rel="stylesheet" href="~/css/admin-interview-import.css" asp-append-version="true" />
+}
 
 <section class="ciit-mcq-page">
     <div class="ciit-mcq-header">
         <div><span class="ciit-admin-eyebrow">Assessment</span><h1>Interview Questions</h1><p>Manage interview questions linked to existing learning content.</p></div>
-        <a asp-area="Admin" asp-controller="Assessments" asp-action="CreateInterviewQuestion" class="ciit-mcq-primary-btn"><i class="bi bi-plus-lg"></i><span>Add Interview Question</span></a>
+        <div class="ciit-mcq-header-actions">
+            <button type="button" class="ciit-mcq-import-header-btn" data-bs-toggle="modal" data-bs-target="#interviewQuestionImportModal">
+                <i class="bi bi-file-earmark-arrow-up"></i><span>Analyze Notes</span>
+            </button>
+            <a asp-area="Admin" asp-controller="Assessments" asp-action="CreateInterviewQuestion" class="ciit-mcq-primary-btn">
+                <i class="bi bi-plus-lg"></i><span>Add Interview Question</span>
+            </a>
+        </div>
     </div>
 
     @if (!string.IsNullOrWhiteSpace(message))
@@ -51,4 +62,21 @@
             </div>
         }
     </section>
+    @await Html.PartialAsync("_InterviewQuestionImportModal", Model)
 </section>
+
+@section Scripts {
+    <script src="~/js/admin-interview-import.js" asp-append-version="true"></script>
+    <partial name="_ValidationScriptsPartial" />
+    @if (string.Equals(openImportModal, "import", StringComparison.OrdinalIgnoreCase))
+    {
+        <script>
+            document.addEventListener("DOMContentLoaded", function () {
+                const element = document.getElementById("interviewQuestionImportModal");
+                if (element && window.bootstrap) {
+                    bootstrap.Modal.getOrCreateInstance(element).show();
+                }
+            });
+        </script>
+    }
+}

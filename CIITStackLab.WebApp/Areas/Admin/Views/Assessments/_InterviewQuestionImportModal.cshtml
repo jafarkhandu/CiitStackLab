@@ -1,0 +1,92 @@
+@model CIITStackLab.Application.DTOs.AdminInterviewQuestionIndexDto
+@{
+    var contentOptions = ViewBag.InterviewQuestionContent as IEnumerable<Microsoft.AspNetCore.Mvc.Rendering.SelectListItem>
+        ?? Array.Empty<Microsoft.AspNetCore.Mvc.Rendering.SelectListItem>();
+    var preview = ViewBag.InterviewImportPreview as CIITStackLab.Application.DTOs.InterviewQuestionImportPreviewDto;
+    var importMessage = ViewBag.InterviewImportMessage as string;
+}
+<div class="modal fade ciit-interview-import-modal" id="interviewQuestionImportModal" tabindex="-1"
+     aria-labelledby="interviewQuestionImportModalTitle" aria-hidden="true">
+    <div class="modal-dialog modal-xl modal-dialog-centered modal-dialog-scrollable">
+        <div class="modal-content">
+            <div class="modal-header">
+                <div>
+                    <span class="ciit-admin-eyebrow">Assessment tools</span>
+                    <h2 class="modal-title" id="interviewQuestionImportModalTitle">Interview Questions Analyzer</h2>
+                    <p class="mb-0">Analyze learning notes locally, review 20 source-based question-and-answer pairs, then confirm the import.</p>
+                </div>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body ciit-interview-import-modal-body">
+                <div id="interviewQuestionImportPreviewHost"
+                     data-preview-url="@Url.Action("GetInterviewQuestionImportPreview", "Assessments", new { area = "Admin" })">
+                    @if (preview is not null && (preview.Questions.Count > 0 || preview.FileErrors.Count > 0))
+                    {
+                        @await Html.PartialAsync("_InterviewQuestionImportPreview", preview)
+                    }
+                </div>
+                <div class="ciit-interview-import-live-status d-none" id="interviewImportLiveStatus" role="status" aria-live="polite">
+                    <div class="ciit-interview-import-live-icon" aria-hidden="true">
+                        <span></span><i class="bi bi-chat-square-text"></i>
+                    </div>
+                    <div class="ciit-interview-import-live-content">
+                        <div class="ciit-interview-import-live-heading">
+                            <strong id="interviewImportLiveTitle">Preparing analysis...</strong>
+                            <span id="interviewImportLiveState">READY</span>
+                        </div>
+                        <p id="interviewImportLiveDetail">Choose learning content and upload notes to begin.</p>
+                        <ol id="interviewImportProgressLog" class="ciit-interview-import-progress-log"></ol>
+                        <div class="ciit-interview-import-live-track" aria-hidden="true"><span></span></div>
+                    </div>
+                </div>
+                @if (!string.IsNullOrWhiteSpace(importMessage))
+                {
+                    <div class="ciit-interview-import-alert is-error" role="alert">
+                        <i class="bi bi-exclamation-circle-fill"></i><span>@importMessage</span>
+                    </div>
+                }
+                <form asp-area="Admin" asp-controller="Assessments" asp-action="PreviewInterviewQuestions"
+                      method="post" enctype="multipart/form-data" id="interviewQuestionImportUploadForm"
+                      class="ciit-interview-import-upload"
+                      data-analyze-url="@Url.Action("AnalyzeInterviewQuestions", "Assessments", new { area = "Admin" })">
+                    @Html.AntiForgeryToken()
+                    <div class="ciit-interview-import-upload-fields">
+                        <div class="ciit-interview-import-field">
+                            <label for="ImportInterviewContentId">Learning content <span>*</span></label>
+                            <select id="ImportInterviewContentId" name="contentId" required>
+                                <option value="0">Select content</option>
+                                @foreach (var item in contentOptions)
+                                {
+                                    <option value="@item.Value"
+                                            selected="@(preview?.ContentId.ToString() == item.Value ? "selected" : null)">@item.Text</option>
+                                }
+                            </select>
+                            <small>All questions will be linked to this content and its topic.</small>
+                        </div>
+                        <label class="ciit-interview-import-file-drop">
+                            <input type="file" name="file" id="ImportInterviewFile" accept=".txt,.docx" required />
+                            <span class="ciit-interview-import-file-icon"><i class="bi bi-cloud-arrow-up"></i></span>
+                            <strong>Choose a .txt or .docx file</strong>
+                            <span>Maximum 5 MB · Chapter notes or explanatory material</span>
+                        </label>
+                    </div>
+                    <div class="ciit-interview-import-format">
+                        <div class="ciit-interview-import-format-heading">
+                            <span><i class="bi bi-shield-check"></i></span>
+                            <div>
+                                <strong>Local rule-based analysis</strong>
+                                <p>Questions and answers are derived from source statements. No paid AI API or API key is used.</p>
+                            </div>
+                        </div>
+                        <div class="ciit-interview-import-format-steps">
+                            <span><b>01</b> Read content</span><span><b>02</b> Identify concepts</span><span><b>03</b> Validate 20 Q&amp;A pairs</span>
+                        </div>
+                    </div>
+                    <div class="ciit-interview-import-upload-actions">
+                        <button type="submit" class="ciit-mcq-import-primary"><i class="bi bi-search"></i> Analyze notes</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>

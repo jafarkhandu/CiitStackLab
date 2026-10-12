@@ -1,0 +1,131 @@
+/* Interview-question analyzer modal and Q&A preview. */
+.ciit-interview-import-modal { z-index:1260; }
+.modal-backdrop { z-index:1250; }
+.ciit-interview-import-modal .modal-dialog { --bs-modal-width:min(1180px,calc(100vw - 2rem)); margin-inline:auto; }
+.ciit-interview-import-modal .modal-content { overflow:hidden; max-height:calc(100vh - 2rem); max-height:calc(100dvh - 2rem); border:1px solid #e1e7f0; border-radius:20px; box-shadow:0 24px 75px rgba(15,23,42,.22); }
+.ciit-interview-import-modal .modal-header { display:flex; align-items:center; justify-content:space-between; gap:24px; padding:25px 30px; border-bottom:1px solid #e8eef7; background:linear-gradient(115deg,#fbfcff,#fff); }
+.ciit-interview-import-modal .modal-header>div { min-width:0; }
+.ciit-interview-import-modal .modal-title { margin:5px 0; color:#1d2d48; font-size:1.35rem; font-weight:850; letter-spacing:-.025em; }
+.ciit-interview-import-modal .modal-header p { max-width:76ch; margin:0; color:#7b899f; font-size:.82rem; line-height:1.7; }
+.ciit-interview-import-modal .modal-body { padding:28px 30px 30px; }
+.ciit-interview-import-modal-body { display:grid; grid-auto-rows:max-content; align-content:start; gap:24px; overflow-y:auto; background:#f7f9fd; }
+.ciit-interview-import-upload { display:grid; gap:22px; padding:22px; border:1px solid #e1e8f2; border-radius:17px; background:#fff; }
+.ciit-interview-import-upload-fields { display:grid; grid-template-columns:minmax(240px,.8fr) minmax(320px,1.2fr); align-items:stretch; gap:24px; }
+.ciit-interview-import-field { display:grid; align-content:start; gap:8px; min-width:0; color:#334155; font-size:.83rem; font-weight:750; }
+.ciit-interview-import-field label { margin:0; color:#334155; font-weight:750; }
+.ciit-interview-import-field label span { color:#dc3348; }
+.ciit-interview-import-field select { width:100%; min-height:48px; padding:11px 13px; border:1px solid #ced9e8; border-radius:11px; background:#fff; color:#263650; font:inherit; font-weight:500; }
+.ciit-interview-import-field select:focus { outline:3px solid rgba(37,99,235,.12); border-color:#2563eb; }
+.ciit-interview-import-field small { color:#8491a5; font-size:.73rem; font-weight:500; line-height:1.6; }
+.ciit-interview-import-file-drop { display:flex; flex-direction:column; align-items:center; justify-content:center; gap:9px; min-height:168px; margin:0; padding:24px; border:1px dashed #b9cbed; border-radius:15px; background:#f8faff; text-align:center; cursor:pointer; }
+.ciit-interview-import-file-drop input { max-width:100%; color:#63728a; font-size:.76rem; }
+.ciit-interview-import-file-drop>strong { color:#253651; font-size:.91rem; font-weight:800; }
+.ciit-interview-import-file-drop>span:last-child { color:#8090aa; font-size:.74rem; }
+.ciit-interview-import-file-icon { display:grid; place-items:center; width:48px; height:48px; border:1px solid #dce7ff; border-radius:15px; background:#eff4ff; color:#2563eb; font-size:1.3rem; }
+.ciit-interview-import-format { overflow:hidden; border:1px solid #e0e8f4; border-radius:14px; background:#f8faff; }
+.ciit-interview-import-format-heading { display:flex; align-items:flex-start; gap:12px; padding:17px 18px; }
+.ciit-interview-import-format-heading>span { display:grid; place-items:center; flex:0 0 38px; width:38px; height:38px; border-radius:12px; background:#eaf1ff; color:#2563eb; }
+.ciit-interview-import-format-heading strong { display:block; margin-bottom:5px; color:#263651; font-size:.82rem; font-weight:850; }
+.ciit-interview-import-format-heading p { margin:0; color:#7888a0; font-size:.76rem; line-height:1.65; }
+.ciit-interview-import-format-steps { display:flex; flex-wrap:wrap; gap:10px; padding:14px 18px; border-top:1px solid #e4ebf5; }
+.ciit-interview-import-format-steps span { display:inline-flex; align-items:center; gap:7px; padding:7px 10px; border:1px solid #e0e8f4; border-radius:9px; background:#fff; color:#586982; font-size:.71rem; font-weight:700; }
+.ciit-interview-import-format-steps b { color:#2563eb; font-size:.65rem; }
+.ciit-interview-import-upload-actions { display:flex; justify-content:flex-end; }
+.ciit-interview-import-upload-actions .ciit-mcq-import-primary { display:inline-flex; align-items:center; justify-content:center; gap:8px; min-height:44px; padding:11px 17px; border:0; border-radius:10px; background:#2563eb; color:#fff; font-size:.83rem; font-weight:800; }
+.ciit-interview-import-upload-actions .ciit-mcq-import-primary:disabled { opacity:.62; cursor:wait; }
+.ciit-interview-import-live-status { display:flex; align-items:flex-start; gap:18px; min-height:112px; padding:20px; border:1px solid #cddcff; border-radius:16px; background:linear-gradient(120deg,#f5f8ff,#fff 72%); color:#263651; }
+.ciit-interview-import-live-status.is-complete { border-color:#bfe6cc; background:#f8fdf9; }
+.ciit-interview-import-live-status.is-error { border-color:#f2cbcb; background:#fffafa; }
+.ciit-interview-import-live-icon { position:relative; display:grid; place-items:center; flex:0 0 54px; width:54px; height:54px; border:1px solid #c9d8ff; border-radius:16px; background:#eaf0ff; color:#285fd0; font-size:1.3rem; }
+.ciit-interview-import-live-icon>span { position:absolute; inset:-5px; border:2px solid transparent; border-top-color:#477bf0; border-radius:21px; animation:ciit-interview-import-spin 1.2s linear infinite; }
+.ciit-interview-import-live-status.is-complete .ciit-interview-import-live-icon,.ciit-interview-import-live-status.is-error .ciit-interview-import-live-icon { border-color:#bfe6cc; background:#e9f9ef; color:#14804a; }
+.ciit-interview-import-live-status.is-complete .ciit-interview-import-live-icon>span,.ciit-interview-import-live-status.is-error .ciit-interview-import-live-icon>span { display:none; }
+.ciit-interview-import-live-status.is-error .ciit-interview-import-live-icon { border-color:#f1caca; background:#fff0f0; color:#bc3b46; }
+.ciit-interview-import-live-content { min-width:0; flex:1; }
+.ciit-interview-import-live-heading { display:flex; align-items:center; justify-content:space-between; gap:12px; }
+.ciit-interview-import-live-heading strong { color:#20314f; font-size:.94rem; font-weight:850; }
+.ciit-interview-import-live-heading>span { flex:0 0 auto; padding:4px 8px; border:1px solid #d8e3fa; border-radius:999px; background:#fff; color:#54709f; font-size:.63rem; font-weight:850; letter-spacing:.08em; }
+.ciit-interview-import-live-status.is-complete .ciit-interview-import-live-heading>span { border-color:#c1e5cd; color:#16804b; }
+.ciit-interview-import-live-status.is-error .ciit-interview-import-live-heading>span { border-color:#f0c9cb; color:#b93540; }
+.ciit-interview-import-live-content>p { margin:5px 0 0; color:#65748e; font-size:.78rem; line-height:1.65; }
+.ciit-interview-import-progress-log { display:grid; gap:6px; max-height:150px; overflow-y:auto; margin:12px 0 0; padding:0 6px 0 0; list-style:none; }
+.ciit-interview-import-progress-log:empty { display:none; }
+.ciit-interview-import-progress-log li { position:relative; padding-left:20px; color:#53647f; font-size:.74rem; line-height:1.55; }
+.ciit-interview-import-progress-log li::before { position:absolute; top:.22em; left:0; width:12px; height:12px; border:2px solid #8ca9ef; border-radius:50%; content:""; }
+.ciit-interview-import-progress-log li:last-child::before { border-color:#356eea; background:#356eea; }
+.ciit-interview-import-live-track { height:4px; margin-top:14px; overflow:hidden; border-radius:999px; background:#e2eafc; }
+.ciit-interview-import-live-track>span { display:block; width:42%; height:100%; border-radius:inherit; background:linear-gradient(90deg,#356eea,#79a6ff); animation:ciit-interview-import-sweep 1.5s ease-in-out infinite; }
+.ciit-interview-import-live-status.is-complete .ciit-interview-import-live-track,.ciit-interview-import-live-status.is-error .ciit-interview-import-live-track { display:none; }
+.ciit-interview-import-alert,.ciit-interview-import-errors { padding:14px 16px; border:1px solid #f0cbcd; border-radius:12px; background:#fff7f7; color:#a3333c; font-size:.78rem; line-height:1.65; }
+.ciit-interview-import-alert { display:flex; align-items:flex-start; gap:10px; }
+.ciit-interview-import-errors { margin:18px 24px 0; }
+.ciit-interview-import-errors strong { display:block; margin-bottom:6px; }
+.ciit-interview-import-errors ul { margin:0; padding-left:21px; }
+.ciit-interview-import-preview { overflow:hidden; border:1px solid #e0e8f3; border-radius:17px; background:#fff; }
+.ciit-interview-import-preview-header { display:flex; align-items:center; justify-content:space-between; gap:18px; padding:22px 24px; border-bottom:1px solid #edf1f7; background:#fff; }
+.ciit-interview-import-preview-header>div { display:flex; align-items:flex-start; gap:13px; min-width:0; }
+.ciit-interview-import-preview-header>div>div { min-width:0; }
+.ciit-interview-import-step { display:grid; place-items:center; flex:0 0 38px; width:38px; height:38px; border:1px solid #dce8ff; border-radius:12px; background:#eef4ff; color:#1769ff; font-size:.75rem; font-weight:850; }
+.ciit-interview-import-preview-header h3 { margin:3px 0 5px; color:#1d2d48; font-size:1.03rem; font-weight:850; }
+.ciit-interview-import-preview-header p { margin:0; color:#7a879c; font-size:.76rem; line-height:1.6; overflow-wrap:anywhere; }
+.ciit-interview-import-preview-header p span { padding:0 4px; color:#a3acba; }
+.ciit-interview-import-review-pill { display:inline-flex; align-items:center; gap:6px; flex:0 0 auto; padding:7px 10px; border:1px solid #c8e7d3; border-radius:999px; background:#f0faf4; color:#207246; font-size:.68rem; font-weight:800; }
+.ciit-interview-import-stats { display:grid; grid-template-columns:repeat(4,minmax(0,1fr)); gap:13px; padding:18px 24px; border-bottom:1px solid #edf1f7; background:#fbfcff; }
+.ciit-interview-import-stats>div { display:grid; align-content:start; gap:8px; padding:14px; border:1px solid #e3eaf4; border-radius:12px; background:#fff; }
+.ciit-interview-import-stats span { color:#7c899e; font-size:.7rem; font-weight:750; }
+.ciit-interview-import-stats strong { color:#253651; font-size:1.3rem; font-weight:850; font-variant-numeric:tabular-nums; }
+.ciit-interview-import-stats .is-valid { border-color:#cfebd9; background:#f7fdf9; }
+.ciit-interview-import-stats .is-valid strong { color:#18804a; }
+.ciit-interview-import-stats .is-invalid { border-color:#f0d5d6; background:#fff8f8; }
+.ciit-interview-import-stats .is-invalid strong { color:#be3743; }
+.ciit-interview-import-question-list { display:grid; gap:14px; max-height:min(48vh,480px); overflow:auto; padding:20px 24px; overscroll-behavior:contain; }
+.ciit-interview-import-question { overflow:hidden; border:1px solid #e1e8f2; border-radius:15px; background:#fff; }
+.ciit-interview-import-question.is-valid { border-color:#dcebe1; }
+.ciit-interview-import-question.is-invalid { border-color:#f0d1d3; }
+.ciit-interview-import-question>header { display:flex; align-items:center; flex-wrap:wrap; gap:11px; padding:14px 18px; border-bottom:1px solid #edf1f7; background:#fcfdff; }
+.ciit-interview-import-number { display:inline-flex; align-items:center; justify-content:center; min-width:46px; height:31px; padding:0 9px; border-radius:9px; background:#edf3ff; color:#245fc4; font-size:.74rem; font-weight:850; }
+.ciit-interview-import-status { display:inline-flex; align-items:center; gap:5px; flex:1 1 auto; font-size:.72rem; font-weight:800; }
+.ciit-interview-import-status.is-valid { color:#197747; }
+.ciit-interview-import-status.is-invalid { color:#b3333d; }
+.ciit-interview-import-duplicate { padding:6px 9px; border:1px solid #f1dfb2; border-radius:999px; background:#fff9e9; color:#8c681d; font-size:.67rem; font-weight:800; }
+.ciit-interview-import-question-body { padding:20px; }
+.ciit-interview-import-question-label { display:flex; align-items:center; gap:8px; margin-bottom:8px; color:#72829a; font-size:.7rem; font-weight:850; letter-spacing:.035em; text-transform:uppercase; }
+.ciit-interview-import-question-label i { color:#3b6fd7; font-size:.86rem; }
+.ciit-interview-import-question-body h4 { margin:0; color:#253651; font-size:.94rem; font-weight:850; line-height:1.7; white-space:pre-wrap; overflow-wrap:anywhere; }
+.ciit-interview-import-answer { margin-top:17px; padding:15px 16px; border:1px solid #e2eaf5; border-radius:12px; background:#f8faff; }
+.ciit-interview-import-answer p { margin:0; color:#52627b; font-size:.82rem; line-height:1.8; white-space:pre-wrap; overflow-wrap:anywhere; }
+.ciit-interview-import-question-body footer { display:flex; flex-direction:column; gap:7px; margin-top:14px; padding-top:11px; border-top:1px solid #edf1f7; color:#8390a3; font-size:.7rem; }
+.ciit-interview-import-question-body footer ul { margin:0; padding-left:20px; color:#a3333c; }
+.ciit-interview-import-confirm { display:flex; align-items:center; justify-content:space-between; gap:20px; padding:20px 24px; border-top:1px solid #e7edf6; background:#fff; }
+.ciit-interview-import-confirm>div { min-width:0; }
+.ciit-interview-import-confirm>div>strong { display:inline-flex; align-items:center; gap:7px; color:#273752; font-size:.84rem; font-weight:850; }
+.ciit-interview-import-confirm>div>strong i { color:#17804b; }
+.ciit-interview-import-confirm>div>p { margin:6px 0 0; color:#7b899f; font-size:.76rem; line-height:1.65; }
+.ciit-interview-import-confirm form { margin:0; flex:0 0 auto; }
+.ciit-interview-import-add { display:inline-flex; align-items:center; justify-content:center; gap:8px; min-height:44px; padding:11px 16px; border:0; border-radius:10px; background:#2563eb; color:#fff; font-size:.81rem; font-weight:800; white-space:nowrap; }
+.ciit-interview-import-add:disabled { opacity:.55; cursor:not-allowed; }
+@keyframes ciit-interview-import-spin { to { transform:rotate(360deg); } }
+@keyframes ciit-interview-import-sweep { 0% { transform:translateX(-115%); } 100% { transform:translateX(260%); } }
+@media(prefers-reduced-motion:reduce) { .ciit-interview-import-live-icon>span,.ciit-interview-import-live-track>span { animation:none!important; } }
+@media(max-width:767.98px) {
+ .ciit-interview-import-modal .modal-dialog { --bs-modal-width:calc(100vw - 1rem); }
+ .ciit-interview-import-modal .modal-content { max-height:calc(100vh - 1rem); max-height:calc(100dvh - 1rem); }
+ .ciit-interview-import-modal .modal-header { align-items:flex-start; gap:14px; padding:19px 18px; }
+ .ciit-interview-import-modal .modal-title { font-size:1.15rem; }
+ .ciit-interview-import-modal .modal-body { padding:18px; }
+ .ciit-interview-import-modal-body { gap:18px; }
+ .ciit-interview-import-upload { gap:18px; padding:16px; }
+ .ciit-interview-import-upload-fields { grid-template-columns:minmax(0,1fr); gap:18px; }
+ .ciit-interview-import-preview-header { align-items:flex-start; flex-direction:column; padding:17px; }
+ .ciit-interview-import-stats { grid-template-columns:repeat(2,minmax(0,1fr)); gap:10px; padding:15px; }
+ .ciit-interview-import-question-list { max-height:42vh; padding:14px; }
+ .ciit-interview-import-question-body { padding:16px; }
+ .ciit-interview-import-confirm { align-items:stretch; flex-direction:column; gap:15px; padding:17px; }
+ .ciit-interview-import-confirm form,.ciit-interview-import-add,.ciit-interview-import-upload-actions .ciit-mcq-import-primary { width:100%; }
+}
+@media(max-width:440px) {
+ .ciit-interview-import-stats { grid-template-columns:minmax(0,1fr); }
+ .ciit-interview-import-live-status { gap:12px; padding:15px; }
+ .ciit-interview-import-live-icon { flex-basis:42px; width:42px; height:42px; }
+ .ciit-interview-import-live-heading { align-items:flex-start; flex-direction:column; gap:7px; }
+}

@@ -18,6 +18,7 @@ public sealed class AssessmentsController : Controller
     private readonly IAdminMcqService _mcqService;
     private readonly IMcqImportService _mcqImportService;
     private readonly IAdminInterviewQuestionService _interviewQuestionService;
+    private readonly IInterviewQuestionImportService _interviewQuestionImportService;
     private readonly IAdminPracticeProgramService _practiceProgramService;
     private readonly ILogger<AssessmentsController> _logger;
 
@@ -25,12 +26,14 @@ public sealed class AssessmentsController : Controller
         IAdminMcqService mcqService,
         IMcqImportService mcqImportService,
         IAdminInterviewQuestionService interviewQuestionService,
+        IInterviewQuestionImportService interviewQuestionImportService,
         IAdminPracticeProgramService practiceProgramService,
         ILogger<AssessmentsController> logger)
     {
         _mcqService = mcqService;
         _mcqImportService = mcqImportService;
         _interviewQuestionService = interviewQuestionService;
+        _interviewQuestionImportService = interviewQuestionImportService;
         _practiceProgramService = practiceProgramService;
         _logger = logger;
     }
@@ -505,11 +508,187 @@ public sealed class AssessmentsController : Controller
     }
 
     [HttpGet]
-    public async Task<IActionResult> InterviewQuestions(CancellationToken cancellationToken)
+    public async Task<IActionResult> InterviewQuestions(string? previewToken, CancellationToken cancellationToken)
     {
         ViewBag.InterviewMessage = TempData["AdminInterviewMessage"] as string;
         ViewBag.InterviewMessageType = TempData["AdminInterviewMessageType"] as string;
+        ViewBag.OpenInterviewImportModal = TempData["OpenAdminInterviewImportModal"] as string;
+        ViewBag.InterviewImportMessage = null;
+        var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+        if (!string.IsNullOrWhiteSpace(userId) && !string.IsNullOrWhiteSpace(previewToken))
+        {
+            ViewBag.InterviewImportPreview = _interviewQuestionImportService.GetPreview(previewToken, userId);
+            if (ViewBag.InterviewImportPreview is null)
+                ViewBag.InterviewImportMessage = "This preview has expired or is no longer available. Upload the content file again.";
+        }
+        if (string.Equals(ViewBag.OpenInterviewImportModal as string, "import", StringComparison.OrdinalIgnoreCase)
+            && string.Equals(ViewBag.InterviewMessageType as string, "error", StringComparison.OrdinalIgnoreCase))
+            ViewBag.InterviewImportMessage = ViewBag.InterviewMessage;
+        await LoadInterviewQuestionContentAsync(cancellationToken);
         return View(await _interviewQuestionService.GetIndexAsync(cancellationToken));
+    }
+
+
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    [RequestSizeLimit(6 * 1024 * 1024)]
+    [RequestFormLimits(MultipartBodyLengthLimit = 6 * 1024 * 1024)]
+    public async Task<IActionResult> AnalyzeInterviewQuestions(int contentId, IFormFile? file, CancellationToken cancellationToken)
+    {
+        var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+        if (string.IsNullOrWhiteSpace(userId)) return Unauthorized();
+        Response.ContentType = "application/x-ndjson; charset=utf-8";
+        Response.Headers["Cache-Control"] = "no-cache, no-store, must-revalidate";
+        Response.Headers["X-Accel-Buffering"] = "no";
+
+        async Task WriteEventAsync(object payload, CancellationToken token)
+        {
+            await Response.WriteAsync(JsonSerializer.Serialize(payload) + "\n", token);
+            await Response.Body.FlushAsync(token);
+        }
+        async Task ReportProgressAsync(string message, CancellationToken token)
+        {
+            await WriteEventAsync(new { type = "progress", message }, token);
+        }
+
+        await Response.StartAsync(cancellationToken);
+        await ReportProgressAsync("Upload received. Preparing content and file checks...", cancellationToken);
+        var preview = new InterviewQuestionImportPreviewDto
+        {
+            ContentId = contentId,
+            FileName = file is null ? string.Empty : Path.GetFileName(file.FileName)
+        };
+
+        try
+        {
+            if (file is null || file.Length == 0)
+                preview.FileErrors.Add("Choose a non-empty .txt or .docx file.");
+            else if (file.Length > 5 * 1024 * 1024)
+                preview.FileErrors.Add("The upload is larger than 5 MB. Split the file into smaller batches.");
+            else
+            {
+                await using var stream = file.OpenReadStream();
+                preview = await _interviewQuestionImportService.PreviewAsync(
+                    contentId, file.FileName, stream, userId, cancellationToken, ReportProgressAsync);
+            }
+        }
+        catch (DbException exception)
+        {
+            _logger.LogError(exception, "Interview question analysis database failure for content {ContentId}.", contentId);
+            preview = new InterviewQuestionImportPreviewDto
+            {
+                ContentId = contentId,
+                FileName = file is null ? string.Empty : Path.GetFileName(file.FileName)
+            };
+            preview.FileErrors.Add("The database returned an error while checking the selected content. No interview questions were saved.");
+        }
+        catch (Exception exception) when (!cancellationToken.IsCancellationRequested)
+        {
+            _logger.LogError(exception, "Interview question analysis failed for content {ContentId}.", contentId);
+            preview = new InterviewQuestionImportPreviewDto
+            {
+                ContentId = contentId,
+                FileName = file is null ? string.Empty : Path.GetFileName(file.FileName)
+            };
+            preview.FileErrors.Add("The file could not be analyzed. Verify that it is a valid .txt or .docx file and try again. No questions were saved.");
+        }
+
+        _interviewQuestionImportService.CachePreview(preview, userId);
+        await WriteEventAsync(new
+        {
+            type = "result", previewToken = preview.PreviewToken,
+            questionCount = preview.Questions.Count, validCount = preview.ValidQuestionCount,
+            invalidCount = preview.InvalidQuestionCount, fileErrorCount = preview.FileErrors.Count,
+            canImport = preview.CanImport
+        }, cancellationToken);
+        return new EmptyResult();
+    }
+
+    [HttpGet]
+    public IActionResult GetInterviewQuestionImportPreview(string? previewToken)
+    {
+        var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+        if (string.IsNullOrWhiteSpace(userId)) return Unauthorized();
+        if (string.IsNullOrWhiteSpace(previewToken)) return BadRequest();
+        var preview = _interviewQuestionImportService.GetPreview(previewToken, userId);
+        return preview is null ? NotFound() : PartialView("_InterviewQuestionImportPreview", preview);
+    }
+
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    [RequestSizeLimit(6 * 1024 * 1024)]
+    [RequestFormLimits(MultipartBodyLengthLimit = 6 * 1024 * 1024)]
+    public async Task<IActionResult> PreviewInterviewQuestions(int contentId, IFormFile? file, CancellationToken cancellationToken)
+    {
+        var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+        if (string.IsNullOrWhiteSpace(userId)) return Unauthorized();
+        var preview = new InterviewQuestionImportPreviewDto
+        {
+            ContentId = contentId,
+            FileName = file is null ? string.Empty : Path.GetFileName(file.FileName)
+        };
+
+        try
+        {
+            if (file is null || file.Length == 0)
+                preview.FileErrors.Add("Choose a non-empty .txt or .docx file.");
+            else if (file.Length > 5 * 1024 * 1024)
+                preview.FileErrors.Add("The upload is larger than 5 MB. Split the file into smaller batches.");
+            else
+            {
+                await using var stream = file.OpenReadStream();
+                preview = await _interviewQuestionImportService.PreviewAsync(contentId, file.FileName, stream, userId, cancellationToken);
+            }
+        }
+        catch (Exception exception) when (exception is DbException or DbUpdateException)
+        {
+            _logger.LogError(exception, "Interview question preview database failure for content {ContentId}.", contentId);
+            preview.FileErrors.Add("The database returned an error while checking the selected content. No questions were saved.");
+        }
+        catch (Exception exception) when (!cancellationToken.IsCancellationRequested)
+        {
+            _logger.LogError(exception, "Interview question preview failed for content {ContentId}.", contentId);
+            preview.FileErrors.Add("The file could not be analyzed. Verify that it is a valid .txt or .docx file and try again.");
+        }
+        _interviewQuestionImportService.CachePreview(preview, userId);
+        TempData["OpenAdminInterviewImportModal"] = "import";
+        return RedirectToAction(nameof(InterviewQuestions), new { previewToken = preview.PreviewToken });
+    }
+
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> ConfirmInterviewQuestionImport(string previewToken, CancellationToken cancellationToken)
+    {
+        var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+        if (string.IsNullOrWhiteSpace(userId)) return Unauthorized();
+        InterviewQuestionImportOutcomeDto result;
+        try
+        {
+            result = await _interviewQuestionImportService.ConfirmAsync(previewToken, userId, cancellationToken);
+        }
+        catch (Exception exception) when (exception is DbException or DbUpdateException)
+        {
+            _logger.LogError(exception, "Interview question import confirmation failed.");
+            TempData["AdminInterviewMessage"] = "The database could not confirm this interview-question import. Check the Interview Questions list before retrying.";
+            TempData["AdminInterviewMessageType"] = "error";
+            TempData["OpenAdminInterviewImportModal"] = "import";
+            return RedirectToAction(nameof(InterviewQuestions), new { previewToken });
+        }
+        if (result.Succeeded)
+        {
+            TempData["AdminInterviewMessage"] = result.Message;
+            TempData["AdminInterviewMessageType"] = "success";
+            return RedirectToAction(nameof(InterviewQuestions));
+        }
+        TempData["AdminInterviewMessage"] = result.Message;
+        TempData["AdminInterviewMessageType"] = "error";
+        TempData["OpenAdminInterviewImportModal"] = "import";
+        if (result.Preview is not null)
+        {
+            _interviewQuestionImportService.CachePreview(result.Preview, userId);
+            return RedirectToAction(nameof(InterviewQuestions), new { previewToken = result.Preview.PreviewToken });
+        }
+        return RedirectToAction(nameof(InterviewQuestions));
     }
 
     [HttpGet]

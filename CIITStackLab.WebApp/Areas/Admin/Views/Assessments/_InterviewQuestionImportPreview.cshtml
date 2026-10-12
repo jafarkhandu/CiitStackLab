@@ -1,0 +1,84 @@
+@model CIITStackLab.Application.DTOs.InterviewQuestionImportPreviewDto
+<section class="ciit-interview-import-preview" id="interviewQuestionImportResults" aria-labelledby="interviewQuestionImportResultsTitle">
+    <header class="ciit-interview-import-preview-header">
+        <div>
+            <span class="ciit-interview-import-step">02</span>
+            <div>
+                <span class="ciit-admin-eyebrow">Analysis results</span>
+                <h3 id="interviewQuestionImportResultsTitle">Review interview Q&amp;A</h3>
+                <p>@Model.FileName <span>·</span> @Model.TopicTitle / @Model.ContentTitle</p>
+            </div>
+        </div>
+        <span class="ciit-interview-import-review-pill"><i class="bi bi-shield-check"></i> Nothing saved yet</span>
+    </header>
+    <div class="ciit-interview-import-stats">
+        <div><span>Questions detected</span><strong>@Model.Questions.Count / 20</strong></div>
+        <div class="is-valid"><span>Valid Q&amp;A pairs</span><strong>@Model.ValidQuestionCount</strong></div>
+        <div class="@(Model.InvalidQuestionCount > 0 || Model.FileErrors.Count > 0 ? "is-invalid" : string.Empty)">
+            <span>Needs attention</span><strong>@(Model.InvalidQuestionCount + Model.FileErrors.Count)</strong>
+        </div>
+        <div><span>Database duplicates</span><strong>@Model.Questions.Count(question => question.IsDuplicateInDatabase)</strong></div>
+    </div>
+    @if (Model.FileErrors.Count > 0)
+    {
+        <div class="ciit-interview-import-errors" role="alert">
+            <strong><i class="bi bi-exclamation-triangle-fill"></i> Analysis issues</strong>
+            <ul>
+                @foreach (var error in Model.FileErrors) { <li>@error</li> }
+            </ul>
+        </div>
+    }
+    <div class="ciit-interview-import-question-list" aria-label="Analyzed interview question and answer pairs">
+        @foreach (var item in Model.Questions)
+        {
+            <article class="ciit-interview-import-question @(item.IsValid ? "is-valid" : "is-invalid")">
+                <header>
+                    <span class="ciit-interview-import-number">Q@(item.Number)</span>
+                    <span class="ciit-interview-import-status @(item.IsValid ? "is-valid" : "is-invalid")">
+                        <i class="bi @(item.IsValid ? "bi-check-circle-fill" : "bi-exclamation-circle-fill")"></i>
+                        @(item.IsValid ? "Ready to import" : "Needs attention")
+                    </span>
+                    @if (item.IsDuplicateInDatabase) { <span class="ciit-interview-import-duplicate">Database duplicate</span> }
+                </header>
+                <div class="ciit-interview-import-question-body">
+                    <div class="ciit-interview-import-question-label"><i class="bi bi-chat-left-text"></i><span>Interview question</span></div>
+                    <h4>@item.Question</h4>
+                    <div class="ciit-interview-import-answer">
+                        <div class="ciit-interview-import-question-label"><i class="bi bi-journal-text"></i><span>Source-based answer</span></div>
+                        <p>@item.Answer</p>
+                    </div>
+                    <footer>
+                        @if (item.SourceLine > 0) { <span>Source line @item.SourceLine</span> }
+                        @if (item.Issues.Count > 0)
+                        {
+                            <ul role="alert">
+                                @foreach (var issue in item.Issues) { <li>@issue</li> }
+                            </ul>
+                        }
+                    </footer>
+                </div>
+            </article>
+        }
+    </div>
+    <footer class="ciit-interview-import-confirm">
+        <div>
+            @if (Model.CanImport)
+            {
+                <strong><i class="bi bi-check-circle-fill"></i> Ready to import</strong>
+                <p>20 interview questions will be saved under <b>@Model.TopicTitle / @Model.ContentTitle</b> after confirmation.</p>
+            }
+            else
+            {
+                <strong><i class="bi bi-exclamation-triangle-fill"></i> Import is blocked</strong>
+                <p>Exactly 20 valid, non-duplicate Q&amp;A pairs are required. Review the errors or upload fuller source notes.</p>
+            }
+        </div>
+        <form asp-area="Admin" asp-controller="Assessments" asp-action="ConfirmInterviewQuestionImport" method="post">
+            @Html.AntiForgeryToken()
+            <input type="hidden" name="previewToken" value="@Model.PreviewToken" />
+            <button type="submit" class="ciit-interview-import-add" disabled="@(!Model.CanImport)">
+                <i class="bi bi-database-check"></i> Add Questions (@Model.Questions.Count)
+            </button>
+        </form>
+    </footer>
+</section>
