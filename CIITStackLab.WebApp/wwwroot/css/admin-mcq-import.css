@@ -973,3 +973,13 @@
         grid-template-columns: minmax(0, 1fr);
     }
 }
+
+
+/* Keep MCQ dialogs above the fixed admin sidebar (z-index: 1200). */
+.modal-backdrop {
+    z-index: 1250;
+}
+
+.ciit-mcq-modal {
+    z-index: 1260;
+}
