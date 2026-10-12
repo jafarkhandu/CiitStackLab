@@ -54,6 +54,7 @@ public static class DependencyInjection
         services.AddScoped<IInterviewQuestionAnalyzerService, InterviewQuestionAnalyzerService>();
         services.AddScoped<IInterviewQuestionImportService, InterviewQuestionImportService>();
         services.AddScoped<IAdminPracticeProgramService, AdminPracticeProgramService>();
+        services.AddScoped<IPracticeProgramImportService, PracticeProgramImportService>();
         services.AddScoped<INotesService, NotesService>();
         services.AddScoped<IChapterMcqAnalyzerService, ChapterMcqAnalyzerService>();
         services.AddScoped<IMcqImportService, McqImportService>();
