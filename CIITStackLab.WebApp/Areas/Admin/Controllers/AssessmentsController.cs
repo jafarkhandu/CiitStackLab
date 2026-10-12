@@ -231,7 +231,7 @@ public sealed class AssessmentsController : Controller
         {
             if (file is null || file.Length == 0)
             {
-                preview.FileErrors.Add("Choose a non-empty .txt or .docx file.");
+                preview.FileErrors.Add("Choose a non-empty .xlsx Excel workbook.");
             }
             else if (file.Length > 5 * 1024 * 1024)
             {
@@ -274,7 +274,7 @@ public sealed class AssessmentsController : Controller
                 FileName = file is null ? string.Empty : Path.GetFileName(file.FileName)
             };
             preview.FileErrors.Add(
-                "The file could not be analyzed. Verify that it is a valid .txt or .docx file and try again. No MCQs were saved.");
+                "The file could not be analyzed. Verify that it is a valid .xlsx Excel workbook and try again. No MCQs were saved.");
         }
 
         _mcqImportService.CachePreview(preview, userId);
@@ -343,7 +343,7 @@ public sealed class AssessmentsController : Controller
                 {
                     TopicId = topicId
                 };
-                preview.FileErrors.Add("Choose a non-empty .txt or .docx file.");
+                preview.FileErrors.Add("Choose a non-empty .xlsx Excel workbook.");
             }
             else if (file.Length > 5 * 1024 * 1024)
             {
@@ -562,7 +562,7 @@ public sealed class AssessmentsController : Controller
         try
         {
             if (file is null || file.Length == 0)
-                preview.FileErrors.Add("Choose a non-empty .txt or .docx file.");
+                preview.FileErrors.Add("Choose a non-empty .xlsx Excel workbook.");
             else if (file.Length > 5 * 1024 * 1024)
                 preview.FileErrors.Add("The upload is larger than 5 MB. Split the file into smaller batches.");
             else
@@ -590,7 +590,7 @@ public sealed class AssessmentsController : Controller
                 TopicId = topicId,
                 FileName = file is null ? string.Empty : Path.GetFileName(file.FileName)
             };
-            preview.FileErrors.Add("The file could not be analyzed. Verify that it is a valid .txt or .docx file and try again. No questions were saved.");
+            preview.FileErrors.Add("The file could not be analyzed. Verify that it is a valid .xlsx Excel workbook and try again. No questions were saved.");
         }
 
         _interviewQuestionImportService.CachePreview(preview, userId);
@@ -631,7 +631,7 @@ public sealed class AssessmentsController : Controller
         try
         {
             if (file is null || file.Length == 0)
-                preview.FileErrors.Add("Choose a non-empty .txt or .docx file.");
+                preview.FileErrors.Add("Choose a non-empty .xlsx Excel workbook.");
             else if (file.Length > 5 * 1024 * 1024)
                 preview.FileErrors.Add("The upload is larger than 5 MB. Split the file into smaller batches.");
             else
@@ -648,7 +648,7 @@ public sealed class AssessmentsController : Controller
         catch (Exception exception) when (!cancellationToken.IsCancellationRequested)
         {
             _logger.LogError(exception, "Interview question preview failed for chapter {TopicId}.", topicId);
-            preview.FileErrors.Add("The file could not be analyzed. Verify that it is a valid .txt or .docx file and try again.");
+            preview.FileErrors.Add("The file could not be analyzed. Verify that it is a valid .xlsx Excel workbook and try again.");
         }
         _interviewQuestionImportService.CachePreview(preview, userId);
         TempData["OpenAdminInterviewImportModal"] = "import";
