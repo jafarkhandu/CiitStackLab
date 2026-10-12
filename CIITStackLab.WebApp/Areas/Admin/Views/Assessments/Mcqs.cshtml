@@ -11,7 +11,22 @@
 <section class="ciit-mcq-page">
     <div class="ciit-mcq-header">
         <div><span class="ciit-admin-eyebrow">Assessment</span><h1>MCQs</h1><p>Manage multiple-choice questions linked to existing learning content.</p></div>
-        <a asp-area="Admin" asp-controller="Assessments" asp-action="CreateMcq" class="ciit-mcq-primary-btn"><i class="bi bi-plus-lg"></i><span>Add MCQ</span></a>
+        <div class="ciit-mcq-header-actions">
+            <a asp-area="Admin"
+               asp-controller="Assessments"
+               asp-action="BulkImportMcq"
+               class="ciit-mcq-import-header-btn">
+                <i class="bi bi-file-earmark-arrow-up"></i>
+                <span>Bulk Import</span>
+            </a>
+            <a asp-area="Admin"
+               asp-controller="Assessments"
+               asp-action="CreateMcq"
+               class="ciit-mcq-primary-btn">
+                <i class="bi bi-plus-lg"></i>
+                <span>Add MCQ</span>
+            </a>
+        </div>
     </div>
 
     @if (!string.IsNullOrWhiteSpace(message))
