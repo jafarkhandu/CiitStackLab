@@ -182,10 +182,10 @@ public sealed class AssessmentsController : Controller
         var mcq = await _mcqService.GetByIdAsync(id, cancellationToken);
         if (mcq is null) return NotFound();
 
-        await LoadMcqContentAsync(cancellationToken);
-        return View(new AdminMcqInputDto
+        await LoadMcqTopicLookupAsync(cancellationToken);
+        return View(new AdminTopicMcqInputDto
         {
-            ContentId = mcq.ContentId ?? 0,
+            TopicId = mcq.TopicId ?? 0,
             Question = mcq.Question,
             Option1 = mcq.Option1,
             Option2 = mcq.Option2,
@@ -197,19 +197,19 @@ public sealed class AssessmentsController : Controller
 
     [HttpPost]
     [ValidateAntiForgeryToken]
-    public async Task<IActionResult> EditMcq(int id, AdminMcqInputDto input, CancellationToken cancellationToken)
+    public async Task<IActionResult> EditMcq(int id, AdminTopicMcqInputDto input, CancellationToken cancellationToken)
     {
         if (!ModelState.IsValid)
         {
-            await LoadMcqContentAsync(cancellationToken);
+            await LoadMcqTopicLookupAsync(cancellationToken);
             return View(input);
         }
 
-        var result = await _mcqService.UpdateAsync(id, input, cancellationToken);
+        var result = await _mcqService.UpdateForTopicAsync(id, input, cancellationToken);
         if (!result.Succeeded)
         {
             ModelState.AddModelError(string.Empty, result.Error!);
-            await LoadMcqContentAsync(cancellationToken);
+            await LoadMcqTopicLookupAsync(cancellationToken);
             return View(input);
         }
 
@@ -523,6 +523,11 @@ public sealed class AssessmentsController : Controller
     {
         ViewBag.McqTopics = await _mcqService.GetTopicLookupAsync(cancellationToken);
         return await _mcqService.GetIndexAsync(cancellationToken);
+    }
+
+    private async Task LoadMcqTopicLookupAsync(CancellationToken cancellationToken)
+    {
+        ViewBag.McqTopics = await _mcqService.GetTopicLookupAsync(cancellationToken);
     }
 
     private async Task LoadMcqContentAsync(CancellationToken cancellationToken)
