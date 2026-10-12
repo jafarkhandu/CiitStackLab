@@ -51,7 +51,24 @@ public sealed class ChapterMcqAnalyzerService : IChapterMcqAnalyzerService
         "IT", "THEY", "WE", "YOU", "I", "HE", "SHE", "WHICH", "WHAT", "WHEN",
         "WHERE", "WHO", "HOW", "THERE", "HERE", "CHAPTER", "TOPIC", "INTRODUCTION",
         "CONCLUSION", "EXAMPLE", "NOTE", "OVERVIEW", "IN", "ON", "AT", "FOR",
-        "FROM", "TO", "WITH", "BY", "OF", "AS", "WHILE", "IF", "BECAUSE"
+        "FROM", "TO", "WITH", "BY", "OF", "AS", "WHILE", "IF", "BECAUSE",
+        "ABOUT", "ABOVE", "AFTER", "AGAIN", "AGAINST", "ALL", "ALMOST", "ALONG",
+        "ALREADY", "ALSO", "ALTHOUGH", "ALWAYS", "AMONG", "AND", "ANY", "ARE",
+        "AROUND", "BE", "BECAME", "BECOME", "BEEN", "BEFORE", "BEING", "BELOW",
+        "BETWEEN", "BOTH", "BUT", "CAN", "CANNOT", "COULD", "DID", "DO", "DOES",
+        "DOING", "DOWN", "DURING", "EITHER", "ELSE", "ENOUGH", "EVEN", "EVER",
+        "FEW", "FURTHER", "GET", "GOT", "HAD", "HAS", "HAVE", "HAVING", "HENCE",
+        "HER", "HERE", "HERS", "HIM", "HIS", "HOWEVER", "INTO", "ITS", "ITSELF",
+        "JUST", "LESS", "MANY", "MAY", "MIGHT", "MORE", "MOST", "MUCH", "MUST",
+        "NEAR", "NEVER", "NOT", "NOW", "OFF", "ONCE", "ONLY", "ONTO", "OR",
+        "OTHER", "OTHERS", "OUR", "OURS", "OUT", "OVER", "OWN", "PER", "RATHER",
+        "REALLY", "SAME", "SEVERAL", "SHALL", "SHOULD", "SINCE", "SO", "SOME",
+        "SOMETHING", "SOMETIMES", "STILL", "SUCH", "TAKE", "THEN", "THEREFORE",
+        "THROUGH", "THROUGHOUT", "THUS", "TOO", "TOWARD", "TOWARDS", "UNDER",
+        "UNTIL", "UP", "UPON", "US", "USE", "USED", "USES", "USING", "VERY",
+        "VIA", "WANT", "WANTS", "WAS", "WERE", "WILL", "WITHIN", "WITHOUT",
+        "WOULD", "YES", "YET", "YOUR", "YOURS", "INCLUDING", "INCLUDE", "INCLUDES",
+        "EXAMPLES", "FOLLOWING", "FIRST", "SECOND", "THIRD", "NEXT", "VARIOUS"
     };
 
     public async Task<IReadOnlyList<McqImportQuestionDto>> AnalyzeAsync(
@@ -332,6 +349,30 @@ public sealed class ChapterMcqAnalyzerService : IChapterMcqAnalyzerService
         foreach (Match match in CapitalizedWordPattern.Matches(sourceText))
         {
             AddTerm(match.Value, terms, knownTerms);
+        }
+
+        // Repeated content words support ordinary explanatory notes that do not capitalize every concept.
+        // Restrict the fallback to frequent non-stopwords so function words do not dominate answer choices.
+        var frequentTerms = Regex.Matches(
+                sourceText,
+                @"\b[A-Za-z][A-Za-z0-9+#./_-]{3,}\b")
+            .Select(match => match.Value)
+            .Select(CleanTerm)
+            .Where(IsUsefulTerm)
+            .GroupBy(NormalizeKey, StringComparer.Ordinal)
+            .Select(group => new
+            {
+                Term = group.First(),
+                Frequency = group.Count()
+            })
+            .Where(item => item.Frequency >= 2)
+            .OrderByDescending(item => item.Frequency)
+            .ThenBy(item => item.Term, StringComparer.OrdinalIgnoreCase)
+            .Take(50);
+
+        foreach (var candidate in frequentTerms)
+        {
+            AddTerm(candidate.Term, terms, knownTerms);
         }
 
         return terms;
