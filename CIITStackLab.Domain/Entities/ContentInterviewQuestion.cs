@@ -6,6 +6,8 @@ public class ContentInterviewQuestion
 
     public int? ContentId { get; set; }
 
+    public int? TopicId { get; set; }
+
     public string? Question { get; set; }
 
     public string? Answer { get; set; }
@@ -21,4 +23,6 @@ public class ContentInterviewQuestion
     public DateTime? RestoredAt { get; set; }
 
     public Lesson? Content { get; set; }
+
+    public Topic? Topic { get; set; }
 }
