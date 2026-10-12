@@ -6,7 +6,7 @@
             <div>
                 <span class="ciit-admin-eyebrow">Analysis results</span>
                 <h3 id="interviewQuestionImportResultsTitle">Review interview Q&amp;A</h3>
-                <p>@Model.FileName <span>·</span> @Model.TopicTitle / @Model.ContentTitle</p>
+                <p>@Model.FileName <span>·</span> Chapter: @Model.TopicTitle</p>
             </div>
         </div>
         <span class="ciit-interview-import-review-pill"><i class="bi bi-shield-check"></i> Nothing saved yet</span>
@@ -65,7 +65,7 @@
             @if (Model.CanImport)
             {
                 <strong><i class="bi bi-check-circle-fill"></i> Ready to import</strong>
-                <p>20 interview questions will be saved under <b>@Model.TopicTitle / @Model.ContentTitle</b> after confirmation.</p>
+                <p>20 interview questions will be linked directly to chapter <b>@Model.TopicTitle</b> after confirmation.</p>
             }
             else
             {
