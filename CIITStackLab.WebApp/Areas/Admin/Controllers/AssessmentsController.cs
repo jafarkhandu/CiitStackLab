@@ -42,6 +42,19 @@ public sealed class AssessmentsController : Controller
         ViewBag.McqMessageType = TempData["AdminMcqMessageType"] as string;
         ViewBag.OpenMcqModal = TempData["OpenAdminMcqModal"] as string;
 
+        if (string.Equals(
+                ViewBag.OpenMcqModal as string,
+                "import",
+                StringComparison.OrdinalIgnoreCase)
+            && string.Equals(
+                ViewBag.McqMessageType as string,
+                "error",
+                StringComparison.OrdinalIgnoreCase))
+        {
+            ViewBag.McqImportMessage = ViewBag.McqMessage;
+            ViewBag.McqImportMessageType = "error";
+        }
+
         var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
 
         if (!string.IsNullOrWhiteSpace(userId)
