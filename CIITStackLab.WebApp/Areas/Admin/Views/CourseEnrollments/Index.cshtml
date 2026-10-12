@@ -1,0 +1,130 @@
+@model IReadOnlyList<CIITStackLab.Application.DTOs.PendingCourseEnrollmentDto>
+
+@{
+    ViewData["Title"] = "Course Enrollments";
+    var message = TempData["CourseEnrollmentAdminMessage"] as string;
+    var messageType = TempData["CourseEnrollmentAdminMessageType"] as string;
+}
+
+<section class="ciit-admin-page ciit-enrollments-page">
+    <header class="ciit-enrollments-header">
+        <div>
+            <span class="ciit-admin-eyebrow">Access management</span>
+            <h1>Course Enrollment Requests</h1>
+            <p>Review requests for priced courses. Approval grants the student access to the mapped course content.</p>
+        </div>
+        <div class="ciit-enrollment-pending-count">
+            <strong>@Model.Count</strong>
+            <span>Pending request@(Model.Count == 1 ? "" : "s")</span>
+        </div>
+    </header>
+
+    @if (!string.IsNullOrWhiteSpace(message))
+    {
+        <div class="ciit-enrollment-alert @(messageType == "success" ? "is-success" : "is-error")"
+             role="status">
+            <i class="bi @(messageType == "success" ? "bi-check-circle-fill" : "bi-exclamation-circle-fill")"></i>
+            <span>@message</span>
+        </div>
+    }
+
+    <section class="ciit-enrollment-table-card">
+        <div class="ciit-enrollment-table-heading">
+            <div>
+                <span class="ciit-enrollment-table-kicker">Requires review</span>
+                <h2>Pending requests</h2>
+            </div>
+            <span class="ciit-enrollment-table-count">@Model.Count in queue</span>
+        </div>
+
+        @if (Model.Count == 0)
+        {
+            <div class="ciit-enrollment-empty">
+                <span class="ciit-enrollment-empty-icon">
+                    <i class="bi bi-check2-circle"></i>
+                </span>
+                <h3>All caught up</h3>
+                <p>There are no pending course enrollment requests right now.</p>
+            </div>
+        }
+        else
+        {
+            <div class="table-responsive ciit-enrollment-table-wrap">
+                <table class="table ciit-enrollment-table align-middle mb-0">
+                    <thead>
+                        <tr>
+                            <th>Student</th>
+                            <th>Course</th>
+                            <th>Requested price</th>
+                            <th>Requested on</th>
+                            <th>Status</th>
+                            <th class="text-end">Review</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var request in Model)
+                        {
+                            <tr>
+                                <td>
+                                    <div class="ciit-enrollment-student">
+                                        <span class="ciit-enrollment-avatar">
+                                            @(string.IsNullOrWhiteSpace(request.StudentUserName)
+                                                ? "S"
+                                                : request.StudentUserName[..1].ToUpperInvariant())
+                                        </span>
+                                        <span>
+                                            <strong>@request.StudentUserName</strong>
+                                            <small>@(string.IsNullOrWhiteSpace(request.StudentEmail) ? "No email supplied" : request.StudentEmail)</small>
+                                        </span>
+                                    </div>
+                                </td>
+                                <td>
+                                    <strong class="ciit-enrollment-course-title">@request.CourseTitle</strong>
+                                    <small class="ciit-enrollment-course-id">Course #@request.CourseId</small>
+                                </td>
+                                <td class="ciit-enrollment-price">₹@request.PriceAtEnrollment.ToString("N2")</td>
+                                <td>@request.RequestedAt.ToLocalTime().ToString("dd MMM yyyy, hh:mm tt")</td>
+                                <td>
+                                    <span class="ciit-enrollment-status-pill">
+                                        <span></span>Pending
+                                    </span>
+                                </td>
+                                <td>
+                                    <div class="ciit-enrollment-review-actions">
+                                        <form asp-area="Admin"
+                                              asp-controller="CourseEnrollments"
+                                              asp-action="Review"
+                                              method="post">
+                                            <input type="hidden" name="enrollmentId" value="@request.Id" />
+                                            <input type="hidden" name="approve" value="true" />
+                                            <button type="submit" class="btn ciit-enrollment-approve-btn">
+                                                <i class="bi bi-check-lg me-1"></i>Approve
+                                            </button>
+                                        </form>
+
+                                        <form asp-area="Admin"
+                                              asp-controller="CourseEnrollments"
+                                              asp-action="Review"
+                                              method="post"
+                                              onsubmit="return confirm('Decline this course enrollment request?');">
+                                            <input type="hidden" name="enrollmentId" value="@request.Id" />
+                                            <input type="hidden" name="approve" value="false" />
+                                            <button type="submit" class="btn ciit-enrollment-reject-btn">
+                                                Decline
+                                            </button>
+                                        </form>
+                                    </div>
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        }
+    </section>
+
+    <p class="ciit-enrollment-note">
+        <i class="bi bi-info-circle me-2"></i>
+        Enrollment approval is a manual access decision. This workflow does not process or verify payments.
+    </p>
+</section>

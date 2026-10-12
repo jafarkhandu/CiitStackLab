@@ -137,12 +137,27 @@ public sealed class CourseService
             {
                 TopicId = topic.Id,
                 TopicTitle = topic.Title,
+                TopicPrice = topic.Price,
                 ContentId = (int?)content.Id,
                 ContentTitle = content.Title,
                 Slides = content.Slides,
                 VideoName = content.VideoName
             })
             .ToListAsync(cancellationToken);
+
+        var topicIds = rows
+            .Select(x => x.TopicId)
+            .Distinct()
+            .ToList();
+
+        var topicsWithNotes = topicIds.Count == 0
+            ? new HashSet<int>()
+            : new HashSet<int>(await _dbContext.TrainingNotes
+                .AsNoTracking()
+                .Where(note => topicIds.Contains(note.TopicId) && note.Flag == 0)
+                .Select(note => note.TopicId)
+                .Distinct()
+                .ToListAsync(cancellationToken));
 
         var contentIds = rows
             .Where(x => x.ContentId.HasValue)
@@ -169,15 +184,16 @@ public sealed class CourseService
                     Id = x.Id,
                     Question = x.Question ?? string.Empty,
                     Options = new[] { x.Option1, x.Option2, x.Option3, x.Option4 },
-                    CorrectOptionNumber = x.CorrectOptionNumber
                 }).ToList());
 
         var topics = rows
-            .GroupBy(x => new { x.TopicId, x.TopicTitle })
+            .GroupBy(x => new { x.TopicId, x.TopicTitle, x.TopicPrice })
             .Select(group => new CourseTopicDto
             {
                 Id = group.Key.TopicId,
                 Title = group.Key.TopicTitle,
+                Price = group.Key.TopicPrice,
+                HasNotes = topicsWithNotes.Contains(group.Key.TopicId),
                 Contents = group
                     .Where(x => x.ContentId.HasValue)
                     .Select(x => new CourseContentDto
@@ -208,6 +224,7 @@ public sealed class CourseService
             Category = presentation.Category,
             Level = presentation.Level,
             DurationHours = presentation.DurationHours,
+            TotalPrice = topics.Sum(topic => Math.Max(0m, topic.Price)),
             Topics = topics
         };
     }
