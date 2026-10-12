@@ -1,0 +1,129 @@
+@model CIITStackLab.Application.DTOs.CourseDetailsDto
+
+@{
+    ViewData["Title"] = "Checkout";
+    var hasPendingEnrollment = string.Equals(
+        Model.Enrollment?.Status,
+        "PendingApproval",
+        StringComparison.OrdinalIgnoreCase);
+}
+
+@section Styles {
+    <link rel="stylesheet" href="~/css/user-checkout.css" />
+}
+
+<section class="ciit-checkout-page">
+    <div class="container">
+        <div class="ciit-checkout-header">
+            <a asp-controller="Courses"
+               asp-action="Details"
+               asp-route-id="@Model.Id"
+               class="ciit-checkout-back">
+                <i class="bi bi-arrow-left"></i>
+                Back to course
+            </a>
+            <span class="ciit-checkout-step">Secure checkout</span>
+        </div>
+
+        <div class="row g-4 g-xl-5 align-items-start">
+            <div class="col-lg-7">
+                <div class="ciit-checkout-card ciit-checkout-course-card">
+                    <div class="ciit-checkout-card-heading">
+                        <span class="ciit-checkout-eyebrow">Your course</span>
+                        <h1>Start learning @Model.Title</h1>
+                        <p>Review your course details before continuing to payment.</p>
+                    </div>
+
+                    <div class="ciit-checkout-course-summary">
+                        <img src="@Model.ImageUrl" alt="@Model.Title" class="ciit-checkout-course-image" />
+                        <div>
+                            <span class="ciit-checkout-category">@Model.Category</span>
+                            <h2>@Model.Title</h2>
+                            <p>@Model.ShortDescription</p>
+                            <div class="ciit-checkout-meta">
+                                <span><i class="bi bi-bar-chart"></i>@Model.Level</span>
+                                <span><i class="bi bi-clock"></i>@Model.DurationHours hrs</span>
+                                <span><i class="bi bi-collection-play"></i>@Model.Topics.Count topics</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="ciit-checkout-benefits">
+                        <div>
+                            <i class="bi bi-check-circle-fill"></i>
+                            <span>Access the complete course learning content</span>
+                        </div>
+                        <div>
+                            <i class="bi bi-check-circle-fill"></i>
+                            <span>Learn through topic-based lessons and assessments</span>
+                        </div>
+                        <div>
+                            <i class="bi bi-check-circle-fill"></i>
+                            <span>Your course access is protected by your student enrollment</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-lg-5">
+                <aside class="ciit-checkout-card ciit-order-card">
+                    <div class="ciit-checkout-card-heading">
+                        <span class="ciit-checkout-eyebrow">Order summary</span>
+                        <h2>Complete your enrollment</h2>
+                    </div>
+
+                    <div class="ciit-order-line">
+                        <span>Course</span>
+                        <strong>@Model.Title</strong>
+                    </div>
+
+                    <div class="ciit-order-line">
+                        <span>Course price</span>
+                        <strong>₹@Model.TotalPrice.ToString("N2")</strong>
+                    </div>
+
+                    <div class="ciit-order-total">
+                        <span>Total</span>
+                        <strong>₹@Model.TotalPrice.ToString("N2")</strong>
+                    </div>
+
+                    @if (hasPendingEnrollment)
+                    {
+                        <div class="ciit-checkout-notice is-pending">
+                            <i class="bi bi-hourglass-split"></i>
+                            <div>
+                                <strong>Enrollment already requested</strong>
+                                <p>Your previous enrollment request is waiting for admin approval.</p>
+                            </div>
+                        </div>
+                    }
+                    else
+                    {
+                        <div class="ciit-payment-placeholder">
+                            <div class="ciit-payment-placeholder-icon">
+                                <i class="bi bi-credit-card"></i>
+                            </div>
+                            <div>
+                                <strong>Online payment</strong>
+                                <p>The checkout screen is ready. The payment gateway will be connected here next.</p>
+                            </div>
+                        </div>
+
+                        <button type="button" class="btn btn-primary btn-lg w-100 ciit-pay-button" disabled>
+                            <i class="bi bi-lock-fill me-2"></i>
+                            Pay ₹@Model.TotalPrice.ToString("N2")
+                        </button>
+                        <p class="ciit-payment-helper">
+                            Payment is not connected yet. No payment or enrollment access is created from this page.
+                        </p>
+                    }
+
+                    <div class="ciit-checkout-security">
+                        <i class="bi bi-shield-check"></i>
+                        <span>Course access will only be granted after verified payment and enrollment.</span>
+                    </div>
+                </aside>
+            </div>
+        </div>
+    </div>
+</section>
