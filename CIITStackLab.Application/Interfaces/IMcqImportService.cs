@@ -13,7 +13,8 @@ public interface IMcqImportService
         string fileName,
         Stream fileStream,
         string userId,
-        CancellationToken cancellationToken = default);
+        CancellationToken cancellationToken = default,
+        Func<string, CancellationToken, Task>? reportProgress = null);
 
     Task<McqImportOutcomeDto> ConfirmAsync(
         string previewToken,

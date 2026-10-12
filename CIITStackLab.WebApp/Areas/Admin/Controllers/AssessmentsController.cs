@@ -1,5 +1,6 @@
 using System.Security.Claims;
 using System.Data.Common;
+using System.Text.Json;
 using Microsoft.AspNetCore.Http;
 using CIITStackLab.Application.DTOs;
 using CIITStackLab.Application.Interfaces;
@@ -18,17 +19,20 @@ public sealed class AssessmentsController : Controller
     private readonly IMcqImportService _mcqImportService;
     private readonly IAdminInterviewQuestionService _interviewQuestionService;
     private readonly IAdminPracticeProgramService _practiceProgramService;
+    private readonly ILogger<AssessmentsController> _logger;
 
     public AssessmentsController(
         IAdminMcqService mcqService,
         IMcqImportService mcqImportService,
         IAdminInterviewQuestionService interviewQuestionService,
-        IAdminPracticeProgramService practiceProgramService)
+        IAdminPracticeProgramService practiceProgramService,
+        ILogger<AssessmentsController> logger)
     {
         _mcqService = mcqService;
         _mcqImportService = mcqImportService;
         _interviewQuestionService = interviewQuestionService;
         _practiceProgramService = practiceProgramService;
+        _logger = logger;
     }
 
     [HttpGet]
@@ -171,6 +175,143 @@ public sealed class AssessmentsController : Controller
     {
         TempData["OpenAdminMcqModal"] = "import";
         return RedirectToAction(nameof(Mcqs));
+    }
+
+
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    [RequestSizeLimit(6 * 1024 * 1024)]
+    [RequestFormLimits(MultipartBodyLengthLimit = 6 * 1024 * 1024)]
+    public async Task<IActionResult> AnalyzeBulkMcq(
+        int topicId,
+        IFormFile? file,
+        CancellationToken cancellationToken)
+    {
+        var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+
+        if (string.IsNullOrWhiteSpace(userId))
+        {
+            return Unauthorized();
+        }
+
+        Response.ContentType = "application/x-ndjson; charset=utf-8";
+        Response.Headers["Cache-Control"] = "no-cache, no-store, must-revalidate";
+        Response.Headers["X-Accel-Buffering"] = "no";
+
+        async Task WriteEventAsync(object payload, CancellationToken token)
+        {
+            await Response.WriteAsync(
+                JsonSerializer.Serialize(payload) + "\n",
+                token);
+            await Response.Body.FlushAsync(token);
+        }
+
+        async Task ReportProgressAsync(string message, CancellationToken token)
+        {
+            await WriteEventAsync(
+                new { type = "progress", message },
+                token);
+        }
+
+        await Response.StartAsync(cancellationToken);
+        await ReportProgressAsync(
+            "Upload received. Preparing the chapter and file checks...",
+            cancellationToken);
+
+        var preview = new McqImportPreviewDto
+        {
+            TopicId = topicId,
+            FileName = file is null ? string.Empty : Path.GetFileName(file.FileName)
+        };
+
+        try
+        {
+            if (file is null || file.Length == 0)
+            {
+                preview.FileErrors.Add("Choose a non-empty .txt or .docx file.");
+            }
+            else if (file.Length > 5 * 1024 * 1024)
+            {
+                preview.FileErrors.Add(
+                    "The upload is larger than 5 MB. Split the file into smaller batches.");
+            }
+            else
+            {
+                await using var fileStream = file.OpenReadStream();
+
+                preview = await _mcqImportService.PreviewAsync(
+                    topicId,
+                    file.FileName,
+                    fileStream,
+                    userId,
+                    cancellationToken,
+                    ReportProgressAsync);
+            }
+        }
+        catch (DbException)
+        {
+            preview = new McqImportPreviewDto
+            {
+                TopicId = topicId,
+                FileName = file is null ? string.Empty : Path.GetFileName(file.FileName)
+            };
+            preview.FileErrors.Add(
+                "The database returned an error during analysis. Confirm Database/20261012_AddTopicIdToContentQuestions.sql has been executed against the database used by this application, then try again. No MCQs were saved.");
+        }
+        catch (Exception exception) when (!cancellationToken.IsCancellationRequested)
+        {
+            _logger.LogError(
+                exception,
+                "MCQ file analysis failed for chapter {TopicId}.",
+                topicId);
+
+            preview = new McqImportPreviewDto
+            {
+                TopicId = topicId,
+                FileName = file is null ? string.Empty : Path.GetFileName(file.FileName)
+            };
+            preview.FileErrors.Add(
+                "The file could not be analyzed. Verify that it is a valid .txt or .docx file and try again. No MCQs were saved.");
+        }
+
+        _mcqImportService.CachePreview(preview, userId);
+
+        await WriteEventAsync(
+            new
+            {
+                type = "result",
+                previewToken = preview.PreviewToken,
+                questionCount = preview.Questions.Count,
+                validCount = preview.ValidQuestionCount,
+                invalidCount = preview.InvalidQuestionCount,
+                fileErrorCount = preview.FileErrors.Count,
+                canImport = preview.CanImport
+            },
+            cancellationToken);
+
+        return new EmptyResult();
+    }
+
+    [HttpGet]
+    public IActionResult GetBulkMcqPreview(string? previewToken)
+    {
+        var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+
+        if (string.IsNullOrWhiteSpace(userId))
+        {
+            return Unauthorized();
+        }
+
+        if (string.IsNullOrWhiteSpace(previewToken))
+        {
+            return BadRequest();
+        }
+
+        var preview = _mcqImportService.GetPreview(previewToken, userId);
+
+        return preview is null
+            ? NotFound()
+            : PartialView("_McqImportPreview", preview);
     }
 
     [HttpPost]

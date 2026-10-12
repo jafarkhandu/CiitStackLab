@@ -90,8 +90,17 @@ public sealed class McqImportService : IMcqImportService
         string fileName,
         Stream fileStream,
         string userId,
-        CancellationToken cancellationToken = default)
+        CancellationToken cancellationToken = default,
+        Func<string, CancellationToken, Task>? reportProgress = null)
     {
+        async Task ReportProgressAsync(string message)
+        {
+            if (reportProgress is not null)
+            {
+                await reportProgress(message, cancellationToken);
+            }
+        }
+
         var preview = new McqImportPreviewDto
         {
             TopicId = topicId,
@@ -109,6 +118,9 @@ public sealed class McqImportService : IMcqImportService
             preview.FileErrors.Add("Select an active chapter before uploading the MCQ file.");
             return preview;
         }
+
+        await ReportProgressAsync(
+            "Checking that the selected chapter is active...");
 
         var topic = await _dbContext.Topics
             .AsNoTracking()
@@ -137,10 +149,16 @@ public sealed class McqImportService : IMcqImportService
             return preview;
         }
 
+        await ReportProgressAsync(
+            "Reading the document and detecting question blocks...");
+
         var parsed = await McqImportParser.ParseAsync(
             fileStream,
             extension,
             cancellationToken);
+
+        await ReportProgressAsync(
+            "Reviewing detected questions, options A–D, and answer keys...");
 
         preview.FileErrors.AddRange(parsed.FileErrors);
 
@@ -163,6 +181,9 @@ public sealed class McqImportService : IMcqImportService
         }
 
         MarkDuplicatesWithinUpload(preview.Questions);
+
+        await ReportProgressAsync(
+            "Checking the selected chapter for duplicate questions...");
 
         var existingQuestions = await _dbContext.ContentQuestions
             .AsNoTracking()
@@ -197,6 +218,9 @@ public sealed class McqImportService : IMcqImportService
                     "This question already exists for the selected chapter, including archived MCQs.");
             }
         }
+
+        await ReportProgressAsync(
+            "Preparing the review results. No questions have been saved yet.");
 
         // Cache successful and failed previews alike so the UI can use
         // Post/Redirect/Get without losing validation feedback on refresh.

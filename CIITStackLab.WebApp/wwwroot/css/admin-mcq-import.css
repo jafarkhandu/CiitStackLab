@@ -1017,3 +1017,237 @@
     font-size: .76rem;
     line-height: 1.6;
 }
+
+
+/* Live analysis feedback inside the Smart MCQ Import modal. */
+.ciit-mcq-import-live-status {
+    display: flex;
+    align-items: flex-start;
+    gap: 18px;
+    padding: 20px;
+    overflow: hidden;
+    border: 1px solid #cddcff;
+    border-radius: 16px;
+    background:
+        radial-gradient(circle at 0% 0%, rgba(91, 141, 255, .12), transparent 43%),
+        linear-gradient(120deg, #f5f8ff 0%, #ffffff 72%);
+    color: #263651;
+}
+
+.ciit-mcq-import-live-status.is-complete {
+    border-color: #bfe6cc;
+    background:
+        radial-gradient(circle at 0% 0%, rgba(49, 164, 99, .1), transparent 43%),
+        #f8fdf9;
+}
+
+.ciit-mcq-import-live-status.is-error {
+    border-color: #f2cbcb;
+    background:
+        radial-gradient(circle at 0% 0%, rgba(220, 53, 69, .08), transparent 43%),
+        #fffafa;
+}
+
+.ciit-mcq-import-live-orbit {
+    position: relative;
+    display: grid;
+    place-items: center;
+    flex: 0 0 58px;
+    width: 58px;
+    height: 58px;
+    border: 1px solid #c9d8ff;
+    border-radius: 18px;
+    background: #eaf0ff;
+    color: #285fd0;
+    font-size: 1.35rem;
+}
+
+.ciit-mcq-import-live-orbit > span {
+    position: absolute;
+    inset: -5px;
+    border: 2px solid transparent;
+    border-top-color: #477bf0;
+    border-right-color: rgba(71, 123, 240, .3);
+    border-radius: 22px;
+    animation: ciit-mcq-orbit-spin 1.2s linear infinite;
+}
+
+.ciit-mcq-import-live-orbit > span:nth-child(2) {
+    inset: -10px;
+    border-top-color: rgba(71, 123, 240, .35);
+    border-left-color: rgba(71, 123, 240, .18);
+    animation-duration: 2s;
+    animation-direction: reverse;
+}
+
+.ciit-mcq-import-live-status.is-complete .ciit-mcq-import-live-orbit {
+    border-color: #bee7cc;
+    background: #e9f9ef;
+    color: #14804a;
+}
+
+.ciit-mcq-import-live-status.is-complete .ciit-mcq-import-live-orbit > span,
+.ciit-mcq-import-live-status.is-error .ciit-mcq-import-live-orbit > span {
+    display: none;
+}
+
+.ciit-mcq-import-live-status.is-error .ciit-mcq-import-live-orbit {
+    border-color: #f1caca;
+    background: #fff0f0;
+    color: #bc3b46;
+}
+
+.ciit-mcq-import-live-content {
+    min-width: 0;
+    flex: 1;
+}
+
+.ciit-mcq-import-live-heading {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+}
+
+.ciit-mcq-import-live-heading strong {
+    color: #20314f;
+    font-size: .94rem;
+    font-weight: 850;
+}
+
+.ciit-mcq-import-live-heading > span {
+    flex: 0 0 auto;
+    padding: 4px 8px;
+    border: 1px solid #d8e3fa;
+    border-radius: 999px;
+    background: rgba(255, 255, 255, .8);
+    color: #54709f;
+    font-size: .63rem;
+    font-weight: 850;
+    letter-spacing: .08em;
+}
+
+.ciit-mcq-import-live-status.is-complete .ciit-mcq-import-live-heading > span {
+    border-color: #c1e5cd;
+    color: #16804b;
+}
+
+.ciit-mcq-import-live-status.is-error .ciit-mcq-import-live-heading > span {
+    border-color: #f0c9cb;
+    color: #b93540;
+}
+
+.ciit-mcq-import-live-content > p {
+    margin: 5px 0 0;
+    color: #65748e;
+    font-size: .78rem;
+    line-height: 1.65;
+}
+
+.ciit-mcq-import-progress-log {
+    display: grid;
+    gap: 6px;
+    margin: 12px 0 0;
+    padding: 0;
+    list-style: none;
+}
+
+.ciit-mcq-import-progress-log:empty {
+    display: none;
+}
+
+.ciit-mcq-import-progress-log li {
+    position: relative;
+    padding-left: 20px;
+    color: #53647f;
+    font-size: .74rem;
+    line-height: 1.55;
+    animation: ciit-mcq-progress-in .25s ease-out both;
+}
+
+.ciit-mcq-import-progress-log li::before {
+    position: absolute;
+    top: .22em;
+    left: 0;
+    width: 12px;
+    height: 12px;
+    border: 2px solid #8ca9ef;
+    border-radius: 50%;
+    content: "";
+}
+
+.ciit-mcq-import-progress-log li:last-child::before {
+    border-color: #356eea;
+    background: #356eea;
+    box-shadow: 0 0 0 3px rgba(53, 110, 234, .12);
+}
+
+.ciit-mcq-import-live-track {
+    height: 4px;
+    margin-top: 14px;
+    overflow: hidden;
+    border-radius: 999px;
+    background: #e2eafc;
+}
+
+.ciit-mcq-import-live-track > span {
+    display: block;
+    width: 42%;
+    height: 100%;
+    border-radius: inherit;
+    background: linear-gradient(90deg, #356eea, #79a6ff);
+    animation: ciit-mcq-progress-sweep 1.5s ease-in-out infinite;
+}
+
+.ciit-mcq-import-live-status.is-complete .ciit-mcq-import-live-track,
+.ciit-mcq-import-live-status.is-error .ciit-mcq-import-live-track {
+    display: none;
+}
+
+@keyframes ciit-mcq-orbit-spin {
+    to { transform: rotate(360deg); }
+}
+
+@keyframes ciit-mcq-progress-sweep {
+    0% { transform: translateX(-115%); }
+    100% { transform: translateX(260%); }
+}
+
+@keyframes ciit-mcq-progress-in {
+    from { opacity: 0; transform: translateY(4px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .ciit-mcq-import-live-orbit > span,
+    .ciit-mcq-import-live-track > span,
+    .ciit-mcq-import-progress-log li {
+        animation: none !important;
+    }
+}
+
+@media (max-width: 520px) {
+    .ciit-mcq-import-live-status {
+        gap: 12px;
+        padding: 15px;
+    }
+
+    .ciit-mcq-import-live-orbit {
+        flex-basis: 42px;
+        width: 42px;
+        height: 42px;
+        border-radius: 14px;
+        font-size: 1rem;
+    }
+
+    .ciit-mcq-import-live-orbit > span {
+        border-radius: 18px;
+    }
+
+    .ciit-mcq-import-live-heading {
+        align-items: flex-start;
+        flex-direction: column;
+        gap: 7px;
+    }
+}
+

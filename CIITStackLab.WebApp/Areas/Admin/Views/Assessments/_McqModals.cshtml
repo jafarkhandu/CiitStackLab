@@ -109,10 +109,35 @@
             </div>
 
             <div class="modal-body ciit-mcq-import-modal-body">
-                @if (preview is not null && preview.Questions.Count > 0)
-                {
-                    @await Html.PartialAsync("_McqImportPreview", preview)
-                }
+                <div id="mcqImportPreviewHost"
+                     data-preview-url="@Url.Action("GetBulkMcqPreview", "Assessments", new { area = "Admin" })">
+                    @if (preview is not null && (preview.Questions.Count > 0 || preview.FileErrors.Count > 0))
+                    {
+                        @await Html.PartialAsync("_McqImportPreview", preview)
+                    }
+                </div>
+
+                <div class="ciit-mcq-import-live-status d-none"
+                     id="mcqImportLiveStatus"
+                     role="status"
+                     aria-live="polite">
+                    <div class="ciit-mcq-import-live-orbit" aria-hidden="true">
+                        <span></span>
+                        <span></span>
+                        <i class="bi bi-file-earmark-text"></i>
+                    </div>
+                    <div class="ciit-mcq-import-live-content">
+                        <div class="ciit-mcq-import-live-heading">
+                            <strong id="mcqImportLiveTitle">Preparing analysis...</strong>
+                            <span id="mcqImportLiveState">READY</span>
+                        </div>
+                        <p id="mcqImportLiveDetail">Select a chapter and upload a file to begin.</p>
+                        <ol id="mcqImportProgressLog" class="ciit-mcq-import-progress-log"></ol>
+                        <div class="ciit-mcq-import-live-track" aria-hidden="true">
+                            <span></span>
+                        </div>
+                    </div>
+                </div>
 
                 @if (!string.IsNullOrWhiteSpace(importMessage))
                 {
@@ -122,7 +147,9 @@
                 }
 
                 <form asp-area="Admin" asp-controller="Assessments" asp-action="PreviewBulkMcq"
-                      method="post" enctype="multipart/form-data" class="ciit-mcq-import-modal-upload">
+                      method="post" enctype="multipart/form-data" class="ciit-mcq-import-modal-upload"
+                      id="mcqImportUploadForm"
+                      data-analyze-url="@Url.Action("AnalyzeBulkMcq", "Assessments", new { area = "Admin" })">
                     @Html.AntiForgeryToken()
 
                     <div class="ciit-mcq-import-modal-fields">
@@ -141,7 +168,7 @@
                         </div>
 
                         <label class="ciit-mcq-import-file-drop">
-                            <input type="file" name="file" accept=".txt,.docx" required />
+                            <input type="file" name="file" id="ImportMcqFile" accept=".txt,.docx" required />
                             <span class="ciit-mcq-import-file-icon"><i class="bi bi-cloud-arrow-up"></i></span>
                             <strong>Choose a .txt or .docx file</strong>
                             <span>Maximum 5 MB · Up to 500 MCQs per batch</span>
