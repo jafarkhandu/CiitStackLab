@@ -1148,10 +1148,24 @@ public sealed class AssessmentsController : Controller
     }
 
     [HttpGet]
-    public async Task<IActionResult> CreatePracticeAnswer(CancellationToken cancellationToken)
+    public async Task<IActionResult> CreatePracticeAnswer(
+        int? programQuestionId,
+        CancellationToken cancellationToken)
     {
-        await LoadPracticeProgramLookupAsync(cancellationToken);
-        return View(new AdminPracticeProgramAnswerInputDto());
+        var programs = await _practiceProgramService.GetProgramLookupAsync(cancellationToken);
+        ViewBag.PracticePrograms = programs
+            .Select(item => new SelectListItem(item.QuestionTitle, item.Id.ToString()))
+            .ToList();
+
+        var selectedProgramId = programQuestionId.HasValue
+            && programs.Any(item => item.Id == programQuestionId.Value)
+                ? programQuestionId.Value
+                : 0;
+
+        return View(new AdminPracticeProgramAnswerInputDto
+        {
+            ProgramQuestionId = selectedProgramId
+        });
     }
 
     [HttpPost]
