@@ -227,21 +227,14 @@ public sealed class AssessmentsController : Controller
         }
         catch (DbException)
         {
-            ViewBag.McqImportMessage =
-                "The database returned an error while confirming the import, so success cannot be confirmed. Refresh the MCQ list to verify what was saved before trying again. If the chapter column is missing, execute Database/20261012_AddTopicIdToContentQuestions.sql first.";
-            ViewBag.McqImportMessageType = "error";
-            ViewBag.OpenMcqModal = "import";
+            TempData["AdminMcqMessage"] =
+                "The database returned an error during confirmation, so success could not be confirmed. Check the MCQ list before retrying. If the chapter column is missing, execute Database/20261012_AddTopicIdToContentQuestions.sql first.";
+            TempData["AdminMcqMessageType"] = "error";
+            TempData["OpenAdminMcqModal"] = "import";
 
-            try
-            {
-                ViewBag.McqTopics = await _mcqService.GetTopicLookupAsync(cancellationToken);
-            }
-            catch (DbException)
-            {
-                ViewBag.McqTopics = Array.Empty<AdminMcqTopicLookupDto>();
-            }
-
-            return View("Mcqs", new AdminMcqIndexDto());
+            return RedirectToAction(
+                nameof(Mcqs),
+                new { previewToken });
         }
 
         if (result.Succeeded)
@@ -251,19 +244,20 @@ public sealed class AssessmentsController : Controller
             return RedirectToAction(nameof(Mcqs));
         }
 
-        var model = await LoadMcqIndexAsync(cancellationToken);
-        ViewBag.McqImportMessage = result.Message;
-        ViewBag.McqImportPreview = result.Preview;
-        ViewBag.OpenMcqModal = "import";
+        TempData["AdminMcqMessage"] = result.Message;
+        TempData["AdminMcqMessageType"] = "error";
+        TempData["OpenAdminMcqModal"] = "import";
 
-        if (result.Preview is null)
+        if (result.Preview is not null)
         {
-            TempData["AdminMcqMessage"] = result.Message;
-            TempData["AdminMcqMessageType"] = "error";
-            return RedirectToAction(nameof(Mcqs), new { openModal = "import" });
+            _mcqImportService.CachePreview(result.Preview, userId);
+
+            return RedirectToAction(
+                nameof(Mcqs),
+                new { previewToken = result.Preview.PreviewToken });
         }
 
-        return View("Mcqs", model);
+        return RedirectToAction(nameof(Mcqs));
     }
 
     [HttpGet]
