@@ -187,10 +187,33 @@ public sealed class AssessmentsController : Controller
             return Unauthorized();
         }
 
-        var result = await _mcqImportService.ConfirmAsync(
-            previewToken,
-            userId,
-            cancellationToken);
+        McqImportOutcomeDto result;
+
+        try
+        {
+            result = await _mcqImportService.ConfirmAsync(
+                previewToken,
+                userId,
+                cancellationToken);
+        }
+        catch (DbException)
+        {
+            ViewBag.McqImportMessage =
+                "The database returned an error while confirming the import, so success cannot be confirmed. Refresh the MCQ list to verify what was saved before trying again. If the chapter column is missing, execute Database/20261012_AddTopicIdToContentQuestions.sql first.";
+            ViewBag.McqImportMessageType = "error";
+            ViewBag.OpenMcqModal = "import";
+
+            try
+            {
+                ViewBag.McqTopics = await _mcqService.GetTopicLookupAsync(cancellationToken);
+            }
+            catch (DbException)
+            {
+                ViewBag.McqTopics = Array.Empty<AdminMcqTopicLookupDto>();
+            }
+
+            return View("Mcqs", new AdminMcqIndexDto());
+        }
 
         if (result.Succeeded)
         {
