@@ -4,6 +4,10 @@ namespace CIITStackLab.Application.Interfaces;
 
 public interface IMcqImportService
 {
+    void CachePreview(McqImportPreviewDto preview, string userId);
+
+    McqImportPreviewDto? GetPreview(string previewToken, string userId);
+
     Task<McqImportPreviewDto> PreviewAsync(
         int topicId,
         string fileName,
