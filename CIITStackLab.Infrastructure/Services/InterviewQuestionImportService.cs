@@ -20,16 +20,12 @@ public sealed class InterviewQuestionImportService : IInterviewQuestionImportSer
 
     private readonly ApplicationDbContext _dbContext;
     private readonly IMemoryCache _cache;
-    private readonly IInterviewQuestionAnalyzerService _analyzerService;
-
     public InterviewQuestionImportService(
         ApplicationDbContext dbContext,
-        IMemoryCache cache,
-        IInterviewQuestionAnalyzerService analyzerService)
+        IMemoryCache cache)
     {
         _dbContext = dbContext;
         _cache = cache;
-        _analyzerService = analyzerService;
     }
 
     public async Task<IReadOnlyList<InterviewQuestionTopicLookupDto>> GetTopicLookupAsync(
@@ -140,70 +136,28 @@ public sealed class InterviewQuestionImportService : IInterviewQuestionImportSer
         preview.TopicTitle = topic.Title;
 
         var extension = Path.GetExtension(fileName);
-        if (!extension.Equals(".txt", StringComparison.OrdinalIgnoreCase)
-            && !extension.Equals(".docx", StringComparison.OrdinalIgnoreCase))
+        if (!extension.Equals(".xlsx", StringComparison.OrdinalIgnoreCase))
         {
-            preview.FileErrors.Add("Choose a .txt or .docx file.");
+            preview.FileErrors.Add("Choose an Excel .xlsx file using the required Question and Answer columns.");
             return preview;
         }
 
-        await ReportProgressAsync("Extracting readable text from the uploaded notes...");
+        await ReportProgressAsync(
+            "Opening the Excel workbook and locating the first worksheet...");
 
-        using var documentBuffer = new MemoryStream();
-        await fileStream.CopyToAsync(documentBuffer, cancellationToken);
-        documentBuffer.Position = 0;
+        using var workbookBuffer = new MemoryStream();
+        await fileStream.CopyToAsync(workbookBuffer, cancellationToken);
+        workbookBuffer.Position = 0;
 
-        string sourceText;
-        try
-        {
-            sourceText = await McqImportParser.ExtractTextAsync(
-                documentBuffer,
-                extension,
-                cancellationToken);
-        }
-        catch (DecoderFallbackException)
-        {
-            preview.FileErrors.Add("The text file is not valid UTF-8. Save it as UTF-8 and upload it again.");
-            return preview;
-        }
-        catch (InvalidDataException)
-        {
-            preview.FileErrors.Add("The Word document is invalid or could not be opened. Upload a valid .docx file.");
-            return preview;
-        }
-        catch (XmlException)
-        {
-            preview.FileErrors.Add("The Word document contains invalid document XML.");
-            return preview;
-        }
-        catch (IOException)
-        {
-            preview.FileErrors.Add("The uploaded file could not be read. Please try again.");
-            return preview;
-        }
+        var parsedExcel = await ExcelQuestionImportMapper.ParseInterviewQuestionsAsync(
+            workbookBuffer,
+            cancellationToken);
 
-        if (string.IsNullOrWhiteSpace(sourceText))
-        {
-            preview.FileErrors.Add("The document did not contain readable text. Upload non-empty chapter notes.");
-            return preview;
-        }
+        preview.FileErrors.AddRange(parsedExcel.FileErrors);
+        preview.Questions.AddRange(parsedExcel.Questions);
 
-        await ReportProgressAsync("Identifying concepts and preparing source-based interview questions...");
-
-        try
-        {
-            var analyzedQuestions = await _analyzerService.AnalyzeAsync(
-                topic.Title,
-                sourceText,
-                cancellationToken,
-                (message, _) => ReportProgressAsync(message));
-
-            preview.Questions.AddRange(analyzedQuestions);
-        }
-        catch (InvalidOperationException exception)
-        {
-            preview.FileErrors.Add(exception.Message);
-        }
+        await ReportProgressAsync(
+            "Read " + preview.Questions.Count + " Excel interview row(s). Validating required Question and Answer cells...");
 
         if (preview.Questions.Count > 0)
         {
