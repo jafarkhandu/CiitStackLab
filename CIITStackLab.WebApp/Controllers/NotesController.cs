@@ -48,10 +48,8 @@ public sealed class NotesController : Controller
                     new { returnUrl });
             }
 
-            TempData["CourseEnrollmentMessage"] =
-                "Enrollment is required to open notes for this paid course. Select the course and request enrollment first.";
-
-            TempData["CourseEnrollmentMessageType"] = "error";
+            TempData["CoursePaymentMessage"] =
+                "Payment is required to open notes for this paid course.";
 
             return RedirectToAction("Index", "Home");
         }
