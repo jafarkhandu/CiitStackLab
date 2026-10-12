@@ -1,0 +1,18 @@
+using CIITStackLab.Application.DTOs;
+
+namespace CIITStackLab.Application.Interfaces;
+
+public interface IMcqImportService
+{
+    Task<McqImportPreviewDto> PreviewAsync(
+        int contentId,
+        string fileName,
+        Stream fileStream,
+        string userId,
+        CancellationToken cancellationToken = default);
+
+    Task<McqImportOutcomeDto> ConfirmAsync(
+        string previewToken,
+        string userId,
+        CancellationToken cancellationToken = default);
+}
