@@ -26,6 +26,18 @@ app.UseHttpsRedirection();
 app.UseStaticFiles();
 app.UseRouting();
 
+app.Use(async (context, next) =>
+{
+    try
+    {
+        await next();
+    }
+    catch (OperationCanceledException) when (context.RequestAborted.IsCancellationRequested)
+    {
+        // The client/request was cancelled. The response can no longer be completed.
+    }
+});
+
 app.UseAuthentication();
 app.UseAuthorization();
 
