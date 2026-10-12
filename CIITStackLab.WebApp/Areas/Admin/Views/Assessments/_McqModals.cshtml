@@ -102,8 +102,8 @@
             <div class="modal-header">
                 <div>
                     <span class="ciit-admin-eyebrow">Assessment tools</span>
-                    <h2 class="modal-title" id="bulkImportMcqModalTitle">Smart MCQ Import</h2>
-                    <p class="mb-0">Upload, preview and confirm — without leaving the MCQ list.</p>
+                    <h2 class="modal-title" id="bulkImportMcqModalTitle">MCQ Analyzer &amp; Import</h2>
+                    <p class="mb-0">Analyze chapter notes locally or review a formatted MCQ set, then confirm the import.</p>
                 </div>
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
@@ -179,8 +179,8 @@
                         <div class="ciit-mcq-import-format-heading">
                             <i class="bi bi-file-earmark-text"></i>
                             <div>
-                                <strong>Required format</strong>
-                                <span>Each question, options A–D and answer on separate lines.</span>
+                                <strong>Supported analysis formats</strong>
+                                <span>Chapter notes are analyzed locally. Preformatted MCQs should use question text, options A–D and an ANSWER line.</span>
                             </div>
                         </div>
                         <pre>Q1: What is the JVM?
@@ -196,7 +196,7 @@ B) interface
 C) extends
 D) import
 ANSWER: C</pre>
-                        <p>Answers can be A–D or 1–4. Chapter heading such as <code>CHAPTER: Core Java</code> is allowed.</p>
+                        <p>For preformatted MCQs, answers can be A–D or 1–4. A heading such as <code>CHAPTER: Core Java</code> is allowed. Ordinary explanatory chapter notes are also supported by the local rule-based analyzer.</p>
                     </div>
 
                     @if (preview is not null && preview.FileErrors.Count > 0 && preview.Questions.Count == 0)
@@ -214,7 +214,7 @@ ANSWER: C</pre>
 
                     <div class="ciit-mcq-import-upload-actions">
                         <button type="submit" class="ciit-mcq-import-primary">
-                            <i class="bi bi-magic"></i>Analyze file
+                            <i class="bi bi-search"></i>Analyze file
                         </button>
                     </div>
                 </form>

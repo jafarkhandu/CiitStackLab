@@ -53,8 +53,7 @@ public static class DependencyInjection
         services.AddScoped<IAdminInterviewQuestionService, AdminInterviewQuestionService>();
         services.AddScoped<IAdminPracticeProgramService, AdminPracticeProgramService>();
         services.AddScoped<INotesService, NotesService>();
-        services.AddHttpClient<IChapterMcqGenerationService, ChapterMcqGenerationService>(
-            client => client.Timeout = TimeSpan.FromMinutes(2));
+        services.AddScoped<IChapterMcqAnalyzerService, ChapterMcqAnalyzerService>();
         services.AddScoped<IMcqImportService, McqImportService>();
         services.AddScoped<IStudentProgressService, StudentProgressService>();
         services.AddScoped<ICourseAssessmentService, CourseAssessmentService>();
