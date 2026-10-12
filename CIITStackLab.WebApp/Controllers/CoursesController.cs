@@ -44,6 +44,41 @@ public class CoursesController : Controller
             : View(course);
     }
 
+    [HttpPost("Courses/DemoPayment/{id:int}")]
+    [Authorize(Roles = "Student")]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> DemoPayment(
+        int id,
+        CancellationToken cancellationToken)
+    {
+        if (id <= 0)
+        {
+            return NotFound();
+        }
+
+        var course = await _courseService.GetByIdAsync(
+            id,
+            cancellationToken);
+
+        if (course is null)
+        {
+            return NotFound();
+        }
+
+        var price = await _courseEnrollmentService.GetCoursePriceAsync(
+            id,
+            cancellationToken);
+
+        if (price <= 0m)
+        {
+            return RedirectToAction(nameof(Learn), new { id });
+        }
+
+        TempData[$"DemoPayment:{id}"] = true;
+
+        return RedirectToAction(nameof(Learn), new { id });
+    }
+
     [HttpGet("Courses/Learn/{id:int}")]
     public async Task<IActionResult> Learn(
         int id,
@@ -71,14 +106,18 @@ public class CoursesController : Controller
             ? User.FindFirstValue(ClaimTypes.NameIdentifier)
             : null;
 
-        var hasCourseAccess = User.IsInRole("Student")
-            ? await _courseEnrollmentService.CanAccessCourseAsync(
-                accessUserId,
-                id,
-                cancellationToken)
-            : await _courseEnrollmentService.GetCoursePriceAsync(
-                id,
-                cancellationToken) <= 0m;
+        var demoPaymentCompleted = User.IsInRole("Student")
+            && TempData.Peek($"DemoPayment:{id}") is not null;
+
+        var hasCourseAccess = demoPaymentCompleted
+            || (User.IsInRole("Student")
+                ? await _courseEnrollmentService.CanAccessCourseAsync(
+                    accessUserId,
+                    id,
+                    cancellationToken)
+                : await _courseEnrollmentService.GetCoursePriceAsync(
+                    id,
+                    cancellationToken) <= 0m);
 
         if (!hasCourseAccess)
         {
