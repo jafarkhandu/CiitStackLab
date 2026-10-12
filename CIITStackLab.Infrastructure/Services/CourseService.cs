@@ -165,26 +165,72 @@ public sealed class CourseService
             .Distinct()
             .ToList();
 
-        var questions = contentIds.Count == 0
-            ? []
-            : await _dbContext.ContentQuestions
-                .AsNoTracking()
-                .Where(x => x.ContentId.HasValue
-                            && contentIds.Contains(x.ContentId.Value)
-                            && x.Flag == 0)
-                .OrderBy(x => x.Id)
-                .ToListAsync(cancellationToken);
+        var questions = await _dbContext.ContentQuestions
+            .AsNoTracking()
+            .Where(question =>
+                question.Flag == 0
+                && ((question.ContentId.HasValue
+                     && contentIds.Contains(question.ContentId.Value))
+                    || (question.TopicId.HasValue
+                        && topicIds.Contains(question.TopicId.Value))))
+            .OrderBy(question => question.Id)
+            .ToListAsync(cancellationToken);
 
         var questionsByContentId = questions
-            .GroupBy(x => x.ContentId!.Value)
+            .Where(question => question.ContentId.HasValue)
+            .GroupBy(question => question.ContentId!.Value)
             .ToDictionary(
                 group => group.Key,
-                group => (IReadOnlyList<ContentQuestionDto>)group.Select(x => new ContentQuestionDto
+                group => (IReadOnlyList<ContentQuestionDto>)group.Select(MapCourseQuestion).ToList());
+
+        var questionsByTopicId = questions
+            .Where(question => question.TopicId.HasValue)
+            .GroupBy(question => question.TopicId!.Value)
+            .ToDictionary(
+                group => group.Key,
+                group => (IReadOnlyList<ContentQuestionDto>)group.Select(MapCourseQuestion).ToList());
+
+        var firstContentIdByTopicId = rows
+            .Where(row => row.ContentId.HasValue)
+            .GroupBy(row => row.TopicId)
+            .ToDictionary(
+                group => group.Key,
+                group => group.Min(row => row.ContentId!.Value));
+
+        IReadOnlyList<ContentQuestionDto> GetQuestionsForCourseContent(int contentId, int topicId)
+        {
+            var result = new List<ContentQuestionDto>();
+
+            if (questionsByContentId.TryGetValue(contentId, out var contentQuestions))
+            {
+                result.AddRange(contentQuestions);
+            }
+
+            if (firstContentIdByTopicId.TryGetValue(topicId, out var firstContentId)
+                && firstContentId == contentId
+                && questionsByTopicId.TryGetValue(topicId, out var topicQuestions))
+            {
+                foreach (var question in topicQuestions)
                 {
-                    Id = x.Id,
-                    Question = x.Question ?? string.Empty,
-                    Options = new[] { x.Option1, x.Option2, x.Option3, x.Option4 },
-                }).ToList());
+                    if (result.All(existingQuestion => existingQuestion.Id != question.Id))
+                    {
+                        result.Add(question);
+                    }
+                }
+            }
+
+            return result;
+        }
+
+        ContentQuestionDto MapCourseQuestion(ContentQuestion question)
+        {
+            return new ContentQuestionDto
+            {
+                Id = question.Id,
+                Question = question.Question ?? string.Empty,
+                Options = new[] { question.Option1, question.Option2, question.Option3, question.Option4 }
+            };
+        }
 
         var topics = rows
             .GroupBy(x => new { x.TopicId, x.TopicTitle, x.TopicPrice })
@@ -202,9 +248,7 @@ public sealed class CourseService
                         Title = x.ContentTitle ?? string.Empty,
                         Slides = x.Slides,
                         VideoName = x.VideoName,
-                        Questions = questionsByContentId.TryGetValue(x.ContentId.Value, out var contentQuestions)
-                            ? contentQuestions
-                            : Array.Empty<ContentQuestionDto>()
+                        Questions = GetQuestionsForCourseContent(x.ContentId.Value, x.TopicId)
                     })
                     .ToList()
             })
