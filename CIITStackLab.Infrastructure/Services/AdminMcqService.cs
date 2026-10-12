@@ -25,8 +25,9 @@ public sealed class AdminMcqService : IAdminMcqService
             {
                 Id = x.Id,
                 ContentId = x.ContentId,
-                ContentTitle = x.Content != null ? x.Content.Title ?? string.Empty : "Unassigned",
-                TopicTitle = x.Content != null && x.Content.Topic != null ? x.Content.Topic.Title : "Unassigned",
+                TopicId = x.TopicId ?? (x.Content != null ? x.Content.TopicId : null),
+                ContentTitle = x.Content != null ? x.Content.Title ?? string.Empty : string.Empty,
+                TopicTitle = x.Topic != null ? x.Topic.Title : (x.Content != null && x.Content.Topic != null ? x.Content.Topic.Title : "Unassigned"),
                 Question = x.Question ?? string.Empty,
                 Option1 = x.Option1 ?? string.Empty,
                 Option2 = x.Option2 ?? string.Empty,
@@ -45,8 +46,9 @@ public sealed class AdminMcqService : IAdminMcqService
             .Select(x => new AdminArchivedMcqDto
             {
                 Id = x.Id,
-                ContentTitle = x.Content != null ? x.Content.Title ?? string.Empty : "Unassigned",
-                TopicTitle = x.Content != null && x.Content.Topic != null ? x.Content.Topic.Title : "Unassigned",
+                TopicId = x.TopicId ?? (x.Content != null ? x.Content.TopicId : null),
+                ContentTitle = x.Content != null ? x.Content.Title ?? string.Empty : string.Empty,
+                TopicTitle = x.Topic != null ? x.Topic.Title : (x.Content != null && x.Content.Topic != null ? x.Content.Topic.Title : "Unassigned"),
                 Question = x.Question ?? string.Empty,
                 DeletedAt = x.DeletedAt
             })
@@ -68,8 +70,9 @@ public sealed class AdminMcqService : IAdminMcqService
             {
                 Id = x.Id,
                 ContentId = x.ContentId,
-                ContentTitle = x.Content != null ? x.Content.Title ?? string.Empty : "Unassigned",
-                TopicTitle = x.Content != null && x.Content.Topic != null ? x.Content.Topic.Title : "Unassigned",
+                TopicId = x.TopicId ?? (x.Content != null ? x.Content.TopicId : null),
+                ContentTitle = x.Content != null ? x.Content.Title ?? string.Empty : string.Empty,
+                TopicTitle = x.Topic != null ? x.Topic.Title : (x.Content != null && x.Content.Topic != null ? x.Content.Topic.Title : "Unassigned"),
                 Question = x.Question ?? string.Empty,
                 Option1 = x.Option1 ?? string.Empty,
                 Option2 = x.Option2 ?? string.Empty,
@@ -96,6 +99,91 @@ public sealed class AdminMcqService : IAdminMcqService
                 TopicTitle = x.Topic!.Title
             })
             .ToListAsync(cancellationToken);
+    }
+
+    public async Task<IReadOnlyList<AdminMcqTopicLookupDto>> GetTopicLookupAsync(
+        CancellationToken cancellationToken = default)
+    {
+        return await _dbContext.Topics
+            .AsNoTracking()
+            .Where(topic => topic.Flag == 0)
+            .OrderBy(topic => topic.Title)
+            .Select(topic => new AdminMcqTopicLookupDto
+            {
+                Id = topic.Id,
+                Title = topic.Title
+            })
+            .ToListAsync(cancellationToken);
+    }
+
+    public async Task<(bool Succeeded, string? Error)> CreateForTopicAsync(
+        AdminTopicMcqInputDto input,
+        CancellationToken cancellationToken = default)
+    {
+        var topicExists = await _dbContext.Topics.AnyAsync(
+            topic => topic.Id == input.TopicId && topic.Flag == 0,
+            cancellationToken);
+
+        if (!topicExists)
+        {
+            return (false, "The selected chapter is not available.");
+        }
+
+        var question = new ContentQuestion
+        {
+            TopicId = input.TopicId,
+            ContentId = null,
+            Question = input.Question.Trim(),
+            Option1 = input.Option1.Trim(),
+            Option2 = input.Option2.Trim(),
+            Option3 = input.Option3.Trim(),
+            Option4 = input.Option4.Trim(),
+            CorrectOptionNumber = input.CorrectOptionNumber,
+            Flag = 0,
+            CreatedAt = DateTime.Now
+        };
+
+        _dbContext.ContentQuestions.Add(question);
+        await _dbContext.SaveChangesAsync(cancellationToken);
+
+        return (true, null);
+    }
+
+    public async Task<(bool Succeeded, string? Error)> UpdateForTopicAsync(
+        int id,
+        AdminTopicMcqInputDto input,
+        CancellationToken cancellationToken = default)
+    {
+        var question = await _dbContext.ContentQuestions
+            .SingleOrDefaultAsync(item => item.Id == id && item.Flag == 0, cancellationToken);
+
+        if (question is null)
+        {
+            return (false, "The selected MCQ was not found.");
+        }
+
+        var topicExists = await _dbContext.Topics.AnyAsync(
+            topic => topic.Id == input.TopicId && topic.Flag == 0,
+            cancellationToken);
+
+        if (!topicExists)
+        {
+            return (false, "The selected chapter is not available.");
+        }
+
+        question.TopicId = input.TopicId;
+        question.ContentId = null;
+        question.Question = input.Question.Trim();
+        question.Option1 = input.Option1.Trim();
+        question.Option2 = input.Option2.Trim();
+        question.Option3 = input.Option3.Trim();
+        question.Option4 = input.Option4.Trim();
+        question.CorrectOptionNumber = input.CorrectOptionNumber;
+        question.UpdatedAt = DateTime.Now;
+
+        await _dbContext.SaveChangesAsync(cancellationToken);
+
+        return (true, null);
     }
 
     public async Task<(bool Succeeded, string? Error)> CreateAsync(AdminMcqInputDto input, CancellationToken cancellationToken = default)
