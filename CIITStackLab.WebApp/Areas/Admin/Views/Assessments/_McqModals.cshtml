@@ -103,7 +103,7 @@
                 <div>
                     <span class="ciit-admin-eyebrow">Assessment tools</span>
                     <h2 class="modal-title" id="bulkImportMcqModalTitle">MCQ Analyzer &amp; Import</h2>
-                    <p class="mb-0">Analyze chapter notes locally or review a formatted MCQ set, then confirm the import.</p>
+                    <p class="mb-0">Upload a fixed-column Excel workbook, review each MCQ row, then confirm the import.</p>
                 </div>
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
@@ -168,10 +168,10 @@
                         </div>
 
                         <label class="ciit-mcq-import-file-drop">
-                            <input type="file" name="file" id="ImportMcqFile" accept=".txt,.docx" required />
+                            <input type="file" name="file" id="ImportMcqFile" accept=".xlsx" required />
                             <span class="ciit-mcq-import-file-icon"><i class="bi bi-cloud-arrow-up"></i></span>
-                            <strong>Choose a .txt or .docx file</strong>
-                            <span>Maximum 5 MB · Up to 500 MCQs per batch</span>
+                            <strong>Choose an Excel .xlsx file</strong>
+                            <span>Maximum 5 MB · Up to 500 MCQ rows</span>
                         </label>
                     </div>
 
@@ -179,24 +179,14 @@
                         <div class="ciit-mcq-import-format-heading">
                             <i class="bi bi-file-earmark-text"></i>
                             <div>
-                                <strong>Supported analysis formats</strong>
+                                <strong>Required Excel columns</strong>
                                 <span>Chapter notes are analyzed locally. Preformatted MCQs should use question text, options A–D and an ANSWER line.</span>
                             </div>
                         </div>
-                        <pre>Q1: What is the JVM?
-A) Java Variable Method
-B) Java Virtual Machine
-C) Java Visual Model
-D) Java Verified Module
-ANSWER: B
-
-Q2: Which keyword inherits a class?
-A) implements
-B) interface
-C) extends
-D) import
-ANSWER: C</pre>
-                        <p>For preformatted MCQs, answers can be A–D or 1–4. A heading such as <code>CHAPTER: Core Java</code> is allowed. Ordinary explanatory chapter notes are also supported by the local rule-based analyzer.</p>
+                        <pre>Question | Option A | Option B | Option C | Option D | Correct Answer
+One spreadsheet row = one MCQ. Use A–D or 1–4 for Correct Answer.
+Long questions and answers can contain multiple lines inside the same Excel cell.</pre>
+                        <p>Keep the six headers in columns A–F in the shown order. Put each full question and each option in its own cell; embedded line breaks stay inside that cell and do not start a new MCQ.</p>
                     </div>
 
                     @if (preview is not null && preview.FileErrors.Count > 0 && preview.Questions.Count == 0)
