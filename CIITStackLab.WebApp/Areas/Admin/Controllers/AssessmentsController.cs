@@ -580,7 +580,7 @@ public sealed class AssessmentsController : Controller
                 TopicId = topicId,
                 FileName = file is null ? string.Empty : Path.GetFileName(file.FileName)
             };
-            preview.FileErrors.Add("The database returned an error while checking the selected content. No interview questions were saved.");
+            preview.FileErrors.Add("The database returned an error while checking the selected chapter. No interview questions were saved.");
         }
         catch (Exception exception) when (!cancellationToken.IsCancellationRequested)
         {
@@ -643,7 +643,7 @@ public sealed class AssessmentsController : Controller
         catch (Exception exception) when (exception is DbException or DbUpdateException)
         {
             _logger.LogError(exception, "Interview question preview database failure for chapter {TopicId}.", topicId);
-            preview.FileErrors.Add("The database returned an error while checking the selected content. No questions were saved.");
+            preview.FileErrors.Add("The database returned an error while checking the selected chapter. No questions were saved.");
         }
         catch (Exception exception) when (!cancellationToken.IsCancellationRequested)
         {
