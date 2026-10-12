@@ -39,26 +39,9 @@ public class CoursesController : Controller
             id,
             cancellationToken);
 
-        if (course is null)
-        {
-            return NotFound();
-        }
-
-        course.IsStudent = User.IsInRole("Student");
-
-        var userId = course.IsStudent
-            ? User.FindFirstValue(ClaimTypes.NameIdentifier)
-            : null;
-
-        if (!string.IsNullOrWhiteSpace(userId))
-        {
-            course.Enrollment = await _courseEnrollmentService.GetStudentEnrollmentAsync(
-                userId,
-                id,
-                cancellationToken);
-        }
-
-        return View(course);
+        return course is null
+            ? NotFound()
+            : View(course);
     }
 
     [HttpGet("Courses/Learn/{id:int}")]
@@ -108,9 +91,8 @@ public class CoursesController : Controller
                     new { returnUrl });
             }
 
-            TempData["CourseEnrollmentMessage"] = User.IsInRole("Student")
-                ? "This course requires an approved enrollment before learning content can be opened."
-                : "Paid course access is available to enrolled student accounts.";
+            TempData["CoursePaymentMessage"] =
+                "Payment is required before this paid course can be opened.";
 
             return RedirectToAction(nameof(Details), new { id });
         }
@@ -181,7 +163,8 @@ public class CoursesController : Controller
             id,
             cancellationToken))
         {
-            TempData["CourseEnrollmentMessage"] = "An approved enrollment is required to update paid-course progress.";
+            TempData["CoursePaymentMessage"] =
+                "Payment is required before paid-course progress can be updated.";
             return RedirectToAction(nameof(Details), new { id });
         }
 
@@ -233,7 +216,8 @@ public class CoursesController : Controller
             id,
             cancellationToken))
         {
-            TempData["CourseEnrollmentMessage"] = "An approved enrollment is required to submit this assessment.";
+            TempData["CoursePaymentMessage"] =
+                "Payment is required before a paid-course assessment can be submitted.";
             return RedirectToAction(nameof(Details), new { id });
         }
 
@@ -304,36 +288,5 @@ public class CoursesController : Controller
         return attempt is null
             ? NotFound()
             : View(attempt);
-    }
-
-    [HttpPost("Courses/Enroll/{id:int}")]
-    [Authorize(Roles = "Student")]
-    [ValidateAntiForgeryToken]
-    public async Task<IActionResult> RequestEnrollment(
-        int id,
-        CancellationToken cancellationToken)
-    {
-        if (id <= 0)
-        {
-            return NotFound();
-        }
-
-        var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
-
-        if (string.IsNullOrWhiteSpace(userId))
-        {
-            return Unauthorized();
-        }
-
-        var outcome = await _courseEnrollmentService.RequestEnrollmentAsync(
-            userId,
-            id,
-            cancellationToken);
-
-        TempData["CourseEnrollmentMessage"] = outcome.Message;
-        TempData["CourseEnrollmentMessageType"] =
-            outcome.Succeeded ? "success" : "error";
-
-        return RedirectToAction(nameof(Details), new { id });
     }
 }
