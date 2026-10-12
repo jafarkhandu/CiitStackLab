@@ -6,6 +6,7 @@ public sealed class AdminInterviewQuestionDto
 {
     public int Id { get; init; }
     public int? ContentId { get; init; }
+    public int? TopicId { get; init; }
     public string ContentTitle { get; init; } = string.Empty;
     public string TopicTitle { get; init; } = string.Empty;
     public string Question { get; init; } = string.Empty;
@@ -44,6 +45,7 @@ public sealed class AdminInterviewQuestionInputDto
 public sealed class AdminInterviewQuestionContentLookupDto
 {
     public int Id { get; init; }
+    public int? TopicId { get; init; }
     public string Title { get; init; } = string.Empty;
     public string TopicTitle { get; init; } = string.Empty;
 }
