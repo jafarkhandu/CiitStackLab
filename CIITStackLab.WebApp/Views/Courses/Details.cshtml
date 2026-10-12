@@ -93,107 +93,130 @@
                     <div class="modal-content">
                         <div class="modal-header border-0">
                             <div>
-                                <span class="ciit-payment-modal-eyebrow">Secure checkout</span>
+                                <span class="ciit-payment-modal-eyebrow">Demo checkout</span>
                                 <h2 class="modal-title" id="coursePaymentModalLabel">Complete your purchase</h2>
-                                <p class="ciit-payment-modal-subtitle">Review the course and continue to secure payment.</p>
+                                <p class="ciit-payment-modal-subtitle">This is a testing flow. No real payment will be processed.</p>
                             </div>
                             <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                         </div>
 
                         <div class="modal-body pt-0">
-                            <div class="ciit-payment-course-summary">
-                                <img src="@Model.ImageUrl" alt="@Model.Title" />
-                                <div>
-                                    <span>@Model.Category</span>
-                                    <h3>@Model.Title</h3>
-                                    <p>@Model.ShortDescription</p>
-                                    <div class="ciit-payment-course-meta">
-                                        <span><i class="bi bi-bar-chart"></i>@Model.Level</span>
-                                        <span><i class="bi bi-clock"></i>@Model.DurationHours hrs</span>
-                                        <span><i class="bi bi-collection-play"></i>@Model.Topics.Count topics</span>
-                                    </div>
-                                </div>
-                            </div>
-
-                            <div class="ciit-payment-order-box">
-                                <div>
-                                    <span>Course price</span>
-                                    <strong>₹@Model.TotalPrice.ToString("N2")</strong>
-                                </div>
-                                <div class="ciit-payment-order-total">
-                                    <span>Total payable</span>
-                                    <strong>₹@Model.TotalPrice.ToString("N2")</strong>
-                                </div>
-                            </div>
-
-                            <div class="ciit-payment-method-box">
-                                <div class="ciit-payment-section-heading">
+                            <div id="ciit-payment-form-state">
+                                <div class="ciit-payment-course-summary">
+                                    <img src="@Model.ImageUrl" alt="@Model.Title" />
                                     <div>
-                                        <span>Payment method</span>
-                                        <strong>Choose how you want to pay</strong>
+                                        <span>@Model.Category</span>
+                                        <h3>@Model.Title</h3>
+                                        <p>@Model.ShortDescription</p>
+                                        <div class="ciit-payment-course-meta">
+                                            <span><i class="bi bi-bar-chart"></i>@Model.Level</span>
+                                            <span><i class="bi bi-clock"></i>@Model.DurationHours hrs</span>
+                                            <span><i class="bi bi-collection-play"></i>@Model.Topics.Count topics</span>
+                                        </div>
                                     </div>
-                                    <i class="bi bi-shield-check"></i>
                                 </div>
 
-                                <div class="ciit-payment-methods" role="radiogroup" aria-label="Payment method">
-                                    <label class="ciit-payment-method">
-                                        <input type="radio" name="paymentMethod" value="upi" checked />
-                                        <span class="ciit-payment-method-icon"><i class="bi bi-phone"></i></span>
-                                        <span>
-                                            <strong>UPI</strong>
-                                            <small>Google Pay, PhonePe, Paytm and more</small>
-                                        </span>
-                                        <i class="bi bi-check-circle-fill ciit-payment-method-check"></i>
-                                    </label>
-
-                                    <label class="ciit-payment-method">
-                                        <input type="radio" name="paymentMethod" value="card" />
-                                        <span class="ciit-payment-method-icon"><i class="bi bi-credit-card"></i></span>
-                                        <span>
-                                            <strong>Card</strong>
-                                            <small>Credit or debit card</small>
-                                        </span>
-                                        <i class="bi bi-check-circle-fill ciit-payment-method-check"></i>
-                                    </label>
-
-                                    <label class="ciit-payment-method">
-                                        <input type="radio" name="paymentMethod" value="netbanking" />
-                                        <span class="ciit-payment-method-icon"><i class="bi bi-bank"></i></span>
-                                        <span>
-                                            <strong>Net banking</strong>
-                                            <small>Pay directly through your bank</small>
-                                        </span>
-                                        <i class="bi bi-check-circle-fill ciit-payment-method-check"></i>
-                                    </label>
+                                <div class="ciit-payment-order-box">
+                                    <div>
+                                        <span>Course price</span>
+                                        <strong>₹@Model.TotalPrice.ToString("N2")</strong>
+                                    </div>
+                                    <div class="ciit-payment-order-total">
+                                        <span>Total payable</span>
+                                        <strong>₹@Model.TotalPrice.ToString("N2")</strong>
+                                    </div>
                                 </div>
+
+                                <div class="ciit-payment-method-box">
+                                    <div class="ciit-payment-section-heading">
+                                        <div>
+                                            <span>Payment method</span>
+                                            <strong>Choose how you want to pay</strong>
+                                        </div>
+                                        <i class="bi bi-shield-check"></i>
+                                    </div>
+
+                                    <div class="ciit-payment-methods" role="radiogroup" aria-label="Payment method">
+                                        <label class="ciit-payment-method">
+                                            <input type="radio" name="paymentMethod" value="upi" checked />
+                                            <span class="ciit-payment-method-icon"><i class="bi bi-phone"></i></span>
+                                            <span>
+                                                <strong>UPI</strong>
+                                                <small>Google Pay, PhonePe, Paytm and more</small>
+                                            </span>
+                                            <i class="bi bi-check-circle-fill ciit-payment-method-check"></i>
+                                        </label>
+
+                                        <label class="ciit-payment-method">
+                                            <input type="radio" name="paymentMethod" value="card" />
+                                            <span class="ciit-payment-method-icon"><i class="bi bi-credit-card"></i></span>
+                                            <span>
+                                                <strong>Card</strong>
+                                                <small>Credit or debit card</small>
+                                            </span>
+                                            <i class="bi bi-check-circle-fill ciit-payment-method-check"></i>
+                                        </label>
+
+                                        <label class="ciit-payment-method">
+                                            <input type="radio" name="paymentMethod" value="netbanking" />
+                                            <span class="ciit-payment-method-icon"><i class="bi bi-bank"></i></span>
+                                            <span>
+                                                <strong>Net banking</strong>
+                                                <small>Pay directly through your bank</small>
+                                            </span>
+                                            <i class="bi bi-check-circle-fill ciit-payment-method-check"></i>
+                                        </label>
+                                    </div>
+                                </div>
+
+                                @if (User.Identity?.IsAuthenticated == true)
+                                {
+                                    <form id="ciit-demo-payment-form"
+                                          asp-controller="Courses"
+                                          asp-action="DemoPayment"
+                                          asp-route-id="@Model.Id"
+                                          method="post">
+                                        @Html.AntiForgeryToken()
+                                        <button type="submit"
+                                                id="ciit-demo-payment-button"
+                                                class="btn btn-primary btn-lg w-100 ciit-payment-pay-button">
+                                            <i class="bi bi-lock-fill me-2"></i>
+                                            Pay ₹@Model.TotalPrice.ToString("N2") (Demo)
+                                        </button>
+                                    </form>
+                                    <p class="ciit-payment-modal-note">
+                                        Demo mode: a fake payment animation will run, then the learning page will open.
+                                    </p>
+                                }
+                                else
+                                {
+                                    <a asp-controller="Account"
+                                       asp-action="Login"
+                                       asp-route-returnUrl="@Context.Request.Path@Context.Request.QueryString"
+                                       class="btn btn-primary btn-lg w-100 ciit-payment-pay-button">
+                                        <i class="bi bi-box-arrow-in-right me-2"></i>
+                                        Sign in to continue
+                                    </a>
+                                    <p class="ciit-payment-modal-note">
+                                        Sign in to use the demo payment flow.
+                                    </p>
+                                }
                             </div>
 
-                            @if (User.Identity?.IsAuthenticated == true)
-                            {
-                                <a asp-controller="Courses"
-                                   asp-action="Learn"
-                                   asp-route-id="@Model.Id"
-                                   class="btn btn-primary btn-lg w-100 ciit-payment-pay-button">
-                                    <i class="bi bi-play-circle me-2"></i>
-                                    Pay ₹@Model.TotalPrice.ToString("N2") (Demo)
-                                </a>
-                                <p class="ciit-payment-modal-note">
-                                    Demo mode: no real payment is processed. This button only lets you preview the learning flow.
-                                </p>
-                            }
-                            else
-                            {
-                                <a asp-controller="Account"
-                                   asp-action="Login"
-                                   asp-route-returnUrl="@Context.Request.Path@Context.Request.QueryString"
-                                   class="btn btn-primary btn-lg w-100 ciit-payment-pay-button">
-                                    <i class="bi bi-box-arrow-in-right me-2"></i>
-                                    Sign in to continue
-                                </a>
-                                <p class="ciit-payment-modal-note">
-                                    Your course purchase must be linked to your signed-in student account.
-                                </p>
-                            }
+                            <div id="ciit-payment-processing-state" class="ciit-payment-state" hidden>
+                                <div class="ciit-payment-spinner" aria-hidden="true"></div>
+                                <strong>Processing demo payment</strong>
+                                <span>Verifying your demo payment...</span>
+                            </div>
+
+                            <div id="ciit-payment-success-state" class="ciit-payment-state ciit-payment-success-state" hidden>
+                                <div class="ciit-payment-success-icon" aria-hidden="true">
+                                    <i class="bi bi-check-lg"></i>
+                                </div>
+                                <strong>Payment Successful</strong>
+                                <span>Demo payment completed successfully.</span>
+                                <small>Opening your learning page...</small>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -316,3 +339,55 @@
         </div>
     </div>
 </section>
+
+@section Scripts {
+    <script>
+        (() => {
+            const form = document.getElementById('ciit-demo-payment-form');
+            const formState = document.getElementById('ciit-payment-form-state');
+            const processingState = document.getElementById('ciit-payment-processing-state');
+            const successState = document.getElementById('ciit-payment-success-state');
+            const modal = document.getElementById('coursePaymentModal');
+
+            if (!form || !formState || !processingState || !successState) {
+                return;
+            }
+
+            form.addEventListener('submit', (event) => {
+                event.preventDefault();
+
+                const button = document.getElementById('ciit-demo-payment-button');
+                if (button) {
+                    button.disabled = true;
+                }
+
+                formState.hidden = true;
+                processingState.hidden = false;
+
+                window.setTimeout(() => {
+                    processingState.hidden = true;
+                    successState.hidden = false;
+                }, 2200);
+
+                window.setTimeout(() => {
+                    form.submit();
+                }, 3500);
+            });
+
+            if (modal) {
+                modal.addEventListener('hidden.bs.modal', () => {
+                    if (!processingState.hidden || !successState.hidden) {
+                        formState.hidden = false;
+                        processingState.hidden = true;
+                        successState.hidden = true;
+
+                        const button = document.getElementById('ciit-demo-payment-button');
+                        if (button) {
+                            button.disabled = false;
+                        }
+                    }
+                });
+            }
+        })();
+    </script>
+}
