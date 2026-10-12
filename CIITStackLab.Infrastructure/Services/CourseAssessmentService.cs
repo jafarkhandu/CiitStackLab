@@ -42,18 +42,41 @@ public sealed class CourseAssessmentService : ICourseAssessmentService
                 "This lesson is no longer available in the selected course.");
         }
 
+        var lessonTopicId = await _dbContext.Lessons
+            .AsNoTracking()
+            .Where(lesson => lesson.Id == contentId && lesson.Flag == 0)
+            .Select(lesson => lesson.TopicId)
+            .SingleOrDefaultAsync(cancellationToken);
+
+        int? firstActiveContentId = null;
+
+        if (lessonTopicId.HasValue)
+        {
+            firstActiveContentId = await _dbContext.Lessons
+                .AsNoTracking()
+                .Where(lesson =>
+                    lesson.TopicId == lessonTopicId.Value
+                    && lesson.Flag == 0)
+                .OrderBy(lesson => lesson.Id)
+                .Select(lesson => (int?)lesson.Id)
+                .FirstOrDefaultAsync(cancellationToken);
+        }
+
         var questions = await _dbContext.ContentQuestions
             .AsNoTracking()
             .Where(question =>
-                question.ContentId == contentId
-                && question.Flag == 0)
+                question.Flag == 0
+                && (question.ContentId == contentId
+                    || (lessonTopicId.HasValue
+                        && firstActiveContentId == contentId
+                        && question.TopicId == lessonTopicId.Value)))
             .OrderBy(question => question.Id)
             .ToListAsync(cancellationToken);
 
         if (questions.Count == 0)
         {
             return AssessmentSubmissionOutcomeDto.Failure(
-                "There are no active assessment questions for this lesson.");
+                "There are no active assessment questions for this lesson or chapter.");
         }
 
         if (answers is null || answers.Count != questions.Count)
