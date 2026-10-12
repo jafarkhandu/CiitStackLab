@@ -35,21 +35,64 @@ public sealed class AssessmentsController : Controller
 
     [HttpGet]
     public async Task<IActionResult> Mcqs(
-        string? openModal,
+        string? previewToken,
         CancellationToken cancellationToken)
     {
         ViewBag.McqMessage = TempData["AdminMcqMessage"] as string;
         ViewBag.McqMessageType = TempData["AdminMcqMessageType"] as string;
-        ViewBag.OpenMcqModal = openModal;
+        ViewBag.OpenMcqModal = TempData["OpenAdminMcqModal"] as string;
 
-        var model = await LoadMcqIndexAsync(cancellationToken);
+        var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+
+        if (!string.IsNullOrWhiteSpace(userId)
+            && !string.IsNullOrWhiteSpace(previewToken))
+        {
+            ViewBag.McqImportPreview = _mcqImportService.GetPreview(
+                previewToken,
+                userId);
+
+            if (ViewBag.McqImportPreview is null)
+            {
+                ViewBag.McqImportMessage =
+                    "This preview has expired or is no longer available. Upload the file again to analyze it.";
+                ViewBag.McqImportMessageType = "error";
+            }
+        }
+
+        AdminMcqIndexDto model;
+
+        try
+        {
+            model = await LoadMcqIndexAsync(cancellationToken);
+        }
+        catch (DbException)
+        {
+            model = new AdminMcqIndexDto();
+            ViewBag.McqMessage =
+                "The MCQ list could not be loaded from the database. Check the latest database setup script and the application connection string.";
+            ViewBag.McqMessageType = "error";
+
+            if (ViewBag.McqTopics is null)
+            {
+                try
+                {
+                    ViewBag.McqTopics = await _mcqService.GetTopicLookupAsync(cancellationToken);
+                }
+                catch (DbException)
+                {
+                    ViewBag.McqTopics = Array.Empty<AdminMcqTopicLookupDto>();
+                }
+            }
+        }
+
         return View(model);
     }
 
     [HttpGet]
     public IActionResult CreateMcq()
     {
-        return RedirectToAction(nameof(Mcqs), new { openModal = "add" });
+        TempData["OpenAdminMcqModal"] = "add";
+        return RedirectToAction(nameof(Mcqs));
     }
 
     [HttpPost]
@@ -85,7 +128,8 @@ public sealed class AssessmentsController : Controller
     [HttpGet]
     public IActionResult BulkImportMcq()
     {
-        return RedirectToAction(nameof(Mcqs), new { openModal = "import" });
+        TempData["OpenAdminMcqModal"] = "import";
+        return RedirectToAction(nameof(Mcqs));
     }
 
     [HttpPost]
@@ -104,12 +148,10 @@ public sealed class AssessmentsController : Controller
             return Unauthorized();
         }
 
-        McqImportPreviewDto? preview = null;
+        McqImportPreviewDto preview;
 
         try
         {
-            ViewBag.McqTopics = await _mcqService.GetTopicLookupAsync(cancellationToken);
-
             if (file is null || file.Length == 0)
             {
                 preview = new McqImportPreviewDto
@@ -139,39 +181,26 @@ public sealed class AssessmentsController : Controller
                     userId,
                     cancellationToken);
             }
-
-            var model = await LoadMcqIndexAsync(cancellationToken);
-
-            ViewBag.McqImportPreview = preview;
-            ViewBag.OpenMcqModal = "import";
-
-            return View("Mcqs", model);
         }
         catch (DbException)
         {
-            preview ??= new McqImportPreviewDto
+            preview = new McqImportPreviewDto
             {
                 TopicId = topicId,
                 FileName = file is null ? string.Empty : Path.GetFileName(file.FileName)
             };
-
             preview.FileErrors.Add(
-                "The database could not read the MCQ data. Confirm that Database/20261012_AddTopicIdToContentQuestions.sql has been executed against the same database used by this application, then analyze the file again. Analyze never saves questions.");
-
-            try
-            {
-                ViewBag.McqTopics = await _mcqService.GetTopicLookupAsync(cancellationToken);
-            }
-            catch (DbException)
-            {
-                ViewBag.McqTopics = Array.Empty<AdminMcqTopicLookupDto>();
-            }
-
-            ViewBag.McqImportPreview = preview;
-            ViewBag.OpenMcqModal = "import";
-
-            return View("Mcqs", new AdminMcqIndexDto());
+                "The database returned an error during analysis. No MCQs were saved. Confirm the topic_id setup SQL has been run against the database used by this application, then retry.");
         }
+
+        // Keep the preview in server-side cache and redirect to the list page.
+        // This prevents browser refresh from reposting the upload.
+        _mcqImportService.CachePreview(preview, userId);
+        TempData["OpenAdminMcqModal"] = "import";
+
+        return RedirectToAction(
+            nameof(Mcqs),
+            new { previewToken = preview.PreviewToken });
     }
 
     [HttpPost]
