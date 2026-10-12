@@ -44,6 +44,7 @@ internal static class McqImportParser
                         encoderShouldEmitUTF8Identifier: false,
                         throwOnInvalidBytes: true),
                     detectEncodingFromByteOrderMarks: true,
+                    bufferSize: 1024,
                     leaveOpen: true);
 
                 var text = await reader.ReadToEndAsync(cancellationToken);
