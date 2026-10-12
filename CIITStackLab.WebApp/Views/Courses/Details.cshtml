@@ -2,7 +2,10 @@
 
 @{
     ViewData["Title"] = Model.Title;
-    var courseDetailsReturnUrl = Url.Action("Details", "Courses", new { id = Model.Id });
+}
+
+@section Styles {
+    <link rel="stylesheet" href="~/css/course-payment-modal.css" />
 }
 
 <section class="ciit-course-details-section">
@@ -42,7 +45,7 @@
                     </div>
 
                     <div class="d-flex flex-wrap gap-3 mt-4 align-items-center">
-                        @if (Model.TotalPrice <= 0m || Model.Enrollment?.HasAccess == true)
+                        @if (Model.TotalPrice <= 0m)
                         {
                             <a asp-controller="Courses"
                                asp-action="Learn"
@@ -53,56 +56,146 @@
                         }
                         else
                         {
-                            <a asp-area="User"
-                               asp-controller="Checkout"
-                               asp-action="Index"
-                               asp-route-id="@Model.Id"
-                               class="btn btn-primary btn-lg">
+                            <button type="button"
+                                    class="btn btn-primary btn-lg"
+                                    data-bs-toggle="modal"
+                                    data-bs-target="#coursePaymentModal">
                                 <i class="bi bi-credit-card me-2"></i>Start Tutorial
-                            </a>
-
-                            @if (Model.IsStudent && Model.Enrollment?.Status != "PendingApproval")
-                            {
-                                <form asp-controller="Courses"
-                                      asp-action="RequestEnrollment"
-                                      asp-route-id="@Model.Id"
-                                      method="post"
-                                      class="m-0">
-                                    <button type="submit" class="btn btn-outline-primary btn-lg">
-                                        <i class="bi bi-journal-check me-2"></i>
-                                        @(Model.Enrollment?.Status == "Rejected" ? "Request Again" : "Request Enrollment")
-                                    </button>
-                                </form>
-                            }
+                            </button>
                         }
 
-                        <a asp-controller="Home" asp-action="Index" asp-fragment="tutorials" class="btn btn-outline-dark btn-lg">
+                        <a asp-controller="Home"
+                           asp-action="Index"
+                           asp-fragment="tutorials"
+                           class="btn btn-outline-dark btn-lg">
                             Back to Courses
                         </a>
                     </div>
 
-                    @if (Model.IsStudent && Model.Enrollment?.Status == "PendingApproval")
-                    {
-                        <div class="ciit-course-enrollment-status is-pending mt-3">
-                            <i class="bi bi-hourglass-split"></i>
-                            Enrollment awaiting approval. You can review the course checkout details while access is pending.
-                        </div>
-                    }
-                    else if (Model.IsStudent && Model.Enrollment?.Status == "Rejected")
+                    @if (User.Identity?.IsAuthenticated != true && Model.TotalPrice > 0m)
                     {
                         <small class="text-secondary d-block mt-2">
-                            Your previous enrollment request was declined. You can request approval again or continue to checkout.
-                        </small>
-                    }
-                    else if (User.Identity?.IsAuthenticated != true && Model.TotalPrice > 0m)
-                    {
-                        <small class="text-secondary d-block mt-2">
-                            You will be asked to sign in before continuing with checkout.
+                            Sign in before completing payment for this course.
                         </small>
                     }
                 </div>
             </div>
         </div>
+
+        @if (Model.TotalPrice > 0m)
+        {
+            <div class="modal fade ciit-payment-modal"
+                 id="coursePaymentModal"
+                 tabindex="-1"
+                 aria-labelledby="coursePaymentModalLabel"
+                 aria-hidden="true">
+                <div class="modal-dialog modal-dialog-centered modal-lg">
+                    <div class="modal-content">
+                        <div class="modal-header border-0">
+                            <div>
+                                <span class="ciit-payment-modal-eyebrow">Secure checkout</span>
+                                <h2 class="modal-title" id="coursePaymentModalLabel">Complete your purchase</h2>
+                                <p class="ciit-payment-modal-subtitle">Review the course and continue to secure payment.</p>
+                            </div>
+                            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                        </div>
+
+                        <div class="modal-body pt-0">
+                            <div class="ciit-payment-course-summary">
+                                <img src="@Model.ImageUrl" alt="@Model.Title" />
+                                <div>
+                                    <span>@Model.Category</span>
+                                    <h3>@Model.Title</h3>
+                                    <p>@Model.ShortDescription</p>
+                                    <div class="ciit-payment-course-meta">
+                                        <span><i class="bi bi-bar-chart"></i>@Model.Level</span>
+                                        <span><i class="bi bi-clock"></i>@Model.DurationHours hrs</span>
+                                        <span><i class="bi bi-collection-play"></i>@Model.Topics.Count topics</span>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="ciit-payment-order-box">
+                                <div>
+                                    <span>Course price</span>
+                                    <strong>₹@Model.TotalPrice.ToString("N2")</strong>
+                                </div>
+                                <div class="ciit-payment-order-total">
+                                    <span>Total payable</span>
+                                    <strong>₹@Model.TotalPrice.ToString("N2")</strong>
+                                </div>
+                            </div>
+
+                            <div class="ciit-payment-method-box">
+                                <div class="ciit-payment-section-heading">
+                                    <div>
+                                        <span>Payment method</span>
+                                        <strong>Choose how you want to pay</strong>
+                                    </div>
+                                    <i class="bi bi-shield-check"></i>
+                                </div>
+
+                                <div class="ciit-payment-methods" role="radiogroup" aria-label="Payment method">
+                                    <label class="ciit-payment-method is-selected">
+                                        <input type="radio" name="paymentMethod" value="upi" checked />
+                                        <span class="ciit-payment-method-icon"><i class="bi bi-phone"></i></span>
+                                        <span>
+                                            <strong>UPI</strong>
+                                            <small>Google Pay, PhonePe, Paytm and more</small>
+                                        </span>
+                                        <i class="bi bi-check-circle-fill ciit-payment-method-check"></i>
+                                    </label>
+
+                                    <label class="ciit-payment-method">
+                                        <input type="radio" name="paymentMethod" value="card" />
+                                        <span class="ciit-payment-method-icon"><i class="bi bi-credit-card"></i></span>
+                                        <span>
+                                            <strong>Card</strong>
+                                            <small>Credit or debit card</small>
+                                        </span>
+                                        <i class="bi bi-check-circle-fill ciit-payment-method-check"></i>
+                                    </label>
+
+                                    <label class="ciit-payment-method">
+                                        <input type="radio" name="paymentMethod" value="netbanking" />
+                                        <span class="ciit-payment-method-icon"><i class="bi bi-bank"></i></span>
+                                        <span>
+                                            <strong>Net banking</strong>
+                                            <small>Pay directly through your bank</small>
+                                        </span>
+                                        <i class="bi bi-check-circle-fill ciit-payment-method-check"></i>
+                                    </label>
+                                </div>
+                            </div>
+
+                            @if (User.Identity?.IsAuthenticated == true)
+                            {
+                                <button type="button" class="btn btn-primary btn-lg w-100 ciit-payment-pay-button" disabled>
+                                    <i class="bi bi-lock-fill me-2"></i>
+                                    Pay ₹@Model.TotalPrice.ToString("N2")
+                                </button>
+                                <p class="ciit-payment-modal-note">
+                                    The payment gateway is not connected yet. This button stays disabled until verified payment processing is configured.
+                                </p>
+                            }
+                            else
+                            {
+                                <a asp-controller="Account"
+                                   asp-action="Login"
+                                   asp-route-returnUrl="@Context.Request.Path@Context.Request.QueryString"
+                                   class="btn btn-primary btn-lg w-100 ciit-payment-pay-button">
+                                    <i class="bi bi-box-arrow-in-right me-2"></i>
+                                    Sign in to continue
+                                </a>
+                                <p class="ciit-payment-modal-note">
+                                    Your course purchase must be linked to your signed-in student account.
+                                </p>
+                            }
+                        </div>
+                    </div>
+                </div>
+            </div>
+        }
 
         <div id="course-roadmap" class="ciit-course-outline-card mt-4">
             <div class="d-flex justify-content-between align-items-center gap-3 flex-wrap mb-3">
@@ -207,7 +300,6 @@
                                                             </a>
                                                         </div>
                                                     }
-
                                                 </article>
                                             }
                                         </div>
