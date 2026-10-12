@@ -1467,3 +1467,45 @@
         padding: 10px;
     }
 }
+
+
+/* Keep the completion/progress card at its natural height inside the scrollable modal grid. */
+.ciit-mcq-import-modal-body {
+    grid-auto-rows: max-content;
+    align-content: start;
+}
+
+.ciit-mcq-import-modal-body > .ciit-mcq-import-live-status {
+    box-sizing: border-box;
+    min-height: 112px;
+    height: auto;
+    align-self: stretch;
+    flex-shrink: 0;
+    overflow: visible;
+}
+
+.ciit-mcq-import-modal-body > .ciit-mcq-import-live-status .ciit-mcq-import-live-orbit {
+    flex-shrink: 0;
+}
+
+.ciit-mcq-import-modal-body .ciit-mcq-import-progress-log {
+    max-height: 168px;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    padding-right: 6px;
+}
+
+.ciit-mcq-import-modal-body .ciit-mcq-import-progress-log:empty {
+    display: none;
+}
+
+@media (max-width: 767.98px) {
+    .ciit-mcq-import-modal-body > .ciit-mcq-import-live-status {
+        min-height: 96px;
+        padding: 16px;
+    }
+
+    .ciit-mcq-import-modal-body .ciit-mcq-import-progress-log {
+        max-height: 132px;
+    }
+}
