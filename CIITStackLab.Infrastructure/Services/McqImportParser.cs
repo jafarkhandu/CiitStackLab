@@ -253,6 +253,13 @@ internal static class McqImportParser
                 var label = optionMatch.Groups[1].Value.ToUpperInvariant()[0];
                 var optionText = optionMatch.Groups[2].Value.Trim();
 
+                if (current.HasAnswerLine)
+                {
+                    current.Issues.Add(
+                        $"Line {lineNumber}: options must appear before the ANSWER line.");
+                    continue;
+                }
+
                 if (current.Options.ContainsKey(label))
                 {
                     current.Issues.Add(
@@ -282,11 +289,19 @@ internal static class McqImportParser
                     continue;
                 }
 
-                if (current.CorrectOptionNumber.HasValue)
+                if (current.HasAnswerLine)
                 {
                     current.Issues.Add(
                         $"Line {lineNumber}: more than one answer key was supplied for this question.");
                     continue;
+                }
+
+                current.HasAnswerLine = true;
+
+                if (current.Options.Count != 4)
+                {
+                    current.Issues.Add(
+                        $"Line {lineNumber}: the ANSWER line must appear after options A, B, C and D.");
                 }
 
                 var answerValue = answerMatch.Groups[1].Value.Trim();
@@ -335,11 +350,11 @@ internal static class McqImportParser
                 }
             }
 
-            if (!question.CorrectOptionNumber.HasValue)
+            if (!question.HasAnswerLine)
             {
                 question.Issues.Add("The ANSWER line is missing.");
             }
-            else
+            else if (question.CorrectOptionNumber.HasValue)
             {
                 var correctLabel = (char)('A' + question.CorrectOptionNumber.Value - 1);
                 if (!question.Options.ContainsKey(correctLabel)
@@ -408,6 +423,8 @@ internal sealed class McqImportParsedQuestion
     public Dictionary<char, string> Options { get; } = new();
 
     public int? CorrectOptionNumber { get; set; }
+
+    public bool HasAnswerLine { get; set; }
 
     public List<string> Issues { get; } = new();
 }
