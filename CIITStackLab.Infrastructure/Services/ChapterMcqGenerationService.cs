@@ -84,6 +84,7 @@ public sealed class ChapterMcqGenerationService : IChapterMcqGenerationService
         }
 
         await ReportAsync(
+            reportProgress,
             "Sending chapter material to the AI generator for exactly 20 source-grounded MCQs.",
             cancellationToken);
 
@@ -120,7 +121,7 @@ public sealed class ChapterMcqGenerationService : IChapterMcqGenerationService
                                         @enum = new[] { 1, 2, 3, 4 }
                                     }
                                 },
-                                required = new[]
+                                ["required"] = new[]
                                 {
                                     "question",
                                     "option1",

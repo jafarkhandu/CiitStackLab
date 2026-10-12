@@ -246,7 +246,7 @@ public sealed class McqImportService : IMcqImportService
                     topic.Title,
                     sourceText,
                     cancellationToken,
-                    ReportProgressAsync);
+                    (message, _) => ReportProgressAsync(message));
 
                 preview.Questions.AddRange(generatedQuestions);
                 preview.IsAiGenerated = true;
