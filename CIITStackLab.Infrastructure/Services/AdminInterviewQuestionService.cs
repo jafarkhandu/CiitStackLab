@@ -25,8 +25,9 @@ public sealed class AdminInterviewQuestionService : IAdminInterviewQuestionServi
             {
                 Id = x.Id,
                 ContentId = x.ContentId,
-                ContentTitle = x.Content != null ? x.Content.Title ?? string.Empty : "Unassigned",
-                TopicTitle = x.Content != null && x.Content.Topic != null ? x.Content.Topic.Title : "Unassigned",
+                TopicId = x.TopicId,
+                ContentTitle = x.Content != null ? x.Content.Title ?? string.Empty : x.Topic != null ? "Chapter-level" : "Unassigned",
+                TopicTitle = x.Topic != null ? x.Topic.Title : x.Content != null && x.Content.Topic != null ? x.Content.Topic.Title : "Unassigned",
                 Question = x.Question ?? string.Empty,
                 Answer = x.Answer ?? string.Empty,
                 CreatedAt = x.CreatedAt,
@@ -64,8 +65,9 @@ public sealed class AdminInterviewQuestionService : IAdminInterviewQuestionServi
             {
                 Id = x.Id,
                 ContentId = x.ContentId,
-                ContentTitle = x.Content != null ? x.Content.Title ?? string.Empty : "Unassigned",
-                TopicTitle = x.Content != null && x.Content.Topic != null ? x.Content.Topic.Title : "Unassigned",
+                TopicId = x.TopicId,
+                ContentTitle = x.Content != null ? x.Content.Title ?? string.Empty : x.Topic != null ? "Chapter-level" : "Unassigned",
+                TopicTitle = x.Topic != null ? x.Topic.Title : x.Content != null && x.Content.Topic != null ? x.Content.Topic.Title : "Unassigned",
                 Question = x.Question ?? string.Empty,
                 Answer = x.Answer ?? string.Empty,
                 CreatedAt = x.CreatedAt,
@@ -84,6 +86,7 @@ public sealed class AdminInterviewQuestionService : IAdminInterviewQuestionServi
             .Select(x => new AdminInterviewQuestionContentLookupDto
             {
                 Id = x.Id,
+                TopicId = x.TopicId,
                 Title = x.Title ?? string.Empty,
                 TopicTitle = x.Topic!.Title
             })
