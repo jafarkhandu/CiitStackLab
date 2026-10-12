@@ -1,0 +1,326 @@
+.ciit-checkout-page {
+    padding: 3.5rem 0 5rem;
+    background: #f7f9fc;
+    min-height: calc(100vh - 150px);
+}
+
+.ciit-checkout-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+    margin-bottom: 1.75rem;
+}
+
+.ciit-checkout-back {
+    display: inline-flex;
+    align-items: center;
+    gap: .5rem;
+    color: #526071;
+    font-weight: 700;
+    text-decoration: none;
+}
+
+.ciit-checkout-back:hover {
+    color: #0d6efd;
+}
+
+.ciit-checkout-step {
+    display: inline-flex;
+    align-items: center;
+    min-height: 34px;
+    padding: .35rem .75rem;
+    border: 1px solid #dfe5ed;
+    border-radius: 999px;
+    background: #fff;
+    color: #526071;
+    font-size: .82rem;
+    font-weight: 700;
+}
+
+.ciit-checkout-card {
+    border: 1px solid #e3e8ef;
+    border-radius: 22px;
+    background: #fff;
+    box-shadow: 0 18px 45px rgba(30, 45, 65, .07);
+}
+
+.ciit-course-details-section .ciit-course-details-card {
+    box-shadow: none;
+}
+
+.ciit-course-details-card,
+.ciit-checkout-course-card,
+.ciit-order-card {
+    overflow: hidden;
+}
+
+.ciit-checkout-course-card {
+    padding: 2rem;
+}
+
+.ciit-order-card {
+    position: sticky;
+    top: 100px;
+    padding: 1.75rem;
+}
+
+.ciit-checkout-card-heading {
+    margin-bottom: 1.5rem;
+}
+
+.ciit-checkout-eyebrow {
+    display: block;
+    margin-bottom: .45rem;
+    color: #0d6efd;
+    font-size: .75rem;
+    font-weight: 800;
+    letter-spacing: .09em;
+    text-transform: uppercase;
+}
+
+.ciit-checkout-card-heading h1,
+.ciit-checkout-card-heading h2 {
+    margin: 0;
+    color: #18212f;
+    font-weight: 800;
+    letter-spacing: -.025em;
+}
+
+.ciit-checkout-card-heading h1 {
+    font-size: clamp(1.7rem, 3vw, 2.35rem);
+}
+
+.ciit-checkout-card-heading h2 {
+    font-size: 1.35rem;
+}
+
+.ciit-checkout-card-heading p {
+    margin: .6rem 0 0;
+    color: #687587;
+    line-height: 1.65;
+}
+
+.ciit-checkout-course-summary {
+    display: grid;
+    grid-template-columns: 190px 1fr;
+    gap: 1.5rem;
+    align-items: center;
+    padding: 1.25rem;
+    border: 1px solid #e7ebf0;
+    border-radius: 16px;
+    background: #fbfcfe;
+}
+
+.ciit-checkout-course-image {
+    width: 100%;
+    aspect-ratio: 16 / 10;
+    object-fit: cover;
+    border-radius: 12px;
+    background: #edf1f6;
+}
+
+.ciit-checkout-category {
+    color: #0d6efd;
+    font-size: .78rem;
+    font-weight: 800;
+    text-transform: uppercase;
+    letter-spacing: .06em;
+}
+
+.ciit-checkout-course-summary h2 {
+    margin: .3rem 0 .45rem;
+    color: #1a2433;
+    font-size: 1.25rem;
+    font-weight: 800;
+}
+
+.ciit-checkout-course-summary p {
+    margin: 0;
+    color: #687587;
+    line-height: 1.6;
+}
+
+.ciit-checkout-meta {
+    display: flex;
+    flex-wrap: wrap;
+    gap: .75rem 1rem;
+    margin-top: .9rem;
+}
+
+.ciit-checkout-meta span {
+    display: inline-flex;
+    align-items: center;
+    gap: .35rem;
+    color: #536174;
+    font-size: .82rem;
+    font-weight: 700;
+}
+
+.ciit-checkout-meta i {
+    color: #0d6efd;
+}
+
+.ciit-checkout-benefits {
+    display: grid;
+    gap: .8rem;
+    margin-top: 1.5rem;
+}
+
+.ciit-checkout-benefits div {
+    display: flex;
+    align-items: flex-start;
+    gap: .65rem;
+    color: #465365;
+    font-size: .92rem;
+    line-height: 1.5;
+}
+
+.ciit-checkout-benefits i {
+    flex: 0 0 auto;
+    margin-top: .1rem;
+    color: #198754;
+}
+
+.ciit-order-line,
+.ciit-order-total {
+    display: flex;
+    justify-content: space-between;
+    gap: 1rem;
+}
+
+.ciit-order-line {
+    padding: .9rem 0;
+    border-bottom: 1px solid #edf0f4;
+    color: #687587;
+    font-size: .9rem;
+}
+
+.ciit-order-line strong {
+    max-width: 65%;
+    color: #253142;
+    text-align: right;
+}
+
+.ciit-order-total {
+    align-items: baseline;
+    padding: 1.15rem 0 1.35rem;
+    color: #1f2937;
+    font-size: 1rem;
+}
+
+.ciit-order-total strong {
+    color: #0d6efd;
+    font-size: 1.55rem;
+    font-weight: 800;
+}
+
+.ciit-payment-placeholder,
+.ciit-checkout-notice {
+    display: flex;
+    align-items: flex-start;
+    gap: .8rem;
+    padding: 1rem;
+    border-radius: 14px;
+}
+
+.ciit-payment-placeholder {
+    border: 1px solid #dfe7f3;
+    background: #f7faff;
+}
+
+.ciit-payment-placeholder-icon {
+    display: grid;
+    place-items: center;
+    width: 40px;
+    height: 40px;
+    flex: 0 0 40px;
+    border-radius: 11px;
+    background: #e8f1ff;
+    color: #0d6efd;
+}
+
+.ciit-payment-placeholder strong,
+.ciit-checkout-notice strong {
+    display: block;
+    color: #273344;
+    font-size: .9rem;
+}
+
+.ciit-payment-placeholder p,
+.ciit-checkout-notice p {
+    margin: .25rem 0 0;
+    color: #6a7686;
+    font-size: .8rem;
+    line-height: 1.5;
+}
+
+.ciit-pay-button {
+    min-height: 52px;
+    margin-top: 1rem;
+    font-weight: 800;
+}
+
+.ciit-payment-helper {
+    margin: .65rem 0 0;
+    color: #7a8594;
+    font-size: .75rem;
+    line-height: 1.5;
+    text-align: center;
+}
+
+.ciit-checkout-notice.is-pending {
+    border: 1px solid #f0dfb2;
+    background: #fffaf0;
+}
+
+.ciit-checkout-notice.is-pending > i {
+    color: #b58105;
+    margin-top: .1rem;
+}
+
+.ciit-checkout-security {
+    display: flex;
+    align-items: flex-start;
+    gap: .55rem;
+    margin-top: 1.25rem;
+    padding-top: 1rem;
+    border-top: 1px solid #edf0f4;
+    color: #6a7686;
+    font-size: .78rem;
+    line-height: 1.5;
+}
+
+.ciit-checkout-security i {
+    color: #198754;
+    margin-top: .1rem;
+}
+
+@media (max-width: 991.98px) {
+    .ciit-order-card {
+        position: static;
+    }
+}
+
+@media (max-width: 575.98px) {
+    .ciit-checkout-page {
+        padding: 2rem 0 3rem;
+    }
+
+    .ciit-checkout-header {
+        align-items: flex-start;
+        flex-direction: column;
+    }
+
+    .ciit-checkout-course-card,
+    .ciit-order-card {
+        padding: 1.25rem;
+        border-radius: 17px;
+    }
+
+    .ciit-checkout-course-summary {
+        grid-template-columns: 1fr;
+        gap: 1rem;
+        padding: 1rem;
+    }
+}
