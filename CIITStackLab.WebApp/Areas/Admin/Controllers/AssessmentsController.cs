@@ -20,6 +20,7 @@ public sealed class AssessmentsController : Controller
     private readonly IAdminInterviewQuestionService _interviewQuestionService;
     private readonly IInterviewQuestionImportService _interviewQuestionImportService;
     private readonly IAdminPracticeProgramService _practiceProgramService;
+    private readonly IPracticeProgramImportService _practiceProgramImportService;
     private readonly ILogger<AssessmentsController> _logger;
 
     public AssessmentsController(
@@ -28,6 +29,7 @@ public sealed class AssessmentsController : Controller
         IAdminInterviewQuestionService interviewQuestionService,
         IInterviewQuestionImportService interviewQuestionImportService,
         IAdminPracticeProgramService practiceProgramService,
+        IPracticeProgramImportService practiceProgramImportService,
         ILogger<AssessmentsController> logger)
     {
         _mcqService = mcqService;
@@ -35,6 +37,7 @@ public sealed class AssessmentsController : Controller
         _interviewQuestionService = interviewQuestionService;
         _interviewQuestionImportService = interviewQuestionImportService;
         _practiceProgramService = practiceProgramService;
+        _practiceProgramImportService = practiceProgramImportService;
         _logger = logger;
     }
 
@@ -786,11 +789,274 @@ public sealed class AssessmentsController : Controller
     }
 
     [HttpGet]
-    public async Task<IActionResult> PracticePrograms(CancellationToken cancellationToken)
+    public async Task<IActionResult> PracticePrograms(
+        string? previewToken,
+        CancellationToken cancellationToken)
     {
         ViewBag.PracticeMessage = TempData["AdminPracticeMessage"] as string;
         ViewBag.PracticeMessageType = TempData["AdminPracticeMessageType"] as string;
+        ViewBag.OpenPracticeProgramImportModal = TempData["OpenPracticeProgramImportModal"] as string;
+        ViewBag.PracticeProgramImportMessage = TempData["PracticeProgramImportMessage"] as string;
+        ViewBag.PracticeProgramImportPreview = null;
+
+        var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+        if (!string.IsNullOrWhiteSpace(userId) && !string.IsNullOrWhiteSpace(previewToken))
+        {
+            ViewBag.PracticeProgramImportPreview =
+                _practiceProgramImportService.GetPreview(previewToken, userId);
+            if (ViewBag.PracticeProgramImportPreview is null)
+            {
+                ViewBag.PracticeProgramImportMessage =
+                    "This preview has expired or is no longer available. Upload the Excel workbook again.";
+            }
+        }
+
+        await LoadPracticeProgramContentAsync(cancellationToken);
         return View(await _practiceProgramService.GetIndexAsync(cancellationToken));
+    }
+
+
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    [RequestSizeLimit(6 * 1024 * 1024)]
+    [RequestFormLimits(MultipartBodyLengthLimit = 6 * 1024 * 1024)]
+    public async Task<IActionResult> AnalyzePracticePrograms(
+        int contentId,
+        IFormFile? file,
+        CancellationToken cancellationToken)
+    {
+        var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+        if (string.IsNullOrWhiteSpace(userId))
+        {
+            return Unauthorized();
+        }
+
+        Response.ContentType = "application/x-ndjson; charset=utf-8";
+        Response.Headers["Cache-Control"] = "no-cache, no-store, must-revalidate";
+        Response.Headers["X-Accel-Buffering"] = "no";
+
+        async Task WriteEventAsync(object payload, CancellationToken token)
+        {
+            await Response.WriteAsync(JsonSerializer.Serialize(payload) + "\n", token);
+            await Response.Body.FlushAsync(token);
+        }
+
+        async Task ReportProgressAsync(string message, CancellationToken token)
+        {
+            await WriteEventAsync(new { type = "progress", message }, token);
+        }
+
+        await Response.StartAsync(cancellationToken);
+        await ReportProgressAsync(
+            "Upload received. Preparing the learning content and Excel workbook checks...",
+            cancellationToken);
+
+        var preview = new PracticeProgramImportPreviewDto
+        {
+            ContentId = contentId,
+            FileName = file is null ? string.Empty : Path.GetFileName(file.FileName)
+        };
+
+        try
+        {
+            if (file is null || file.Length == 0)
+            {
+                preview.FileErrors.Add("Choose a non-empty .xlsx Excel workbook.");
+            }
+            else if (file.Length > 5 * 1024 * 1024)
+            {
+                preview.FileErrors.Add("The upload is larger than 5 MB. Split it into smaller workbooks.");
+            }
+            else
+            {
+                await using var fileStream = file.OpenReadStream();
+                preview = await _practiceProgramImportService.PreviewAsync(
+                    contentId,
+                    file.FileName,
+                    fileStream,
+                    userId,
+                    cancellationToken,
+                    ReportProgressAsync);
+            }
+        }
+        catch (DbException exception)
+        {
+            _logger.LogError(
+                exception,
+                "Practice-program Excel analysis database failure for content {ContentId}.",
+                contentId);
+            preview = new PracticeProgramImportPreviewDto
+            {
+                ContentId = contentId,
+                FileName = file is null ? string.Empty : Path.GetFileName(file.FileName)
+            };
+            preview.FileErrors.Add(
+                "The database returned an error while checking the selected content. No questions or solutions were saved.");
+        }
+        catch (Exception exception) when (!cancellationToken.IsCancellationRequested)
+        {
+            _logger.LogError(
+                exception,
+                "Practice-program Excel analysis failed for content {ContentId}.",
+                contentId);
+            preview = new PracticeProgramImportPreviewDto
+            {
+                ContentId = contentId,
+                FileName = file is null ? string.Empty : Path.GetFileName(file.FileName)
+            };
+            preview.FileErrors.Add(
+                "The file could not be analyzed. Verify that it is a valid .xlsx workbook and try again. No questions or solutions were saved.");
+        }
+
+        _practiceProgramImportService.CachePreview(preview, userId);
+        await WriteEventAsync(
+            new
+            {
+                type = "result",
+                previewToken = preview.PreviewToken,
+                questionCount = preview.Programs.Count,
+                validCount = preview.ValidQuestionCount,
+                invalidCount = preview.InvalidQuestionCount,
+                fileErrorCount = preview.FileErrors.Count,
+                canImport = preview.CanImport
+            },
+            cancellationToken);
+
+        return new EmptyResult();
+    }
+
+    [HttpGet]
+    public IActionResult GetPracticeProgramImportPreview(string? previewToken)
+    {
+        var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+        if (string.IsNullOrWhiteSpace(userId))
+        {
+            return Unauthorized();
+        }
+
+        if (string.IsNullOrWhiteSpace(previewToken))
+        {
+            return BadRequest();
+        }
+
+        var preview = _practiceProgramImportService.GetPreview(previewToken, userId);
+        return preview is null
+            ? NotFound()
+            : PartialView("_PracticeProgramImportPreview", preview);
+    }
+
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    [RequestSizeLimit(6 * 1024 * 1024)]
+    [RequestFormLimits(MultipartBodyLengthLimit = 6 * 1024 * 1024)]
+    public async Task<IActionResult> PreviewPracticePrograms(
+        int contentId,
+        IFormFile? file,
+        CancellationToken cancellationToken)
+    {
+        var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+        if (string.IsNullOrWhiteSpace(userId))
+        {
+            return Unauthorized();
+        }
+
+        var preview = new PracticeProgramImportPreviewDto
+        {
+            ContentId = contentId,
+            FileName = file is null ? string.Empty : Path.GetFileName(file.FileName)
+        };
+
+        try
+        {
+            if (file is null || file.Length == 0)
+            {
+                preview.FileErrors.Add("Choose a non-empty .xlsx Excel workbook.");
+            }
+            else if (file.Length > 5 * 1024 * 1024)
+            {
+                preview.FileErrors.Add("The upload is larger than 5 MB. Split it into smaller workbooks.");
+            }
+            else
+            {
+                await using var fileStream = file.OpenReadStream();
+                preview = await _practiceProgramImportService.PreviewAsync(
+                    contentId,
+                    file.FileName,
+                    fileStream,
+                    userId,
+                    cancellationToken);
+            }
+        }
+        catch (Exception exception) when (exception is DbException or DbUpdateException)
+        {
+            _logger.LogError(
+                exception,
+                "Practice-program preview database failure for content {ContentId}.",
+                contentId);
+            preview.FileErrors.Add(
+                "The database returned an error while checking the selected content. No questions or solutions were saved.");
+        }
+        catch (Exception exception) when (!cancellationToken.IsCancellationRequested)
+        {
+            _logger.LogError(
+                exception,
+                "Practice-program preview failed for content {ContentId}.",
+                contentId);
+            preview.FileErrors.Add(
+                "The Excel workbook could not be analyzed. No questions or solutions were saved.");
+        }
+
+        _practiceProgramImportService.CachePreview(preview, userId);
+        TempData["OpenPracticeProgramImportModal"] = "import";
+        return RedirectToAction(nameof(PracticePrograms), new { previewToken = preview.PreviewToken });
+    }
+
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> ConfirmPracticeProgramImport(
+        string previewToken,
+        CancellationToken cancellationToken)
+    {
+        var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+        if (string.IsNullOrWhiteSpace(userId))
+        {
+            return Unauthorized();
+        }
+
+        PracticeProgramImportOutcomeDto result;
+        try
+        {
+            result = await _practiceProgramImportService.ConfirmAsync(
+                previewToken,
+                userId,
+                cancellationToken);
+        }
+        catch (Exception exception) when (exception is DbException or DbUpdateException)
+        {
+            _logger.LogError(exception, "Practice-program import confirmation failed.");
+            TempData["PracticeProgramImportMessage"] =
+                "The database could not complete this import. Check the Practice Programs list before retrying.";
+            TempData["OpenPracticeProgramImportModal"] = "import";
+            return RedirectToAction(nameof(PracticePrograms), new { previewToken });
+        }
+
+        if (result.Succeeded)
+        {
+            TempData["AdminPracticeMessage"] = result.Message;
+            TempData["AdminPracticeMessageType"] = "success";
+            return RedirectToAction(nameof(PracticePrograms));
+        }
+
+        TempData["PracticeProgramImportMessage"] = result.Message;
+        TempData["OpenPracticeProgramImportModal"] = "import";
+
+        if (result.Preview is not null)
+        {
+            _practiceProgramImportService.CachePreview(result.Preview, userId);
+            return RedirectToAction(nameof(PracticePrograms), new { previewToken = result.Preview.PreviewToken });
+        }
+
+        return RedirectToAction(nameof(PracticePrograms));
     }
 
     [HttpGet]
