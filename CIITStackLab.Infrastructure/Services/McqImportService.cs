@@ -28,6 +28,63 @@ public sealed class McqImportService : IMcqImportService
         _cache = cache;
     }
 
+    public void CachePreview(
+        McqImportPreviewDto preview,
+        string userId)
+    {
+        ArgumentNullException.ThrowIfNull(preview);
+
+        if (string.IsNullOrWhiteSpace(userId))
+        {
+            throw new ArgumentException(
+                "An authenticated administrator is required.",
+                nameof(userId));
+        }
+
+        if (string.IsNullOrWhiteSpace(preview.PreviewToken))
+        {
+            preview.PreviewToken = Guid.NewGuid().ToString("N");
+        }
+
+        _cache.Set(
+            GetCacheKey(preview.PreviewToken),
+            new McqImportCacheEntry(userId, preview),
+            new MemoryCacheEntryOptions
+            {
+                AbsoluteExpirationRelativeToNow = PreviewLifetime
+            });
+    }
+
+    public McqImportPreviewDto? GetPreview(
+        string previewToken,
+        string userId)
+    {
+        if (string.IsNullOrWhiteSpace(previewToken)
+            || string.IsNullOrWhiteSpace(userId))
+        {
+            return null;
+        }
+
+        if (!_cache.TryGetValue<McqImportCacheEntry>(
+                GetCacheKey(previewToken),
+                out var cacheEntry)
+            || cacheEntry is null)
+        {
+            return null;
+        }
+
+        if (!string.Equals(cacheEntry.UserId, userId, StringComparison.Ordinal)
+            || !string.Equals(
+                cacheEntry.Preview.PreviewToken,
+                previewToken,
+                StringComparison.Ordinal))
+        {
+            return null;
+        }
+
+        return cacheEntry.Preview;
+    }
+
     public async Task<McqImportPreviewDto> PreviewAsync(
         int topicId,
         string fileName,
@@ -141,18 +198,9 @@ public sealed class McqImportService : IMcqImportService
             }
         }
 
-        if (preview.Questions.Count > 0)
-        {
-            preview.PreviewToken = Guid.NewGuid().ToString("N");
-
-            _cache.Set(
-                GetCacheKey(preview.PreviewToken),
-                new McqImportCacheEntry(userId, preview),
-                new MemoryCacheEntryOptions
-                {
-                    AbsoluteExpirationRelativeToNow = PreviewLifetime
-                });
-        }
+        // Cache successful and failed previews alike so the UI can use
+        // Post/Redirect/Get without losing validation feedback on refresh.
+        CachePreview(preview, userId);
 
         return preview;
     }
