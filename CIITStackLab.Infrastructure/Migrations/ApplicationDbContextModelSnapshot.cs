@@ -536,6 +536,10 @@ namespace CIITStackLab.Infrastructure.Migrations
                         .HasColumnType("int")
                         .HasColumnName("content_id");
 
+                    b.Property<int?>("TopicId")
+                        .HasColumnType("int")
+                        .HasColumnName("topic_id");
+
                     b.Property<DateTime?>("CreatedAt")
                         .HasColumnType("datetime2")
                         .HasColumnName("InsertedAt");
@@ -563,6 +567,8 @@ namespace CIITStackLab.Infrastructure.Migrations
                     b.HasKey("Id");
 
                     b.HasIndex("ContentId");
+
+                    b.HasIndex("TopicId");
 
                     b.ToTable("tblcontent_interview_questions", "erpsystem");
                 });
@@ -952,7 +958,14 @@ namespace CIITStackLab.Infrastructure.Migrations
                         .HasForeignKey("ContentId")
                         .OnDelete(DeleteBehavior.NoAction);
 
+                    b.HasOne("CIITStackLab.Domain.Entities.Topic", "Topic")
+                        .WithMany()
+                        .HasForeignKey("TopicId")
+                        .OnDelete(DeleteBehavior.NoAction);
+
                     b.Navigation("Content");
+
+                    b.Navigation("Topic");
                 });
 
             modelBuilder.Entity("CIITStackLab.Domain.Entities.ContentProgramAnswer", b =>
