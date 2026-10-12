@@ -3,7 +3,7 @@
     const form = document.getElementById("interviewQuestionImportUploadForm");
     if (!form) return;
 
-    const content = document.getElementById("ImportInterviewContentId");
+    const content = document.getElementById("ImportInterviewTopicId");
     const file = document.getElementById("ImportInterviewFile");
     const button = form.querySelector('button[type="submit"]');
     const preview = document.getElementById("interviewQuestionImportPreviewHost");
@@ -73,7 +73,7 @@
     async function analyze() {
         if (running || !file.files || !file.files[0]) return;
         if (!content.value || Number(content.value) <= 0) {
-            setStatus("Choose learning content first", "Select the content item these questions should be linked to.", "error");
+            setStatus("Choose a chapter first", "Select the chapter these questions should be linked to.", "error");
             return;
         }
 
