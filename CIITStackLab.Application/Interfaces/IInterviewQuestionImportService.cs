@@ -8,8 +8,11 @@ public interface IInterviewQuestionImportService
 
     InterviewQuestionImportPreviewDto? GetPreview(string previewToken, string userId);
 
+    Task<IReadOnlyList<InterviewQuestionTopicLookupDto>> GetTopicLookupAsync(
+        CancellationToken cancellationToken = default);
+
     Task<InterviewQuestionImportPreviewDto> PreviewAsync(
-        int contentId,
+        int topicId,
         string fileName,
         Stream fileStream,
         string userId,
