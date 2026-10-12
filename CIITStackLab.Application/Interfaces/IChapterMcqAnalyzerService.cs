@@ -2,9 +2,9 @@ using CIITStackLab.Application.DTOs;
 
 namespace CIITStackLab.Application.Interfaces;
 
-public interface IChapterMcqGenerationService
+public interface IChapterMcqAnalyzerService
 {
-    Task<IReadOnlyList<McqImportQuestionDto>> GenerateAsync(
+    Task<IReadOnlyList<McqImportQuestionDto>> AnalyzeAsync(
         string chapterTitle,
         string sourceText,
         CancellationToken cancellationToken = default,

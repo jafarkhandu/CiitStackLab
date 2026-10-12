@@ -20,16 +20,16 @@ public sealed class McqImportService : IMcqImportService
 
     private readonly ApplicationDbContext _dbContext;
     private readonly IMemoryCache _cache;
-    private readonly IChapterMcqGenerationService _chapterMcqGenerationService;
+    private readonly IChapterMcqAnalyzerService _chapterMcqAnalyzerService;
 
     public McqImportService(
         ApplicationDbContext dbContext,
         IMemoryCache cache,
-        IChapterMcqGenerationService chapterMcqGenerationService)
+        IChapterMcqAnalyzerService chapterMcqAnalyzerService)
     {
         _dbContext = dbContext;
         _cache = cache;
-        _chapterMcqGenerationService = chapterMcqGenerationService;
+        _chapterMcqAnalyzerService = chapterMcqAnalyzerService;
     }
 
     public void CachePreview(
@@ -238,30 +238,24 @@ public sealed class McqImportService : IMcqImportService
         else
         {
             await ReportProgressAsync(
-                "No complete preformatted MCQ set was detected. Analyzing chapter concepts and generating exactly 20 MCQs...");
+                "No complete preformatted MCQ set was detected. Running the local chapter analyzer to build 20 source-grounded MCQs...");
 
             try
             {
-                var generatedQuestions = await _chapterMcqGenerationService.GenerateAsync(
+                var analyzedQuestions = await _chapterMcqAnalyzerService.AnalyzeAsync(
                     topic.Title,
                     sourceText,
                     cancellationToken,
                     (message, _) => ReportProgressAsync(message));
 
-                preview.Questions.AddRange(generatedQuestions);
-                preview.IsAiGenerated = true;
+                preview.Questions.AddRange(analyzedQuestions);
 
                 await ReportProgressAsync(
-                    "All 20 generated MCQs were received. Checking the set for repeated questions and existing chapter duplicates...");
+                    "The local analyzer finished. Checking the question set for repeated questions and existing chapter duplicates...");
             }
             catch (InvalidOperationException exception)
             {
                 preview.FileErrors.Add(exception.Message);
-            }
-            catch (HttpRequestException)
-            {
-                preview.FileErrors.Add(
-                    "The AI question generator could not be reached. Check server network access and the AI provider configuration. No MCQs were saved.");
             }
         }
 
