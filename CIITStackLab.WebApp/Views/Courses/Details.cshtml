@@ -51,56 +51,41 @@
                                 <i class="bi bi-play-circle me-2"></i>Start Learning
                             </a>
                         }
-                        else if (Model.IsStudent)
-                        {
-                            if (Model.Enrollment?.Status == "PendingApproval")
-                            {
-                                <span class="ciit-course-enrollment-status is-pending">
-                                    <i class="bi bi-hourglass-split"></i>
-                                    Enrollment awaiting approval
-                                </span>
-                            }
-                            else
-                            {
-                                <form asp-controller="Courses"
-                                      asp-action="RequestEnrollment"
-                                      asp-route-id="@Model.Id"
-                                      method="post"
-                                      class="m-0">
-                                    <button type="submit" class="btn btn-primary btn-lg">
-                                        <i class="bi bi-journal-check me-2"></i>
-                                        @(Model.Enrollment?.Status == "Rejected" ? "Request Again" : "Request Enrollment")
-                                    </button>
-                                </form>
-                                @if (Model.Enrollment?.Status == "Rejected")
-                                {
-                                    <small class="text-secondary d-block mt-2">
-                                        Your previous request was declined. You can submit a new request.
-                                    </small>
-                                }
-                            }
-                        }
-                        else if (User.Identity?.IsAuthenticated != true)
-                        {
-                            <a asp-controller="Account"
-                               asp-action="Login"
-                               asp-route-returnUrl="@courseDetailsReturnUrl"
-                               class="btn btn-primary btn-lg">
-                                <i class="bi bi-box-arrow-in-right me-2"></i>Sign in to enroll
-                            </a>
-                        }
                         else
                         {
-                            <span class="ciit-course-enrollment-status">
-                                <i class="bi bi-person-lock"></i>
-                                Paid-course enrollment is available to student accounts.
-                            </span>
+                            <a asp-area="User"
+                               asp-controller="Checkout"
+                               asp-action="Index"
+                               asp-route-id="@Model.Id"
+                               class="btn btn-primary btn-lg">
+                                <i class="bi bi-credit-card me-2"></i>Start Tutorial
+                            </a>
                         }
 
                         <a asp-controller="Home" asp-action="Index" asp-fragment="tutorials" class="btn btn-outline-dark btn-lg">
                             Back to Courses
                         </a>
                     </div>
+
+                    @if (Model.IsStudent && Model.Enrollment?.Status == "PendingApproval")
+                    {
+                        <div class="ciit-course-enrollment-status is-pending mt-3">
+                            <i class="bi bi-hourglass-split"></i>
+                            Enrollment awaiting approval. You can review the course checkout details while access is pending.
+                        </div>
+                    }
+                    else if (Model.IsStudent && Model.Enrollment?.Status == "Rejected")
+                    {
+                        <small class="text-secondary d-block mt-2">
+                            Your previous enrollment request was declined. Starting the tutorial will take you to the course checkout page.
+                        </small>
+                    }
+                    else if (User.Identity?.IsAuthenticated != true && Model.TotalPrice > 0m)
+                    {
+                        <small class="text-secondary d-block mt-2">
+                            You will be asked to sign in before continuing with checkout.
+                        </small>
+                    }
                 </div>
             </div>
         </div>
