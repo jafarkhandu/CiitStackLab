@@ -1,0 +1,296 @@
+@model CIITStackLab.Application.DTOs.AdminMcqIndexDto
+
+@{
+    var chapters = ViewBag.McqTopics as IEnumerable<CIITStackLab.Application.DTOs.AdminMcqTopicLookupDto>
+        ?? Array.Empty<CIITStackLab.Application.DTOs.AdminMcqTopicLookupDto>();
+    var addInput = ViewBag.AddMcqInput as CIITStackLab.Application.DTOs.AdminTopicMcqInputDto
+        ?? new CIITStackLab.Application.DTOs.AdminTopicMcqInputDto();
+    var preview = ViewBag.McqImportPreview as CIITStackLab.Application.DTOs.McqImportPreviewDto;
+    var importMessage = ViewBag.McqImportMessage as string;
+}
+
+<div class="modal fade ciit-mcq-modal" id="addMcqModal" tabindex="-1"
+     aria-labelledby="addMcqModalTitle" aria-hidden="true">
+    <div class="modal-dialog modal-lg modal-dialog-scrollable">
+        <div class="modal-content">
+            <div class="modal-header">
+                <div>
+                    <span class="ciit-admin-eyebrow">Assessment</span>
+                    <h2 class="modal-title" id="addMcqModalTitle">Add MCQ</h2>
+                    <p class="mb-0">Create a question under a chapter.</p>
+                </div>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+
+            <form asp-area="Admin" asp-controller="Assessments" asp-action="CreateMcq" method="post">
+                @Html.AntiForgeryToken()
+                <div class="modal-body ciit-mcq-modal-body">
+                    <div asp-validation-summary="All" class="text-danger small mb-3"></div>
+
+                    <div class="ciit-mcq-modal-field">
+                        <label for="AddMcqTopicId">Chapter <span>*</span></label>
+                        <select id="AddMcqTopicId" name="TopicId" required>
+                            <option value="0">Select chapter</option>
+                            @foreach (var chapter in chapters)
+                            {
+                                <option value="@chapter.Id" selected="@(addInput.TopicId == chapter.Id)">
+                                    @chapter.Title
+                                </option>
+                            }
+                        </select>
+                    </div>
+
+                    <div class="ciit-mcq-modal-field">
+                        <label for="AddMcqQuestion">Question <span>*</span></label>
+                        <textarea id="AddMcqQuestion" name="Question" rows="3" maxlength="4000" required>@addInput.Question</textarea>
+                    </div>
+
+                    <div class="ciit-mcq-modal-option-grid">
+                        <div class="ciit-mcq-modal-field">
+                            <label for="AddMcqOption1">Option A <span>*</span></label>
+                            <input id="AddMcqOption1" name="Option1" value="@addInput.Option1" maxlength="2000" required />
+                        </div>
+                        <div class="ciit-mcq-modal-field">
+                            <label for="AddMcqOption2">Option B <span>*</span></label>
+                            <input id="AddMcqOption2" name="Option2" value="@addInput.Option2" maxlength="2000" required />
+                        </div>
+                        <div class="ciit-mcq-modal-field">
+                            <label for="AddMcqOption3">Option C <span>*</span></label>
+                            <input id="AddMcqOption3" name="Option3" value="@addInput.Option3" maxlength="2000" required />
+                        </div>
+                        <div class="ciit-mcq-modal-field">
+                            <label for="AddMcqOption4">Option D <span>*</span></label>
+                            <input id="AddMcqOption4" name="Option4" value="@addInput.Option4" maxlength="2000" required />
+                        </div>
+                    </div>
+
+                    <div class="ciit-mcq-modal-field">
+                        <label for="AddMcqCorrectOption">Correct option <span>*</span></label>
+                        <select id="AddMcqCorrectOption" name="CorrectOptionNumber" required>
+                            <option value="0">Select correct answer</option>
+                            <option value="1" selected="@(addInput.CorrectOptionNumber == 1)">A</option>
+                            <option value="2" selected="@(addInput.CorrectOptionNumber == 2)">B</option>
+                            <option value="3" selected="@(addInput.CorrectOptionNumber == 3)">C</option>
+                            <option value="4" selected="@(addInput.CorrectOptionNumber == 4)">D</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-primary">
+                        <i class="bi bi-check2-circle me-1"></i>Create MCQ
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<div class="modal fade ciit-mcq-modal ciit-mcq-import-modal" id="bulkImportMcqModal"
+     tabindex="-1" aria-labelledby="bulkImportMcqModalTitle" aria-hidden="true">
+    <div class="modal-dialog modal-xl modal-dialog-scrollable">
+        <div class="modal-content">
+            <div class="modal-header">
+                <div>
+                    <span class="ciit-admin-eyebrow">Assessment tools</span>
+                    <h2 class="modal-title" id="bulkImportMcqModalTitle">Smart MCQ Import</h2>
+                    <p class="mb-0">Upload, preview and confirm — without leaving the MCQ list.</p>
+                </div>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+
+            <div class="modal-body ciit-mcq-import-modal-body">
+                @if (!string.IsNullOrWhiteSpace(importMessage))
+                {
+                    <div class="ciit-mcq-import-alert is-error" role="alert">
+                        <i class="bi bi-exclamation-circle-fill"></i><span>@importMessage</span>
+                    </div>
+                }
+
+                <form asp-area="Admin" asp-controller="Assessments" asp-action="PreviewBulkMcq"
+                      method="post" enctype="multipart/form-data" class="ciit-mcq-import-modal-upload">
+                    @Html.AntiForgeryToken()
+
+                    <div class="ciit-mcq-import-modal-fields">
+                        <div class="ciit-mcq-modal-field">
+                            <label for="ImportMcqTopicId">Chapter <span>*</span></label>
+                            <select id="ImportMcqTopicId" name="topicId" required>
+                                <option value="0">Select chapter</option>
+                                @foreach (var chapter in chapters)
+                                {
+                                    <option value="@chapter.Id" selected="@(preview?.TopicId == chapter.Id)">
+                                        @chapter.Title
+                                    </option>
+                                }
+                            </select>
+                            <small>All parsed MCQs will be linked directly to this chapter.</small>
+                        </div>
+
+                        <label class="ciit-mcq-import-file-drop">
+                            <input type="file" name="file" accept=".txt,.docx" required />
+                            <span class="ciit-mcq-import-file-icon"><i class="bi bi-cloud-arrow-up"></i></span>
+                            <strong>Choose a .txt or .docx file</strong>
+                            <span>Maximum 5 MB · Up to 500 MCQs per batch</span>
+                        </label>
+                    </div>
+
+                    <div class="ciit-mcq-import-format">
+                        <div class="ciit-mcq-import-format-heading">
+                            <i class="bi bi-file-earmark-text"></i>
+                            <div>
+                                <strong>Required format</strong>
+                                <span>Each question, options A–D and answer on separate lines.</span>
+                            </div>
+                        </div>
+                        <pre>Q1: What is the JVM?
+A) Java Variable Method
+B) Java Virtual Machine
+C) Java Visual Model
+D) Java Verified Module
+ANSWER: B
+
+Q2: Which keyword inherits a class?
+A) implements
+B) interface
+C) extends
+D) import
+ANSWER: C</pre>
+                        <p>Answers can be A–D or 1–4. Chapter heading such as <code>CHAPTER: Core Java</code> is allowed.</p>
+                    </div>
+
+                    @if (preview?.FileErrors.Count > 0 && preview.Questions.Count == 0)
+                    {
+                        <div class="ciit-mcq-import-file-errors" role="alert">
+                            <strong><i class="bi bi-exclamation-triangle-fill me-2"></i>File needs attention</strong>
+                            <ul>
+                                @foreach (var error in preview.FileErrors)
+                                {
+                                    <li>@error</li>
+                                }
+                            </ul>
+                        </div>
+                    }
+
+                    <div class="ciit-mcq-import-upload-actions">
+                        <button type="submit" class="ciit-mcq-import-primary">
+                            <i class="bi bi-magic"></i>Analyze file
+                        </button>
+                    </div>
+                </form>
+
+                @if (preview is not null && preview.Questions.Count > 0)
+                {
+                    <section class="ciit-mcq-import-modal-preview">
+                        <header class="ciit-mcq-import-preview-header">
+                            <div>
+                                <span class="ciit-mcq-import-step">01</span>
+                                <div>
+                                    <span class="ciit-admin-eyebrow">Analysis preview</span>
+                                    <h3>Review before importing</h3>
+                                    <p>@preview.FileName <span>·</span> @preview.TopicLabel</p>
+                                </div>
+                            </div>
+                            <span class="ciit-mcq-import-review-pill">
+                                <i class="bi bi-shield-check"></i>Nothing saved yet
+                            </span>
+                        </header>
+
+                        <div class="ciit-mcq-import-stats">
+                            <div class="ciit-mcq-import-stat"><span>Total detected</span><strong>@preview.Questions.Count</strong></div>
+                            <div class="ciit-mcq-import-stat is-valid"><span>Valid</span><strong>@preview.ValidQuestionCount</strong></div>
+                            <div class="ciit-mcq-import-stat @(preview.InvalidQuestionCount > 0 ? "is-invalid" : "")"><span>Needs attention</span><strong>@preview.InvalidQuestionCount</strong></div>
+                            <div class="ciit-mcq-import-stat"><span>Duplicates</span><strong>@preview.Questions.Count(question => question.IsDuplicateInDatabase)</strong></div>
+                        </div>
+
+                        @if (preview.FileErrors.Count > 0)
+                        {
+                            <div class="ciit-mcq-import-global-errors" role="alert">
+                                <strong>File-level issues</strong>
+                                <ul>
+                                    @foreach (var error in preview.FileErrors)
+                                    {
+                                        <li>@error</li>
+                                    }
+                                </ul>
+                            </div>
+                        }
+
+                        <div class="ciit-mcq-import-question-list">
+                            @foreach (var question in preview.Questions)
+                            {
+                                <article class="ciit-mcq-import-question @(question.IsValid ? "is-valid" : "is-invalid")">
+                                    <header class="ciit-mcq-import-question-header">
+                                        <span class="ciit-mcq-import-question-number">Q@question.Number</span>
+                                        <div class="ciit-mcq-import-question-status">
+                                            @if (question.IsValid)
+                                            {
+                                                <span class="is-valid"><i class="bi bi-check-circle-fill"></i>Ready to import</span>
+                                            }
+                                            else
+                                            {
+                                                <span class="is-invalid"><i class="bi bi-exclamation-circle-fill"></i>Needs attention</span>
+                                            }
+                                        </div>
+                                        @if (question.IsDuplicateInDatabase)
+                                        {
+                                            <span class="ciit-mcq-import-duplicate-pill">Database duplicate</span>
+                                        }
+                                    </header>
+
+                                    <div class="ciit-mcq-import-question-body">
+                                        <h4>@question.Question</h4>
+                                        <div class="ciit-mcq-import-options">
+                                            <div class="@(question.CorrectOptionNumber == 1 ? "is-correct" : "")"><span>A</span><p>@question.Option1</p></div>
+                                            <div class="@(question.CorrectOptionNumber == 2 ? "is-correct" : "")"><span>B</span><p>@question.Option2</p></div>
+                                            <div class="@(question.CorrectOptionNumber == 3 ? "is-correct" : "")"><span>C</span><p>@question.Option3</p></div>
+                                            <div class="@(question.CorrectOptionNumber == 4 ? "is-correct" : "")"><span>D</span><p>@question.Option4</p></div>
+                                        </div>
+                                        <div class="ciit-mcq-import-question-footer">
+                                            <span>Correct answer: <strong>@question.CorrectOptionLabel</strong></span>
+                                            <span>Source line @question.SourceLine</span>
+                                        </div>
+                                        @if (question.Issues.Count > 0)
+                                        {
+                                            <div class="ciit-mcq-import-row-errors">
+                                                <strong>Fix these issues in the file</strong>
+                                                <ul>
+                                                    @foreach (var issue in question.Issues)
+                                                    {
+                                                        <li>@issue</li>
+                                                    }
+                                                </ul>
+                                            </div>
+                                        }
+                                    </div>
+                                </article>
+                            }
+                        </div>
+
+                        <footer class="ciit-mcq-import-confirm-card">
+                            <div>
+                                @if (preview.CanImport)
+                                {
+                                    <strong><i class="bi bi-check-circle-fill me-2"></i>Ready to import</strong>
+                                    <p>@preview.Questions.Count MCQs will be added to @preview.TopicLabel.</p>
+                                }
+                                else
+                                {
+                                    <strong><i class="bi bi-exclamation-triangle-fill me-2"></i>Import is blocked</strong>
+                                    <p>Fix the file and analyze it again. No questions have been saved.</p>
+                                }
+                            </div>
+                            <form asp-area="Admin" asp-controller="Assessments" asp-action="ConfirmBulkMcq" method="post">
+                                @Html.AntiForgeryToken()
+                                <input type="hidden" name="previewToken" value="@preview.PreviewToken" />
+                                <button type="submit" class="ciit-mcq-import-primary" disabled="@(!preview.CanImport)">
+                                    <i class="bi bi-database-check"></i>Import all @preview.Questions.Count
+                                </button>
+                            </form>
+                        </footer>
+                    </section>
+                }
+            </div>
+        </div>
+    </div>
+</div>
