@@ -13,7 +13,7 @@
                 <div>
                     <span class="ciit-admin-eyebrow">Assessment tools</span>
                     <h2 class="modal-title" id="interviewQuestionImportModalTitle">Interview Questions Analyzer</h2>
-                    <p class="mb-0">Analyze learning notes locally, review 20 source-based question-and-answer pairs, then confirm the import.</p>
+                    <p class="mb-0">Upload a fixed-column Excel workbook, review 20 question-and-answer rows, then confirm the import.</p>
                 </div>
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
@@ -64,22 +64,22 @@
                             <small>All imported interview questions will be linked directly to this chapter.</small>
                         </div>
                         <label class="ciit-interview-import-file-drop">
-                            <input type="file" name="file" id="ImportInterviewFile" accept=".txt,.docx" required />
+                            <input type="file" name="file" id="ImportInterviewFile" accept=".xlsx" required />
                             <span class="ciit-interview-import-file-icon"><i class="bi bi-cloud-arrow-up"></i></span>
-                            <strong>Choose a .txt or .docx file</strong>
-                            <span>Maximum 5 MB · Chapter notes or explanatory material</span>
+                            <strong>Choose an Excel .xlsx file</strong>
+                            <span>Maximum 5 MB · Exactly 20 question-and-answer rows</span>
                         </label>
                     </div>
                     <div class="ciit-interview-import-format">
                         <div class="ciit-interview-import-format-heading">
                             <span><i class="bi bi-shield-check"></i></span>
                             <div>
-                                <strong>Local rule-based analysis</strong>
-                                <p>Questions and answers are derived from source statements. No paid AI API or API key is used.</p>
+                                <strong>Fixed-column Excel validation</strong>
+                                <p>Question cells and Answer cells are read separately, preserving embedded line breaks. No paid AI API or API key is used.</p>
                             </div>
                         </div>
                         <div class="ciit-interview-import-format-steps">
-                            <span><b>01</b> Read content</span><span><b>02</b> Identify concepts</span><span><b>03</b> Validate 20 Q&amp;A pairs</span>
+                            <span><b>01</b> Read worksheet</span><span><b>02</b> Preserve each cell</span><span><b>03</b> Validate 20 Q&amp;A pairs</span>
                         </div>
                     </div>
                     <div class="ciit-interview-import-upload-actions">
