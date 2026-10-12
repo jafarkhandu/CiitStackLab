@@ -18,6 +18,7 @@ public sealed class AdminInterviewQuestionDto
 public sealed class AdminArchivedInterviewQuestionDto
 {
     public int Id { get; init; }
+    public int? TopicId { get; init; }
     public string ContentTitle { get; init; } = string.Empty;
     public string TopicTitle { get; init; } = string.Empty;
     public string Question { get; init; } = string.Empty;
