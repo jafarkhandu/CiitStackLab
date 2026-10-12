@@ -100,6 +100,11 @@ public sealed class AdminReportsService : IAdminReportsService
             .Where(x => x.ContentId.HasValue && contentIds.Contains(x.ContentId.Value) && x.Flag == 0)
             .GroupBy(x => x.ContentId!.Value).Select(g => new { ContentId = g.Key, Count = g.Count() })
             .ToDictionaryAsync(x => x.ContentId, x => x.Count, cancellationToken);
+        var chapterInterviewCounts = await _dbContext.ContentInterviewQuestions.AsNoTracking()
+            .Where(x => x.TopicId.HasValue && topicIds.Contains(x.TopicId.Value)
+                && !x.ContentId.HasValue && x.Flag == 0)
+            .GroupBy(x => x.TopicId!.Value).Select(g => new { TopicId = g.Key, Count = g.Count() })
+            .ToDictionaryAsync(x => x.TopicId, x => x.Count, cancellationToken);
         var practiceCounts = await _dbContext.ContentProgramQuestions.AsNoTracking()
             .Where(x => x.ContentId.HasValue && contentIds.Contains(x.ContentId.Value) && x.Flag == 0)
             .GroupBy(x => x.ContentId!.Value).Select(g => new { ContentId = g.Key, Count = g.Count() })
@@ -121,7 +126,8 @@ public sealed class AdminReportsService : IAdminReportsService
                 TopicCount = courseTopicIds.Count,
                 ContentCount = courseContentIds.Count,
                 McqCount = courseContentIds.Sum(id => mcqCounts.GetValueOrDefault(id)),
-                InterviewCount = courseContentIds.Sum(id => interviewCounts.GetValueOrDefault(id)),
+                InterviewCount = courseContentIds.Sum(id => interviewCounts.GetValueOrDefault(id))
+                    + courseTopicIds.Sum(id => chapterInterviewCounts.GetValueOrDefault(id)),
                 PracticeCount = courseContentIds.Sum(id => practiceCounts.GetValueOrDefault(id))
             };
         }).ToList();
