@@ -170,12 +170,15 @@
 
                             @if (User.Identity?.IsAuthenticated == true)
                             {
-                                <button type="button" class="btn btn-primary btn-lg w-100 ciit-payment-pay-button" disabled>
-                                    <i class="bi bi-lock-fill me-2"></i>
-                                    Pay ₹@Model.TotalPrice.ToString("N2")
-                                </button>
+                                <a asp-controller="Courses"
+                                   asp-action="Learn"
+                                   asp-route-id="@Model.Id"
+                                   class="btn btn-primary btn-lg w-100 ciit-payment-pay-button">
+                                    <i class="bi bi-play-circle me-2"></i>
+                                    Pay ₹@Model.TotalPrice.ToString("N2") (Demo)
+                                </a>
                                 <p class="ciit-payment-modal-note">
-                                    The payment gateway is not connected yet. This button stays disabled until verified payment processing is configured.
+                                    Demo mode: no real payment is processed. This button only lets you preview the learning flow.
                                 </p>
                             }
                             else
