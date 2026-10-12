@@ -180,6 +180,77 @@ internal static class ExcelQuestionImportMapper
         return result;
     }
 
+
+    public static async Task<ExcelPracticeProgramImportParseResult> ParsePracticeProgramsAsync(
+        Stream stream,
+        CancellationToken cancellationToken = default)
+    {
+        var result = new ExcelPracticeProgramImportParseResult();
+        IReadOnlyList<ExcelQuestionSheetRow> rows;
+
+        try
+        {
+            rows = await ExcelQuestionSheetParser.ReadRowsAsync(stream, cancellationToken);
+        }
+        catch (Exception exception) when (
+            exception is InvalidDataException
+            or IOException
+            or System.Xml.XmlException
+            or ArgumentException
+            or OverflowException)
+        {
+            result.FileErrors.Add(
+                "The Excel workbook could not be read. Upload a valid .xlsx file with a readable first worksheet.");
+            return result;
+        }
+
+        if (rows.Count == 0)
+        {
+            result.FileErrors.Add(
+                "The Excel worksheet is empty. Add the required header row and programming-question rows.");
+            return result;
+        }
+
+        var expectedHeaders = new[] { "QUESTIONTITLE", "QUESTIONDESCRIPTION" };
+        if (!HasExpectedHeaders(rows[0], expectedHeaders, out var headerError))
+        {
+            result.FileErrors.Add(
+                "Practice-program Excel headers must be in columns A–B in this exact order: Question Title, Question Description. " +
+                headerError);
+            return result;
+        }
+
+        foreach (var row in rows.Skip(1))
+        {
+            cancellationToken.ThrowIfCancellationRequested();
+
+            var item = new PracticeProgramImportQuestionDto
+            {
+                Number = result.Questions.Count + 1,
+                SourceRow = row.RowNumber,
+                QuestionTitle = ReadCell(row, 0),
+                QuestionDescription = ReadCell(row, 1)
+            };
+
+            AddRequiredCellIssue(item.Issues, item.QuestionTitle, "Question Title", row.RowNumber);
+            AddRequiredCellIssue(item.Issues, item.QuestionDescription, "Question Description", row.RowNumber);
+            result.Questions.Add(item);
+        }
+
+        if (result.Questions.Count == 0)
+        {
+            result.FileErrors.Add("No programming-question rows were found below the header row.");
+        }
+
+        if (result.Questions.Count > 500)
+        {
+            result.Questions.Clear();
+            result.FileErrors.Add("A single Excel upload can contain at most 500 programming questions.");
+        }
+
+        return result;
+    }
+
     private static bool HasExpectedHeaders(
         ExcelQuestionSheetRow row,
         IReadOnlyList<string> expectedHeaders,
@@ -278,6 +349,13 @@ internal sealed class ExcelMcqImportParseResult
 internal sealed class ExcelInterviewImportParseResult
 {
     public List<InterviewQuestionImportItemDto> Questions { get; } = new();
+
+    public List<string> FileErrors { get; } = new();
+}
+
+internal sealed class ExcelPracticeProgramImportParseResult
+{
+    public List<PracticeProgramImportQuestionDto> Questions { get; } = new();
 
     public List<string> FileErrors { get; } = new();
 }
