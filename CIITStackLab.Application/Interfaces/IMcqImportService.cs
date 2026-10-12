@@ -5,7 +5,7 @@ namespace CIITStackLab.Application.Interfaces;
 public interface IMcqImportService
 {
     Task<McqImportPreviewDto> PreviewAsync(
-        int contentId,
+        int topicId,
         string fileName,
         Stream fileStream,
         string userId,
