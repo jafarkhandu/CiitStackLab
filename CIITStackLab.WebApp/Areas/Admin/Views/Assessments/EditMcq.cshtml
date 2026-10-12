@@ -2,6 +2,8 @@
 
 @{
     ViewData["Title"] = "Edit MCQ";
+    var mcqTopics = ViewBag.McqTopics as IEnumerable<CIITStackLab.Application.DTOs.AdminMcqTopicLookupDto>
+        ?? Array.Empty<CIITStackLab.Application.DTOs.AdminMcqTopicLookupDto>();
 }
 
 @section Styles { <link rel="stylesheet" href="~/css/admin-mcqs.css" asp-append-version="true" /> }
@@ -11,7 +13,12 @@
     <form asp-area="Admin" asp-controller="Assessments" asp-action="EditMcq" method="post" class="ciit-mcq-form">
         @Html.AntiForgeryToken()
         <div asp-validation-summary="ModelOnly" class="ciit-mcq-validation"></div>
-        <label>Chapter<select asp-for="TopicId" asp-items="ViewBag.McqTopics"><option value="0">Select chapter</option></select><span asp-validation-for="TopicId"></span></label>
+        <label>Chapter<select asp-for="TopicId"><option value="0">Select chapter</option>
+            @foreach (var chapter in mcqTopics)
+            {
+                <option value="@chapter.Id" selected="@(Model.TopicId == chapter.Id)">@chapter.Title</option>
+            }
+        </select><span asp-validation-for="TopicId"></span></label>
         <label>Question<textarea asp-for="Question" rows="4"></textarea><span asp-validation-for="Question"></span></label>
         <div class="ciit-mcq-option-grid">
             <label>Option A<input asp-for="Option1" /><span asp-validation-for="Option1"></span></label>
