@@ -1,3 +1,4 @@
+using CIITStackLab.Domain.Entities;
 using CIITStackLab.Application.DTOs;
 using CIITStackLab.Infrastructure.Persistence;
 using Microsoft.EntityFrameworkCore;
