@@ -145,119 +145,29 @@ public sealed class McqImportService : IMcqImportService
         preview.TopicLabel = topic.Title;
 
         var extension = Path.GetExtension(fileName);
-
-        if (!extension.Equals(".txt", StringComparison.OrdinalIgnoreCase)
-            && !extension.Equals(".docx", StringComparison.OrdinalIgnoreCase))
+        if (!extension.Equals(".xlsx", StringComparison.OrdinalIgnoreCase))
         {
-            preview.FileErrors.Add("Choose a .txt or .docx file.");
+            preview.FileErrors.Add("Choose an Excel .xlsx file using the required Question, Option A–D and Correct Answer columns.");
+            CachePreview(preview, userId);
             return preview;
         }
 
         await ReportProgressAsync(
-            "Extracting readable text from the uploaded chapter...");
+            "Opening the Excel workbook and locating the first worksheet...");
 
-        using var documentBuffer = new MemoryStream();
-        await fileStream.CopyToAsync(documentBuffer, cancellationToken);
-        documentBuffer.Position = 0;
+        using var workbookBuffer = new MemoryStream();
+        await fileStream.CopyToAsync(workbookBuffer, cancellationToken);
+        workbookBuffer.Position = 0;
 
-        string sourceText;
+        var parsedExcel = await ExcelQuestionImportMapper.ParseMcqsAsync(
+            workbookBuffer,
+            cancellationToken);
 
-        try
-        {
-            sourceText = await McqImportParser.ExtractTextAsync(
-                documentBuffer,
-                extension,
-                cancellationToken);
-        }
-        catch (DecoderFallbackException)
-        {
-            preview.FileErrors.Add(
-                "The text file is not valid UTF-8. Save it as UTF-8 and upload it again.");
-            return preview;
-        }
-        catch (InvalidDataException)
-        {
-            preview.FileErrors.Add(
-                "The Word document is invalid or could not be opened. Upload a valid .docx file.");
-            return preview;
-        }
-        catch (XmlException)
-        {
-            preview.FileErrors.Add(
-                "The Word document contains invalid document XML.");
-            return preview;
-        }
-        catch (IOException)
-        {
-            preview.FileErrors.Add(
-                "The uploaded file could not be read. Please try again.");
-            return preview;
-        }
+        preview.FileErrors.AddRange(parsedExcel.FileErrors);
+        preview.Questions.AddRange(parsedExcel.Questions);
 
-        if (string.IsNullOrWhiteSpace(sourceText))
-        {
-            preview.FileErrors.Add(
-                "The document did not contain readable text. Upload a non-empty .txt or .docx chapter.");
-            return preview;
-        }
-
-        var containsFormattedMcqs =
-            McqImportParser.LooksLikeFormattedMcqDocument(sourceText);
-
-        if (containsFormattedMcqs)
-        {
-            await ReportProgressAsync(
-                "Detected a preformatted MCQ set. Validating the questions, four options, and answer keys...");
-
-            documentBuffer.Position = 0;
-            var parsed = await McqImportParser.ParseAsync(
-                documentBuffer,
-                extension,
-                cancellationToken);
-
-            preview.FileErrors.AddRange(parsed.FileErrors);
-
-            foreach (var parsedQuestion in parsed.Questions)
-            {
-                var question = new McqImportQuestionDto
-                {
-                    Number = parsedQuestion.Number,
-                    SourceLine = parsedQuestion.SourceLine,
-                    Question = parsedQuestion.Question.Trim(),
-                    Option1 = GetOption(parsedQuestion, 'A'),
-                    Option2 = GetOption(parsedQuestion, 'B'),
-                    Option3 = GetOption(parsedQuestion, 'C'),
-                    Option4 = GetOption(parsedQuestion, 'D'),
-                    CorrectOptionNumber = parsedQuestion.CorrectOptionNumber ?? 0
-                };
-
-                question.Issues.AddRange(parsedQuestion.Issues);
-                preview.Questions.Add(question);
-            }
-        }
-        else
-        {
-            await ReportProgressAsync(
-                "No complete preformatted MCQ set was detected. Running the local chapter analyzer to build 20 source-grounded MCQs...");
-
-            try
-            {
-                var analyzedQuestions = await _chapterMcqAnalyzerService.AnalyzeAsync(
-                    topic.Title,
-                    sourceText,
-                    cancellationToken,
-                    (message, _) => ReportProgressAsync(message));
-
-                preview.Questions.AddRange(analyzedQuestions);
-
-                await ReportProgressAsync(
-                    "The local analyzer finished. Checking the question set for repeated questions and existing chapter duplicates...");
-            }
-            catch (InvalidOperationException exception)
-            {
-                preview.FileErrors.Add(exception.Message);
-            }
-        }
+        await ReportProgressAsync(
+            "Read " + preview.Questions.Count + " Excel MCQ row(s). Validating each fixed column, answer key, and repeated question...");
 
         MarkDuplicatesWithinUpload(preview.Questions);
 
