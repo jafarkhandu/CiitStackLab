@@ -33,48 +33,58 @@ public sealed class AssessmentsController : Controller
     public IActionResult Index() => View();
 
     [HttpGet]
-    public async Task<IActionResult> Mcqs(CancellationToken cancellationToken)
+    public async Task<IActionResult> Mcqs(
+        string? openModal,
+        CancellationToken cancellationToken)
     {
         ViewBag.McqMessage = TempData["AdminMcqMessage"] as string;
         ViewBag.McqMessageType = TempData["AdminMcqMessageType"] as string;
-        return View(await _mcqService.GetIndexAsync(cancellationToken));
+        ViewBag.OpenMcqModal = openModal;
+
+        var model = await LoadMcqIndexAsync(cancellationToken);
+        return View(model);
     }
 
     [HttpGet]
-    public async Task<IActionResult> CreateMcq(CancellationToken cancellationToken)
+    public IActionResult CreateMcq()
     {
-        await LoadMcqContentAsync(cancellationToken);
-        return View(new AdminMcqInputDto());
+        return RedirectToAction(nameof(Mcqs), new { openModal = "add" });
     }
 
     [HttpPost]
     [ValidateAntiForgeryToken]
-    public async Task<IActionResult> CreateMcq(AdminMcqInputDto input, CancellationToken cancellationToken)
+    public async Task<IActionResult> CreateMcq(
+        AdminTopicMcqInputDto input,
+        CancellationToken cancellationToken)
     {
         if (!ModelState.IsValid)
         {
-            await LoadMcqContentAsync(cancellationToken);
-            return View(input);
+            var invalidModel = await LoadMcqIndexAsync(cancellationToken);
+            ViewBag.AddMcqInput = input;
+            ViewBag.OpenMcqModal = "add";
+            return View("Mcqs", invalidModel);
         }
 
-        var result = await _mcqService.CreateAsync(input, cancellationToken);
+        var result = await _mcqService.CreateForTopicAsync(input, cancellationToken);
+
         if (!result.Succeeded)
         {
-            ModelState.AddModelError(string.Empty, result.Error!);
-            await LoadMcqContentAsync(cancellationToken);
-            return View(input);
+            ModelState.AddModelError(string.Empty, result.Error ?? "The MCQ could not be created.");
+            var failedModel = await LoadMcqIndexAsync(cancellationToken);
+            ViewBag.AddMcqInput = input;
+            ViewBag.OpenMcqModal = "add";
+            return View("Mcqs", failedModel);
         }
 
-        TempData["AdminMcqMessage"] = "MCQ created successfully.";
+        TempData["AdminMcqMessage"] = "MCQ created successfully for the selected chapter.";
         TempData["AdminMcqMessageType"] = "success";
         return RedirectToAction(nameof(Mcqs));
     }
 
     [HttpGet]
-    public async Task<IActionResult> BulkImportMcq(CancellationToken cancellationToken)
+    public IActionResult BulkImportMcq()
     {
-        await LoadMcqContentAsync(cancellationToken);
-        return View(new McqImportPreviewDto());
+        return RedirectToAction(nameof(Mcqs), new { openModal = "import" });
     }
 
     [HttpPost]
@@ -82,12 +92,11 @@ public sealed class AssessmentsController : Controller
     [RequestSizeLimit(6 * 1024 * 1024)]
     [RequestFormLimits(MultipartBodyLengthLimit = 6 * 1024 * 1024)]
     public async Task<IActionResult> PreviewBulkMcq(
-        int contentId,
+        int topicId,
         IFormFile? file,
         CancellationToken cancellationToken)
     {
-        await LoadMcqContentAsync(cancellationToken);
-
+        var model = await LoadMcqIndexAsync(cancellationToken);
         var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
 
         if (string.IsNullOrWhiteSpace(userId))
@@ -95,39 +104,36 @@ public sealed class AssessmentsController : Controller
             return Unauthorized();
         }
 
+        McqImportPreviewDto preview;
+
         if (file is null || file.Length == 0)
         {
-            var emptyPreview = new McqImportPreviewDto
-            {
-                ContentId = contentId
-            };
-            emptyPreview.FileErrors.Add("Choose a non-empty .txt or .docx file.");
-            return View("BulkImportMcq", emptyPreview);
+            preview = new McqImportPreviewDto { TopicId = topicId };
+            preview.FileErrors.Add("Choose a non-empty .txt or .docx file.");
         }
-
-        const long maximumFileSize = 5 * 1024 * 1024;
-
-        if (file.Length > maximumFileSize)
+        else if (file.Length > 5 * 1024 * 1024)
         {
-            var oversizedPreview = new McqImportPreviewDto
+            preview = new McqImportPreviewDto
             {
-                ContentId = contentId,
+                TopicId = topicId,
                 FileName = Path.GetFileName(file.FileName)
             };
-            oversizedPreview.FileErrors.Add("The upload is larger than 5 MB. Split the file into smaller batches.");
-            return View("BulkImportMcq", oversizedPreview);
+            preview.FileErrors.Add("The upload is larger than 5 MB. Split the file into smaller batches.");
+        }
+        else
+        {
+            await using var fileStream = file.OpenReadStream();
+            preview = await _mcqImportService.PreviewAsync(
+                topicId,
+                file.FileName,
+                fileStream,
+                userId,
+                cancellationToken);
         }
 
-        await using var fileStream = file.OpenReadStream();
-
-        var preview = await _mcqImportService.PreviewAsync(
-            contentId,
-            file.FileName,
-            fileStream,
-            userId,
-            cancellationToken);
-
-        return View("BulkImportMcq", preview);
+        ViewBag.McqImportPreview = preview;
+        ViewBag.OpenMcqModal = "import";
+        return View("Mcqs", model);
     }
 
     [HttpPost]
@@ -155,11 +161,19 @@ public sealed class AssessmentsController : Controller
             return RedirectToAction(nameof(Mcqs));
         }
 
+        var model = await LoadMcqIndexAsync(cancellationToken);
         ViewBag.McqImportMessage = result.Message;
-        ViewBag.McqImportMessageType = "error";
-        await LoadMcqContentAsync(cancellationToken);
+        ViewBag.McqImportPreview = result.Preview;
+        ViewBag.OpenMcqModal = "import";
 
-        return View("BulkImportMcq", result.Preview ?? new McqImportPreviewDto());
+        if (result.Preview is null)
+        {
+            TempData["AdminMcqMessage"] = result.Message;
+            TempData["AdminMcqMessageType"] = "error";
+            return RedirectToAction(nameof(Mcqs), new { openModal = "import" });
+        }
+
+        return View("Mcqs", model);
     }
 
     [HttpGet]
@@ -502,6 +516,13 @@ public sealed class AssessmentsController : Controller
         TempData["AdminPracticeMessage"] = result.Succeeded ? "Practice program solution restored successfully." : result.Error;
         TempData["AdminPracticeMessageType"] = result.Succeeded ? "success" : "error";
         return RedirectToAction(nameof(PracticePrograms));
+    }
+
+    private async Task<AdminMcqIndexDto> LoadMcqIndexAsync(
+        CancellationToken cancellationToken)
+    {
+        ViewBag.McqTopics = await _mcqService.GetTopicLookupAsync(cancellationToken);
+        return await _mcqService.GetIndexAsync(cancellationToken);
     }
 
     private async Task LoadMcqContentAsync(CancellationToken cancellationToken)
