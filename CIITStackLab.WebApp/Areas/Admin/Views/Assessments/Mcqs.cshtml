@@ -44,7 +44,7 @@
                 <table class="ciit-mcq-table"><thead><tr><th>Question</th><th>Chapter</th><th>Correct</th><th>Actions</th></tr></thead><tbody>
                 @foreach (var mcq in Model.ActiveMcqs)
                 {
-                    <tr><td><div class="ciit-mcq-question"><strong>@mcq.Question</strong><span>#@mcq.Id</span></div></td><td>@mcq.TopicTitle</td><td>Option @mcq.CorrectOptionNumber</td><td><div class="ciit-mcq-actions"><a asp-area="Admin" asp-controller="Assessments" asp-action="EditMcq" asp-route-id="@mcq.Id" title="Edit"><i class="bi bi-pencil-square"></i></a><form asp-area="Admin" asp-controller="Assessments" asp-action="DeleteMcq" method="post" onsubmit="return confirm('Archive this MCQ?');">@Html.AntiForgeryToken()<input type="hidden" name="id" value="@mcq.Id" /><button type="submit" title="Archive"><i class="bi bi-archive"></i></button></form></div></td></tr>
+                    <tr><td><div class="ciit-mcq-question"><strong>@mcq.Question</strong><span>#@mcq.Id</span></div></td><td>@mcq.ChapterTitle</td><td>Option @mcq.CorrectOptionNumber</td><td><div class="ciit-mcq-actions"><a asp-area="Admin" asp-controller="Assessments" asp-action="EditMcq" asp-route-id="@mcq.Id" title="Edit"><i class="bi bi-pencil-square"></i></a><form asp-area="Admin" asp-controller="Assessments" asp-action="DeleteMcq" method="post" onsubmit="return confirm('Archive this MCQ?');">@Html.AntiForgeryToken()<input type="hidden" name="id" value="@mcq.Id" /><button type="submit" title="Archive"><i class="bi bi-archive"></i></button></form></div></td></tr>
                 }
                 </tbody></table>
             </div>
@@ -59,7 +59,7 @@
             <div class="ciit-mcq-archive-list">
             @foreach (var mcq in Model.ArchivedMcqs)
             {
-                <div class="ciit-mcq-archive-row"><div><strong>@mcq.Question</strong><span>@mcq.TopicTitle</span></div><form asp-area="Admin" asp-controller="Assessments" asp-action="RestoreMcq" method="post">@Html.AntiForgeryToken()<input type="hidden" name="id" value="@mcq.Id" /><button type="submit" class="ciit-mcq-restore"><i class="bi bi-arrow-counterclockwise"></i> Restore</button></form></div>
+                <div class="ciit-mcq-archive-row"><div><strong>@mcq.Question</strong><span>@mcq.ChapterTitle</span></div><form asp-area="Admin" asp-controller="Assessments" asp-action="RestoreMcq" method="post">@Html.AntiForgeryToken()<input type="hidden" name="id" value="@mcq.Id" /><button type="submit" class="ciit-mcq-restore"><i class="bi bi-arrow-counterclockwise"></i> Restore</button></form></div>
             }
             </div>
         }
