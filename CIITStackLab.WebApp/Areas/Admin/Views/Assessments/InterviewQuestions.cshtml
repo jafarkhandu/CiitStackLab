@@ -54,7 +54,7 @@
         <div class="ciit-mcq-card-header"><div><h2>Active Interview Questions</h2><p>@Model.ActiveQuestions.Count active question@(Model.ActiveQuestions.Count == 1 ? "" : "s")</p></div></div>
         @if (Model.ActiveQuestions.Count == 0)
         {
-            <div class="ciit-mcq-empty"><i class="bi bi-chat-left-text"></i><h3>No active interview questions</h3><p>Create an interview question and attach it to a Notes chapter.</p><a asp-area="Admin" asp-controller="Assessments" asp-action="CreateInterviewQuestion" class="ciit-mcq-secondary-btn">Add Interview Question</a></div>
+            <div class="ciit-mcq-empty"><i class="bi bi-chat-left-text"></i><h3>No active interview questions</h3><p>Create an interview question and attach it to a Notes chapter.</p><button type="button" class="ciit-mcq-secondary-btn" data-bs-toggle="modal" data-bs-target="#createInterviewQuestionModal">Add Interview Question</button></div>
         }
         else
         {
