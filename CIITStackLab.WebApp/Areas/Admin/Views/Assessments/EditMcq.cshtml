@@ -16,7 +16,7 @@
         <label>Chapter<select asp-for="NoteId"><option value="0">Select Notes chapter</option>
             @foreach (var chapter in mcqChapters)
             {
-                <option value="@chapter.NoteId" selected="@(Model.TopicId == chapter.Id ? "selected" : null)">@chapter.TopicTitle / @chapter.ChapterId — @chapter.ChapterTitle</option>
+                <option value="@chapter.NoteId" selected="@(Model.NoteId == chapter.NoteId ? "selected" : null)">@chapter.TopicTitle / @chapter.ChapterId — @chapter.ChapterTitle</option>
             }
         </select><span asp-validation-for="NoteId"></span></label>
         <label>Question<textarea asp-for="Question" rows="4"></textarea><span asp-validation-for="Question"></span></label>
