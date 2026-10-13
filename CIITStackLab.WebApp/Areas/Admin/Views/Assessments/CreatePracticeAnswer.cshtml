@@ -10,9 +10,14 @@
     }
 }
 
-@section Styles { <link rel="stylesheet" href="~/css/admin-practice.css" asp-append-version="true" /> }
+@section Styles { <link rel="stylesheet" href="~/css/admin-practice.css" asp-append-version="true" /> 
+    <link rel="stylesheet" href="~/css/admin-assessment-detail.css" asp-append-version="true" />
+}
 
 <section class="ciit-practice-form-page">
+    <div class="ciit-assessment-standalone-nav">
+        <a asp-area="Admin" asp-controller="Assessments" asp-action="Index" class="ciit-assessment-back-link"><i class="bi bi-arrow-left"></i><span>Back to Assessments</span></a>
+    </div>
     <div class="ciit-practice-header">
         <div><span class="ciit-admin-eyebrow">Assessment</span><h1>Add Practice Solution</h1><p>Add an answer or solution to an existing practice program.</p></div>
     </div>
