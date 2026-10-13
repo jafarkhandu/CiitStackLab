@@ -59,13 +59,15 @@ public sealed class CoursePurchaseService
             return true;
         }
 
-        _dbContext.StudentCoursePurchases.Add(new StudentCoursePurchase
+        var purchase = new StudentCoursePurchase
         {
             UserId = userId,
             CourseId = courseId,
             PurchasePrice = price,
             PurchasedAt = DateTime.UtcNow
-        });
+        };
+
+        _dbContext.StudentCoursePurchases.Add(purchase);
 
         try
         {
@@ -74,12 +76,7 @@ public sealed class CoursePurchaseService
         }
         catch (DbUpdateException)
         {
-            _dbContext.Entry(new StudentCoursePurchase
-            {
-                UserId = userId,
-                CourseId = courseId,
-                PurchasePrice = price
-            }).State = EntityState.Detached;
+            _dbContext.Entry(purchase).State = EntityState.Detached;
 
             return await _dbContext.StudentCoursePurchases
                 .AsNoTracking()
