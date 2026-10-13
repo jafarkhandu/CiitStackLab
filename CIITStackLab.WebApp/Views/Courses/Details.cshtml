@@ -185,7 +185,7 @@
                                         </button>
                                     </form>
                                     <p class="ciit-payment-modal-note">
-                                        Demo mode: a fake payment animation will run, then the learning page will open.
+                                        Demo mode: no real money is charged. The payment animation is only for testing the purchase experience.
                                     </p>
                                 }
                                 else
@@ -203,19 +203,41 @@
                                 }
                             </div>
 
-                            <div id="ciit-payment-processing-state" class="ciit-payment-state" hidden>
-                                <div class="ciit-payment-spinner" aria-hidden="true"></div>
+                            <div id="ciit-payment-processing-state" class="ciit-payment-state" hidden aria-live="polite">
+                                <div class="ciit-payment-processing-icon" aria-hidden="true">
+                                    <span class="ciit-payment-spinner"></span>
+                                    <i class="bi bi-credit-card-2-front"></i>
+                                </div>
                                 <strong>Processing demo payment</strong>
-                                <span>Verifying your demo payment...</span>
+                                <span>Simulating a secure payment flow. Please wait...</span>
+
+                                <div class="ciit-payment-processing-steps" aria-label="Payment processing status">
+                                    <div class="ciit-payment-processing-step" data-payment-step="gateway">
+                                        <i class="bi bi-check-lg" aria-hidden="true"></i>
+                                        <span>Connecting to payment gateway...</span>
+                                    </div>
+                                    <div class="ciit-payment-processing-step" data-payment-step="verify">
+                                        <i class="bi bi-check-lg" aria-hidden="true"></i>
+                                        <span>Verifying payment details...</span>
+                                    </div>
+                                    <div class="ciit-payment-processing-step" data-payment-step="process">
+                                        <i class="bi bi-check-lg" aria-hidden="true"></i>
+                                        <span>Processing your demo payment...</span>
+                                    </div>
+                                </div>
                             </div>
 
-                            <div id="ciit-payment-success-state" class="ciit-payment-state ciit-payment-success-state" hidden>
+                            <div id="ciit-payment-success-state" class="ciit-payment-state ciit-payment-success-state" hidden aria-live="polite">
                                 <div class="ciit-payment-success-icon" aria-hidden="true">
                                     <i class="bi bi-check-lg"></i>
                                 </div>
                                 <strong>Payment Successful</strong>
-                                <span>Demo payment completed successfully.</span>
+                                <span class="ciit-payment-success-course">Your access to @Model.Title is ready.</span>
+                                <span class="ciit-payment-success-note">Demo payment completed successfully.</span>
                                 <small>Opening your learning page...</small>
+                                <div class="ciit-payment-redirect-bar" aria-hidden="true">
+                                    <span></span>
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -348,10 +370,36 @@
             const processingState = document.getElementById('ciit-payment-processing-state');
             const successState = document.getElementById('ciit-payment-success-state');
             const modal = document.getElementById('coursePaymentModal');
+            const processingSteps = processingState
+                ? Array.from(processingState.querySelectorAll('[data-payment-step]'))
+                : [];
 
             if (!form || !formState || !processingState || !successState) {
                 return;
             }
+
+            let paymentTimers = [];
+
+            const clearPaymentTimers = () => {
+                paymentTimers.forEach(window.clearTimeout);
+                paymentTimers = [];
+            };
+
+            const resetPaymentState = () => {
+                clearPaymentTimers();
+                formState.hidden = false;
+                processingState.hidden = true;
+                successState.hidden = true;
+
+                processingSteps.forEach((step) => {
+                    step.classList.remove('is-active', 'is-complete');
+                });
+
+                const button = document.getElementById('ciit-demo-payment-button');
+                if (button) {
+                    button.disabled = false;
+                }
+            };
 
             form.addEventListener('submit', (event) => {
                 event.preventDefault();
@@ -359,34 +407,55 @@
                 const button = document.getElementById('ciit-demo-payment-button');
                 if (button) {
                     button.disabled = true;
+                    button.innerHTML = '<span class="spinner-border spinner-border-sm me-2" aria-hidden="true"></span>Processing...';
                 }
 
                 formState.hidden = true;
                 processingState.hidden = false;
 
-                window.setTimeout(() => {
+                processingSteps.forEach((step) => {
+                    step.classList.remove('is-active', 'is-complete');
+                });
+
+                const activateStep = (index) => {
+                    if (!processingSteps[index]) {
+                        return;
+                    }
+
+                    if (index > 0) {
+                        processingSteps[index - 1].classList.remove('is-active');
+                        processingSteps[index - 1].classList.add('is-complete');
+                    }
+
+                    processingSteps[index].classList.add('is-active');
+                };
+
+                const completeStep = (index) => {
+                    if (!processingSteps[index]) {
+                        return;
+                    }
+
+                    processingSteps[index].classList.remove('is-active');
+                    processingSteps[index].classList.add('is-complete');
+                };
+
+                activateStep(0);
+
+                paymentTimers.push(window.setTimeout(() => activateStep(1), 650));
+                paymentTimers.push(window.setTimeout(() => activateStep(2), 1300));
+                paymentTimers.push(window.setTimeout(() => completeStep(2), 1900));
+                paymentTimers.push(window.setTimeout(() => {
                     processingState.hidden = true;
                     successState.hidden = false;
-                }, 2200);
+                }, 2100));
 
-                window.setTimeout(() => {
+                paymentTimers.push(window.setTimeout(() => {
                     form.submit();
-                }, 3500);
+                }, 3400));
             });
 
             if (modal) {
-                modal.addEventListener('hidden.bs.modal', () => {
-                    if (!processingState.hidden || !successState.hidden) {
-                        formState.hidden = false;
-                        processingState.hidden = true;
-                        successState.hidden = true;
-
-                        const button = document.getElementById('ciit-demo-payment-button');
-                        if (button) {
-                            button.disabled = false;
-                        }
-                    }
-                });
+                modal.addEventListener('hidden.bs.modal', resetPaymentState);
             }
         })();
     </script>
