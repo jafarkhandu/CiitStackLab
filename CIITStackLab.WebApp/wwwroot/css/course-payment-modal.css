@@ -288,31 +288,142 @@
     font-size: .85rem;
 }
 
+.ciit-payment-processing-icon {
+    position: relative;
+    display: grid;
+    place-items: center;
+    width: 82px;
+    height: 82px;
+    margin-bottom: .7rem;
+}
+
 .ciit-payment-spinner {
-    width: 58px;
-    height: 58px;
-    margin-bottom: .65rem;
+    position: absolute;
+    inset: 0;
+    width: 82px;
+    height: 82px;
     border: 4px solid #dbe8fb;
     border-top-color: #0d6efd;
+    border-right-color: #5a9cff;
     border-radius: 50%;
     animation: ciit-payment-spin .8s linear infinite;
+}
+
+.ciit-payment-processing-icon > i {
+    position: relative;
+    z-index: 1;
+    display: grid;
+    place-items: center;
+    width: 48px;
+    height: 48px;
+    border-radius: 50%;
+    background: #edf4ff;
+    color: #0d6efd;
+    font-size: 1.35rem;
+}
+
+.ciit-payment-processing-steps {
+    width: min(100%, 390px);
+    margin-top: 1rem;
+    text-align: left;
+}
+
+.ciit-payment-processing-step {
+    display: flex;
+    align-items: center;
+    gap: .7rem;
+    padding: .45rem 0;
+    color: #9aa5b5;
+    font-size: .78rem;
+    transition: color .2s ease;
+}
+
+.ciit-payment-processing-step i {
+    display: grid;
+    place-items: center;
+    width: 24px;
+    height: 24px;
+    flex: 0 0 24px;
+    border: 1px solid #dce3ec;
+    border-radius: 50%;
+    background: #fff;
+    color: transparent;
+    font-size: .72rem;
+    transition: all .2s ease;
+}
+
+.ciit-payment-processing-step.is-active {
+    color: #3d4b60;
+    font-weight: 700;
+}
+
+.ciit-payment-processing-step.is-active i {
+    border-color: #9fc4ff;
+    background: #edf4ff;
+    color: #0d6efd;
+    animation: ciit-payment-step-pulse 1s ease-in-out infinite;
+}
+
+.ciit-payment-processing-step.is-complete {
+    color: #344054;
+}
+
+.ciit-payment-processing-step.is-complete i {
+    border-color: #198754;
+    background: #198754;
+    color: #fff;
 }
 
 .ciit-payment-success-icon {
     display: grid;
     place-items: center;
-    width: 68px;
-    height: 68px;
+    width: 76px;
+    height: 76px;
     margin-bottom: .7rem;
+    border: 7px solid #e7f8ee;
     border-radius: 50%;
-    background: #dff7e9;
-    color: #198754;
-    font-size: 2rem;
-    animation: ciit-payment-success-pop .35s ease-out;
+    background: #198754;
+    color: #fff;
+    font-size: 2.1rem;
+    box-shadow: 0 12px 30px rgba(25, 135, 84, .18);
+    animation: ciit-payment-success-pop .4s ease-out;
+}
+
+.ciit-payment-success-icon i {
+    animation: ciit-payment-check-in .35s .08s ease-out both;
 }
 
 .ciit-payment-success-state strong {
     color: #198754;
+}
+
+.ciit-payment-success-course {
+    margin-top: .35rem;
+    color: #344054 !important;
+    font-weight: 700;
+}
+
+.ciit-payment-success-note {
+    margin-top: .7rem;
+    color: #748195 !important;
+}
+
+.ciit-payment-redirect-bar {
+    width: min(100%, 330px);
+    height: 5px;
+    margin-top: .8rem;
+    overflow: hidden;
+    border-radius: 999px;
+    background: #e8eef6;
+}
+
+.ciit-payment-redirect-bar span {
+    display: block;
+    width: 0;
+    height: 100%;
+    border-radius: inherit;
+    background: #198754;
+    animation: ciit-payment-redirect-fill 1.1s ease-out forwards;
 }
 
 @keyframes ciit-payment-spin {
@@ -321,15 +432,53 @@
     }
 }
 
+@keyframes ciit-payment-step-pulse {
+    0%, 100% { transform: scale(1); }
+    50% { transform: scale(1.08); }
+}
+
 @keyframes ciit-payment-success-pop {
     0% {
         transform: scale(.65);
         opacity: .3;
     }
-
+    70% {
+        transform: scale(1.05);
+        opacity: 1;
+    }
     100% {
         transform: scale(1);
+    }
+}
+
+@keyframes ciit-payment-check-in {
+    0% {
+        transform: scale(.4) rotate(-20deg);
+        opacity: 0;
+    }
+    100% {
+        transform: scale(1) rotate(0);
         opacity: 1;
+    }
+}
+
+@keyframes ciit-payment-redirect-fill {
+    to {
+        width: 100%;
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .ciit-payment-spinner,
+    .ciit-payment-processing-step.is-active i,
+    .ciit-payment-success-icon,
+    .ciit-payment-success-icon i,
+    .ciit-payment-redirect-bar span {
+        animation: none;
+    }
+
+    .ciit-payment-redirect-bar span {
+        width: 100%;
     }
 }
 
