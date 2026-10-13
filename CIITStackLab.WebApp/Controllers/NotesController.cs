@@ -8,19 +8,23 @@ public sealed class NotesController : Controller
 {
     private readonly INotesService _notesService;
     private readonly ICourseEnrollmentService _courseEnrollmentService;
+    private readonly ICourseService _courseService;
 
     public NotesController(
         INotesService notesService,
-        ICourseEnrollmentService courseEnrollmentService)
+        ICourseEnrollmentService courseEnrollmentService,
+        ICourseService courseService)
     {
         _notesService = notesService;
         _courseEnrollmentService = courseEnrollmentService;
+        _courseService = courseService;
     }
 
     [HttpGet]
     public async Task<IActionResult> Index(
         int topicId,
         string? chapterId,
+        int? courseId,
         CancellationToken ct)
     {
         if (topicId <= 0)
@@ -41,7 +45,7 @@ public sealed class NotesController : Controller
         {
             if (User.Identity?.IsAuthenticated != true)
             {
-                var returnUrl = Url.Action(nameof(Index), new { topicId, chapterId });
+                var returnUrl = Url.Action(nameof(Index), new { topicId, chapterId, courseId });
                 return RedirectToAction(
                     "Login",
                     "Account",
@@ -59,8 +63,24 @@ public sealed class NotesController : Controller
             chapterId,
             ct);
 
-        return notes is null
-            ? NotFound()
-            : View(notes);
+        if (notes is null)
+        {
+            return NotFound();
+        }
+
+        if (courseId is > 0)
+        {
+            var course = await _courseService.GetLearningAsync(courseId.Value, null, ct);
+
+            if (course is not null && course.Topics.Any(topic => topic.Id == topicId))
+            {
+                ViewData["CourseId"] = course.Id.ToString();
+                ViewData["CourseTitle"] = course.Title;
+                ViewData["NotesTopicId"] = notes.TopicId.ToString();
+                ViewData["NotesChapterId"] = notes.CurrentChapterId;
+            }
+        }
+
+        return View(notes);
     }
 }
