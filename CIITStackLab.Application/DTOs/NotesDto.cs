@@ -69,3 +69,21 @@ public sealed class NoteMediaDto
     public string? Slides { get; init; }
     public string? VideoName { get; init; }
 }
+
+
+/// <summary>
+/// A selectable Notes chapter. NoteId is the primary key of tbltraining_notes,
+/// not the parent TopicId or the display-only ChapterId.
+/// </summary>
+public sealed class AdminAssessmentChapterLookupDto
+{
+    public int NoteId { get; init; }
+
+    public int TopicId { get; init; }
+
+    public string TopicTitle { get; init; } = string.Empty;
+
+    public string ChapterId { get; init; } = string.Empty;
+
+    public string ChapterTitle { get; init; } = string.Empty;
+}
