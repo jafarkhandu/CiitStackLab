@@ -100,11 +100,11 @@ public sealed class AssessmentsController : Controller
             {
                 try
                 {
-                    ViewBag.McqTopics = await _mcqService.GetTopicLookupAsync(cancellationToken);
+                    ViewBag.McqChapters = await _mcqService.GetAssessmentChapterLookupAsync(cancellationToken);
                 }
                 catch (DbException)
                 {
-                    ViewBag.McqTopics = Array.Empty<AdminMcqTopicLookupDto>();
+                    ViewBag.McqChapters = Array.Empty<AdminAssessmentChapterLookupDto>();
                 }
             }
         }
@@ -122,7 +122,7 @@ public sealed class AssessmentsController : Controller
     [HttpPost]
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> CreateMcq(
-        AdminTopicMcqInputDto input,
+        AdminChapterMcqInputDto input,
         CancellationToken cancellationToken)
     {
         if (!ModelState.IsValid)
@@ -137,7 +137,7 @@ public sealed class AssessmentsController : Controller
 
         try
         {
-            result = await _mcqService.CreateForTopicAsync(input, cancellationToken);
+            result = await _mcqService.CreateForChapterAsync(input, cancellationToken);
         }
         catch (Exception exception) when (
             exception is DbException or DbUpdateException)
@@ -146,17 +146,17 @@ public sealed class AssessmentsController : Controller
 
             try
             {
-                ViewBag.McqTopics = await _mcqService.GetTopicLookupAsync(cancellationToken);
+                ViewBag.McqChapters = await _mcqService.GetAssessmentChapterLookupAsync(cancellationToken);
             }
             catch (Exception lookupException) when (
                 lookupException is DbException or DbUpdateException)
             {
-                ViewBag.McqTopics = Array.Empty<AdminMcqTopicLookupDto>();
+                ViewBag.McqChapters = Array.Empty<AdminAssessmentChapterLookupDto>();
             }
 
             ViewBag.AddMcqInput = input;
             ViewBag.AddMcqError =
-                "The MCQ could not be saved to the database. Check that Database/20261012_AddTopicIdToContentQuestions.sql has been executed against the database used by this application, then try again.";
+                "The MCQ could not be saved to the database. Confirm Database/20261013_LinkAssessmentsToNotesChapters.sql has been executed against the database used by this application, then try again.";
             ViewBag.OpenMcqModal = "add";
 
             return View("Mcqs", failedModel);
@@ -189,7 +189,7 @@ public sealed class AssessmentsController : Controller
     [RequestSizeLimit(6 * 1024 * 1024)]
     [RequestFormLimits(MultipartBodyLengthLimit = 6 * 1024 * 1024)]
     public async Task<IActionResult> AnalyzeBulkMcq(
-        int topicId,
+        int noteId,
         IFormFile? file,
         CancellationToken cancellationToken)
     {
@@ -226,7 +226,7 @@ public sealed class AssessmentsController : Controller
 
         var preview = new McqImportPreviewDto
         {
-            TopicId = topicId,
+            NoteId = noteId,
             FileName = file is null ? string.Empty : Path.GetFileName(file.FileName)
         };
 
@@ -246,7 +246,7 @@ public sealed class AssessmentsController : Controller
                 await using var fileStream = file.OpenReadStream();
 
                 preview = await _mcqImportService.PreviewAsync(
-                    topicId,
+                    noteId,
                     file.FileName,
                     fileStream,
                     userId,
@@ -258,22 +258,22 @@ public sealed class AssessmentsController : Controller
         {
             preview = new McqImportPreviewDto
             {
-                TopicId = topicId,
+                NoteId = noteId,
                 FileName = file is null ? string.Empty : Path.GetFileName(file.FileName)
             };
             preview.FileErrors.Add(
-                "The database returned an error during analysis. Confirm Database/20261012_AddTopicIdToContentQuestions.sql has been executed against the database used by this application, then try again. No MCQs were saved.");
+                "The database returned an error during analysis. Confirm Database/20261013_LinkAssessmentsToNotesChapters.sql has been executed against the database used by this application, then try again. No MCQs were saved.");
         }
         catch (Exception exception) when (!cancellationToken.IsCancellationRequested)
         {
             _logger.LogError(
                 exception,
-                "MCQ file analysis failed for chapter {TopicId}.",
-                topicId);
+                "MCQ file analysis failed for Notes chapter {NoteId}.",
+                noteId);
 
             preview = new McqImportPreviewDto
             {
-                TopicId = topicId,
+                NoteId = noteId,
                 FileName = file is null ? string.Empty : Path.GetFileName(file.FileName)
             };
             preview.FileErrors.Add(
@@ -325,7 +325,7 @@ public sealed class AssessmentsController : Controller
     [RequestSizeLimit(6 * 1024 * 1024)]
     [RequestFormLimits(MultipartBodyLengthLimit = 6 * 1024 * 1024)]
     public async Task<IActionResult> PreviewBulkMcq(
-        int topicId,
+        int noteId,
         IFormFile? file,
         CancellationToken cancellationToken)
     {
@@ -344,7 +344,7 @@ public sealed class AssessmentsController : Controller
             {
                 preview = new McqImportPreviewDto
                 {
-                    TopicId = topicId
+                    TopicId = noteId
                 };
                 preview.FileErrors.Add("Choose a non-empty .xlsx Excel workbook.");
             }
@@ -352,7 +352,7 @@ public sealed class AssessmentsController : Controller
             {
                 preview = new McqImportPreviewDto
                 {
-                    TopicId = topicId,
+                    NoteId = noteId,
                     FileName = Path.GetFileName(file.FileName)
                 };
                 preview.FileErrors.Add(
@@ -363,7 +363,7 @@ public sealed class AssessmentsController : Controller
                 await using var fileStream = file.OpenReadStream();
 
                 preview = await _mcqImportService.PreviewAsync(
-                    topicId,
+                    noteId,
                     file.FileName,
                     fileStream,
                     userId,
@@ -374,11 +374,11 @@ public sealed class AssessmentsController : Controller
         {
             preview = new McqImportPreviewDto
             {
-                TopicId = topicId,
+                NoteId = noteId,
                 FileName = file is null ? string.Empty : Path.GetFileName(file.FileName)
             };
             preview.FileErrors.Add(
-                "The database returned an error during analysis. No MCQs were saved. Confirm the topic_id setup SQL has been run against the database used by this application, then retry.");
+                "The database returned an error during analysis. No MCQs were saved. Confirm the Notes chapter note_id setup SQL has been run against the database used by this application, then retry.");
         }
 
         // Keep the preview in server-side cache and redirect to the list page.
@@ -454,10 +454,10 @@ public sealed class AssessmentsController : Controller
         var mcq = await _mcqService.GetByIdAsync(id, cancellationToken);
         if (mcq is null) return NotFound();
 
-        await LoadMcqTopicLookupAsync(cancellationToken);
-        return View(new AdminTopicMcqInputDto
+        await LoadMcqChapterLookupAsync(cancellationToken);
+        return View(new AdminChapterMcqInputDto
         {
-            TopicId = mcq.TopicId ?? 0,
+            NoteId = mcq.NoteId ?? 0,
             Question = mcq.Question,
             Option1 = mcq.Option1,
             Option2 = mcq.Option2,
@@ -469,19 +469,19 @@ public sealed class AssessmentsController : Controller
 
     [HttpPost]
     [ValidateAntiForgeryToken]
-    public async Task<IActionResult> EditMcq(int id, AdminTopicMcqInputDto input, CancellationToken cancellationToken)
+    public async Task<IActionResult> EditMcq(int id, AdminChapterMcqInputDto input, CancellationToken cancellationToken)
     {
         if (!ModelState.IsValid)
         {
-            await LoadMcqTopicLookupAsync(cancellationToken);
+            await LoadMcqChapterLookupAsync(cancellationToken);
             return View(input);
         }
 
-        var result = await _mcqService.UpdateForTopicAsync(id, input, cancellationToken);
+        var result = await _mcqService.UpdateForChapterAsync(id, input, cancellationToken);
         if (!result.Succeeded)
         {
             ModelState.AddModelError(string.Empty, result.Error!);
-            await LoadMcqTopicLookupAsync(cancellationToken);
+            await LoadMcqChapterLookupAsync(cancellationToken);
             return View(input);
         }
 
@@ -1252,8 +1252,13 @@ public sealed class AssessmentsController : Controller
     private async Task<AdminMcqIndexDto> LoadMcqIndexAsync(
         CancellationToken cancellationToken)
     {
-        ViewBag.McqTopics = await _mcqService.GetTopicLookupAsync(cancellationToken);
+        ViewBag.McqChapters = await _mcqService.GetAssessmentChapterLookupAsync(cancellationToken);
         return await _mcqService.GetIndexAsync(cancellationToken);
+    }
+
+    private async Task LoadMcqChapterLookupAsync(CancellationToken cancellationToken)
+    {
+        ViewBag.McqChapters = await _mcqService.GetAssessmentChapterLookupAsync(cancellationToken);
     }
 
     private async Task LoadMcqTopicLookupAsync(CancellationToken cancellationToken)
