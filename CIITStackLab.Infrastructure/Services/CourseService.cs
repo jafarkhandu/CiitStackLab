@@ -140,6 +140,7 @@ public sealed class CourseService
                 TopicTitle = topic.Title,
                 TopicPrice = topic.Price,
                 ContentId = (int?)content.Id,
+                NoteId = (int?)content.NoteId,
                 ContentTitle = content.Title,
                 Slides = content.Slides,
                 VideoName = content.VideoName
@@ -165,6 +166,11 @@ public sealed class CourseService
             .Select(x => x.ContentId!.Value)
             .Distinct()
             .ToList();
+        var noteIds = rows
+            .Where(x => x.NoteId.HasValue)
+            .Select(x => x.NoteId!.Value)
+            .Distinct()
+            .ToList();
 
         var questions = await _dbContext.ContentQuestions
             .AsNoTracking()
@@ -173,7 +179,9 @@ public sealed class CourseService
                 && ((question.ContentId.HasValue
                      && contentIds.Contains(question.ContentId.Value))
                     || (question.TopicId.HasValue
-                        && topicIds.Contains(question.TopicId.Value))))
+                        && topicIds.Contains(question.TopicId.Value))
+                    || (question.NoteId.HasValue
+                        && noteIds.Contains(question.NoteId.Value)))
             .OrderBy(question => question.Id)
             .ToListAsync(cancellationToken);
 
@@ -191,6 +199,13 @@ public sealed class CourseService
                 group => group.Key,
                 group => (IReadOnlyList<ContentQuestionDto>)group.Select(MapCourseQuestion).ToList());
 
+        var questionsByNoteId = questions
+            .Where(question => question.NoteId.HasValue)
+            .GroupBy(question => question.NoteId!.Value)
+            .ToDictionary(
+                group => group.Key,
+                group => (IReadOnlyList<ContentQuestionDto>)group.Select(MapCourseQuestion).ToList());
+
         var firstContentIdByTopicId = rows
             .Where(row => row.ContentId.HasValue)
             .GroupBy(row => row.TopicId)
@@ -198,7 +213,14 @@ public sealed class CourseService
                 group => group.Key,
                 group => group.Min(row => row.ContentId!.Value));
 
-        IReadOnlyList<ContentQuestionDto> GetQuestionsForCourseContent(int contentId, int topicId)
+        var firstContentIdByNoteId = rows
+            .Where(row => row.ContentId.HasValue && row.NoteId.HasValue)
+            .GroupBy(row => row.NoteId!.Value)
+            .ToDictionary(
+                group => group.Key,
+                group => group.Min(row => row.ContentId!.Value));
+
+        IReadOnlyList<ContentQuestionDto> GetQuestionsForCourseContent(int contentId, int topicId, int? noteId)
         {
             var result = new List<ContentQuestionDto>();
 
@@ -212,6 +234,20 @@ public sealed class CourseService
                 && questionsByTopicId.TryGetValue(topicId, out var topicQuestions))
             {
                 foreach (var question in topicQuestions)
+                {
+                    if (result.All(existingQuestion => existingQuestion.Id != question.Id))
+                    {
+                        result.Add(question);
+                    }
+                }
+            }
+
+            if (noteId.HasValue
+                && firstContentIdByNoteId.TryGetValue(noteId.Value, out var firstChapterContentId)
+                && firstChapterContentId == contentId
+                && questionsByNoteId.TryGetValue(noteId.Value, out var chapterQuestions))
+            {
+                foreach (var question in chapterQuestions)
                 {
                     if (result.All(existingQuestion => existingQuestion.Id != question.Id))
                     {
@@ -249,7 +285,7 @@ public sealed class CourseService
                         Title = x.ContentTitle ?? string.Empty,
                         Slides = x.Slides,
                         VideoName = x.VideoName,
-                        Questions = GetQuestionsForCourseContent(x.ContentId.Value, x.TopicId)
+                        Questions = GetQuestionsForCourseContent(x.ContentId.Value, x.TopicId, x.NoteId)
                     })
                     .ToList()
             })
