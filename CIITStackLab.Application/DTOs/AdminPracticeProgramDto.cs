@@ -6,6 +6,8 @@ public sealed class AdminPracticeProgramDto
 {
     public int Id { get; init; }
     public int? ContentId { get; init; }
+    public int? NoteId { get; init; }
+    public string ChapterTitle { get; init; } = string.Empty;
     public string ContentTitle { get; init; } = string.Empty;
     public string TopicTitle { get; init; } = string.Empty;
     public string QuestionTitle { get; init; } = string.Empty;
@@ -18,6 +20,8 @@ public sealed class AdminPracticeProgramDto
 public sealed class AdminArchivedPracticeProgramDto
 {
     public int Id { get; init; }
+    public int? NoteId { get; init; }
+    public string ChapterTitle { get; init; } = string.Empty;
     public string ContentTitle { get; init; } = string.Empty;
     public string TopicTitle { get; init; } = string.Empty;
     public string QuestionTitle { get; init; } = string.Empty;
@@ -52,7 +56,10 @@ public sealed class AdminPracticeProgramIndexDto
 
 public sealed class AdminPracticeProgramInputDto
 {
-    [Range(1, int.MaxValue, ErrorMessage = "Please select content.")]
+    [Range(1, int.MaxValue, ErrorMessage = "Please select a Notes chapter.")]
+    public int NoteId { get; set; }
+
+    // Retained for legacy content-linked rows.
     public int ContentId { get; set; }
 
     [Required(ErrorMessage = "Question title is required.")]
