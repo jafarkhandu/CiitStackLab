@@ -26,8 +26,16 @@ public sealed class AdminInterviewQuestionService : IAdminInterviewQuestionServi
                 Id = x.Id,
                 ContentId = x.ContentId,
                 TopicId = x.TopicId,
-                ContentTitle = x.Content != null ? x.Content.Title ?? string.Empty : x.Topic != null ? "Chapter-level" : "Unassigned",
-                TopicTitle = x.Topic != null ? x.Topic.Title : x.Content != null && x.Content.Topic != null ? x.Content.Topic.Title : "Unassigned",
+                NoteId = x.NoteId ?? (x.Content != null ? x.Content.NoteId : null),
+                ChapterTitle = x.Note != null
+                    ? x.Note.Topic.Title + " / " + x.Note.ChapterId + " — " + x.Note.Title
+                    : x.Content != null && x.Content.Note != null
+                        ? x.Content.Note.Topic.Title + " / " + x.Content.Note.ChapterId + " — " + x.Content.Note.Title
+                        : x.Topic != null
+                            ? x.Topic.Title + " / legacy topic-level assessment"
+                            : "Unassigned",
+                ContentTitle = x.Content != null ? x.Content.Title ?? string.Empty : "Unassigned",
+                TopicTitle = x.Note != null ? x.Note.Topic.Title : x.Topic != null ? x.Topic.Title : x.Content != null && x.Content.Topic != null ? x.Content.Topic.Title : "Unassigned",
                 Question = x.Question ?? string.Empty,
                 Answer = x.Answer ?? string.Empty,
                 CreatedAt = x.CreatedAt,
@@ -42,8 +50,16 @@ public sealed class AdminInterviewQuestionService : IAdminInterviewQuestionServi
             .Select(x => new AdminArchivedInterviewQuestionDto
             {
                 Id = x.Id,
+                NoteId = x.NoteId ?? (x.Content != null ? x.Content.NoteId : null),
+                ChapterTitle = x.Note != null
+                    ? x.Note.Topic.Title + " / " + x.Note.ChapterId + " — " + x.Note.Title
+                    : x.Content != null && x.Content.Note != null
+                        ? x.Content.Note.Topic.Title + " / " + x.Content.Note.ChapterId + " — " + x.Content.Note.Title
+                        : x.Topic != null
+                            ? x.Topic.Title + " / legacy topic-level assessment"
+                            : "Unassigned",
                 ContentTitle = x.Content != null ? x.Content.Title ?? string.Empty : "Unassigned",
-                TopicTitle = x.Content != null && x.Content.Topic != null ? x.Content.Topic.Title : "Unassigned",
+                TopicTitle = x.Note != null ? x.Note.Topic.Title : x.Content != null && x.Content.Topic != null ? x.Content.Topic.Title : x.Topic != null ? x.Topic.Title : "Unassigned",
                 Question = x.Question ?? string.Empty,
                 DeletedAt = x.DeletedAt
             })
@@ -66,8 +82,16 @@ public sealed class AdminInterviewQuestionService : IAdminInterviewQuestionServi
                 Id = x.Id,
                 ContentId = x.ContentId,
                 TopicId = x.TopicId,
-                ContentTitle = x.Content != null ? x.Content.Title ?? string.Empty : x.Topic != null ? "Chapter-level" : "Unassigned",
-                TopicTitle = x.Topic != null ? x.Topic.Title : x.Content != null && x.Content.Topic != null ? x.Content.Topic.Title : "Unassigned",
+                NoteId = x.NoteId ?? (x.Content != null ? x.Content.NoteId : null),
+                ChapterTitle = x.Note != null
+                    ? x.Note.Topic.Title + " / " + x.Note.ChapterId + " — " + x.Note.Title
+                    : x.Content != null && x.Content.Note != null
+                        ? x.Content.Note.Topic.Title + " / " + x.Content.Note.ChapterId + " — " + x.Content.Note.Title
+                        : x.Topic != null
+                            ? x.Topic.Title + " / legacy topic-level assessment"
+                            : "Unassigned",
+                ContentTitle = x.Content != null ? x.Content.Title ?? string.Empty : "Unassigned",
+                TopicTitle = x.Note != null ? x.Note.Topic.Title : x.Topic != null ? x.Topic.Title : x.Content != null && x.Content.Topic != null ? x.Content.Topic.Title : "Unassigned",
                 Question = x.Question ?? string.Empty,
                 Answer = x.Answer ?? string.Empty,
                 CreatedAt = x.CreatedAt,
@@ -113,18 +137,24 @@ public sealed class AdminInterviewQuestionService : IAdminInterviewQuestionServi
             .ToListAsync(cancellationToken);
     }
 
-    public async Task<(bool Succeeded, string? Error)> CreateAsync(AdminInterviewQuestionInputDto input, CancellationToken cancellationToken = default)
+    public async Task<(bool Succeeded, string? Error)> CreateAsync(
+        AdminInterviewQuestionInputDto input,
+        CancellationToken cancellationToken = default)
     {
-        var contentExists = await _dbContext.Lessons.AnyAsync(
-            x => x.Id == input.ContentId && x.Flag == 0 && x.Topic != null && x.Topic.Flag == 0,
+        var chapterExists = await _dbContext.TrainingNotes.AnyAsync(
+            note => note.Id == input.NoteId && note.Flag == 0 && note.Topic.Flag == 0,
             cancellationToken);
 
-        if (!contentExists)
-            return (false, "The selected content is not available.");
+        if (!chapterExists)
+        {
+            return (false, "The selected Notes chapter is not available.");
+        }
 
         var question = new ContentInterviewQuestion
         {
-            ContentId = input.ContentId,
+            NoteId = input.NoteId,
+            ContentId = null,
+            TopicId = null,
             Question = input.Question.Trim(),
             Answer = input.Answer.Trim(),
             Flag = 0,
@@ -136,22 +166,30 @@ public sealed class AdminInterviewQuestionService : IAdminInterviewQuestionServi
         return (true, null);
     }
 
-    public async Task<(bool Succeeded, string? Error)> UpdateAsync(int id, AdminInterviewQuestionInputDto input, CancellationToken cancellationToken = default)
+    public async Task<(bool Succeeded, string? Error)> UpdateAsync(
+        int id,
+        AdminInterviewQuestionInputDto input,
+        CancellationToken cancellationToken = default)
     {
         var question = await _dbContext.ContentInterviewQuestions
-            .SingleOrDefaultAsync(x => x.Id == id && x.Flag == 0, cancellationToken);
+            .SingleOrDefaultAsync(item => item.Id == id && item.Flag == 0, cancellationToken);
 
         if (question is null)
+        {
             return (false, "The selected interview question was not found.");
+        }
 
-        var contentExists = await _dbContext.Lessons.AnyAsync(
-            x => x.Id == input.ContentId && x.Flag == 0 && x.Topic != null && x.Topic.Flag == 0,
+        var chapterExists = await _dbContext.TrainingNotes.AnyAsync(
+            note => note.Id == input.NoteId && note.Flag == 0 && note.Topic.Flag == 0,
             cancellationToken);
 
-        if (!contentExists)
-            return (false, "The selected content is not available.");
+        if (!chapterExists)
+        {
+            return (false, "The selected Notes chapter is not available.");
+        }
 
-        question.ContentId = input.ContentId;
+        question.NoteId = input.NoteId;
+        question.ContentId = null;
         question.TopicId = null;
         question.Question = input.Question.Trim();
         question.Answer = input.Answer.Trim();
