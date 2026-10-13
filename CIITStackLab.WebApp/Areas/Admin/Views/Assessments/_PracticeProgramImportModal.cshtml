@@ -1,7 +1,7 @@
 @model CIITStackLab.Application.DTOs.AdminPracticeProgramIndexDto
 @{
-    var contentOptions = ViewBag.PracticeProgramContent as IEnumerable<Microsoft.AspNetCore.Mvc.Rendering.SelectListItem>
-        ?? Array.Empty<Microsoft.AspNetCore.Mvc.Rendering.SelectListItem>();
+    var chapters = ViewBag.PracticeProgramChapters as IEnumerable<CIITStackLab.Application.DTOs.AdminAssessmentChapterLookupDto>
+        ?? Array.Empty<CIITStackLab.Application.DTOs.AdminAssessmentChapterLookupDto>();
     var preview = ViewBag.PracticeProgramImportPreview as CIITStackLab.Application.DTOs.PracticeProgramImportPreviewDto;
     var importMessage = ViewBag.PracticeProgramImportMessage as string;
 }
@@ -38,7 +38,7 @@
                             <strong id="practiceProgramImportLiveTitle">Preparing analysis...</strong>
                             <span id="practiceProgramImportLiveState">READY</span>
                         </div>
-                        <p id="practiceProgramImportLiveDetail">Select content and upload an Excel workbook to begin.</p>
+                        <p id="practiceProgramImportLiveDetail">Select a Notes chapter and upload an Excel workbook to begin.</p>
                         <ol id="practiceProgramImportProgressLog" class="ciit-mcq-import-progress-log"></ol>
                         <div class="ciit-mcq-import-live-track" aria-hidden="true"><span></span></div>
                     </div>
@@ -59,16 +59,18 @@
                     @Html.AntiForgeryToken()
                     <div class="ciit-mcq-import-upload-fields">
                         <div class="ciit-mcq-import-field">
-                            <label for="PracticeProgramImportContentId">Learning content <span>*</span></label>
-                            <select id="PracticeProgramImportContentId" name="contentId" required>
-                                <option value="0">Select content</option>
-                                @foreach (var item in contentOptions)
+                            <label for="PracticeProgramImportNoteId">Notes Chapter <span>*</span></label>
+                            <select id="PracticeProgramImportNoteId" name="noteId" required>
+                                <option value="0">Select chapter</option>
+                                @foreach (var chapter in chapters)
                                 {
-                                    <option value="@item.Value"
-                                            selected="@(preview?.ContentId.ToString() == item.Value ? "selected" : null)">@item.Text</option>
+                                    <option value="@chapter.NoteId"
+                                            selected="@(preview?.NoteId == chapter.NoteId ? "selected" : null)">
+                                        @chapter.TopicTitle / @chapter.ChapterId — @chapter.ChapterTitle
+                                    </option>
                                 }
                             </select>
-                            <small>Each problem will be linked to this content and its topic.</small>
+                            <small>Each programming question will be linked directly to this Notes chapter.</small>
                         </div>
                         <label class="ciit-mcq-import-file-drop">
                             <input type="file" name="file" id="PracticeProgramImportFile" accept=".xlsx" required />
