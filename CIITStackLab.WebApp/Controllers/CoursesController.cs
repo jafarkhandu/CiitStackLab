@@ -1,6 +1,7 @@
 using System.Security.Claims;
 using CIITStackLab.Application.DTOs;
 using CIITStackLab.Application.Interfaces;
+using CIITStackLab.Infrastructure.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
@@ -84,7 +85,30 @@ public class CoursesController : Controller
             return RedirectToAction(nameof(CourseHome));
         }
 
-        TempData[$"DemoPayment:{id}"] = true;
+        var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+
+        if (string.IsNullOrWhiteSpace(userId))
+        {
+            return Unauthorized();
+        }
+
+        var demoPurchaseService = HttpContext.RequestServices
+            .GetRequiredService<DemoCoursePurchaseService>();
+
+        var purchaseCompleted = await demoPurchaseService.CompleteAsync(
+            userId,
+            id,
+            cancellationToken);
+
+        if (!purchaseCompleted)
+        {
+            TempData["CoursePaymentMessage"] =
+                "The demo payment could not be completed. Please try again.";
+            return RedirectToAction(nameof(Details), new { id });
+        }
+
+        TempData["CoursePaymentMessage"] =
+            $"Demo payment successful. {course.Title} has been added to My Courses.";
 
         return RedirectToAction(nameof(CourseHome));
     }
