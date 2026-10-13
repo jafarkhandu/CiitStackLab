@@ -81,12 +81,12 @@ public class CoursesController : Controller
 
         if (price <= 0m)
         {
-            return RedirectToAction(nameof(CourseHome), new { id });
+            return RedirectToAction(nameof(CourseEnvironment), new { id });
         }
 
         TempData[$"DemoPayment:{id}"] = true;
 
-        return RedirectToAction(nameof(CourseHome), new { id });
+        return RedirectToAction(nameof(CourseEnvironment), new { id });
     }
 
     [HttpPost("Courses/Enroll/{id:int}")]
@@ -143,9 +143,9 @@ public class CoursesController : Controller
         return View("MyCourses", courses);
     }
 
-    [HttpGet("Courses/Home/{id:int}")]
+    [HttpGet("Courses/Course/{id:int}")]
     [Authorize(Roles = "Student")]
-    public async Task<IActionResult> CourseHome(
+    public async Task<IActionResult> CourseEnvironment(
         int id,
         CancellationToken cancellationToken)
     {
@@ -183,7 +183,7 @@ public class CoursesController : Controller
             id,
             cancellationToken);
 
-        return View(course);
+        return View("CourseHome", course);
     }
 
     [HttpGet("Courses/Curriculum/{id:int}")]
