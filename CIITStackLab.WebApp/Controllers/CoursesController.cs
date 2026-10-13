@@ -39,9 +39,25 @@ public class CoursesController : Controller
             id,
             cancellationToken);
 
-        return course is null
-            ? NotFound()
-            : View(course);
+        if (course is null)
+        {
+            return NotFound();
+        }
+
+        course.IsStudent = User.IsInRole("Student");
+        var userId = course.IsStudent
+            ? User.FindFirstValue(ClaimTypes.NameIdentifier)
+            : null;
+
+        if (!string.IsNullOrWhiteSpace(userId))
+        {
+            course.Enrollment = await _courseEnrollmentService.GetStudentEnrollmentAsync(
+                userId,
+                id,
+                cancellationToken);
+        }
+
+        return View(course);
     }
 
     [HttpPost("Courses/DemoPayment/{id:int}")]
@@ -77,6 +93,35 @@ public class CoursesController : Controller
         TempData[$"DemoPayment:{id}"] = true;
 
         return RedirectToAction(nameof(CourseHome), new { id });
+    }
+
+    [HttpPost("Courses/Enroll/{id:int}")]
+    [Authorize(Roles = "Student")]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> RequestEnrollment(
+        int id,
+        CancellationToken cancellationToken)
+    {
+        if (id <= 0)
+        {
+            return NotFound();
+        }
+
+        var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+        if (string.IsNullOrWhiteSpace(userId))
+        {
+            return Unauthorized();
+        }
+
+        var outcome = await _courseEnrollmentService.RequestEnrollmentAsync(
+            userId,
+            id,
+            cancellationToken);
+
+        TempData["CourseEnrollmentMessage"] = outcome.Message;
+        TempData["CourseEnrollmentMessageType"] = outcome.Succeeded ? "success" : "error";
+
+        return RedirectToAction(nameof(Details), new { id });
     }
 
     [HttpGet("Courses/Home/{id:int}")]
