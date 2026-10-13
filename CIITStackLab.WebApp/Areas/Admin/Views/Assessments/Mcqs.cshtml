@@ -12,8 +12,8 @@
     <link rel="stylesheet" href="~/css/admin-mcq-import.css" asp-append-version="true" />
 }
 
-<section class="ciit-mcq-page">
-    <div class="ciit-mcq-header">
+<section class="ciit-mcq-page ciit-assessment-subpage ciit-assessment-subpage--mcq">
+    <div class="ciit-mcq-header ciit-assessment-subpage-hero">
         <div><span class="ciit-admin-eyebrow">Assessment</span><h1>MCQs</h1><p>Manage multiple-choice questions organized by chapter.</p></div>
         <div class="ciit-mcq-header-actions">
             <button type="button" class="ciit-mcq-import-header-btn"
@@ -24,6 +24,21 @@
                     data-bs-toggle="modal" data-bs-target="#addMcqModal">
                 <i class="bi bi-plus-lg"></i><span>Add MCQ</span>
             </button>
+        </div>
+    </div>
+
+    <div class="ciit-assessment-summary" aria-label="MCQ summary">
+        <div class="ciit-assessment-summary-card">
+            <span class="ciit-assessment-summary-icon is-blue"><i class="bi bi-check2-circle"></i></span>
+            <span><small>Active questions</small><strong>@Model.ActiveMcqs.Count</strong></span>
+        </div>
+        <div class="ciit-assessment-summary-card">
+            <span class="ciit-assessment-summary-icon is-slate"><i class="bi bi-archive"></i></span>
+            <span><small>Archived questions</small><strong>@Model.ArchivedMcqs.Count</strong></span>
+        </div>
+        <div class="ciit-assessment-summary-card">
+            <span class="ciit-assessment-summary-icon is-violet"><i class="bi bi-file-earmark-spreadsheet"></i></span>
+            <span><small>Bulk import</small><strong>Excel .xlsx <em>· up to 500 rows</em></strong></span>
         </div>
     </div>
 
