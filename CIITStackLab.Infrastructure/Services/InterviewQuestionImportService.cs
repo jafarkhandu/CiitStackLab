@@ -88,7 +88,7 @@ public sealed class InterviewQuestionImportService : IInterviewQuestionImportSer
     }
 
     public async Task<InterviewQuestionImportPreviewDto> PreviewAsync(
-        int topicId,
+        int noteId,
         string fileName,
         Stream fileStream,
         string userId,
@@ -105,7 +105,7 @@ public sealed class InterviewQuestionImportService : IInterviewQuestionImportSer
 
         var preview = new InterviewQuestionImportPreviewDto
         {
-            TopicId = topicId,
+            NoteId = noteId,
             FileName = Path.GetFileName(fileName)
         };
 
@@ -115,25 +115,34 @@ public sealed class InterviewQuestionImportService : IInterviewQuestionImportSer
             return preview;
         }
 
-        if (topicId <= 0)
+        if (noteId <= 0)
         {
-            preview.FileErrors.Add("Select the chapter before uploading the notes.");
+            preview.FileErrors.Add("Select a Notes chapter before uploading the workbook.");
             return preview;
         }
 
-        await ReportProgressAsync("Checking the selected chapter...");
-        var topic = await _dbContext.Topics.AsNoTracking()
-            .Where(item => item.Id == topicId && item.Flag == 0)
-            .Select(item => new { item.Id, item.Title })
+        await ReportProgressAsync("Checking the selected Notes chapter...");
+        var chapter = await _dbContext.TrainingNotes.AsNoTracking()
+            .Where(item => item.Id == noteId && item.Flag == 0 && item.Topic.Flag == 0)
+            .Select(item => new
+            {
+                item.Id,
+                item.TopicId,
+                TopicTitle = item.Topic.Title,
+                item.ChapterId,
+                ChapterTitle = item.Title
+            })
             .SingleOrDefaultAsync(cancellationToken);
 
-        if (topic is null)
+        if (chapter is null)
         {
-            preview.FileErrors.Add("The selected chapter is no longer active. Refresh the page and choose another chapter.");
+            preview.FileErrors.Add("The selected Notes chapter is no longer active. Refresh the page and select another chapter.");
             return preview;
         }
 
-        preview.TopicTitle = topic.Title;
+        preview.TopicId = chapter.TopicId;
+        preview.TopicTitle = chapter.TopicTitle;
+        preview.ChapterTitle = $"{chapter.TopicTitle} / {chapter.ChapterId} — {chapter.ChapterTitle}";
 
         var extension = Path.GetExtension(fileName);
         if (!extension.Equals(".xlsx", StringComparison.OrdinalIgnoreCase))
@@ -163,11 +172,11 @@ public sealed class InterviewQuestionImportService : IInterviewQuestionImportSer
         {
             MarkDuplicatesWithinUpload(preview.Questions);
 
-            await ReportProgressAsync("Checking for questions already linked to this chapter...");
+            await ReportProgressAsync("Checking for questions already linked to this Notes chapter...");
             var existingQuestions = await _dbContext.ContentInterviewQuestions
                 .AsNoTracking()
-                .Where(question => question.TopicId == topicId
-                    || (question.Content != null && question.Content.TopicId == topicId))
+                .Where(question => question.NoteId == noteId
+                    || (question.Content != null && question.Content.NoteId == noteId))
                 .Select(question => question.Question)
                 .ToListAsync(cancellationToken);
 
@@ -223,19 +232,19 @@ public sealed class InterviewQuestionImportService : IInterviewQuestionImportSer
                 preview);
         }
 
-        var topicExists = await _dbContext.Topics.AsNoTracking()
-            .AnyAsync(item => item.Id == preview.TopicId && item.Flag == 0, cancellationToken);
-        if (!topicExists)
+        var chapterExists = await _dbContext.TrainingNotes.AsNoTracking()
+            .AnyAsync(item => item.Id == preview.NoteId && item.Flag == 0 && item.Topic.Flag == 0, cancellationToken);
+        if (!chapterExists)
         {
-            AddFileError(preview, "The selected chapter is no longer active. Nothing was imported.");
+            AddFileError(preview, "The selected Notes chapter is no longer active. Nothing was imported.");
             RefreshCachedPreview(previewToken, entry);
             return InterviewQuestionImportOutcomeDto.Failure(preview.FileErrors[0], preview);
         }
 
         var existingQuestions = await _dbContext.ContentInterviewQuestions
             .AsNoTracking()
-            .Where(question => question.TopicId == preview.TopicId
-                || (question.Content != null && question.Content.TopicId == preview.TopicId))
+            .Where(question => question.NoteId == preview.NoteId
+                || (question.Content != null && question.Content.NoteId == preview.NoteId))
             .Select(question => question.Question)
             .ToListAsync(cancellationToken);
 
@@ -266,7 +275,8 @@ public sealed class InterviewQuestionImportService : IInterviewQuestionImportSer
             .Select(item => new ContentInterviewQuestion
             {
                 ContentId = null,
-                TopicId = preview.TopicId,
+                TopicId = null,
+                NoteId = preview.NoteId,
                 Question = item.Question.Trim(),
                 Answer = item.Answer.Trim(),
                 Flag = 0,
