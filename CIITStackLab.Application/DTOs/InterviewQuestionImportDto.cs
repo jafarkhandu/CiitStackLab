@@ -4,9 +4,13 @@ public sealed class InterviewQuestionImportPreviewDto
 {
     public string PreviewToken { get; set; } = string.Empty;
 
+    public int NoteId { get; set; }
+
     public int TopicId { get; set; }
 
     public string TopicTitle { get; set; } = string.Empty;
+
+    public string ChapterTitle { get; set; } = string.Empty;
 
     public string FileName { get; set; } = string.Empty;
 
@@ -20,6 +24,7 @@ public sealed class InterviewQuestionImportPreviewDto
 
     public bool CanImport =>
         !string.IsNullOrWhiteSpace(PreviewToken)
+        && NoteId > 0
         && FileErrors.Count == 0
         && Questions.Count == 20
         && Questions.All(question => question.IsValid);
