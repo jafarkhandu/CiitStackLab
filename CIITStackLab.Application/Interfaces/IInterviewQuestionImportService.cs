@@ -12,7 +12,7 @@ public interface IInterviewQuestionImportService
         CancellationToken cancellationToken = default);
 
     Task<InterviewQuestionImportPreviewDto> PreviewAsync(
-        int topicId,
+        int noteId,
         string fileName,
         Stream fileStream,
         string userId,
