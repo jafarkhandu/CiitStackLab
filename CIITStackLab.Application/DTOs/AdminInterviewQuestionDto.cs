@@ -7,6 +7,8 @@ public sealed class AdminInterviewQuestionDto
     public int Id { get; init; }
     public int? ContentId { get; init; }
     public int? TopicId { get; init; }
+    public int? NoteId { get; init; }
+    public string ChapterTitle { get; init; } = string.Empty;
     public string ContentTitle { get; init; } = string.Empty;
     public string TopicTitle { get; init; } = string.Empty;
     public string Question { get; init; } = string.Empty;
@@ -19,6 +21,8 @@ public sealed class AdminArchivedInterviewQuestionDto
 {
     public int Id { get; init; }
     public int? TopicId { get; init; }
+    public int? NoteId { get; init; }
+    public string ChapterTitle { get; init; } = string.Empty;
     public string ContentTitle { get; init; } = string.Empty;
     public string TopicTitle { get; init; } = string.Empty;
     public string Question { get; init; } = string.Empty;
@@ -33,7 +37,10 @@ public sealed class AdminInterviewQuestionIndexDto
 
 public sealed class AdminInterviewQuestionInputDto
 {
-    [Range(1, int.MaxValue, ErrorMessage = "Please select content.")]
+    [Range(1, int.MaxValue, ErrorMessage = "Please select a Notes chapter.")]
+    public int NoteId { get; set; }
+
+    // Retained for legacy rows that were originally associated with learning content.
     public int ContentId { get; set; }
 
     [Required(ErrorMessage = "Question is required.")]
