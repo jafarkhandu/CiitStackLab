@@ -26,8 +26,16 @@ public sealed class AdminMcqService : IAdminMcqService
                 Id = x.Id,
                 ContentId = x.ContentId,
                 TopicId = x.TopicId ?? (x.Content != null ? x.Content.TopicId : null),
+                NoteId = x.NoteId ?? (x.Content != null ? x.Content.NoteId : null),
+                ChapterTitle = x.Note != null
+                    ? x.Note.Topic.Title + " / " + x.Note.ChapterId + " — " + x.Note.Title
+                    : x.Content != null && x.Content.Note != null
+                        ? x.Content.Note.Topic.Title + " / " + x.Content.Note.ChapterId + " — " + x.Content.Note.Title
+                        : x.Topic != null
+                            ? x.Topic.Title + " / legacy topic-level assessment"
+                            : "Unassigned",
                 ContentTitle = x.Content != null ? x.Content.Title ?? string.Empty : string.Empty,
-                TopicTitle = x.Topic != null ? x.Topic.Title : (x.Content != null && x.Content.Topic != null ? x.Content.Topic.Title : "Unassigned"),
+                TopicTitle = x.Note != null ? x.Note.Topic.Title : x.Topic != null ? x.Topic.Title : x.Content != null && x.Content.Topic != null ? x.Content.Topic.Title : "Unassigned",
                 Question = x.Question ?? string.Empty,
                 Option1 = x.Option1 ?? string.Empty,
                 Option2 = x.Option2 ?? string.Empty,
@@ -47,8 +55,16 @@ public sealed class AdminMcqService : IAdminMcqService
             {
                 Id = x.Id,
                 TopicId = x.TopicId ?? (x.Content != null ? x.Content.TopicId : null),
+                NoteId = x.NoteId ?? (x.Content != null ? x.Content.NoteId : null),
+                ChapterTitle = x.Note != null
+                    ? x.Note.Topic.Title + " / " + x.Note.ChapterId + " — " + x.Note.Title
+                    : x.Content != null && x.Content.Note != null
+                        ? x.Content.Note.Topic.Title + " / " + x.Content.Note.ChapterId + " — " + x.Content.Note.Title
+                        : x.Topic != null
+                            ? x.Topic.Title + " / legacy topic-level assessment"
+                            : "Unassigned",
                 ContentTitle = x.Content != null ? x.Content.Title ?? string.Empty : string.Empty,
-                TopicTitle = x.Topic != null ? x.Topic.Title : (x.Content != null && x.Content.Topic != null ? x.Content.Topic.Title : "Unassigned"),
+                TopicTitle = x.Note != null ? x.Note.Topic.Title : x.Topic != null ? x.Topic.Title : x.Content != null && x.Content.Topic != null ? x.Content.Topic.Title : "Unassigned",
                 Question = x.Question ?? string.Empty,
                 DeletedAt = x.DeletedAt
             })
@@ -71,8 +87,16 @@ public sealed class AdminMcqService : IAdminMcqService
                 Id = x.Id,
                 ContentId = x.ContentId,
                 TopicId = x.TopicId ?? (x.Content != null ? x.Content.TopicId : null),
+                NoteId = x.NoteId ?? (x.Content != null ? x.Content.NoteId : null),
+                ChapterTitle = x.Note != null
+                    ? x.Note.Topic.Title + " / " + x.Note.ChapterId + " — " + x.Note.Title
+                    : x.Content != null && x.Content.Note != null
+                        ? x.Content.Note.Topic.Title + " / " + x.Content.Note.ChapterId + " — " + x.Content.Note.Title
+                        : x.Topic != null
+                            ? x.Topic.Title + " / legacy topic-level assessment"
+                            : "Unassigned",
                 ContentTitle = x.Content != null ? x.Content.Title ?? string.Empty : string.Empty,
-                TopicTitle = x.Topic != null ? x.Topic.Title : (x.Content != null && x.Content.Topic != null ? x.Content.Topic.Title : "Unassigned"),
+                TopicTitle = x.Note != null ? x.Note.Topic.Title : x.Topic != null ? x.Topic.Title : x.Content != null && x.Content.Topic != null ? x.Content.Topic.Title : "Unassigned",
                 Question = x.Question ?? string.Empty,
                 Option1 = x.Option1 ?? string.Empty,
                 Option2 = x.Option2 ?? string.Empty,
@@ -134,6 +158,77 @@ public sealed class AdminMcqService : IAdminMcqService
                 Title = topic.Title
             })
             .ToListAsync(cancellationToken);
+    }
+
+
+    public async Task<(bool Succeeded, string? Error)> CreateForChapterAsync(
+        AdminChapterMcqInputDto input,
+        CancellationToken cancellationToken = default)
+    {
+        var chapterExists = await _dbContext.TrainingNotes.AnyAsync(
+            note => note.Id == input.NoteId && note.Flag == 0 && note.Topic.Flag == 0,
+            cancellationToken);
+
+        if (!chapterExists)
+        {
+            return (false, "The selected Notes chapter is not available.");
+        }
+
+        var question = new ContentQuestion
+        {
+            NoteId = input.NoteId,
+            TopicId = null,
+            ContentId = null,
+            Question = input.Question.Trim(),
+            Option1 = input.Option1.Trim(),
+            Option2 = input.Option2.Trim(),
+            Option3 = input.Option3.Trim(),
+            Option4 = input.Option4.Trim(),
+            CorrectOptionNumber = input.CorrectOptionNumber,
+            Flag = 0,
+            CreatedAt = DateTime.Now
+        };
+
+        _dbContext.ContentQuestions.Add(question);
+        await _dbContext.SaveChangesAsync(cancellationToken);
+        return (true, null);
+    }
+
+    public async Task<(bool Succeeded, string? Error)> UpdateForChapterAsync(
+        int id,
+        AdminChapterMcqInputDto input,
+        CancellationToken cancellationToken = default)
+    {
+        var question = await _dbContext.ContentQuestions
+            .SingleOrDefaultAsync(item => item.Id == id && item.Flag == 0, cancellationToken);
+
+        if (question is null)
+        {
+            return (false, "The selected MCQ was not found.");
+        }
+
+        var chapterExists = await _dbContext.TrainingNotes.AnyAsync(
+            note => note.Id == input.NoteId && note.Flag == 0 && note.Topic.Flag == 0,
+            cancellationToken);
+
+        if (!chapterExists)
+        {
+            return (false, "The selected Notes chapter is not available.");
+        }
+
+        question.NoteId = input.NoteId;
+        question.TopicId = null;
+        question.ContentId = null;
+        question.Question = input.Question.Trim();
+        question.Option1 = input.Option1.Trim();
+        question.Option2 = input.Option2.Trim();
+        question.Option3 = input.Option3.Trim();
+        question.Option4 = input.Option4.Trim();
+        question.CorrectOptionNumber = input.CorrectOptionNumber;
+        question.UpdatedAt = DateTime.Now;
+
+        await _dbContext.SaveChangesAsync(cancellationToken);
+        return (true, null);
     }
 
     public async Task<(bool Succeeded, string? Error)> CreateForTopicAsync(
