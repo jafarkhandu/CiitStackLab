@@ -168,6 +168,4 @@ public sealed class CourseEnrollmentService : ICourseEnrollmentService
 
         return false;
     }
-
-
 }
