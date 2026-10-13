@@ -1,0 +1,562 @@
+/* Shared visual language for the MCQ, Interview Questions and Practice Programs workspaces. */
+.ciit-assessment-subpage {
+    --assessment-page-accent: #2563eb;
+    --assessment-page-tint: #eff6ff;
+    --assessment-page-border: #e2eaf5;
+    width: 100%;
+    max-width: 1320px;
+    margin-inline: auto;
+    gap: 26px;
+}
+
+.ciit-assessment-subpage--interview {
+    --assessment-page-accent: #7c3aed;
+    --assessment-page-tint: #f5f0ff;
+}
+
+.ciit-assessment-subpage--practice {
+    --assessment-page-accent: #0f9f88;
+    --assessment-page-tint: #eafaf6;
+}
+
+.ciit-assessment-subpage .ciit-assessment-subpage-hero {
+    position: relative;
+    align-items: center;
+    min-height: 188px;
+    padding: clamp(25px, 3.3vw, 38px);
+    overflow: hidden;
+    border: 1px solid var(--assessment-page-border);
+    border-radius: 22px;
+    background:
+        radial-gradient(circle at 92% 5%, color-mix(in srgb, var(--assessment-page-accent) 12%, transparent), transparent 30%),
+        linear-gradient(115deg, #fff 0%, #f8faff 64%, var(--assessment-page-tint) 100%);
+    box-shadow: 0 12px 34px rgba(20, 43, 80, .055);
+}
+
+.ciit-assessment-subpage .ciit-assessment-subpage-hero::after {
+    position: absolute;
+    right: 0;
+    bottom: 0;
+    width: 28%;
+    height: 100%;
+    background-image: radial-gradient(color-mix(in srgb, var(--assessment-page-accent) 28%, transparent) 1px, transparent 1px);
+    background-size: 15px 15px;
+    content: "";
+    opacity: .25;
+    pointer-events: none;
+    mask-image: linear-gradient(90deg, transparent, #000);
+}
+
+.ciit-assessment-subpage .ciit-assessment-subpage-hero > div:first-child {
+    position: relative;
+    z-index: 1;
+    min-width: 0;
+}
+
+.ciit-assessment-subpage .ciit-assessment-subpage-hero .ciit-admin-eyebrow {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 9px;
+    color: var(--assessment-page-accent);
+    font-size: .72rem;
+    font-weight: 800;
+    letter-spacing: .14em;
+    text-transform: uppercase;
+}
+
+.ciit-assessment-subpage .ciit-assessment-subpage-hero h1 {
+    margin: 0 0 9px;
+    color: #18263d;
+    font-size: clamp(1.95rem, 3vw, 2.55rem);
+    font-weight: 800;
+    letter-spacing: -.045em;
+    line-height: 1.15;
+}
+
+.ciit-assessment-subpage .ciit-assessment-subpage-hero p {
+    max-width: 650px;
+    margin: 0;
+    color: #6b7b93;
+    font-size: .94rem;
+    line-height: 1.7;
+}
+
+.ciit-assessment-subpage .ciit-mcq-header-actions,
+.ciit-assessment-subpage .ciit-practice-header-actions {
+    position: relative;
+    z-index: 2;
+    flex-shrink: 0;
+    gap: 9px;
+}
+
+.ciit-assessment-subpage .ciit-mcq-primary-btn,
+.ciit-assessment-subpage .ciit-mcq-import-header-btn,
+.ciit-assessment-subpage .ciit-practice-primary-btn,
+.ciit-assessment-subpage .ciit-practice-secondary-btn {
+    min-height: 44px;
+    padding: 10px 15px;
+    border-radius: 11px;
+    font-size: .84rem;
+    font-weight: 750;
+    white-space: nowrap;
+    transition: transform .18s ease, box-shadow .18s ease, background .18s ease, border-color .18s ease;
+}
+
+.ciit-assessment-subpage .ciit-mcq-primary-btn,
+.ciit-assessment-subpage .ciit-practice-primary-btn {
+    background: #14223b;
+    box-shadow: 0 6px 14px rgba(20, 34, 59, .12);
+    color: #fff;
+}
+
+.ciit-assessment-subpage .ciit-mcq-primary-btn:hover,
+.ciit-assessment-subpage .ciit-practice-primary-btn:hover {
+    transform: translateY(-1px);
+    background: var(--assessment-page-accent);
+    color: #fff;
+}
+
+.ciit-assessment-subpage .ciit-mcq-import-header-btn,
+.ciit-assessment-subpage .ciit-practice-secondary-btn {
+    border: 1px solid color-mix(in srgb, var(--assessment-page-accent) 20%, #fff);
+    background: #fff;
+    color: var(--assessment-page-accent);
+}
+
+.ciit-assessment-subpage .ciit-mcq-import-header-btn:hover,
+.ciit-assessment-subpage .ciit-practice-secondary-btn:hover {
+    transform: translateY(-1px);
+    border-color: var(--assessment-page-accent);
+    background: var(--assessment-page-tint);
+    color: var(--assessment-page-accent);
+}
+
+.ciit-assessment-summary {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 15px;
+}
+
+.ciit-assessment-summary-card {
+    display: flex;
+    align-items: center;
+    gap: 13px;
+    min-width: 0;
+    min-height: 91px;
+    padding: 18px 20px;
+    border: 1px solid #e4ebf5;
+    border-radius: 16px;
+    background: #fff;
+    box-shadow: 0 7px 22px rgba(20, 43, 80, .035);
+}
+
+.ciit-assessment-summary-icon {
+    display: grid;
+    flex: 0 0 43px;
+    width: 43px;
+    height: 43px;
+    place-items: center;
+    border-radius: 13px;
+    font-size: 1.12rem;
+}
+
+.ciit-assessment-summary-icon.is-blue {
+    background: #edf4ff;
+    color: #2563eb;
+}
+
+.ciit-assessment-summary-icon.is-violet {
+    background: #f3edff;
+    color: #7c3aed;
+}
+
+.ciit-assessment-summary-icon.is-teal {
+    background: #e6faf5;
+    color: #0f9f88;
+}
+
+.ciit-assessment-summary-icon.is-slate {
+    background: #f1f5f9;
+    color: #64748b;
+}
+
+.ciit-assessment-summary-card > span:last-child {
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+    min-width: 0;
+}
+
+.ciit-assessment-summary-card small {
+    color: #7b899f;
+    font-size: .76rem;
+    font-weight: 650;
+}
+
+.ciit-assessment-summary-card strong {
+    overflow-wrap: anywhere;
+    color: #1c2b43;
+    font-size: 1.38rem;
+    font-weight: 800;
+    letter-spacing: -.035em;
+    line-height: 1.28;
+}
+
+.ciit-assessment-summary-card strong em {
+    color: #8190a6;
+    font-size: .72rem;
+    font-style: normal;
+    font-weight: 600;
+    letter-spacing: 0;
+}
+
+.ciit-assessment-subpage .ciit-mcq-alert,
+.ciit-assessment-subpage .ciit-practice-alert {
+    border: 1px solid transparent;
+    border-radius: 13px;
+    box-shadow: 0 5px 15px rgba(20, 43, 80, .025);
+}
+
+.ciit-assessment-subpage .ciit-mcq-alert.is-success,
+.ciit-assessment-subpage .ciit-practice-alert.is-success {
+    border-color: #bcebd0;
+}
+
+.ciit-assessment-subpage .ciit-mcq-alert.is-error,
+.ciit-assessment-subpage .ciit-practice-alert.is-error {
+    border-color: #fecaca;
+}
+
+.ciit-assessment-subpage .ciit-mcq-card,
+.ciit-assessment-subpage .ciit-practice-card {
+    border: 1px solid #e2eaf4;
+    border-radius: 18px;
+    box-shadow: 0 10px 30px rgba(20, 43, 80, .045);
+}
+
+.ciit-assessment-subpage .ciit-mcq-card-header,
+.ciit-assessment-subpage .ciit-practice-card-header {
+    min-height: 78px;
+    padding: 20px 24px;
+    border-bottom-color: #eaf0f7;
+    background: linear-gradient(180deg, #fff, #fcfdff);
+}
+
+.ciit-assessment-subpage .ciit-mcq-card-header h2,
+.ciit-assessment-subpage .ciit-practice-card-header h2 {
+    color: #1b2a43;
+    font-size: 1.08rem;
+    font-weight: 800;
+    letter-spacing: -.02em;
+}
+
+.ciit-assessment-subpage .ciit-mcq-card-header p,
+.ciit-assessment-subpage .ciit-practice-card-header p {
+    margin-top: 5px;
+    color: #8390a4;
+    font-size: .83rem;
+}
+
+.ciit-assessment-subpage .ciit-mcq-table th {
+    padding: 13px 20px;
+    background: #f7f9fd;
+    color: #78869b;
+    font-size: .7rem;
+    font-weight: 800;
+    letter-spacing: .09em;
+}
+
+.ciit-assessment-subpage .ciit-mcq-table td {
+    padding: 17px 20px;
+    border-bottom-color: #edf1f7;
+    color: #52627a;
+    font-size: .86rem;
+    line-height: 1.65;
+}
+
+.ciit-assessment-subpage .ciit-mcq-table tbody tr {
+    transition: background .15s ease;
+}
+
+.ciit-assessment-subpage .ciit-mcq-table tbody tr:hover {
+    background: #fbfcff;
+}
+
+.ciit-assessment-subpage .ciit-mcq-question {
+    min-width: 270px;
+    max-width: 600px;
+    gap: 6px;
+}
+
+.ciit-assessment-subpage .ciit-mcq-question strong {
+    color: #24344d;
+    font-size: .88rem;
+    font-weight: 750;
+    line-height: 1.65;
+    white-space: pre-wrap;
+    overflow-wrap: anywhere;
+}
+
+.ciit-assessment-subpage--interview .ciit-mcq-table td:nth-child(3) {
+    min-width: 220px;
+    white-space: pre-wrap;
+    overflow-wrap: anywhere;
+}
+
+.ciit-assessment-subpage .ciit-mcq-question span {
+    color: #9aa6b7;
+    font-variant-numeric: tabular-nums;
+}
+
+.ciit-assessment-subpage .ciit-mcq-actions {
+    gap: 7px;
+}
+
+.ciit-assessment-subpage .ciit-mcq-actions a,
+.ciit-assessment-subpage .ciit-mcq-actions button {
+    width: 37px;
+    height: 37px;
+    border-radius: 10px;
+    transition: background .16s ease, border-color .16s ease, color .16s ease, transform .16s ease;
+}
+
+.ciit-assessment-subpage .ciit-mcq-actions a:hover,
+.ciit-assessment-subpage .ciit-mcq-actions button:hover {
+    transform: translateY(-1px);
+    border-color: #c5d8fa;
+    background: #edf4ff;
+    color: #2563eb;
+}
+
+.ciit-assessment-subpage .ciit-mcq-archive-row,
+.ciit-assessment-subpage .ciit-practice-archive-row {
+    min-height: 70px;
+    padding: 17px 23px;
+}
+
+.ciit-assessment-subpage .ciit-mcq-archive-row strong,
+.ciit-assessment-subpage .ciit-practice-archive-row strong {
+    color: #34445d;
+    font-size: .88rem;
+    line-height: 1.6;
+    white-space: pre-wrap;
+    overflow-wrap: anywhere;
+}
+
+.ciit-assessment-subpage .ciit-mcq-restore,
+.ciit-assessment-subpage .ciit-practice-restore {
+    border-color: #d9e4f1;
+    border-radius: 10px;
+    background: #fff;
+    font-size: .82rem;
+    font-weight: 700;
+    transition: background .16s ease, border-color .16s ease;
+}
+
+.ciit-assessment-subpage .ciit-mcq-restore:hover,
+.ciit-assessment-subpage .ciit-practice-restore:hover {
+    border-color: #b6cafa;
+    background: #eff6ff;
+    color: #2555b6;
+}
+
+.ciit-assessment-subpage .ciit-mcq-empty,
+.ciit-assessment-subpage .ciit-practice-empty {
+    padding: 55px 24px;
+}
+
+.ciit-assessment-subpage .ciit-mcq-empty > i,
+.ciit-assessment-subpage .ciit-practice-empty > i {
+    display: inline-grid;
+    width: 58px;
+    height: 58px;
+    place-items: center;
+    border-radius: 17px;
+    background: var(--assessment-page-tint);
+    color: var(--assessment-page-accent);
+}
+
+.ciit-assessment-subpage .ciit-mcq-empty h3,
+.ciit-assessment-subpage .ciit-practice-empty h3 {
+    margin-top: 15px;
+    color: #1d2c44;
+    font-size: 1.08rem;
+    font-weight: 800;
+}
+
+.ciit-assessment-subpage .ciit-mcq-count,
+.ciit-assessment-subpage .ciit-practice-count {
+    min-width: 36px;
+    height: 36px;
+    padding: 7px 11px;
+    border-radius: 12px;
+    background: var(--assessment-page-tint);
+    color: var(--assessment-page-accent);
+    font-size: .88rem;
+    font-weight: 800;
+}
+
+.ciit-assessment-subpage--practice .ciit-practice-program {
+    padding: 25px 26px;
+}
+
+.ciit-assessment-subpage--practice .ciit-practice-program h3 {
+    margin: 5px 0 7px;
+    color: #1c2b43;
+    font-size: 1.12rem;
+    font-weight: 800;
+    line-height: 1.45;
+    overflow-wrap: anywhere;
+}
+
+.ciit-assessment-subpage--practice .ciit-practice-id {
+    display: inline-flex;
+    align-items: center;
+    padding: 4px 8px;
+    border: 1px solid #d5f1e9;
+    border-radius: 8px;
+    background: #effbf7;
+    color: #0f8875;
+    font-size: .72rem;
+    font-variant-numeric: tabular-nums;
+}
+
+.ciit-assessment-subpage--practice .ciit-practice-meta {
+    color: #8390a4;
+    font-size: .82rem;
+}
+
+.ciit-assessment-subpage--practice .ciit-practice-description {
+    border: 1px solid #e8eef6;
+    border-radius: 13px;
+    background: #f7f9fd;
+    color: #455671;
+    font-size: .88rem;
+    line-height: 1.85;
+    overflow-wrap: anywhere;
+}
+
+.ciit-assessment-subpage--practice .ciit-practice-solutions {
+    border-color: #e5edf6;
+    border-radius: 14px;
+    background: #fbfcfe;
+}
+
+.ciit-assessment-subpage--practice .ciit-practice-solutions-header h4 {
+    color: #2b3a53;
+    font-weight: 800;
+}
+
+.ciit-assessment-subpage--practice .ciit-practice-solutions-header span {
+    min-width: 32px;
+    height: 32px;
+    background: #eafaf6;
+    color: #0f8875;
+    font-size: .82rem;
+}
+
+.ciit-assessment-subpage--practice .ciit-practice-solution strong {
+    color: #263750;
+    font-size: .87rem;
+    line-height: 1.6;
+    white-space: pre-wrap;
+    overflow-wrap: anywhere;
+}
+
+.ciit-assessment-subpage--practice .ciit-practice-solution p {
+    line-height: 1.75;
+    white-space: pre-wrap;
+    overflow-wrap: anywhere;
+}
+
+@media (max-width: 1080px) {
+    .ciit-assessment-subpage .ciit-assessment-subpage-hero {
+        align-items: flex-start;
+        flex-direction: column;
+        gap: 22px;
+    }
+
+    .ciit-assessment-subpage .ciit-mcq-header-actions,
+    .ciit-assessment-subpage .ciit-practice-header-actions {
+        width: 100%;
+        justify-content: flex-start;
+    }
+
+    .ciit-assessment-summary-card {
+        padding: 15px;
+    }
+}
+
+@media (max-width: 760px) {
+    .ciit-assessment-subpage {
+        gap: 19px;
+    }
+
+    .ciit-assessment-subpage .ciit-assessment-subpage-hero {
+        min-height: 0;
+        padding: 23px 20px;
+        border-radius: 17px;
+    }
+
+    .ciit-assessment-subpage .ciit-mcq-header-actions,
+    .ciit-assessment-subpage .ciit-practice-header-actions {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    .ciit-assessment-subpage .ciit-mcq-header-actions > *,
+    .ciit-assessment-subpage .ciit-practice-header-actions > * {
+        width: 100%;
+        white-space: normal;
+    }
+
+    .ciit-assessment-summary {
+        grid-template-columns: minmax(0, 1fr);
+        gap: 10px;
+    }
+
+    .ciit-assessment-summary-card {
+        min-height: 76px;
+        padding: 13px 16px;
+    }
+
+    .ciit-assessment-summary-card strong {
+        font-size: 1.2rem;
+    }
+
+    .ciit-assessment-subpage .ciit-mcq-card-header,
+    .ciit-assessment-subpage .ciit-practice-card-header {
+        padding: 17px 18px;
+    }
+
+    .ciit-assessment-subpage .ciit-mcq-table th,
+    .ciit-assessment-subpage .ciit-mcq-table td {
+        padding: 13px 15px;
+    }
+
+    .ciit-assessment-subpage--practice .ciit-practice-program {
+        padding: 20px 18px;
+    }
+}
+
+@media (max-width: 420px) {
+    .ciit-assessment-subpage .ciit-mcq-header-actions,
+    .ciit-assessment-subpage .ciit-practice-header-actions {
+        grid-template-columns: minmax(0, 1fr);
+    }
+
+    .ciit-assessment-subpage .ciit-mcq-primary-btn,
+    .ciit-assessment-subpage .ciit-mcq-import-header-btn,
+    .ciit-assessment-subpage .ciit-practice-primary-btn,
+    .ciit-assessment-subpage .ciit-practice-secondary-btn {
+        justify-content: center;
+        width: 100%;
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .ciit-assessment-subpage * {
+        transition: none !important;
+    }
+}
