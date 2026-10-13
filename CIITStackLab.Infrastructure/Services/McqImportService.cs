@@ -86,7 +86,7 @@ public sealed class McqImportService : IMcqImportService
     }
 
     public async Task<McqImportPreviewDto> PreviewAsync(
-        int topicId,
+        int noteId,
         string fileName,
         Stream fileStream,
         string userId,
@@ -103,7 +103,7 @@ public sealed class McqImportService : IMcqImportService
 
         var preview = new McqImportPreviewDto
         {
-            TopicId = topicId,
+            NoteId = noteId,
             FileName = Path.GetFileName(fileName)
         };
 
@@ -113,32 +113,37 @@ public sealed class McqImportService : IMcqImportService
             return preview;
         }
 
-        if (topicId <= 0)
+        if (noteId <= 0)
         {
-            preview.FileErrors.Add("Select an active chapter before uploading the MCQ file.");
+            preview.FileErrors.Add("Select an active Notes chapter before uploading the MCQ workbook.");
             return preview;
         }
 
         await ReportProgressAsync(
-            "Checking that the selected chapter is active...");
+            "Checking that the selected Notes chapter is active...");
 
-        var topic = await _dbContext.Topics
+        var chapter = await _dbContext.TrainingNotes
             .AsNoTracking()
-            .Where(chapter => chapter.Id == topicId && chapter.Flag == 0)
-            .Select(chapter => new
+            .Where(note => note.Id == noteId && note.Flag == 0 && note.Topic.Flag == 0)
+            .Select(note => new
             {
-                chapter.Id,
-                chapter.Title
+                note.Id,
+                note.TopicId,
+                TopicTitle = note.Topic.Title,
+                note.ChapterId,
+                ChapterTitle = note.Title
             })
             .SingleOrDefaultAsync(cancellationToken);
 
-        if (topic is null)
+        if (chapter is null)
         {
-            preview.FileErrors.Add("The selected chapter is no longer active. Refresh the page and select another chapter.");
+            preview.FileErrors.Add("The selected Notes chapter is no longer active. Refresh the page and select another chapter.");
             return preview;
         }
 
-        preview.TopicLabel = topic.Title;
+        preview.TopicId = chapter.TopicId;
+        preview.TopicLabel = chapter.TopicTitle;
+        preview.ChapterLabel = $"{chapter.TopicTitle} / {chapter.ChapterId} — {chapter.ChapterTitle}";
 
         var extension = Path.GetExtension(fileName);
         if (!extension.Equals(".xlsx", StringComparison.OrdinalIgnoreCase))
@@ -173,11 +178,11 @@ public sealed class McqImportService : IMcqImportService
         var existingQuestions = await _dbContext.ContentQuestions
             .AsNoTracking()
             .Where(question =>
-                question.TopicId == topicId
+                question.NoteId == noteId
                 || (question.ContentId.HasValue
                     && _dbContext.Lessons.Any(lesson =>
                         lesson.Id == question.ContentId.Value
-                        && lesson.TopicId == topicId)))
+                        && lesson.NoteId == noteId)))
             .Select(question => new
             {
                 question.Id,
@@ -256,18 +261,16 @@ public sealed class McqImportService : IMcqImportService
                 preview);
         }
 
-        var topicExists = await _dbContext.Topics
+        var chapterExists = await _dbContext.TrainingNotes
             .AsNoTracking()
             .AnyAsync(
-                topic =>
-                    topic.Id == preview.TopicId
-                    && topic.Flag == 0,
+                note => note.Id == preview.NoteId && note.Flag == 0 && note.Topic.Flag == 0,
                 cancellationToken);
 
-        if (!topicExists)
+        if (!chapterExists)
         {
             preview.FileErrors.Add(
-                "The target chapter is no longer active. Nothing was imported.");
+                "The target Notes chapter is no longer active. Nothing was imported.");
             RefreshCachedPreview(previewToken, cacheEntry);
             return McqImportOutcomeDto.Failure(
                 preview.FileErrors[0],
@@ -277,11 +280,11 @@ public sealed class McqImportService : IMcqImportService
         var existingQuestions = await _dbContext.ContentQuestions
             .AsNoTracking()
             .Where(question =>
-                question.TopicId == preview.TopicId
+                question.NoteId == preview.NoteId
                 || (question.ContentId.HasValue
                     && _dbContext.Lessons.Any(lesson =>
                         lesson.Id == question.ContentId.Value
-                        && lesson.TopicId == preview.TopicId)))
+                        && lesson.NoteId == preview.NoteId)))
             .Select(question => question.Question)
             .ToListAsync(cancellationToken);
 
@@ -315,7 +318,8 @@ public sealed class McqImportService : IMcqImportService
         var questionsToInsert = preview.Questions
             .Select(question => new ContentQuestion
             {
-                TopicId = preview.TopicId,
+                NoteId = preview.NoteId,
+                TopicId = null,
                 ContentId = null,
                 Question = question.Question.Trim(),
                 Option1 = question.Option1.Trim(),
