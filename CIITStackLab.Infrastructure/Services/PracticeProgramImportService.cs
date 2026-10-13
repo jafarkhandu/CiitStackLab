@@ -79,7 +79,7 @@ public sealed class PracticeProgramImportService : IPracticeProgramImportService
     }
 
     public async Task<PracticeProgramImportPreviewDto> PreviewAsync(
-        int contentId,
+        int noteId,
         string fileName,
         Stream fileStream,
         string userId,
@@ -96,13 +96,13 @@ public sealed class PracticeProgramImportService : IPracticeProgramImportService
 
         var preview = new PracticeProgramImportPreviewDto
         {
-            ContentId = contentId,
+            NoteId = noteId,
             FileName = Path.GetFileName(fileName)
         };
 
-        if (contentId <= 0)
+        if (noteId <= 0)
         {
-            preview.FileErrors.Add("Select the learning content before uploading the workbook.");
+            preview.FileErrors.Add("Select a Notes chapter before uploading the workbook.");
             return preview;
         }
 
@@ -112,30 +112,31 @@ public sealed class PracticeProgramImportService : IPracticeProgramImportService
             return preview;
         }
 
-        await ReportProgressAsync("Checking the selected learning content...");
-        var content = await _dbContext.Lessons
+        await ReportProgressAsync("Checking the selected Notes chapter...");
+        var chapter = await _dbContext.TrainingNotes
             .AsNoTracking()
-            .Where(item => item.Id == contentId
-                && item.Flag == 0
-                && item.Topic != null
-                && item.Topic.Flag == 0)
+            .Where(item => item.Id == noteId && item.Flag == 0 && item.Topic.Flag == 0)
             .Select(item => new
             {
                 item.Id,
-                Title = item.Title ?? string.Empty,
-                TopicTitle = item.Topic!.Title
+                item.TopicId,
+                TopicTitle = item.Topic.Title,
+                item.ChapterId,
+                ChapterTitle = item.Title
             })
             .SingleOrDefaultAsync(cancellationToken);
 
-        if (content is null)
+        if (chapter is null)
         {
             preview.FileErrors.Add(
-                "The selected learning content is no longer active. Refresh the page and choose another item.");
+                "The selected Notes chapter is no longer active. Refresh the page and choose another chapter.");
             return preview;
         }
 
-        preview.ContentTitle = content.Title;
-        preview.TopicTitle = content.TopicTitle;
+        preview.TopicId = chapter.TopicId;
+        preview.TopicTitle = chapter.TopicTitle;
+        preview.ChapterTitle = $"{chapter.TopicTitle} / {chapter.ChapterId} — {chapter.ChapterTitle}";
+        preview.ContentTitle = chapter.ChapterTitle;
 
         await ReportProgressAsync("Opening the Excel workbook and reading the first worksheet...");
         using var workbookBuffer = new MemoryStream();
@@ -153,7 +154,11 @@ public sealed class PracticeProgramImportService : IPracticeProgramImportService
 
         var existing = await _dbContext.ContentProgramQuestions
             .AsNoTracking()
-            .Where(item => item.ContentId == contentId)
+            .Where(item => item.NoteId == noteId
+                || (item.ContentId.HasValue
+                    && _dbContext.Lessons.Any(contentItem =>
+                        contentItem.Id == item.ContentId.Value
+                        && contentItem.NoteId == noteId)))
             .Select(item => new
             {
                 item.QuestionTitle,
@@ -217,17 +222,16 @@ public sealed class PracticeProgramImportService : IPracticeProgramImportService
             };
         }
 
-        var contentExists = await _dbContext.Lessons
+        var chapterExists = await _dbContext.TrainingNotes
             .AsNoTracking()
-            .AnyAsync(item => item.Id == preview.ContentId
+            .AnyAsync(item => item.Id == preview.NoteId
                 && item.Flag == 0
-                && item.Topic != null
                 && item.Topic.Flag == 0, cancellationToken);
 
-        if (!contentExists)
+        if (!chapterExists)
         {
             preview.FileErrors.Add(
-                "The selected learning content is no longer active. Nothing was imported.");
+                "The selected Notes chapter is no longer active. Nothing was imported.");
             return new PracticeProgramImportOutcomeDto
             {
                 Message = preview.FileErrors[^1],
@@ -237,7 +241,11 @@ public sealed class PracticeProgramImportService : IPracticeProgramImportService
 
         var currentPrograms = await _dbContext.ContentProgramQuestions
             .AsNoTracking()
-            .Where(item => item.ContentId == preview.ContentId)
+            .Where(item => item.NoteId == preview.NoteId
+                || (item.ContentId.HasValue
+                    && _dbContext.Lessons.Any(contentItem =>
+                        contentItem.Id == item.ContentId.Value
+                        && contentItem.NoteId == preview.NoteId)))
             .Select(item => new
             {
                 item.QuestionTitle,
@@ -274,7 +282,8 @@ public sealed class PracticeProgramImportService : IPracticeProgramImportService
 
         var programs = preview.Programs.Select(item => new ContentProgramQuestion
         {
-            ContentId = preview.ContentId,
+            NoteId = preview.NoteId,
+            ContentId = null,
             QuestionTitle = item.QuestionTitle.Trim(),
             QuestionDescription = item.QuestionDescription.Trim(),
             Flag = 0,
