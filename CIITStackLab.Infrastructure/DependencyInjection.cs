@@ -60,6 +60,7 @@ public static class DependencyInjection
         services.AddScoped<IMcqImportService, McqImportService>();
         services.AddScoped<IStudentProgressService, StudentProgressService>();
         services.AddScoped<ICourseAssessmentService, CourseAssessmentService>();
+        services.AddScoped<CoursePurchaseService>();
         services.AddScoped<IAdminStudentService, AdminStudentService>();
         services.AddScoped<IAdminSettingsService, AdminSettingsService>();
         services.AddScoped<IAdminReportsService, AdminReportsService>();

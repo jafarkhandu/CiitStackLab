@@ -1,6 +1,8 @@
 @model CIITStackLab.Application.DTOs.CourseLearningDto
 
 @{
+    Layout = "_CourseLayout";
+
     ViewData["Title"] = $"{Model.Title} - Course Home";
     ViewData["CourseTitle"] = Model.Title;
 
@@ -12,6 +14,7 @@
         .SelectMany(topic => topic.Contents)
         .FirstOrDefault();
     var continueContentId = progress?.LastAccessedContentId;
+    var lessonNumber = 0;
 }
 
 @section Styles {
@@ -19,138 +22,264 @@
 }
 
 <section class="ciit-course-experience">
-    <div class="container">
-        <div class="ciit-course-experience-shell">
-            <aside class="ciit-course-experience-sidebar" aria-label="Course navigation">
-                <div class="ciit-course-experience-brand">
-                    <small>Course</small>
-                    <strong>@Model.Title</strong>
+    <div class="container-fluid px-3 px-lg-4">
+        <main class="ciit-course-experience-main">
+            <section class="ciit-course-experience-card ciit-course-experience-hero">
+                @if (!string.IsNullOrWhiteSpace(Model.ImageUrl))
+                {
+                    <img class="ciit-course-hero-image"
+                         src="@Model.ImageUrl"
+                         alt="@Model.Title course cover"
+                         loading="eager" />
+                }
+                <div class="ciit-course-hero-overlay" aria-hidden="true"></div>
+
+                <div class="ciit-course-hero-content">
+                    <span class="ciit-course-experience-eyebrow">Course access active</span>
+                    <h1>Welcome to @Model.Title</h1>
+                    <p>@(string.IsNullOrWhiteSpace(Model.ShortDescription) ? "Build your skills through a structured, hands-on learning path." : Model.ShortDescription)</p>
+                    <div class="ciit-course-hero-actions">
+                        <a class="btn btn-light fw-semibold"
+                           asp-controller="Courses"
+                           asp-action="Learn"
+                           asp-route-id="@Model.Id"
+                           asp-route-contentId="@continueContentId">
+                            <i class="bi bi-play-fill me-1"></i>
+                            @(continueContentId.HasValue ? "Continue Learning" : "Start Learning")
+                        </a>
+                        <span class="ciit-course-access-badge">
+                            <i class="bi bi-check-circle-fill"></i>
+                            Access Active
+                        </span>
+                    </div>
+                </div>
+            </section>
+
+            <section class="ciit-course-stat-grid" aria-label="Course summary">
+                <div class="ciit-course-stat">
+                    <strong>@Model.ContentCount</strong>
+                    <span>Lessons</span>
+                </div>
+                <div class="ciit-course-stat">
+                    <strong>@Model.TopicCount</strong>
+                    <span>Topics</span>
+                </div>
+                <div class="ciit-course-stat">
+                    <strong>@Model.Level</strong>
+                    <span>Level</span>
+                </div>
+                <div class="ciit-course-stat">
+                    <strong>@Model.DurationHours hrs</strong>
+                    <span>Duration</span>
+                </div>
+            </section>
+
+            <section id="course-progress" class="ciit-course-experience-card">
+                <div class="ciit-course-experience-card-header">
+                    <div>
+                        <h2>Your Progress</h2>
+                        <p>Track completed lessons and continue from where you left off.</p>
+                    </div>
+                    <strong>@percentage%</strong>
+                </div>
+                <div class="ciit-progress-track"
+                     role="progressbar"
+                     aria-label="Course progress"
+                     aria-valuenow="@percentage"
+                     aria-valuemin="0"
+                     aria-valuemax="100">
+                    <span style="width: @percentage%"></span>
+                </div>
+                <div class="ciit-progress-meta">
+                    <span>@completedLessons of @totalLessons lessons completed</span>
+                    <span>@Model.TopicCount topics</span>
+                </div>
+            </section>
+
+            <section class="ciit-course-experience-card ciit-course-curriculum-section">
+                <div class="ciit-course-experience-card-header">
+                    <div>
+                        <h2>Course Curriculum</h2>
+                        <p>Open a topic to reveal its lessons without leaving your course home.</p>
+                    </div>
+                    <span class="ciit-curriculum-summary">
+                        <i class="bi bi-journal-check"></i>
+                        @Model.ContentCount Lessons · @Model.TopicCount Topics
+                    </span>
                 </div>
 
-                <nav class="ciit-course-experience-nav">
-                    <a class="active" asp-controller="Courses" asp-action="CourseHome" asp-route-id="@Model.Id">
-                        <i class="bi bi-house"></i> Course Home
-                    </a>
-                    <a asp-controller="Courses" asp-action="Curriculum" asp-route-id="@Model.Id">
-                        <i class="bi bi-list-check"></i> Curriculum
-                    </a>
-                    <a asp-controller="Courses" asp-action="Learn" asp-route-id="@Model.Id" asp-route-contentId="@continueContentId">
-                        <i class="bi bi-play-circle"></i> Continue Learning
-                    </a>
-                    <a asp-controller="Courses" asp-action="CourseHome" asp-route-id="@Model.Id" asp-fragment="course-progress">
-                        <i class="bi bi-graph-up"></i> My Progress
-                    </a>
-                </nav>
-            </aside>
-
-            <main class="ciit-course-experience-main">
-                <section class="ciit-course-experience-card ciit-course-experience-hero">
-                    @if (!string.IsNullOrWhiteSpace(Model.ImageUrl))
-                    {
-                        <img class="ciit-course-hero-image"
-                             src="@Model.ImageUrl"
-                             alt="@Model.Title course cover"
-                             loading="eager" />
-                    }
-                    <div class="ciit-course-hero-overlay" aria-hidden="true"></div>
-
-                    <div class="ciit-course-hero-content">
-                        <span class="ciit-course-experience-eyebrow">Course access active</span>
-                        <h1>Welcome to @Model.Title</h1>
-                        <p>@(string.IsNullOrWhiteSpace(Model.ShortDescription) ? "Build your skills through a structured, hands-on learning path." : Model.ShortDescription)</p>
-                        <div class="ciit-course-hero-actions">
-                            <a class="btn btn-light fw-semibold"
-                               asp-controller="Courses"
-                               asp-action="Learn"
-                               asp-route-id="@Model.Id"
-                               asp-route-contentId="@continueContentId">
-                                <i class="bi bi-play-fill me-1"></i>
-                                @(continueContentId.HasValue ? "Continue Learning" : "Start Learning")
-                            </a>
-                            <span class="ciit-course-access-badge">
-                                <i class="bi bi-check-circle-fill"></i>
-                                Access Active
-                            </span>
-                        </div>
-                    </div>
-                </section>
-
-                <section class="ciit-course-stat-grid" aria-label="Course summary">
-                    <div class="ciit-course-stat">
-                        <strong>@Model.ContentCount</strong>
-                        <span>Lessons</span>
-                    </div>
-                    <div class="ciit-course-stat">
-                        <strong>@Model.TopicCount</strong>
-                        <span>Topics</span>
-                    </div>
-                    <div class="ciit-course-stat">
-                        <strong>@Model.Level</strong>
-                        <span>Level</span>
-                    </div>
-                    <div class="ciit-course-stat">
-                        <strong>@Model.DurationHours hrs</strong>
-                        <span>Duration</span>
-                    </div>
-                </section>
-
-                <section id="course-progress" class="ciit-course-experience-card">
-                    <div class="ciit-course-experience-card-header">
-                        <div>
-                            <h2>Your Progress</h2>
-                            <p>Track completed lessons and continue from where you left off.</p>
-                        </div>
-                        <strong>@percentage%</strong>
-                    </div>
-                    <div class="ciit-progress-track"
-                         role="progressbar"
-                         aria-label="Course progress"
-                         aria-valuenow="@percentage"
-                         aria-valuemin="0"
-                         aria-valuemax="100">
-                        <span style="width: @percentage%"></span>
-                    </div>
-                    <div class="ciit-progress-meta">
-                        <span>@completedLessons of @totalLessons lessons completed</span>
-                        <span>@Model.TopicCount topics</span>
-                    </div>
-                </section>
-
-                <section class="ciit-course-experience-card">
-                    <div class="ciit-course-experience-card-header">
-                        <div>
-                            <h2>Continue Learning</h2>
-                            <p>Pick up where you left off or explore the complete curriculum.</p>
-                        </div>
-                        <a class="btn btn-outline-primary btn-sm"
-                           asp-controller="Courses"
-                           asp-action="Curriculum"
-                           asp-route-id="@Model.Id">
-                            View Curriculum
-                        </a>
-                    </div>
-
-                    <div class="ciit-continue-card">
-                        <div class="ciit-continue-card-content">
-                            <span class="ciit-continue-card-label">@(continueContentId.HasValue ? "Continue learning" : "Start learning")</span>
-                            <h3>@(firstLesson?.Title ?? "Course lessons")</h3>
-                            <p>@(firstLesson is null ? "No lessons are available yet." : $"{Model.ContentCount} lessons available in this course")</p>
-                        </div>
-
-                        @if (firstLesson is not null)
+                @if (Model.Topics.Count == 0)
+                {
+                    <div class="ciit-curriculum-empty">No active lessons are available for this course yet.</div>
+                }
+                else
+                {
+                    <div class="ciit-course-curriculum-list">
+                        @foreach (var topic in Model.Topics)
                         {
-                            <a class="btn btn-primary"
-                               asp-controller="Courses"
-                               asp-action="Learn"
-                               asp-route-id="@Model.Id"
-                               asp-route-contentId="@continueContentId">
-                                @(continueContentId.HasValue ? "Continue Learning" : "Start Lesson")
-                                <i class="bi bi-arrow-right ms-1"></i>
-                            </a>
+                            var topicKey = $"course-topic-{topic.Id}";
+
+                            <div class="ciit-curriculum-accordion" data-curriculum-item>
+                                <button type="button"
+                                        class="ciit-curriculum-topic-toggle"
+                                        aria-expanded="false"
+                                        aria-controls="@topicKey">
+                                    <span class="ciit-curriculum-topic-toggle-content">
+                                        <span class="ciit-curriculum-topic-icon">
+                                            <i class="bi bi-collection"></i>
+                                        </span>
+                                        <span>
+                                            <strong>@topic.Title</strong>
+                                            <small>@topic.Contents.Count lessons</small>
+                                        </span>
+                                    </span>
+                                    <span class="ciit-curriculum-topic-toggle-end">
+                                        <span class="ciit-curriculum-topic-status">Expand</span>
+                                        <i class="bi bi-chevron-down" aria-hidden="true"></i>
+                                    </span>
+                                </button>
+
+                                <div id="@topicKey" class="ciit-curriculum-topic-panel" hidden>
+                                    <div class="ciit-curriculum-topic-panel-inner">
+                                        @if (topic.Contents.Count == 0)
+                                        {
+                                            <div class="ciit-curriculum-empty">No lessons are available in this topic yet.</div>
+                                        }
+                                        else
+                                        {
+                                            @foreach (var lesson in topic.Contents)
+                                            {
+                                                lessonNumber++;
+                                                var completed = progress?.CompletedContentIds?.Contains(lesson.Id) == true;
+
+                                                <div class="ciit-curriculum-lesson">
+                                                    <div class="ciit-curriculum-lesson-title">
+                                                        <span class="ciit-curriculum-lesson-number">@lessonNumber.ToString("00")</span>
+                                                        <div>
+                                                            <strong>@lesson.Title</strong>
+                                                            <small>
+                                                                @if (completed)
+                                                                {
+                                                                    <span>Completed</span>
+                                                                }
+                                                                else
+                                                                {
+                                                                    <span>Ready to learn</span>
+                                                                }
+                                                            </small>
+                                                        </div>
+                                                    </div>
+
+                                                    <a class="btn @(completed ? "btn-outline-primary" : "btn-primary") btn-sm"
+                                                       asp-controller="Courses"
+                                                       asp-action="Learn"
+                                                       asp-route-id="@Model.Id"
+                                                       asp-route-contentId="@lesson.Id">
+                                                        @(completed ? "Review" : "Start")
+                                                        <i class="bi bi-arrow-right ms-1"></i>
+                                                    </a>
+                                                </div>
+                                            }
+                                        }
+                                    </div>
+                                </div>
+                            </div>
                         }
                     </div>
-                </section>
-            </main>
-        </div>
+                }
+            </section>
+
+            <section class="ciit-course-experience-card">
+                <div class="ciit-course-experience-card-header">
+                    <div>
+                        <h2>Continue Learning</h2>
+                        <p>Pick up where you left off or start your next lesson.</p>
+                    </div>
+                </div>
+
+                <div class="ciit-continue-card">
+                    <div class="ciit-continue-card-content">
+                        <span class="ciit-continue-card-label">@(continueContentId.HasValue ? "Continue learning" : "Start learning")</span>
+                        <h3>@(firstLesson?.Title ?? "Course lessons")</h3>
+                        <p>@(firstLesson is null ? "No lessons are available yet." : $"{Model.ContentCount} lessons available in this course")</p>
+                    </div>
+
+                    @if (firstLesson is not null)
+                    {
+                        <a class="btn btn-primary"
+                           asp-controller="Courses"
+                           asp-action="Learn"
+                           asp-route-id="@Model.Id"
+                           asp-route-contentId="@continueContentId">
+                            @(continueContentId.HasValue ? "Continue Learning" : "Start Lesson")
+                            <i class="bi bi-arrow-right ms-1"></i>
+                        </a>
+                    }
+                </div>
+            </section>
+        </main>
     </div>
 </section>
+
+@section Scripts {
+    <script>
+        document.querySelectorAll('[data-curriculum-item]').forEach(function (item) {
+            const toggle = item.querySelector('.ciit-curriculum-topic-toggle');
+            const panel = item.querySelector('.ciit-curriculum-topic-panel');
+            const status = item.querySelector('.ciit-curriculum-topic-status');
+            const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+            if (!toggle || !panel) {
+                return;
+            }
+
+            toggle.addEventListener('click', function () {
+                const isExpanded = toggle.getAttribute('aria-expanded') === 'true';
+                const shouldExpand = !isExpanded;
+
+                toggle.setAttribute('aria-expanded', String(shouldExpand));
+                item.classList.toggle('is-expanded', shouldExpand);
+                if (status) {
+                    status.textContent = shouldExpand ? 'Collapse' : 'Expand';
+                }
+
+                if (reduceMotion) {
+                    panel.hidden = !shouldExpand;
+                    panel.style.maxHeight = shouldExpand ? 'none' : '';
+                    return;
+                }
+
+                if (shouldExpand) {
+                    panel.hidden = false;
+                    panel.style.maxHeight = '0px';
+                    requestAnimationFrame(function () {
+                        panel.style.maxHeight = panel.scrollHeight + 'px';
+                    });
+
+                    panel.addEventListener('transitionend', function handleExpand(event) {
+                        if (event.propertyName !== 'max-height') {
+                            return;
+                        }
+                        panel.style.maxHeight = 'none';
+                        panel.removeEventListener('transitionend', handleExpand);
+                    });
+                }
+                else {
+                    panel.style.maxHeight = panel.scrollHeight + 'px';
+                    requestAnimationFrame(function () {
+                        panel.style.maxHeight = '0px';
+                    });
+
+                    panel.addEventListener('transitionend', function handleCollapse(event) {
+                        if (event.propertyName !== 'max-height') {
+                            return;
+                        }
+                        panel.hidden = true;
+                        panel.style.maxHeight = '';
+                        panel.removeEventListener('transitionend', handleCollapse);
+                    });
+                }
+            });
+        });
+    </script>
+}

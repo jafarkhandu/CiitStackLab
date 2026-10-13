@@ -1,3 +1,9 @@
+@using System.Security.Claims
+@using CIITStackLab.Application.DTOs
+@using CIITStackLab.Application.Interfaces
+@inject CoursePurchaseService CoursePurchaseService
+@inject ICourseService CourseService
+
 @{
     var courseId = ViewContext.RouteData.Values["id"]?.ToString()
         ?? ViewData["CourseId"]?.ToString();
@@ -7,6 +13,38 @@
     var courseTitle = ViewData["CourseTitle"]?.ToString();
     var notesTopicId = ViewData["NotesTopicId"]?.ToString();
     var notesChapterId = ViewData["NotesChapterId"]?.ToString();
+    var purchasedCourses = Array.Empty<CourseDto>();
+
+    if (User.IsInRole("Student"))
+    {
+        var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+
+        if (!string.IsNullOrWhiteSpace(userId))
+        {
+            var activeCourseIds = await CoursePurchaseService.GetAccessibleCourseIdsAsync(userId);
+            var publishedCourses = await CourseService.GetPublishedAsync();
+            var activeCourseIdSet = activeCourseIds.ToHashSet();
+
+            purchasedCourses = publishedCourses
+                .Where(course => activeCourseIdSet.Contains(course.Id))
+                .OrderBy(course => course.Title)
+                .ToArray();
+
+            if (int.TryParse(courseId, out var currentCourseId)
+                && purchasedCourses.All(course => course.Id != currentCourseId))
+            {
+                var currentCourse = await CourseService.GetByIdAsync(currentCourseId);
+
+                if (currentCourse is not null)
+                {
+                    purchasedCourses = purchasedCourses
+                        .Append(currentCourse)
+                        .OrderBy(course => course.Title)
+                        .ToArray();
+                }
+            }
+        }
+    }
 
     if (string.IsNullOrWhiteSpace(courseTitle))
     {
@@ -30,6 +68,7 @@
     <link href="https://fonts.googleapis.com/css2?family=Fira+Code:wght@400;500;600;700;800&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
     <link rel="stylesheet" href="~/css/site.css" />
     <link rel="stylesheet" href="~/css/course-environment.css" asp-append-version="true" />
+    <link rel="stylesheet" href="~/css/course-switcher.css" asp-append-version="true" />
     @await RenderSectionAsync("Styles", required: false)
     <link rel="stylesheet" href="~/css/course-learning-enhancements.css" asp-append-version="true" />
 </head>
@@ -53,22 +92,16 @@
                 <nav class="ciit-course-environment-nav" aria-label="Course environment navigation">
                     @if (!string.IsNullOrWhiteSpace(courseId))
                     {
-                        <a class="@(currentAction.Equals("CourseHome", StringComparison.OrdinalIgnoreCase) ? "active" : "")"
-                           asp-controller="Courses" asp-action="CourseHome" asp-route-id="@courseId">
-                            <i class="bi bi-house"></i>
+                        <a asp-controller="Courses" asp-action="CourseHome">
+                            <i class="bi bi-collection-play"></i>
                             <span>Home</span>
-                        </a>
-                        <a class="@(currentAction.Equals("Curriculum", StringComparison.OrdinalIgnoreCase) ? "active" : "")"
-                           asp-controller="Courses" asp-action="Curriculum" asp-route-id="@courseId">
-                            <i class="bi bi-list-check"></i>
-                            <span>Curriculum</span>
                         </a>
                         <a class="@(currentAction.Equals("Learn", StringComparison.OrdinalIgnoreCase) ? "active" : "")"
                            asp-controller="Courses" asp-action="Learn" asp-route-id="@courseId">
                             <i class="bi bi-play-circle"></i>
                             <span>Learn</span>
                         </a>
-                        <a asp-controller="Courses" asp-action="CourseHome" asp-route-id="@courseId" asp-fragment="course-progress">
+                        <a asp-controller="Courses" asp-action="CourseEnvironment" asp-route-id="@courseId" asp-fragment="course-progress">
                             <i class="bi bi-graph-up"></i>
                             <span>Progress</span>
                         </a>
@@ -90,27 +123,51 @@
 
     <div class="ciit-course-environment-workspace">
         <aside class="ciit-course-global-sidebar" aria-label="Course sections">
-            <div class="ciit-course-global-sidebar-heading">
-                <span>COURSE</span>
-                <strong>@(string.IsNullOrWhiteSpace(courseTitle) ? "Learning" : courseTitle)</strong>
-            </div>
+            @if (!string.IsNullOrWhiteSpace(courseId))
+            {
+                <details class="ciit-course-switcher" open>
+                    <summary>
+                        <span>COURSE</span>
+                        <strong>@(string.IsNullOrWhiteSpace(courseTitle) ? "Learning" : courseTitle)</strong>
+                        <i class="bi bi-chevron-down" aria-hidden="true"></i>
+                    </summary>
+                    <div class="ciit-course-switcher-menu">
+                        @foreach (var course in purchasedCourses)
+                        {
+                            <a class="@(course.Id.ToString() == courseId ? "active" : "")"
+                               asp-controller="Courses"
+                               asp-action="CourseEnvironment"
+                               asp-route-id="@course.Id">
+                                <span>@course.Title</span>
+                                @if (course.Id.ToString() == courseId)
+                                {
+                                    <i class="bi bi-check2" aria-hidden="true"></i>
+                                }
+                            </a>
+                        }
+                    </div>
+                </details>
+            }
+            else
+            {
+                <div class="ciit-course-global-sidebar-heading">
+                    <span>COURSE HOME</span>
+                    <strong>My Courses</strong>
+                </div>
+            }
 
             <nav class="ciit-course-global-nav">
                 @if (!string.IsNullOrWhiteSpace(courseId))
                 {
-                    <a class="@(currentAction.Equals("CourseHome", StringComparison.OrdinalIgnoreCase) ? "active" : "")"
-                       asp-controller="Courses" asp-action="CourseHome" asp-route-id="@courseId">
+                    <a class="@(currentAction.Equals("CourseEnvironment", StringComparison.OrdinalIgnoreCase) ? "active" : "")"
+                       asp-controller="Courses" asp-action="CourseEnvironment" asp-route-id="@courseId">
                         <i class="bi bi-house"></i><span>Course Home</span>
-                    </a>
-                    <a class="@(currentAction.Equals("Curriculum", StringComparison.OrdinalIgnoreCase) ? "active" : "")"
-                       asp-controller="Courses" asp-action="Curriculum" asp-route-id="@courseId">
-                        <i class="bi bi-list-check"></i><span>Curriculum</span>
                     </a>
                     <a class="@(currentAction.Equals("Learn", StringComparison.OrdinalIgnoreCase) ? "active" : "")"
                        asp-controller="Courses" asp-action="Learn" asp-route-id="@courseId">
                         <i class="bi bi-play-circle"></i><span>Learn</span>
                     </a>
-                    <a asp-controller="Courses" asp-action="CourseHome" asp-route-id="@courseId" asp-fragment="course-progress">
+                    <a asp-controller="Courses" asp-action="CourseEnvironment" asp-route-id="@courseId" asp-fragment="course-progress">
                         <i class="bi bi-graph-up"></i><span>My Progress</span>
                     </a>
                 }

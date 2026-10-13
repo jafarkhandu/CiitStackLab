@@ -1,0 +1,65 @@
+@model IReadOnlyList<CIITStackLab.Application.DTOs.CourseDto>
+
+@{
+    ViewData["Title"] = "My Courses";
+}
+
+@section Styles {
+    <link rel="stylesheet" href="~/css/my-courses.css" asp-append-version="true" />
+}
+
+<section class="ciit-my-courses-page">
+    <div class="container">
+        <header class="ciit-my-courses-header">
+            <span class="ciit-my-courses-eyebrow">COURSE HOME</span>
+            <h1>My Courses</h1>
+            <p>Open any purchased course to continue learning in its dedicated course environment.</p>
+        </header>
+
+        @if (Model.Count == 0)
+        {
+            <div class="ciit-my-courses-empty">
+                <div class="ciit-my-courses-empty-icon">
+                    <i class="bi bi-collection-play"></i>
+                </div>
+                <h2>No purchased courses yet</h2>
+                <p>Once you have access to a course, it will appear here.</p>
+                <a asp-controller="Home" asp-action="Index" asp-fragment="tutorials" class="btn btn-primary">
+                    Browse Courses
+                </a>
+            </div>
+        }
+        else
+        {
+            <div class="ciit-my-courses-grid">
+                @foreach (var course in Model)
+                {
+                    <article class="ciit-my-course-card">
+                        <div class="ciit-my-course-image-wrap">
+                            <img src="@course.ImageUrl" alt="@course.Title course cover" loading="lazy" />
+                            <span class="ciit-my-course-access">
+                                <i class="bi bi-check-circle-fill"></i> Access Active
+                            </span>
+                        </div>
+                        <div class="ciit-my-course-body">
+                            <span class="ciit-my-course-category">@course.Category</span>
+                            <h2>@course.Title</h2>
+                            <p>@course.ShortDescription</p>
+                            <div class="ciit-my-course-meta">
+                                <span><i class="bi bi-bar-chart"></i>@course.Level</span>
+                                <span><i class="bi bi-clock"></i>@course.DurationHours hrs</span>
+                            </div>
+                            <a asp-controller="Courses"
+                               asp-action="CourseEnvironment"
+                               asp-route-id="@course.Id"
+                               class="btn btn-primary w-100">
+                                Open Course
+                                <i class="bi bi-arrow-right ms-1"></i>
+                            </a>
+                        </div>
+                    </article>
+                }
+            </div>
+        }
+    </div>
+</section>

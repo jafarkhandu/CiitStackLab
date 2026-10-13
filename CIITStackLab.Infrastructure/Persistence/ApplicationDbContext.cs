@@ -26,6 +26,7 @@ public class ApplicationDbContext : IdentityDbContext<ApplicationUser>
     public DbSet<StudentLoginActivity> StudentLoginActivities => Set<StudentLoginActivity>();
     public DbSet<StudentLessonProgress> StudentLessonProgress => Set<StudentLessonProgress>();
     public DbSet<StudentAssessmentAttempt> StudentAssessmentAttempts => Set<StudentAssessmentAttempt>();
+    public DbSet<StudentCoursePurchase> StudentCoursePurchases => Set<StudentCoursePurchase>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -276,6 +277,26 @@ public class ApplicationDbContext : IdentityDbContext<ApplicationUser>
                 .HasDatabaseName("IX_tblstudent_assessment_attempts_user_course_content_date");
         });
 
+        modelBuilder.Entity<StudentCoursePurchase>(entity =>
+        {
+            entity.ToTable("tblstudent_course_purchases", ExistingSchema);
+            entity.HasKey(x => x.Id);
+            entity.Property(x => x.Id).HasColumnName("purchase_id").ValueGeneratedOnAdd();
+            entity.Property(x => x.UserId).HasColumnName("user_id").HasMaxLength(450).IsRequired();
+            entity.Property(x => x.CourseId).HasColumnName("course_id").IsRequired();
+            entity.Property(x => x.PurchasePrice).HasColumnName("purchase_price").HasPrecision(18, 2).IsRequired();
+            entity.Property(x => x.PurchasedAt).HasColumnName("purchased_at").HasColumnType("datetime2").IsRequired();
+            entity.HasIndex(x => new { x.UserId, x.CourseId }).IsUnique()
+                .HasDatabaseName("UX_tblstudent_course_purchases_user_course");
+            entity.HasOne<ApplicationUser>()
+                .WithMany()
+                .HasForeignKey(x => x.UserId)
+                .OnDelete(DeleteBehavior.NoAction);
+            entity.HasOne<Course>()
+                .WithMany()
+                .HasForeignKey(x => x.CourseId)
+                .OnDelete(DeleteBehavior.NoAction);
+        });
         modelBuilder.Entity<TrainingNote>(entity =>
         {
             entity.ToTable("tbltraining_notes", ExistingSchema);

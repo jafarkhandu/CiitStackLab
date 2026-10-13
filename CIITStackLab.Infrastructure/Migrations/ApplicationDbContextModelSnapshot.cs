@@ -471,6 +471,42 @@ namespace CIITStackLab.Infrastructure.Migrations
                     b.ToTable("tblstudent_assessment_attempts", "erpsystem");
                 });
 
+            modelBuilder.Entity("CIITStackLab.Domain.Entities.StudentCoursePurchase", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int")
+                        .HasColumnName("purchase_id");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<int>("CourseId")
+                        .HasColumnType("int")
+                        .HasColumnName("course_id");
+
+                    b.Property<decimal>("PurchasePrice")
+                        .HasPrecision(18, 2)
+                        .HasColumnType("decimal(18,2)")
+                        .HasColumnName("purchase_price");
+
+                    b.Property<DateTime>("PurchasedAt")
+                        .HasColumnType("datetime2")
+                        .HasColumnName("purchased_at");
+
+                    b.Property<string>("UserId")
+                        .IsRequired()
+                        .HasMaxLength(450)
+                        .HasColumnType("nvarchar(450)")
+                        .HasColumnName("user_id");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("UserId", "CourseId")
+                        .IsUnique()
+                        .HasDatabaseName("UX_tblstudent_course_purchases_user_course");
+
+                    b.ToTable("tblstudent_course_purchases", "erpsystem");
+                });
             modelBuilder.Entity("CIITStackLab.Domain.Entities.ContentInterviewQuestion", b =>
                 {
                     b.Property<int>("Id")
@@ -809,6 +845,21 @@ namespace CIITStackLab.Infrastructure.Migrations
                         .HasFilter("[NormalizedName] IS NOT NULL");
 
                     b.ToTable("AspNetRoles", "erpsystem");
+                });
+
+            modelBuilder.Entity("CIITStackLab.Domain.Entities.StudentCoursePurchase", b =>
+                {
+                    b.HasOne("CIITStackLab.Domain.Entities.Course", null)
+                        .WithMany()
+                        .HasForeignKey("CourseId")
+                        .OnDelete(DeleteBehavior.NoAction)
+                        .IsRequired();
+
+                    b.HasOne("CIITStackLab.Infrastructure.Identity.ApplicationUser", null)
+                        .WithMany()
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.NoAction)
+                        .IsRequired();
                 });
 
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityRoleClaim<string>", b =>

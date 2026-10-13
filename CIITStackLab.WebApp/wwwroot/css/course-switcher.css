@@ -1,0 +1,98 @@
+.ciit-course-switcher {
+    margin: 0 12px 18px;
+    border-bottom: 1px solid #e8edf5;
+    padding-bottom: 18px;
+}
+
+.ciit-course-switcher summary {
+    display: grid;
+    grid-template-columns: 1fr auto;
+    gap: 3px 12px;
+    padding: 6px 4px 10px;
+    cursor: pointer;
+    list-style: none;
+}
+
+.ciit-course-switcher summary::-webkit-details-marker {
+    display: none;
+}
+
+.ciit-course-switcher summary > span {
+    grid-column: 1 / -1;
+    color: #8a94a6;
+    font-size: .68rem;
+    font-weight: 800;
+    letter-spacing: .13em;
+}
+
+.ciit-course-switcher summary strong {
+    min-width: 0;
+    overflow: hidden;
+    color: #10213f;
+    font-size: .98rem;
+    font-weight: 800;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.ciit-course-switcher summary > i {
+    align-self: center;
+    color: #64748b;
+    font-size: .78rem;
+    transition: transform .18s ease;
+}
+
+.ciit-course-switcher[open] summary > i {
+    transform: rotate(180deg);
+}
+
+.ciit-course-switcher-menu {
+    display: grid;
+    gap: 4px;
+    max-height: 220px;
+    margin-top: 4px;
+    overflow-y: auto;
+    padding-right: 2px;
+}
+
+.ciit-course-switcher-menu a {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+    min-height: 38px;
+    padding: 8px 10px;
+    border-radius: 9px;
+    color: #53627a;
+    font-size: .82rem;
+    font-weight: 650;
+    text-decoration: none;
+}
+
+.ciit-course-switcher-menu a:hover {
+    background: #f2f6fc;
+    color: #2563eb;
+}
+
+.ciit-course-switcher-menu a.active {
+    background: #edf4ff;
+    color: #155eef;
+}
+
+.ciit-course-switcher-menu a span {
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.ciit-course-switcher-menu a i {
+    flex: 0 0 auto;
+    font-size: .85rem;
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .ciit-course-switcher summary > i {
+        transition: none;
+    }
+}

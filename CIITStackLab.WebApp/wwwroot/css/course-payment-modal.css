@@ -1,99 +1,99 @@
-.ciit-payment-modal .modal-dialog {
-    max-width: 760px;
+"".ciit-payment-modal .modal-dialog {
+    max-width: 680px;
 }
 
 .ciit-payment-modal .modal-content {
     overflow: hidden;
     border: 1px solid #e2e8f0;
-    border-radius: 22px;
-    box-shadow: 0 24px 70px rgba(15, 23, 42, .18);
+    border-radius: 18px;
+    box-shadow: 0 20px 55px rgba(15, 23, 42, .18);
 }
 
 .ciit-payment-modal .modal-header {
-    padding: 1.5rem 1.5rem .75rem;
+    padding: 1.1rem 1.25rem .55rem;
 }
 
 .ciit-payment-modal .modal-body {
-    padding: 0 1.5rem 1.5rem;
+    padding: 0 1.25rem 1.1rem;
 }
 
 .ciit-payment-modal-eyebrow {
     display: block;
-    margin-bottom: .35rem;
+    margin-bottom: .2rem;
     color: #0d6efd;
-    font-size: .72rem;
+    font-size: .66rem;
     font-weight: 800;
-    letter-spacing: .1em;
+    letter-spacing: .09em;
     text-transform: uppercase;
 }
 
 .ciit-payment-modal .modal-title {
     color: #18212f;
-    font-size: 1.45rem;
+    font-size: 1.25rem;
     font-weight: 800;
     letter-spacing: -.025em;
 }
 
 .ciit-payment-modal-subtitle {
-    margin: .35rem 0 0;
+    margin: .2rem 0 0;
     color: #718096;
-    font-size: .86rem;
+    font-size: .78rem;
 }
 
 .ciit-payment-course-summary {
     display: grid;
-    grid-template-columns: 150px 1fr;
-    gap: 1rem;
+    grid-template-columns: 120px 1fr;
+    gap: .85rem;
     align-items: center;
-    padding: 1rem;
+    padding: .75rem;
     border: 1px solid #e7ebf0;
-    border-radius: 16px;
+    border-radius: 13px;
     background: #f8fafc;
 }
 
 .ciit-payment-course-summary img {
-    width: 150px;
-    height: 100px;
+    width: 120px;
+    height: 78px;
     object-fit: cover;
-    border-radius: 11px;
+    border-radius: 9px;
     background: #e9eef5;
 }
 
 .ciit-payment-course-summary > div > span {
     color: #0d6efd;
-    font-size: .72rem;
+    font-size: .62rem;
     font-weight: 800;
-    letter-spacing: .06em;
+    letter-spacing: .05em;
     text-transform: uppercase;
 }
 
 .ciit-payment-course-summary h3 {
-    margin: .25rem 0 .35rem;
+    margin: .15rem 0 .2rem;
     color: #243044;
-    font-size: 1.08rem;
+    font-size: .98rem;
     font-weight: 800;
 }
 
 .ciit-payment-course-summary p {
     margin: 0;
     color: #6b7788;
-    font-size: .82rem;
-    line-height: 1.5;
+    font-size: .74rem;
+    line-height: 1.35;
 }
 
 .ciit-payment-course-meta {
     display: flex;
     flex-wrap: wrap;
-    gap: .55rem 1rem;
-    margin-top: .7rem;
+    gap: .4rem .8rem;
+    margin-top: .45rem;
 }
 
 .ciit-payment-course-meta span {
     display: inline-flex;
     align-items: center;
-    gap: .3rem;
+    gap: .25rem;
     color: #526174;
-    font-size: .75rem;
+    font-size: .68rem;
     font-weight: 700;
 }
 
@@ -103,11 +103,11 @@
 
 .ciit-payment-order-box {
     display: grid;
-    gap: .75rem;
-    margin-top: 1rem;
-    padding: 1rem;
+    gap: .5rem;
+    margin-top: .7rem;
+    padding: .7rem .85rem;
     border: 1px solid #e7ebf0;
-    border-radius: 15px;
+    border-radius: 12px;
     background: #fff;
 }
 
@@ -117,7 +117,7 @@
     justify-content: space-between;
     gap: 1rem;
     color: #687587;
-    font-size: .84rem;
+    font-size: .75rem;
 }
 
 .ciit-payment-order-box strong {
@@ -126,7 +126,7 @@
 }
 
 .ciit-payment-order-total {
-    padding-top: .75rem;
+    padding-top: .5rem;
     border-top: 1px solid #edf0f4;
 }
 
@@ -137,14 +137,14 @@
 
 .ciit-payment-order-total strong {
     color: #0d6efd;
-    font-size: 1.35rem;
+    font-size: 1.15rem;
 }
 
 .ciit-payment-method-box {
-    margin-top: 1rem;
-    padding: 1rem;
+    margin-top: .7rem;
+    padding: .75rem .85rem;
     border: 1px solid #e7ebf0;
-    border-radius: 15px;
+    border-radius: 12px;
 }
 
 .ciit-payment-section-heading {
@@ -152,7 +152,7 @@
     align-items: center;
     justify-content: space-between;
     gap: 1rem;
-    margin-bottom: .8rem;
+    margin-bottom: .55rem;
 }
 
 .ciit-payment-section-heading span,
@@ -162,37 +162,37 @@
 
 .ciit-payment-section-heading span {
     color: #0d6efd;
-    font-size: .7rem;
+    font-size: .62rem;
     font-weight: 800;
-    letter-spacing: .08em;
+    letter-spacing: .07em;
     text-transform: uppercase;
 }
 
 .ciit-payment-section-heading strong {
-    margin-top: .2rem;
+    margin-top: .12rem;
     color: #293548;
-    font-size: .9rem;
+    font-size: .78rem;
 }
 
 .ciit-payment-section-heading > i {
     color: #198754;
-    font-size: 1.15rem;
+    font-size: 1rem;
 }
 
 .ciit-payment-methods {
     display: grid;
-    gap: .6rem;
+    gap: .45rem;
 }
 
 .ciit-payment-method {
     position: relative;
     display: grid;
-    grid-template-columns: 38px 1fr auto;
+    grid-template-columns: 34px 1fr auto;
     align-items: center;
-    gap: .7rem;
-    padding: .75rem;
+    gap: .6rem;
+    padding: .55rem .65rem;
     border: 1px solid #e2e7ee;
-    border-radius: 12px;
+    border-radius: 10px;
     background: #fff;
     cursor: pointer;
     transition: border-color .15s ease, background-color .15s ease;
@@ -213,9 +213,9 @@
 .ciit-payment-method-icon {
     display: grid;
     place-items: center;
-    width: 38px;
-    height: 38px;
-    border-radius: 10px;
+    width: 34px;
+    height: 34px;
+    border-radius: 9px;
     background: #edf4ff;
     color: #0d6efd;
 }
@@ -227,14 +227,14 @@
 
 .ciit-payment-method strong {
     color: #2c3749;
-    font-size: .82rem;
+    font-size: .76rem;
     font-weight: 800;
 }
 
 .ciit-payment-method small {
-    margin-top: .15rem;
+    margin-top: .08rem;
     color: #7a8798;
-    font-size: .7rem;
+    font-size: .64rem;
 }
 
 .ciit-payment-method-check {
@@ -247,8 +247,9 @@
 }
 
 .ciit-payment-pay-button {
-    min-height: 52px;
-    margin-top: 1rem;
+    min-height: 46px;
+    margin-top: .7rem;
+    font-size: .9rem;
     font-weight: 800;
 }
 
@@ -258,50 +259,50 @@
 }
 
 .ciit-payment-modal-note {
-    margin: .6rem 0 0;
+    margin: .4rem 0 0;
     color: #7a8798;
-    font-size: .72rem;
-    line-height: 1.55;
+    font-size: .64rem;
+    line-height: 1.4;
     text-align: center;
 }
 
 .ciit-payment-state {
-    min-height: 390px;
+    min-height: 350px;
     display: flex;
     flex-direction: column;
     align-items: center;
     justify-content: center;
-    gap: .55rem;
-    padding: 2rem 1rem;
+    gap: .5rem;
+    padding: 1.5rem 1rem;
     text-align: center;
 }
 
 .ciit-payment-state strong {
     color: #202b3c;
-    font-size: 1.25rem;
+    font-size: 1.15rem;
     font-weight: 800;
 }
 
 .ciit-payment-state span,
 .ciit-payment-state small {
     color: #748195;
-    font-size: .85rem;
+    font-size: .8rem;
 }
 
 .ciit-payment-processing-icon {
     position: relative;
     display: grid;
     place-items: center;
-    width: 82px;
-    height: 82px;
-    margin-bottom: .7rem;
+    width: 72px;
+    height: 72px;
+    margin-bottom: .5rem;
 }
 
 .ciit-payment-spinner {
     position: absolute;
     inset: 0;
-    width: 82px;
-    height: 82px;
+    width: 72px;
+    height: 72px;
     border: 4px solid #dbe8fb;
     border-top-color: #0d6efd;
     border-right-color: #5a9cff;
@@ -314,41 +315,41 @@
     z-index: 1;
     display: grid;
     place-items: center;
-    width: 48px;
-    height: 48px;
+    width: 44px;
+    height: 44px;
     border-radius: 50%;
     background: #edf4ff;
     color: #0d6efd;
-    font-size: 1.35rem;
+    font-size: 1.2rem;
 }
 
 .ciit-payment-processing-steps {
-    width: min(100%, 390px);
-    margin-top: 1rem;
+    width: min(100%, 360px);
+    margin-top: .75rem;
     text-align: left;
 }
 
 .ciit-payment-processing-step {
     display: flex;
     align-items: center;
-    gap: .7rem;
-    padding: .45rem 0;
+    gap: .6rem;
+    padding: .35rem 0;
     color: #9aa5b5;
-    font-size: .78rem;
+    font-size: .72rem;
     transition: color .2s ease;
 }
 
 .ciit-payment-processing-step i {
     display: grid;
     place-items: center;
-    width: 24px;
-    height: 24px;
-    flex: 0 0 24px;
+    width: 22px;
+    height: 22px;
+    flex: 0 0 22px;
     border: 1px solid #dce3ec;
     border-radius: 50%;
     background: #fff;
     color: transparent;
-    font-size: .72rem;
+    font-size: .66rem;
     transition: all .2s ease;
 }
 
@@ -377,15 +378,15 @@
 .ciit-payment-success-icon {
     display: grid;
     place-items: center;
-    width: 76px;
-    height: 76px;
-    margin-bottom: .7rem;
-    border: 7px solid #e7f8ee;
+    width: 70px;
+    height: 70px;
+    margin-bottom: .5rem;
+    border: 6px solid #e7f8ee;
     border-radius: 50%;
     background: #198754;
     color: #fff;
-    font-size: 2.1rem;
-    box-shadow: 0 12px 30px rgba(25, 135, 84, .18);
+    font-size: 1.9rem;
+    box-shadow: 0 10px 25px rgba(25, 135, 84, .18);
     animation: ciit-payment-success-pop .4s ease-out;
 }
 
@@ -398,20 +399,20 @@
 }
 
 .ciit-payment-success-course {
-    margin-top: .35rem;
+    margin-top: .3rem;
     color: #344054 !important;
     font-weight: 700;
 }
 
 .ciit-payment-success-note {
-    margin-top: .7rem;
+    margin-top: .55rem;
     color: #748195 !important;
 }
 
 .ciit-payment-redirect-bar {
-    width: min(100%, 330px);
-    height: 5px;
-    margin-top: .8rem;
+    width: min(100%, 300px);
+    height: 4px;
+    margin-top: .65rem;
     overflow: hidden;
     border-radius: 999px;
     background: #e8eef6;
@@ -495,10 +496,10 @@
 
     .ciit-payment-course-summary img {
         width: 100%;
-        height: 150px;
+        height: 140px;
     }
 
     .ciit-payment-state {
-        min-height: 330px;
+        min-height: 320px;
     }
 }
