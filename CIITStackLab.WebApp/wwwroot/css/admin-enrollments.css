@@ -1,0 +1,352 @@
+.ciit-enrollments-page {
+    display: grid;
+    gap: 22px;
+}
+
+.ciit-enrollments-header {
+    display: flex;
+    align-items: flex-end;
+    justify-content: space-between;
+    gap: 20px;
+}
+
+.ciit-enrollments-header h1 {
+    margin: 7px 0 8px;
+    color: #18253d;
+    font-size: clamp(1.65rem, 3vw, 2.25rem);
+    font-weight: 800;
+    letter-spacing: -.04em;
+}
+
+.ciit-enrollments-header p {
+    max-width: 690px;
+    margin: 0;
+    color: #758198;
+    font-size: .88rem;
+    line-height: 1.7;
+}
+
+.ciit-enrollment-pending-count {
+    display: grid;
+    min-width: 120px;
+    justify-items: center;
+    padding: 14px 17px;
+    border: 1px solid #dae7fb;
+    border-radius: 15px;
+    background: #f0f6ff;
+}
+
+.ciit-enrollment-pending-count strong {
+    color: #1769ff;
+    font-size: 1.8rem;
+    font-weight: 800;
+    line-height: 1.1;
+    font-variant-numeric: tabular-nums;
+}
+
+.ciit-enrollment-pending-count span {
+    margin-top: 5px;
+    color: #607493;
+    font-size: .71rem;
+    font-weight: 700;
+}
+
+.ciit-enrollment-alert {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 13px 15px;
+    border: 1px solid transparent;
+    border-radius: 12px;
+    font-size: .83rem;
+    font-weight: 650;
+}
+
+.ciit-enrollment-alert.is-success {
+    border-color: #c9ead5;
+    background: #f0fbf4;
+    color: #176b3d;
+}
+
+.ciit-enrollment-alert.is-error {
+    border-color: #f2d1d2;
+    background: #fff6f6;
+    color: #a3313a;
+}
+
+.ciit-enrollment-table-card {
+    overflow: hidden;
+    border: 1px solid #e1e7f0;
+    border-radius: 19px;
+    background: #fff;
+    box-shadow: 0 12px 34px rgba(22, 39, 66, .045);
+}
+
+.ciit-enrollment-table-heading {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+    padding: 22px 23px;
+    border-bottom: 1px solid #edf1f7;
+}
+
+.ciit-enrollment-table-kicker {
+    color: #1769ff;
+    font-size: .68rem;
+    font-weight: 800;
+    letter-spacing: .1em;
+    text-transform: uppercase;
+}
+
+.ciit-enrollment-table-heading h2 {
+    margin: 5px 0 0;
+    color: #1d2d48;
+    font-size: 1.12rem;
+    font-weight: 800;
+}
+
+.ciit-enrollment-table-count {
+    padding: 7px 10px;
+    border: 1px solid #e1e8f3;
+    border-radius: 999px;
+    background: #f8faff;
+    color: #687994;
+    font-size: .72rem;
+    font-weight: 750;
+    white-space: nowrap;
+}
+
+.ciit-enrollment-table-wrap {
+    width: 100%;
+}
+
+.ciit-enrollment-table {
+    min-width: 960px;
+    color: #52627a;
+    font-size: .81rem;
+}
+
+.ciit-enrollment-table thead th {
+    padding: 13px 18px;
+    border-bottom-color: #e9eef6;
+    background: #f8faff;
+    color: #75839a;
+    font-size: .68rem;
+    font-weight: 800;
+    letter-spacing: .055em;
+    text-transform: uppercase;
+    white-space: nowrap;
+}
+
+.ciit-enrollment-table tbody td {
+    padding: 17px 18px;
+    border-bottom-color: #edf1f7;
+    vertical-align: middle;
+}
+
+.ciit-enrollment-table tbody tr:last-child td {
+    border-bottom: 0;
+}
+
+.ciit-enrollment-student {
+    display: flex;
+    align-items: center;
+    gap: 11px;
+    min-width: 190px;
+}
+
+.ciit-enrollment-avatar {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 38px;
+    height: 38px;
+    flex: 0 0 38px;
+    border: 1px solid #dce8ff;
+    border-radius: 12px;
+    background: #eef4ff;
+    color: #1769ff;
+    font-size: .84rem;
+    font-weight: 800;
+}
+
+.ciit-enrollment-student strong,
+.ciit-enrollment-student small {
+    display: block;
+}
+
+.ciit-enrollment-student strong {
+    color: #2c3c57;
+    font-size: .82rem;
+    font-weight: 800;
+}
+
+.ciit-enrollment-student small,
+.ciit-enrollment-course-id {
+    margin-top: 4px;
+    color: #8a96a8;
+    font-size: .7rem;
+}
+
+.ciit-enrollment-course-title {
+    display: block;
+    max-width: 230px;
+    color: #2c3c57;
+    font-size: .81rem;
+    font-weight: 800;
+}
+
+.ciit-enrollment-course-id {
+    display: block;
+}
+
+.ciit-enrollment-price {
+    color: #1b2c49 !important;
+    font-size: .87rem !important;
+    font-weight: 800;
+    white-space: nowrap;
+    font-variant-numeric: tabular-nums;
+}
+
+.ciit-enrollment-status-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+    padding: 7px 10px;
+    border: 1px solid #f3e1b1;
+    border-radius: 999px;
+    background: #fff9e9;
+    color: #936716;
+    font-size: .7rem;
+    font-weight: 800;
+    white-space: nowrap;
+}
+
+.ciit-enrollment-status-pill > span {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: #d99a1e;
+}
+
+.ciit-enrollment-review-actions {
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 7px;
+}
+
+.ciit-enrollment-review-actions form {
+    margin: 0;
+}
+
+.ciit-enrollment-review-actions .btn {
+    min-height: 35px;
+    padding: 7px 10px;
+    border-radius: 9px;
+    font-size: .72rem;
+    font-weight: 800;
+    white-space: nowrap;
+}
+
+.ciit-enrollment-approve-btn {
+    border: 1px solid #bfe7cf;
+    background: #ecfaf1;
+    color: #177746;
+}
+
+.ciit-enrollment-approve-btn:hover {
+    border-color: #8dd2a8;
+    background: #dff6e8;
+    color: #105b32;
+}
+
+.ciit-enrollment-reject-btn {
+    border: 1px solid #f0d2d3;
+    background: #fff7f7;
+    color: #b13a42;
+}
+
+.ciit-enrollment-reject-btn:hover {
+    border-color: #e7adaf;
+    background: #ffecec;
+    color: #92242b;
+}
+
+.ciit-enrollment-empty {
+    display: grid;
+    justify-items: center;
+    padding: 50px 20px;
+    text-align: center;
+}
+
+.ciit-enrollment-empty-icon {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 52px;
+    height: 52px;
+    border: 1px solid #cbeed9;
+    border-radius: 16px;
+    background: #effbf4;
+    color: #17804b;
+    font-size: 1.25rem;
+}
+
+.ciit-enrollment-empty h3 {
+    margin: 15px 0 6px;
+    color: #22334e;
+    font-size: 1.05rem;
+    font-weight: 800;
+}
+
+.ciit-enrollment-empty p {
+    max-width: 420px;
+    margin: 0;
+    color: #7b899f;
+    font-size: .82rem;
+    line-height: 1.7;
+}
+
+.ciit-enrollment-note {
+    margin: 0;
+    color: #7a879c;
+    font-size: .77rem;
+    line-height: 1.7;
+}
+
+.ciit-enrollment-note i {
+    color: #1769ff;
+}
+
+@media (max-width: 767.98px) {
+    .ciit-enrollments-header {
+        align-items: flex-start;
+        flex-direction: column;
+    }
+
+    .ciit-enrollment-pending-count {
+        width: 100%;
+        grid-template-columns: auto 1fr;
+        align-items: center;
+        justify-items: start;
+        gap: 9px;
+    }
+
+    .ciit-enrollment-pending-count strong {
+        font-size: 1.4rem;
+    }
+
+    .ciit-enrollment-pending-count span {
+        margin-top: 0;
+    }
+
+    .ciit-enrollment-table-heading {
+        padding: 17px;
+    }
+
+    .ciit-enrollment-empty {
+        padding: 36px 17px;
+    }
+}
