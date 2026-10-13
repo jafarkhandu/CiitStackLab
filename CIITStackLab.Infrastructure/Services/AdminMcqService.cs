@@ -85,6 +85,26 @@ public sealed class AdminMcqService : IAdminMcqService
             .SingleOrDefaultAsync(cancellationToken);
     }
 
+    public async Task<IReadOnlyList<AdminAssessmentChapterLookupDto>> GetAssessmentChapterLookupAsync(
+        CancellationToken cancellationToken = default)
+    {
+        return await _dbContext.TrainingNotes
+            .AsNoTracking()
+            .Where(note => note.Flag == 0 && note.Topic.Flag == 0)
+            .OrderBy(note => note.Topic.Title)
+            .ThenBy(note => note.SortOrder)
+            .ThenBy(note => note.Id)
+            .Select(note => new AdminAssessmentChapterLookupDto
+            {
+                NoteId = note.Id,
+                TopicId = note.TopicId,
+                TopicTitle = note.Topic.Title,
+                ChapterId = note.ChapterId,
+                ChapterTitle = note.Title
+            })
+            .ToListAsync(cancellationToken);
+    }
+
     public async Task<IReadOnlyList<AdminMcqContentLookupDto>> GetContentLookupAsync(CancellationToken cancellationToken = default)
     {
         return await _dbContext.Lessons
