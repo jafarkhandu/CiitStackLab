@@ -28,7 +28,7 @@
                 </div>
 
                 <nav class="ciit-course-experience-nav">
-                    <a class="active" asp-controller="Courses" asp-action="CourseHome" asp-route-id="@Model.Id">
+                    <a class="active" asp-controller="Courses" asp-action="CourseEnvironment" asp-route-id="@Model.Id">
                         <i class="bi bi-house"></i> Course Home
                     </a>
                     <a asp-controller="Courses" asp-action="Curriculum" asp-route-id="@Model.Id">
@@ -37,7 +37,7 @@
                     <a asp-controller="Courses" asp-action="Learn" asp-route-id="@Model.Id" asp-route-contentId="@continueContentId">
                         <i class="bi bi-play-circle"></i> Continue Learning
                     </a>
-                    <a asp-controller="Courses" asp-action="CourseHome" asp-route-id="@Model.Id" asp-fragment="course-progress">
+                    <a asp-controller="Courses" asp-action="CourseEnvironment" asp-route-id="@Model.Id" asp-fragment="course-progress">
                         <i class="bi bi-graph-up"></i> My Progress
                     </a>
                 </nav>
