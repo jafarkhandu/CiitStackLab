@@ -11,18 +11,15 @@ public class CoursesController : Controller
     private readonly ICourseService _courseService;
     private readonly IStudentProgressService _studentProgressService;
     private readonly ICourseAssessmentService _courseAssessmentService;
-    private readonly ICourseEnrollmentService _courseEnrollmentService;
 
     public CoursesController(
         ICourseService courseService,
         IStudentProgressService studentProgressService,
-        ICourseAssessmentService courseAssessmentService,
-        ICourseEnrollmentService courseEnrollmentService)
+        ICourseAssessmentService courseAssessmentService)
     {
         _courseService = courseService;
         _studentProgressService = studentProgressService;
         _courseAssessmentService = courseAssessmentService;
-        _courseEnrollmentService = courseEnrollmentService;
     }
 
     [HttpGet]
@@ -44,18 +41,6 @@ public class CoursesController : Controller
             return NotFound();
         }
 
-        course.IsStudent = User.IsInRole("Student");
-        var userId = course.IsStudent
-            ? User.FindFirstValue(ClaimTypes.NameIdentifier)
-            : null;
-
-        if (!string.IsNullOrWhiteSpace(userId))
-        {
-            course.Enrollment = await _courseEnrollmentService.GetStudentEnrollmentAsync(
-                userId,
-                id,
-                cancellationToken);
-        }
 
         return View(course);
     }
@@ -72,7 +57,7 @@ public class CoursesController : Controller
             return NotFound();
         }
 
-        var course = await _courseService.GetByIdAsync(
+        var course = await _courseService.GetDetailsAsync(
             id,
             cancellationToken);
 
@@ -81,9 +66,7 @@ public class CoursesController : Controller
             return NotFound();
         }
 
-        var price = await _courseEnrollmentService.GetCoursePriceAsync(
-            id,
-            cancellationToken);
+        var price = course.TotalPrice;
 
         if (price <= 0m)
         {
@@ -123,11 +106,7 @@ public class CoursesController : Controller
             return Challenge();
         }
 
-        var hasAccess = TempData.Peek($"DemoPayment:{id}") is not null
-            || await _courseEnrollmentService.CanAccessCourseAsync(
-                userId,
-                id,
-                cancellationToken);
+        var hasAccess = await HasCourseAccessAsync(id, cancellationToken);
 
         if (!hasAccess)
         {
@@ -162,11 +141,7 @@ public class CoursesController : Controller
             return Challenge();
         }
 
-        var hasAccess = TempData.Peek($"DemoPayment:{id}") is not null
-            || await _courseEnrollmentService.CanAccessCourseAsync(
-                userId,
-                id,
-                cancellationToken);
+        var hasAccess = await HasCourseAccessAsync(id, cancellationToken);
 
         if (!hasAccess)
         {
@@ -220,18 +195,8 @@ public class CoursesController : Controller
             ? User.FindFirstValue(ClaimTypes.NameIdentifier)
             : null;
 
-        var demoPaymentCompleted = User.IsInRole("Student")
-            && TempData.Peek($"DemoPayment:{id}") is not null;
 
-        var hasCourseAccess = demoPaymentCompleted
-            || (User.IsInRole("Student")
-                ? await _courseEnrollmentService.CanAccessCourseAsync(
-                    accessUserId,
-                    id,
-                    cancellationToken)
-                : await _courseEnrollmentService.GetCoursePriceAsync(
-                    id,
-                    cancellationToken) <= 0m);
+        var hasCourseAccess = await HasCourseAccessAsync(id, cancellationToken);
 
         if (!hasCourseAccess)
         {
@@ -311,12 +276,7 @@ public class CoursesController : Controller
             return Unauthorized();
         }
 
-        var hasDemoAccess = TempData.Peek($"DemoPayment:{id}") is not null;
-        var hasCourseAccess = hasDemoAccess
-            || await _courseEnrollmentService.CanAccessCourseAsync(
-                userId,
-                id,
-                cancellationToken);
+        var hasCourseAccess = await HasCourseAccessAsync(id, cancellationToken);
 
         if (!hasCourseAccess)
         {
@@ -368,12 +328,7 @@ public class CoursesController : Controller
             return Unauthorized();
         }
 
-        var hasDemoAccess = TempData.Peek($"DemoPayment:{id}") is not null;
-        var hasCourseAccess = hasDemoAccess
-            || await _courseEnrollmentService.CanAccessCourseAsync(
-                userId,
-                id,
-                cancellationToken);
+        var hasCourseAccess = await HasCourseAccessAsync(id, cancellationToken);
 
         if (!hasCourseAccess)
         {
@@ -432,12 +387,7 @@ public class CoursesController : Controller
             return Unauthorized();
         }
 
-        var hasDemoAccess = TempData.Peek($"DemoPayment:{id}") is not null;
-        var hasCourseAccess = hasDemoAccess
-            || await _courseEnrollmentService.CanAccessCourseAsync(
-                userId,
-                id,
-                cancellationToken);
+        var hasCourseAccess = await HasCourseAccessAsync(id, cancellationToken);
 
         if (!hasCourseAccess)
         {
@@ -454,4 +404,18 @@ public class CoursesController : Controller
             ? NotFound()
             : View(attempt);
     }
+
+    private async Task<bool> HasCourseAccessAsync(
+        int courseId,
+        CancellationToken cancellationToken)
+    {
+        if (TempData.Peek($"DemoPayment:{courseId}") is not null)
+        {
+            return true;
+        }
+
+        var course = await _courseService.GetDetailsAsync(courseId, cancellationToken);
+        return course is not null && course.TotalPrice <= 0m;
+    }
+
 }
