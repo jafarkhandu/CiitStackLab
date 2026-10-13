@@ -35,9 +35,7 @@ public class CoursesController : Controller
             return NotFound();
         }
 
-        var course = await _courseService.GetDetailsAsync(
-            id,
-            cancellationToken);
+        var course = await _courseService.GetDetailsAsync(id, cancellationToken);
 
         if (course is null)
         {
@@ -72,18 +70,14 @@ public class CoursesController : Controller
             return NotFound();
         }
 
-        var course = await _courseService.GetByIdAsync(
-            id,
-            cancellationToken);
+        var course = await _courseService.GetByIdAsync(id, cancellationToken);
 
         if (course is null)
         {
             return NotFound();
         }
 
-        var price = await _courseEnrollmentService.GetCoursePriceAsync(
-            id,
-            cancellationToken);
+        var price = await _courseEnrollmentService.GetCoursePriceAsync(id, cancellationToken);
 
         if (price <= 0m)
         {
@@ -126,8 +120,7 @@ public class CoursesController : Controller
 
     [HttpGet("Courses/Home")]
     [Authorize(Roles = "Student")]
-    public async Task<IActionResult> CourseHome(
-        CancellationToken cancellationToken)
+    public async Task<IActionResult> CourseHome(CancellationToken cancellationToken)
     {
         var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
 
@@ -144,7 +137,7 @@ public class CoursesController : Controller
 
         var courses = publishedCourses
             .Where(course => activeCourseIdSet.Contains(course.Id))
-            .OrderBy(course => activeCourseIds.IndexOf(course.Id))
+            .OrderBy(course => course.Title)
             .ToList();
 
         return View("MyCourses", courses);
@@ -161,10 +154,7 @@ public class CoursesController : Controller
             return NotFound();
         }
 
-        var course = await _courseService.GetLearningAsync(
-            id,
-            null,
-            cancellationToken);
+        var course = await _courseService.GetLearningAsync(id, null, cancellationToken);
 
         if (course is null)
         {
@@ -179,10 +169,7 @@ public class CoursesController : Controller
         }
 
         var hasAccess = TempData.Peek($"DemoPayment:{id}") is not null
-            || await _courseEnrollmentService.CanAccessCourseAsync(
-                userId,
-                id,
-                cancellationToken);
+            || await _courseEnrollmentService.CanAccessCourseAsync(userId, id, cancellationToken);
 
         if (!hasAccess)
         {
@@ -230,10 +217,7 @@ public class CoursesController : Controller
             return RedirectToAction(nameof(Details), new { id });
         }
 
-        var course = await _courseService.GetLearningAsync(
-            id,
-            null,
-            cancellationToken);
+        var course = await _courseService.GetLearningAsync(id, null, cancellationToken);
 
         if (course is null)
         {
@@ -259,9 +243,7 @@ public class CoursesController : Controller
             return NotFound();
         }
 
-        var publishedCourse = await _courseService.GetByIdAsync(
-            id,
-            cancellationToken);
+        var publishedCourse = await _courseService.GetByIdAsync(id, cancellationToken);
 
         if (publishedCourse is null)
         {
@@ -293,10 +275,7 @@ public class CoursesController : Controller
             if (User.Identity?.IsAuthenticated != true)
             {
                 var returnUrl = Url.Action(nameof(Details), new { id });
-                return RedirectToAction(
-                    "Login",
-                    "Account",
-                    new { returnUrl });
+                return RedirectToAction("Login", "Account", new { returnUrl });
             }
 
             TempData["CoursePaymentMessage"] =
@@ -318,18 +297,14 @@ public class CoursesController : Controller
             }
         }
 
-        var course = await _courseService.GetLearningAsync(
-            id,
-            contentId,
-            cancellationToken);
+        var course = await _courseService.GetLearningAsync(id, contentId, cancellationToken);
 
         if (course is null)
         {
             return NotFound();
         }
 
-        if (!string.IsNullOrWhiteSpace(studentUserId)
-            && course.CurrentContentId.HasValue)
+        if (!string.IsNullOrWhiteSpace(studentUserId) && course.CurrentContentId.HasValue)
         {
             await _studentProgressService.RecordAccessAsync(
                 studentUserId,
@@ -393,13 +368,7 @@ public class CoursesController : Controller
 
         TempData["LearningProgressMessage"] = "Lesson marked as complete.";
 
-        return RedirectToAction(
-            nameof(Learn),
-            new
-            {
-                id,
-                contentId
-            });
+        return RedirectToAction(nameof(Learn), new { id, contentId });
     }
 
     [HttpPost("Courses/Learn/{id:int}/Assessment/{contentId:int}")]
@@ -449,22 +418,12 @@ public class CoursesController : Controller
             TempData["AssessmentError"] = outcome.ErrorMessage
                 ?? "The assessment could not be submitted. Please try again.";
 
-            return RedirectToAction(
-                nameof(Learn),
-                new
-                {
-                    id,
-                    contentId
-                });
+            return RedirectToAction(nameof(Learn), new { id, contentId });
         }
 
         return RedirectToAction(
             nameof(AssessmentResult),
-            new
-            {
-                id,
-                attemptId = outcome.Result.Id
-            });
+            new { id, attemptId = outcome.Result.Id });
     }
 
     [HttpGet("Courses/Learn/{id:int}/AssessmentResult/{attemptId:int}")]
@@ -505,8 +464,6 @@ public class CoursesController : Controller
             attemptId,
             cancellationToken);
 
-        return attempt is null
-            ? NotFound()
-            : View(attempt);
+        return attempt is null ? NotFound() : View(attempt);
     }
 }
