@@ -6,9 +6,14 @@
         ?? Array.Empty<CIITStackLab.Application.DTOs.AdminAssessmentChapterLookupDto>();
 }
 
-@section Styles { <link rel="stylesheet" href="~/css/admin-mcqs.css" asp-append-version="true" /> }
+@section Styles { <link rel="stylesheet" href="~/css/admin-mcqs.css" asp-append-version="true" /> 
+    <link rel="stylesheet" href="~/css/admin-assessment-detail.css" asp-append-version="true" />
+}
 
 <section class="ciit-mcq-form-page">
+    <div class="ciit-assessment-standalone-nav">
+        <a asp-area="Admin" asp-controller="Assessments" asp-action="Index" class="ciit-assessment-back-link"><i class="bi bi-arrow-left"></i><span>Back to Assessments</span></a>
+    </div>
     <div class="ciit-mcq-header"><div><span class="ciit-admin-eyebrow">Assessment</span><h1>Edit Interview Question</h1><p>Update the interview question and its Notes chapter association.</p></div></div>
     <form asp-area="Admin" asp-controller="Assessments" asp-action="EditInterviewQuestion" method="post" class="ciit-mcq-form">
         @Html.AntiForgeryToken()
