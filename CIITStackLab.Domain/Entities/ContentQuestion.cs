@@ -8,6 +8,8 @@ public class ContentQuestion
 
     public int? TopicId { get; set; }
 
+    public int? NoteId { get; set; }
+
     public string? Question { get; set; }
 
     public string? Option1 { get; set; }
@@ -33,4 +35,6 @@ public class ContentQuestion
     public Lesson? Content { get; set; }
 
     public Topic? Topic { get; set; }
+
+    public TrainingNote? Note { get; set; }
 }
