@@ -54,15 +54,6 @@
                                 <i class="bi bi-play-circle me-2"></i>Start Learning
                             </a>
                         }
-                        else if (Model.IsStudent && Model.Enrollment?.HasAccess == true)
-                        {
-                            <a asp-controller="Courses"
-                               asp-action="CourseHome"
-                               asp-route-id="@Model.Id"
-                               class="btn btn-primary btn-lg">
-                                <i class="bi bi-play-circle me-2"></i>Continue Learning
-                            </a>
-                        }
                         else
                         {
                             <button type="button"
