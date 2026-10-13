@@ -95,35 +95,6 @@ public class CoursesController : Controller
         return RedirectToAction(nameof(CourseHome), new { id });
     }
 
-    [HttpPost("Courses/Enroll/{id:int}")]
-    [Authorize(Roles = "Student")]
-    [ValidateAntiForgeryToken]
-    public async Task<IActionResult> RequestEnrollment(
-        int id,
-        CancellationToken cancellationToken)
-    {
-        if (id <= 0)
-        {
-            return NotFound();
-        }
-
-        var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
-        if (string.IsNullOrWhiteSpace(userId))
-        {
-            return Unauthorized();
-        }
-
-        var outcome = await _courseEnrollmentService.RequestEnrollmentAsync(
-            userId,
-            id,
-            cancellationToken);
-
-        TempData["CourseEnrollmentMessage"] = outcome.Message;
-        TempData["CourseEnrollmentMessageType"] = outcome.Succeeded ? "success" : "error";
-
-        return RedirectToAction(nameof(Details), new { id });
-    }
-
     [HttpGet("Courses/Home/{id:int}")]
     [Authorize(Roles = "Student")]
     public async Task<IActionResult> CourseHome(
