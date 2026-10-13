@@ -5,6 +5,7 @@
     var message = ViewBag.PracticeMessage as string;
     var messageType = ViewBag.PracticeMessageType as string;
     var openImportModal = ViewBag.OpenPracticeProgramImportModal as string;
+    var openPracticeModal = ViewBag.OpenPracticeModal as string;
 }
 
 @section Styles {
@@ -22,14 +23,21 @@
             <p>Manage programming problems and their associated solutions using the existing assessment data.</p>
         </div>
         <div class="ciit-practice-header-actions">
-            <button type="button"
-                    class="ciit-practice-secondary-btn"
-                    data-bs-toggle="modal"
-                    data-bs-target="#practiceProgramImportModal">
+            <a asp-area="Admin" asp-controller="Assessments" asp-action="Index" class="ciit-assessment-back-link">
+                <i class="bi bi-arrow-left"></i><span>Assessments</span>
+            </a>
+            <button type="button" class="ciit-practice-secondary-btn"
+                    data-bs-toggle="modal" data-bs-target="#practiceProgramImportModal">
                 <i class="bi bi-file-earmark-arrow-up"></i><span>Analyze Questions</span>
             </button>
-            <a asp-area="Admin" asp-controller="Assessments" asp-action="CreatePracticeAnswer" class="ciit-practice-secondary-btn"><i class="bi bi-lightbulb"></i><span>Add Solution</span></a>
-            <a asp-area="Admin" asp-controller="Assessments" asp-action="CreatePracticeProgram" class="ciit-practice-primary-btn"><i class="bi bi-plus-lg"></i><span>Add Program</span></a>
+            <button type="button" class="ciit-practice-secondary-btn"
+                    data-bs-toggle="modal" data-bs-target="#createPracticeSolutionModal">
+                <i class="bi bi-lightbulb"></i><span>Add Solution</span>
+            </button>
+            <button type="button" class="ciit-practice-primary-btn"
+                    data-bs-toggle="modal" data-bs-target="#createPracticeProgramModal">
+                <i class="bi bi-plus-lg"></i><span>Add Program</span>
+            </button>
         </div>
     </div>
 
@@ -87,7 +95,11 @@
                             </div>
                             <div class="ciit-practice-actions">
                                 <a asp-area="Admin" asp-controller="Assessments" asp-action="EditPracticeProgram" asp-route-id="@program.Id" title="Edit program"><i class="bi bi-pencil-square"></i></a>
-                                <a asp-area="Admin" asp-controller="Assessments" asp-action="CreatePracticeAnswer" asp-route-programQuestionId="@program.Id" title="Add solution"><i class="bi bi-plus-circle"></i></a>
+                                <button type="button" title="Add solution"
+                                        data-bs-toggle="modal" data-bs-target="#createPracticeSolutionModal"
+                                        data-program-question-id="@program.Id">
+                                    <i class="bi bi-plus-circle"></i>
+                                </button>
                                 <form asp-area="Admin" asp-controller="Assessments" asp-action="DeletePracticeProgram" method="post" onsubmit="return confirm('Archive this practice program?');">
                                     @Html.AntiForgeryToken()
                                     <input type="hidden" name="id" value="@program.Id" />
@@ -199,11 +211,42 @@
         }
     </section>
     @await Html.PartialAsync("_PracticeProgramImportModal", Model)
+    @await Html.PartialAsync("_CreatePracticeProgramModal",
+        ViewBag.PracticeProgramInput as CIITStackLab.Application.DTOs.AdminPracticeProgramInputDto
+        ?? new CIITStackLab.Application.DTOs.AdminPracticeProgramInputDto())
+    @await Html.PartialAsync("_CreatePracticeAnswerModal",
+        ViewBag.PracticeSolutionInput as CIITStackLab.Application.DTOs.AdminPracticeProgramAnswerInputDto
+        ?? new CIITStackLab.Application.DTOs.AdminPracticeProgramAnswerInputDto())
 </section>
 
 @section Scripts {
     <script src="~/js/admin-practice-import.js" asp-append-version="true"></script>
     <partial name="_ValidationScriptsPartial" />
+    <script>
+        document.addEventListener("DOMContentLoaded", function () {
+            const solutionModal = document.getElementById("createPracticeSolutionModal");
+            if (solutionModal) {
+                solutionModal.addEventListener("show.bs.modal", function (event) {
+                    const trigger = event.relatedTarget;
+                    const questionId = trigger && trigger.getAttribute("data-program-question-id");
+                    if (!questionId) return;
+                    const selector = solutionModal.querySelector('[name="ProgramQuestionId"]');
+                    if (selector) selector.value = questionId;
+                });
+            }
+
+            const openTarget = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(openPracticeModal));
+            const modalIds = {
+                program: "createPracticeProgramModal",
+                solution: "createPracticeSolutionModal"
+            };
+            const id = openTarget && modalIds[openTarget];
+            const element = id && document.getElementById(id);
+            if (element && window.bootstrap) {
+                bootstrap.Modal.getOrCreateInstance(element).show();
+            }
+        });
+    </script>
     @if (string.Equals(openImportModal, "import", StringComparison.OrdinalIgnoreCase))
     {
         <script>
