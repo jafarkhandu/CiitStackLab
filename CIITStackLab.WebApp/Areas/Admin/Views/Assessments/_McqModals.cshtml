@@ -1,10 +1,10 @@
 @model CIITStackLab.Application.DTOs.AdminMcqIndexDto
 
 @{
-    var chapters = ViewBag.McqTopics as IEnumerable<CIITStackLab.Application.DTOs.AdminMcqTopicLookupDto>
-        ?? Array.Empty<CIITStackLab.Application.DTOs.AdminMcqTopicLookupDto>();
-    var addInput = ViewBag.AddMcqInput as CIITStackLab.Application.DTOs.AdminTopicMcqInputDto
-        ?? new CIITStackLab.Application.DTOs.AdminTopicMcqInputDto();
+    var chapters = ViewBag.McqChapters as IEnumerable<CIITStackLab.Application.DTOs.AdminAssessmentChapterLookupDto>
+        ?? Array.Empty<CIITStackLab.Application.DTOs.AdminAssessmentChapterLookupDto>();
+    var addInput = ViewBag.AddMcqInput as CIITStackLab.Application.DTOs.AdminChapterMcqInputDto
+        ?? new CIITStackLab.Application.DTOs.AdminChapterMcqInputDto();
     var addMcqError = ViewBag.AddMcqError as string;
     var preview = ViewBag.McqImportPreview as CIITStackLab.Application.DTOs.McqImportPreviewDto;
     var importMessage = ViewBag.McqImportMessage as string;
@@ -18,7 +18,7 @@
                 <div>
                     <span class="ciit-admin-eyebrow">Assessment</span>
                     <h2 class="modal-title" id="addMcqModalTitle">Add MCQ</h2>
-                    <p class="mb-0">Create a question under a chapter.</p>
+                    <p class="mb-0">Create a question under an individual Notes chapter.</p>
                 </div>
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
@@ -36,13 +36,13 @@
                     <div asp-validation-summary="All" class="text-danger small mb-3"></div>
 
                     <div class="ciit-mcq-modal-field">
-                        <label for="AddMcqTopicId">Chapter <span>*</span></label>
-                        <select id="AddMcqTopicId" name="TopicId" required>
+                        <label for="AddMcqNoteId">Chapter <span>*</span></label>
+                        <select id="AddMcqNoteId" name="NoteId" required>
                             <option value="0">Select chapter</option>
                             @foreach (var chapter in chapters)
                             {
-                                <option value="@chapter.Id" selected="@(addInput.TopicId == chapter.Id ? "selected" : null)">
-                                    @chapter.Title
+                                <option value="@chapter.NoteId" selected="@(addInput.NoteId == chapter.NoteId ? "selected" : null)">
+                                    @chapter.TopicTitle / @chapter.ChapterId — @chapter.ChapterTitle
                                 </option>
                             }
                         </select>
@@ -131,7 +131,7 @@
                             <strong id="mcqImportLiveTitle">Preparing analysis...</strong>
                             <span id="mcqImportLiveState">READY</span>
                         </div>
-                        <p id="mcqImportLiveDetail">Select a chapter and upload a file to begin.</p>
+                        <p id="mcqImportLiveDetail">Select a Notes chapter and upload an Excel workbook to begin.</p>
                         <ol id="mcqImportProgressLog" class="ciit-mcq-import-progress-log"></ol>
                         <div class="ciit-mcq-import-live-track" aria-hidden="true">
                             <span></span>
@@ -154,17 +154,17 @@
 
                     <div class="ciit-mcq-import-modal-fields">
                         <div class="ciit-mcq-modal-field">
-                            <label for="ImportMcqTopicId">Chapter <span>*</span></label>
-                            <select id="ImportMcqTopicId" name="topicId" required>
+                            <label for="ImportMcqNoteId">Chapter <span>*</span></label>
+                            <select id="ImportMcqNoteId" name="noteId" required>
                                 <option value="0">Select chapter</option>
                                 @foreach (var chapter in chapters)
                                 {
-                                    <option value="@chapter.Id" selected="@(preview?.TopicId == chapter.Id ? "selected" : null)">
-                                        @chapter.Title
+                                    <option value="@chapter.NoteId" selected="@(preview?.NoteId == chapter.NoteId ? "selected" : null)">
+                                        @chapter.TopicTitle / @chapter.ChapterId — @chapter.ChapterTitle
                                     </option>
                                 }
                             </select>
-                            <small>All parsed MCQs will be linked directly to this chapter.</small>
+                            <small>All parsed MCQs will be linked directly to this Notes chapter.</small>
                         </div>
 
                         <label class="ciit-mcq-import-file-drop">
