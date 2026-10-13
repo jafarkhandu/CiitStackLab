@@ -40,6 +40,10 @@ namespace CIITStackLab.Infrastructure.Migrations
                         .HasColumnType("int")
                         .HasColumnName("topic_id");
 
+                    b.Property<int?>("NoteId")
+                        .HasColumnType("int")
+                        .HasColumnName("note_id");
+
                     b.Property<int?>("CorrectOptionNumber")
                         .HasColumnType("int")
                         .HasColumnName("correct_option_number");
@@ -90,6 +94,9 @@ namespace CIITStackLab.Infrastructure.Migrations
 
                     b.HasIndex("TopicId")
                         .HasDatabaseName("IX_tblcontent_questions_topic_id");
+
+                    b.HasIndex("NoteId")
+                        .HasDatabaseName("IX_tblcontent_questions_note_id");
 
                     b.ToTable("tblcontent_questions", "erpsystem");
                 });
@@ -541,6 +548,10 @@ namespace CIITStackLab.Infrastructure.Migrations
                         .HasColumnType("int")
                         .HasColumnName("topic_id");
 
+                    b.Property<int?>("NoteId")
+                        .HasColumnType("int")
+                        .HasColumnName("note_id");
+
                     b.Property<DateTime?>("CreatedAt")
                         .HasColumnType("datetime2")
                         .HasColumnName("InsertedAt");
@@ -571,6 +582,9 @@ namespace CIITStackLab.Infrastructure.Migrations
 
                     b.HasIndex("TopicId");
 
+                    b.HasIndex("NoteId")
+                        .HasDatabaseName("IX_tblcontent_interview_questions_note_id");
+
                     b.ToTable("tblcontent_interview_questions", "erpsystem");
                 });
 
@@ -586,6 +600,10 @@ namespace CIITStackLab.Infrastructure.Migrations
                     b.Property<int?>("ContentId")
                         .HasColumnType("int")
                         .HasColumnName("content_id");
+
+                    b.Property<int?>("NoteId")
+                        .HasColumnType("int")
+                        .HasColumnName("note_id");
 
                     b.Property<DateTime?>("CreatedAt")
                         .HasColumnType("datetime2")
@@ -620,6 +638,9 @@ namespace CIITStackLab.Infrastructure.Migrations
                     b.HasKey("Id");
 
                     b.HasIndex("ContentId");
+
+                    b.HasIndex("NoteId")
+                        .HasDatabaseName("IX_tblcontent_program_questions_note_id");
 
                     b.ToTable("tblcontent_program_questions", "erpsystem");
                 });
@@ -964,7 +985,14 @@ namespace CIITStackLab.Infrastructure.Migrations
                         .HasForeignKey("TopicId")
                         .OnDelete(DeleteBehavior.NoAction);
 
+                    b.HasOne("CIITStackLab.Domain.Entities.TrainingNote", "Note")
+                        .WithMany()
+                        .HasForeignKey("NoteId")
+                        .OnDelete(DeleteBehavior.NoAction);
+
                     b.Navigation("Content");
+
+                    b.Navigation("Note");
 
                     b.Navigation("Topic");
                 });
@@ -986,7 +1014,14 @@ namespace CIITStackLab.Infrastructure.Migrations
                         .HasForeignKey("ContentId")
                         .OnDelete(DeleteBehavior.NoAction);
 
+                    b.HasOne("CIITStackLab.Domain.Entities.TrainingNote", "Note")
+                        .WithMany()
+                        .HasForeignKey("NoteId")
+                        .OnDelete(DeleteBehavior.NoAction);
+
                     b.Navigation("Content");
+
+                    b.Navigation("Note");
 
                     b.Navigation("Answers");
                 });
@@ -1003,7 +1038,14 @@ namespace CIITStackLab.Infrastructure.Migrations
                         .HasForeignKey("TopicId")
                         .OnDelete(DeleteBehavior.NoAction);
 
+                    b.HasOne("CIITStackLab.Domain.Entities.TrainingNote", "Note")
+                        .WithMany()
+                        .HasForeignKey("NoteId")
+                        .OnDelete(DeleteBehavior.NoAction);
+
                     b.Navigation("Content");
+
+                    b.Navigation("Note");
 
                     b.Navigation("Topic");
                 });
