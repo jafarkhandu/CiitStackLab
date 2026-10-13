@@ -1,0 +1,51 @@
+@model CIITStackLab.Application.DTOs.AdminInterviewQuestionInputDto
+@{
+    var chapters = ViewBag.InterviewQuestionChapters as IEnumerable<CIITStackLab.Application.DTOs.AdminAssessmentChapterLookupDto>
+        ?? Array.Empty<CIITStackLab.Application.DTOs.AdminAssessmentChapterLookupDto>();
+}
+<div class="modal fade ciit-assessment-form-modal" id="createInterviewQuestionModal" tabindex="-1"
+     aria-labelledby="createInterviewQuestionModalTitle" aria-hidden="true">
+    <div class="modal-dialog modal-lg modal-dialog-centered modal-dialog-scrollable">
+        <div class="modal-content">
+            <div class="modal-header">
+                <div>
+                    <span class="ciit-admin-eyebrow">Interview workspace</span>
+                    <h2 class="modal-title" id="createInterviewQuestionModalTitle">Add Interview Question</h2>
+                    <p class="mb-0">Link a technical question and answer directly to a Notes chapter.</p>
+                </div>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <form asp-area="Admin" asp-controller="Assessments" asp-action="CreateInterviewQuestion" method="post" class="ciit-assessment-modal-form">
+                @Html.AntiForgeryToken()
+                <div class="modal-body">
+                    <div asp-validation-summary="ModelOnly" class="ciit-mcq-validation"></div>
+                    <label class="ciit-assessment-form-field">
+                        <span>Notes Chapter <b>*</b></span>
+                        <select asp-for="NoteId" required>
+                            <option value="0">Select Notes chapter</option>
+                            @foreach (var chapter in chapters)
+                            {
+                                <option value="@chapter.NoteId">@chapter.TopicTitle / @chapter.ChapterId — @chapter.ChapterTitle</option>
+                            }
+                        </select>
+                        <span asp-validation-for="NoteId" class="text-danger"></span>
+                    </label>
+                    <label class="ciit-assessment-form-field">
+                        <span>Question <b>*</b></span>
+                        <textarea asp-for="Question" rows="4" placeholder="Enter the full interview question..." required></textarea>
+                        <span asp-validation-for="Question" class="text-danger"></span>
+                    </label>
+                    <label class="ciit-assessment-form-field">
+                        <span>Answer <b>*</b></span>
+                        <textarea asp-for="Answer" rows="7" placeholder="Add the expected answer or explanation..." required></textarea>
+                        <span asp-validation-for="Answer" class="text-danger"></span>
+                    </label>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="ciit-assessment-modal-cancel" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="ciit-assessment-modal-submit"><i class="bi bi-check-lg"></i> Create Question</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
