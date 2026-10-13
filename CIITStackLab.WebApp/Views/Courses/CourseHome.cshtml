@@ -1,0 +1,120 @@
+@model CIITStackLab.Application.DTOs.CourseLearningDto
+
+@{
+    ViewData["Title"] = $"{Model.Title} - Course Home";
+    var progress = Model.Progress;
+    var percentage = progress?.Percentage ?? 0;
+    var totalLessons = progress?.TotalLessons ?? Model.ContentCount;
+    var completedLessons = progress?.CompletedLessons ?? 0;
+    var firstLesson = Model.Topics
+        .SelectMany(topic => topic.Contents)
+        .FirstOrDefault();
+}
+
+@section Styles {
+    <link rel="stylesheet" href="~/css/course-experience.css" />
+}
+
+<section class="ciit-course-experience">
+    <div class="container">
+        <div class="ciit-course-experience-shell">
+            <aside class="ciit-course-experience-sidebar" aria-label="Course navigation">
+                <div class="ciit-course-experience-brand">
+                    <small>Course</small>
+                    <strong>@Model.Title</strong>
+                </div>
+
+                <nav class="ciit-course-experience-nav">
+                    <a class="active" asp-controller="Courses" asp-action="CourseHome" asp-route-id="@Model.Id">
+                        <i class="bi bi-house"></i> Course Home
+                    </a>
+                    <a asp-controller="Courses" asp-action="Curriculum" asp-route-id="@Model.Id">
+                        <i class="bi bi-list-check"></i> Curriculum
+                    </a>
+                    <a asp-controller="Courses" asp-action="Learn" asp-route-id="@Model.Id">
+                        <i class="bi bi-play-circle"></i> Continue Learning
+                    </a>
+                    <a href="#course-progress">
+                        <i class="bi bi-graph-up"></i> My Progress
+                    </a>
+                </nav>
+            </aside>
+
+            <main class="ciit-course-experience-main">
+                <section class="ciit-course-experience-card ciit-course-experience-hero">
+                    <span class="ciit-course-experience-eyebrow">Course access active</span>
+                    <h1>Welcome to @Model.Title!</h1>
+                    <p>Your demo payment was completed successfully. Your course is ready and you can continue learning at your own pace.</p>
+                    <span class="ciit-course-access-badge">
+                        <i class="bi bi-check-circle-fill"></i>
+                        Access Active
+                    </span>
+                </section>
+
+                <section class="ciit-course-stat-grid" aria-label="Course summary">
+                    <div class="ciit-course-stat">
+                        <strong>@Model.ContentCount</strong>
+                        <span>Lessons</span>
+                    </div>
+                    <div class="ciit-course-stat">
+                        <strong>@Model.TopicCount</strong>
+                        <span>Topics</span>
+                    </div>
+                    <div class="ciit-course-stat">
+                        <strong>@Model.Level</strong>
+                        <span>Level</span>
+                    </div>
+                    <div class="ciit-course-stat">
+                        <strong>@Model.DurationHours hrs</strong>
+                        <span>Duration</span>
+                    </div>
+                </section>
+
+                <section id="course-progress" class="ciit-course-experience-card">
+                    <div class="ciit-course-experience-card-header">
+                        <div>
+                            <h2>Your Progress</h2>
+                            <p>Keep your learning journey moving forward.</p>
+                        </div>
+                        <strong>@percentage%</strong>
+                    </div>
+                    <div class="ciit-progress-track" aria-label="Course progress">
+                        <span style="width: @percentage%"></span>
+                    </div>
+                    <div class="ciit-progress-meta">
+                        <span>@completedLessons of @totalLessons lessons completed</span>
+                        <span>@Model.TopicCount topics</span>
+                    </div>
+                </section>
+
+                <section class="ciit-course-experience-card">
+                    <div class="ciit-course-experience-card-header">
+                        <div>
+                            <h2>Continue Learning</h2>
+                            <p>Pick up where you left off or start the first lesson.</p>
+                        </div>
+                        <a class="btn btn-outline-primary btn-sm" asp-controller="Courses" asp-action="Curriculum" asp-route-id="@Model.Id">
+                            View Curriculum
+                        </a>
+                    </div>
+
+                    <div class="ciit-continue-card">
+                        <div class="ciit-continue-card-content">
+                            <span class="ciit-continue-card-label">@(progress?.LastAccessedContentId.HasValue == true ? "Continue Learning" : "Start Learning")</span>
+                            <h3>@(firstLesson?.Title ?? "Course lessons")</h3>
+                            <p>@(firstLesson is null ? "No lessons are available yet." : $"{Model.ContentCount} lessons available in this course")</p>
+                        </div>
+
+                        @if (firstLesson is not null)
+                        {
+                            <a class="btn btn-primary" asp-controller="Courses" asp-action="Learn" asp-route-id="@Model.Id">
+                                @(progress?.LastAccessedContentId.HasValue == true ? "Continue Learning" : "Start Lesson")
+                                <i class="bi bi-arrow-right ms-1"></i>
+                            </a>
+                        }
+                    </div>
+                </section>
+            </main>
+        </div>
+    </div>
+</section>
