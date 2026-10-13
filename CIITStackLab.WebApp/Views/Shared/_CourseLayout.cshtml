@@ -101,7 +101,7 @@
                             <i class="bi bi-play-circle"></i>
                             <span>Learn</span>
                         </a>
-                        <a asp-controller="Courses" asp-action="CourseHome" asp-route-id="@courseId" asp-fragment="course-progress">
+                        <a asp-controller="Courses" asp-action="CourseEnvironment" asp-route-id="@courseId" asp-fragment="course-progress">
                             <i class="bi bi-graph-up"></i>
                             <span>Progress</span>
                         </a>
@@ -136,7 +136,7 @@
                         {
                             <a class="@(course.Id.ToString() == courseId ? "active" : "")"
                                asp-controller="Courses"
-                               asp-action="CourseHome"
+                               asp-action="CourseEnvironment"
                                asp-route-id="@course.Id">
                                 <span>@course.Title</span>
                                 @if (course.Id.ToString() == courseId)
@@ -159,15 +159,15 @@
             <nav class="ciit-course-global-nav">
                 @if (!string.IsNullOrWhiteSpace(courseId))
                 {
-                    <a class="@(currentAction.Equals("CourseHome", StringComparison.OrdinalIgnoreCase) ? "active" : "")"
-                       asp-controller="Courses" asp-action="CourseHome" asp-route-id="@courseId">
+                    <a class="@(currentAction.Equals("CourseEnvironment", StringComparison.OrdinalIgnoreCase) ? "active" : "")"
+                       asp-controller="Courses" asp-action="CourseEnvironment" asp-route-id="@courseId">
                         <i class="bi bi-house"></i><span>Course Home</span>
                     </a>
                     <a class="@(currentAction.Equals("Learn", StringComparison.OrdinalIgnoreCase) ? "active" : "")"
                        asp-controller="Courses" asp-action="Learn" asp-route-id="@courseId">
                         <i class="bi bi-play-circle"></i><span>Learn</span>
                     </a>
-                    <a asp-controller="Courses" asp-action="CourseHome" asp-route-id="@courseId" asp-fragment="course-progress">
+                    <a asp-controller="Courses" asp-action="CourseEnvironment" asp-route-id="@courseId" asp-fragment="course-progress">
                         <i class="bi bi-graph-up"></i><span>My Progress</span>
                     </a>
                 }
