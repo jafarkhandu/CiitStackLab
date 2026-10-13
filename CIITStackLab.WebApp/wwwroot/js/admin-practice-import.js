@@ -4,7 +4,7 @@
     const form = document.getElementById("practiceProgramImportUploadForm");
     if (!form) return;
 
-    const contentSelect = document.getElementById("PracticeProgramImportContentId");
+    const contentSelect = document.getElementById("PracticeProgramImportNoteId");
     const fileInput = document.getElementById("PracticeProgramImportFile");
     const submitButton = form.querySelector('button[type="submit"]');
     const previewHost = document.getElementById("practiceProgramImportPreviewHost");
@@ -95,8 +95,8 @@
 
         if (!contentSelect.value || Number(contentSelect.value) <= 0) {
             setLiveStatus(
-                "Choose learning content first",
-                "Select the content item these programming questions should be linked to.",
+                "Choose a Notes chapter first",
+                "Select the Notes chapter these programming questions should be linked to.",
                 "error");
             return;
         }
@@ -116,7 +116,7 @@
             "Uploading and starting analysis",
             "Reading the Excel workbook. Each row will be validated separately; line breaks remain inside each cell.",
             "loading");
-        appendProgress("Preparing the selected content and Excel workbook...");
+        appendProgress("Preparing the selected Notes chapter and Excel workbook...");
 
         try {
             const response = await fetch(form.dataset.analyzeUrl, {
