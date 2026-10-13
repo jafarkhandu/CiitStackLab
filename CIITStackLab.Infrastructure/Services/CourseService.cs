@@ -181,7 +181,7 @@ public sealed class CourseService
                     || (question.TopicId.HasValue
                         && topicIds.Contains(question.TopicId.Value))
                     || (question.NoteId.HasValue
-                        && noteIds.Contains(question.NoteId.Value)))
+                        && noteIds.Contains(question.NoteId.Value))))
             .OrderBy(question => question.Id)
             .ToListAsync(cancellationToken);
 
