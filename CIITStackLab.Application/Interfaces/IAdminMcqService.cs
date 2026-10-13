@@ -5,6 +5,7 @@ namespace CIITStackLab.Application.Interfaces;
 public interface IAdminMcqService
 {
     Task<AdminMcqIndexDto> GetIndexAsync(CancellationToken cancellationToken = default);
+    Task<IReadOnlyList<AdminAssessmentChapterLookupDto>> GetAssessmentChapterLookupAsync(CancellationToken cancellationToken = default);
     Task<AdminMcqDto?> GetByIdAsync(int id, CancellationToken cancellationToken = default);
     Task<IReadOnlyList<AdminMcqContentLookupDto>> GetContentLookupAsync(CancellationToken cancellationToken = default);
     Task<IReadOnlyList<AdminMcqTopicLookupDto>> GetTopicLookupAsync(CancellationToken cancellationToken = default);
