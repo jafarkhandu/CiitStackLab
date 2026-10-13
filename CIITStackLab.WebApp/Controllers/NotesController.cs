@@ -1,5 +1,5 @@
-using System.Security.Claims;
 using CIITStackLab.Application.Interfaces;
+using CIITStackLab.Infrastructure.Services;
 using Microsoft.AspNetCore.Mvc;
 
 namespace CIITStackLab.WebApp.Controllers;
@@ -7,16 +7,16 @@ namespace CIITStackLab.WebApp.Controllers;
 public sealed class NotesController : Controller
 {
     private readonly INotesService _notesService;
-    private readonly ICourseEnrollmentService _courseEnrollmentService;
+    private readonly CoursePurchaseService _coursePurchaseService;
     private readonly ICourseService _courseService;
 
     public NotesController(
         INotesService notesService,
-        ICourseEnrollmentService courseEnrollmentService,
+        CoursePurchaseService coursePurchaseService,
         ICourseService courseService)
     {
         _notesService = notesService;
-        _courseEnrollmentService = courseEnrollmentService;
+        _coursePurchaseService = coursePurchaseService;
         _courseService = courseService;
     }
 
@@ -33,27 +33,21 @@ public sealed class NotesController : Controller
         }
 
         var userId = User.Identity?.IsAuthenticated == true
-            ? User.FindFirstValue(ClaimTypes.NameIdentifier)
+            ? User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value
             : null;
 
-        var canAccessTopic = await _courseEnrollmentService.CanAccessTopicAsync(
-            userId,
-            topicId,
-            ct);
+        var canAccessTopic = await _coursePurchaseService.CanAccessTopicAsync(userId, topicId, ct);
 
         if (!canAccessTopic)
         {
             if (User.Identity?.IsAuthenticated != true)
             {
                 var returnUrl = Url.Action(nameof(Index), new { topicId, chapterId, courseId });
-                return RedirectToAction(
-                    "Login",
-                    "Account",
-                    new { returnUrl });
+                return RedirectToAction("Login", "Account", new { returnUrl });
             }
 
             TempData["CoursePaymentMessage"] =
-                "Payment or an approved enrollment is required to open notes for this paid course.";
+                "Purchase is required to open notes for this paid course.";
 
             return RedirectToAction("Index", "Home");
         }

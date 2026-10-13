@@ -1,7 +1,7 @@
 @using System.Security.Claims
 @using CIITStackLab.Application.DTOs
 @using CIITStackLab.Application.Interfaces
-@inject ICourseEnrollmentService CourseEnrollmentService
+@inject CoursePurchaseService CoursePurchaseService
 @inject ICourseService CourseService
 
 @{
@@ -21,7 +21,7 @@
 
         if (!string.IsNullOrWhiteSpace(userId))
         {
-            var activeCourseIds = await CourseEnrollmentService.GetActiveCourseIdsAsync(userId);
+            var activeCourseIds = await CoursePurchaseService.GetAccessibleCourseIdsAsync(userId);
             var publishedCourses = await CourseService.GetPublishedAsync();
             var activeCourseIdSet = activeCourseIds.ToHashSet();
 

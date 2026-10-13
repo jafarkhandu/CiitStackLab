@@ -26,7 +26,7 @@ public class ApplicationDbContext : IdentityDbContext<ApplicationUser>
     public DbSet<StudentLoginActivity> StudentLoginActivities => Set<StudentLoginActivity>();
     public DbSet<StudentLessonProgress> StudentLessonProgress => Set<StudentLessonProgress>();
     public DbSet<StudentAssessmentAttempt> StudentAssessmentAttempts => Set<StudentAssessmentAttempt>();
-    public DbSet<CourseEnrollment> CourseEnrollments => Set<CourseEnrollment>();
+    public DbSet<StudentCoursePurchase> StudentCoursePurchases => Set<StudentCoursePurchase>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -277,55 +277,26 @@ public class ApplicationDbContext : IdentityDbContext<ApplicationUser>
                 .HasDatabaseName("IX_tblstudent_assessment_attempts_user_course_content_date");
         });
 
-        modelBuilder.Entity<CourseEnrollment>(entity =>
+        modelBuilder.Entity<StudentCoursePurchase>(entity =>
         {
-            entity.ToTable("tblstudent_course_enrollments", ExistingSchema);
+            entity.ToTable("tblstudent_course_purchases", ExistingSchema);
             entity.HasKey(x => x.Id);
-
-            entity.Property(x => x.Id)
-                .HasColumnName("enrollment_id")
-                .ValueGeneratedOnAdd();
-
-            entity.Property(x => x.UserId)
-                .HasColumnName("user_id")
-                .HasMaxLength(450)
-                .IsRequired();
-
-            entity.Property(x => x.CourseId)
-                .HasColumnName("course_id")
-                .IsRequired();
-
-            entity.Property(x => x.Status)
-                .HasColumnName("status")
-                .HasMaxLength(30)
-                .IsRequired();
-
-            entity.Property(x => x.PriceAtEnrollment)
-                .HasColumnName("price_at_enrollment")
-                .HasPrecision(18, 2)
-                .IsRequired();
-
-            entity.Property(x => x.RequestedAt)
-                .HasColumnName("requested_at")
-                .HasColumnType("datetime2")
-                .IsRequired();
-
-            entity.Property(x => x.ReviewedAt)
-                .HasColumnName("reviewed_at")
-                .HasColumnType("datetime2");
-
-            entity.Property(x => x.ReviewedByUserId)
-                .HasColumnName("reviewed_by_user_id")
-                .HasMaxLength(450);
-
-            entity.HasIndex(x => new { x.UserId, x.CourseId })
-                .IsUnique()
-                .HasDatabaseName("UX_tblstudent_course_enrollments_user_course");
-
-            entity.HasIndex(x => new { x.Status, x.RequestedAt })
-                .HasDatabaseName("IX_tblstudent_course_enrollments_status_date");
+            entity.Property(x => x.Id).HasColumnName("purchase_id").ValueGeneratedOnAdd();
+            entity.Property(x => x.UserId).HasColumnName("user_id").HasMaxLength(450).IsRequired();
+            entity.Property(x => x.CourseId).HasColumnName("course_id").IsRequired();
+            entity.Property(x => x.PurchasePrice).HasColumnName("purchase_price").HasPrecision(18, 2).IsRequired();
+            entity.Property(x => x.PurchasedAt).HasColumnName("purchased_at").HasColumnType("datetime2").IsRequired();
+            entity.HasIndex(x => new { x.UserId, x.CourseId }).IsUnique()
+                .HasDatabaseName("UX_tblstudent_course_purchases_user_course");
+            entity.HasOne<ApplicationUser>()
+                .WithMany()
+                .HasForeignKey(x => x.UserId)
+                .OnDelete(DeleteBehavior.NoAction);
+            entity.HasOne<Course>()
+                .WithMany()
+                .HasForeignKey(x => x.CourseId)
+                .OnDelete(DeleteBehavior.NoAction);
         });
-
         modelBuilder.Entity<TrainingNote>(entity =>
         {
             entity.ToTable("tbltraining_notes", ExistingSchema);
