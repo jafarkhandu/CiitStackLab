@@ -2,13 +2,15 @@
 
 @{
     ViewData["Title"] = $"{Model.Title} - Curriculum";
+    ViewData["CourseTitle"] = Model.Title;
+
     var progress = Model.Progress;
     var completedIds = progress?.CompletedContentIds ?? Array.Empty<int>();
     var lessonNumber = 0;
 }
 
 @section Styles {
-    <link rel="stylesheet" href="~/css/course-experience.css" />
+    <link rel="stylesheet" href="~/css/course-experience.css" asp-append-version="true" />
 }
 
 <section class="ciit-course-experience">
@@ -27,7 +29,7 @@
                     <a class="active" asp-controller="Courses" asp-action="Curriculum" asp-route-id="@Model.Id">
                         <i class="bi bi-list-check"></i> Curriculum
                     </a>
-                    <a asp-controller="Courses" asp-action="Learn" asp-route-id="@Model.Id">
+                    <a asp-controller="Courses" asp-action="Learn" asp-route-id="@Model.Id" asp-route-contentId="@progress?.LastAccessedContentId">
                         <i class="bi bi-play-circle"></i> Continue Learning
                     </a>
                     <a asp-controller="Courses" asp-action="CourseHome" asp-route-id="@Model.Id" asp-fragment="course-progress">
@@ -38,13 +40,23 @@
 
             <main class="ciit-course-experience-main">
                 <section class="ciit-course-experience-card ciit-course-experience-hero">
-                    <span class="ciit-course-experience-eyebrow">Course curriculum</span>
-                    <h1>@Model.Title</h1>
-                    <p>Explore every topic and lesson in the course. Start any lesson to open the full learning experience.</p>
-                    <span class="ciit-course-access-badge">
-                        <i class="bi bi-check-circle-fill"></i>
-                        @Model.ContentCount Lessons · @Model.TopicCount Topics
-                    </span>
+                    @if (!string.IsNullOrWhiteSpace(Model.ImageUrl))
+                    {
+                        <img class="ciit-course-hero-image"
+                             src="@Model.ImageUrl"
+                             alt="@Model.Title course cover"
+                             loading="eager" />
+                    }
+                    <div class="ciit-course-hero-overlay" aria-hidden="true"></div>
+                    <div class="ciit-course-hero-content">
+                        <span class="ciit-course-experience-eyebrow">Course curriculum</span>
+                        <h1>@Model.Title</h1>
+                        <p>Follow the complete learning path, track completed lessons, and open any lesson without leaving the course environment.</p>
+                        <span class="ciit-course-access-badge">
+                            <i class="bi bi-journal-check"></i>
+                            @Model.ContentCount Lessons · @Model.TopicCount Topics
+                        </span>
+                    </div>
                 </section>
 
                 <section class="ciit-course-experience-card">
@@ -53,7 +65,10 @@
                             <h2>Course Curriculum</h2>
                             <p>Lessons are grouped by topic for a clear learning path.</p>
                         </div>
-                        <a class="btn btn-outline-primary btn-sm" asp-controller="Courses" asp-action="CourseHome" asp-route-id="@Model.Id">
+                        <a class="btn btn-outline-primary btn-sm"
+                           asp-controller="Courses"
+                           asp-action="CourseHome"
+                           asp-route-id="@Model.Id">
                             Course Home
                         </a>
                     </div>
