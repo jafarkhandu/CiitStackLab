@@ -8,7 +8,7 @@ namespace CIITStackLab.Infrastructure.Migrations;
 
 [DbContext(typeof(ApplicationDbContext))]
 [Migration("20261013143000_AddStudentCoursePurchases")]
-public sealed class AddStudentCoursePurchases : Migration
+public sealed partial class AddStudentCoursePurchases : Migration
 {
     protected override void Up(MigrationBuilder migrationBuilder)
     {
