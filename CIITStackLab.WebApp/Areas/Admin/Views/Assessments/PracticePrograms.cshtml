@@ -13,8 +13,8 @@
     <link rel="stylesheet" href="~/css/admin-practice-import.css" asp-append-version="true" />
 }
 
-<section class="ciit-practice-page">
-    <div class="ciit-practice-header">
+<section class="ciit-practice-page ciit-assessment-subpage ciit-assessment-subpage--practice">
+    <div class="ciit-practice-header ciit-assessment-subpage-hero ciit-assessment-subpage-hero--practice">
         <div>
             <span class="ciit-admin-eyebrow">Assessment</span>
             <h1>Practice Programs</h1>
@@ -32,6 +32,21 @@
         </div>
     </div>
 
+    <div class="ciit-assessment-summary" aria-label="Practice programs summary">
+        <div class="ciit-assessment-summary-card">
+            <span class="ciit-assessment-summary-icon is-teal"><i class="bi bi-code-square"></i></span>
+            <span><small>Active programs</small><strong>@Model.ActivePrograms.Count</strong></span>
+        </div>
+        <div class="ciit-assessment-summary-card">
+            <span class="ciit-assessment-summary-icon is-blue"><i class="bi bi-lightbulb"></i></span>
+            <span><small>Active solutions</small><strong>@Model.ActivePrograms.Sum(program => program.Answers.Count)</strong></span>
+        </div>
+        <div class="ciit-assessment-summary-card">
+            <span class="ciit-assessment-summary-icon is-slate"><i class="bi bi-archive"></i></span>
+            <span><small>Archived programs</small><strong>@Model.ArchivedPrograms.Count</strong></span>
+        </div>
+    </div>
+
     @if (!string.IsNullOrWhiteSpace(message))
     {
         <div class="ciit-practice-alert @(messageType == "success" ? "is-success" : "is-error")" role="alert">
@@ -40,7 +55,7 @@
         </div>
     }
 
-    <section class="ciit-practice-card">
+    <section class="ciit-practice-card ciit-assessment-data-card">
         <div class="ciit-practice-card-header">
             <div>
                 <h2>Active Practice Programs</h2>
@@ -117,7 +132,7 @@
         }
     </section>
 
-    <section class="ciit-practice-card ciit-practice-archive">
+    <section class="ciit-practice-card ciit-practice-archive ciit-assessment-data-card">
         <div class="ciit-practice-card-header">
             <div>
                 <h2>Archived Practice Programs</h2>
@@ -150,7 +165,7 @@
         }
     </section>
 
-    <section class="ciit-practice-card ciit-practice-archive">
+    <section class="ciit-practice-card ciit-practice-archive ciit-assessment-data-card">
         <div class="ciit-practice-card-header">
             <div>
                 <h2>Archived Solutions</h2>
