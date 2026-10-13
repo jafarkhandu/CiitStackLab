@@ -73,20 +73,12 @@
     </nav>
 
     <main>
-        @if (TempData["CourseEnrollmentMessage"] is string courseEnrollmentMessage)
+        @if (TempData["CoursePaymentMessage"] is string coursePaymentMessage)
         {
-            var enrollmentMessageType = TempData["CourseEnrollmentMessageType"] as string;
-            var enrollmentAlertClass = enrollmentMessageType == "success"
-                ? "alert-success"
-                : enrollmentMessageType == "error"
-                    ? "alert-danger"
-                    : "alert-info";
-
             <div class="container mt-3">
-                <div class="alert @enrollmentAlertClass d-flex align-items-start gap-2"
-                     role="status">
-                    <i class="bi bi-info-circle-fill mt-1"></i>
-                    <span>@courseEnrollmentMessage</span>
+                <div class="alert alert-info d-flex align-items-start gap-2" role="status">
+                    <i class="bi bi-credit-card mt-1"></i>
+                    <span>@coursePaymentMessage</span>
                 </div>
             </div>
         }
