@@ -1,7 +1,12 @@
 @{
-    var courseId = ViewContext.RouteData.Values["id"]?.ToString();
+    var courseId = ViewContext.RouteData.Values["id"]?.ToString()
+        ?? ViewData["CourseId"]?.ToString();
     var currentAction = ViewContext.RouteData.Values["action"]?.ToString() ?? string.Empty;
+    var currentController = ViewContext.RouteData.Values["controller"]?.ToString() ?? string.Empty;
+    var isNotesPage = currentController.Equals("Notes", StringComparison.OrdinalIgnoreCase);
     var courseTitle = ViewData["CourseTitle"]?.ToString();
+    var notesTopicId = ViewData["NotesTopicId"]?.ToString();
+    var notesChapterId = ViewData["NotesChapterId"]?.ToString();
 
     if (string.IsNullOrWhiteSpace(courseTitle))
     {
@@ -63,6 +68,15 @@
                             <i class="bi bi-play-circle"></i>
                             <span>Learn</span>
                         </a>
+                        <a class="@(isNotesPage ? "active" : "")"
+                           asp-controller="Notes"
+                           asp-action="Index"
+                           asp-route-topicId="@notesTopicId"
+                           asp-route-chapterId="@notesChapterId"
+                           asp-route-courseId="@courseId">
+                            <i class="bi bi-journal-text"></i>
+                            <span>Notes</span>
+                        </a>
                         <a asp-controller="Courses" asp-action="CourseHome" asp-route-id="@courseId" asp-fragment="course-progress">
                             <i class="bi bi-graph-up"></i>
                             <span>Progress</span>
@@ -122,9 +136,23 @@
                 <div class="ciit-course-coming-soon-link" title="Interview question area will be connected here.">
                     <i class="bi bi-chat-square-text"></i><span>Interview Questions</span><small>Soon</small>
                 </div>
-                <div class="ciit-course-coming-soon-link" title="Course notes are currently opened from a lesson chapter.">
-                    <i class="bi bi-journal-text"></i><span>Notes</span><small>Soon</small>
-                </div>
+                @if (isNotesPage && !string.IsNullOrWhiteSpace(courseId))
+                {
+                    <a class="ciit-course-coming-soon-link active"
+                       asp-controller="Notes"
+                       asp-action="Index"
+                       asp-route-topicId="@notesTopicId"
+                       asp-route-chapterId="@notesChapterId"
+                       asp-route-courseId="@courseId">
+                        <i class="bi bi-journal-text"></i><span>Notes</span><small>Open</small>
+                    </a>
+                }
+                else
+                {
+                    <div class="ciit-course-coming-soon-link" title="Course notes are opened from a lesson chapter.">
+                        <i class="bi bi-journal-text"></i><span>Notes</span><small>Soon</small>
+                    </div>
+                }
                 <div class="ciit-course-coming-soon-link" title="Certificates will be enabled when certificate requirements are implemented.">
                     <i class="bi bi-award"></i><span>Certificates</span><small>Soon</small>
                 </div>
