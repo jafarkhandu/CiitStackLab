@@ -133,7 +133,6 @@ public sealed class PracticeProgramImportService : IPracticeProgramImportService
             return preview;
         }
 
-        preview.TopicId = chapter.TopicId;
         preview.TopicTitle = chapter.TopicTitle;
         preview.ChapterTitle = $"{chapter.TopicTitle} / {chapter.ChapterId} — {chapter.ChapterTitle}";
         preview.ContentTitle = chapter.ChapterTitle;
