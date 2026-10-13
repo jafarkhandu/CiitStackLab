@@ -175,6 +175,21 @@
 
     <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
     <script src="~/js/site.js"></script>
+    @if (!string.IsNullOrWhiteSpace(courseId))
+    {
+        <script>
+            document.addEventListener('click', function (event) {
+                const link = event.target.closest('a.ciit-learning-read-notes');
+                if (!link) {
+                    return;
+                }
+
+                const url = new URL(link.href, window.location.origin);
+                url.searchParams.set('courseId', '@courseId');
+                link.href = url.toString();
+            });
+        </script>
+    }
     @await RenderSectionAsync("Scripts", required: false)
 </body>
 </html>
