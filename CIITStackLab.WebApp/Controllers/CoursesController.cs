@@ -44,6 +44,8 @@ public class CoursesController : Controller
         }
 
         course.IsStudent = User.IsInRole("Student");
+        var userId = course.IsStudent ? User.FindFirstValue(ClaimTypes.NameIdentifier) : null;
+        course.HasAccess = await _coursePurchaseService.CanAccessCourseAsync(userId, id, cancellationToken);
 
         return View(course);
     }
