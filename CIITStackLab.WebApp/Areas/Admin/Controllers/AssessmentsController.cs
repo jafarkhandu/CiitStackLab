@@ -527,7 +527,7 @@ public sealed class AssessmentsController : Controller
         if (string.Equals(ViewBag.OpenInterviewImportModal as string, "import", StringComparison.OrdinalIgnoreCase)
             && string.Equals(ViewBag.InterviewMessageType as string, "error", StringComparison.OrdinalIgnoreCase))
             ViewBag.InterviewImportMessage = ViewBag.InterviewMessage;
-        await LoadInterviewQuestionTopicLookupAsync(cancellationToken);
+        await LoadInterviewQuestionChapterLookupAsync(cancellationToken);
         return View(await _interviewQuestionService.GetIndexAsync(cancellationToken));
     }
 
@@ -536,7 +536,7 @@ public sealed class AssessmentsController : Controller
     [ValidateAntiForgeryToken]
     [RequestSizeLimit(6 * 1024 * 1024)]
     [RequestFormLimits(MultipartBodyLengthLimit = 6 * 1024 * 1024)]
-    public async Task<IActionResult> AnalyzeInterviewQuestions(int topicId, IFormFile? file, CancellationToken cancellationToken)
+    public async Task<IActionResult> AnalyzeInterviewQuestions(int noteId, IFormFile? file, CancellationToken cancellationToken)
     {
         var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
         if (string.IsNullOrWhiteSpace(userId)) return Unauthorized();
@@ -558,7 +558,7 @@ public sealed class AssessmentsController : Controller
         await ReportProgressAsync("Upload received. Preparing content and file checks...", cancellationToken);
         var preview = new InterviewQuestionImportPreviewDto
         {
-            TopicId = topicId,
+            NoteId = noteId,
             FileName = file is null ? string.Empty : Path.GetFileName(file.FileName)
         };
 
@@ -572,25 +572,25 @@ public sealed class AssessmentsController : Controller
             {
                 await using var stream = file.OpenReadStream();
                 preview = await _interviewQuestionImportService.PreviewAsync(
-                    topicId, file.FileName, stream, userId, cancellationToken, ReportProgressAsync);
+                    noteId, file.FileName, stream, userId, cancellationToken, ReportProgressAsync);
             }
         }
         catch (DbException exception)
         {
-            _logger.LogError(exception, "Interview question analysis database failure for chapter {TopicId}.", topicId);
+            _logger.LogError(exception, "Interview question analysis database failure for Notes chapter {NoteId}.", noteId);
             preview = new InterviewQuestionImportPreviewDto
             {
-                TopicId = topicId,
+                NoteId = noteId,
                 FileName = file is null ? string.Empty : Path.GetFileName(file.FileName)
             };
             preview.FileErrors.Add("The database returned an error while checking the selected chapter. No interview questions were saved.");
         }
         catch (Exception exception) when (!cancellationToken.IsCancellationRequested)
         {
-            _logger.LogError(exception, "Interview question analysis failed for chapter {TopicId}.", topicId);
+            _logger.LogError(exception, "Interview question analysis failed for Notes chapter {NoteId}.", noteId);
             preview = new InterviewQuestionImportPreviewDto
             {
-                TopicId = topicId,
+                NoteId = noteId,
                 FileName = file is null ? string.Empty : Path.GetFileName(file.FileName)
             };
             preview.FileErrors.Add("The file could not be analyzed. Verify that it is a valid .xlsx Excel workbook and try again. No questions were saved.");
@@ -621,13 +621,13 @@ public sealed class AssessmentsController : Controller
     [ValidateAntiForgeryToken]
     [RequestSizeLimit(6 * 1024 * 1024)]
     [RequestFormLimits(MultipartBodyLengthLimit = 6 * 1024 * 1024)]
-    public async Task<IActionResult> PreviewInterviewQuestions(int topicId, IFormFile? file, CancellationToken cancellationToken)
+    public async Task<IActionResult> PreviewInterviewQuestions(int noteId, IFormFile? file, CancellationToken cancellationToken)
     {
         var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
         if (string.IsNullOrWhiteSpace(userId)) return Unauthorized();
         var preview = new InterviewQuestionImportPreviewDto
         {
-            TopicId = topicId,
+            NoteId = noteId,
             FileName = file is null ? string.Empty : Path.GetFileName(file.FileName)
         };
 
@@ -640,17 +640,17 @@ public sealed class AssessmentsController : Controller
             else
             {
                 await using var stream = file.OpenReadStream();
-                preview = await _interviewQuestionImportService.PreviewAsync(topicId, file.FileName, stream, userId, cancellationToken);
+                preview = await _interviewQuestionImportService.PreviewAsync(noteId, file.FileName, stream, userId, cancellationToken);
             }
         }
         catch (Exception exception) when (exception is DbException or DbUpdateException)
         {
-            _logger.LogError(exception, "Interview question preview database failure for chapter {TopicId}.", topicId);
+            _logger.LogError(exception, "Interview question preview database failure for Notes chapter {NoteId}.", noteId);
             preview.FileErrors.Add("The database returned an error while checking the selected chapter. No questions were saved.");
         }
         catch (Exception exception) when (!cancellationToken.IsCancellationRequested)
         {
-            _logger.LogError(exception, "Interview question preview failed for chapter {TopicId}.", topicId);
+            _logger.LogError(exception, "Interview question preview failed for Notes chapter {NoteId}.", noteId);
             preview.FileErrors.Add("The file could not be analyzed. Verify that it is a valid .xlsx Excel workbook and try again.");
         }
         _interviewQuestionImportService.CachePreview(preview, userId);
@@ -697,7 +697,7 @@ public sealed class AssessmentsController : Controller
     [HttpGet]
     public async Task<IActionResult> CreateInterviewQuestion(CancellationToken cancellationToken)
     {
-        await LoadInterviewQuestionContentAsync(cancellationToken);
+        await LoadInterviewQuestionChapterLookupAsync(cancellationToken);
         return View(new AdminInterviewQuestionInputDto());
     }
 
@@ -707,7 +707,7 @@ public sealed class AssessmentsController : Controller
     {
         if (!ModelState.IsValid)
         {
-            await LoadInterviewQuestionContentAsync(cancellationToken);
+            await LoadInterviewQuestionChapterLookupAsync(cancellationToken);
             return View(input);
         }
 
@@ -715,7 +715,7 @@ public sealed class AssessmentsController : Controller
         if (!result.Succeeded)
         {
             ModelState.AddModelError(string.Empty, result.Error!);
-            await LoadInterviewQuestionContentAsync(cancellationToken);
+            await LoadInterviewQuestionChapterLookupAsync(cancellationToken);
             return View(input);
         }
 
@@ -730,16 +730,11 @@ public sealed class AssessmentsController : Controller
         var question = await _interviewQuestionService.GetByIdAsync(id, cancellationToken);
         if (question is null) return NotFound();
 
-        var availableContent = await _interviewQuestionService.GetContentLookupAsync(cancellationToken);
-        ViewBag.InterviewQuestionContent = availableContent
-            .Select(x => new SelectListItem($"{x.TopicTitle} / {x.Title}", x.Id.ToString()))
-            .ToList();
-        var selectedContentId = question.ContentId
-            ?? availableContent.FirstOrDefault(x => x.TopicId == question.TopicId)?.Id
-            ?? 0;
+        await LoadInterviewQuestionChapterLookupAsync(cancellationToken);
         return View(new AdminInterviewQuestionInputDto
         {
-            ContentId = selectedContentId,
+            NoteId = question.NoteId ?? 0,
+            ContentId = question.ContentId ?? 0,
             Question = question.Question,
             Answer = question.Answer
         });
@@ -751,7 +746,7 @@ public sealed class AssessmentsController : Controller
     {
         if (!ModelState.IsValid)
         {
-            await LoadInterviewQuestionContentAsync(cancellationToken);
+            await LoadInterviewQuestionChapterLookupAsync(cancellationToken);
             return View(input);
         }
 
@@ -759,7 +754,7 @@ public sealed class AssessmentsController : Controller
         if (!result.Succeeded)
         {
             ModelState.AddModelError(string.Empty, result.Error!);
-            await LoadInterviewQuestionContentAsync(cancellationToken);
+            await LoadInterviewQuestionChapterLookupAsync(cancellationToken);
             return View(input);
         }
 
@@ -811,7 +806,7 @@ public sealed class AssessmentsController : Controller
             }
         }
 
-        await LoadPracticeProgramContentAsync(cancellationToken);
+        await LoadPracticeProgramChapterLookupAsync(cancellationToken);
         return View(await _practiceProgramService.GetIndexAsync(cancellationToken));
     }
 
@@ -821,7 +816,7 @@ public sealed class AssessmentsController : Controller
     [RequestSizeLimit(6 * 1024 * 1024)]
     [RequestFormLimits(MultipartBodyLengthLimit = 6 * 1024 * 1024)]
     public async Task<IActionResult> AnalyzePracticePrograms(
-        int contentId,
+        int noteId,
         IFormFile? file,
         CancellationToken cancellationToken)
     {
@@ -853,7 +848,7 @@ public sealed class AssessmentsController : Controller
 
         var preview = new PracticeProgramImportPreviewDto
         {
-            ContentId = contentId,
+            NoteId = noteId,
             FileName = file is null ? string.Empty : Path.GetFileName(file.FileName)
         };
 
@@ -871,7 +866,7 @@ public sealed class AssessmentsController : Controller
             {
                 await using var fileStream = file.OpenReadStream();
                 preview = await _practiceProgramImportService.PreviewAsync(
-                    contentId,
+                    noteId,
                     file.FileName,
                     fileStream,
                     userId,
@@ -883,25 +878,25 @@ public sealed class AssessmentsController : Controller
         {
             _logger.LogError(
                 exception,
-                "Practice-program Excel analysis database failure for content {ContentId}.",
-                contentId);
+                "Practice-program Excel analysis database failure for Notes chapter {NoteId}.",
+                noteId);
             preview = new PracticeProgramImportPreviewDto
             {
-                ContentId = contentId,
+                NoteId = noteId,
                 FileName = file is null ? string.Empty : Path.GetFileName(file.FileName)
             };
             preview.FileErrors.Add(
-                "The database returned an error while checking the selected content. No questions or solutions were saved.");
+                "The database returned an error while checking the selected Notes chapter. No questions or solutions were saved.");
         }
         catch (Exception exception) when (!cancellationToken.IsCancellationRequested)
         {
             _logger.LogError(
                 exception,
-                "Practice-program Excel analysis failed for content {ContentId}.",
-                contentId);
+                "Practice-program Excel analysis failed for Notes chapter {NoteId}.",
+                noteId);
             preview = new PracticeProgramImportPreviewDto
             {
-                ContentId = contentId,
+                NoteId = noteId,
                 FileName = file is null ? string.Empty : Path.GetFileName(file.FileName)
             };
             preview.FileErrors.Add(
@@ -950,7 +945,7 @@ public sealed class AssessmentsController : Controller
     [RequestSizeLimit(6 * 1024 * 1024)]
     [RequestFormLimits(MultipartBodyLengthLimit = 6 * 1024 * 1024)]
     public async Task<IActionResult> PreviewPracticePrograms(
-        int contentId,
+        int noteId,
         IFormFile? file,
         CancellationToken cancellationToken)
     {
@@ -962,7 +957,7 @@ public sealed class AssessmentsController : Controller
 
         var preview = new PracticeProgramImportPreviewDto
         {
-            ContentId = contentId,
+            NoteId = noteId,
             FileName = file is null ? string.Empty : Path.GetFileName(file.FileName)
         };
 
@@ -980,7 +975,7 @@ public sealed class AssessmentsController : Controller
             {
                 await using var fileStream = file.OpenReadStream();
                 preview = await _practiceProgramImportService.PreviewAsync(
-                    contentId,
+                    noteId,
                     file.FileName,
                     fileStream,
                     userId,
@@ -991,17 +986,17 @@ public sealed class AssessmentsController : Controller
         {
             _logger.LogError(
                 exception,
-                "Practice-program preview database failure for content {ContentId}.",
-                contentId);
+                "Practice-program preview database failure for Notes chapter {NoteId}.",
+                noteId);
             preview.FileErrors.Add(
-                "The database returned an error while checking the selected content. No questions or solutions were saved.");
+                "The database returned an error while checking the selected Notes chapter. No questions or solutions were saved.");
         }
         catch (Exception exception) when (!cancellationToken.IsCancellationRequested)
         {
             _logger.LogError(
                 exception,
-                "Practice-program preview failed for content {ContentId}.",
-                contentId);
+                "Practice-program preview failed for Notes chapter {NoteId}.",
+                noteId);
             preview.FileErrors.Add(
                 "The Excel workbook could not be analyzed. No questions or solutions were saved.");
         }
@@ -1278,9 +1273,14 @@ public sealed class AssessmentsController : Controller
         ViewBag.InterviewQuestionContent = content.Select(x => new SelectListItem($"{x.TopicTitle} / {x.Title}", x.Id.ToString())).ToList();
     }
 
-    private async Task LoadInterviewQuestionTopicLookupAsync(CancellationToken cancellationToken)
+    private async Task LoadInterviewQuestionChapterLookupAsync(CancellationToken cancellationToken)
     {
-        ViewBag.InterviewQuestionTopics = await _interviewQuestionImportService.GetTopicLookupAsync(cancellationToken);
+        ViewBag.InterviewQuestionChapters = await _interviewQuestionService.GetAssessmentChapterLookupAsync(cancellationToken);
+    }
+
+    private async Task LoadPracticeProgramChapterLookupAsync(CancellationToken cancellationToken)
+    {
+        ViewBag.PracticeProgramChapters = await _practiceProgramService.GetAssessmentChapterLookupAsync(cancellationToken);
     }
 
     private async Task LoadPracticeProgramContentAsync(CancellationToken cancellationToken)
