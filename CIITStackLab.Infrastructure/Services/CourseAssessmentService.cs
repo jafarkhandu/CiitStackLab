@@ -48,7 +48,14 @@ public sealed class CourseAssessmentService : ICourseAssessmentService
             .Select(lesson => lesson.TopicId)
             .SingleOrDefaultAsync(cancellationToken);
 
+        var lessonNoteId = await _dbContext.Lessons
+            .AsNoTracking()
+            .Where(lesson => lesson.Id == contentId && lesson.Flag == 0)
+            .Select(lesson => lesson.NoteId)
+            .SingleOrDefaultAsync(cancellationToken);
+
         int? firstActiveContentId = null;
+        int? firstActiveChapterContentId = null;
 
         if (lessonTopicId.HasValue)
         {
@@ -62,6 +69,18 @@ public sealed class CourseAssessmentService : ICourseAssessmentService
                 .FirstOrDefaultAsync(cancellationToken);
         }
 
+        if (lessonNoteId.HasValue)
+        {
+            firstActiveChapterContentId = await _dbContext.Lessons
+                .AsNoTracking()
+                .Where(lesson =>
+                    lesson.NoteId == lessonNoteId.Value
+                    && lesson.Flag == 0)
+                .OrderBy(lesson => lesson.Id)
+                .Select(lesson => (int?)lesson.Id)
+                .FirstOrDefaultAsync(cancellationToken);
+        }
+
         var questions = await _dbContext.ContentQuestions
             .AsNoTracking()
             .Where(question =>
@@ -69,7 +88,10 @@ public sealed class CourseAssessmentService : ICourseAssessmentService
                 && (question.ContentId == contentId
                     || (lessonTopicId.HasValue
                         && firstActiveContentId == contentId
-                        && question.TopicId == lessonTopicId.Value)))
+                        && question.TopicId == lessonTopicId.Value)
+                    || (lessonNoteId.HasValue
+                        && firstActiveChapterContentId == contentId
+                        && question.NoteId == lessonNoteId.Value)))
             .OrderBy(question => question.Id)
             .ToListAsync(cancellationToken);
 
