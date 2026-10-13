@@ -71,12 +71,110 @@ public class CoursesController : Controller
 
         if (price <= 0m)
         {
-            return RedirectToAction(nameof(Learn), new { id });
+            return RedirectToAction(nameof(CourseHome), new { id });
         }
 
         TempData[$"DemoPayment:{id}"] = true;
 
-        return RedirectToAction(nameof(Learn), new { id });
+        return RedirectToAction(nameof(CourseHome), new { id });
+    }
+
+    [HttpGet("Courses/Home/{id:int}")]
+    [Authorize(Roles = "Student")]
+    public async Task<IActionResult> CourseHome(
+        int id,
+        CancellationToken cancellationToken)
+    {
+        if (id <= 0)
+        {
+            return NotFound();
+        }
+
+        var course = await _courseService.GetLearningAsync(
+            id,
+            null,
+            cancellationToken);
+
+        if (course is null)
+        {
+            return NotFound();
+        }
+
+        var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+
+        if (string.IsNullOrWhiteSpace(userId))
+        {
+            return Challenge();
+        }
+
+        var hasAccess = TempData.Peek($"DemoPayment:{id}") is not null
+            || await _courseEnrollmentService.CanAccessCourseAsync(
+                userId,
+                id,
+                cancellationToken);
+
+        if (!hasAccess)
+        {
+            TempData["CoursePaymentMessage"] =
+                "Payment is required before this paid course can be opened.";
+            return RedirectToAction(nameof(Details), new { id });
+        }
+
+        course.Progress = await _studentProgressService.GetProgressAsync(
+            userId,
+            id,
+            cancellationToken);
+
+        return View(course);
+    }
+
+    [HttpGet("Courses/Curriculum/{id:int}")]
+    [Authorize(Roles = "Student")]
+    public async Task<IActionResult> Curriculum(
+        int id,
+        CancellationToken cancellationToken)
+    {
+        if (id <= 0)
+        {
+            return NotFound();
+        }
+
+        var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+
+        if (string.IsNullOrWhiteSpace(userId))
+        {
+            return Challenge();
+        }
+
+        var hasAccess = TempData.Peek($"DemoPayment:{id}") is not null
+            || await _courseEnrollmentService.CanAccessCourseAsync(
+                userId,
+                id,
+                cancellationToken);
+
+        if (!hasAccess)
+        {
+            TempData["CoursePaymentMessage"] =
+                "Payment is required before this paid course can be opened.";
+            return RedirectToAction(nameof(Details), new { id });
+        }
+
+        var course = await _courseService.GetLearningAsync(
+            id,
+            null,
+            cancellationToken);
+
+        if (course is null)
+        {
+            return NotFound();
+        }
+
+        course.Progress = await _studentProgressService.GetProgressAsync(
+            userId,
+            id,
+            cancellationToken);
+
+        return View(course);
     }
 
     [HttpGet("Courses/Learn/{id:int}")]
@@ -197,10 +295,14 @@ public class CoursesController : Controller
             return Unauthorized();
         }
 
-        if (!await _courseEnrollmentService.CanAccessCourseAsync(
-            userId,
-            id,
-            cancellationToken))
+        var hasDemoAccess = TempData.Peek($"DemoPayment:{id}") is not null;
+        var hasCourseAccess = hasDemoAccess
+            || await _courseEnrollmentService.CanAccessCourseAsync(
+                userId,
+                id,
+                cancellationToken);
+
+        if (!hasCourseAccess)
         {
             TempData["CoursePaymentMessage"] =
                 "Payment is required before paid-course progress can be updated.";
@@ -250,10 +352,14 @@ public class CoursesController : Controller
             return Unauthorized();
         }
 
-        if (!await _courseEnrollmentService.CanAccessCourseAsync(
-            userId,
-            id,
-            cancellationToken))
+        var hasDemoAccess = TempData.Peek($"DemoPayment:{id}") is not null;
+        var hasCourseAccess = hasDemoAccess
+            || await _courseEnrollmentService.CanAccessCourseAsync(
+                userId,
+                id,
+                cancellationToken);
+
+        if (!hasCourseAccess)
         {
             TempData["CoursePaymentMessage"] =
                 "Payment is required before a paid-course assessment can be submitted.";
@@ -310,10 +416,14 @@ public class CoursesController : Controller
             return Unauthorized();
         }
 
-        if (!await _courseEnrollmentService.CanAccessCourseAsync(
-            userId,
-            id,
-            cancellationToken))
+        var hasDemoAccess = TempData.Peek($"DemoPayment:{id}") is not null;
+        var hasCourseAccess = hasDemoAccess
+            || await _courseEnrollmentService.CanAccessCourseAsync(
+                userId,
+                id,
+                cancellationToken);
+
+        if (!hasCourseAccess)
         {
             return Forbid();
         }
