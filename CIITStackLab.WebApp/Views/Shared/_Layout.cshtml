@@ -83,6 +83,17 @@
             </div>
         }
 
+        @if (TempData["CourseEnrollmentMessage"] is string courseEnrollmentMessage)
+        {
+            var enrollmentMessageType = TempData["CourseEnrollmentMessageType"] as string;
+            <div class="container mt-3">
+                <div class="alert @(enrollmentMessageType == "success" ? "alert-success" : "alert-info") d-flex align-items-start gap-2" role="status">
+                    <i class="bi @(enrollmentMessageType == "success" ? "bi-check-circle" : "bi-person-check") mt-1"></i>
+                    <span>@courseEnrollmentMessage</span>
+                </div>
+            </div>
+        }
+
         @RenderBody()
     </main>
 
