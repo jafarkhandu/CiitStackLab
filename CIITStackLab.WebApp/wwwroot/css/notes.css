@@ -1,1 +1,417 @@
-.ciit-notes-reader{min-height:calc(100vh - 130px);background:#f8fafc}.ciit-notes-reader-header{background:#0f172a;color:#fff;padding:34px 0}.ciit-notes-back{display:inline-flex;gap:8px;color:#cbd5e1;text-decoration:none;margin-bottom:24px}.ciit-notes-reader-kicker{display:block;color:#93c5fd;font:700 12px 'Fira Code',monospace;letter-spacing:.12em;text-transform:uppercase}.ciit-notes-reader-header h1{margin:9px 0 5px;font:800 34px 'Plus Jakarta Sans',sans-serif}.ciit-notes-reader-header p{color:#cbd5e1}.ciit-notes-reader-shell{display:grid;grid-template-columns:280px 1fr;gap:22px;padding-top:24px;padding-bottom:50px}.ciit-notes-reader-sidebar{background:#fff;border:1px solid #e2e8f0;border-radius:16px;overflow:hidden;height:max-content;position:sticky;top:90px}.ciit-notes-reader-sidebar-head{padding:16px;border-bottom:1px solid #e2e8f0;display:flex;justify-content:space-between}.ciit-notes-reader-list{padding:8px}.ciit-notes-reader-list a{display:flex;justify-content:space-between;padding:11px 12px;border-radius:10px;color:#475569;text-decoration:none}.ciit-notes-reader-list a.is-active{background:#eff6ff;color:#1d4ed8;font-weight:800}.ciit-notes-reader-card{background:#fff;border:1px solid #e2e8f0;border-radius:18px;padding:clamp(22px,4vw,42px);box-shadow:0 10px 35px rgba(15,23,42,.06)}.ciit-notes-reader-title{border-bottom:1px solid #e2e8f0;padding-bottom:22px;margin-bottom:25px}.ciit-notes-reader-title span{color:#64748b;font:700 12px 'Fira Code',monospace}.ciit-notes-reader-title h2{margin:8px 0 0;font:800 36px 'Plus Jakarta Sans',sans-serif}.ciit-notes-reader-content{color:#334155;font-size:16px;line-height:1.8}.ciit-notes-reader-content img{max-width:100%;height:auto}.ciit-notes-reader-content pre{overflow:auto;padding:16px;background:#0f172a;color:#e2e8f0;border-radius:12px}.ciit-notes-reader-pager{display:grid;grid-template-columns:1fr 1fr;gap:14px;border-top:1px solid #e2e8f0;margin-top:35px;padding-top:20px}.ciit-notes-reader-pager a{display:flex;align-items:center;gap:12px;color:#334155;text-decoration:none;border:1px solid #e2e8f0;border-radius:12px;padding:12px}.ciit-notes-reader-pager a.next{justify-content:flex-end;text-align:right}@media(max-width:850px){.ciit-notes-reader-shell{grid-template-columns:1fr}.ciit-notes-reader-sidebar{position:static}.ciit-notes-reader-list{display:flex;overflow-x:auto}.ciit-notes-reader-list a{min-width:max-content}.ciit-notes-reader-pager{grid-template-columns:1fr}}
+.ciit-notes-reader {
+    min-height: 100%;
+    background: #f6f8fc;
+    padding: 28px clamp(18px, 3vw, 42px) 48px;
+}
+
+.ciit-notes-reader-header {
+    max-width: 1280px;
+    margin: 0 auto 22px;
+    padding: 0;
+    background: transparent;
+}
+
+.ciit-notes-reader-header-inner {
+    display: grid;
+    gap: 16px;
+}
+
+.ciit-notes-back {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    width: fit-content;
+    color: #52627a;
+    text-decoration: none;
+    font-size: 14px;
+    font-weight: 700;
+}
+
+.ciit-notes-back:hover {
+    color: #1769ff;
+}
+
+.ciit-notes-reader-heading {
+    display: flex;
+    align-items: flex-end;
+    justify-content: space-between;
+    gap: 20px;
+}
+
+.ciit-notes-reader-kicker {
+    display: block;
+    margin-bottom: 7px;
+    color: #1769ff;
+    font: 800 11px 'Fira Code', monospace;
+    letter-spacing: .12em;
+    text-transform: uppercase;
+}
+
+.ciit-notes-reader-header h1 {
+    margin: 0;
+    color: #12213f;
+    font: 800 clamp(28px, 3vw, 38px) 'Plus Jakarta Sans', sans-serif;
+    letter-spacing: -.035em;
+}
+
+.ciit-notes-reader-header p {
+    margin: 7px 0 0;
+    color: #71809a;
+    font-size: 14px;
+}
+
+.ciit-notes-reader-count {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    flex: 0 0 auto;
+    padding: 10px 14px;
+    border: 1px solid #dfe6f1;
+    border-radius: 12px;
+    background: #fff;
+    color: #41516b;
+    font-size: 13px;
+    font-weight: 800;
+    box-shadow: 0 5px 18px rgba(20, 42, 76, .05);
+}
+
+.ciit-notes-reader-count i {
+    color: #1769ff;
+}
+
+.ciit-notes-reader-shell {
+    display: grid;
+    grid-template-columns: minmax(230px, 280px) minmax(0, 1fr);
+    gap: 22px;
+    max-width: 1280px;
+    margin: 0 auto;
+}
+
+.ciit-notes-reader-sidebar {
+    align-self: start;
+    position: sticky;
+    top: 88px;
+    overflow: hidden;
+    height: max-content;
+    border: 1px solid #e0e7f0;
+    border-radius: 16px;
+    background: #fff;
+    box-shadow: 0 8px 26px rgba(20, 42, 76, .05);
+}
+
+.ciit-notes-reader-sidebar-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    padding: 16px 17px;
+    border-bottom: 1px solid #e7ecf3;
+}
+
+.ciit-notes-reader-sidebar-head div {
+    display: grid;
+    gap: 4px;
+}
+
+.ciit-notes-reader-sidebar-head span {
+    color: #7b8aa2;
+    font-size: 11px;
+    font-weight: 800;
+    letter-spacing: .08em;
+    text-transform: uppercase;
+}
+
+.ciit-notes-reader-sidebar-head strong {
+    color: #182946;
+    font-size: 14px;
+}
+
+.ciit-notes-reader-sidebar-head > i {
+    color: #1769ff;
+    font-size: 18px;
+}
+
+.ciit-notes-reader-list {
+    display: grid;
+    gap: 4px;
+    padding: 9px;
+}
+
+.ciit-notes-reader-list a {
+    display: grid;
+    grid-template-columns: 28px minmax(0, 1fr) 12px;
+    align-items: center;
+    gap: 10px;
+    padding: 11px 10px;
+    border-radius: 11px;
+    color: #52627a;
+    text-decoration: none;
+    transition: background-color .15s ease, color .15s ease;
+}
+
+.ciit-notes-reader-list a:hover {
+    background: #f5f8fd;
+    color: #1769ff;
+}
+
+.ciit-notes-reader-list a.is-active {
+    background: #edf4ff;
+    color: #1769ff;
+}
+
+.ciit-notes-reader-list-number {
+    display: grid;
+    place-items: center;
+    width: 28px;
+    height: 28px;
+    border-radius: 8px;
+    background: #f4f6fa;
+    color: #71809a;
+    font: 700 11px 'Fira Code', monospace;
+}
+
+.ciit-notes-reader-list a.is-active .ciit-notes-reader-list-number {
+    background: #1769ff;
+    color: #fff;
+}
+
+.ciit-notes-reader-list-copy {
+    display: grid;
+    min-width: 0;
+    gap: 3px;
+}
+
+.ciit-notes-reader-list-copy strong {
+    overflow: hidden;
+    color: inherit;
+    font-size: 13px;
+    line-height: 1.35;
+    text-overflow: ellipsis;
+}
+
+.ciit-notes-reader-list-copy small {
+    color: #91a0b7;
+    font-size: 11px;
+}
+
+.ciit-notes-reader-list > a > i {
+    color: #9aa8bc;
+    font-size: 11px;
+}
+
+.ciit-notes-reader-main {
+    min-width: 0;
+}
+
+.ciit-notes-reader-card {
+    overflow: hidden;
+    border: 1px solid #e0e7f0;
+    border-radius: 18px;
+    background: #fff;
+    box-shadow: 0 10px 32px rgba(20, 42, 76, .06);
+}
+
+.ciit-notes-reader-title {
+    padding: 28px clamp(22px, 3vw, 38px) 22px;
+    border-bottom: 1px solid #e5eaf2;
+}
+
+.ciit-notes-reader-title span {
+    color: #1769ff;
+    font: 800 11px 'Fira Code', monospace;
+    letter-spacing: .1em;
+}
+
+.ciit-notes-reader-title h2 {
+    margin: 8px 0 0;
+    color: #12213f;
+    font: 800 clamp(25px, 3vw, 36px) 'Plus Jakarta Sans', sans-serif;
+    letter-spacing: -.035em;
+}
+
+.ciit-notes-reader-content {
+    padding: clamp(22px, 3vw, 38px);
+    color: #34445d;
+    font-size: 16px;
+    line-height: 1.82;
+}
+
+.ciit-notes-reader-content img {
+    max-width: 100%;
+    height: auto;
+}
+
+.ciit-notes-reader-content pre {
+    overflow: auto;
+    padding: 16px;
+    border-radius: 12px;
+    background: #111c32;
+    color: #e6edf8;
+}
+
+.ciit-notes-reader-content h1,
+.ciit-notes-reader-content h2,
+.ciit-notes-reader-content h3,
+.ciit-notes-reader-content h4 {
+    color: #12213f;
+}
+
+.ciit-notes-reader-media {
+    margin: 0 clamp(22px, 3vw, 38px) 28px;
+    overflow: hidden;
+    border: 1px solid #e0e7f0;
+    border-radius: 14px;
+    background: #f8faff;
+}
+
+.ciit-notes-reader-media-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+    padding: 15px 17px;
+    border-bottom: 1px solid #e2e8f1;
+}
+
+.ciit-notes-reader-media-head div {
+    display: grid;
+    gap: 3px;
+}
+
+.ciit-notes-reader-media-head span {
+    color: #7c8ba1;
+    font-size: 11px;
+    font-weight: 800;
+    letter-spacing: .08em;
+    text-transform: uppercase;
+}
+
+.ciit-notes-reader-media-head strong {
+    color: #1a2b49;
+    font-size: 14px;
+}
+
+.ciit-notes-reader-media-head > i {
+    color: #1769ff;
+    font-size: 18px;
+}
+
+.ciit-notes-reader-media-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+    padding: 15px 17px;
+    border-top: 1px solid #e8edf4;
+}
+
+.ciit-notes-reader-media-row:first-of-type {
+    border-top: 0;
+}
+
+.ciit-notes-reader-media-copy {
+    display: grid;
+    gap: 4px;
+}
+
+.ciit-notes-reader-media-copy strong {
+    color: #253651;
+    font-size: 14px;
+}
+
+.ciit-notes-reader-media-copy small {
+    color: #8492a8;
+    font-size: 12px;
+}
+
+.ciit-notes-reader-pager {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 14px;
+    margin: 0 clamp(22px, 3vw, 38px);
+    padding: 22px 0 30px;
+    border-top: 1px solid #e5eaf2;
+}
+
+.ciit-notes-reader-pager a {
+    display: flex;
+    align-items: center;
+    gap: 11px;
+    min-width: 0;
+    padding: 13px 15px;
+    border: 1px solid #e0e7f0;
+    border-radius: 12px;
+    color: #34445d;
+    text-decoration: none;
+    background: #fff;
+    transition: border-color .15s ease, background-color .15s ease, color .15s ease;
+}
+
+.ciit-notes-reader-pager a:hover {
+    border-color: #b9d1ff;
+    background: #f7faff;
+    color: #1769ff;
+}
+
+.ciit-notes-reader-pager a.next {
+    justify-content: flex-end;
+    text-align: right;
+}
+
+.ciit-notes-reader-pager a span {
+    display: grid;
+    min-width: 0;
+    gap: 3px;
+}
+
+.ciit-notes-reader-pager a span small {
+    color: #8a98ad;
+    font-size: 10px;
+    font-weight: 800;
+    letter-spacing: .08em;
+    text-transform: uppercase;
+}
+
+@media (max-width: 950px) {
+    .ciit-notes-reader-shell {
+        grid-template-columns: 1fr;
+    }
+
+    .ciit-notes-reader-sidebar {
+        position: static;
+    }
+
+    .ciit-notes-reader-list {
+        display: flex;
+        overflow-x: auto;
+    }
+
+    .ciit-notes-reader-list a {
+        min-width: 240px;
+    }
+}
+
+@media (max-width: 650px) {
+    .ciit-notes-reader {
+        padding: 20px 14px 32px;
+    }
+
+    .ciit-notes-reader-heading {
+        align-items: flex-start;
+        flex-direction: column;
+    }
+
+    .ciit-notes-reader-media-row {
+        align-items: flex-start;
+        flex-direction: column;
+    }
+
+    .ciit-notes-reader-pager {
+        grid-template-columns: 1fr;
+    }
+
+    .ciit-notes-reader-pager a.next {
+        justify-content: flex-start;
+        text-align: left;
+    }
+}
