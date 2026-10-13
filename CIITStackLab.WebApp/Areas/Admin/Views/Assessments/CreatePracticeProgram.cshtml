@@ -2,14 +2,15 @@
 
 @{
     ViewData["Title"] = "Add Practice Program";
-    var contentItems = ViewBag.PracticeProgramContent as IEnumerable<Microsoft.AspNetCore.Mvc.Rendering.SelectListItem> ?? Array.Empty<Microsoft.AspNetCore.Mvc.Rendering.SelectListItem>();
+    var chapters = ViewBag.PracticeProgramChapters as IEnumerable<CIITStackLab.Application.DTOs.AdminAssessmentChapterLookupDto>
+        ?? Array.Empty<CIITStackLab.Application.DTOs.AdminAssessmentChapterLookupDto>();
 }
 
 @section Styles { <link rel="stylesheet" href="~/css/admin-practice.css" asp-append-version="true" /> }
 
 <section class="ciit-practice-form-page">
     <div class="ciit-practice-header">
-        <div><span class="ciit-admin-eyebrow">Assessment</span><h1>Add Practice Program</h1><p>Create a programming problem and link it to existing learning content.</p></div>
+        <div><span class="ciit-admin-eyebrow">Assessment</span><h1>Add Practice Program</h1><p>Create a programming problem and link it to a specific Notes chapter.</p></div>
     </div>
 
     <div class="ciit-practice-form-card">
@@ -17,9 +18,17 @@
             @Html.AntiForgeryToken()
             <div asp-validation-summary="ModelOnly" class="text-danger"></div>
             <div class="ciit-practice-field">
-                <label asp-for="ContentId">Content</label>
-                <select asp-for="ContentId" asp-items="contentItems"><option value="">Select content</option></select>
-                <span asp-validation-for="ContentId" class="text-danger"></span>
+                <label asp-for="NoteId">Notes Chapter</label>
+                <select asp-for="NoteId">
+                    <option value="0">Select chapter</option>
+                    @foreach (var chapter in chapters)
+                    {
+                        <option value="@chapter.NoteId" selected="@(Model.NoteId == chapter.NoteId ? "selected" : null)">
+                            @chapter.TopicTitle / @chapter.ChapterId — @chapter.ChapterTitle
+                        </option>
+                    }
+                </select>
+                <span asp-validation-for="NoteId" class="text-danger"></span>
             </div>
             <div class="ciit-practice-field">
                 <label asp-for="QuestionTitle">Problem Title</label>
