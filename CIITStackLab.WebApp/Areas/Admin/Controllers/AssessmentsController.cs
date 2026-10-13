@@ -708,7 +708,11 @@ public sealed class AssessmentsController : Controller
         if (!ModelState.IsValid)
         {
             await LoadInterviewQuestionChapterLookupAsync(cancellationToken);
-            return View(input);
+            ViewBag.InterviewQuestionInput = input;
+            ViewBag.OpenInterviewQuestionModal = "add";
+            ViewBag.InterviewMessage = "Review the highlighted fields and try again.";
+            ViewBag.InterviewMessageType = "error";
+            return View("InterviewQuestions", await _interviewQuestionService.GetIndexAsync(cancellationToken));
         }
 
         var result = await _interviewQuestionService.CreateAsync(input, cancellationToken);
@@ -716,7 +720,11 @@ public sealed class AssessmentsController : Controller
         {
             ModelState.AddModelError(string.Empty, result.Error!);
             await LoadInterviewQuestionChapterLookupAsync(cancellationToken);
-            return View(input);
+            ViewBag.InterviewQuestionInput = input;
+            ViewBag.OpenInterviewQuestionModal = "add";
+            ViewBag.InterviewMessage = result.Error;
+            ViewBag.InterviewMessageType = "error";
+            return View("InterviewQuestions", await _interviewQuestionService.GetIndexAsync(cancellationToken));
         }
 
         TempData["AdminInterviewMessage"] = "Interview question created successfully.";
@@ -807,6 +815,7 @@ public sealed class AssessmentsController : Controller
         }
 
         await LoadPracticeProgramChapterLookupAsync(cancellationToken);
+        await LoadPracticeProgramLookupAsync(cancellationToken);
         return View(await _practiceProgramService.GetIndexAsync(cancellationToken));
     }
 
@@ -1067,16 +1076,26 @@ public sealed class AssessmentsController : Controller
     {
         if (!ModelState.IsValid)
         {
-            await LoadPracticeProgramContentAsync(cancellationToken);
-            return View(input);
+            await LoadPracticeProgramChapterLookupAsync(cancellationToken);
+            await LoadPracticeProgramLookupAsync(cancellationToken);
+            ViewBag.PracticeProgramInput = input;
+            ViewBag.OpenPracticeModal = "program";
+            ViewBag.PracticeMessage = "Review the highlighted fields and try again.";
+            ViewBag.PracticeMessageType = "error";
+            return View("PracticePrograms", await _practiceProgramService.GetIndexAsync(cancellationToken));
         }
 
         var result = await _practiceProgramService.CreateAsync(input, cancellationToken);
         if (!result.Succeeded)
         {
             ModelState.AddModelError(string.Empty, result.Error!);
-            await LoadPracticeProgramContentAsync(cancellationToken);
-            return View(input);
+            await LoadPracticeProgramChapterLookupAsync(cancellationToken);
+            await LoadPracticeProgramLookupAsync(cancellationToken);
+            ViewBag.PracticeProgramInput = input;
+            ViewBag.OpenPracticeModal = "program";
+            ViewBag.PracticeMessage = result.Error;
+            ViewBag.PracticeMessageType = "error";
+            return View("PracticePrograms", await _practiceProgramService.GetIndexAsync(cancellationToken));
         }
 
         TempData["AdminPracticeMessage"] = "Practice program created successfully.";
@@ -1169,16 +1188,26 @@ public sealed class AssessmentsController : Controller
     {
         if (!ModelState.IsValid)
         {
+            await LoadPracticeProgramChapterLookupAsync(cancellationToken);
             await LoadPracticeProgramLookupAsync(cancellationToken);
-            return View(input);
+            ViewBag.PracticeSolutionInput = input;
+            ViewBag.OpenPracticeModal = "solution";
+            ViewBag.PracticeMessage = "Review the highlighted fields and try again.";
+            ViewBag.PracticeMessageType = "error";
+            return View("PracticePrograms", await _practiceProgramService.GetIndexAsync(cancellationToken));
         }
 
         var result = await _practiceProgramService.CreateAnswerAsync(input, cancellationToken);
         if (!result.Succeeded)
         {
             ModelState.AddModelError(string.Empty, result.Error!);
+            await LoadPracticeProgramChapterLookupAsync(cancellationToken);
             await LoadPracticeProgramLookupAsync(cancellationToken);
-            return View(input);
+            ViewBag.PracticeSolutionInput = input;
+            ViewBag.OpenPracticeModal = "solution";
+            ViewBag.PracticeMessage = result.Error;
+            ViewBag.PracticeMessageType = "error";
+            return View("PracticePrograms", await _practiceProgramService.GetIndexAsync(cancellationToken));
         }
 
         TempData["AdminPracticeMessage"] = "Practice program solution added successfully.";
