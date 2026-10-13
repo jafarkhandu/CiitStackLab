@@ -12,8 +12,8 @@
     <link rel="stylesheet" href="~/css/admin-interview-import.css" asp-append-version="true" />
 }
 
-<section class="ciit-mcq-page">
-    <div class="ciit-mcq-header">
+<section class="ciit-mcq-page ciit-assessment-subpage ciit-assessment-subpage--interview">
+    <div class="ciit-mcq-header ciit-assessment-subpage-hero">
         <div><span class="ciit-admin-eyebrow">Assessment</span><h1>Interview Questions</h1><p>Manage interview questions by their Notes chapter.</p></div>
         <div class="ciit-mcq-header-actions">
             <button type="button" class="ciit-mcq-import-header-btn" data-bs-toggle="modal" data-bs-target="#interviewQuestionImportModal">
@@ -25,12 +25,27 @@
         </div>
     </div>
 
+    <div class="ciit-assessment-summary" aria-label="Interview questions summary">
+        <div class="ciit-assessment-summary-card">
+            <span class="ciit-assessment-summary-icon is-violet"><i class="bi bi-chat-square-text"></i></span>
+            <span><small>Active questions</small><strong>@Model.ActiveQuestions.Count</strong></span>
+        </div>
+        <div class="ciit-assessment-summary-card">
+            <span class="ciit-assessment-summary-icon is-slate"><i class="bi bi-archive"></i></span>
+            <span><small>Archived questions</small><strong>@Model.ArchivedQuestions.Count</strong></span>
+        </div>
+        <div class="ciit-assessment-summary-card">
+            <span class="ciit-assessment-summary-icon is-blue"><i class="bi bi-file-earmark-spreadsheet"></i></span>
+            <span><small>Interview import</small><strong>Excel .xlsx <em>· 20 Q&amp;A rows</em></strong></span>
+        </div>
+    </div>
+
     @if (!string.IsNullOrWhiteSpace(message))
     {
         <div class="ciit-mcq-alert @(messageType == "success" ? "is-success" : "is-error")" role="alert"><i class="bi @(messageType == "success" ? "bi-check-circle-fill" : "bi-exclamation-circle-fill")"></i><span>@message</span></div>
     }
 
-    <section class="ciit-mcq-card">
+    <section class="ciit-mcq-card ciit-assessment-data-card">
         <div class="ciit-mcq-card-header"><div><h2>Active Interview Questions</h2><p>@Model.ActiveQuestions.Count active question@(Model.ActiveQuestions.Count == 1 ? "" : "s")</p></div></div>
         @if (Model.ActiveQuestions.Count == 0)
         {
@@ -49,7 +64,7 @@
         }
     </section>
 
-    <section class="ciit-mcq-card ciit-mcq-archive">
+    <section class="ciit-mcq-card ciit-mcq-archive ciit-assessment-data-card">
         <div class="ciit-mcq-card-header"><div><h2>Archived Interview Questions</h2><p>Archived questions can be restored.</p></div><span class="ciit-mcq-count">@Model.ArchivedQuestions.Count</span></div>
         @if (Model.ArchivedQuestions.Count == 0) { <div class="ciit-mcq-empty compact"><p>No archived interview questions.</p></div> }
         else
