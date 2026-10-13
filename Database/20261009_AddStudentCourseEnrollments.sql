@@ -1,7 +1,7 @@
 /*
-    Stores student enrollment requests and administrator-granted course access.
+    Stores course access grants for active students.
     This script creates a new table only; existing ERP tables are not altered.
-    Paid course access is manually approved; no payment gateway is assumed.
+    Only active access grants are stored; request review is not part of this workflow.
 */
 
 IF OBJECT_ID(N'erpsystem.tblstudent_course_enrollments', N'U') IS NULL
@@ -33,7 +33,7 @@ BEGIN
             REFERENCES [erpsystem].[AspNetUsers] ([Id]),
 
         CONSTRAINT [CK_tblstudent_course_enrollments_status]
-            CHECK ([status] IN (N'PendingApproval', N'Active', N'Rejected')),
+            CHECK ([status] = N'Active'),
 
         CONSTRAINT [CK_tblstudent_course_enrollments_price]
             CHECK ([price_at_enrollment] >= 0)
