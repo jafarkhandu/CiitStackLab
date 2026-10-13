@@ -28,17 +28,5 @@ public interface ICourseEnrollmentService
         int topicId,
         CancellationToken cancellationToken = default);
 
-    Task<CourseEnrollmentRequestResultDto> RequestEnrollmentAsync(
-        string userId,
-        int courseId,
-        CancellationToken cancellationToken = default);
 
-    Task<IReadOnlyList<PendingCourseEnrollmentDto>> GetPendingAsync(
-        CancellationToken cancellationToken = default);
-
-    Task<bool> ReviewAsync(
-        int enrollmentId,
-        bool approve,
-        string reviewerUserId,
-        CancellationToken cancellationToken = default);
 }
