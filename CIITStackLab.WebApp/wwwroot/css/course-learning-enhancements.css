@@ -1,6 +1,8 @@
 .ciit-course-environment-workspace {
     display: grid;
     grid-template-columns: 248px minmax(0, 1fr);
+    width: 100%;
+    min-width: 0;
     min-height: calc(100vh - 72px);
 }
 
@@ -107,17 +109,40 @@
 }
 
 .ciit-course-environment-main {
+    width: 100%;
     min-width: 0;
     min-height: calc(100vh - 72px);
 }
 
 /* Home and Curriculum now use the shared course navigation shell. */
+.ciit-course-experience {
+    width: 100%;
+}
+
+.ciit-course-experience > .container {
+    width: 100%;
+    max-width: none;
+    padding-left: 32px;
+    padding-right: 32px;
+}
+
 .ciit-course-experience-shell {
     display: block;
+    width: 100%;
 }
 
 .ciit-course-experience-shell > .ciit-course-experience-sidebar {
     display: none;
+}
+
+.ciit-course-experience-main {
+    width: 100%;
+}
+
+.ciit-course-experience-hero,
+.ciit-course-stat-grid,
+.ciit-course-experience-card {
+    width: 100%;
 }
 
 /* Make the lesson workspace feel like a dedicated LMS rather than the public site. */
@@ -169,6 +194,11 @@
 @media (max-width: 767.98px) {
     .ciit-course-environment-main {
         min-height: calc(100vh - 64px);
+    }
+
+    .ciit-course-experience > .container {
+        padding-left: 16px;
+        padding-right: 16px;
     }
 
     .ciit-learning-main-card::before {
