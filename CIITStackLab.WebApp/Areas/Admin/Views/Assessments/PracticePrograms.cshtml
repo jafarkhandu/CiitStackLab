@@ -53,7 +53,7 @@
             <div class="ciit-practice-empty">
                 <i class="bi bi-code-square"></i>
                 <h3>No active practice programs</h3>
-                <p>Create a program and attach it to existing learning content.</p>
+                <p>Create a programming problem and attach it to a Notes chapter.</p>
                 <a asp-area="Admin" asp-controller="Assessments" asp-action="CreatePracticeProgram" class="ciit-practice-secondary-btn">Add Program</a>
             </div>
         }
@@ -67,7 +67,7 @@
                             <div>
                                 <span class="ciit-practice-id">#@program.Id</span>
                                 <h3>@program.QuestionTitle</h3>
-                                <p class="ciit-practice-meta">@program.TopicTitle / @program.ContentTitle</p>
+                                <p class="ciit-practice-meta">@program.ChapterTitle</p>
                             </div>
                             <div class="ciit-practice-actions">
                                 <a asp-area="Admin" asp-controller="Assessments" asp-action="EditPracticeProgram" asp-route-id="@program.Id" title="Edit program"><i class="bi bi-pencil-square"></i></a>
@@ -137,7 +137,7 @@
                     <div class="ciit-practice-archive-row">
                         <div>
                             <strong>@program.QuestionTitle</strong>
-                            <span>@program.TopicTitle / @program.ContentTitle</span>
+                            <span>@program.ChapterTitle</span>
                         </div>
                         <form asp-area="Admin" asp-controller="Assessments" asp-action="RestorePracticeProgram" method="post">
                             @Html.AntiForgeryToken()
