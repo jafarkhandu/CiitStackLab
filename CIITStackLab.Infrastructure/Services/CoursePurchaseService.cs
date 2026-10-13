@@ -74,6 +74,13 @@ public sealed class CoursePurchaseService
         }
         catch (DbUpdateException)
         {
+            _dbContext.Entry(new StudentCoursePurchase
+            {
+                UserId = userId,
+                CourseId = courseId,
+                PurchasePrice = price
+            }).State = EntityState.Detached;
+
             return await _dbContext.StudentCoursePurchases
                 .AsNoTracking()
                 .AnyAsync(
