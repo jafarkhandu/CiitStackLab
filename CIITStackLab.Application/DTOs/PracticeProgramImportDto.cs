@@ -4,11 +4,15 @@ public sealed class PracticeProgramImportPreviewDto
 {
     public string PreviewToken { get; set; } = Guid.NewGuid().ToString("N");
 
+    public int NoteId { get; set; }
+
     public int ContentId { get; set; }
 
     public string ContentTitle { get; set; } = string.Empty;
 
     public string TopicTitle { get; set; } = string.Empty;
+
+    public string ChapterTitle { get; set; } = string.Empty;
 
     public string FileName { get; set; } = string.Empty;
 
@@ -21,7 +25,8 @@ public sealed class PracticeProgramImportPreviewDto
     public int InvalidQuestionCount => Programs.Count(item => !item.IsValid);
 
     public bool CanImport =>
-        FileErrors.Count == 0
+        NoteId > 0
+        && FileErrors.Count == 0
         && Programs.Count > 0
         && Programs.All(item => item.IsValid);
 }
