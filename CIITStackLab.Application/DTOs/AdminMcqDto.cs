@@ -7,6 +7,8 @@ public sealed class AdminMcqDto
     public int Id { get; init; }
     public int? ContentId { get; init; }
     public int? TopicId { get; init; }
+    public int? NoteId { get; init; }
+    public string ChapterTitle { get; init; } = string.Empty;
     public string ContentTitle { get; init; } = string.Empty;
     public string TopicTitle { get; init; } = string.Empty;
     public string Question { get; init; } = string.Empty;
@@ -23,6 +25,8 @@ public sealed class AdminArchivedMcqDto
 {
     public int Id { get; init; }
     public int? TopicId { get; init; }
+    public int? NoteId { get; init; }
+    public string ChapterTitle { get; init; } = string.Empty;
     public string ContentTitle { get; init; } = string.Empty;
     public string TopicTitle { get; init; } = string.Empty;
     public string Question { get; init; } = string.Empty;
@@ -78,6 +82,31 @@ public sealed class AdminTopicMcqInputDto
 {
     [Range(1, int.MaxValue, ErrorMessage = "Please select a chapter.")]
     public int TopicId { get; set; }
+
+    [Required(ErrorMessage = "Question is required.")]
+    public string Question { get; set; } = string.Empty;
+
+    [Required(ErrorMessage = "Option A is required.")]
+    public string Option1 { get; set; } = string.Empty;
+
+    [Required(ErrorMessage = "Option B is required.")]
+    public string Option2 { get; set; } = string.Empty;
+
+    [Required(ErrorMessage = "Option C is required.")]
+    public string Option3 { get; set; } = string.Empty;
+
+    [Required(ErrorMessage = "Option D is required.")]
+    public string Option4 { get; set; } = string.Empty;
+
+    [Range(1, 4, ErrorMessage = "Correct option must be between A and D.")]
+    public int CorrectOptionNumber { get; set; }
+}
+
+
+public sealed class AdminChapterMcqInputDto
+{
+    [Range(1, int.MaxValue, ErrorMessage = "Please select a Notes chapter.")]
+    public int NoteId { get; set; }
 
     [Required(ErrorMessage = "Question is required.")]
     public string Question { get; set; } = string.Empty;
