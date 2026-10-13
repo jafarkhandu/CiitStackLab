@@ -1,0 +1,89 @@
+@{
+    var courseId = ViewContext.RouteData.Values["id"]?.ToString();
+    var currentAction = ViewContext.RouteData.Values["action"]?.ToString() ?? string.Empty;
+    var courseTitle = ViewData["CourseTitle"]?.ToString();
+}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>@ViewData["Title"] - CIIT Stack Lab</title>
+    <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="anonymous" />
+    <link href="https://fonts.googleapis.com/css2?family=Fira+Code:wght@400;500;600&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+    <link rel="stylesheet" href="~/css/site.css" />
+    <link rel="stylesheet" href="~/css/course-environment.css" asp-append-version="true" />
+    @await RenderSectionAsync("Styles", required: false)
+</head>
+<body class="ciit-course-environment-body">
+    <header class="ciit-course-environment-header">
+        <div class="container-fluid px-3 px-lg-4">
+            <div class="ciit-course-environment-header-inner">
+                <a class="ciit-course-environment-brand" asp-controller="Home" asp-action="Index" aria-label="CIIT Stack Lab home">
+                    <span class="ciit-course-environment-brand-mark">C</span>
+                    <span>CIIT<span> Stack Lab</span></span>
+                </a>
+
+                <div class="ciit-course-environment-context">
+                    <span class="ciit-course-environment-label">Course Environment</span>
+                    @if (!string.IsNullOrWhiteSpace(courseTitle))
+                    {
+                        <strong>@courseTitle</strong>
+                    }
+                </div>
+
+                <nav class="ciit-course-environment-nav" aria-label="Course environment navigation">
+                    @if (!string.IsNullOrWhiteSpace(courseId))
+                    {
+                        <a class="@(currentAction.Equals("CourseHome", StringComparison.OrdinalIgnoreCase) ? "active" : "")"
+                           asp-controller="Courses" asp-action="CourseHome" asp-route-id="@courseId">
+                            <i class="bi bi-house"></i>
+                            <span>Home</span>
+                        </a>
+                        <a class="@(currentAction.Equals("Curriculum", StringComparison.OrdinalIgnoreCase) ? "active" : "")"
+                           asp-controller="Courses" asp-action="Curriculum" asp-route-id="@courseId">
+                            <i class="bi bi-list-check"></i>
+                            <span>Curriculum</span>
+                        </a>
+                        <a class="@(currentAction.Equals("Learn", StringComparison.OrdinalIgnoreCase) ? "active" : "")"
+                           asp-controller="Courses" asp-action="Learn" asp-route-id="@courseId">
+                            <i class="bi bi-play-circle"></i>
+                            <span>Learn</span>
+                        </a>
+                    }
+                </nav>
+
+                <div class="ciit-course-environment-account">
+                    @if (User.Identity?.IsAuthenticated == true)
+                    {
+                        <span class="ciit-course-environment-user d-none d-md-inline">Hi, @User.Identity.Name</span>
+                        <form asp-controller="Account" asp-action="Logout" method="post" class="m-0">
+                            <button type="submit" class="btn btn-outline-primary ciit-course-signout">Sign Out</button>
+                        </form>
+                    }
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <main class="ciit-course-environment-main">
+        @RenderBody()
+    </main>
+
+    <footer class="ciit-course-environment-footer">
+        <div class="container-fluid px-3 px-lg-4">
+            <div class="d-flex flex-column flex-sm-row justify-content-between align-items-center gap-2">
+                <span>&copy; @DateTime.Now.Year - CIIT Stack Lab</span>
+                <a asp-controller="Home" asp-action="Index">Exit Course</a>
+            </div>
+        </div>
+    </footer>
+
+    <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="~/js/site.js"></script>
+    @await RenderSectionAsync("Scripts", required: false)
+</body>
+</html>
