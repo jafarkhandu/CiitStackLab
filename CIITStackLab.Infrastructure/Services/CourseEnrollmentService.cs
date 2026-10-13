@@ -42,6 +42,31 @@ public sealed class CourseEnrollmentService : ICourseEnrollmentService
         return enrollment;
     }
 
+    public async Task<IReadOnlyList<int>> GetActiveCourseIdsAsync(
+        string userId,
+        CancellationToken cancellationToken = default)
+    {
+        if (string.IsNullOrWhiteSpace(userId))
+        {
+            return Array.Empty<int>();
+        }
+
+        return await (
+            from enrollment in _dbContext.CourseEnrollments.AsNoTracking()
+            join course in _dbContext.Courses.AsNoTracking()
+                on enrollment.CourseId equals course.Id
+            join user in _dbContext.Users.AsNoTracking()
+                on enrollment.UserId equals user.Id
+            where enrollment.UserId == userId
+                  && enrollment.Status == CourseEnrollmentStatuses.Active
+                  && course.Flag == 0
+                  && user.IsActive
+            orderby enrollment.ReviewedAt descending, enrollment.RequestedAt descending
+            select enrollment.CourseId)
+            .Distinct()
+            .ToListAsync(cancellationToken);
+    }
+
     public async Task<bool> HasActiveEnrollmentAsync(
         string userId,
         int courseId,
