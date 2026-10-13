@@ -49,7 +49,7 @@ public sealed class NotesController : Controller
             }
 
             TempData["CoursePaymentMessage"] =
-                "Payment is required to open notes for this paid course.";
+                "Payment or an approved enrollment is required to open notes for this paid course.";
 
             return RedirectToAction("Index", "Home");
         }
