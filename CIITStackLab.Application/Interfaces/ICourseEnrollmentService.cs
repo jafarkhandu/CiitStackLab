@@ -27,6 +27,4 @@ public interface ICourseEnrollmentService
         string? userId,
         int topicId,
         CancellationToken cancellationToken = default);
-
-
 }
