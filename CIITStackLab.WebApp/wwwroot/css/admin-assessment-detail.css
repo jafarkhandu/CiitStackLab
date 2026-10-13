@@ -1,4 +1,51 @@
 /* Shared visual language for the MCQ, Interview Questions and Practice Programs workspaces. */
+/* Shared back navigation, bounded lists and consistent create modals. */
+.ciit-assessment-back-link {
+    position:relative; z-index:2; display:inline-flex; align-items:center; justify-content:center;
+    gap:8px; min-height:42px; padding:9px 13px; border:1px solid #dce5f1;
+    border-radius:11px; background:rgba(255,255,255,.92); color:#5d6e86;
+    font-size:.82rem; font-weight:750; text-decoration:none; white-space:nowrap;
+    transition:border-color .18s ease,background .18s ease,color .18s ease,transform .18s ease;
+}
+.ciit-assessment-back-link:hover,.ciit-assessment-back-link:focus-visible {
+    transform:translateY(-1px); border-color:#b9cef0; background:#fff; color:#2459b2;
+}
+.ciit-assessment-standalone-nav { display:flex; align-items:center; justify-content:flex-start; margin-bottom:10px; }
+
+.ciit-assessment-form-modal .modal-content { overflow:hidden; border:1px solid #e0e8f4; border-radius:21px; box-shadow:0 24px 74px rgba(15,32,63,.2); }
+.ciit-assessment-form-modal .modal-header {
+    align-items:flex-start; gap:18px; padding:26px 29px 22px; border-bottom:1px solid #e9eef6;
+    background:radial-gradient(circle at 95% 0%,color-mix(in srgb,var(--assessment-page-accent,#2563eb) 12%,transparent),transparent 32%),linear-gradient(120deg,#fff,#f8faff);
+}
+.ciit-assessment-form-modal .modal-title { margin:4px 0 7px; color:#18263d; font-size:1.48rem; font-weight:800; letter-spacing:-.035em; }
+.ciit-assessment-form-modal .modal-header p { color:#71819a; font-size:.86rem; line-height:1.65; }
+.ciit-assessment-modal-form .modal-body { display:grid; gap:18px; max-height:min(64vh,680px); overflow-y:auto; padding:25px 29px; }
+.ciit-assessment-form-field { display:grid; gap:8px; margin:0; color:#33445d; font-size:.84rem; font-weight:750; }
+.ciit-assessment-form-field > span:first-child b { color:#dc4562; }
+.ciit-assessment-form-field input,.ciit-assessment-form-field select,.ciit-assessment-form-field textarea {
+    width:100%; min-width:0; padding:11px 13px; border:1px solid #d7e1ef; border-radius:11px;
+    background:#fff; color:#253650; font:inherit; font-size:.88rem; font-weight:450; line-height:1.7;
+}
+.ciit-assessment-form-field textarea { min-height:112px; resize:vertical; white-space:pre-wrap; }
+.ciit-assessment-form-field input:focus,.ciit-assessment-form-field select:focus,.ciit-assessment-form-field textarea:focus {
+    border-color:var(--assessment-page-accent,#2563eb); outline:3px solid color-mix(in srgb,var(--assessment-page-accent,#2563eb) 13%,transparent);
+}
+.ciit-assessment-modal-form .modal-footer { display:flex; justify-content:flex-end; gap:9px; padding:17px 29px 22px; border-top:1px solid #e9eef6; background:#fbfcfe; }
+.ciit-assessment-modal-cancel,.ciit-assessment-modal-submit { display:inline-flex; align-items:center; justify-content:center; gap:8px; min-height:42px; padding:10px 16px; border-radius:10px; font-size:.85rem; font-weight:750; }
+.ciit-assessment-modal-cancel { border:1px solid #d8e1ec; background:#fff; color:#596982; }
+.ciit-assessment-modal-submit { border:1px solid transparent; background:#17263e; color:#fff; }
+.ciit-assessment-modal-submit:hover { background:var(--assessment-page-accent,#2563eb); color:#fff; }
+.ciit-assessment-subpage--interview .ciit-assessment-modal-submit { --assessment-page-accent:#7c3aed; }
+.ciit-assessment-subpage--practice .ciit-assessment-modal-submit { --assessment-page-accent:#0f9f88; }
+.ciit-assessment-modal-form .text-danger,.ciit-assessment-modal-form .field-validation-error { color:#c2414d; font-size:.78rem; font-weight:600; }
+.ciit-assessment-modal-form .validation-summary-errors { padding:12px 14px; border:1px solid #fecaca; border-radius:11px; background:#fff5f5; color:#b42335; font-size:.82rem; }
+
+.ciit-assessment-subpage .ciit-mcq-table-wrap { max-height:min(62vh,570px); overflow:auto; overscroll-behavior:contain; scrollbar-gutter:stable; }
+.ciit-assessment-subpage .ciit-mcq-table thead th { position:sticky; top:0; z-index:3; box-shadow:0 1px 0 #e8edf5; }
+.ciit-assessment-subpage .ciit-mcq-archive-list,.ciit-assessment-subpage--practice .ciit-practice-archive-list { max-height:min(38vh,340px); overflow-y:auto; overscroll-behavior:contain; scrollbar-gutter:stable; }
+.ciit-assessment-subpage--practice .ciit-practice-list { max-height:min(76vh,760px); overflow-y:auto; overscroll-behavior:contain; scrollbar-gutter:stable; }
+.ciit-assessment-subpage--practice .ciit-practice-program:last-child { border-bottom:1px solid #edf1f7; }
+
 .ciit-assessment-subpage {
     --assessment-page-accent: #2563eb;
     --assessment-page-tint: #eff6ff;
