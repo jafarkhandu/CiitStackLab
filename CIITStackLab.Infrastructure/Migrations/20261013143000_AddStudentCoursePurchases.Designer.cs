@@ -849,6 +849,21 @@ namespace CIITStackLab.Infrastructure.Migrations
                     b.ToTable("AspNetRoles", "erpsystem");
                 });
 
+            modelBuilder.Entity("CIITStackLab.Domain.Entities.StudentCoursePurchase", b =>
+                {
+                    b.HasOne("CIITStackLab.Domain.Entities.Course", null)
+                        .WithMany()
+                        .HasForeignKey("CourseId")
+                        .OnDelete(DeleteBehavior.NoAction)
+                        .IsRequired();
+
+                    b.HasOne("CIITStackLab.Infrastructure.Identity.ApplicationUser", null)
+                        .WithMany()
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.NoAction)
+                        .IsRequired();
+                });
+
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityRoleClaim<string>", b =>
                 {
                     b.Property<int>("Id")
