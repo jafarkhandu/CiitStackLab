@@ -96,6 +96,7 @@ public class ApplicationDbContext : IdentityDbContext<ApplicationUser>
             entity.Property(x => x.Id).HasColumnName("question_id");
             entity.Property(x => x.ContentId).HasColumnName("content_id");
             entity.Property(x => x.TopicId).HasColumnName("topic_id");
+            entity.Property(x => x.NoteId).HasColumnName("note_id");
             entity.Property(x => x.Question).HasColumnName("question");
             entity.Property(x => x.Option1).HasColumnName("option1");
             entity.Property(x => x.Option2).HasColumnName("option2");
@@ -109,7 +110,9 @@ public class ApplicationDbContext : IdentityDbContext<ApplicationUser>
             entity.Property(x => x.RestoredAt).HasColumnName("RestoredAt");
             entity.HasOne(x => x.Content).WithMany().HasForeignKey(x => x.ContentId).OnDelete(DeleteBehavior.NoAction);
             entity.HasOne(x => x.Topic).WithMany().HasForeignKey(x => x.TopicId).OnDelete(DeleteBehavior.NoAction);
+            entity.HasOne(x => x.Note).WithMany().HasForeignKey(x => x.NoteId).OnDelete(DeleteBehavior.NoAction);
             entity.HasIndex(x => x.TopicId).HasDatabaseName("IX_tblcontent_questions_topic_id");
+            entity.HasIndex(x => x.NoteId).HasDatabaseName("IX_tblcontent_questions_note_id");
         });
 
         modelBuilder.Entity<ContentInterviewQuestion>(entity =>
@@ -119,6 +122,7 @@ public class ApplicationDbContext : IdentityDbContext<ApplicationUser>
             entity.Property(x => x.Id).HasColumnName("question_id");
             entity.Property(x => x.ContentId).HasColumnName("content_id");
             entity.Property(x => x.TopicId).HasColumnName("topic_id");
+            entity.Property(x => x.NoteId).HasColumnName("note_id");
             entity.Property(x => x.Question).HasColumnName("question");
             entity.Property(x => x.Answer).HasColumnName("answer");
             entity.Property(x => x.Flag).HasColumnName("flag");
@@ -128,7 +132,9 @@ public class ApplicationDbContext : IdentityDbContext<ApplicationUser>
             entity.Property(x => x.RestoredAt).HasColumnName("RestoredAt");
             entity.HasOne(x => x.Content).WithMany().HasForeignKey(x => x.ContentId).OnDelete(DeleteBehavior.NoAction);
             entity.HasOne(x => x.Topic).WithMany().HasForeignKey(x => x.TopicId).OnDelete(DeleteBehavior.NoAction);
+            entity.HasOne(x => x.Note).WithMany().HasForeignKey(x => x.NoteId).OnDelete(DeleteBehavior.NoAction);
             entity.HasIndex(x => x.TopicId).HasDatabaseName("IX_tblcontent_interview_questions_topic_id");
+            entity.HasIndex(x => x.NoteId).HasDatabaseName("IX_tblcontent_interview_questions_note_id");
         });
 
         modelBuilder.Entity<ContentProgramQuestion>(entity =>
@@ -137,6 +143,7 @@ public class ApplicationDbContext : IdentityDbContext<ApplicationUser>
             entity.HasKey(x => x.Id);
             entity.Property(x => x.Id).HasColumnName("program_question_id");
             entity.Property(x => x.ContentId).HasColumnName("content_id");
+            entity.Property(x => x.NoteId).HasColumnName("note_id");
             entity.Property(x => x.QuestionTitle).HasColumnName("question_title");
             entity.Property(x => x.QuestionDescription).HasColumnName("question_description");
             entity.Property(x => x.Flag).HasColumnName("flag");
@@ -145,6 +152,8 @@ public class ApplicationDbContext : IdentityDbContext<ApplicationUser>
             entity.Property(x => x.DeletedAt).HasColumnName("DeletedAt");
             entity.Property(x => x.RestoredAt).HasColumnName("RestoredAt");
             entity.HasOne(x => x.Content).WithMany().HasForeignKey(x => x.ContentId).OnDelete(DeleteBehavior.NoAction);
+            entity.HasOne(x => x.Note).WithMany().HasForeignKey(x => x.NoteId).OnDelete(DeleteBehavior.NoAction);
+            entity.HasIndex(x => x.NoteId).HasDatabaseName("IX_tblcontent_program_questions_note_id");
             entity.HasMany(x => x.Answers).WithOne(x => x.ProgramQuestion).HasForeignKey(x => x.ProgramQuestionId).OnDelete(DeleteBehavior.NoAction);
         });
 
