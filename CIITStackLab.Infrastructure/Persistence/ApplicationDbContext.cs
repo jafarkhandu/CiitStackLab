@@ -288,6 +288,14 @@ public class ApplicationDbContext : IdentityDbContext<ApplicationUser>
             entity.Property(x => x.PurchasedAt).HasColumnName("purchased_at").HasColumnType("datetime2").IsRequired();
             entity.HasIndex(x => new { x.UserId, x.CourseId }).IsUnique()
                 .HasDatabaseName("UX_tblstudent_course_purchases_user_course");
+            entity.HasOne<ApplicationUser>()
+                .WithMany()
+                .HasForeignKey(x => x.UserId)
+                .OnDelete(DeleteBehavior.NoAction);
+            entity.HasOne<Course>()
+                .WithMany()
+                .HasForeignKey(x => x.CourseId)
+                .OnDelete(DeleteBehavior.NoAction);
         });
         modelBuilder.Entity<TrainingNote>(entity =>
         {
