@@ -25,8 +25,16 @@ public sealed class AdminPracticeProgramService : IAdminPracticeProgramService
             {
                 Id = x.Id,
                 ContentId = x.ContentId,
-                ContentTitle = x.Content != null ? x.Content.Title ?? string.Empty : "Unassigned",
-                TopicTitle = x.Content != null && x.Content.Topic != null ? x.Content.Topic.Title : "Unassigned",
+                NoteId = x.NoteId ?? (x.Content != null ? x.Content.NoteId : null),
+                ChapterTitle = x.Note != null
+                    ? x.Note.Topic.Title + " / " + x.Note.ChapterId + " — " + x.Note.Title
+                    : x.Content != null && x.Content.Note != null
+                        ? x.Content.Note.Topic.Title + " / " + x.Content.Note.ChapterId + " — " + x.Content.Note.Title
+                        : x.Content != null && x.Content.Topic != null
+                            ? x.Content.Topic.Title + " / legacy content-linked question"
+                            : "Unassigned",
+                ContentTitle = x.Content != null ? x.Content.Title ?? string.Empty : x.Note != null ? "Chapter-level" : "Unassigned",
+                TopicTitle = x.Note != null ? x.Note.Topic.Title : x.Content != null && x.Content.Topic != null ? x.Content.Topic.Title : "Unassigned",
                 QuestionTitle = x.QuestionTitle,
                 QuestionDescription = x.QuestionDescription,
                 CreatedAt = x.CreatedAt,
@@ -67,8 +75,16 @@ public sealed class AdminPracticeProgramService : IAdminPracticeProgramService
             .Select(x => new AdminArchivedPracticeProgramDto
             {
                 Id = x.Id,
-                ContentTitle = x.Content != null ? x.Content.Title ?? string.Empty : "Unassigned",
-                TopicTitle = x.Content != null && x.Content.Topic != null ? x.Content.Topic.Title : "Unassigned",
+                NoteId = x.NoteId ?? (x.Content != null ? x.Content.NoteId : null),
+                ChapterTitle = x.Note != null
+                    ? x.Note.Topic.Title + " / " + x.Note.ChapterId + " — " + x.Note.Title
+                    : x.Content != null && x.Content.Note != null
+                        ? x.Content.Note.Topic.Title + " / " + x.Content.Note.ChapterId + " — " + x.Content.Note.Title
+                        : x.Content != null && x.Content.Topic != null
+                            ? x.Content.Topic.Title + " / legacy content-linked question"
+                            : "Unassigned",
+                ContentTitle = x.Content != null ? x.Content.Title ?? string.Empty : x.Note != null ? "Chapter-level" : "Unassigned",
+                TopicTitle = x.Note != null ? x.Note.Topic.Title : x.Content != null && x.Content.Topic != null ? x.Content.Topic.Title : "Unassigned",
                 QuestionTitle = x.QuestionTitle,
                 DeletedAt = x.DeletedAt
             })
@@ -105,8 +121,16 @@ public sealed class AdminPracticeProgramService : IAdminPracticeProgramService
             {
                 Id = x.Id,
                 ContentId = x.ContentId,
-                ContentTitle = x.Content != null ? x.Content.Title ?? string.Empty : "Unassigned",
-                TopicTitle = x.Content != null && x.Content.Topic != null ? x.Content.Topic.Title : "Unassigned",
+                NoteId = x.NoteId ?? (x.Content != null ? x.Content.NoteId : null),
+                ChapterTitle = x.Note != null
+                    ? x.Note.Topic.Title + " / " + x.Note.ChapterId + " — " + x.Note.Title
+                    : x.Content != null && x.Content.Note != null
+                        ? x.Content.Note.Topic.Title + " / " + x.Content.Note.ChapterId + " — " + x.Content.Note.Title
+                        : x.Content != null && x.Content.Topic != null
+                            ? x.Content.Topic.Title + " / legacy content-linked question"
+                            : "Unassigned",
+                ContentTitle = x.Content != null ? x.Content.Title ?? string.Empty : x.Note != null ? "Chapter-level" : "Unassigned",
+                TopicTitle = x.Note != null ? x.Note.Topic.Title : x.Content != null && x.Content.Topic != null ? x.Content.Topic.Title : "Unassigned",
                 QuestionTitle = x.QuestionTitle,
                 QuestionDescription = x.QuestionDescription,
                 CreatedAt = x.CreatedAt,
@@ -202,14 +226,19 @@ public sealed class AdminPracticeProgramService : IAdminPracticeProgramService
             .ToListAsync(cancellationToken);
     }
 
-    public async Task<(bool Succeeded, string? Error)> CreateAsync(AdminPracticeProgramInputDto input, CancellationToken cancellationToken = default)
+    public async Task<(bool Succeeded, string? Error)> CreateAsync(
+        AdminPracticeProgramInputDto input,
+        CancellationToken cancellationToken = default)
     {
-        if (!await ContentExistsAsync(input.ContentId, cancellationToken))
-            return (false, "The selected content is not available.");
+        if (!await NoteExistsAsync(input.NoteId, cancellationToken))
+        {
+            return (false, "The selected Notes chapter is not available.");
+        }
 
         var program = new ContentProgramQuestion
         {
-            ContentId = input.ContentId,
+            NoteId = input.NoteId,
+            ContentId = null,
             QuestionTitle = input.QuestionTitle.Trim(),
             QuestionDescription = input.QuestionDescription.Trim(),
             Flag = 0,
@@ -221,18 +250,26 @@ public sealed class AdminPracticeProgramService : IAdminPracticeProgramService
         return (true, null);
     }
 
-    public async Task<(bool Succeeded, string? Error)> UpdateAsync(int id, AdminPracticeProgramInputDto input, CancellationToken cancellationToken = default)
+    public async Task<(bool Succeeded, string? Error)> UpdateAsync(
+        int id,
+        AdminPracticeProgramInputDto input,
+        CancellationToken cancellationToken = default)
     {
         var program = await _dbContext.ContentProgramQuestions
-            .SingleOrDefaultAsync(x => x.Id == id && x.Flag == 0, cancellationToken);
+            .SingleOrDefaultAsync(item => item.Id == id && item.Flag == 0, cancellationToken);
 
         if (program is null)
+        {
             return (false, "The selected practice program was not found.");
+        }
 
-        if (!await ContentExistsAsync(input.ContentId, cancellationToken))
-            return (false, "The selected content is not available.");
+        if (!await NoteExistsAsync(input.NoteId, cancellationToken))
+        {
+            return (false, "The selected Notes chapter is not available.");
+        }
 
-        program.ContentId = input.ContentId;
+        program.NoteId = input.NoteId;
+        program.ContentId = null;
         program.QuestionTitle = input.QuestionTitle.Trim();
         program.QuestionDescription = input.QuestionDescription.Trim();
         program.UpdatedAt = DateTime.Now;
@@ -264,8 +301,15 @@ public sealed class AdminPracticeProgramService : IAdminPracticeProgramService
         if (program is null)
             return (false, "The selected archived practice program was not found.");
 
-        if (!await ContentExistsAsync(program.ContentId, cancellationToken))
+        if (program.NoteId.HasValue)
+        {
+            if (!await NoteExistsAsync(program.NoteId.Value, cancellationToken))
+                return (false, "The original Notes chapter is no longer available, so this program cannot be restored.");
+        }
+        else if (!await ContentExistsAsync(program.ContentId, cancellationToken))
+        {
             return (false, "The original content is no longer available, so this program cannot be restored.");
+        }
 
         program.Flag = 0;
         program.DeletedAt = null;
@@ -355,6 +399,13 @@ public sealed class AdminPracticeProgramService : IAdminPracticeProgramService
 
         return _dbContext.Lessons.AnyAsync(
             x => x.Id == contentId.Value && x.Flag == 0 && x.Topic != null && x.Topic.Flag == 0,
+            cancellationToken);
+    }
+
+    private Task<bool> NoteExistsAsync(int noteId, CancellationToken cancellationToken)
+    {
+        return _dbContext.TrainingNotes.AnyAsync(
+            note => note.Id == noteId && note.Flag == 0 && note.Topic.Flag == 0,
             cancellationToken);
     }
 
