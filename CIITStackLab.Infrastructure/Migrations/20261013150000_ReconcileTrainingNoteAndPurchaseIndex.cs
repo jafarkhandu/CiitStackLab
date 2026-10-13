@@ -1,4 +1,3 @@
-﻿using System;
 using Microsoft.EntityFrameworkCore.Migrations;
 
 #nullable disable
@@ -11,32 +10,63 @@ namespace CIITStackLab.Infrastructure.Migrations
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
         {
-            migrationBuilder.DropColumn(
-                name: "RestoredAt",
-                schema: "erpsystem",
-                table: "tbltraining_notes");
+            migrationBuilder.Sql("""
+                IF COL_LENGTH(N'erpsystem.tbltraining_notes', N'RestoredAt') IS NOT NULL
+                BEGIN
+                    ALTER TABLE [erpsystem].[tbltraining_notes]
+                    DROP COLUMN [RestoredAt];
+                END;
 
-            migrationBuilder.CreateIndex(
-                name: "IX_tblstudent_course_purchases_course_id",
-                schema: "erpsystem",
-                table: "tblstudent_course_purchases",
-                column: "course_id");
+                IF OBJECT_ID(N'erpsystem.tblstudent_course_purchases', N'U') IS NULL
+                BEGIN
+                    THROW 50001,
+                        'tblstudent_course_purchases must exist before this migration.',
+                        1;
+                END;
+
+                IF NOT EXISTS
+                (
+                    SELECT 1
+                    FROM sys.indexes
+                    WHERE [name] = N'IX_tblstudent_course_purchases_course_id'
+                      AND [object_id] =
+                          OBJECT_ID(N'erpsystem.tblstudent_course_purchases')
+                )
+                BEGIN
+                    CREATE INDEX [IX_tblstudent_course_purchases_course_id]
+                    ON [erpsystem].[tblstudent_course_purchases] ([course_id]);
+                END;
+                """);
         }
 
         /// <inheritdoc />
         protected override void Down(MigrationBuilder migrationBuilder)
         {
-            migrationBuilder.DropIndex(
-                name: "IX_tblstudent_course_purchases_course_id",
-                schema: "erpsystem",
-                table: "tblstudent_course_purchases");
+            migrationBuilder.Sql("""
+                IF OBJECT_ID(N'erpsystem.tblstudent_course_purchases', N'U') IS NOT NULL
+                   AND EXISTS
+                   (
+                       SELECT 1
+                       FROM sys.indexes
+                       WHERE [name] = N'IX_tblstudent_course_purchases_course_id'
+                         AND [object_id] =
+                             OBJECT_ID(N'erpsystem.tblstudent_course_purchases')
+                   )
+                BEGIN
+                    DROP INDEX [IX_tblstudent_course_purchases_course_id]
+                    ON [erpsystem].[tblstudent_course_purchases];
+                END;
 
-            migrationBuilder.AddColumn<DateTime>(
-                name: "RestoredAt",
-                schema: "erpsystem",
-                table: "tbltraining_notes",
-                type: "datetime2",
-                nullable: true);
+                IF OBJECT_ID(N'erpsystem.tbltraining_notes', N'U') IS NOT NULL
+                   AND COL_LENGTH(
+                       N'erpsystem.tbltraining_notes',
+                       N'RestoredAt'
+                   ) IS NULL
+                BEGIN
+                    ALTER TABLE [erpsystem].[tbltraining_notes]
+                    ADD [RestoredAt] datetime2 NULL;
+                END;
+                """);
         }
     }
 }
