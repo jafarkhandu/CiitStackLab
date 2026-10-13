@@ -473,12 +473,12 @@ namespace CIITStackLab.Infrastructure.Migrations
                     b.ToTable("tblstudent_assessment_attempts", "erpsystem");
                 });
 
-            modelBuilder.Entity("CIITStackLab.Domain.Entities.CourseEnrollment", b =>
+            modelBuilder.Entity("CIITStackLab.Domain.Entities.StudentCoursePurchase", b =>
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("int")
-                        .HasColumnName("enrollment_id");
+                        .HasColumnName("purchase_id");
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
 
@@ -486,29 +486,14 @@ namespace CIITStackLab.Infrastructure.Migrations
                         .HasColumnType("int")
                         .HasColumnName("course_id");
 
-                    b.Property<decimal>("PriceAtEnrollment")
+                    b.Property<decimal>("PurchasePrice")
                         .HasPrecision(18, 2)
                         .HasColumnType("decimal(18,2)")
-                        .HasColumnName("price_at_enrollment");
+                        .HasColumnName("purchase_price");
 
-                    b.Property<DateTime>("RequestedAt")
+                    b.Property<DateTime>("PurchasedAt")
                         .HasColumnType("datetime2")
-                        .HasColumnName("requested_at");
-
-                    b.Property<DateTime?>("ReviewedAt")
-                        .HasColumnType("datetime2")
-                        .HasColumnName("reviewed_at");
-
-                    b.Property<string>("ReviewedByUserId")
-                        .HasMaxLength(450)
-                        .HasColumnType("nvarchar(450)")
-                        .HasColumnName("reviewed_by_user_id");
-
-                    b.Property<string>("Status")
-                        .IsRequired()
-                        .HasMaxLength(30)
-                        .HasColumnType("nvarchar(30)")
-                        .HasColumnName("status");
+                        .HasColumnName("purchased_at");
 
                     b.Property<string>("UserId")
                         .IsRequired()
@@ -518,17 +503,12 @@ namespace CIITStackLab.Infrastructure.Migrations
 
                     b.HasKey("Id");
 
-                    b.HasIndex("Status", "RequestedAt")
-                        .HasDatabaseName("IX_tblstudent_course_enrollments_status_date");
-
                     b.HasIndex("UserId", "CourseId")
                         .IsUnique()
-                        .HasDatabaseName("UX_tblstudent_course_enrollments_user_course");
+                        .HasDatabaseName("UX_tblstudent_course_purchases_user_course");
 
-                    b.ToTable("tblstudent_course_enrollments", "erpsystem");
-                });
-
-            modelBuilder.Entity("CIITStackLab.Domain.Entities.ContentInterviewQuestion", b =>
+                    b.ToTable("tblstudent_course_purchases", "erpsystem");
+                });            modelBuilder.Entity("CIITStackLab.Domain.Entities.ContentInterviewQuestion", b =>
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
