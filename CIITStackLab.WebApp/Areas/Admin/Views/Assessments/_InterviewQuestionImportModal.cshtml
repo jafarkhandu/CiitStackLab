@@ -1,7 +1,7 @@
 @model CIITStackLab.Application.DTOs.AdminInterviewQuestionIndexDto
 @{
-    var topicOptions = ViewBag.InterviewQuestionTopics as IEnumerable<CIITStackLab.Application.DTOs.InterviewQuestionTopicLookupDto>
-        ?? Array.Empty<CIITStackLab.Application.DTOs.InterviewQuestionTopicLookupDto>();
+    var chapterOptions = ViewBag.InterviewQuestionChapters as IEnumerable<CIITStackLab.Application.DTOs.AdminAssessmentChapterLookupDto>
+        ?? Array.Empty<CIITStackLab.Application.DTOs.AdminAssessmentChapterLookupDto>();
     var preview = ViewBag.InterviewImportPreview as CIITStackLab.Application.DTOs.InterviewQuestionImportPreviewDto;
     var importMessage = ViewBag.InterviewImportMessage as string;
 }
@@ -34,7 +34,7 @@
                             <strong id="interviewImportLiveTitle">Preparing analysis...</strong>
                             <span id="interviewImportLiveState">READY</span>
                         </div>
-                        <p id="interviewImportLiveDetail">Choose a chapter and upload notes to begin.</p>
+                        <p id="interviewImportLiveDetail">Choose a Notes chapter and upload an Excel workbook to begin.</p>
                         <ol id="interviewImportProgressLog" class="ciit-interview-import-progress-log"></ol>
                         <div class="ciit-interview-import-live-track" aria-hidden="true"><span></span></div>
                     </div>
@@ -52,13 +52,13 @@
                     @Html.AntiForgeryToken()
                     <div class="ciit-interview-import-upload-fields">
                         <div class="ciit-interview-import-field">
-                            <label for="ImportInterviewTopicId">Chapter <span>*</span></label>
-                            <select id="ImportInterviewTopicId" name="topicId" required>
+                            <label for="ImportInterviewNoteId">Chapter <span>*</span></label>
+                            <select id="ImportInterviewNoteId" name="noteId" required>
                                 <option value="0">Select chapter</option>
-                                @foreach (var item in topicOptions)
+                                @foreach (var item in chapterOptions)
                                 {
-                                    <option value="@item.Id"
-                                            selected="@(preview?.TopicId == item.Id ? "selected" : null)">@item.Title</option>
+                                    <option value="@item.NoteId"
+                                            selected="@(preview?.NoteId == item.NoteId ? "selected" : null)">@item.TopicTitle / @item.ChapterId — @item.ChapterTitle</option>
                                 }
                             </select>
                             <small>All imported interview questions will be linked directly to this chapter.</small>
@@ -83,7 +83,7 @@
                         </div>
                     </div>
                     <div class="ciit-interview-import-upload-actions">
-                        <button type="submit" class="ciit-mcq-import-primary"><i class="bi bi-search"></i> Analyze notes</button>
+                        <button type="submit" class="ciit-mcq-import-primary"><i class="bi bi-search"></i> Analyze workbook</button>
                     </div>
                 </form>
             </div>
