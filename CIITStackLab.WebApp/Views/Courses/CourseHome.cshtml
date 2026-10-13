@@ -227,6 +227,7 @@
             const toggle = item.querySelector('.ciit-curriculum-topic-toggle');
             const panel = item.querySelector('.ciit-curriculum-topic-panel');
             const status = item.querySelector('.ciit-curriculum-topic-status');
+            const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
             if (!toggle || !panel) {
                 return;
@@ -240,6 +241,12 @@
                 item.classList.toggle('is-expanded', shouldExpand);
                 if (status) {
                     status.textContent = shouldExpand ? 'Collapse' : 'Expand';
+                }
+
+                if (reduceMotion) {
+                    panel.hidden = !shouldExpand;
+                    panel.style.maxHeight = shouldExpand ? 'none' : '';
+                    return;
                 }
 
                 if (shouldExpand) {
