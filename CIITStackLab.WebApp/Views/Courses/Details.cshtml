@@ -54,6 +54,15 @@
                                 <i class="bi bi-play-circle me-2"></i>Start Learning
                             </a>
                         }
+                        else if (Model.IsStudent && Model.Enrollment?.HasAccess == true)
+                        {
+                            <a asp-controller="Courses"
+                               asp-action="CourseHome"
+                               asp-route-id="@Model.Id"
+                               class="btn btn-primary btn-lg">
+                                <i class="bi bi-play-circle me-2"></i>Continue Learning
+                            </a>
+                        }
                         else
                         {
                             <button type="button"
@@ -77,6 +86,27 @@
                         <small class="text-secondary d-block mt-2">
                             Sign in before completing payment for this course.
                         </small>
+                    }
+
+                    @if (Model.IsStudent && Model.TotalPrice > 0m && Model.Enrollment?.HasAccess != true)
+                    {
+                        <div class="mt-3 p-3 rounded-3 border bg-light">
+                            @if (string.Equals(Model.Enrollment?.Status, "PendingApproval", StringComparison.OrdinalIgnoreCase))
+                            {
+                                <span class="badge text-bg-warning">Enrollment request pending administrator approval</span>
+                                <p class="small text-secondary mt-2 mb-0">You can use the demo checkout above, or wait for an administrator to review your enrollment request.</p>
+                            }
+                            else
+                            {
+                                <p class="small text-secondary mb-2">Prefer administrator-approved access? Submit an enrollment request for this course.</p>
+                                <form asp-controller="Courses" asp-action="RequestEnrollment" asp-route-id="@Model.Id" method="post" class="m-0">
+                                    @Html.AntiForgeryToken()
+                                    <button type="submit" class="btn btn-outline-primary">
+                                        <i class="bi bi-person-check me-1"></i>Request Enrollment
+                                    </button>
+                                </form>
+                            }
+                        </div>
                     }
                 </div>
             </div>
