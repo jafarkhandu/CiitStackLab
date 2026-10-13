@@ -124,6 +124,32 @@ public class CoursesController : Controller
         return RedirectToAction(nameof(Details), new { id });
     }
 
+    [HttpGet("Courses/Home")]
+    [Authorize(Roles = "Student")]
+    public async Task<IActionResult> CourseHome(
+        CancellationToken cancellationToken)
+    {
+        var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+
+        if (string.IsNullOrWhiteSpace(userId))
+        {
+            return Challenge();
+        }
+
+        var activeCourseIds = await _courseEnrollmentService.GetActiveCourseIdsAsync(
+            userId,
+            cancellationToken);
+        var publishedCourses = await _courseService.GetPublishedAsync(cancellationToken);
+        var activeCourseIdSet = activeCourseIds.ToHashSet();
+
+        var courses = publishedCourses
+            .Where(course => activeCourseIdSet.Contains(course.Id))
+            .OrderBy(course => activeCourseIds.IndexOf(course.Id))
+            .ToList();
+
+        return View("MyCourses", courses);
+    }
+
     [HttpGet("Courses/Home/{id:int}")]
     [Authorize(Roles = "Student")]
     public async Task<IActionResult> CourseHome(
