@@ -9,6 +9,10 @@ public interface ICourseEnrollmentService
         int courseId,
         CancellationToken cancellationToken = default);
 
+    Task<IReadOnlyList<int>> GetActiveCourseIdsAsync(
+        string userId,
+        CancellationToken cancellationToken = default);
+
     Task<bool> HasActiveEnrollmentAsync(
         string userId,
         int courseId,
