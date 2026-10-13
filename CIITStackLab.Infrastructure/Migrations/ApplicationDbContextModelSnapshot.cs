@@ -22,6 +22,175 @@ namespace CIITStackLab.Infrastructure.Migrations
 
             SqlServerModelBuilderExtensions.UseIdentityColumns(modelBuilder);
 
+            modelBuilder.Entity("CIITStackLab.Domain.Entities.ContentInterviewQuestion", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int")
+                        .HasColumnName("question_id");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("Answer")
+                        .HasColumnType("nvarchar(max)")
+                        .HasColumnName("answer");
+
+                    b.Property<int?>("ContentId")
+                        .HasColumnType("int")
+                        .HasColumnName("content_id");
+
+                    b.Property<DateTime?>("CreatedAt")
+                        .HasColumnType("datetime2")
+                        .HasColumnName("InsertedAt");
+
+                    b.Property<DateTime?>("DeletedAt")
+                        .HasColumnType("datetime2")
+                        .HasColumnName("DeletedAt");
+
+                    b.Property<int?>("Flag")
+                        .HasColumnType("int")
+                        .HasColumnName("flag");
+
+                    b.Property<int?>("NoteId")
+                        .HasColumnType("int")
+                        .HasColumnName("note_id");
+
+                    b.Property<string>("Question")
+                        .HasColumnType("nvarchar(max)")
+                        .HasColumnName("question");
+
+                    b.Property<DateTime?>("RestoredAt")
+                        .HasColumnType("datetime2")
+                        .HasColumnName("RestoredAt");
+
+                    b.Property<int?>("TopicId")
+                        .HasColumnType("int")
+                        .HasColumnName("topic_id");
+
+                    b.Property<DateTime?>("UpdatedAt")
+                        .HasColumnType("datetime2")
+                        .HasColumnName("UpdatedAt");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("ContentId");
+
+                    b.HasIndex("NoteId")
+                        .HasDatabaseName("IX_tblcontent_interview_questions_note_id");
+
+                    b.HasIndex("TopicId")
+                        .HasDatabaseName("IX_tblcontent_interview_questions_topic_id");
+
+                    b.ToTable("tblcontent_interview_questions", "erpsystem");
+                });
+
+            modelBuilder.Entity("CIITStackLab.Domain.Entities.ContentProgramAnswer", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int")
+                        .HasColumnName("program_answer_id");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("Answer")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)")
+                        .HasColumnName("program_answer");
+
+                    b.Property<DateTime?>("CreatedAt")
+                        .HasColumnType("datetime2")
+                        .HasColumnName("InsertedAt");
+
+                    b.Property<DateTime?>("DeletedAt")
+                        .HasColumnType("datetime2")
+                        .HasColumnName("DeletedAt");
+
+                    b.Property<string>("Description")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)")
+                        .HasColumnName("program_description");
+
+                    b.Property<int?>("Flag")
+                        .HasColumnType("int")
+                        .HasColumnName("flag");
+
+                    b.Property<int?>("ProgramQuestionId")
+                        .HasColumnType("int")
+                        .HasColumnName("program_question_id");
+
+                    b.Property<DateTime?>("RestoredAt")
+                        .HasColumnType("datetime2")
+                        .HasColumnName("RestoredAt");
+
+                    b.Property<DateTime?>("UpdatedAt")
+                        .HasColumnType("datetime2")
+                        .HasColumnName("UpdatedAt");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("ProgramQuestionId");
+
+                    b.ToTable("tblcontent_program_answers", "erpsystem");
+                });
+
+            modelBuilder.Entity("CIITStackLab.Domain.Entities.ContentProgramQuestion", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int")
+                        .HasColumnName("program_question_id");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<int?>("ContentId")
+                        .HasColumnType("int")
+                        .HasColumnName("content_id");
+
+                    b.Property<DateTime?>("CreatedAt")
+                        .HasColumnType("datetime2")
+                        .HasColumnName("InsertedAt");
+
+                    b.Property<DateTime?>("DeletedAt")
+                        .HasColumnType("datetime2")
+                        .HasColumnName("DeletedAt");
+
+                    b.Property<int?>("Flag")
+                        .HasColumnType("int")
+                        .HasColumnName("flag");
+
+                    b.Property<int?>("NoteId")
+                        .HasColumnType("int")
+                        .HasColumnName("note_id");
+
+                    b.Property<string>("QuestionDescription")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)")
+                        .HasColumnName("question_description");
+
+                    b.Property<string>("QuestionTitle")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)")
+                        .HasColumnName("question_title");
+
+                    b.Property<DateTime?>("RestoredAt")
+                        .HasColumnType("datetime2")
+                        .HasColumnName("RestoredAt");
+
+                    b.Property<DateTime?>("UpdatedAt")
+                        .HasColumnType("datetime2")
+                        .HasColumnName("UpdatedAt");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("ContentId");
+
+                    b.HasIndex("NoteId")
+                        .HasDatabaseName("IX_tblcontent_program_questions_note_id");
+
+                    b.ToTable("tblcontent_program_questions", "erpsystem");
+                });
+
             modelBuilder.Entity("CIITStackLab.Domain.Entities.ContentQuestion", b =>
                 {
                     b.Property<int>("Id")
@@ -34,14 +203,6 @@ namespace CIITStackLab.Infrastructure.Migrations
                     b.Property<int?>("ContentId")
                         .HasColumnType("int")
                         .HasColumnName("content_id");
-
-                    b.Property<int?>("TopicId")
-                        .HasColumnType("int")
-                        .HasColumnName("topic_id");
-
-                    b.Property<int?>("NoteId")
-                        .HasColumnType("int")
-                        .HasColumnName("note_id");
 
                     b.Property<int?>("CorrectOptionNumber")
                         .HasColumnType("int")
@@ -58,6 +219,10 @@ namespace CIITStackLab.Infrastructure.Migrations
                     b.Property<int?>("Flag")
                         .HasColumnType("int")
                         .HasColumnName("flag");
+
+                    b.Property<int?>("NoteId")
+                        .HasColumnType("int")
+                        .HasColumnName("note_id");
 
                     b.Property<string>("Option1")
                         .HasColumnType("nvarchar(max)")
@@ -83,6 +248,10 @@ namespace CIITStackLab.Infrastructure.Migrations
                         .HasColumnType("datetime2")
                         .HasColumnName("RestoredAt");
 
+                    b.Property<int?>("TopicId")
+                        .HasColumnType("int")
+                        .HasColumnName("topic_id");
+
                     b.Property<DateTime?>("UpdatedAt")
                         .HasColumnType("datetime2")
                         .HasColumnName("UpdatedAt");
@@ -91,11 +260,11 @@ namespace CIITStackLab.Infrastructure.Migrations
 
                     b.HasIndex("ContentId");
 
-                    b.HasIndex("TopicId")
-                        .HasDatabaseName("IX_tblcontent_questions_topic_id");
-
                     b.HasIndex("NoteId")
                         .HasDatabaseName("IX_tblcontent_questions_note_id");
+
+                    b.HasIndex("TopicId")
+                        .HasDatabaseName("IX_tblcontent_questions_topic_id");
 
                     b.ToTable("tblcontent_questions", "erpsystem");
                 });
@@ -259,6 +428,217 @@ namespace CIITStackLab.Infrastructure.Migrations
                     b.ToTable("tbltraining_topic_contents", "erpsystem");
                 });
 
+            modelBuilder.Entity("CIITStackLab.Domain.Entities.StudentAssessmentAttempt", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int")
+                        .HasColumnName("attempt_id");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("AnswersJson")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)")
+                        .HasColumnName("answers_json");
+
+                    b.Property<int>("ContentId")
+                        .HasColumnType("int")
+                        .HasColumnName("content_id");
+
+                    b.Property<int>("CourseId")
+                        .HasColumnType("int")
+                        .HasColumnName("course_id");
+
+                    b.Property<int>("Score")
+                        .HasColumnType("int")
+                        .HasColumnName("score");
+
+                    b.Property<DateTime>("SubmittedAt")
+                        .HasColumnType("datetime2")
+                        .HasColumnName("submitted_at");
+
+                    b.Property<int>("TotalQuestions")
+                        .HasColumnType("int")
+                        .HasColumnName("total_questions");
+
+                    b.Property<string>("UserId")
+                        .IsRequired()
+                        .HasMaxLength(450)
+                        .HasColumnType("nvarchar(450)")
+                        .HasColumnName("user_id");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("UserId", "CourseId", "ContentId", "SubmittedAt")
+                        .IsDescending(false, false, false, true)
+                        .HasDatabaseName("IX_tblstudent_assessment_attempts_user_course_content_date");
+
+                    b.ToTable("tblstudent_assessment_attempts", "erpsystem");
+                });
+
+            modelBuilder.Entity("CIITStackLab.Domain.Entities.StudentCoursePurchase", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int")
+                        .HasColumnName("purchase_id");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<int>("CourseId")
+                        .HasColumnType("int")
+                        .HasColumnName("course_id");
+
+                    b.Property<decimal>("PurchasePrice")
+                        .HasPrecision(18, 2)
+                        .HasColumnType("decimal(18,2)")
+                        .HasColumnName("purchase_price");
+
+                    b.Property<DateTime>("PurchasedAt")
+                        .HasColumnType("datetime2")
+                        .HasColumnName("purchased_at");
+
+                    b.Property<string>("UserId")
+                        .IsRequired()
+                        .HasMaxLength(450)
+                        .HasColumnType("nvarchar(450)")
+                        .HasColumnName("user_id");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("CourseId");
+
+                    b.HasIndex("UserId", "CourseId")
+                        .IsUnique()
+                        .HasDatabaseName("UX_tblstudent_course_purchases_user_course");
+
+                    b.ToTable("tblstudent_course_purchases", "erpsystem");
+                });
+
+            modelBuilder.Entity("CIITStackLab.Domain.Entities.StudentLessonProgress", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int")
+                        .HasColumnName("progress_id");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<DateTime?>("CompletedAt")
+                        .HasColumnType("datetime2")
+                        .HasColumnName("completed_at");
+
+                    b.Property<int>("ContentId")
+                        .HasColumnType("int")
+                        .HasColumnName("content_id");
+
+                    b.Property<int>("CourseId")
+                        .HasColumnType("int")
+                        .HasColumnName("course_id");
+
+                    b.Property<bool>("IsCompleted")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("bit")
+                        .HasDefaultValue(false)
+                        .HasColumnName("is_completed");
+
+                    b.Property<DateTime>("LastAccessedAt")
+                        .HasColumnType("datetime2")
+                        .HasColumnName("last_accessed_at");
+
+                    b.Property<string>("UserId")
+                        .IsRequired()
+                        .HasMaxLength(450)
+                        .HasColumnType("nvarchar(450)")
+                        .HasColumnName("user_id");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("UserId", "CourseId", "ContentId")
+                        .IsUnique()
+                        .HasDatabaseName("UX_tblstudent_lesson_progress_user_course_content");
+
+                    b.ToTable("tblstudent_lesson_progress", "erpsystem");
+                });
+
+            modelBuilder.Entity("CIITStackLab.Domain.Entities.StudentLoginActivity", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int")
+                        .HasColumnName("activity_id");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<int?>("Flag")
+                        .HasColumnType("int")
+                        .HasColumnName("flag");
+
+                    b.Property<string>("IpAddress")
+                        .HasColumnType("nvarchar(max)")
+                        .HasColumnName("ip_address");
+
+                    b.Property<DateTime>("LoginTime")
+                        .HasColumnType("datetime2")
+                        .HasColumnName("login_time");
+
+                    b.Property<DateTime?>("LogoutTime")
+                        .HasColumnType("datetime2")
+                        .HasColumnName("logout_time");
+
+                    b.Property<int>("StudentId")
+                        .HasColumnType("int")
+                        .HasColumnName("student_id");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("tblstudent_logins", "erpsystem");
+                });
+
+            modelBuilder.Entity("CIITStackLab.Domain.Entities.StudentPayment", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int")
+                        .HasColumnName("payment_id");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<int?>("Flag")
+                        .HasColumnType("int")
+                        .HasColumnName("flag");
+
+                    b.Property<bool>("IsPaid")
+                        .HasColumnType("bit")
+                        .HasColumnName("is_paid");
+
+                    b.Property<decimal>("PaymentAmount")
+                        .HasPrecision(18, 2)
+                        .HasColumnType("decimal(18,2)")
+                        .HasColumnName("payment_amount");
+
+                    b.Property<DateTime>("PaymentDate")
+                        .HasColumnType("datetime2")
+                        .HasColumnName("payment_date");
+
+                    b.Property<string>("PaymentDescription")
+                        .HasColumnType("nvarchar(max)")
+                        .HasColumnName("payment_description");
+
+                    b.Property<string>("PaymentMode")
+                        .HasColumnType("nvarchar(max)")
+                        .HasColumnName("payment_mode");
+
+                    b.Property<int>("RegistrationId")
+                        .HasColumnType("int")
+                        .HasColumnName("registration_id");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("tblstudent_payments", "erpsystem");
+                });
+
             modelBuilder.Entity("CIITStackLab.Domain.Entities.Topic", b =>
                 {
                     b.Property<int>("Id")
@@ -346,9 +726,6 @@ namespace CIITStackLab.Infrastructure.Migrations
                         .HasColumnType("nvarchar(max)")
                         .HasColumnName("html_content");
 
-                    b.Property<DateTime?>("RestoredAt")
-                        .HasColumnType("datetime2");
-
                     b.Property<int>("SortOrder")
                         .HasColumnType("int")
                         .HasColumnName("sort_order");
@@ -374,382 +751,6 @@ namespace CIITStackLab.Infrastructure.Migrations
                         .HasDatabaseName("UX_tbltraining_notes_topic_chapter");
 
                     b.ToTable("tbltraining_notes", "erpsystem");
-                });
-
-            modelBuilder.Entity("CIITStackLab.Domain.Entities.StudentLessonProgress", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("int")
-                        .HasColumnName("progress_id");
-
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
-
-                    b.Property<int>("ContentId")
-                        .HasColumnType("int")
-                        .HasColumnName("content_id");
-
-                    b.Property<int>("CourseId")
-                        .HasColumnType("int")
-                        .HasColumnName("course_id");
-
-                    b.Property<DateTime?>("CompletedAt")
-                        .HasColumnType("datetime2")
-                        .HasColumnName("completed_at");
-
-                    b.Property<bool>("IsCompleted")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("bit")
-                        .HasDefaultValue(false)
-                        .HasColumnName("is_completed");
-
-                    b.Property<DateTime>("LastAccessedAt")
-                        .HasColumnType("datetime2")
-                        .HasColumnName("last_accessed_at");
-
-                    b.Property<string>("UserId")
-                        .IsRequired()
-                        .HasMaxLength(450)
-                        .HasColumnType("nvarchar(450)")
-                        .HasColumnName("user_id");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("UserId", "CourseId", "ContentId")
-                        .IsUnique()
-                        .HasDatabaseName("UX_tblstudent_lesson_progress_user_course_content");
-
-                    b.ToTable("tblstudent_lesson_progress", "erpsystem");
-                });
-
-            modelBuilder.Entity("CIITStackLab.Domain.Entities.StudentAssessmentAttempt", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("int")
-                        .HasColumnName("attempt_id");
-
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
-
-                    b.Property<string>("AnswersJson")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)")
-                        .HasColumnName("answers_json");
-
-                    b.Property<int>("ContentId")
-                        .HasColumnType("int")
-                        .HasColumnName("content_id");
-
-                    b.Property<int>("CourseId")
-                        .HasColumnType("int")
-                        .HasColumnName("course_id");
-
-                    b.Property<int>("Score")
-                        .HasColumnType("int")
-                        .HasColumnName("score");
-
-                    b.Property<DateTime>("SubmittedAt")
-                        .HasColumnType("datetime2")
-                        .HasColumnName("submitted_at");
-
-                    b.Property<int>("TotalQuestions")
-                        .HasColumnType("int")
-                        .HasColumnName("total_questions");
-
-                    b.Property<string>("UserId")
-                        .IsRequired()
-                        .HasMaxLength(450)
-                        .HasColumnType("nvarchar(450)")
-                        .HasColumnName("user_id");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("UserId", "CourseId", "ContentId", "SubmittedAt")
-                        .IsDescending(false, false, false, true)
-                        .HasDatabaseName("IX_tblstudent_assessment_attempts_user_course_content_date");
-
-                    b.ToTable("tblstudent_assessment_attempts", "erpsystem");
-                });
-
-            modelBuilder.Entity("CIITStackLab.Domain.Entities.StudentCoursePurchase", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("int")
-                        .HasColumnName("purchase_id");
-
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
-
-                    b.Property<int>("CourseId")
-                        .HasColumnType("int")
-                        .HasColumnName("course_id");
-
-                    b.Property<decimal>("PurchasePrice")
-                        .HasPrecision(18, 2)
-                        .HasColumnType("decimal(18,2)")
-                        .HasColumnName("purchase_price");
-
-                    b.Property<DateTime>("PurchasedAt")
-                        .HasColumnType("datetime2")
-                        .HasColumnName("purchased_at");
-
-                    b.Property<string>("UserId")
-                        .IsRequired()
-                        .HasMaxLength(450)
-                        .HasColumnType("nvarchar(450)")
-                        .HasColumnName("user_id");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("UserId", "CourseId")
-                        .IsUnique()
-                        .HasDatabaseName("UX_tblstudent_course_purchases_user_course");
-
-                    b.ToTable("tblstudent_course_purchases", "erpsystem");
-                });
-            modelBuilder.Entity("CIITStackLab.Domain.Entities.ContentInterviewQuestion", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("int")
-                        .HasColumnName("question_id");
-
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
-
-                    b.Property<string>("Answer")
-                        .HasColumnType("nvarchar(max)")
-                        .HasColumnName("answer");
-
-                    b.Property<int?>("ContentId")
-                        .HasColumnType("int")
-                        .HasColumnName("content_id");
-
-                    b.Property<int?>("TopicId")
-                        .HasColumnType("int")
-                        .HasColumnName("topic_id");
-
-                    b.Property<int?>("NoteId")
-                        .HasColumnType("int")
-                        .HasColumnName("note_id");
-
-                    b.Property<DateTime?>("CreatedAt")
-                        .HasColumnType("datetime2")
-                        .HasColumnName("InsertedAt");
-
-                    b.Property<DateTime?>("DeletedAt")
-                        .HasColumnType("datetime2")
-                        .HasColumnName("DeletedAt");
-
-                    b.Property<int?>("Flag")
-                        .HasColumnType("int")
-                        .HasColumnName("flag");
-
-                    b.Property<string>("Question")
-                        .HasColumnType("nvarchar(max)")
-                        .HasColumnName("question");
-
-                    b.Property<DateTime?>("RestoredAt")
-                        .HasColumnType("datetime2")
-                        .HasColumnName("RestoredAt");
-
-                    b.Property<DateTime?>("UpdatedAt")
-                        .HasColumnType("datetime2")
-                        .HasColumnName("UpdatedAt");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("ContentId");
-
-                    b.HasIndex("TopicId");
-
-                    b.HasIndex("NoteId")
-                        .HasDatabaseName("IX_tblcontent_interview_questions_note_id");
-
-                    b.ToTable("tblcontent_interview_questions", "erpsystem");
-                });
-
-            modelBuilder.Entity("CIITStackLab.Domain.Entities.ContentProgramQuestion", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("int")
-                        .HasColumnName("program_question_id");
-
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
-
-                    b.Property<int?>("ContentId")
-                        .HasColumnType("int")
-                        .HasColumnName("content_id");
-
-                    b.Property<int?>("NoteId")
-                        .HasColumnType("int")
-                        .HasColumnName("note_id");
-
-                    b.Property<DateTime?>("CreatedAt")
-                        .HasColumnType("datetime2")
-                        .HasColumnName("InsertedAt");
-
-                    b.Property<DateTime?>("DeletedAt")
-                        .HasColumnType("datetime2")
-                        .HasColumnName("DeletedAt");
-
-                    b.Property<string>("QuestionDescription")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)")
-                        .HasColumnName("question_description");
-
-                    b.Property<string>("QuestionTitle")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)")
-                        .HasColumnName("question_title");
-
-                    b.Property<DateTime?>("RestoredAt")
-                        .HasColumnType("datetime2")
-                        .HasColumnName("RestoredAt");
-
-                    b.Property<int?>("Flag")
-                        .HasColumnType("int")
-                        .HasColumnName("flag");
-
-                    b.Property<DateTime?>("UpdatedAt")
-                        .HasColumnType("datetime2")
-                        .HasColumnName("UpdatedAt");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("ContentId");
-
-                    b.HasIndex("NoteId")
-                        .HasDatabaseName("IX_tblcontent_program_questions_note_id");
-
-                    b.ToTable("tblcontent_program_questions", "erpsystem");
-                });
-
-            modelBuilder.Entity("CIITStackLab.Domain.Entities.ContentProgramAnswer", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("int")
-                        .HasColumnName("program_answer_id");
-
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
-
-                    b.Property<string>("Answer")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)")
-                        .HasColumnName("program_answer");
-
-                    b.Property<DateTime?>("CreatedAt")
-                        .HasColumnType("datetime2")
-                        .HasColumnName("InsertedAt");
-
-                    b.Property<DateTime?>("DeletedAt")
-                        .HasColumnType("datetime2")
-                        .HasColumnName("DeletedAt");
-
-                    b.Property<string>("Description")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)")
-                        .HasColumnName("program_description");
-
-                    b.Property<int?>("Flag")
-                        .HasColumnType("int")
-                        .HasColumnName("flag");
-
-                    b.Property<int?>("ProgramQuestionId")
-                        .HasColumnType("int")
-                        .HasColumnName("program_question_id");
-
-                    b.Property<DateTime?>("RestoredAt")
-                        .HasColumnType("datetime2")
-                        .HasColumnName("RestoredAt");
-
-                    b.Property<DateTime?>("UpdatedAt")
-                        .HasColumnType("datetime2")
-                        .HasColumnName("UpdatedAt");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("ProgramQuestionId");
-
-                    b.ToTable("tblcontent_program_answers", "erpsystem");
-                });
-
-            modelBuilder.Entity("CIITStackLab.Domain.Entities.StudentPayment", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("int")
-                        .HasColumnName("payment_id");
-
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
-
-                    b.Property<string>("PaymentDescription")
-                        .HasColumnType("nvarchar(max)")
-                        .HasColumnName("payment_description");
-
-                    b.Property<decimal>("PaymentAmount")
-                        .HasPrecision(18, 2)
-                        .HasColumnType("decimal(18,2)")
-                        .HasColumnName("payment_amount");
-
-                    b.Property<DateTime>("PaymentDate")
-                        .HasColumnType("datetime2")
-                        .HasColumnName("payment_date");
-
-                    b.Property<string>("PaymentMode")
-                        .HasColumnType("nvarchar(max)")
-                        .HasColumnName("payment_mode");
-
-                    b.Property<int?>("Flag")
-                        .HasColumnType("int")
-                        .HasColumnName("flag");
-
-                    b.Property<bool>("IsPaid")
-                        .HasColumnType("bit")
-                        .HasColumnName("is_paid");
-
-                    b.Property<int>("RegistrationId")
-                        .HasColumnType("int")
-                        .HasColumnName("registration_id");
-
-                    b.HasKey("Id");
-
-                    b.ToTable("tblstudent_payments", "erpsystem");
-                });
-
-            modelBuilder.Entity("CIITStackLab.Domain.Entities.StudentLoginActivity", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("int")
-                        .HasColumnName("activity_id");
-
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
-
-                    b.Property<string>("IpAddress")
-                        .HasColumnType("nvarchar(max)")
-                        .HasColumnName("ip_address");
-
-                    b.Property<DateTime>("LoginTime")
-                        .HasColumnType("datetime2")
-                        .HasColumnName("login_time");
-
-                    b.Property<DateTime?>("LogoutTime")
-                        .HasColumnType("datetime2")
-                        .HasColumnName("logout_time");
-
-                    b.Property<int>("StudentId")
-                        .HasColumnType("int")
-                        .HasColumnName("student_id");
-
-                    b.Property<int?>("Flag")
-                        .HasColumnType("int")
-                        .HasColumnName("flag");
-
-                    b.HasKey("Id");
-
-                    b.ToTable("tblstudent_logins", "erpsystem");
                 });
 
             modelBuilder.Entity("CIITStackLab.Infrastructure.Identity.ApplicationUser", b =>
@@ -845,21 +846,6 @@ namespace CIITStackLab.Infrastructure.Migrations
                         .HasFilter("[NormalizedName] IS NOT NULL");
 
                     b.ToTable("AspNetRoles", "erpsystem");
-                });
-
-            modelBuilder.Entity("CIITStackLab.Domain.Entities.StudentCoursePurchase", b =>
-                {
-                    b.HasOne("CIITStackLab.Domain.Entities.Course", null)
-                        .WithMany()
-                        .HasForeignKey("CourseId")
-                        .OnDelete(DeleteBehavior.NoAction)
-                        .IsRequired();
-
-                    b.HasOne("CIITStackLab.Infrastructure.Identity.ApplicationUser", null)
-                        .WithMany()
-                        .HasForeignKey("UserId")
-                        .OnDelete(DeleteBehavior.NoAction)
-                        .IsRequired();
                 });
 
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityRoleClaim<string>", b =>
@@ -975,14 +961,14 @@ namespace CIITStackLab.Infrastructure.Migrations
                         .HasForeignKey("ContentId")
                         .OnDelete(DeleteBehavior.NoAction);
 
-                    b.HasOne("CIITStackLab.Domain.Entities.Topic", "Topic")
-                        .WithMany()
-                        .HasForeignKey("TopicId")
-                        .OnDelete(DeleteBehavior.NoAction);
-
                     b.HasOne("CIITStackLab.Domain.Entities.TrainingNote", "Note")
                         .WithMany()
                         .HasForeignKey("NoteId")
+                        .OnDelete(DeleteBehavior.NoAction);
+
+                    b.HasOne("CIITStackLab.Domain.Entities.Topic", "Topic")
+                        .WithMany()
+                        .HasForeignKey("TopicId")
                         .OnDelete(DeleteBehavior.NoAction);
 
                     b.Navigation("Content");
@@ -1017,8 +1003,6 @@ namespace CIITStackLab.Infrastructure.Migrations
                     b.Navigation("Content");
 
                     b.Navigation("Note");
-
-                    b.Navigation("Answers");
                 });
 
             modelBuilder.Entity("CIITStackLab.Domain.Entities.ContentQuestion", b =>
@@ -1028,14 +1012,14 @@ namespace CIITStackLab.Infrastructure.Migrations
                         .HasForeignKey("ContentId")
                         .OnDelete(DeleteBehavior.NoAction);
 
-                    b.HasOne("CIITStackLab.Domain.Entities.Topic", "Topic")
-                        .WithMany()
-                        .HasForeignKey("TopicId")
-                        .OnDelete(DeleteBehavior.NoAction);
-
                     b.HasOne("CIITStackLab.Domain.Entities.TrainingNote", "Note")
                         .WithMany()
                         .HasForeignKey("NoteId")
+                        .OnDelete(DeleteBehavior.NoAction);
+
+                    b.HasOne("CIITStackLab.Domain.Entities.Topic", "Topic")
+                        .WithMany()
+                        .HasForeignKey("TopicId")
                         .OnDelete(DeleteBehavior.NoAction);
 
                     b.Navigation("Content");
@@ -1066,7 +1050,7 @@ namespace CIITStackLab.Infrastructure.Migrations
 
             modelBuilder.Entity("CIITStackLab.Domain.Entities.Lesson", b =>
                 {
-                    b.HasOne("CIITStackLab.Domain.Entities.TrainingNote", null)
+                    b.HasOne("CIITStackLab.Domain.Entities.TrainingNote", "Note")
                         .WithMany()
                         .HasForeignKey("NoteId")
                         .OnDelete(DeleteBehavior.NoAction);
@@ -1076,7 +1060,24 @@ namespace CIITStackLab.Infrastructure.Migrations
                         .HasForeignKey("TopicId")
                         .OnDelete(DeleteBehavior.NoAction);
 
+                    b.Navigation("Note");
+
                     b.Navigation("Topic");
+                });
+
+            modelBuilder.Entity("CIITStackLab.Domain.Entities.StudentCoursePurchase", b =>
+                {
+                    b.HasOne("CIITStackLab.Domain.Entities.Course", null)
+                        .WithMany()
+                        .HasForeignKey("CourseId")
+                        .OnDelete(DeleteBehavior.NoAction)
+                        .IsRequired();
+
+                    b.HasOne("CIITStackLab.Infrastructure.Identity.ApplicationUser", null)
+                        .WithMany()
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.NoAction)
+                        .IsRequired();
                 });
 
             modelBuilder.Entity("CIITStackLab.Domain.Entities.TrainingNote", b =>
@@ -1139,6 +1140,11 @@ namespace CIITStackLab.Infrastructure.Migrations
                         .HasForeignKey("UserId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
+                });
+
+            modelBuilder.Entity("CIITStackLab.Domain.Entities.ContentProgramQuestion", b =>
+                {
+                    b.Navigation("Answers");
                 });
 
             modelBuilder.Entity("CIITStackLab.Domain.Entities.Course", b =>
