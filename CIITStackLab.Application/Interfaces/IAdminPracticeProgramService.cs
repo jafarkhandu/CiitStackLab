@@ -5,6 +5,7 @@ namespace CIITStackLab.Application.Interfaces;
 public interface IAdminPracticeProgramService
 {
     Task<AdminPracticeProgramIndexDto> GetIndexAsync(CancellationToken cancellationToken = default);
+    Task<IReadOnlyList<AdminAssessmentChapterLookupDto>> GetAssessmentChapterLookupAsync(CancellationToken cancellationToken = default);
     Task<AdminPracticeProgramDto?> GetByIdAsync(int id, CancellationToken cancellationToken = default);
     Task<AdminPracticeProgramAnswerDto?> GetAnswerByIdAsync(int id, CancellationToken cancellationToken = default);
     Task<IReadOnlyList<AdminPracticeProgramContentLookupDto>> GetContentLookupAsync(CancellationToken cancellationToken = default);
