@@ -1,13 +1,8 @@
-using CIITStackLab.Infrastructure.Persistence;
-using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Migrations;
 
 #nullable disable
 
 namespace CIITStackLab.Infrastructure.Migrations;
-
-[DbContext(typeof(ApplicationDbContext))]
-[Migration("20261013143000_AddStudentCoursePurchases")]
 public sealed partial class AddStudentCoursePurchases : Migration
 {
     protected override void Up(MigrationBuilder migrationBuilder)
