@@ -4,9 +4,13 @@ public sealed class McqImportPreviewDto
 {
     public string PreviewToken { get; set; } = string.Empty;
 
+    public int NoteId { get; set; }
+
     public int TopicId { get; set; }
 
     public string TopicLabel { get; set; } = string.Empty;
+
+    public string ChapterLabel { get; set; } = string.Empty;
 
     public string FileName { get; set; } = string.Empty;
 
@@ -22,6 +26,7 @@ public sealed class McqImportPreviewDto
 
     public bool CanImport =>
         HasPreview
+        && NoteId > 0
         && FileErrors.Count == 0
         && Questions.Count > 0
         && Questions.All(question => question.IsValid);
