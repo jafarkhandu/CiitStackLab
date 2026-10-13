@@ -17,6 +17,9 @@
     <div class="ciit-mcq-header ciit-assessment-subpage-hero">
         <div><span class="ciit-admin-eyebrow">Assessment</span><h1>MCQs</h1><p>Manage multiple-choice questions organized by chapter.</p></div>
         <div class="ciit-mcq-header-actions">
+            <a asp-area="Admin" asp-controller="Assessments" asp-action="Index" class="ciit-assessment-back-link">
+                <i class="bi bi-arrow-left"></i><span>Assessments</span>
+            </a>
             <button type="button" class="ciit-mcq-import-header-btn"
                     data-bs-toggle="modal" data-bs-target="#bulkImportMcqModal">
                 <i class="bi bi-file-earmark-arrow-up"></i><span>Bulk Import</span>
