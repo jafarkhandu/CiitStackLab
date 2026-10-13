@@ -1,3 +1,4 @@
+using CIITStackLab.Application.Interfaces;
 using CIITStackLab.Domain.Entities;
 using CIITStackLab.Infrastructure.Persistence;
 using Microsoft.EntityFrameworkCore;
@@ -7,11 +8,11 @@ namespace CIITStackLab.Infrastructure.Services;
 public sealed class DemoCoursePurchaseService
 {
     private readonly ApplicationDbContext _dbContext;
-    private readonly CourseEnrollmentService _courseEnrollmentService;
+    private readonly ICourseEnrollmentService _courseEnrollmentService;
 
     public DemoCoursePurchaseService(
         ApplicationDbContext dbContext,
-        CourseEnrollmentService courseEnrollmentService)
+        ICourseEnrollmentService courseEnrollmentService)
     {
         _dbContext = dbContext;
         _courseEnrollmentService = courseEnrollmentService;
