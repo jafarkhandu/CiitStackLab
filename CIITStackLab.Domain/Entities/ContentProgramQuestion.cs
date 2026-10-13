@@ -4,6 +4,7 @@ public class ContentProgramQuestion
 {
     public int Id { get; set; }
     public int? ContentId { get; set; }
+    public int? NoteId { get; set; }
     public string QuestionTitle { get; set; } = string.Empty;
     public string QuestionDescription { get; set; } = string.Empty;
     public int? Flag { get; set; }
@@ -13,5 +14,6 @@ public class ContentProgramQuestion
     public DateTime? RestoredAt { get; set; }
 
     public Lesson? Content { get; set; }
+    public TrainingNote? Note { get; set; }
     public ICollection<ContentProgramAnswer> Answers { get; set; } = new List<ContentProgramAnswer>();
 }
