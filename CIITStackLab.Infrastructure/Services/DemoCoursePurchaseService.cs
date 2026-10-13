@@ -1,3 +1,4 @@
+using CIITStackLab.Domain.Entities;
 using CIITStackLab.Infrastructure.Persistence;
 using Microsoft.EntityFrameworkCore;
 
@@ -66,7 +67,7 @@ public sealed class DemoCoursePurchaseService
 
         if (existing is null)
         {
-            _dbContext.CourseEnrollments.Add(new Domain.Entities.CourseEnrollment
+            _dbContext.CourseEnrollments.Add(new CourseEnrollment
             {
                 UserId = userId,
                 CourseId = courseId,
