@@ -81,12 +81,12 @@ public class CoursesController : Controller
 
         if (price <= 0m)
         {
-            return RedirectToAction(nameof(CourseEnvironment), new { id });
+            return RedirectToAction(nameof(CourseHome));
         }
 
         TempData[$"DemoPayment:{id}"] = true;
 
-        return RedirectToAction(nameof(CourseEnvironment), new { id });
+        return RedirectToAction(nameof(CourseHome));
     }
 
     [HttpPost("Courses/Enroll/{id:int}")]
