@@ -1,0 +1,47 @@
+@model CIITStackLab.Application.DTOs.AdminPracticeProgramAnswerInputDto
+@{
+    var programs = ViewBag.PracticePrograms as IEnumerable<Microsoft.AspNetCore.Mvc.Rendering.SelectListItem>
+        ?? Array.Empty<Microsoft.AspNetCore.Mvc.Rendering.SelectListItem>();
+}
+<div class="modal fade ciit-assessment-form-modal" id="createPracticeSolutionModal" tabindex="-1"
+     aria-labelledby="createPracticeSolutionModalTitle" aria-hidden="true">
+    <div class="modal-dialog modal-lg modal-dialog-centered modal-dialog-scrollable">
+        <div class="modal-content">
+            <div class="modal-header">
+                <div>
+                    <span class="ciit-admin-eyebrow">Coding workspace</span>
+                    <h2 class="modal-title" id="createPracticeSolutionModalTitle">Add Solution</h2>
+                    <p class="mb-0">Choose the exact programming question this solution belongs to.</p>
+                </div>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <form asp-area="Admin" asp-controller="Assessments" asp-action="CreatePracticeAnswer" method="post" class="ciit-assessment-modal-form">
+                @Html.AntiForgeryToken()
+                <div class="modal-body">
+                    <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+                    <label class="ciit-assessment-form-field">
+                        <span>Practice Question <b>*</b></span>
+                        <select asp-for="ProgramQuestionId" asp-items="programs" required>
+                            <option value="0">Select practice question</option>
+                        </select>
+                        <span asp-validation-for="ProgramQuestionId" class="text-danger"></span>
+                    </label>
+                    <label class="ciit-assessment-form-field">
+                        <span>Answer / Solution <b>*</b></span>
+                        <textarea asp-for="Answer" rows="8" placeholder="Paste the solution code or expected answer..." required></textarea>
+                        <span asp-validation-for="Answer" class="text-danger"></span>
+                    </label>
+                    <label class="ciit-assessment-form-field">
+                        <span>Solution Description <b>*</b></span>
+                        <textarea asp-for="Description" rows="5" placeholder="Explain the solution approach..." required></textarea>
+                        <span asp-validation-for="Description" class="text-danger"></span>
+                    </label>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="ciit-assessment-modal-cancel" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="ciit-assessment-modal-submit"><i class="bi bi-check-lg"></i> Add Solution</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
