@@ -9,7 +9,7 @@ public interface IPracticeProgramImportService
     PracticeProgramImportPreviewDto? GetPreview(string previewToken, string userId);
 
     Task<PracticeProgramImportPreviewDto> PreviewAsync(
-        int contentId,
+        int noteId,
         string fileName,
         Stream fileStream,
         string userId,
