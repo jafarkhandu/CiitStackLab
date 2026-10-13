@@ -27,7 +27,7 @@
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" />
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" />
-    <link href="https://fonts.googleapis.com/css2?family=Fira+Code:wght@400;500;600&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+    <link href="https://fonts.googleapis.com/css2?family=Fira+Code:wght@400;500;600;700;800&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
     <link rel="stylesheet" href="~/css/site.css" />
     <link rel="stylesheet" href="~/css/course-environment.css" asp-append-version="true" />
     @await RenderSectionAsync("Styles", required: false)
@@ -67,15 +67,6 @@
                            asp-controller="Courses" asp-action="Learn" asp-route-id="@courseId">
                             <i class="bi bi-play-circle"></i>
                             <span>Learn</span>
-                        </a>
-                        <a class="@(isNotesPage ? "active" : "")"
-                           asp-controller="Notes"
-                           asp-action="Index"
-                           asp-route-topicId="@notesTopicId"
-                           asp-route-chapterId="@notesChapterId"
-                           asp-route-courseId="@courseId">
-                            <i class="bi bi-journal-text"></i>
-                            <span>Notes</span>
                         </a>
                         <a asp-controller="Courses" asp-action="CourseHome" asp-route-id="@courseId" asp-fragment="course-progress">
                             <i class="bi bi-graph-up"></i>
