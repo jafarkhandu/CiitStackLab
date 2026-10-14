@@ -48,6 +48,10 @@
                 const id = path.split('/').filter(Boolean)[0]?.replace(/\.m3u8$/i, '');
                 return isLikelyPlaybackId(id) ? id : null;
             }
+            const singlePathSegment = path.split('/').filter(Boolean);
+            if (singlePathSegment.length === 1 && isLikelyPlaybackId(singlePathSegment[0])) {
+                return singlePathSegment[0];
+            }
         } catch {
             // Fall through to bare playback ID handling.
         }
