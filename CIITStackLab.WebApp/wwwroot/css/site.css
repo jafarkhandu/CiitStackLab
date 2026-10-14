@@ -1293,3 +1293,174 @@ main{min-height:calc(100vh - 120px)}.ciit-footer{background:#0b0f19;color:#94a3b
     .ciit-course-topic-flow-cover { min-height: 120px; margin-bottom: 18px; }
     .ciit-course-topic-flow-cover img { height: 100px; }
 }
+
+
+/* Premium Learning Hub switch */
+.ciit-learning-hub-switch {
+    position: relative;
+    display: inline-flex;
+    align-items: center;
+    gap: 9px;
+    margin: 4px 0;
+    padding: 10px 15px;
+    overflow: hidden;
+    border: 1px solid rgba(37, 99, 235, .22);
+    border-radius: 999px;
+    background: linear-gradient(120deg, #eff6ff 0%, #ffffff 48%, #eef2ff 100%);
+    color: #1747b8;
+    font-size: .88rem;
+    font-weight: 750;
+    text-decoration: none;
+    box-shadow: 0 5px 16px rgba(37, 99, 235, .08);
+    transition: transform .22s ease, box-shadow .22s ease, border-color .22s ease;
+}
+.ciit-learning-hub-switch::before {
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(105deg, transparent 20%, rgba(255, 255, 255, .85) 48%, transparent 75%);
+    content: "";
+    transform: translateX(-130%);
+    transition: transform .65s ease;
+    pointer-events: none;
+}
+.ciit-learning-hub-switch:hover {
+    transform: translateY(-1px);
+    border-color: rgba(37, 99, 235, .42);
+    color: #123a9a;
+    box-shadow: 0 9px 24px rgba(37, 99, 235, .15);
+}
+.ciit-learning-hub-switch:hover::before { transform: translateX(130%); }
+.ciit-learning-hub-switch:focus-visible {
+    outline: 3px solid rgba(37, 99, 235, .35);
+    outline-offset: 3px;
+}
+.ciit-learning-hub-switch[aria-disabled="true"] {
+    pointer-events: none;
+    opacity: .78;
+}
+
+/* Full-screen, brief transition into the authenticated course hub */
+.ciit-hub-transition {
+    position: fixed;
+    z-index: 2000;
+    inset: 0;
+    display: grid;
+    place-items: center;
+    overflow: hidden;
+    background:
+        radial-gradient(ellipse at 50% 38%, rgba(59, 130, 246, .2), transparent 42%),
+        linear-gradient(145deg, #f8fbff 0%, #edf4ff 48%, #e9efff 100%);
+    opacity: 0;
+    visibility: hidden;
+    pointer-events: none;
+    transition: opacity .38s ease, visibility .38s ease;
+}
+.ciit-hub-transition.is-active {
+    opacity: 1;
+    visibility: visible;
+    pointer-events: auto;
+}
+.ciit-hub-transition-content {
+    position: relative;
+    z-index: 2;
+    display: flex;
+    width: min(90vw, 390px);
+    align-items: center;
+    flex-direction: column;
+    text-align: center;
+    animation: ciitHubContentIn .55s cubic-bezier(.2,.8,.2,1) both;
+}
+.ciit-hub-transition-icon {
+    display: grid;
+    width: 76px;
+    height: 76px;
+    margin-bottom: 22px;
+    place-items: center;
+    border: 1px solid rgba(255,255,255,.9);
+    border-radius: 24px;
+    background: linear-gradient(145deg, #3677ff, #1747c8);
+    color: #fff;
+    font-size: 1.8rem;
+    box-shadow: 0 16px 38px rgba(37, 99, 235, .27), inset 0 1px 0 rgba(255,255,255,.35);
+    animation: ciitHubIconPulse 1.6s ease-in-out infinite;
+}
+.ciit-hub-transition-eyebrow {
+    margin-bottom: 10px;
+    color: #2458d3;
+    font-size: .7rem;
+    font-weight: 850;
+    letter-spacing: .19em;
+}
+.ciit-hub-transition-content strong {
+    color: #14213d;
+    font-size: clamp(1.25rem, 3vw, 1.65rem);
+    font-weight: 800;
+    letter-spacing: -.035em;
+}
+.ciit-hub-transition-caption {
+    margin-top: 9px;
+    color: #64748b;
+    font-size: .92rem;
+}
+.ciit-hub-transition-progress {
+    display: block;
+    width: 190px;
+    height: 4px;
+    margin-top: 27px;
+    overflow: hidden;
+    border-radius: 999px;
+    background: rgba(37, 99, 235, .12);
+}
+.ciit-hub-transition-progress span {
+    display: block;
+    width: 42%;
+    height: 100%;
+    border-radius: inherit;
+    background: linear-gradient(90deg, #2563eb, #60a5fa);
+    animation: ciitHubProgress .72s ease-in-out forwards;
+}
+.ciit-hub-transition-orbit {
+    position: absolute;
+    width: min(78vw, 680px);
+    aspect-ratio: 1;
+    border: 1px solid rgba(59, 130, 246, .13);
+    border-radius: 50%;
+    animation: ciitHubOrbit 13s linear infinite;
+}
+.ciit-hub-transition-orbit-one { transform: translate(-28%, 14%) scale(.72); }
+.ciit-hub-transition-orbit-two {
+    width: min(105vw, 900px);
+    border-color: rgba(99, 102, 241, .09);
+    animation-direction: reverse;
+}
+body.ciit-hub-transitioning { overflow: hidden; }
+
+@keyframes ciitHubContentIn {
+    from { opacity: 0; transform: translateY(16px) scale(.98); }
+    to { opacity: 1; transform: translateY(0) scale(1); }
+}
+@keyframes ciitHubIconPulse {
+    0%, 100% { transform: translateY(0); box-shadow: 0 16px 38px rgba(37, 99, 235, .27), inset 0 1px 0 rgba(255,255,255,.35); }
+    50% { transform: translateY(-4px); box-shadow: 0 22px 44px rgba(37, 99, 235, .32), inset 0 1px 0 rgba(255,255,255,.35); }
+}
+@keyframes ciitHubProgress {
+    from { transform: translateX(-110%); }
+    to { transform: translateX(240%); }
+}
+@keyframes ciitHubOrbit { to { rotate: 360deg; } }
+
+@media (max-width: 991.98px) {
+    .ciit-learning-hub-switch { margin: 8px 0 12px; }
+}
+@media (prefers-reduced-motion: reduce) {
+    .ciit-learning-hub-switch,
+    .ciit-learning-hub-switch::before,
+    .ciit-hub-transition,
+    .ciit-hub-transition-content,
+    .ciit-hub-transition-icon,
+    .ciit-hub-transition-orbit,
+    .ciit-hub-transition-progress span {
+        animation: none !important;
+        transition-duration: .01ms !important;
+    }
+}
