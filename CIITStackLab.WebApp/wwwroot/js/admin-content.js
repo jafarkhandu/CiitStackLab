@@ -70,4 +70,46 @@ document.addEventListener('DOMContentLoaded', () => {
             if (!window.confirm(`Move "${name}" to the archive?`)) event.preventDefault();
         });
     });
+
+    document.querySelectorAll('.ciit-content-form-card').forEach(form => {
+        const videoInput = form.querySelector('input[name="videoFile"]');
+        const submitButton = form.querySelector('button[type="submit"]');
+
+        if (!videoInput || !submitButton) return;
+
+        form.addEventListener('submit', event => {
+            if (!videoInput.files || videoInput.files.length === 0) return;
+
+            const existingOverlay = document.querySelector('.ciit-upload-overlay');
+            if (existingOverlay) return;
+
+            event.preventDefault();
+
+            const overlay = document.createElement('div');
+            overlay.className = 'ciit-upload-overlay';
+            overlay.setAttribute('role', 'dialog');
+            overlay.setAttribute('aria-modal', 'true');
+            overlay.setAttribute('aria-live', 'polite');
+            overlay.innerHTML = `
+                <div class="ciit-upload-dialog">
+                    <div class="ciit-upload-spinner" aria-hidden="true"></div>
+                    <div class="ciit-upload-copy">
+                        <strong>Uploading video</strong>
+                        <span>Your video is being uploaded to secure video storage. Please keep this page open.</span>
+                    </div>
+                    <div class="ciit-upload-progress" aria-hidden="true">
+                        <div class="ciit-upload-progress-bar"></div>
+                    </div>
+                    <span class="ciit-upload-status">Uploading video...</span>
+                </div>
+            `;
+            document.body.appendChild(overlay);
+            document.body.classList.add('ciit-uploading');
+
+            submitButton.disabled = true;
+            submitButton.classList.add('is-uploading');
+            submitButton.setAttribute('aria-busy', 'true');
+            submitButton.innerHTML = '<span class="ciit-upload-button-spinner" aria-hidden="true"></span> Uploading...';
+        });
+    });
 });
