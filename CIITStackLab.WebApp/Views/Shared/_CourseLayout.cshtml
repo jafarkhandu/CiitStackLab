@@ -166,6 +166,13 @@
                         </a>
                         @if (!string.IsNullOrWhiteSpace(courseId))
                         {
+                            <a class="@(currentController.Equals("Courses", StringComparison.OrdinalIgnoreCase) && currentAction.Equals("Learn", StringComparison.OrdinalIgnoreCase) ? "active" : "")"
+                               asp-controller="Courses" asp-action="Learn" asp-route-id="@courseId">
+                                <i class="bi bi-journal-bookmark"></i><span>Learning Path</span>
+                            </a>
+                        }
+                        @if (!string.IsNullOrWhiteSpace(courseId))
+                        {
                             <a class="@(currentAction.Equals("CourseEnvironment", StringComparison.OrdinalIgnoreCase) ? "active" : "")"
                                asp-controller="Courses" asp-action="CourseEnvironment" asp-route-id="@courseId">
                                 <i class="bi bi-house"></i><span>Course Home</span>
