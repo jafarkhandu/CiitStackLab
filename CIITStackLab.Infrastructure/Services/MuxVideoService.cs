@@ -10,7 +10,7 @@ public sealed class MuxVideoService : IMuxVideoService
 {
     private const string MuxApiBaseUrl = "https://api.mux.com/";
     private static readonly TimeSpan PollInterval = TimeSpan.FromSeconds(2);
-    private static readonly TimeSpan ProcessingTimeout = TimeSpan.FromMinutes(5);
+    private static readonly TimeSpan ProcessingTimeout = TimeSpan.FromMinutes(15);
 
     private readonly IHttpClientFactory _httpClientFactory;
     private readonly IConfiguration _configuration;
@@ -23,31 +23,17 @@ public sealed class MuxVideoService : IMuxVideoService
         _configuration = configuration;
     }
 
-    public async Task<MuxVideoUploadResult> UploadVideoAsync(
-        Stream videoStream,
-        string fileName,
-        string contentType,
+    public async Task<MuxDirectUploadDto> CreateDirectUploadAsync(
+        string corsOrigin,
         CancellationToken cancellationToken = default)
     {
-        if (videoStream is null || !videoStream.CanRead)
-            throw new ArgumentException("A readable video stream is required.", nameof(videoStream));
+        if (string.IsNullOrWhiteSpace(corsOrigin))
+            throw new ArgumentException("CORS origin is required.", nameof(corsOrigin));
 
-        if (string.IsNullOrWhiteSpace(fileName))
-            throw new ArgumentException("A video file name is required.", nameof(fileName));
-
-        if (string.IsNullOrWhiteSpace(contentType))
-            throw new ArgumentException("A video content type is required.", nameof(contentType));
-
-        var tokenId = _configuration["Mux:TokenId"];
-        var tokenSecret = _configuration["Mux:TokenSecret"];
-
-        if (string.IsNullOrWhiteSpace(tokenId) || string.IsNullOrWhiteSpace(tokenSecret))
-            throw new InvalidOperationException("Mux credentials are not configured.");
-
-        var apiClient = CreateAuthenticatedClient(tokenId, tokenSecret);
-
-        var uploadRequest = new
+        var client = CreateAuthenticatedClient();
+        var request = new
         {
+            cors_origin = corsOrigin,
             new_asset_settings = new
             {
                 playback_policies = new[] { "signed" },
@@ -55,33 +41,48 @@ public sealed class MuxVideoService : IMuxVideoService
             }
         };
 
-        using var createResponse = await apiClient.PostAsJsonAsync(
+        using var response = await client.PostAsJsonAsync(
             "video/v1/uploads",
-            uploadRequest,
+            request,
             cancellationToken);
 
-        if (!createResponse.IsSuccessStatusCode)
+        if (!response.IsSuccessStatusCode)
         {
-            var error = await createResponse.Content.ReadAsStringAsync(cancellationToken);
+            var error = await response.Content.ReadAsStringAsync(cancellationToken);
             throw new InvalidOperationException(
-                $"Mux direct upload creation failed with status {(int)createResponse.StatusCode}: {error}");
+                $"Mux direct upload creation failed with status {(int)response.StatusCode}: {error}");
         }
 
-        var uploadResponse = await createResponse.Content.ReadFromJsonAsync<MuxUploadResponse>(cancellationToken);
-        var upload = uploadResponse?.Data;
+        var result = await response.Content.ReadFromJsonAsync<MuxUploadResponse>(cancellationToken);
+        var upload = result?.Data;
         if (upload is null || string.IsNullOrWhiteSpace(upload.Id) || string.IsNullOrWhiteSpace(upload.Url))
             throw new InvalidOperationException("Mux returned an invalid direct upload response.");
 
-        await UploadStreamAsync(upload.Url, videoStream, fileName, contentType, cancellationToken);
+        return new MuxDirectUploadDto(upload.Id, upload.Url);
+    }
 
-        var assetId = await WaitForAssetAsync(apiClient, upload.Id, cancellationToken);
-        var playbackId = await WaitForPlaybackIdAsync(apiClient, assetId, cancellationToken);
+    public async Task<MuxVideoUploadResult> CompleteDirectUploadAsync(
+        string uploadId,
+        CancellationToken cancellationToken = default)
+    {
+        if (string.IsNullOrWhiteSpace(uploadId))
+            throw new ArgumentException("A Mux upload ID is required.", nameof(uploadId));
+
+        var client = CreateAuthenticatedClient();
+        var assetId = await WaitForAssetAsync(client, uploadId, cancellationToken);
+        var playbackId = await WaitForPlaybackIdAsync(client, assetId, cancellationToken);
 
         return new MuxVideoUploadResult(assetId, playbackId);
     }
 
-    private HttpClient CreateAuthenticatedClient(string tokenId, string tokenSecret)
+    private HttpClient CreateAuthenticatedClient()
     {
+        var tokenId = _configuration["Mux:TokenId"];
+        var tokenSecret = _configuration["Mux:TokenSecret"];
+
+        if (string.IsNullOrWhiteSpace(tokenId) || string.IsNullOrWhiteSpace(tokenSecret))
+            throw new InvalidOperationException("Mux credentials are not configured.");
+
         var client = _httpClientFactory.CreateClient();
         client.BaseAddress = new Uri(MuxApiBaseUrl);
         client.Timeout = Timeout.InfiniteTimeSpan;
@@ -91,32 +92,6 @@ public sealed class MuxVideoService : IMuxVideoService
         client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Basic", credentials);
 
         return client;
-    }
-
-    private async Task UploadStreamAsync(
-        string uploadUrl,
-        Stream videoStream,
-        string fileName,
-        string contentType,
-        CancellationToken cancellationToken)
-    {
-        var uploadClient = _httpClientFactory.CreateClient();
-        uploadClient.Timeout = Timeout.InfiniteTimeSpan;
-
-        using var content = new StreamContent(videoStream);
-        content.Headers.ContentType = new MediaTypeHeaderValue(contentType);
-        content.Headers.ContentDisposition = new ContentDispositionHeaderValue("attachment")
-        {
-            FileName = fileName
-        };
-
-        using var response = await uploadClient.PutAsync(uploadUrl, content, cancellationToken);
-        if (!response.IsSuccessStatusCode)
-        {
-            var error = await response.Content.ReadAsStringAsync(cancellationToken);
-            throw new InvalidOperationException(
-                $"Mux video upload failed with status {(int)response.StatusCode}: {error}");
-        }
     }
 
     private async Task<string> WaitForAssetAsync(
