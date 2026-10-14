@@ -196,18 +196,29 @@
 
         loadHls().then(Hls => {
             const source = `${HLS_URL_BASE}${encodeURIComponent(playbackId)}.m3u8`;
+
+            // Prefer HLS.js on browsers that expose a Media Source implementation.
+            // Some Chromium versions report native HLS support through canPlayType()
+            // but cannot reliably play Mux HLS streams natively. HLS.js avoids that
+            // false-positive path while still falling back to native HLS where MSE is
+            // unavailable.
+            if (Hls && Hls.isSupported()) {
+                hls = new Hls({ enableWorker: true, lowLatencyMode: false, backBufferLength: 90 });
+                hls.loadSource(source);
+                hls.attachMedia(video);
+                hls.on(Hls.Events.MANIFEST_PARSED, () => setLoading(false));
+                hls.on(Hls.Events.ERROR, (_event, data) => {
+                    if (data?.fatal) setError('The video stream could not be loaded. Please refresh and try again.');
+                });
+                return;
+            }
+
             if (video.canPlayType('application/vnd.apple.mpegurl')) {
                 video.src = source;
                 return;
             }
-            if (!Hls || !Hls.isSupported()) throw new Error('This browser does not support HLS playback.');
-            hls = new Hls({ enableWorker: true, lowLatencyMode: false, backBufferLength: 90 });
-            hls.loadSource(source);
-            hls.attachMedia(video);
-            hls.on(Hls.Events.MANIFEST_PARSED, () => setLoading(false));
-            hls.on(Hls.Events.ERROR, (_event, data) => {
-                if (data?.fatal) setError('The video stream could not be loaded. Please refresh and try again.');
-            });
+
+            throw new Error('This browser does not support HLS playback.');
         }).catch(() => setError('The video player could not initialize. Please refresh and try again.'));
 
         wrapper.destroyPlayer = () => {
