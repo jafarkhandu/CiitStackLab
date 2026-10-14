@@ -310,6 +310,8 @@ public class CoursesController : Controller
     [HttpGet("/uploads/videos/{playbackId}")]
     public async Task<IActionResult> MuxVideo(
         string playbackId,
+        int? courseId,
+        string? title,
         CancellationToken cancellationToken)
     {
         if (string.IsNullOrWhiteSpace(playbackId)
@@ -320,6 +322,56 @@ public class CoursesController : Controller
             || playbackId.Any(char.IsWhiteSpace))
         {
             return NotFound();
+        }
+
+        if (courseId is > 0)
+        {
+            var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+
+            if (!User.IsInRole("Student") || string.IsNullOrWhiteSpace(userId))
+            {
+                return Challenge();
+            }
+
+            var hasAccess = TempData.Peek($"DemoPayment:{courseId.Value}") is not null
+                || await _coursePurchaseService.CanAccessCourseAsync(
+                    userId,
+                    courseId.Value,
+                    cancellationToken);
+
+            if (!hasAccess)
+            {
+                TempData["CoursePaymentMessage"] =
+                    "Payment is required before this paid course can be opened.";
+                return RedirectToAction(nameof(Details), new { id = courseId.Value });
+            }
+
+            var course = await _courseService.GetByIdAsync(courseId.Value, cancellationToken);
+
+            if (course is null)
+            {
+                return NotFound();
+            }
+
+            try
+            {
+                var publicPlaybackId = await _muxVideoService.EnsurePublicPlaybackIdAsync(
+                    playbackId,
+                    cancellationToken);
+
+                ViewData["CourseId"] = course.Id.ToString();
+                ViewData["CourseTitle"] = course.Title;
+                ViewData["VideoTitle"] = string.IsNullOrWhiteSpace(title)
+                    ? "Video lesson"
+                    : title.Trim();
+                ViewData["MuxPlaybackId"] = publicPlaybackId;
+
+                return View("Watch");
+            }
+            catch (InvalidOperationException)
+            {
+                return NotFound();
+            }
         }
 
         try
