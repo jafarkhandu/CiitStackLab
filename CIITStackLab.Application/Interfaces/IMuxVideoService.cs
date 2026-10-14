@@ -2,12 +2,13 @@ namespace CIITStackLab.Application.Interfaces;
 
 public interface IMuxVideoService
 {
-    Task<MuxDirectUploadDto> CreateDirectUploadAsync(
-        string corsOrigin,
+    Task<MuxVideoUploadResult> UploadVideoAsync(
+        Stream videoStream,
+        string fileName,
+        string contentType,
         CancellationToken cancellationToken = default);
 }
 
-public sealed record MuxDirectUploadDto(
-    string UploadId,
-    string UploadUrl,
-    string Status);
+public sealed record MuxVideoUploadResult(
+    string AssetId,
+    string PlaybackId);
