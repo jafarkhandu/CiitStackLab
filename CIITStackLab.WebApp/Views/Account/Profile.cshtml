@@ -1,0 +1,130 @@
+@model CIITStackLab.WebApp.Models.StudentProfileViewModel
+
+@{
+    Layout = "_CourseLayout";
+    ViewData["Title"] = "My Profile";
+    var displayInitial = string.IsNullOrWhiteSpace(Model.UserName) ? "S" : Model.UserName.Trim()[0].ToString().ToUpperInvariant();
+}
+
+@section Styles {
+    <link rel="stylesheet" href="~/css/student-profile.css" asp-append-version="true" />
+}
+
+<section class="ciit-student-profile">
+    <div class="ciit-student-profile-shell">
+        <header class="ciit-profile-hero" data-profile-reveal>
+            <div class="ciit-profile-hero-copy">
+                <span class="ciit-profile-eyebrow"><i class="bi bi-person-badge" aria-hidden="true"></i> YOUR PERSONAL SPACE</span>
+                <h1>Your profile.<br /><span>Your settings.</span></h1>
+                <p>Keep your account details up to date and your sign-in secure, all from one place.</p>
+            </div>
+            <div class="ciit-profile-identity-card">
+                <div class="ciit-profile-avatar">@displayInitial<span class="ciit-profile-avatar-status"></span></div>
+                <div class="ciit-profile-identity-copy"><span>STUDENT ACCOUNT</span><strong>@Model.UserName</strong><small>@Model.Email</small></div>
+                <span class="ciit-profile-identity-check"><i class="bi bi-shield-check"></i></span>
+                <div class="ciit-profile-identity-glow"></div>
+            </div>
+            <span class="ciit-profile-hero-orbit ciit-profile-hero-orbit-one"></span>
+            <span class="ciit-profile-hero-orbit ciit-profile-hero-orbit-two"></span>
+        </header>
+
+        @if (TempData["ProfileSuccess"] is string profileSuccess)
+        {
+            <div class="ciit-profile-alert ciit-profile-alert-success" role="status"><i class="bi bi-check-circle-fill"></i><span>@profileSuccess</span></div>
+        }
+        @if (TempData["PasswordSuccess"] is string passwordSuccess)
+        {
+            <div class="ciit-profile-alert ciit-profile-alert-success" role="status"><i class="bi bi-shield-check"></i><span>@passwordSuccess</span></div>
+        }
+
+        <div class="ciit-profile-content-grid">
+            <section class="ciit-profile-panel" data-profile-reveal>
+                <div class="ciit-profile-panel-heading">
+                    <span class="ciit-profile-panel-icon"><i class="bi bi-person-lines-fill"></i></span>
+                    <div><span>PROFILE INFORMATION</span><h2>Personal details</h2><p>Update the information associated with your student account.</p></div>
+                </div>
+                <form asp-controller="Account" asp-action="UpdateProfile" method="post" class="ciit-profile-form">
+                    <div asp-validation-summary="ModelOnly" class="ciit-profile-validation" role="alert"></div>
+                    <div class="ciit-profile-field">
+                        <label asp-for="UserName"></label>
+                        <div class="ciit-profile-input-wrap"><i class="bi bi-at"></i><input asp-for="UserName" autocomplete="username" placeholder="Your username" /></div>
+                        <span asp-validation-for="UserName" class="ciit-profile-field-error"></span>
+                    </div>
+                    <div class="ciit-profile-field">
+                        <label asp-for="Email"></label>
+                        <div class="ciit-profile-input-wrap"><i class="bi bi-envelope"></i><input asp-for="Email" autocomplete="email" placeholder="you@example.com" /></div>
+                        <span asp-validation-for="Email" class="ciit-profile-field-error"></span>
+                    </div>
+                    <div class="ciit-profile-field">
+                        <label asp-for="PhoneNumber"></label>
+                        <div class="ciit-profile-input-wrap"><i class="bi bi-telephone"></i><input asp-for="PhoneNumber" autocomplete="tel" placeholder="Add your phone number" /></div>
+                        <span asp-validation-for="PhoneNumber" class="ciit-profile-field-error"></span>
+                    </div>
+                    <div class="ciit-profile-form-footer"><span><i class="bi bi-lock-fill"></i> Only your account details will be updated.</span><button type="submit" class="ciit-profile-primary-button">Save changes <i class="bi bi-arrow-right"></i></button></div>
+                </form>
+            </section>
+
+            <section class="ciit-profile-panel ciit-profile-security-panel" data-profile-reveal>
+                <div class="ciit-profile-panel-heading">
+                    <span class="ciit-profile-panel-icon ciit-profile-panel-icon-violet"><i class="bi bi-shield-lock"></i></span>
+                    <div><span>ACCOUNT SECURITY</span><h2>Change password</h2><p>Use your current password to securely set a new one.</p></div>
+                </div>
+                <form asp-controller="Account" asp-action="ChangePassword" method="post" class="ciit-profile-form" id="ciit-change-password-form">
+                    <div asp-validation-summary="ModelOnly" class="ciit-profile-validation" role="alert"></div>
+                    <div class="ciit-profile-field">
+                        <label asp-for="CurrentPassword"></label>
+                        <div class="ciit-profile-input-wrap"><i class="bi bi-key"></i><input asp-for="CurrentPassword" autocomplete="current-password" placeholder="Enter current password" /></div>
+                        <span asp-validation-for="CurrentPassword" class="ciit-profile-field-error"></span>
+                    </div>
+                    <div class="ciit-profile-field">
+                        <label asp-for="NewPassword"></label>
+                        <div class="ciit-profile-input-wrap"><i class="bi bi-lock"></i><input asp-for="NewPassword" autocomplete="new-password" placeholder="At least 8 characters" /><button type="button" class="ciit-profile-password-toggle" data-password-target="NewPassword" aria-label="Show new password"><i class="bi bi-eye"></i></button></div>
+                        <span asp-validation-for="NewPassword" class="ciit-profile-field-error"></span>
+                    </div>
+                    <div class="ciit-profile-field">
+                        <label asp-for="ConfirmNewPassword"></label>
+                        <div class="ciit-profile-input-wrap"><i class="bi bi-lock-fill"></i><input asp-for="ConfirmNewPassword" autocomplete="new-password" placeholder="Re-enter new password" /><button type="button" class="ciit-profile-password-toggle" data-password-target="ConfirmNewPassword" aria-label="Show password confirmation"><i class="bi bi-eye"></i></button></div>
+                        <span asp-validation-for="ConfirmNewPassword" class="ciit-profile-field-error"></span>
+                    </div>
+                    <div class="ciit-profile-security-note"><i class="bi bi-info-circle"></i><span>Your current password is required. Your new password must meet the account's security policy.</span></div>
+                    <div class="ciit-profile-form-footer"><span><i class="bi bi-shield-check"></i> Passwords are handled by secure Identity services.</span><button type="submit" class="ciit-profile-primary-button ciit-profile-password-button">Update password <i class="bi bi-arrow-right"></i></button></div>
+                </form>
+            </section>
+        </div>
+
+        <section class="ciit-profile-bottom-note" data-profile-reveal><span><i class="bi bi-stars"></i></span><div><strong>Your account, your control</strong><p>Keep your email current so your account information stays accurate. Never share your password with anyone.</p></div><a asp-controller="Home" asp-action="Dashboard">Back to dashboard <i class="bi bi-arrow-up-right"></i></a></section>
+    </div>
+</section>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+    <script>
+        (function () {
+            document.querySelectorAll('[data-password-target]').forEach(button => {
+                button.addEventListener('click', () => {
+                    const input = document.getElementById(button.dataset.passwordTarget);
+                    if (!input) return;
+                    const reveal = input.type === 'password';
+                    input.type = reveal ? 'text' : 'password';
+                    button.setAttribute('aria-label', reveal ? 'Hide password' : 'Show password');
+                    button.innerHTML = reveal ? '<i class="bi bi-eye-slash"></i>' : '<i class="bi bi-eye"></i>';
+                });
+            });
+
+            const items = document.querySelectorAll('[data-profile-reveal]');
+            const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+            if (reduceMotion || !('IntersectionObserver' in window)) {
+                items.forEach(item => item.classList.add('is-visible'));
+                return;
+            }
+            const observer = new IntersectionObserver(entries => {
+                entries.forEach(entry => {
+                    if (!entry.isIntersecting) return;
+                    entry.target.classList.add('is-visible');
+                    observer.unobserve(entry.target);
+                });
+            }, { threshold: 0.08 });
+            items.forEach(item => observer.observe(item));
+        })();
+    </script>
+}

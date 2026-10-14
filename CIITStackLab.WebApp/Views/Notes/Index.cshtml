@@ -61,36 +61,7 @@
     </header>
 
     <div class="ciit-notes-reader-shell">
-        <aside class="ciit-notes-reader-sidebar" aria-label="Notes chapters">
-            <div class="ciit-notes-reader-sidebar-head">
-                <div>
-                    <span>Chapter Library</span>
-                    <strong>@chapters.Count chapters</strong>
-                </div>
-                <i class="bi bi-list-ul"></i>
-            </div>
 
-            <div class="ciit-notes-reader-list">
-                @for (var chapterIndex = 0; chapterIndex < chapters.Count; chapterIndex++)
-                {
-                    var chapter = chapters[chapterIndex];
-
-                    <a class="@(chapter.ChapterId == Model.CurrentChapterId ? "is-active" : "")"
-                       asp-controller="Notes"
-                       asp-action="Index"
-                       asp-route-topicId="@Model.TopicId"
-                       asp-route-chapterId="@chapter.ChapterId"
-                       asp-route-courseId="@courseId">
-                        <span class="ciit-notes-reader-list-number">@((chapterIndex + 1).ToString("00"))</span>
-                        <span class="ciit-notes-reader-list-copy">
-                            <strong>@chapter.Title</strong>
-                            <small>@chapter.ChapterId</small>
-                        </span>
-                        <i class="bi bi-chevron-right"></i>
-                    </a>
-                }
-            </div>
-        </aside>
 
         <main class="ciit-notes-reader-main">
             <article class="ciit-notes-reader-card">

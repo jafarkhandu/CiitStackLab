@@ -72,7 +72,7 @@
     @await RenderSectionAsync("Styles", required: false)
     <link rel="stylesheet" href="~/css/course-learning-enhancements.css" asp-append-version="true" />
 </head>
-<body class="ciit-course-environment-body">
+<body class="ciit-course-environment-body @(currentController.Equals("Courses", StringComparison.OrdinalIgnoreCase) && currentAction.Equals("Learn", StringComparison.OrdinalIgnoreCase) ? "ciit-learning-mode" : "")">
     <header class="ciit-course-environment-header">
         <div class="container-fluid px-3 px-lg-4">
             <div class="ciit-course-environment-header-inner">
@@ -82,7 +82,7 @@
                 </a>
 
                 <div class="ciit-course-environment-context">
-                    <span class="ciit-course-environment-label">Course Environment</span>
+                    <span class="ciit-course-environment-label">@(string.IsNullOrWhiteSpace(courseId) ? "Learning Hub" : "Course Environment")</span>
                     @if (!string.IsNullOrWhiteSpace(courseTitle))
                     {
                         <strong>@courseTitle</strong>
@@ -95,15 +95,6 @@
                         <a asp-controller="Courses" asp-action="CourseHome">
                             <i class="bi bi-collection-play"></i>
                             <span>Home</span>
-                        </a>
-                        <a class="@(currentAction.Equals("Learn", StringComparison.OrdinalIgnoreCase) ? "active" : "")"
-                           asp-controller="Courses" asp-action="Learn" asp-route-id="@courseId">
-                            <i class="bi bi-play-circle"></i>
-                            <span>Learn</span>
-                        </a>
-                        <a asp-controller="Courses" asp-action="CourseEnvironment" asp-route-id="@courseId" asp-fragment="course-progress">
-                            <i class="bi bi-graph-up"></i>
-                            <span>Progress</span>
                         </a>
                     }
                 </nav>
@@ -122,90 +113,151 @@
     </header>
 
     <div class="ciit-course-environment-workspace">
-        <aside class="ciit-course-global-sidebar" aria-label="Course sections">
-            @if (!string.IsNullOrWhiteSpace(courseId))
-            {
-                <details class="ciit-course-switcher" open>
-                    <summary>
-                        <span>COURSE</span>
-                        <strong>@(string.IsNullOrWhiteSpace(courseTitle) ? "Learning" : courseTitle)</strong>
-                        <i class="bi bi-chevron-down" aria-hidden="true"></i>
-                    </summary>
-                    <div class="ciit-course-switcher-menu">
-                        @foreach (var course in purchasedCourses)
-                        {
-                            <a class="@(course.Id.ToString() == courseId ? "active" : "")"
-                               asp-controller="Courses"
-                               asp-action="CourseEnvironment"
-                               asp-route-id="@course.Id">
-                                <span>@course.Title</span>
-                                @if (course.Id.ToString() == courseId)
+        @if (currentController.Equals("Courses", StringComparison.OrdinalIgnoreCase) && currentAction.Equals("Learn", StringComparison.OrdinalIgnoreCase))
+        {
+            <aside class="ciit-course-global-sidebar ciit-learning-path-sidebar" aria-label="Learning path">
+                <div class="ciit-learning-path-host"></div>
+            </aside>
+        }
+        else if (isNotesPage && ViewData["LearningPathModel"] is CourseLearningDto notesLearningPath)
+        {
+            <aside class="ciit-course-global-sidebar ciit-learning-path-sidebar ciit-notes-learning-path" aria-label="Learning path">
+                <div class="ciit-notes-path-heading">
+                    <span>YOUR LEARNING PATH</span>
+                    <strong>@notesLearningPath.Title</strong>
+                    <a asp-controller="Courses" asp-action="Learn" asp-route-id="@courseId">
+                        <i class="bi bi-arrow-left-circle"></i> Back to learning
+                    </a>
+                </div>
+                <div class="ciit-notes-path-topics">
+                    @foreach (var pathTopic in notesLearningPath.Topics)
+                    {
+                        <details class="ciit-notes-path-topic" open="@(pathTopic.Id.ToString() == notesTopicId ? "open" : null)">
+                            <summary>
+                                <i class="bi bi-collection-play"></i>
+                                <span>@pathTopic.Title</span>
+                                <i class="bi bi-chevron-down"></i>
+                            </summary>
+                            @foreach (var pathChapter in pathTopic.Chapters)
+                            {
+                                <a class="ciit-notes-path-chapter @(pathTopic.Id.ToString() == notesTopicId && pathChapter.ChapterId == notesChapterId ? "active" : "")"
+                                   asp-controller="Notes"
+                                   asp-action="Index"
+                                   asp-route-topicId="@pathTopic.Id"
+                                   asp-route-chapterId="@pathChapter.ChapterId"
+                                   asp-route-courseId="@courseId">
+                                    <i class="bi bi-journal-text"></i>
+                                    <span>@pathChapter.Title</span>
+                                </a>
+                            }
+                        </details>
+                    }
+                </div>
+            </aside>
+        }
+        else
+        {
+            <aside class="ciit-course-global-sidebar" aria-label="Course sections">
+                    @if (!string.IsNullOrWhiteSpace(courseId))
+                    {
+                        <details class="ciit-course-switcher">
+                            <summary>
+                                <span>COURSE</span>
+                                <strong>@(string.IsNullOrWhiteSpace(courseTitle) ? "Learning" : courseTitle)</strong>
+                                <i class="bi bi-chevron-down" aria-hidden="true"></i>
+                            </summary>
+                            <div class="ciit-course-switcher-menu">
+                                @foreach (var course in purchasedCourses)
                                 {
-                                    <i class="bi bi-check2" aria-hidden="true"></i>
+                                    <a class="@(course.Id.ToString() == courseId ? "active" : "")"
+                                       asp-controller="Courses"
+                                       asp-action="CourseEnvironment"
+                                       asp-route-id="@course.Id">
+                                        <span>@course.Title</span>
+                                        @if (course.Id.ToString() == courseId)
+                                        {
+                                            <i class="bi bi-check2" aria-hidden="true"></i>
+                                        }
+                                    </a>
                                 }
+                            </div>
+                        </details>
+                    }
+                    else
+                    {
+                        <div class="ciit-course-global-sidebar-heading">
+                            <span>COURSE HOME</span>
+                            <strong>My Courses</strong>
+                        </div>
+                    }
+        
+                    <nav class="ciit-course-global-nav">
+                        <a class="@(currentController.Equals("Home", StringComparison.OrdinalIgnoreCase) && currentAction.Equals("Dashboard", StringComparison.OrdinalIgnoreCase) ? "active" : "")"
+                           asp-controller="Home" asp-action="Dashboard">
+                            <i class="bi bi-grid-1x2"></i><span>Dashboard</span>
+                        </a>
+                        <a class="@(currentController.Equals("Courses", StringComparison.OrdinalIgnoreCase) && currentAction.Equals("CourseHome", StringComparison.OrdinalIgnoreCase) ? "active" : "")"
+                           asp-controller="Courses" asp-action="CourseHome">
+                            <i class="bi bi-collection-play"></i><span>My Courses</span>
+                        </a>
+                        @if (!string.IsNullOrWhiteSpace(courseId))
+                        {
+                            <a class="@(currentController.Equals("Courses", StringComparison.OrdinalIgnoreCase) && currentAction.Equals("Learn", StringComparison.OrdinalIgnoreCase) ? "active" : "")"
+                               asp-controller="Courses" asp-action="Learn" asp-route-id="@courseId">
+                                <i class="bi bi-journal-bookmark"></i><span>Learning Path</span>
                             </a>
                         }
+                        @if (!string.IsNullOrWhiteSpace(courseId))
+                        {
+                            <a class="@(currentAction.Equals("CourseEnvironment", StringComparison.OrdinalIgnoreCase) ? "active" : "")"
+                               asp-controller="Courses" asp-action="CourseEnvironment" asp-route-id="@courseId">
+                                <i class="bi bi-house"></i><span>Course Home</span>
+                            </a>
+                        }
+                        <a class="@(currentAction.Equals("PaymentHistory", StringComparison.OrdinalIgnoreCase) ? "active" : "")"
+                           asp-controller="Courses" asp-action="PaymentHistory">
+                            <i class="bi bi-receipt"></i><span>Payment History</span>
+                        </a>
+                        <a class="@(currentController.Equals("Account", StringComparison.OrdinalIgnoreCase) && currentAction.Equals("Profile", StringComparison.OrdinalIgnoreCase) ? "active" : "")"
+                           asp-controller="Account" asp-action="Profile">
+                            <i class="bi bi-person-circle"></i><span>My Profile</span>
+                        </a>
+                    </nav>
+        
+                    <div class="ciit-course-global-sidebar-section">
+                        <span>LEARNING TOOLS</span>
+                        <div class="ciit-course-coming-soon-link" title="Student assessment area will be connected here.">
+                            <i class="bi bi-patch-check"></i><span>Assessments</span><small>Soon</small>
+                        </div>
+                        <div class="ciit-course-coming-soon-link" title="Practice program area will be connected here.">
+                            <i class="bi bi-code-square"></i><span>Practice Programs</span><small>Soon</small>
+                        </div>
+                        <div class="ciit-course-coming-soon-link" title="Interview question area will be connected here.">
+                            <i class="bi bi-chat-square-text"></i><span>Interview Questions</span><small>Soon</small>
+                        </div>
+                        @if (isNotesPage && !string.IsNullOrWhiteSpace(courseId))
+                        {
+                            <a class="ciit-course-coming-soon-link active"
+                               asp-controller="Notes"
+                               asp-action="Index"
+                               asp-route-topicId="@notesTopicId"
+                               asp-route-chapterId="@notesChapterId"
+                               asp-route-courseId="@courseId">
+                                <i class="bi bi-journal-text"></i><span>Notes</span><small>Open</small>
+                            </a>
+                        }
+                        else
+                        {
+                            <div class="ciit-course-coming-soon-link" title="Course notes are opened from a lesson chapter.">
+                                <i class="bi bi-journal-text"></i><span>Notes</span><small>Soon</small>
+                            </div>
+                        }
+                        <div class="ciit-course-coming-soon-link" title="Certificates will be enabled when certificate requirements are implemented.">
+                            <i class="bi bi-award"></i><span>Certificates</span><small>Soon</small>
+                        </div>
                     </div>
-                </details>
-            }
-            else
-            {
-                <div class="ciit-course-global-sidebar-heading">
-                    <span>COURSE HOME</span>
-                    <strong>My Courses</strong>
-                </div>
-            }
-
-            <nav class="ciit-course-global-nav">
-                @if (!string.IsNullOrWhiteSpace(courseId))
-                {
-                    <a class="@(currentAction.Equals("CourseEnvironment", StringComparison.OrdinalIgnoreCase) ? "active" : "")"
-                       asp-controller="Courses" asp-action="CourseEnvironment" asp-route-id="@courseId">
-                        <i class="bi bi-house"></i><span>Course Home</span>
-                    </a>
-                    <a class="@(currentAction.Equals("Learn", StringComparison.OrdinalIgnoreCase) ? "active" : "")"
-                       asp-controller="Courses" asp-action="Learn" asp-route-id="@courseId">
-                        <i class="bi bi-play-circle"></i><span>Learn</span>
-                    </a>
-                    <a asp-controller="Courses" asp-action="CourseEnvironment" asp-route-id="@courseId" asp-fragment="course-progress">
-                        <i class="bi bi-graph-up"></i><span>My Progress</span>
-                    </a>
-                }
-            </nav>
-
-            <div class="ciit-course-global-sidebar-section">
-                <span>LEARNING TOOLS</span>
-                <div class="ciit-course-coming-soon-link" title="Student assessment area will be connected here.">
-                    <i class="bi bi-patch-check"></i><span>Assessments</span><small>Soon</small>
-                </div>
-                <div class="ciit-course-coming-soon-link" title="Practice program area will be connected here.">
-                    <i class="bi bi-code-square"></i><span>Practice Programs</span><small>Soon</small>
-                </div>
-                <div class="ciit-course-coming-soon-link" title="Interview question area will be connected here.">
-                    <i class="bi bi-chat-square-text"></i><span>Interview Questions</span><small>Soon</small>
-                </div>
-                @if (isNotesPage && !string.IsNullOrWhiteSpace(courseId))
-                {
-                    <a class="ciit-course-coming-soon-link active"
-                       asp-controller="Notes"
-                       asp-action="Index"
-                       asp-route-topicId="@notesTopicId"
-                       asp-route-chapterId="@notesChapterId"
-                       asp-route-courseId="@courseId">
-                        <i class="bi bi-journal-text"></i><span>Notes</span><small>Open</small>
-                    </a>
-                }
-                else
-                {
-                    <div class="ciit-course-coming-soon-link" title="Course notes are opened from a lesson chapter.">
-                        <i class="bi bi-journal-text"></i><span>Notes</span><small>Soon</small>
-                    </div>
-                }
-                <div class="ciit-course-coming-soon-link" title="Certificates will be enabled when certificate requirements are implemented.">
-                    <i class="bi bi-award"></i><span>Certificates</span><small>Soon</small>
-                </div>
-            </div>
-        </aside>
+            </aside>
+        }
 
         <main class="ciit-course-environment-main">
             @RenderBody()
@@ -239,5 +291,20 @@
         </script>
     }
     @await RenderSectionAsync("Scripts", required: false)
+    @if (currentController.Equals("Courses", StringComparison.OrdinalIgnoreCase) && currentAction.Equals("Learn", StringComparison.OrdinalIgnoreCase))
+    {
+        <script>
+            document.addEventListener('DOMContentLoaded', function () {
+                const source = document.querySelector('.ciit-learning-shell > .ciit-learning-sidebar');
+                const host = document.querySelector('.ciit-learning-path-host');
+                if (!source || !host) return;
+
+                source.classList.add('ciit-learning-sidebar-in-shell');
+                host.appendChild(source);
+                document.body.classList.add('ciit-learning-mode-ready');
+            });
+        </script>
+    }
+
 </body>
 </html>
