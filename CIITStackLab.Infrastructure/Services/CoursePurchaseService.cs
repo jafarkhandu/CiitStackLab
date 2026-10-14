@@ -95,17 +95,22 @@ public sealed class CoursePurchaseService
             return false;
         }
 
-        return await _dbContext.Users
+        var userIsActive = await _dbContext.Users
             .AsNoTracking()
-            .Where(user => user.Id == userId && user.IsActive)
-            .SelectMany(user => _dbContext.StudentCoursePurchases
-                .Where(purchase => purchase.UserId == user.Id)
-                .Join(
-                    _dbContext.Courses.Where(course => course.Flag == 0),
-                    purchase => purchase.CourseId,
-                    course => course.Id,
-                    (purchase, course) => purchase.Id))
-            .AnyAsync(cancellationToken);
+            .AnyAsync(user => user.Id == userId && user.IsActive, cancellationToken);
+
+        if (!userIsActive)
+        {
+            return false;
+        }
+
+        return await _dbContext.StudentCoursePurchases
+            .AsNoTracking()
+            .AnyAsync(
+                purchase => purchase.UserId == userId
+                    && _dbContext.Courses.Any(course =>
+                        course.Id == purchase.CourseId && course.Flag == 0),
+                cancellationToken);
     }
 
     public async Task<IReadOnlyList<int>> GetAccessibleCourseIdsAsync(
