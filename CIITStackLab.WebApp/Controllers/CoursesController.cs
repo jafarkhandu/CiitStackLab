@@ -304,6 +304,22 @@ public class CoursesController : Controller
         return View(course);
     }
 
+    [HttpGet("/uploads/videos/{playbackId}")]
+    public IActionResult MuxVideo(string playbackId)
+    {
+        if (string.IsNullOrWhiteSpace(playbackId)
+            || playbackId.Length > 256
+            || playbackId.Contains('/')
+            || playbackId.Contains('\\')
+            || playbackId.Contains('.')
+            || playbackId.Any(char.IsWhiteSpace))
+        {
+            return NotFound();
+        }
+
+        return Redirect($"https://player.mux.com/{Uri.EscapeDataString(playbackId)}");
+    }
+
     [HttpPost("Courses/Learn/{id:int}/Complete/{contentId:int}")]
     [Authorize(Roles = "Student")]
     [ValidateAntiForgeryToken]
