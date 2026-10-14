@@ -607,3 +607,23 @@
         transition: none !important;
     }
 }
+
+
+/* Modal roots are moved under body to avoid ancestor stacking contexts. */
+.ciit-assessment-form-modal { --assessment-page-accent: #2563eb; }
+.ciit-assessment-form-modal--interview { --assessment-page-accent: #7c3aed; }
+.ciit-assessment-form-modal--practice { --assessment-page-accent: #0f9f88; }
+
+
+/* Keep assessment dialogs above Bootstrap's backdrop even inside admin stacking contexts. */
+body > .modal.ciit-assessment-form-modal {
+    z-index: 1060 !important;
+    pointer-events: auto;
+}
+body > .modal-backdrop {
+    z-index: 1050 !important;
+}
+body > .modal.ciit-assessment-form-modal .modal-dialog,
+body > .modal.ciit-assessment-form-modal .modal-content {
+    pointer-events: auto;
+}

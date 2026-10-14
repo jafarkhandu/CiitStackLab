@@ -3,6 +3,8 @@ using CIITStackLab.WebApp.Models;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.WebUtilities;
+using System.Text;
 
 namespace CIITStackLab.WebApp.Controllers;
 
@@ -179,6 +181,141 @@ public class AccountController : Controller
         await _signInManager.SignInAsync(user, isPersistent: false);
 
         return RedirectToAction("Index", "Home");
+    }
+
+    [HttpGet]
+    [Authorize(Roles = "Student")]
+    public async Task<IActionResult> Profile()
+    {
+        var user = await _userManager.GetUserAsync(User);
+        if (user is null)
+        {
+            return Challenge();
+        }
+
+        return View(new StudentProfileViewModel
+        {
+            UserName = user.UserName ?? string.Empty,
+            Email = user.Email ?? string.Empty,
+            PhoneNumber = user.PhoneNumber
+        });
+    }
+
+    [HttpPost]
+    [Authorize(Roles = "Student")]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> UpdateProfile(StudentProfileViewModel model)
+    {
+        ModelState.Remove(nameof(model.CurrentPassword));
+        ModelState.Remove(nameof(model.NewPassword));
+        ModelState.Remove(nameof(model.ConfirmNewPassword));
+
+        if (!ModelState.IsValid)
+        {
+            return View("Profile", model);
+        }
+
+        var user = await _userManager.GetUserAsync(User);
+        if (user is null)
+        {
+            return Challenge();
+        }
+
+        var normalizedUserName = model.UserName.Trim();
+        var normalizedEmail = model.Email.Trim();
+
+        var existingUserName = await _userManager.FindByNameAsync(normalizedUserName);
+        if (existingUserName is not null && existingUserName.Id != user.Id)
+        {
+            ModelState.AddModelError(nameof(model.UserName), "This username is already in use.");
+            return View("Profile", model);
+        }
+
+        var existingEmail = await _userManager.FindByEmailAsync(normalizedEmail);
+        if (existingEmail is not null && existingEmail.Id != user.Id)
+        {
+            ModelState.AddModelError(nameof(model.Email), "This email is already registered.");
+            return View("Profile", model);
+        }
+
+        user.UserName = normalizedUserName;
+        user.Email = normalizedEmail;
+        user.PhoneNumber = string.IsNullOrWhiteSpace(model.PhoneNumber)
+            ? null
+            : model.PhoneNumber.Trim();
+
+        var updateResult = await _userManager.UpdateAsync(user);
+        if (!updateResult.Succeeded)
+        {
+            foreach (var error in updateResult.Errors)
+            {
+                ModelState.AddModelError(string.Empty, error.Description);
+            }
+
+            return View("Profile", model);
+        }
+
+        await _signInManager.RefreshSignInAsync(user);
+        TempData["ProfileSuccess"] = "Your profile details have been updated.";
+        return RedirectToAction(nameof(Profile));
+    }
+
+    [HttpPost]
+    [Authorize(Roles = "Student")]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> ChangePassword(StudentProfileViewModel model)
+    {
+        ModelState.Remove(nameof(model.UserName));
+        ModelState.Remove(nameof(model.Email));
+        ModelState.Remove(nameof(model.PhoneNumber));
+
+        if (string.IsNullOrWhiteSpace(model.CurrentPassword))
+        {
+            ModelState.AddModelError(nameof(model.CurrentPassword), "Enter your current password.");
+        }
+
+        if (!ModelState.IsValid)
+        {
+            return View("Profile", await PopulateProfileFieldsAsync(model));
+        }
+
+        var user = await _userManager.GetUserAsync(User);
+        if (user is null)
+        {
+            return Challenge();
+        }
+
+        var result = await _userManager.ChangePasswordAsync(
+            user,
+            model.CurrentPassword,
+            model.NewPassword);
+
+        if (!result.Succeeded)
+        {
+            foreach (var error in result.Errors)
+            {
+                ModelState.AddModelError(string.Empty, error.Description);
+            }
+
+            return View("Profile", await PopulateProfileFieldsAsync(model));
+        }
+
+        await _signInManager.RefreshSignInAsync(user);
+        TempData["PasswordSuccess"] = "Your password has been changed successfully.";
+        return RedirectToAction(nameof(Profile));
+    }
+
+    private async Task<StudentProfileViewModel> PopulateProfileFieldsAsync(StudentProfileViewModel model)
+    {
+        var user = await _userManager.GetUserAsync(User);
+        if (user is not null)
+        {
+            model.UserName = user.UserName ?? string.Empty;
+            model.Email = user.Email ?? string.Empty;
+            model.PhoneNumber = user.PhoneNumber;
+        }
+
+        return model;
     }
 
     [HttpPost]
