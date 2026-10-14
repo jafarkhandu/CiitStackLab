@@ -12,10 +12,14 @@ namespace CIITStackLab.WebApp.Areas.Admin.Controllers;
 public sealed class ContentController : Controller
 {
     private readonly IAdminContentService _contentService;
+    private readonly IMuxVideoService _muxVideoService;
 
-    public ContentController(IAdminContentService contentService)
+    public ContentController(
+        IAdminContentService contentService,
+        IMuxVideoService muxVideoService)
     {
         _contentService = contentService;
+        _muxVideoService = muxVideoService;
     }
 
     [HttpGet]
@@ -41,7 +45,23 @@ public sealed class ContentController : Controller
             return View(input);
         }
 
-        await SaveUploadedFilesAsync(input, slidesFile, videoFile, cancellationToken);
+        try
+        {
+            await SaveUploadedFilesAsync(input, slidesFile, videoFile, cancellationToken);
+        }
+        catch (InvalidOperationException ex)
+        {
+            ModelState.AddModelError(string.Empty, ex.Message);
+            await LoadFormDataAsync(input.TopicId, cancellationToken);
+            return View(input);
+        }
+        catch (TimeoutException ex)
+        {
+            ModelState.AddModelError(string.Empty, ex.Message);
+            await LoadFormDataAsync(input.TopicId, cancellationToken);
+            return View(input);
+        }
+
         var result = await _contentService.CreateAsync(input, cancellationToken);
         if (!result.Succeeded)
         {
@@ -93,7 +113,23 @@ public sealed class ContentController : Controller
         if (videoFile is null || videoFile.Length == 0)
             input.VideoName = existing.VideoName;
 
-        await SaveUploadedFilesAsync(input, slidesFile, videoFile, cancellationToken);
+        try
+        {
+            await SaveUploadedFilesAsync(input, slidesFile, videoFile, cancellationToken);
+        }
+        catch (InvalidOperationException ex)
+        {
+            ModelState.AddModelError(string.Empty, ex.Message);
+            await LoadFormDataAsync(input.TopicId, cancellationToken);
+            return View(input);
+        }
+        catch (TimeoutException ex)
+        {
+            ModelState.AddModelError(string.Empty, ex.Message);
+            await LoadFormDataAsync(input.TopicId, cancellationToken);
+            return View(input);
+        }
+
         var result = await _contentService.UpdateAsync(id, input, cancellationToken);
         if (!result.Succeeded)
         {
@@ -176,8 +212,18 @@ public sealed class ContentController : Controller
     {
         if (slidesFile is not null && slidesFile.Length > 0)
             input.Slides = await SaveFileAsync(slidesFile, "slides", cancellationToken);
+
         if (videoFile is not null && videoFile.Length > 0)
-            input.VideoName = await SaveFileAsync(videoFile, "videos", cancellationToken);
+        {
+            await using var stream = videoFile.OpenReadStream();
+            var muxResult = await _muxVideoService.UploadVideoAsync(
+                stream,
+                videoFile.FileName,
+                videoFile.ContentType,
+                cancellationToken);
+
+            input.VideoName = muxResult.PlaybackId;
+        }
     }
 
     private async Task<string> SaveFileAsync(IFormFile file, string folder, CancellationToken cancellationToken)
