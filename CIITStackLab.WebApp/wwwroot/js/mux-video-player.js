@@ -61,6 +61,24 @@
             : null;
     }
 
+    function getCurrentCourseId() {
+        const learnLink = document.querySelector('a[href*="/Courses/Learn/"]');
+        if (!learnLink) return null;
+        try {
+            const path = new URL(learnLink.href, window.location.origin).pathname;
+            const match = path.match(/\/Courses\/Learn\/(\d+)/i);
+            return match?.[1] || null;
+        } catch {
+            return null;
+        }
+    }
+
+    function buildWatchUrl(playbackId, title) {
+        const courseId = getCurrentCourseId();
+        if (!courseId) return null;
+        return `${MUX_PATH_PREFIX}${encodeURIComponent(playbackId)}?courseId=${encodeURIComponent(courseId)}&title=${encodeURIComponent(title || 'Video lesson')}`;
+    }
+
     function formatTime(seconds) {
         if (!Number.isFinite(seconds) || seconds < 0) return '00:00';
         const total = Math.floor(seconds);
@@ -253,13 +271,36 @@
         });
     }
 
+    function replaceInlineWatchPlayers() {
+        document.querySelectorAll('.ciit-mux-watch-player').forEach(container => {
+            if (container.dataset.ciitMuxReady === 'true') return;
+            const playbackId = container.dataset.playbackId;
+            if (!isLikelyPlaybackId(playbackId)) return;
+            const title = container.dataset.title || 'Video lesson';
+            container.dataset.ciitMuxReady = 'true';
+            container.replaceChildren(createPlayer(playbackId, title));
+        });
+    }
+
     function wireMuxLinks() {
         document.addEventListener('click', event => {
             const link = event.target.closest('a');
             if (!link || !isMuxVideoLink(link) || link.closest('.ciit-mux-modal')) return;
+
             const playbackId = extractPlaybackId(link.href);
             if (!playbackId) return;
-            const title = link.getAttribute('aria-label') || link.closest('.ciit-notes-reader-media-row')?.querySelector('.ciit-notes-reader-media-copy strong')?.textContent?.trim() || 'Video lesson';
+
+            const title = link.getAttribute('aria-label')
+                || link.closest('.ciit-notes-reader-media-row')?.querySelector('.ciit-notes-reader-media-copy strong')?.textContent?.trim()
+                || 'Video lesson';
+            const watchUrl = buildWatchUrl(playbackId, title);
+
+            if (watchUrl) {
+                event.preventDefault();
+                window.location.assign(watchUrl);
+                return;
+            }
+
             event.preventDefault();
             openModal(playbackId, title);
         });
@@ -267,13 +308,14 @@
 
     function initialize() {
         if (!document.body.classList.contains('ciit-course-environment-body')) return;
-        const hasPotentialMuxVideo = document.querySelector('.ciit-learning-video-frame iframe, a[href*="/uploads/videos/"], .ciit-notes-reader-media a');
+        const hasPotentialMuxVideo = document.querySelector('.ciit-learning-video-frame iframe, a[href*="/uploads/videos/"], .ciit-notes-reader-media a, .ciit-mux-watch-player');
         if (!hasPotentialMuxVideo) return;
         const stylesheet = document.createElement('link');
         stylesheet.rel = 'stylesheet';
         stylesheet.href = '/css/mux-video-player.css?v=1';
         document.head.appendChild(stylesheet);
         replaceInlineMuxIframe();
+        replaceInlineWatchPlayers();
         wireMuxLinks();
     }
 
