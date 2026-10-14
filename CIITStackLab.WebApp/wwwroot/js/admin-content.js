@@ -202,6 +202,65 @@ document.addEventListener('DOMContentLoaded', () => {
             xhr.send(file);
         });
 
+        const waitForMuxReady = async (uploadId, overlay) => {
+            const deadline = Date.now() + (15 * 60 * 1000);
+
+            while (Date.now() < deadline) {
+                const response = await fetch(
+                    `/Admin/Mux/VideoUploadStatus?uploadId=${encodeURIComponent(uploadId)}`,
+                    { headers: { 'Accept': 'application/json' } });
+
+                let payload = null;
+                try {
+                    payload = await response.json();
+                } catch {
+                    // Keep the generic error below if the server did not return JSON.
+                }
+
+                if (!response.ok) {
+                    throw new Error(payload?.message || 'Unable to check the Mux video status.');
+                }
+
+                const progress = Number.isFinite(Number(payload?.progress))
+                    ? Math.max(0, Math.min(100, Number(payload.progress)))
+                    : 0;
+
+                if (payload?.stage === 'ready' && payload?.playbackId) {
+                    updateOverlay(
+                        overlay,
+                        'Video ready',
+                        'Mux has finished processing the video. Saving the content now.',
+                        'Video processing complete — 100%',
+                        100,
+                        true);
+                    return payload;
+                }
+
+                if (payload?.stage === 'processing') {
+                    const hasProgress = progress > 0;
+                    updateOverlay(
+                        overlay,
+                        'Processing video',
+                        payload.message || 'Mux is processing the video and preparing playback.',
+                        hasProgress ? `Processing video... ${progress}%` : 'Processing video...',
+                        hasProgress ? progress : null,
+                        true);
+                } else {
+                    updateOverlay(
+                        overlay,
+                        'Finalizing upload',
+                        payload.message || 'Mux is finalizing the uploaded video.',
+                        'Finalizing upload...',
+                        null,
+                        true);
+                }
+
+                await new Promise(resolve => setTimeout(resolve, 2500));
+            }
+
+            throw new Error('Mux is taking longer than expected to process this video. Please try again shortly.');
+        };
+
         form.addEventListener('submit', async event => {
             if (!videoInput.files || videoInput.files.length === 0) return;
             if (uploadIdInput.value) return;
@@ -236,12 +295,14 @@ document.addEventListener('DOMContentLoaded', () => {
                 updateOverlay(
                     overlay,
                     'Processing video',
-                    'The upload is complete. Mux is now processing the video and preparing playback.',
-                    'Processing video...',
+                    'The upload is complete. Checking Mux processing status now.',
+                    'Checking video status...',
                     null,
                     true);
 
                 submitButton.innerHTML = '<span class="ciit-upload-button-spinner" aria-hidden="true"></span> Processing...';
+                await waitForMuxReady(upload.uploadId, overlay);
+
                 HTMLFormElement.prototype.submit.call(form);
             } catch (error) {
                 showUploadError(overlay, error instanceof Error ? error.message : 'Unable to upload the video.');

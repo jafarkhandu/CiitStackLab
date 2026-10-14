@@ -6,6 +6,10 @@ public interface IMuxVideoService
         string corsOrigin,
         CancellationToken cancellationToken = default);
 
+    Task<MuxVideoStatusDto> GetDirectUploadStatusAsync(
+        string uploadId,
+        CancellationToken cancellationToken = default);
+
     Task<MuxVideoUploadResult> CompleteDirectUploadAsync(
         string uploadId,
         CancellationToken cancellationToken = default);
@@ -14,6 +18,12 @@ public interface IMuxVideoService
 public sealed record MuxDirectUploadDto(
     string UploadId,
     string UploadUrl);
+
+public sealed record MuxVideoStatusDto(
+    string Stage,
+    int Progress,
+    string? PlaybackId,
+    string? Message);
 
 public sealed record MuxVideoUploadResult(
     string AssetId,
