@@ -21,14 +21,38 @@ document.addEventListener("DOMContentLoaded", function () {
 
         hubLink.dataset.transitioning = "true";
         hubLink.setAttribute("aria-disabled", "true");
+        transition.classList.remove("is-complete");
         transition.classList.add("is-active");
         transition.setAttribute("aria-hidden", "false");
         document.body.classList.add("ciit-hub-transitioning");
 
+        const progress = transition.querySelector(".ciit-hub-transition-progress span");
+        const caption = transition.querySelector(".ciit-hub-transition-caption");
         const reducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+        const loadingDuration = reducedMotion ? 80 : 1500;
+
+        if (progress) {
+            progress.style.transitionDuration = loadingDuration + "ms";
+            progress.style.width = "0%";
+            progress.getBoundingClientRect();
+            progress.style.width = "100%";
+        }
+
+        if (caption) {
+            caption.textContent = "Loading your courses and learning progress…";
+        }
+
         window.setTimeout(function () {
-            window.location.assign(hubLink.href);
-        }, reducedMotion ? 120 : 720);
+            transition.classList.add("is-complete");
+
+            if (caption) {
+                caption.textContent = "Your learning space is ready";
+            }
+
+            window.setTimeout(function () {
+                window.location.assign(hubLink.href);
+            }, reducedMotion ? 0 : 260);
+        }, loadingDuration);
     });
 
     window.addEventListener("pageshow", function () {
