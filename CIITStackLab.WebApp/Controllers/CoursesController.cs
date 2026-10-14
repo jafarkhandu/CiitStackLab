@@ -13,17 +13,20 @@ public class CoursesController : Controller
     private readonly IStudentProgressService _studentProgressService;
     private readonly ICourseAssessmentService _courseAssessmentService;
     private readonly CoursePurchaseService _coursePurchaseService;
+    private readonly IMuxVideoService _muxVideoService;
 
     public CoursesController(
         ICourseService courseService,
         IStudentProgressService studentProgressService,
         ICourseAssessmentService courseAssessmentService,
-        CoursePurchaseService coursePurchaseService)
+        CoursePurchaseService coursePurchaseService,
+        IMuxVideoService muxVideoService)
     {
         _courseService = courseService;
         _studentProgressService = studentProgressService;
         _courseAssessmentService = courseAssessmentService;
         _coursePurchaseService = coursePurchaseService;
+        _muxVideoService = muxVideoService;
     }
 
     [HttpGet]
@@ -302,6 +305,35 @@ public class CoursesController : Controller
         }
 
         return View(course);
+    }
+
+    [HttpGet("/uploads/videos/{playbackId}")]
+    public async Task<IActionResult> MuxVideo(
+        string playbackId,
+        CancellationToken cancellationToken)
+    {
+        if (string.IsNullOrWhiteSpace(playbackId)
+            || playbackId.Length > 256
+            || playbackId.Contains('/')
+            || playbackId.Contains('\\')
+            || playbackId.Contains('.')
+            || playbackId.Any(char.IsWhiteSpace))
+        {
+            return NotFound();
+        }
+
+        try
+        {
+            var publicPlaybackId = await _muxVideoService.EnsurePublicPlaybackIdAsync(
+                playbackId,
+                cancellationToken);
+
+            return Redirect($"https://player.mux.com/{Uri.EscapeDataString(publicPlaybackId)}");
+        }
+        catch (InvalidOperationException)
+        {
+            return NotFound();
+        }
     }
 
     [HttpPost("Courses/Learn/{id:int}/Complete/{contentId:int}")]

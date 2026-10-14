@@ -180,12 +180,13 @@ document.addEventListener('DOMContentLoaded', () => {
                 }
 
                 const percent = Math.min(100, Math.round((event.loaded / event.total) * 100));
+                const combinedProgress = Math.min(85, Math.round(percent * 0.85));
                 updateOverlay(
                     overlay,
                     'Uploading video',
                     'Your browser is uploading the video directly to secure Mux storage.',
-                    `Uploading video... ${percent}%`,
-                    percent);
+                    `Uploading video... ${combinedProgress}%`,
+                    combinedProgress);
             });
 
             xhr.addEventListener('load', () => {
@@ -204,6 +205,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
         const waitForMuxReady = async (uploadId, overlay) => {
             const deadline = Date.now() + (15 * 60 * 1000);
+            const processingStartedAt = Date.now();
 
             while (Date.now() < deadline) {
                 const response = await fetch(
@@ -224,7 +226,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     throw new Error(payload?.message || 'Unable to check the Mux video status.');
                 }
 
-                const progress = Number.isFinite(Number(payload?.progress))
+                const muxProgress = Number.isFinite(Number(payload?.progress))
                     ? Math.max(0, Math.min(100, Number(payload.progress)))
                     : 0;
 
@@ -233,28 +235,35 @@ document.addEventListener('DOMContentLoaded', () => {
                         overlay,
                         'Video ready',
                         'Mux has finished processing the video. Saving the content now.',
-                        'Video processing complete — 100%',
+                        'Video ready — 100%',
                         100,
                         true);
                     return payload;
                 }
 
                 if (payload?.stage === 'processing') {
-                    const hasProgress = progress > 0;
+                    const elapsedSeconds = Math.max(0, (Date.now() - processingStartedAt) / 1000);
+                    const fallbackProgress = Math.min(99, 85 + Math.floor(elapsedSeconds / 5));
+                    const combinedProgress = muxProgress > 0
+                        ? Math.min(99, 85 + Math.round(muxProgress * 0.14))
+                        : fallbackProgress;
+
                     updateOverlay(
                         overlay,
                         'Processing video',
                         payload.message || 'Mux is processing the video and preparing playback.',
-                        hasProgress ? `Processing video... ${progress}%` : 'Processing video...',
-                        hasProgress ? progress : null,
+                        `Processing video... ${combinedProgress}%`,
+                        combinedProgress,
                         true);
                 } else {
+                    const elapsedSeconds = Math.max(0, (Date.now() - processingStartedAt) / 1000);
+                    const combinedProgress = Math.min(99, 85 + Math.floor(elapsedSeconds / 5));
                     updateOverlay(
                         overlay,
-                        'Finalizing upload',
-                        payload.message || 'Mux is finalizing the uploaded video.',
-                        'Finalizing upload...',
-                        null,
+                        'Processing video',
+                        payload.message || 'Mux is preparing the video for playback.',
+                        `Processing video... ${combinedProgress}%`,
+                        combinedProgress,
                         true);
                 }
 
@@ -298,9 +307,9 @@ document.addEventListener('DOMContentLoaded', () => {
                 updateOverlay(
                     overlay,
                     'Processing video',
-                    'The upload is complete. Checking Mux processing status now.',
-                    'Checking video status...',
-                    null,
+                    'The upload is complete. The same progress bar will finish when Mux is ready.',
+                    'Processing video... 85%',
+                    85,
                     true);
 
                 submitButton.innerHTML = '<span class="ciit-upload-button-spinner" aria-hidden="true"></span> Processing...';
