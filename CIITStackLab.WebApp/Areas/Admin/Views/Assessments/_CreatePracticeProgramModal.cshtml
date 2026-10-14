@@ -3,7 +3,7 @@
     var chapters = ViewBag.PracticeProgramChapters as IEnumerable<CIITStackLab.Application.DTOs.AdminAssessmentChapterLookupDto>
         ?? Array.Empty<CIITStackLab.Application.DTOs.AdminAssessmentChapterLookupDto>();
 }
-<div class="modal fade ciit-assessment-form-modal" id="createPracticeProgramModal" tabindex="-1"
+<div class="modal fade ciit-assessment-form-modal ciit-assessment-form-modal--practice" id="createPracticeProgramModal" tabindex="-1"
      aria-labelledby="createPracticeProgramModalTitle" aria-hidden="true">
     <div class="modal-dialog modal-lg modal-dialog-centered modal-dialog-scrollable">
         <div class="modal-content">
@@ -49,3 +49,11 @@
         </div>
     </div>
 </div>
+<script>
+    (function () {
+        const modal = document.getElementById("createPracticeProgramModal");
+        if (modal && modal.parentElement !== document.body) {
+            document.body.appendChild(modal);
+        }
+    })();
+</script>
