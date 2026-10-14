@@ -17,6 +17,7 @@ public static class DependencyInjection
             ?? throw new InvalidOperationException("DefaultConnection is not configured.");
 
         services.AddMemoryCache();
+        services.AddHttpClient();
 
         services.AddDbContext<ApplicationDbContext>(options =>
             options.UseSqlServer(connectionString, sqlOptions => { sqlOptions.EnableRetryOnFailure(); }));
@@ -49,6 +50,7 @@ public static class DependencyInjection
         services.AddScoped<IAdminTopicService, AdminTopicService>();
         services.AddScoped<IAdminCourseTopicMappingService, AdminCourseTopicMappingService>();
         services.AddScoped<IAdminContentService, AdminContentService>();
+        services.AddScoped<IMuxVideoService, MuxVideoService>();
         services.AddScoped<IAdminMcqService, AdminMcqService>();
         services.AddScoped<IAdminInterviewQuestionService, AdminInterviewQuestionService>();
         services.AddScoped<IInterviewQuestionAnalyzerService, InterviewQuestionAnalyzerService>();
