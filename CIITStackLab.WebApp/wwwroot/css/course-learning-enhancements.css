@@ -820,3 +820,112 @@
         background: rgba(248, 251, 255, .97);
     }
 }
+
+
+/* Shared glassmorphism refinement for the Learning Hub shell. */
+.ciit-course-environment-body {
+    background: #edf3fc;
+}
+
+.ciit-course-environment-header {
+    position: sticky;
+    top: 0;
+    z-index: 1030;
+    background: rgba(250, 252, 255, .76);
+    border-bottom: 1px solid rgba(255, 255, 255, .88);
+    box-shadow: 0 8px 30px rgba(27, 57, 105, .065);
+    -webkit-backdrop-filter: blur(24px) saturate(165%);
+    backdrop-filter: blur(24px) saturate(165%);
+}
+
+.ciit-course-global-sidebar {
+    background: linear-gradient(180deg, rgba(255, 255, 255, .72), rgba(247, 250, 255, .64));
+    border-right: 1px solid rgba(255, 255, 255, .9);
+    box-shadow: 8px 0 35px rgba(35, 65, 111, .035);
+    -webkit-backdrop-filter: blur(26px) saturate(155%);
+    backdrop-filter: blur(26px) saturate(155%);
+}
+
+.ciit-course-global-sidebar-heading,
+.ciit-course-global-sidebar-section {
+    border-color: rgba(213, 226, 245, .8);
+}
+
+.ciit-course-global-nav a,
+.ciit-course-coming-soon-link {
+    border: 1px solid transparent;
+    border-radius: 12px;
+    transition: background .2s ease, border-color .2s ease, color .2s ease, transform .2s ease, box-shadow .2s ease;
+}
+
+.ciit-course-global-nav a:hover {
+    transform: translateX(2px);
+    border-color: rgba(211, 226, 251, .86);
+    background: rgba(255, 255, 255, .66);
+    box-shadow: 0 7px 18px rgba(35, 75, 140, .055);
+}
+
+.ciit-course-global-nav a.active {
+    border-color: rgba(205, 223, 255, .94);
+    background: linear-gradient(110deg, rgba(225, 238, 255, .88), rgba(247, 250, 255, .75));
+    box-shadow: inset 3px 0 0 #2674ff, 0 7px 20px rgba(35, 100, 225, .07);
+}
+
+.ciit-course-switcher {
+    overflow: hidden;
+    border: 1px solid rgba(255, 255, 255, .94);
+    border-radius: 16px;
+    background: rgba(255, 255, 255, .62);
+    box-shadow: 0 12px 30px rgba(35, 65, 111, .055), inset 0 1px 0 #fff;
+    -webkit-backdrop-filter: blur(20px);
+    backdrop-filter: blur(20px);
+}
+
+.ciit-course-switcher summary {
+    transition: background .2s ease;
+}
+
+.ciit-course-switcher summary:hover {
+    background: rgba(238, 245, 255, .6);
+}
+
+.ciit-course-switcher-menu {
+    background: rgba(255, 255, 255, .82);
+    -webkit-backdrop-filter: blur(20px);
+    backdrop-filter: blur(20px);
+}
+
+.ciit-course-environment-account .ciit-course-environment-user {
+    color: #617493;
+    font-weight: 650;
+}
+
+.ciit-course-signout {
+    border-color: rgba(183, 207, 248, .95);
+    border-radius: 12px;
+    background: rgba(255, 255, 255, .56);
+    box-shadow: 0 6px 18px rgba(35, 65, 111, .045);
+    -webkit-backdrop-filter: blur(12px);
+    backdrop-filter: blur(12px);
+}
+
+.ciit-course-environment-footer {
+    border-top: 1px solid rgba(255, 255, 255, .86);
+    background: rgba(248, 251, 255, .74);
+    -webkit-backdrop-filter: blur(20px);
+    backdrop-filter: blur(20px);
+}
+
+@media (max-width: 1199.98px) {
+    .ciit-course-global-sidebar {
+        background: rgba(255, 255, 255, .92);
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .ciit-course-global-nav a,
+    .ciit-course-coming-soon-link,
+    .ciit-course-switcher summary {
+        transition: none !important;
+    }
+}
