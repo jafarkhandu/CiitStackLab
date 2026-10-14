@@ -82,7 +82,7 @@
                 </a>
 
                 <div class="ciit-course-environment-context">
-                    <span class="ciit-course-environment-label">Course Environment</span>
+                    <span class="ciit-course-environment-label">@(string.IsNullOrWhiteSpace(courseId) ? "Learning Hub" : "Course Environment")</span>
                     @if (!string.IsNullOrWhiteSpace(courseTitle))
                     {
                         <strong>@courseTitle</strong>
@@ -173,6 +173,10 @@
                 <a class="@(currentAction.Equals("PaymentHistory", StringComparison.OrdinalIgnoreCase) ? "active" : "")"
                    asp-controller="Courses" asp-action="PaymentHistory">
                     <i class="bi bi-receipt"></i><span>Payment History</span>
+                </a>
+                <a class="@(currentController.Equals("Account", StringComparison.OrdinalIgnoreCase) && currentAction.Equals("Profile", StringComparison.OrdinalIgnoreCase) ? "active" : "")"
+                   asp-controller="Account" asp-action="Profile">
+                    <i class="bi bi-person-circle"></i><span>My Profile</span>
                 </a>
             </nav>
 
