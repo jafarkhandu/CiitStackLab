@@ -44,7 +44,6 @@
                     <div><span>PROFILE INFORMATION</span><h2>Personal details</h2><p>Update the information associated with your student account.</p></div>
                 </div>
                 <form asp-controller="Account" asp-action="UpdateProfile" method="post" class="ciit-profile-form">
-                    @Html.AntiForgeryToken()
                     <div asp-validation-summary="ModelOnly" class="ciit-profile-validation" role="alert"></div>
                     <div class="ciit-profile-field">
                         <label asp-for="UserName"></label>
@@ -71,7 +70,6 @@
                     <div><span>ACCOUNT SECURITY</span><h2>Change password</h2><p>Use your current password to securely set a new one.</p></div>
                 </div>
                 <form asp-controller="Account" asp-action="ChangePassword" method="post" class="ciit-profile-form" id="ciit-change-password-form">
-                    @Html.AntiForgeryToken()
                     <div asp-validation-summary="ModelOnly" class="ciit-profile-validation" role="alert"></div>
                     <div class="ciit-profile-field">
                         <label asp-for="CurrentPassword"></label>
