@@ -8,23 +8,24 @@
     <link rel="stylesheet" href="~/css/course-payment-modal.css" />
 }
 
-<section class="ciit-course-details-section">
+<section class="ciit-course-details-section ciit-student-course-details">
     <div class="container">
-        <div class="ciit-course-details-card">
+        <div class="ciit-course-details-card ciit-student-course-hero">
+            <div class="ciit-course-details-kicker"><i class="bi bi-mortarboard-fill"></i> CIIT LEARNING EXPERIENCE</div>
             <div class="row align-items-center g-5">
                 <div class="col-lg-5">
-                    <div class="ciit-course-details-image">
+                    <div class="ciit-course-details-image ciit-student-course-cover">
                         <img src="@Model.ImageUrl" alt="@Model.Title" />
                     </div>
                 </div>
 
                 <div class="col-lg-7">
-                    <span class="ciit-course-details-badge">@Model.Category</span>
+                    <span class="ciit-course-details-badge"><i class="bi bi-bookmark-star me-1"></i>@Model.Category</span>
                     <h1 class="ciit-course-details-title">@Model.Title</h1>
                     <p class="ciit-course-details-summary">@Model.ShortDescription</p>
                     <p class="ciit-course-details-description">@Model.Description</p>
 
-                    <div class="ciit-course-meta-row">
+                    <div class="ciit-course-meta-row ciit-student-course-stats">
                         <div><strong>@Model.Level</strong><span>Level</span></div>
                         <div><strong>@Model.DurationHours hrs</strong><span>Duration</span></div>
                         <div><strong>@Model.Topics.Count</strong><span>Topics</span></div>
@@ -256,7 +257,7 @@
             </div>
         }
 
-        <div id="course-roadmap" class="ciit-course-outline-card mt-4">
+        <div id="course-roadmap" class="ciit-course-outline-card ciit-student-course-roadmap mt-4">
             <div class="d-flex justify-content-between align-items-center gap-3 flex-wrap mb-3">
                 <div>
                     <h2 class="mb-1">Course Roadmap</h2>
