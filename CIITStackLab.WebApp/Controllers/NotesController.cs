@@ -68,6 +68,7 @@ public sealed class NotesController : Controller
 
             if (course is not null && course.Topics.Any(topic => topic.Id == topicId))
             {
+                ViewData["LearningPathModel"] = course;
                 ViewData["CourseId"] = course.Id.ToString();
                 ViewData["CourseTitle"] = course.Title;
                 ViewData["NotesTopicId"] = notes.TopicId.ToString();
