@@ -33,7 +33,7 @@ public sealed class MuxVideoService : IMuxVideoService
             cors_origin = corsOrigin,
             new_asset_settings = new
             {
-                playback_policies = new[] { "signed" },
+                playback_policies = new[] { "public" },
                 video_quality = "basic"
             }
         };
@@ -90,7 +90,9 @@ public sealed class MuxVideoService : IMuxVideoService
             throw new InvalidOperationException("Mux reported an error while processing the video asset.");
 
         var playbackId = assetDetails.PlaybackIds?
-            .FirstOrDefault(x => !string.IsNullOrWhiteSpace(x.Id))?.Id;
+            .FirstOrDefault(x => string.Equals(x.Policy, "public", StringComparison.OrdinalIgnoreCase))?.Id
+            ?? assetDetails.PlaybackIds?
+                .FirstOrDefault(x => !string.IsNullOrWhiteSpace(x.Id))?.Id;
         var progress = Math.Clamp(assetDetails.Progress?.Progress ?? 0, 0, 100);
 
         if (string.Equals(assetDetails.Status, "ready", StringComparison.OrdinalIgnoreCase) &&
@@ -115,8 +117,7 @@ public sealed class MuxVideoService : IMuxVideoService
         while (DateTimeOffset.UtcNow < deadline)
         {
             var status = await GetDirectUploadStatusAsync(uploadId, cancellationToken);
-            if (string.Equals(status.Stage, "ready", StringComparison.OrdinalIgnoreCase) &&
-                !string.IsNullOrWhiteSpace(status.PlaybackId))
+            if (string.Equals(status.Stage, "ready", StringComparison.OrdinalIgnoreCase))
             {
                 var client = CreateAuthenticatedClient();
                 var upload = await GetUploadAsync(client, uploadId, cancellationToken);
@@ -131,13 +132,54 @@ public sealed class MuxVideoService : IMuxVideoService
                 if (string.IsNullOrWhiteSpace(assetId))
                     throw new InvalidOperationException("Mux reported the video as ready without an asset ID.");
 
-                return new MuxVideoUploadResult(assetId, status.PlaybackId);
+                var assetDetails = await GetAssetAsync(client, assetId, cancellationToken);
+                var playbackId = await EnsurePublicPlaybackIdAsync(
+                    client,
+                    assetId,
+                    assetDetails.PlaybackIds,
+                    cancellationToken);
+
+                return new MuxVideoUploadResult(assetId, playbackId);
             }
 
             await Task.Delay(PollInterval, cancellationToken);
         }
 
         throw new TimeoutException("Mux did not finish processing the video within the allowed time.");
+    }
+
+    private async Task<string> EnsurePublicPlaybackIdAsync(
+        HttpClient client,
+        string assetId,
+        List<MuxPlaybackId>? playbackIds,
+        CancellationToken cancellationToken)
+    {
+        var existingPublicPlaybackId = playbackIds?
+            .FirstOrDefault(x =>
+                string.Equals(x.Policy, "public", StringComparison.OrdinalIgnoreCase) &&
+                !string.IsNullOrWhiteSpace(x.Id))?.Id;
+
+        if (!string.IsNullOrWhiteSpace(existingPublicPlaybackId))
+            return existingPublicPlaybackId;
+
+        var request = new { policy = "public" };
+        using var response = await client.PostAsJsonAsync(
+            $"video/v1/assets/{Uri.EscapeDataString(assetId)}/playback-ids",
+            request,
+            cancellationToken);
+
+        if (!response.IsSuccessStatusCode)
+        {
+            var error = await response.Content.ReadAsStringAsync(cancellationToken);
+            throw new InvalidOperationException($"Mux public playback setup failed with status {(int)response.StatusCode}: {error}");
+        }
+
+        var result = await response.Content.ReadFromJsonAsync<MuxPlaybackIdResponse>(cancellationToken);
+        var playbackId = result?.Data?.Id;
+        if (string.IsNullOrWhiteSpace(playbackId))
+            throw new InvalidOperationException("Mux created the public playback ID without returning its ID.");
+
+        return playbackId;
     }
 
     private HttpClient CreateAuthenticatedClient()
@@ -231,5 +273,14 @@ public sealed class MuxVideoService : IMuxVideoService
         public int Progress { get; set; }
     }
 
-    private sealed class MuxPlaybackId { public string? Id { get; set; } }
+    private sealed class MuxPlaybackId
+    {
+        public string? Id { get; set; }
+        public string? Policy { get; set; }
+    }
+
+    private sealed class MuxPlaybackIdResponse
+    {
+        public MuxPlaybackId? Data { get; set; }
+    }
 }
