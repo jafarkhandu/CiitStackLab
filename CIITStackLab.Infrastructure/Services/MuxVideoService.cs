@@ -1,6 +1,7 @@
 using System.Net.Http.Headers;
 using System.Net.Http.Json;
 using System.Text;
+using System.Text.Json.Serialization;
 using CIITStackLab.Application.Interfaces;
 using Microsoft.Extensions.Configuration;
 
@@ -162,6 +163,8 @@ public sealed class MuxVideoService : IMuxVideoService
         public string? Id { get; set; }
         public string? Url { get; set; }
         public string? Status { get; set; }
+
+        [JsonPropertyName("asset_id")]
         public string? AssetId { get; set; }
     }
 
@@ -170,7 +173,10 @@ public sealed class MuxVideoService : IMuxVideoService
     private sealed class MuxAssetData
     {
         public string? Status { get; set; }
+
+        [JsonPropertyName("playback_ids")]
         public List<MuxPlaybackId>? PlaybackIds { get; set; }
+
         public MuxAssetProgress? Progress { get; set; }
     }
 
