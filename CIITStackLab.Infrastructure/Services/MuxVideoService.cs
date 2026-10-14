@@ -148,6 +148,40 @@ public sealed class MuxVideoService : IMuxVideoService
         throw new TimeoutException("Mux did not finish processing the video within the allowed time.");
     }
 
+    public async Task<string> EnsurePublicPlaybackIdAsync(
+        string playbackId,
+        CancellationToken cancellationToken = default)
+    {
+        if (string.IsNullOrWhiteSpace(playbackId))
+            throw new ArgumentException("A Mux playback ID is required.", nameof(playbackId));
+
+        var client = CreateAuthenticatedClient();
+        using var response = await client.GetAsync(
+            $"video/v1/playback-ids/{Uri.EscapeDataString(playbackId)}",
+            cancellationToken);
+
+        if (!response.IsSuccessStatusCode)
+        {
+            var error = await response.Content.ReadAsStringAsync(cancellationToken);
+            throw new InvalidOperationException($"Mux playback lookup failed with status {(int)response.StatusCode}: {error}");
+        }
+
+        var result = await response.Content.ReadFromJsonAsync<MuxPlaybackLookupResponse>(cancellationToken);
+        var assetId = result?.Data?.Object?.Id;
+        if (string.IsNullOrWhiteSpace(assetId))
+            throw new InvalidOperationException("Mux did not return an asset for the playback ID.");
+
+        var assetDetails = await GetAssetAsync(client, assetId, cancellationToken);
+        if (!string.Equals(assetDetails.Status, "ready", StringComparison.OrdinalIgnoreCase))
+            throw new InvalidOperationException("The Mux video is not ready for playback yet.");
+
+        return await EnsurePublicPlaybackIdAsync(
+            client,
+            assetId,
+            assetDetails.PlaybackIds,
+            cancellationToken);
+    }
+
     private async Task<string> EnsurePublicPlaybackIdAsync(
         HttpClient client,
         string assetId,
@@ -282,5 +316,21 @@ public sealed class MuxVideoService : IMuxVideoService
     private sealed class MuxPlaybackIdResponse
     {
         public MuxPlaybackId? Data { get; set; }
+    }
+
+    private sealed class MuxPlaybackLookupResponse
+    {
+        public MuxPlaybackLookupData? Data { get; set; }
+    }
+
+    private sealed class MuxPlaybackLookupData
+    {
+        public MuxPlaybackObject? Object { get; set; }
+    }
+
+    private sealed class MuxPlaybackObject
+    {
+        public string? Type { get; set; }
+        public string? Id { get; set; }
     }
 }
