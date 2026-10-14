@@ -11,6 +11,8 @@ namespace CIITStackLab.WebApp.Areas.Admin.Controllers;
 [Authorize(Roles = "Admin,Super User")]
 public sealed class ContentController : Controller
 {
+    private const long MaxVideoUploadBytes = 500L * 1024 * 1024;
+
     private readonly IAdminContentService _contentService;
     private readonly IMuxVideoService _muxVideoService;
 
@@ -37,6 +39,8 @@ public sealed class ContentController : Controller
 
     [HttpPost]
     [ValidateAntiForgeryToken]
+    [RequestSizeLimit(MaxVideoUploadBytes)]
+    [RequestFormLimits(MultipartBodyLengthLimit = MaxVideoUploadBytes)]
     public async Task<IActionResult> Create(AdminContentInputDto input, IFormFile? slidesFile, IFormFile? videoFile, CancellationToken cancellationToken)
     {
         if (!ModelState.IsValid)
@@ -96,6 +100,8 @@ public sealed class ContentController : Controller
 
     [HttpPost]
     [ValidateAntiForgeryToken]
+    [RequestSizeLimit(MaxVideoUploadBytes)]
+    [RequestFormLimits(MultipartBodyLengthLimit = MaxVideoUploadBytes)]
     public async Task<IActionResult> Edit(int id, AdminContentInputDto input, IFormFile? slidesFile, IFormFile? videoFile, CancellationToken cancellationToken)
     {
         input.Id = id;
