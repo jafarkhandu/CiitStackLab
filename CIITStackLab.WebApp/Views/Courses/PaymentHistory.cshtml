@@ -3,81 +3,79 @@
 @{
     Layout = "_CourseLayout";
     ViewData["Title"] = "Payment History";
+    var totalAmount = Model.Sum(item => item.Amount);
 }
 
-<section class="container py-5">
-    <div class="row justify-content-center">
-        <div class="col-12 col-xl-10">
-            <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-end gap-3 mb-4">
-                <div>
-                    <span class="text-primary fw-semibold text-uppercase small">Your account</span>
-                    <h1 class="display-6 fw-bold mb-2">Payment History</h1>
-                    <p class="text-secondary mb-0">Review course purchases recorded for your account.</p>
-                </div>
-                <a asp-controller="Courses" asp-action="CourseHome" class="btn btn-outline-primary">
-                    <i class="bi bi-arrow-left me-2" aria-hidden="true"></i>My Courses
-                </a>
-            </div>
+@section Styles {
+    <link rel="stylesheet" href="~/css/payment-history.css" asp-append-version="true" />
+}
 
-            <div class="alert alert-info border-0 rounded-4" role="note">
-                <i class="bi bi-info-circle me-2" aria-hidden="true"></i>
-                This history shows course purchases recorded by CIIT Stack Lab's current checkout flow. It does not include legacy ERP payment entries or verified payment-gateway transactions.
+<section class="ciit-payment-page">
+    <div class="ciit-payment-shell">
+        <header class="ciit-payment-hero" data-payment-reveal>
+            <div class="ciit-payment-hero-copy">
+                <span class="ciit-payment-eyebrow"><i class="bi bi-shield-check"></i> ACCOUNT FINANCE</span>
+                <h1>Your payments.<br /><span>Clearly accounted for.</span></h1>
+                <p>A clear view of course purchases associated with your learning account.</p>
+                <div class="ciit-payment-hero-meta"><span><i class="bi bi-lock-fill"></i> Private to your account</span><span><i class="bi bi-clock-history"></i> Purchase timeline</span></div>
             </div>
+            <div class="ciit-payment-hero-art" aria-hidden="true">
+                <div class="ciit-payment-orbit ciit-payment-orbit-one"></div>
+                <div class="ciit-payment-orbit ciit-payment-orbit-two"></div>
+                <div class="ciit-payment-art-card"><i class="bi bi-receipt-cutoff"></i><span>PAYMENT RECORD</span><strong>₹</strong><i class="bi bi-check-circle-fill ciit-payment-art-check"></i></div>
+                <span class="ciit-payment-float ciit-payment-float-one"><i class="bi bi-check2-circle"></i> Recorded</span>
+                <span class="ciit-payment-float ciit-payment-float-two"><i class="bi bi-stars"></i> Your learning</span>
+            </div>
+        </header>
 
-            <div class="card border-0 shadow-sm rounded-4 overflow-hidden">
-                @if (Model.Count == 0)
+        <section class="ciit-payment-summary" aria-label="Purchase summary" data-payment-reveal>
+            <article class="ciit-payment-summary-card"><span class="ciit-payment-summary-icon"><i class="bi bi-receipt"></i></span><div><small>Purchase records</small><strong>@Model.Count.ToString("00")</strong><span>Recorded in your account</span></div></article>
+            <article class="ciit-payment-summary-card"><span class="ciit-payment-summary-icon ciit-payment-summary-icon-cyan"><i class="bi bi-wallet2"></i></span><div><small>Total recorded</small><strong>₹@totalAmount.ToString("N2")</strong><span>Course purchase value</span></div></article>
+            <article class="ciit-payment-summary-card"><span class="ciit-payment-summary-icon ciit-payment-summary-icon-green"><i class="bi bi-journal-check"></i></span><div><small>Record status</small><strong>@(Model.Count == 0 ? "No records" : "Up to date")</strong><span>Based on available purchase data</span></div></article>
+        </section>
+
+        <section class="ciit-payment-records" data-payment-reveal>
+            <div class="ciit-payment-records-heading"><div><span>YOUR TRANSACTION LOG</span><h2>Purchase history</h2><p>Course purchases recorded for your account.</p></div><a asp-controller="Courses" asp-action="CourseHome" class="ciit-payment-back-link"><i class="bi bi-arrow-left"></i> My Courses</a></div>
+            <div class="ciit-payment-notice"><i class="bi bi-info-circle-fill"></i><p>This page shows course purchases recorded by CIIT Stack Lab's current checkout flow. Legacy ERP payment entries and verified payment-gateway transactions are not included.</p></div>
+            @if (Model.Count == 0)
+            {
+                <div class="ciit-payment-empty"><span><i class="bi bi-receipt"></i></span><h3>No purchase records yet</h3><p>Once a course purchase is recorded, its details will appear here.</p><a asp-controller="Home" asp-action="Index" asp-fragment="tutorials">Explore courses <i class="bi bi-arrow-up-right"></i></a></div>
+            }
+            else
+            {
+                <div class="ciit-payment-table-wrap"><table class="ciit-payment-table"><thead><tr><th>Course details</th><th>Purchase date</th><th>Amount</th><th>Record ID</th></tr></thead><tbody>
+                @foreach (var purchase in Model)
                 {
-                    <div class="text-center px-4 py-5">
-                        <div class="display-5 text-secondary mb-3" aria-hidden="true">
-                            <i class="bi bi-receipt"></i>
-                        </div>
-                        <h2 class="h5 fw-bold">No purchases yet</h2>
-                        <p class="text-secondary mb-4">When a course purchase is recorded, it will appear here.</p>
-                        <a asp-controller="Home" asp-action="Index" asp-fragment="tutorials" class="btn btn-primary">
-                            Browse Courses
-                        </a>
-                    </div>
+                    <tr>
+                        <td><div class="ciit-payment-course"><span class="ciit-payment-course-icon"><i class="bi bi-journal-code"></i></span><span><strong>@purchase.CourseTitle</strong><small>Course purchase</small></span></div></td>
+                        <td><time datetime="@purchase.PurchasedAt.ToString("O")">@purchase.PurchasedAt.ToLocalTime().ToString("dd MMM yyyy")<small>@purchase.PurchasedAt.ToLocalTime().ToString("hh:mm tt")</small></time></td>
+                        <td><strong class="ciit-payment-amount">₹@purchase.Amount.ToString("N2")</strong></td>
+                        <td><span class="ciit-payment-record-id">#@purchase.PurchaseId</span></td>
+                    </tr>
                 }
-                else
-                {
-                    <div class="table-responsive">
-                        <table class="table table-hover align-middle mb-0">
-                            <thead class="table-light">
-                                <tr>
-                                    <th scope="col" class="px-4 py-3">Course</th>
-                                    <th scope="col" class="py-3">Purchase date</th>
-                                    <th scope="col" class="py-3 text-end">Amount</th>
-                                    <th scope="col" class="px-4 py-3 text-end">Record</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                @foreach (var purchase in Model)
-                                {
-                                    <tr>
-                                        <td class="px-4 py-3">
-                                            <div class="fw-semibold">@purchase.CourseTitle</div>
-                                            <div class="small text-secondary">Course purchase</div>
-                                        </td>
-                                        <td class="py-3">
-                                            <time datetime="@purchase.PurchasedAt.ToString("O")">
-                                                @purchase.PurchasedAt.ToLocalTime().ToString("dd MMM yyyy, hh:mm tt")
-                                            </time>
-                                        </td>
-                                        <td class="py-3 text-end fw-semibold text-nowrap">
-                                            ₹@purchase.Amount.ToString("N2")
-                                        </td>
-                                        <td class="px-4 py-3 text-end text-secondary">#@purchase.PurchaseId</td>
-                                    </tr>
-                                }
-                            </tbody>
-                        </table>
-                    </div>
-                    <div class="px-4 py-3 border-top d-flex flex-column flex-sm-row justify-content-between gap-2">
-                        <span class="text-secondary small">@Model.Count purchase record@(Model.Count == 1 ? "" : "s")</span>
-                        <span class="fw-semibold">Total recorded: ₹@(Model.Sum(item => item.Amount).ToString("N2"))</span>
-                    </div>
-                }
-            </div>
-        </div>
+                </tbody></table></div>
+                <footer class="ciit-payment-table-footer"><span><i class="bi bi-check-circle"></i> @Model.Count purchase record@(Model.Count == 1 ? "" : "s")</span><strong>Total recorded <b>₹@totalAmount.ToString("N2")</b></strong></footer>
+            }
+        </section>
     </div>
 </section>
+
+@section Scripts {
+    <script>
+        (function () {
+            const items = document.querySelectorAll('[data-payment-reveal]');
+            if (window.matchMedia('(prefers-reduced-motion: reduce)').matches || !('IntersectionObserver' in window)) {
+                items.forEach(item => item.classList.add('is-visible'));
+                return;
+            }
+            const observer = new IntersectionObserver(entries => {
+                entries.forEach(entry => {
+                    if (!entry.isIntersecting) return;
+                    entry.target.classList.add('is-visible');
+                    observer.unobserve(entry.target);
+                });
+            }, { threshold: 0.08 });
+            items.forEach(item => observer.observe(item));
+        })();
+    </script>
+}
