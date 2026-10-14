@@ -143,42 +143,9 @@ public sealed class CoursePurchaseService
             .Select(purchase => purchase.CourseId)
             .ToListAsync(cancellationToken);
 
-        var courseTopicPrices = await (
-            from course in _dbContext.Courses.AsNoTracking()
-            join courseTopic in _dbContext.CourseModules.AsNoTracking()
-                on course.Id equals courseTopic.CourseId
-            join topic in _dbContext.Topics.AsNoTracking()
-                on courseTopic.TopicId equals topic.Id
-            where course.Flag == 0
-                  && courseTopic.Flag == 0
-                  && topic.Flag == 0
-            select new
-            {
-                CourseId = course.Id,
-                TopicId = topic.Id,
-                Price = topic.Price
-            })
-            .Distinct()
-            .ToListAsync(cancellationToken);
-
-        var priceByCourseId = courseTopicPrices
-            .GroupBy(row => row.CourseId)
-            .ToDictionary(
-                group => group.Key,
-                group => group.Sum(row => Math.Max(0m, row.Price)));
-
-        var accessibleCourseIds = purchasedCourseIds.ToHashSet();
-
-        foreach (var courseId in publishedCourseIds)
-        {
-            if (!priceByCourseId.TryGetValue(courseId, out var price) || price <= 0m)
-            {
-                accessibleCourseIds.Add(courseId);
-            }
-        }
-
-        return accessibleCourseIds
+        return purchasedCourseIds
             .Where(publishedCourseIds.Contains)
+            .Distinct()
             .OrderBy(courseId => courseId)
             .ToArray();
     }
