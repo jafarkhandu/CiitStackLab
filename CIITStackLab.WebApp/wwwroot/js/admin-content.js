@@ -208,7 +208,10 @@ document.addEventListener('DOMContentLoaded', () => {
             while (Date.now() < deadline) {
                 const response = await fetch(
                     `/Admin/Mux/VideoUploadStatus?uploadId=${encodeURIComponent(uploadId)}`,
-                    { headers: { 'Accept': 'application/json' } });
+                    {
+                        cache: 'no-store',
+                        headers: { 'Accept': 'application/json', 'Cache-Control': 'no-cache' }
+                    });
 
                 let payload = null;
                 try {
@@ -255,7 +258,7 @@ document.addEventListener('DOMContentLoaded', () => {
                         true);
                 }
 
-                await new Promise(resolve => setTimeout(resolve, 2500));
+                await new Promise(resolve => setTimeout(resolve, 2000));
             }
 
             throw new Error('Mux is taking longer than expected to process this video. Please try again shortly.');

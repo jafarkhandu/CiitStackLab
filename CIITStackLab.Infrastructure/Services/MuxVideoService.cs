@@ -70,20 +70,36 @@ public sealed class MuxVideoService : IMuxVideoService
             throw new InvalidOperationException("The Mux video upload is no longer available for processing.");
         }
 
-        if (string.IsNullOrWhiteSpace(upload.AssetId))
+        var assetId = upload.AssetId;
+
+        // Mux exposes the asset_id on the Direct Upload once the upload reaches
+        // asset_created. The asset list endpoint also supports an upload_id
+        // filter, so use it as a reliable fallback if the upload response has
+        // not exposed asset_id yet.
+        if (string.IsNullOrWhiteSpace(assetId))
+        {
+            var asset = await FindAssetByUploadIdAsync(client, uploadId, cancellationToken);
+            assetId = asset?.Id;
+        }
+
+        if (string.IsNullOrWhiteSpace(assetId))
             return new MuxVideoStatusDto("uploading", 0, null, "Mux is finalizing the uploaded video.");
 
-        var asset = await GetAssetAsync(client, upload.AssetId, cancellationToken);
-        if (string.Equals(asset.Status, "errored", StringComparison.OrdinalIgnoreCase))
+        var assetDetails = await GetAssetAsync(client, assetId, cancellationToken);
+        if (string.Equals(assetDetails.Status, "errored", StringComparison.OrdinalIgnoreCase))
             throw new InvalidOperationException("Mux reported an error while processing the video asset.");
 
-        var playbackId = asset.PlaybackIds?.FirstOrDefault(x => !string.IsNullOrWhiteSpace(x.Id))?.Id;
-        var progress = Math.Clamp(asset.Progress?.Progress ?? 0, 0, 100);
+        var playbackId = assetDetails.PlaybackIds?
+            .FirstOrDefault(x => !string.IsNullOrWhiteSpace(x.Id))?.Id;
+        var progress = Math.Clamp(assetDetails.Progress?.Progress ?? 0, 0, 100);
 
-        if (string.Equals(asset.Status, "ready", StringComparison.OrdinalIgnoreCase) && !string.IsNullOrWhiteSpace(playbackId))
+        if (string.Equals(assetDetails.Status, "ready", StringComparison.OrdinalIgnoreCase) &&
+            !string.IsNullOrWhiteSpace(playbackId))
+        {
             return new MuxVideoStatusDto("ready", 100, playbackId, "Video is ready for playback.");
+        }
 
-        var message = string.Equals(asset.Progress?.State, "transcoding", StringComparison.OrdinalIgnoreCase)
+        var message = string.Equals(assetDetails.Progress?.State, "transcoding", StringComparison.OrdinalIgnoreCase)
             ? "Mux is transcoding the video."
             : "Mux is processing the video and preparing playback.";
 
@@ -99,14 +115,23 @@ public sealed class MuxVideoService : IMuxVideoService
         while (DateTimeOffset.UtcNow < deadline)
         {
             var status = await GetDirectUploadStatusAsync(uploadId, cancellationToken);
-            if (string.Equals(status.Stage, "ready", StringComparison.OrdinalIgnoreCase) && !string.IsNullOrWhiteSpace(status.PlaybackId))
+            if (string.Equals(status.Stage, "ready", StringComparison.OrdinalIgnoreCase) &&
+                !string.IsNullOrWhiteSpace(status.PlaybackId))
             {
                 var client = CreateAuthenticatedClient();
                 var upload = await GetUploadAsync(client, uploadId, cancellationToken);
-                if (string.IsNullOrWhiteSpace(upload.AssetId))
+                var assetId = upload.AssetId;
+
+                if (string.IsNullOrWhiteSpace(assetId))
+                {
+                    var asset = await FindAssetByUploadIdAsync(client, uploadId, cancellationToken);
+                    assetId = asset?.Id;
+                }
+
+                if (string.IsNullOrWhiteSpace(assetId))
                     throw new InvalidOperationException("Mux reported the video as ready without an asset ID.");
 
-                return new MuxVideoUploadResult(upload.AssetId, status.PlaybackId);
+                return new MuxVideoUploadResult(assetId, status.PlaybackId);
             }
 
             await Task.Delay(PollInterval, cancellationToken);
@@ -143,6 +168,23 @@ public sealed class MuxVideoService : IMuxVideoService
         return result?.Data ?? throw new InvalidOperationException("Mux returned an invalid upload status response.");
     }
 
+    private async Task<MuxAssetData?> FindAssetByUploadIdAsync(
+        HttpClient client,
+        string uploadId,
+        CancellationToken cancellationToken)
+    {
+        var query = $"video/v1/assets?upload_id={Uri.EscapeDataString(uploadId)}&limit=1";
+        using var response = await client.GetAsync(query, cancellationToken);
+        if (!response.IsSuccessStatusCode)
+        {
+            var error = await response.Content.ReadAsStringAsync(cancellationToken);
+            throw new InvalidOperationException($"Mux asset lookup failed with status {(int)response.StatusCode}: {error}");
+        }
+
+        var result = await response.Content.ReadFromJsonAsync<MuxAssetListResponse>(cancellationToken);
+        return result?.Data?.FirstOrDefault();
+    }
+
     private async Task<MuxAssetData> GetAssetAsync(HttpClient client, string assetId, CancellationToken cancellationToken)
     {
         using var response = await client.GetAsync($"video/v1/assets/{Uri.EscapeDataString(assetId)}", cancellationToken);
@@ -168,10 +210,13 @@ public sealed class MuxVideoService : IMuxVideoService
         public string? AssetId { get; set; }
     }
 
+    private sealed class MuxAssetListResponse { public List<MuxAssetData>? Data { get; set; } }
+
     private sealed class MuxAssetResponse { public MuxAssetData? Data { get; set; } }
 
     private sealed class MuxAssetData
     {
+        public string? Id { get; set; }
         public string? Status { get; set; }
 
         [JsonPropertyName("playback_ids")]
