@@ -161,6 +161,10 @@
                     <a asp-controller="Courses" asp-action="CourseEnvironment" asp-route-id="@courseId" asp-fragment="course-progress">
                         <i class="bi bi-graph-up"></i><span>My Progress</span>
                     </a>
+                    <a class="@(currentAction.Equals("PaymentHistory", StringComparison.OrdinalIgnoreCase) ? "active" : "")"
+                       asp-controller="Courses" asp-action="PaymentHistory">
+                        <i class="bi bi-receipt"></i><span>Payment History</span>
+                    </a>
                 }
             </nav>
 
