@@ -1,0 +1,82 @@
+@model IReadOnlyList<CIITStackLab.WebApp.Models.CoursePurchaseHistoryViewModel>
+
+@{
+    ViewData["Title"] = "Payment History";
+}
+
+<section class="container py-5">
+    <div class="row justify-content-center">
+        <div class="col-12 col-xl-10">
+            <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-end gap-3 mb-4">
+                <div>
+                    <span class="text-primary fw-semibold text-uppercase small">Your account</span>
+                    <h1 class="display-6 fw-bold mb-2">Payment History</h1>
+                    <p class="text-secondary mb-0">Review course purchases recorded for your account.</p>
+                </div>
+                <a asp-controller="Courses" asp-action="CourseHome" class="btn btn-outline-primary">
+                    <i class="bi bi-arrow-left me-2" aria-hidden="true"></i>My Courses
+                </a>
+            </div>
+
+            <div class="alert alert-info border-0 rounded-4" role="note">
+                <i class="bi bi-info-circle me-2" aria-hidden="true"></i>
+                This history shows course purchases recorded by CIIT Stack Lab's current checkout flow. It does not include legacy ERP payment entries or verified payment-gateway transactions.
+            </div>
+
+            <div class="card border-0 shadow-sm rounded-4 overflow-hidden">
+                @if (Model.Count == 0)
+                {
+                    <div class="text-center px-4 py-5">
+                        <div class="display-5 text-secondary mb-3" aria-hidden="true">
+                            <i class="bi bi-receipt"></i>
+                        </div>
+                        <h2 class="h5 fw-bold">No purchases yet</h2>
+                        <p class="text-secondary mb-4">When a course purchase is recorded, it will appear here.</p>
+                        <a asp-controller="Home" asp-action="Index" asp-fragment="tutorials" class="btn btn-primary">
+                            Browse Courses
+                        </a>
+                    </div>
+                }
+                else
+                {
+                    <div class="table-responsive">
+                        <table class="table table-hover align-middle mb-0">
+                            <thead class="table-light">
+                                <tr>
+                                    <th scope="col" class="px-4 py-3">Course</th>
+                                    <th scope="col" class="py-3">Purchase date</th>
+                                    <th scope="col" class="py-3 text-end">Amount</th>
+                                    <th scope="col" class="px-4 py-3 text-end">Record</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @foreach (var purchase in Model)
+                                {
+                                    <tr>
+                                        <td class="px-4 py-3">
+                                            <div class="fw-semibold">@purchase.CourseTitle</div>
+                                            <div class="small text-secondary">Course purchase</div>
+                                        </td>
+                                        <td class="py-3">
+                                            <time datetime="@purchase.PurchasedAt.ToString("O")">
+                                                @purchase.PurchasedAt.ToLocalTime().ToString("dd MMM yyyy, hh:mm tt")
+                                            </time>
+                                        </td>
+                                        <td class="py-3 text-end fw-semibold text-nowrap">
+                                            ₹@purchase.Amount.ToString("N2")
+                                        </td>
+                                        <td class="px-4 py-3 text-end text-secondary">#@purchase.PurchaseId</td>
+                                    </tr>
+                                }
+                            </tbody>
+                        </table>
+                    </div>
+                    <div class="px-4 py-3 border-top d-flex flex-column flex-sm-row justify-content-between gap-2">
+                        <span class="text-secondary small">@Model.Count purchase record@(Model.Count == 1 ? "" : "s")</span>
+                        <span class="fw-semibold">Total recorded: ₹@Model.Sum(item => item.Amount).ToString("N2")</span>
+                    </div>
+                }
+            </div>
+        </div>
+    </div>
+</section>
