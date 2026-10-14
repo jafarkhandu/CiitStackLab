@@ -12,6 +12,12 @@
     <div class="container">
         <div class="ciit-course-details-card ciit-student-course-hero">
             <div class="ciit-course-details-kicker"><i class="bi bi-mortarboard-fill"></i> CIIT LEARNING EXPERIENCE</div>
+            @if (!string.IsNullOrWhiteSpace(Model.ImageUrl))
+            {
+                <div class="ciit-course-hero-logo">
+                    <img src="@Model.ImageUrl" alt="@Model.Title logo" />
+                </div>
+            }
             <div class="row align-items-center g-5">
                 <div class="col-lg-5">
                     <section class="ciit-course-topic-flow" aria-label="Topics included in @Model.Title">
