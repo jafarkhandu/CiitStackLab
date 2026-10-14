@@ -1241,3 +1241,29 @@ main{min-height:calc(100vh - 120px)}.ciit-footer{background:#0b0f19;color:#94a3b
     .ciit-course-topic-timeline::before { left: 18px; }
     .ciit-course-topic-flow-copy strong { font-size: .86rem; }
 }
+
+/* Course logo restored above the topic timeline */
+.ciit-course-topic-flow-cover {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 150px;
+    margin: -5px 0 22px;
+    padding: 18px;
+    overflow: hidden;
+    border: 1px solid #e2eaf7;
+    border-radius: 16px;
+    background: rgba(255, 255, 255, .88);
+}
+.ciit-course-topic-flow-cover img {
+    display: block;
+    width: 100%;
+    max-width: 250px;
+    height: 132px;
+    object-fit: contain;
+    object-position: center;
+}
+@media (max-width: 575.98px) {
+    .ciit-course-topic-flow-cover { min-height: 120px; margin-bottom: 18px; }
+    .ciit-course-topic-flow-cover img { height: 100px; }
+}
