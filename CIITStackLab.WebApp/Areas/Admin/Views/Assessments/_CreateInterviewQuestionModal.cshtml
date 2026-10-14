@@ -3,7 +3,7 @@
     var chapters = ViewBag.InterviewQuestionChapters as IEnumerable<CIITStackLab.Application.DTOs.AdminAssessmentChapterLookupDto>
         ?? Array.Empty<CIITStackLab.Application.DTOs.AdminAssessmentChapterLookupDto>();
 }
-<div class="modal fade ciit-assessment-form-modal" id="createInterviewQuestionModal" tabindex="-1"
+<div class="modal fade ciit-assessment-form-modal ciit-assessment-form-modal--interview" id="createInterviewQuestionModal" tabindex="-1"
      aria-labelledby="createInterviewQuestionModalTitle" aria-hidden="true">
     <div class="modal-dialog modal-lg modal-dialog-centered modal-dialog-scrollable">
         <div class="modal-content">
@@ -49,3 +49,11 @@
         </div>
     </div>
 </div>
+<script>
+    (function () {
+        const modal = document.getElementById("createInterviewQuestionModal");
+        if (modal && modal.parentElement !== document.body) {
+            document.body.appendChild(modal);
+        }
+    })();
+</script>
