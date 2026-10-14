@@ -7,3 +7,180 @@
 .ciit-profile-bottom-note{display:flex;align-items:center;gap:13px;margin-top:18px;padding:17px 20px;border:1px solid rgba(255,255,255,.94);border-radius:17px;background:rgba(255,255,255,.5);box-shadow:0 12px 32px rgba(37,66,112,.04),inset 0 1px 0 white;-webkit-backdrop-filter:blur(23px);backdrop-filter:blur(23px)}.ciit-profile-bottom-note>span{display:grid;width:40px;height:40px;flex:0 0 auto;place-items:center;border:1px solid rgba(204,223,255,.92);border-radius:13px;background:rgba(234,243,255,.82);color:#3478f5}.ciit-profile-bottom-note>div{min-width:0;flex:1}.ciit-profile-bottom-note strong{color:#2b405f;font-size:.76rem;font-weight:850}.ciit-profile-bottom-note p{margin:4px 0 0;color:#8392a9;font-size:.67rem;line-height:1.6}.ciit-profile-bottom-note>a{display:inline-flex;flex:0 0 auto;align-items:center;gap:6px;color:#2d70e8;font-size:.68rem;font-weight:850;text-decoration:none}.ciit-profile-bottom-note>a:hover{color:#1556d4}
 [data-profile-reveal]{opacity:0;transform:translateY(15px);transition:opacity .58s ease,transform .58s cubic-bezier(.2,.7,.25,1)}[data-profile-reveal].is-visible{opacity:1;transform:translateY(0)}@keyframes ciit-profile-enter{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:translateY(0)}}
 @media(max-width:1050px){.ciit-profile-content-grid{grid-template-columns:1fr}.ciit-profile-hero{grid-template-columns:minmax(0,1fr) minmax(270px,.8fr)}}@media(max-width:650px){.ciit-student-profile{padding:16px 11px 30px}.ciit-profile-hero{grid-template-columns:1fr;gap:20px;padding:23px 20px;border-radius:21px}.ciit-profile-identity-card{padding:16px}.ciit-profile-avatar{width:57px;height:57px;border-radius:18px;font-size:1.7rem}.ciit-profile-content-grid{gap:12px;margin-top:12px}.ciit-profile-panel{padding:19px 14px;border-radius:19px}.ciit-profile-panel-heading{gap:10px;margin-bottom:20px}.ciit-profile-panel-icon{width:39px;height:39px;border-radius:12px}.ciit-profile-panel-heading h2{font-size:1.08rem}.ciit-profile-form-footer{align-items:stretch;flex-direction:column}.ciit-profile-primary-button{width:100%}.ciit-profile-bottom-note{align-items:flex-start;flex-wrap:wrap;padding:15px}.ciit-profile-bottom-note>div{flex-basis:calc(100% - 58px)}.ciit-profile-bottom-note>a{margin-left:53px}}@media(prefers-reduced-motion:reduce){.ciit-student-profile *,.ciit-student-profile *:before,.ciit-student-profile *:after{animation-duration:.01ms!important;animation-iteration-count:1!important;transition-duration:.01ms!important}[data-profile-reveal]{opacity:1;transform:none;transition:none}}
+
+
+/* Rich but restrained profile interactions and entrance motion. */
+.ciit-profile-hero {
+    transform-origin: 50% 20%;
+    animation: ciit-profile-hero-arrive .85s cubic-bezier(.16, 1, .3, 1) both;
+}
+
+.ciit-profile-identity-card {
+    animation: ciit-profile-identity-arrive .9s .12s cubic-bezier(.16, 1, .3, 1) both;
+}
+
+.ciit-profile-avatar {
+    animation: ciit-profile-avatar-pop .7s .28s cubic-bezier(.2, .9, .25, 1.35) both;
+}
+
+.ciit-profile-avatar-status {
+    animation: ciit-profile-status-pulse 2.4s 1s ease-in-out infinite;
+}
+
+.ciit-profile-hero-orbit-one {
+    animation: ciit-profile-orbit-drift 13s ease-in-out infinite alternate;
+}
+
+.ciit-profile-hero-orbit-two {
+    animation: ciit-profile-orbit-drift 17s -4s ease-in-out infinite alternate-reverse;
+}
+
+.ciit-profile-hero:after {
+    position: absolute;
+    top: -45%;
+    left: -55%;
+    width: 28%;
+    height: 190%;
+    background: linear-gradient(90deg, transparent, rgba(255,255,255,.38), transparent);
+    content: "";
+    pointer-events: none;
+    transform: rotate(19deg);
+    animation: ciit-profile-glass-shimmer 8s 1.1s ease-in-out infinite;
+}
+
+.ciit-profile-panel {
+    transform: translateY(0);
+    animation: ciit-profile-panel-arrive .75s cubic-bezier(.16, 1, .3, 1) both;
+}
+
+.ciit-profile-panel:nth-child(2) {
+    animation-delay: .13s;
+}
+
+.ciit-profile-panel-icon {
+    transition: transform .3s cubic-bezier(.2, .8, .2, 1), box-shadow .3s ease;
+}
+
+.ciit-profile-panel:hover .ciit-profile-panel-icon {
+    transform: translateY(-3px) rotate(-4deg);
+    box-shadow: 0 9px 18px rgba(48, 112, 225, .1);
+}
+
+.ciit-profile-bottom-note {
+    animation: ciit-profile-panel-arrive .7s .2s cubic-bezier(.16, 1, .3, 1) both;
+    transition: transform .25s ease, box-shadow .25s ease, background .25s ease;
+}
+
+.ciit-profile-bottom-note:hover {
+    transform: translateY(-2px);
+    background: rgba(255,255,255,.66);
+    box-shadow: 0 17px 37px rgba(37,66,112,.075), inset 0 1px 0 #fff;
+}
+
+.ciit-profile-input-wrap {
+    transform: translateZ(0);
+}
+
+.ciit-profile-input-wrap:focus-within > i:first-child {
+    color: #3478f5;
+    transition: color .2s ease;
+}
+
+.ciit-profile-primary-button {
+    position: relative;
+    overflow: hidden;
+}
+
+.ciit-profile-primary-button:before {
+    position: absolute;
+    top: -60%;
+    left: -75%;
+    width: 45%;
+    height: 220%;
+    background: linear-gradient(90deg, transparent, rgba(255,255,255,.3), transparent);
+    content: "";
+    transform: skewX(-22deg);
+    transition: left .55s ease;
+}
+
+.ciit-profile-primary-button:hover:before {
+    left: 140%;
+}
+
+.ciit-profile-primary-button i {
+    transition: transform .2s ease;
+}
+
+.ciit-profile-primary-button:hover i {
+    transform: translateX(3px);
+}
+
+.ciit-profile-alert {
+    animation: ciit-profile-alert-arrive .45s cubic-bezier(.16, 1, .3, 1) both;
+}
+
+@keyframes ciit-profile-hero-arrive {
+    from { opacity: 0; transform: translateY(25px) scale(.985); filter: blur(5px); }
+    to { opacity: 1; transform: translateY(0) scale(1); filter: blur(0); }
+}
+
+@keyframes ciit-profile-identity-arrive {
+    from { opacity: 0; transform: translateX(24px) scale(.98); }
+    to { opacity: 1; transform: translateX(0) scale(1); }
+}
+
+@keyframes ciit-profile-avatar-pop {
+    from { opacity: 0; transform: scale(.72) rotate(-9deg); }
+    to { opacity: 1; transform: scale(1) rotate(0); }
+}
+
+@keyframes ciit-profile-status-pulse {
+    0%, 100% { box-shadow: 0 0 0 0 rgba(38,196,147,0); }
+    50% { box-shadow: 0 0 0 6px rgba(38,196,147,.15); }
+}
+
+@keyframes ciit-profile-orbit-drift {
+    from { translate: 0 -5px; rotate: -3deg; }
+    to { translate: 8px 7px; rotate: 4deg; }
+}
+
+@keyframes ciit-profile-glass-shimmer {
+    0%, 18% { left: -55%; opacity: 0; }
+    28% { opacity: 1; }
+    52%, 100% { left: 135%; opacity: 0; }
+}
+
+@keyframes ciit-profile-panel-arrive {
+    from { opacity: 0; transform: translateY(20px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes ciit-profile-alert-arrive {
+    from { opacity: 0; transform: translateY(-7px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .ciit-profile-hero,
+    .ciit-profile-identity-card,
+    .ciit-profile-avatar,
+    .ciit-profile-avatar-status,
+    .ciit-profile-hero-orbit-one,
+    .ciit-profile-hero-orbit-two,
+    .ciit-profile-hero:after,
+    .ciit-profile-panel,
+    .ciit-profile-bottom-note,
+    .ciit-profile-alert {
+        animation: none !important;
+    }
+
+    .ciit-profile-panel,
+    .ciit-profile-bottom-note {
+        opacity: 1;
+        transform: none;
+    }
+
+    .ciit-profile-primary-button:before {
+        display: none;
+    }
+}
