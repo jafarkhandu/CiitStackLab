@@ -14,9 +14,38 @@
             <div class="ciit-course-details-kicker"><i class="bi bi-mortarboard-fill"></i> CIIT LEARNING EXPERIENCE</div>
             <div class="row align-items-center g-5">
                 <div class="col-lg-5">
-                    <div class="ciit-course-details-image ciit-student-course-cover">
-                        <img src="@Model.ImageUrl" alt="@Model.Title" />
-                    </div>
+                    <section class="ciit-course-topic-flow" aria-label="Topics included in @Model.Title">
+                        <div class="ciit-course-topic-flow-heading">
+                            <span class="ciit-course-topic-flow-mark"><i class="bi bi-signpost-split-fill" aria-hidden="true"></i></span>
+                            <div>
+                                <span class="ciit-course-flow-eyebrow">YOUR LEARNING PATH</span>
+                                <h2>From first steps to real skills</h2>
+                            </div>
+                        </div>
+                        @if (Model.Topics.Count > 0)
+                        {
+                            <ol class="ciit-course-topic-timeline">
+                                @foreach (var topic in Model.Topics)
+                                {
+                                    <li>
+                                        <span class="ciit-course-topic-node" aria-hidden="true"><i class="bi bi-book-half"></i></span>
+                                        <div class="ciit-course-topic-flow-copy">
+                                            <strong>@topic.Title</strong>
+                                            <span>@topic.Contents.Count lesson@(topic.Contents.Count == 1 ? "" : "s")</span>
+                                        </div>
+                                    </li>
+                                }
+                            </ol>
+                            <div class="ciit-course-flow-footer">
+                                <span class="ciit-course-flow-complete"><i class="bi bi-check-lg" aria-hidden="true"></i></span>
+                                <div><strong>Course roadmap</strong><span>@Model.Topics.Count topics in your learning path</span></div>
+                            </div>
+                        }
+                        else
+                        {
+                            <p class="text-secondary mb-0">The learning path will appear here when topics are added to this course.</p>
+                        }
+                    </section>
                 </div>
 
                 <div class="col-lg-7">
