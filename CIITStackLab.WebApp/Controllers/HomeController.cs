@@ -44,11 +44,6 @@ public class HomeController : Controller
 
     public async Task<IActionResult> Index(CancellationToken cancellationToken)
     {
-        if (User.IsInRole("Student"))
-        {
-            return RedirectToAction(nameof(Dashboard));
-        }
-
         ViewBag.ShowLearningHub = false;
 
         if (User.IsInRole("Student"))
