@@ -18,8 +18,37 @@ public class HomeController : Controller
         _coursePurchaseService = coursePurchaseService;
     }
 
+    [Microsoft.AspNetCore.Authorization.Authorize(Roles = "Student")]
+    [HttpGet]
+    public async Task<IActionResult> Dashboard(CancellationToken cancellationToken)
+    {
+        var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+
+        if (string.IsNullOrWhiteSpace(userId))
+        {
+            return Challenge();
+        }
+
+        var activeCourseIds = await _coursePurchaseService.GetAccessibleCourseIdsAsync(
+            userId,
+            cancellationToken);
+        var publishedCourses = await _courseService.GetPublishedAsync(cancellationToken);
+        var activeCourseIdSet = activeCourseIds.ToHashSet();
+        var courses = publishedCourses
+            .Where(course => activeCourseIdSet.Contains(course.Id))
+            .OrderBy(course => course.Title)
+            .ToList();
+
+        return View("StudentDashboard", courses);
+    }
+
     public async Task<IActionResult> Index(CancellationToken cancellationToken)
     {
+        if (User.IsInRole("Student"))
+        {
+            return RedirectToAction(nameof(Dashboard));
+        }
+
         ViewBag.ShowLearningHub = false;
 
         if (User.IsInRole("Student"))
