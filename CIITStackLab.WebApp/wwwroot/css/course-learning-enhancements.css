@@ -1115,3 +1115,99 @@
 .ciit-notes-reader-card{border:1px solid rgba(255,255,255,.9);border-radius:24px;background:linear-gradient(145deg,rgba(255,255,255,.78),rgba(247,250,255,.58));box-shadow:0 20px 54px rgba(34,67,122,.075),inset 0 1px 0 rgba(255,255,255,.95);backdrop-filter:blur(28px) saturate(155%);animation:ciit-learning-panel-enter .65s cubic-bezier(.2,.7,.25,1) both}
 .ciit-notes-reader-count{border-color:rgba(255,255,255,.92);background:rgba(255,255,255,.54);box-shadow:0 10px 25px rgba(34,67,122,.055),inset 0 1px 0 #fff;backdrop-filter:blur(18px)}
 @media(prefers-reduced-motion:reduce){.ciit-learning-topic,.ciit-notes-reader-card{animation:none!important;transition:none!important}}
+
+
+/* Notes view uses the same Learning Path navigation instead of the general course menu. */
+.ciit-notes-learning-path {
+    display:flex;
+    flex-direction:column;
+    gap:12px;
+    padding:16px 10px;
+    background:linear-gradient(160deg,rgba(244,249,255,.48),rgba(231,241,255,.3));
+    border-right:1px solid rgba(255,255,255,.8);
+    box-shadow:10px 0 38px rgba(34,68,124,.055),inset -1px 0 0 rgba(255,255,255,.4);
+    backdrop-filter:blur(34px) saturate(175%);
+}
+.ciit-notes-path-heading {
+    padding:12px 11px 15px;
+    border:1px solid rgba(255,255,255,.84);
+    border-radius:16px;
+    background:rgba(255,255,255,.5);
+    box-shadow:0 10px 25px rgba(34,68,124,.045),inset 0 1px 0 rgba(255,255,255,.92);
+}
+.ciit-notes-path-heading span {
+    display:block;
+    color:#7f91ad;
+    font-size:.62rem;
+    font-weight:800;
+    letter-spacing:.1em;
+}
+.ciit-notes-path-heading strong {
+    display:block;
+    margin-top:6px;
+    color:#203657;
+    font-size:.9rem;
+}
+.ciit-notes-path-heading a {
+    display:inline-flex;
+    align-items:center;
+    gap:6px;
+    margin-top:12px;
+    color:#246af0;
+    font-size:.75rem;
+    font-weight:750;
+    text-decoration:none;
+}
+.ciit-notes-path-topics {
+    min-height:0;
+    overflow-y:auto;
+    padding:2px 1px 12px;
+    scrollbar-width:thin;
+    scrollbar-color:rgba(106,143,195,.38) transparent;
+}
+.ciit-notes-path-topic {
+    margin-bottom:9px;
+    overflow:hidden;
+    border:1px solid rgba(255,255,255,.86);
+    border-radius:14px;
+    background:rgba(255,255,255,.43);
+    box-shadow:0 7px 20px rgba(34,68,124,.04),inset 0 1px 0 rgba(255,255,255,.8);
+}
+.ciit-notes-path-topic summary {
+    display:flex;
+    align-items:center;
+    gap:8px;
+    padding:12px 10px;
+    color:#304563;
+    cursor:pointer;
+    list-style:none;
+    font-size:.79rem;
+    font-weight:800;
+}
+.ciit-notes-path-topic summary::-webkit-details-marker {display:none}
+.ciit-notes-path-topic summary i:first-child {color:#3278f5}
+.ciit-notes-path-topic summary i:last-child {margin-left:auto;color:#8495ad;transition:transform .2s ease}
+.ciit-notes-path-topic[open] summary i:last-child {transform:rotate(180deg)}
+.ciit-notes-path-chapter {
+    display:flex;
+    align-items:flex-start;
+    gap:8px;
+    margin:0 6px 6px;
+    padding:10px 8px;
+    border-radius:10px;
+    color:#5a6e8b;
+    font-size:.74rem;
+    line-height:1.4;
+    text-decoration:none;
+    transition:background .2s ease,color .2s ease,transform .2s ease;
+}
+.ciit-notes-path-chapter i {margin-top:1px;color:#7b91b4}
+.ciit-notes-path-chapter:hover,
+.ciit-notes-path-chapter.active {
+    color:#1769ff;
+    background:rgba(221,235,255,.78);
+}
+.ciit-notes-path-chapter:hover {transform:translateX(2px)}
+@media(max-width:767.98px) {
+    .ciit-notes-learning-path {height:300px;max-height:38vh;position:static}
+}
