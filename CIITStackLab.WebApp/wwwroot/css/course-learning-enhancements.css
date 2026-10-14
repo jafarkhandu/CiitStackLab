@@ -1659,3 +1659,69 @@
     .ciit-learning-main-card:hover,.ciit-learning-course-progress:hover,
     .ciit-learning-lesson-status:hover,.ciit-learning-resource:hover {transform:none}
 }
+
+
+/* Learning Path chapter navigation: three predictable resource groups. */
+.ciit-learning-chapter-categories {display:grid;gap:10px;padding:10px 9px 12px}
+.ciit-learning-category-link,.ciit-learning-category-heading {
+    display:flex;align-items:center;gap:11px;width:100%;min-height:60px;padding:11px 12px;
+    border:1px solid rgba(219,232,251,.88);border-radius:14px;
+    background:linear-gradient(125deg,rgba(255,255,255,.78),rgba(239,246,255,.6));
+    color:#314968;text-align:left;text-decoration:none;
+    box-shadow:0 5px 15px rgba(36,75,135,.035),inset 0 1px 0 rgba(255,255,255,.9);
+    transition:transform .22s ease,border-color .22s ease,background .22s ease,box-shadow .22s ease;
+}
+.ciit-learning-category-link:hover,.ciit-learning-category[open]>.ciit-learning-category-heading {
+    border-color:rgba(157,195,255,.88);background:linear-gradient(120deg,rgba(225,239,255,.86),rgba(255,255,255,.78));
+    box-shadow:0 8px 21px rgba(42,99,184,.08),inset 0 1px 0 #fff;
+}
+.ciit-learning-category-link:hover {transform:translateY(-1px);color:#1769ff}
+.ciit-learning-category-icon {
+    display:inline-flex;align-items:center;justify-content:center;flex:0 0 36px;width:36px;height:36px;
+    border:1px solid rgba(255,255,255,.96);border-radius:11px;
+    background:linear-gradient(145deg,rgba(218,235,255,.95),rgba(255,255,255,.88));
+    color:#347aff;box-shadow:0 4px 12px rgba(48,110,214,.06);
+}
+.ciit-learning-category-copy {display:flex;flex:1;min-width:0;flex-direction:column;gap:3px}
+.ciit-learning-category-copy strong {font-size:.78rem;font-weight:800;line-height:1.35;color:#2a405f}
+.ciit-learning-category-copy small {font-size:.68rem;line-height:1.4;color:#8192ad;font-weight:500}
+.ciit-learning-category-arrow {color:#7b91b1;transition:transform .2s ease}
+.ciit-learning-category-link:hover .ciit-learning-category-arrow {transform:translate(2px,-2px);color:#1769ff}
+.ciit-learning-category-count {display:inline-flex;align-items:center;justify-content:center;min-width:25px;height:25px;padding:0 7px;border:1px solid rgba(207,225,251,.8);border-radius:9px;background:rgba(255,255,255,.76);color:#647d9f;font-size:.7rem;font-weight:800}
+.ciit-learning-category>.ciit-learning-category-heading {cursor:pointer;list-style:none}
+.ciit-learning-category>.ciit-learning-category-heading::-webkit-details-marker {display:none}
+.ciit-learning-category>.ciit-learning-category-heading::marker {content:""}
+.ciit-learning-category .ciit-learning-disclosure-icon {margin-left:1px;color:#7990b1;transition:transform .22s ease,color .22s ease}
+.ciit-learning-category[open]>.ciit-learning-category-heading .ciit-learning-disclosure-icon {transform:rotate(180deg);color:#1769ff}
+.ciit-learning-category-body {display:grid;gap:9px;padding:10px 2px 2px;animation:ciit-learning-panel-enter .32s ease both}
+.ciit-learning-category-empty {margin:0;padding:12px;border:1px dashed rgba(176,199,232,.82);border-radius:12px;background:rgba(255,255,255,.4);color:#8292ab;font-size:.72rem;line-height:1.55}
+.ciit-learning-content-item {padding:12px;border:1px solid rgba(220,232,250,.88);border-radius:13px;background:rgba(255,255,255,.56);box-shadow:inset 0 1px 0 rgba(255,255,255,.95)}
+.ciit-learning-content-item-title {display:flex;align-items:flex-start;gap:8px;margin-bottom:10px;color:#344c6e;font-size:.73rem;line-height:1.45}
+.ciit-learning-content-item-title>i {margin-top:1px;color:#347aff}
+.ciit-learning-content-item-title strong {font-weight:750;overflow-wrap:anywhere}
+.ciit-learning-category .ciit-learning-resource-links {display:flex;flex-wrap:wrap;gap:7px;margin:0 0 9px}
+.ciit-learning-category .ciit-learning-resource-links a {display:inline-flex;align-items:center;gap:6px;padding:7px 9px;border:1px solid rgba(211,227,249,.92);border-radius:10px;background:rgba(255,255,255,.78);color:#587092;text-decoration:none;font-size:.69rem;font-weight:700;transition:background .2s ease,color .2s ease,transform .2s ease}
+.ciit-learning-category .ciit-learning-resource-links a:hover {transform:translateY(-1px);background:#edf5ff;color:#1769ff}
+.ciit-learning-category .ciit-learning-open-lesson {display:inline-flex;align-items:center;gap:7px;font-size:.7rem}
+.ciit-learning-assessment-categories {gap:8px}
+.ciit-learning-assessment-type {overflow:hidden;border:1px solid rgba(220,232,250,.88);border-radius:12px;background:rgba(255,255,255,.52)}
+.ciit-learning-assessment-type>summary {display:flex;align-items:center;gap:8px;padding:11px 10px;cursor:pointer;list-style:none;color:#455d7e;font-size:.72rem;font-weight:750}
+.ciit-learning-assessment-type>summary::-webkit-details-marker {display:none}
+.ciit-learning-assessment-type>summary::marker {content:""}
+.ciit-learning-assessment-type>summary>span {display:flex;align-items:center;gap:8px;flex:1}
+.ciit-learning-assessment-type>summary>span>i {color:#347aff}
+.ciit-learning-assessment-type[open]>summary {background:rgba(231,241,255,.62);color:#255eb9}
+.ciit-learning-assessment-type[open]>summary>.ciit-learning-disclosure-icon {transform:rotate(180deg)}
+.ciit-learning-assessment-type-body {padding:10px;animation:ciit-learning-panel-enter .3s ease both}
+.ciit-learning-assessment-type-body .ciit-learning-assessment-question {margin:0 0 10px;padding:10px;border:1px solid rgba(220,232,250,.84);border-radius:11px;background:rgba(255,255,255,.62)}
+.ciit-learning-assessment-type-body .ciit-learning-assessment-question strong {font-size:.71rem;line-height:1.55;overflow-wrap:anywhere}
+.ciit-learning-assessment-type-body .ciit-learning-assessment-question ol {padding-left:20px;color:#7487a4;font-size:.69rem;line-height:1.55}
+@media(max-width:767.98px) {
+    .ciit-learning-chapter-categories {padding-inline:5px}
+    .ciit-learning-category-link,.ciit-learning-category-heading {gap:9px;padding:10px}
+    .ciit-learning-category-icon {flex-basis:32px;width:32px;height:32px}
+}
+@media(prefers-reduced-motion:reduce) {
+    .ciit-learning-category-body,.ciit-learning-assessment-type-body {animation:none!important}
+    .ciit-learning-category-link,.ciit-learning-category-heading,.ciit-learning-category-arrow {transition:none!important}
+}
