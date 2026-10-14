@@ -17,8 +17,8 @@
                 <h1>Your next skill<br class="ciit-welcome-break" /> starts here.</h1>
                 <p>Welcome back, @(User.Identity?.Name ?? "learner"). Pick up where you left off and keep moving forward.</p>
                 <div class="ciit-learning-welcome-actions">
-                    <a asp-controller="Home" asp-action="Index" asp-fragment="tutorials" class="ciit-learning-primary-action">
-                        Explore courses <i class="bi bi-arrow-up-right" aria-hidden="true"></i>
+                    <a asp-controller="Courses" asp-action="PaymentHistory" class="ciit-learning-primary-action">
+                        Payment History <i class="bi bi-receipt" aria-hidden="true"></i>
                     </a>
                     <span class="ciit-learning-secure-note"><i class="bi bi-shield-check" aria-hidden="true"></i> Your purchased learning, all in one place</span>
                 </div>
