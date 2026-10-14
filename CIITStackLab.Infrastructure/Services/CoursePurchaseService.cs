@@ -86,6 +86,28 @@ public sealed class CoursePurchaseService
         }
     }
 
+    public async Task<bool> HasAnyActivePurchaseAsync(
+        string userId,
+        CancellationToken cancellationToken = default)
+    {
+        if (string.IsNullOrWhiteSpace(userId))
+        {
+            return false;
+        }
+
+        return await _dbContext.Users
+            .AsNoTracking()
+            .Where(user => user.Id == userId && user.IsActive)
+            .SelectMany(user => _dbContext.StudentCoursePurchases
+                .Where(purchase => purchase.UserId == user.Id)
+                .Join(
+                    _dbContext.Courses.Where(course => course.Flag == 0),
+                    purchase => purchase.CourseId,
+                    course => course.Id,
+                    (purchase, course) => purchase.Id))
+            .AnyAsync(cancellationToken);
+    }
+
     public async Task<IReadOnlyList<int>> GetAccessibleCourseIdsAsync(
         string userId,
         CancellationToken cancellationToken = default)
