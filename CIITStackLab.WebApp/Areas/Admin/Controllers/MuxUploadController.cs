@@ -17,6 +17,7 @@ public sealed class MuxUploadController : Controller
     }
 
     [HttpGet("VideoUploadStatus")]
+    [ResponseCache(Location = ResponseCacheLocation.None, NoStore = true)]
     public async Task<IActionResult> VideoUploadStatus(string? uploadId, CancellationToken cancellationToken)
     {
         if (string.IsNullOrWhiteSpace(uploadId))
