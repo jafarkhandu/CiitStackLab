@@ -9,13 +9,14 @@
 
     <form asp-action="Create" method="post" enctype="multipart/form-data" class="ciit-content-form-card">
         @Html.AntiForgeryToken()
+        <input type="hidden" name="muxUploadId" class="js-mux-upload-id" />
         <div asp-validation-summary="ModelOnly" class="ciit-content-validation"></div>
         <div class="ciit-content-form-grid">
             <div class="ciit-content-field"><label asp-for="TopicId">Topic</label><select asp-for="TopicId" asp-items="ViewBag.Topics" class="form-select" id="contentTopic"><option value="0">Select topic</option></select><span asp-validation-for="TopicId" class="text-danger"></span></div>
             <div class="ciit-content-field"><label asp-for="NoteId">Notes / Chapter</label><select asp-for="NoteId" asp-items="ViewBag.Notes" class="form-select" id="contentNote" disabled><option value="0">Select note chapter</option></select><span asp-validation-for="NoteId" class="text-danger"></span><small>Select a topic first to load its note chapters.</small></div>
             <div class="ciit-content-field full-width"><label asp-for="Title">Content Name</label><input asp-for="Title" class="form-control" maxlength="100" placeholder="e.g. Dependency Injection Resources" autocomplete="off" /><span asp-validation-for="Title" class="text-danger"></span></div>
             <div class="ciit-content-field"><label>Slides Upload</label><input type="file" name="slidesFile" class="form-control" accept=".pdf,.ppt,.pptx" /><small>Upload PDF, PPT or PPTX slides.</small></div>
-            <div class="ciit-content-field"><label>Video Upload</label><input type="file" name="videoFile" class="form-control" accept=".mp4,.webm,.mov" /><small>Upload MP4, WebM or MOV video.</small></div>
+            <div class="ciit-content-field"><label>Video Upload</label><input type="file" name="videoFile" class="form-control" accept=".mp4,.webm,.mov" /><small>Video uploads go directly from your browser to secure Mux storage.</small></div>
         </div>
         <div class="ciit-content-form-footer"><a asp-action="Index" class="ciit-content-secondary-btn">Cancel</a><button type="submit" class="ciit-content-primary-btn"><i class="bi bi-check2-circle"></i> Create Content</button></div>
     </form>
