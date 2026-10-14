@@ -115,9 +115,45 @@
     <div class="ciit-course-environment-workspace">
         @if (currentController.Equals("Courses", StringComparison.OrdinalIgnoreCase) && currentAction.Equals("Learn", StringComparison.OrdinalIgnoreCase))
         {
-                    <aside class="ciit-course-global-sidebar ciit-learning-path-sidebar" aria-label="Learning path">
-                        <div class="ciit-learning-path-host"></div>
-                    </aside>
+            <aside class="ciit-course-global-sidebar ciit-learning-path-sidebar" aria-label="Learning path">
+                <div class="ciit-learning-path-host"></div>
+            </aside>
+        }
+        else if (isNotesPage && ViewData["LearningPathModel"] is CourseLearningDto notesLearningPath)
+        {
+            <aside class="ciit-course-global-sidebar ciit-learning-path-sidebar ciit-notes-learning-path" aria-label="Learning path">
+                <div class="ciit-notes-path-heading">
+                    <span>YOUR LEARNING PATH</span>
+                    <strong>@notesLearningPath.Title</strong>
+                    <a asp-controller="Courses" asp-action="Learn" asp-route-id="@courseId">
+                        <i class="bi bi-arrow-left-circle"></i> Back to learning
+                    </a>
+                </div>
+                <div class="ciit-notes-path-topics">
+                    @foreach (var pathTopic in notesLearningPath.Topics)
+                    {
+                        <details class="ciit-notes-path-topic" open="@(pathTopic.Id.ToString() == notesTopicId ? "open" : null)">
+                            <summary>
+                                <i class="bi bi-collection-play"></i>
+                                <span>@pathTopic.Title</span>
+                                <i class="bi bi-chevron-down"></i>
+                            </summary>
+                            @foreach (var pathChapter in pathTopic.Chapters)
+                            {
+                                <a class="ciit-notes-path-chapter @(pathTopic.Id.ToString() == notesTopicId && pathChapter.ChapterId == notesChapterId ? "active" : "")"
+                                   asp-controller="Notes"
+                                   asp-action="Index"
+                                   asp-route-topicId="@pathTopic.Id"
+                                   asp-route-chapterId="@pathChapter.ChapterId"
+                                   asp-route-courseId="@courseId">
+                                    <i class="bi bi-journal-text"></i>
+                                    <span>@pathChapter.Title</span>
+                                </a>
+                            }
+                        </details>
+                    }
+                </div>
+            </aside>
         }
         else
         {
