@@ -12,14 +12,10 @@ namespace CIITStackLab.WebApp.Areas.Admin.Controllers;
 public sealed class ContentController : Controller
 {
     private readonly IAdminContentService _contentService;
-    private readonly IMuxVideoService _muxVideoService;
 
-    public ContentController(
-        IAdminContentService contentService,
-        IMuxVideoService muxVideoService)
+    public ContentController(IAdminContentService contentService)
     {
         _contentService = contentService;
-        _muxVideoService = muxVideoService;
     }
 
     [HttpGet]
@@ -45,17 +41,7 @@ public sealed class ContentController : Controller
             return View(input);
         }
 
-        try
-        {
-            await SaveUploadedFilesAsync(input, slidesFile, videoFile, cancellationToken);
-        }
-        catch (Exception ex) when (ex is InvalidOperationException or TimeoutException)
-        {
-            ModelState.AddModelError(nameof(videoFile), ex.Message);
-            await LoadFormDataAsync(input.TopicId, cancellationToken);
-            return View(input);
-        }
-
+        await SaveUploadedFilesAsync(input, slidesFile, videoFile, cancellationToken);
         var result = await _contentService.CreateAsync(input, cancellationToken);
         if (!result.Succeeded)
         {
@@ -107,17 +93,7 @@ public sealed class ContentController : Controller
         if (videoFile is null || videoFile.Length == 0)
             input.VideoName = existing.VideoName;
 
-        try
-        {
-            await SaveUploadedFilesAsync(input, slidesFile, videoFile, cancellationToken);
-        }
-        catch (Exception ex) when (ex is InvalidOperationException or TimeoutException)
-        {
-            ModelState.AddModelError(nameof(videoFile), ex.Message);
-            await LoadFormDataAsync(input.TopicId, cancellationToken);
-            return View(input);
-        }
-
+        await SaveUploadedFilesAsync(input, slidesFile, videoFile, cancellationToken);
         var result = await _contentService.UpdateAsync(id, input, cancellationToken);
         if (!result.Succeeded)
         {
@@ -200,23 +176,8 @@ public sealed class ContentController : Controller
     {
         if (slidesFile is not null && slidesFile.Length > 0)
             input.Slides = await SaveFileAsync(slidesFile, "slides", cancellationToken);
-
         if (videoFile is not null && videoFile.Length > 0)
-        {
-            var extension = Path.GetExtension(videoFile.FileName).ToLowerInvariant();
-            var allowedVideoExtensions = new[] { ".mp4", ".webm", ".mov" };
-            if (!allowedVideoExtensions.Contains(extension))
-                throw new InvalidOperationException("Unsupported video file type.");
-
-            await using var videoStream = videoFile.OpenReadStream();
-            var muxResult = await _muxVideoService.UploadVideoAsync(
-                videoStream,
-                Path.GetFileName(videoFile.FileName),
-                videoFile.ContentType,
-                cancellationToken);
-
-            input.VideoName = muxResult.PlaybackId;
-        }
+            input.VideoName = await SaveFileAsync(videoFile, "videos", cancellationToken);
     }
 
     private async Task<string> SaveFileAsync(IFormFile file, string folder, CancellationToken cancellationToken)
