@@ -1,0 +1,151 @@
+@model IReadOnlyList<CIITStackLab.Application.DTOs.CourseDto>
+
+@{
+    ViewData["Title"] = "Student Dashboard";
+    var totalLearningHours = Model.Sum(course => course.DurationHours);
+}
+
+@section Styles {
+    <link rel="stylesheet" href="~/css/my-courses.css" asp-append-version="true" />
+}
+
+<section class="ciit-my-courses-page">
+    <div class="ciit-my-courses-shell">
+        <header class="ciit-learning-welcome" data-learning-reveal>
+            <div class="ciit-learning-welcome-copy">
+                <span class="ciit-my-courses-eyebrow"><i class="bi bi-stars" aria-hidden="true"></i> YOUR LEARNING HUB</span>
+                <h1>Your next skill<br class="ciit-welcome-break" /> starts here.</h1>
+                <p>Welcome back, @(User.Identity?.Name ?? "learner"). Pick up where you left off and keep moving forward.</p>
+                <div class="ciit-learning-welcome-actions">
+                    <a asp-controller="Home" asp-action="Index" asp-fragment="tutorials" class="ciit-learning-primary-action">
+                        Explore courses <i class="bi bi-arrow-up-right" aria-hidden="true"></i>
+                    </a>
+                    <span class="ciit-learning-secure-note"><i class="bi bi-shield-check" aria-hidden="true"></i> Your purchased learning, all in one place</span>
+                </div>
+            </div>
+            <div class="ciit-learning-welcome-art" aria-hidden="true">
+                <div class="ciit-learning-art-orbit ciit-learning-art-orbit-one"></div>
+                <div class="ciit-learning-art-orbit ciit-learning-art-orbit-two"></div>
+                <div class="ciit-learning-art-glow"></div>
+                <div class="ciit-learning-art-icon"><i class="bi bi-mortarboard-fill"></i></div>
+                <span class="ciit-learning-art-chip ciit-learning-art-chip-one"><i class="bi bi-lightning-charge-fill"></i> Learn by doing</span>
+                <span class="ciit-learning-art-chip ciit-learning-art-chip-two"><i class="bi bi-check2-circle"></i> Keep progressing</span>
+                <span class="ciit-learning-art-dot ciit-learning-art-dot-one"></span>
+                <span class="ciit-learning-art-dot ciit-learning-art-dot-two"></span>
+            </div>
+        </header>
+
+        <section class="ciit-learning-overview" aria-label="Learning overview" data-learning-reveal>
+            <article class="ciit-learning-overview-card">
+                <span class="ciit-learning-overview-icon"><i class="bi bi-collection-play" aria-hidden="true"></i></span>
+                <div><span class="ciit-learning-overview-label">My courses</span><strong>@Model.Count.ToString("00")</strong><small>Courses with access</small></div>
+            </article>
+            <article class="ciit-learning-overview-card">
+                <span class="ciit-learning-overview-icon ciit-learning-overview-icon-cyan"><i class="bi bi-clock-history" aria-hidden="true"></i></span>
+                <div><span class="ciit-learning-overview-label">Learning time</span><strong>@totalLearningHours <em>hrs</em></strong><small>Combined course duration</small></div>
+            </article>
+            <article class="ciit-learning-overview-card ciit-learning-overview-card-note">
+                <span class="ciit-learning-overview-icon ciit-learning-overview-icon-green"><i class="bi bi-stars" aria-hidden="true"></i></span>
+                <div><span class="ciit-learning-overview-label">Your next step</span><strong>Keep going</strong><small>Every lesson builds momentum</small></div>
+            </article>
+        </section>
+
+        <section class="ciit-my-courses-library" aria-labelledby="ciit-my-courses-title">
+            <div class="ciit-my-courses-section-heading" data-learning-reveal>
+                <div>
+                    <span class="ciit-my-courses-section-kicker">PICK UP WHERE YOU LEFT OFF</span>
+                    <h2 id="ciit-my-courses-title">Your courses<span class="ciit-my-courses-heading-count">@Model.Count</span></h2>
+                    <p>Everything you have access to, ready when you are.</p>
+                </div>
+                <a asp-controller="Home" asp-action="Index" asp-fragment="tutorials" class="ciit-my-courses-browse-link">
+                    Browse catalog <i class="bi bi-arrow-up-right" aria-hidden="true"></i>
+                </a>
+            </div>
+
+            @if (Model.Count == 0)
+            {
+                <div class="ciit-my-courses-empty" data-learning-reveal>
+                    <div class="ciit-my-courses-empty-visual"><span><i class="bi bi-journal-bookmark-fill" aria-hidden="true"></i></span><i class="bi bi-stars ciit-empty-sparkle" aria-hidden="true"></i></div>
+                    <span class="ciit-my-courses-empty-kicker">YOUR JOURNEY STARTS HERE</span>
+                    <h2>Your first course is waiting.</h2>
+                    <p>Explore the course catalog, find a skill you want to build, and your purchased courses will show up here.</p>
+                    <a asp-controller="Home" asp-action="Index" asp-fragment="tutorials" class="ciit-learning-primary-action">
+                        Explore courses <i class="bi bi-arrow-right" aria-hidden="true"></i>
+                    </a>
+                </div>
+            }
+            else
+            {
+                <div class="ciit-my-courses-grid">
+                    @for (var index = 0; index < Model.Count; index++)
+                    {
+                        var course = Model[index];
+                        <article class="ciit-my-course-card" data-learning-reveal style="--card-index: @index">
+                            <a class="ciit-my-course-image-wrap" asp-controller="Courses" asp-action="CourseEnvironment" asp-route-id="@course.Id" aria-label="Open @course.Title">
+                                @if (!string.IsNullOrWhiteSpace(course.ImageUrl))
+                                {
+                                    <img src="@course.ImageUrl" alt="@course.Title course cover" loading="lazy" />
+                                }
+                                else
+                                {
+                                    <span class="ciit-my-course-image-fallback"><i class="bi bi-code-slash" aria-hidden="true"></i></span>
+                                }
+                                <span class="ciit-my-course-image-shade" aria-hidden="true"></span>
+                                <span class="ciit-my-course-access"><i class="bi bi-check-circle-fill" aria-hidden="true"></i> Access active</span>
+                                <span class="ciit-my-course-image-open" aria-hidden="true"><i class="bi bi-arrow-up-right"></i></span>
+                            </a>
+                            <div class="ciit-my-course-body">
+                                <div class="ciit-my-course-card-topline">
+                                    <span class="ciit-my-course-category">@course.Category</span>
+                                    <span class="ciit-my-course-status"><span></span> Ready to learn</span>
+                                </div>
+                                <h3>@course.Title</h3>
+                                <p class="ciit-my-course-description">@(string.IsNullOrWhiteSpace(course.ShortDescription) ? "Continue building your skills with this structured course." : course.ShortDescription)</p>
+                                <div class="ciit-my-course-meta">
+                                    <span><i class="bi bi-bar-chart-line" aria-hidden="true"></i>@course.Level</span>
+                                    <span><i class="bi bi-clock" aria-hidden="true"></i>@course.DurationHours hrs</span>
+                                </div>
+                                <a asp-controller="Courses"
+                                   asp-action="CourseEnvironment"
+                                   asp-route-id="@course.Id"
+                                   class="ciit-my-course-open">
+                                    Open course <i class="bi bi-arrow-right" aria-hidden="true"></i>
+                                </a>
+                            </div>
+                        </article>
+                    }
+                </div>
+            }
+        </section>
+
+        <footer class="ciit-learning-footer-note" data-learning-reveal>
+            <span class="ciit-learning-footer-icon"><i class="bi bi-lightbulb" aria-hidden="true"></i></span>
+            <p><strong>Small steps. Real progress.</strong><span>Make a little time for learning today — your future self will thank you.</span></p>
+            <i class="bi bi-arrow-up-right ciit-learning-footer-arrow" aria-hidden="true"></i>
+        </footer>
+    </div>
+</section>
+
+@section Scripts {
+    <script>
+        (function () {
+            const items = document.querySelectorAll('[data-learning-reveal]');
+            const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+            if (reduceMotion || !('IntersectionObserver' in window)) {
+                items.forEach(function (item) { item.classList.add('is-visible'); });
+                return;
+            }
+
+            const observer = new IntersectionObserver(function (entries) {
+                entries.forEach(function (entry) {
+                    if (!entry.isIntersecting) return;
+                    entry.target.classList.add('is-visible');
+                    observer.unobserve(entry.target);
+                });
+            }, { threshold: 0.12, rootMargin: '0px 0px -24px 0px' });
+
+            items.forEach(function (item) { observer.observe(item); });
+        })();
+    </script>
+}
