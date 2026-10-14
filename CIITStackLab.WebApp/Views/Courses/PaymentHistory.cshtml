@@ -74,7 +74,7 @@
                     </div>
                     <div class="px-4 py-3 border-top d-flex flex-column flex-sm-row justify-content-between gap-2">
                         <span class="text-secondary small">@Model.Count purchase record@(Model.Count == 1 ? "" : "s")</span>
-                        <span class="fw-semibold">Total recorded: ₹@Model.Sum(item => item.Amount).ToString("N2")</span>
+                        <span class="fw-semibold">Total recorded: ₹@(Model.Sum(item => item.Amount).ToString("N2"))</span>
                     </div>
                 }
             </div>
