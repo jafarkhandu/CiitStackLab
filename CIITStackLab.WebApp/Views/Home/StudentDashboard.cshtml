@@ -1,7 +1,8 @@
 @model IReadOnlyList<CIITStackLab.Application.DTOs.CourseDto>
 
 @{
-    ViewData["Title"] = "Student Dashboard";
+    Layout = "_CourseLayout";
+    ViewData["Title"] = "Learning Hub Dashboard";
     var totalLearningHours = Model.Sum(course => course.DurationHours);
 }
 
