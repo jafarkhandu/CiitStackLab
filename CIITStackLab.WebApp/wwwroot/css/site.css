@@ -823,3 +823,41 @@ main{min-height:calc(100vh - 120px)}.ciit-footer{background:#0b0f19;color:#94a3b
     .ciit-student-course-details .ciit-course-price-card { align-items: flex-start; }
     .ciit-student-course-details .ciit-student-course-roadmap { padding: 19px; border-radius: 17px; }
 }
+
+
+/* Complete student course details experience */
+.ciit-student-course-details { padding: 30px 0 76px; background: linear-gradient(180deg,#f4f7fc 0%,#fff 64%); }
+.ciit-student-course-details .container { max-width: 1120px; }
+.ciit-student-course-details .ciit-student-course-hero { border-radius: 24px; }
+.ciit-student-course-details .ciit-course-details-kicker { font-size: .72rem; letter-spacing: .12em; }
+.ciit-student-course-details .ciit-course-details-title { font-size: clamp(2.3rem,4vw,3.6rem); font-weight: 800; letter-spacing: -.055em; }
+.ciit-student-course-details .ciit-course-details-summary { font-size: 1.08rem; line-height: 1.7; }
+.ciit-student-course-details .ciit-student-course-stats > div { min-height: 74px; }
+.ciit-course-details-nav { position: sticky; top: 64px; z-index: 5; display: flex; gap: 8px; flex-wrap: wrap; margin: 22px 0; padding: 10px; border: 1px solid #e4eaf3; border-radius: 15px; background: rgba(255,255,255,.94); box-shadow: 0 8px 24px rgba(22,42,75,.05); backdrop-filter: blur(12px); }
+.ciit-course-details-nav a { display: inline-flex; align-items: center; gap: 8px; padding: 10px 15px; border-radius: 10px; color: #475569; text-decoration: none; font-weight: 700; font-size: .9rem; }
+.ciit-course-details-nav a:hover,.ciit-course-details-nav a:focus-visible { color: #1d4ed8; background: #edf4ff; }
+.ciit-student-info-panel,.ciit-student-outcome-panel { margin-top: 24px; padding: clamp(24px,4vw,42px); border: 1px solid #e1e9f6; border-radius: 22px; background: #fff; box-shadow: 0 14px 40px rgba(25,52,92,.045); }
+.ciit-student-section-heading { max-width: 720px; margin-bottom: 26px; }
+.ciit-student-eyebrow { display: inline-block; margin-bottom: 12px; color: #2563eb; font-size: .72rem; font-weight: 850; letter-spacing: .13em; }
+.ciit-student-section-heading h2,.ciit-student-outcome-panel h2 { color: #162744; font-size: clamp(1.6rem,3vw,2.2rem); font-weight: 800; letter-spacing: -.04em; }
+.ciit-student-section-heading p,.ciit-student-outcome-panel p { max-width: 720px; color: #66758c; line-height: 1.8; }
+.ciit-student-benefit-grid { display: grid; grid-template-columns: repeat(3,minmax(0,1fr)); gap: 16px; }
+.ciit-student-benefit-grid article { padding: 22px; border: 1px solid #e6edf7; border-radius: 16px; background: linear-gradient(145deg,#fff,#f8faff); }
+.ciit-student-benefit-icon { display: inline-grid; width: 44px; height: 44px; place-items: center; margin-bottom: 16px; border-radius: 13px; background: #eaf1ff; color: #2459b2; font-size: 1.2rem; }
+.ciit-student-benefit-grid h3 { color: #20314b; font-size: 1.02rem; font-weight: 800; }
+.ciit-student-benefit-grid p { margin: 0; color: #718099; font-size: .9rem; line-height: 1.75; }
+.ciit-student-outcome-panel { display: grid; grid-template-columns: 1.3fr 1fr; gap: 26px; align-items: center; background: linear-gradient(120deg,#eff5ff,#fff); }
+.ciit-student-outcome-points { display: grid; gap: 14px; }
+.ciit-student-outcome-points span { display: flex; gap: 10px; align-items: center; color: #33445e; font-weight: 700; }
+.ciit-student-outcome-points i { color: #16845b; }
+.ciit-student-course-roadmap .accordion-item { margin-bottom: 10px; overflow: hidden; border: 1px solid #e3eaf4; border-radius: 13px; }
+.ciit-student-course-roadmap .accordion-button { padding: 17px 19px; font-weight: 750; }
+.ciit-student-course-roadmap .accordion-button:not(.collapsed) { color: #1d4ed8; background: #f1f6ff; box-shadow: none; }
+.ciit-student-course-roadmap .accordion-body { padding: 20px; }
+@media (max-width: 767.98px) {
+    .ciit-student-course-details { padding: 20px 0 48px; }
+    .ciit-course-details-nav { top: 60px; }
+    .ciit-course-details-nav a { flex: 1 1 auto; justify-content: center; padding: 9px; font-size: .82rem; }
+    .ciit-student-benefit-grid,.ciit-student-outcome-panel { grid-template-columns: 1fr; }
+    .ciit-student-info-panel,.ciit-student-outcome-panel { padding: 22px; border-radius: 17px; }
+}
