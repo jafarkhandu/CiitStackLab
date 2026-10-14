@@ -28,11 +28,9 @@ public class HomeController : Controller
 
             if (!string.IsNullOrWhiteSpace(userId))
             {
-                var accessibleCourseIds = await _coursePurchaseService.GetAccessibleCourseIdsAsync(
+                ViewBag.ShowLearningHub = await _coursePurchaseService.HasAnyActivePurchaseAsync(
                     userId,
                     cancellationToken);
-
-                ViewBag.ShowLearningHub = accessibleCourseIds.Count > 0;
             }
         }
 
