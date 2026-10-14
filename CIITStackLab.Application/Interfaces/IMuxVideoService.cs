@@ -13,6 +13,10 @@ public interface IMuxVideoService
     Task<MuxVideoUploadResult> CompleteDirectUploadAsync(
         string uploadId,
         CancellationToken cancellationToken = default);
+
+    Task<string> EnsurePublicPlaybackIdAsync(
+        string playbackId,
+        CancellationToken cancellationToken = default);
 }
 
 public sealed record MuxDirectUploadDto(
