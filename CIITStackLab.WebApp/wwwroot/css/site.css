@@ -861,3 +861,208 @@ main{min-height:calc(100vh - 120px)}.ciit-footer{background:#0b0f19;color:#94a3b
     .ciit-student-benefit-grid,.ciit-student-outcome-panel { grid-template-columns: 1fr; }
     .ciit-student-info-panel,.ciit-student-outcome-panel { padding: 22px; border-radius: 17px; }
 }
+
+
+/* Premium sticky course section navigation and roadmap */
+.ciit-course-details-nav {
+    position: sticky;
+    top: 128px;
+    z-index: 1020;
+    width: 100%;
+    min-height: 66px;
+    align-items: center;
+    gap: 8px;
+    margin: 24px 0;
+    padding: 10px 14px;
+    border: 1px solid rgba(210, 224, 244, .95);
+    border-radius: 17px;
+    background: rgba(255, 255, 255, .96);
+    box-shadow: 0 12px 30px rgba(20, 43, 80, .09);
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
+}
+.ciit-course-details-nav a {
+    min-height: 42px;
+    padding: 10px 16px;
+    border: 1px solid transparent;
+    border-radius: 11px;
+    transition: color .18s ease, background .18s ease, border-color .18s ease;
+}
+.ciit-course-details-nav a:hover,
+.ciit-course-details-nav a:focus-visible {
+    border-color: #dbe7fb;
+    background: #eff5ff;
+}
+.ciit-student-course-details #course-overview,
+.ciit-student-course-details #course-roadmap,
+.ciit-student-course-details #course-benefits {
+    scroll-margin-top: 215px;
+}
+.ciit-student-course-roadmap {
+    position: relative;
+    overflow: hidden;
+    background:
+        radial-gradient(ellipse at top right, rgba(224, 237, 255, .5), transparent 45%),
+        #fff;
+}
+.ciit-student-course-roadmap > .d-flex {
+    padding-bottom: 19px;
+    border-bottom: 1px solid #edf1f7;
+}
+.ciit-student-course-roadmap > .d-flex .badge {
+    padding: 8px 13px;
+    color: #234b8d !important;
+    background: #edf4ff !important;
+    border-color: #dbe7fb !important;
+    font-weight: 750;
+}
+.ciit-student-course-details .ciit-premium-roadmap .accordion-item {
+    margin: 12px 0 0;
+    border: 1px solid #e2eaf6;
+    border-radius: 16px;
+    background: #fff;
+    box-shadow: 0 4px 13px rgba(28, 53, 89, .025);
+    transition: border-color .2s ease, box-shadow .2s ease, transform .2s ease;
+}
+.ciit-student-course-details .ciit-premium-roadmap .accordion-item:hover {
+    border-color: #c9daf5;
+    box-shadow: 0 9px 22px rgba(28, 65, 125, .07);
+}
+.ciit-student-course-details .ciit-premium-roadmap .accordion-button {
+    display: flex;
+    min-height: 82px;
+    gap: 13px;
+    padding: 15px 19px;
+    border-radius: 16px;
+    background: transparent;
+}
+.ciit-student-course-details .ciit-premium-roadmap .accordion-button::after {
+    flex: 0 0 auto;
+    width: 13px;
+    height: 13px;
+    background-size: 13px;
+}
+.ciit-roadmap-number {
+    display: grid;
+    flex: 0 0 38px;
+    width: 38px;
+    height: 38px;
+    place-items: center;
+    border-radius: 12px;
+    color: #2857a5;
+    background: #edf4ff;
+    font-size: .76rem;
+    font-weight: 850;
+    letter-spacing: .02em;
+}
+.ciit-roadmap-topic-icon {
+    display: grid;
+    flex: 0 0 42px;
+    width: 42px;
+    height: 42px;
+    place-items: center;
+    border: 1px solid #e7edf7;
+    border-radius: 13px;
+    color: #536c94;
+    background: #fbfcff;
+    font-size: 1.05rem;
+}
+.ciit-roadmap-topic-copy {
+    display: grid;
+    flex: 1 1 auto;
+    min-width: 0;
+    gap: 5px;
+    text-align: left;
+}
+.ciit-roadmap-topic-copy strong {
+    overflow-wrap: anywhere;
+    color: #1d2e49;
+    font-size: .98rem;
+    font-weight: 800;
+}
+.ciit-roadmap-topic-copy small {
+    color: #8190a6;
+    font-size: .78rem;
+    font-weight: 500;
+}
+.ciit-roadmap-lesson-count {
+    display: inline-flex;
+    flex: 0 0 auto;
+    align-items: center;
+    gap: 8px;
+    margin-left: auto;
+    padding: 9px 12px;
+    border: 1px solid #e6edf7;
+    border-radius: 10px;
+    color: #566a88;
+    background: #f9fbff;
+    font-size: .8rem;
+    font-weight: 750;
+    white-space: nowrap;
+}
+.ciit-roadmap-lesson-count i { color: #4773bd; }
+.ciit-student-course-details .ciit-premium-roadmap .accordion-button:not(.collapsed) {
+    border-radius: 15px 15px 0 0;
+    background: linear-gradient(100deg, #f1f6ff, #fff);
+    color: #1d4ed8;
+}
+.ciit-student-course-details .ciit-premium-roadmap .accordion-button:not(.collapsed) .ciit-roadmap-number {
+    color: #fff;
+    background: #2458b5;
+}
+.ciit-student-course-details .ciit-premium-roadmap .accordion-button:not(.collapsed) .ciit-roadmap-topic-icon {
+    color: #2458b5;
+    border-color: #d7e5fc;
+    background: #fff;
+}
+.ciit-student-course-details .ciit-premium-roadmap .accordion-button:not(.collapsed) .ciit-roadmap-topic-copy strong {
+    color: #1e4da0;
+}
+.ciit-student-course-details .ciit-premium-roadmap .accordion-body {
+    border-top: 1px solid #edf2fa;
+    background: #fcfdff;
+}
+.ciit-student-course-details .ciit-content-item {
+    padding: 16px 0;
+    border-bottom: 1px solid #edf1f7;
+}
+.ciit-student-course-details .ciit-content-item:last-child { border-bottom: 0; }
+.ciit-student-course-details .ciit-roadmap-content-title { color: #2b3c56; }
+@media (max-width: 991.98px) {
+    .ciit-course-details-nav { top: 118px; }
+}
+@media (max-width: 767.98px) {
+    .ciit-course-details-nav {
+        top: 106px;
+        gap: 4px;
+        margin: 17px 0;
+        padding: 7px;
+        border-radius: 14px;
+    }
+    .ciit-course-details-nav a {
+        flex: 1 1 0;
+        min-width: 0;
+        gap: 6px;
+        padding: 9px 6px;
+        font-size: .76rem;
+    }
+    .ciit-course-details-nav a i { display: none; }
+    .ciit-student-course-details .ciit-premium-roadmap .accordion-button {
+        min-height: 74px;
+        gap: 9px;
+        padding: 12px 10px;
+    }
+    .ciit-roadmap-number { flex-basis: 30px; width: 30px; height: 32px; border-radius: 9px; }
+    .ciit-roadmap-topic-icon { flex-basis: 34px; width: 34px; height: 34px; border-radius: 10px; }
+    .ciit-roadmap-topic-copy strong { font-size: .85rem; }
+    .ciit-roadmap-topic-copy small { font-size: .7rem; }
+    .ciit-roadmap-lesson-count { gap: 5px; margin-left: 0; padding: 7px; font-size: .7rem; }
+    .ciit-roadmap-lesson-count i { display: none; }
+    .ciit-student-course-details #course-overview,
+    .ciit-student-course-details #course-roadmap,
+    .ciit-student-course-details #course-benefits { scroll-margin-top: 165px; }
+}
+@media (prefers-reduced-motion: reduce) {
+    .ciit-course-details-nav a,
+    .ciit-student-course-details .ciit-premium-roadmap .accordion-item { transition: none; }
+}
