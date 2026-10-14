@@ -8,23 +8,59 @@
     <link rel="stylesheet" href="~/css/course-payment-modal.css" />
 }
 
-<section class="ciit-course-details-section">
+<section class="ciit-course-details-section ciit-student-course-details">
     <div class="container">
-        <div class="ciit-course-details-card">
+        <div class="ciit-course-details-card ciit-student-course-hero">
+            <div class="ciit-course-details-kicker"><i class="bi bi-mortarboard-fill"></i> CIIT LEARNING EXPERIENCE</div>
+            @if (!string.IsNullOrWhiteSpace(Model.ImageUrl))
+            {
+                <div class="ciit-course-hero-logo">
+                    <img src="@Model.ImageUrl" alt="@Model.Title logo" />
+                </div>
+            }
             <div class="row align-items-center g-5">
                 <div class="col-lg-5">
-                    <div class="ciit-course-details-image">
-                        <img src="@Model.ImageUrl" alt="@Model.Title" />
-                    </div>
+                    <section class="ciit-course-topic-flow" aria-label="Topics included in @Model.Title">
+                        <div class="ciit-course-topic-flow-heading">
+                            <span class="ciit-course-topic-flow-mark"><i class="bi bi-signpost-split-fill" aria-hidden="true"></i></span>
+                            <div>
+                                <span class="ciit-course-flow-eyebrow">YOUR LEARNING PATH</span>
+                                <h2>From first steps to real skills</h2>
+                            </div>
+                        </div>
+                        @if (Model.Topics.Count > 0)
+                        {
+                            <ol class="ciit-course-topic-timeline">
+                                @foreach (var topic in Model.Topics)
+                                {
+                                    <li>
+                                        <span class="ciit-course-topic-node" aria-hidden="true"><i class="bi bi-book-half"></i></span>
+                                        <div class="ciit-course-topic-flow-copy">
+                                            <strong>@topic.Title</strong>
+                                            <span>@topic.Contents.Count lesson@(topic.Contents.Count == 1 ? "" : "s")</span>
+                                        </div>
+                                    </li>
+                                }
+                            </ol>
+                            <div class="ciit-course-flow-footer">
+                                <span class="ciit-course-flow-complete"><i class="bi bi-check-lg" aria-hidden="true"></i></span>
+                                <div><strong>Course roadmap</strong><span>@Model.Topics.Count topics in your learning path</span></div>
+                            </div>
+                        }
+                        else
+                        {
+                            <p class="text-secondary mb-0">The learning path will appear here when topics are added to this course.</p>
+                        }
+                    </section>
                 </div>
 
                 <div class="col-lg-7">
-                    <span class="ciit-course-details-badge">@Model.Category</span>
+                    <span class="ciit-course-details-badge"><i class="bi bi-bookmark-star me-1"></i>@Model.Category</span>
                     <h1 class="ciit-course-details-title">@Model.Title</h1>
                     <p class="ciit-course-details-summary">@Model.ShortDescription</p>
                     <p class="ciit-course-details-description">@Model.Description</p>
 
-                    <div class="ciit-course-meta-row">
+                    <div class="ciit-course-meta-row ciit-student-course-stats">
                         <div><strong>@Model.Level</strong><span>Level</span></div>
                         <div><strong>@Model.DurationHours hrs</strong><span>Duration</span></div>
                         <div><strong>@Model.Topics.Count</strong><span>Topics</span></div>
@@ -69,7 +105,7 @@
                                     class="btn btn-primary btn-lg"
                                     data-bs-toggle="modal"
                                     data-bs-target="#coursePaymentModal">
-                                <i class="bi bi-credit-card me-2"></i>Start Tutorial
+                                <i class="bi bi-bag-check me-2"></i>Enroll Now
                             </button>
                         }
 
@@ -256,7 +292,26 @@
             </div>
         }
 
-        <div id="course-roadmap" class="ciit-course-outline-card mt-4">
+        <nav class="ciit-course-details-nav" aria-label="Course details sections">
+            <a href="#course-overview"><i class="bi bi-info-circle"></i> Overview</a>
+            <a href="#course-roadmap"><i class="bi bi-list-check"></i> Syllabus</a>
+            <a href="#course-benefits"><i class="bi bi-stars"></i> What you'll gain</a>
+        </nav>
+
+        <section id="course-overview" class="ciit-student-info-panel">
+            <div class="ciit-student-section-heading">
+                <span class="ciit-student-eyebrow">YOUR LEARNING JOURNEY</span>
+                <h2>Build skills you can put into practice.</h2>
+                <p>Follow a structured learning path, explore lesson resources, and check your understanding as you progress through the course.</p>
+            </div>
+            <div class="ciit-student-benefit-grid">
+                <article><span class="ciit-student-benefit-icon"><i class="bi bi-signpost-split"></i></span><h3>Structured roadmap</h3><p>Course topics are organized so you can learn in a clear, guided sequence.</p></article>
+                <article><span class="ciit-student-benefit-icon"><i class="bi bi-journal-code"></i></span><h3>Learning resources</h3><p>Open available notes and lesson content directly from your course learning flow.</p></article>
+                <article><span class="ciit-student-benefit-icon"><i class="bi bi-patch-check"></i></span><h3>Knowledge checks</h3><p>Practice with available assessments to reinforce concepts as you learn.</p></article>
+            </div>
+        </section>
+
+        <div id="course-roadmap" class="ciit-course-outline-card ciit-student-course-roadmap mt-4">
             <div class="d-flex justify-content-between align-items-center gap-3 flex-wrap mb-3">
                 <div>
                     <h2 class="mb-1">Course Roadmap</h2>
@@ -273,9 +328,11 @@
             }
             else
             {
-                <div class="accordion" id="courseTopicsAccordion">
+                <div class="accordion ciit-premium-roadmap" id="courseTopicsAccordion">
+                    @{ var topicNumber = 0; }
                     @foreach (var topic in Model.Topics)
                     {
+                        topicNumber++;
                         var headingId = $"heading-{topic.Id}";
                         var collapseId = $"collapse-{topic.Id}";
 
@@ -286,8 +343,14 @@
                                         data-bs-target="#@collapseId"
                                         aria-expanded="false"
                                         aria-controls="@collapseId">
-                                    <span class="fw-semibold">@topic.Title</span>
-                                    <span class="ms-auto me-3 text-secondary small">
+                                    <span class="ciit-roadmap-number">@topicNumber.ToString("D2")</span>
+                                    <span class="ciit-roadmap-topic-icon"><i class="bi bi-journal-bookmark-fill" aria-hidden="true"></i></span>
+                                    <span class="ciit-roadmap-topic-copy">
+                                        <strong>@topic.Title</strong>
+                                        <small>Topic @topicNumber · Structured learning</small>
+                                    </span>
+                                    <span class="ciit-roadmap-lesson-count">
+                                        <i class="bi bi-play-circle" aria-hidden="true"></i>
                                         @topic.Contents.Count lesson@(topic.Contents.Count == 1 ? "" : "s")
                                     </span>
                                 </button>
@@ -370,6 +433,18 @@
                 </div>
             }
         </div>
+        <section id="course-benefits" class="ciit-student-outcome-panel">
+            <div>
+                <span class="ciit-student-eyebrow">WHY THIS COURSE</span>
+                <h2>Learn at your pace. Build with confidence.</h2>
+                <p>Use the roadmap to explore each topic, revisit learning material when needed, and practice with the assessments available in the course.</p>
+            </div>
+            <div class="ciit-student-outcome-points">
+                <span><i class="bi bi-check-circle-fill"></i> Topic-by-topic learning</span>
+                <span><i class="bi bi-check-circle-fill"></i> Clear lesson organization</span>
+                <span><i class="bi bi-check-circle-fill"></i> Practice opportunities where available</span>
+            </div>
+        </section>
     </div>
 </section>
 
