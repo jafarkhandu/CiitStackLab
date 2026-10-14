@@ -44,19 +44,7 @@ public class HomeController : Controller
 
     public async Task<IActionResult> Index(CancellationToken cancellationToken)
     {
-        ViewBag.ShowLearningHub = false;
-
-        if (User.IsInRole("Student"))
-        {
-            var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
-
-            if (!string.IsNullOrWhiteSpace(userId))
-            {
-                ViewBag.ShowLearningHub = await _coursePurchaseService.HasAnyActivePurchaseAsync(
-                    userId,
-                    cancellationToken);
-            }
-        }
+        ViewBag.ShowLearningHub = User.IsInRole("Student");
 
         var courses = await _courseService.GetPublishedAsync(cancellationToken);
         return View(courses);
