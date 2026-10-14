@@ -176,8 +176,8 @@ else
                                 completedTopicLessons * 100d / topic.Contents.Count,
                                 MidpointRounding.AwayFromZero);
 
-                        <section class="ciit-learning-topic @(topicHasCurrentContent ? "is-active-topic" : "")">
-                            <div class="ciit-learning-topic-heading">
+                        <details class="ciit-learning-topic @(topicHasCurrentContent ? "is-active-topic" : "")" open="@(topicHasCurrentContent ? "open" : null)">
+                            <summary class="ciit-learning-topic-heading">
                                 <div class="ciit-learning-topic-icon">
                                     <i class="bi bi-collection-play"></i>
                                 </div>
@@ -189,7 +189,7 @@ else
                                         @topic.Contents.Count lesson@(topic.Contents.Count == 1 ? "" : "s")
                                     </span>
                                 </div>
-                            </div>
+                            </summary>
 
                             @if (User.IsInRole("Student") && learningProgress is not null && topic.Contents.Count > 0)
                             {
@@ -237,6 +237,7 @@ else
                                                asp-action="Index"
                                                asp-route-topicId="@topic.Id"
                                                asp-route-chapterId="@chapter.ChapterId"
+                                               asp-route-courseId="@Model.Id"
                                                class="ciit-learning-read-notes">
                                                 <span><i class="bi bi-journal-text"></i> Read chapter notes</span>
                                                 <i class="bi bi-arrow-up-right"></i>
@@ -433,7 +434,7 @@ else
                                     </div>
                                 </details>
                             }
-                        </section>
+                        </details>
                     }
                 </div>
             </aside>
