@@ -7,14 +7,14 @@
 <section class="ciit-content-form-page">
     <div class="ciit-content-form-header"><div><a asp-action="Index" class="ciit-content-back"><i class="bi bi-arrow-left"></i> Back to Content</a><span class="ciit-content-eyebrow">Learning content</span><h1>Edit Content</h1><p>Keep the existing record and update its chapter media.</p></div></div>
     <form asp-action="Edit" asp-route-id="@Model.Id" method="post" enctype="multipart/form-data" class="ciit-content-form-card">
-        @Html.AntiForgeryToken()<input asp-for="Id" type="hidden" />
+        @Html.AntiForgeryToken()<input asp-for="Id" type="hidden" /><input type="hidden" name="muxUploadId" class="js-mux-upload-id" />
         <div asp-validation-summary="ModelOnly" class="ciit-content-validation"></div>
         <div class="ciit-content-form-grid">
             <div class="ciit-content-field"><label asp-for="TopicId">Topic</label><select asp-for="TopicId" asp-items="ViewBag.Topics" class="form-select" id="contentTopic"><option value="0">Select topic</option></select><span asp-validation-for="TopicId" class="text-danger"></span></div>
             <div class="ciit-content-field"><label asp-for="NoteId">Notes / Chapter</label><select asp-for="NoteId" asp-items="ViewBag.Notes" class="form-select" id="contentNote"><option value="0">Select note chapter</option></select><span asp-validation-for="NoteId" class="text-danger"></span><small>Only note chapters belonging to the selected topic are available.</small></div>
             <div class="ciit-content-field full-width"><label asp-for="Title">Content Name</label><input asp-for="Title" class="form-control" maxlength="100" autocomplete="off" /><span asp-validation-for="Title" class="text-danger"></span></div>
             <div class="ciit-content-field"><label>Replace Slides</label><input type="file" name="slidesFile" class="form-control" accept=".pdf,.ppt,.pptx" /><small>@(string.IsNullOrWhiteSpace(Model.Slides) ? "No slides uploaded." : "A new upload will replace the current slides file.")</small></div>
-            <div class="ciit-content-field"><label>Replace Video</label><input type="file" name="videoFile" class="form-control" accept=".mp4,.webm,.mov" /><small>@(string.IsNullOrWhiteSpace(Model.VideoName) ? "No video uploaded." : "A new upload will replace the current video file.")</small></div>
+            <div class="ciit-content-field"><label>Replace Video</label><input type="file" name="videoFile" class="form-control" accept=".mp4,.webm,.mov" /><small>@(string.IsNullOrWhiteSpace(Model.VideoName) ? "No video uploaded." : "A new upload will replace the current video file. The video uploads directly to secure Mux storage.")</small></div>
         </div>
         <div class="ciit-content-form-footer"><a asp-action="Index" class="ciit-content-secondary-btn">Cancel</a><button type="submit" class="ciit-content-primary-btn"><i class="bi bi-check2-circle"></i> Save Changes</button></div>
     </form>
