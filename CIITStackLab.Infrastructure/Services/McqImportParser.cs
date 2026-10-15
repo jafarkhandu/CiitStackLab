@@ -8,7 +8,7 @@ namespace CIITStackLab.Infrastructure.Services;
 
 internal static class McqImportParser
 {
-    private const int MaximumQuestionCount = 500;
+    private const int MaximumQuestionCount = 100;
     private const long MaximumDocumentXmlLength = 10 * 1024 * 1024;
 
     private static readonly XNamespace WordNamespace =
