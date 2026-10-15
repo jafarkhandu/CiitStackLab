@@ -85,14 +85,7 @@ else
     <section class="ciit-learning-page">
         <header class="ciit-learning-header">
             <div class="container">
-                <a asp-action="Details"
-                   asp-route-id="@Model.Id"
-                   class="ciit-learning-back-link">
-                    <i class="bi bi-arrow-left"></i>
-                    <span>Course Overview</span>
-                </a>
-
-                <div class="ciit-learning-header-row">
+                                <div class="ciit-learning-header-row">
                     <div class="ciit-learning-course-intro">
                         <div class="ciit-learning-pills">
                             <span class="ciit-learning-badge">@Model.Category</span>
@@ -101,7 +94,7 @@ else
                                 <i class="bi bi-clock me-1"></i>@Model.DurationHours hrs
                             </span>
                             <span class="ciit-learning-meta-pill">
-                                <i class="bi bi-play-circle me-1"></i>@Model.ContentCount lessons
+                                <i class="bi bi-journal-bookmark me-1"></i>@Model.Topics.Sum(topic => topic.Chapters.Count) chapters
                             </span>
                         </div>
 
@@ -180,8 +173,7 @@ else
                                     <strong>@topic.Title</strong>
                                     <span>
                                         @topic.Chapters.Count chapter@(topic.Chapters.Count == 1 ? "" : "s")
-                                        <span class="ciit-learning-dot">·</span>
-                                        @topic.Contents.Count lesson@(topic.Contents.Count == 1 ? "" : "s")
+ 
                                     </span>
                                 </div>
                             </summary>
