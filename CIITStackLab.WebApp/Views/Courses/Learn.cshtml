@@ -391,14 +391,18 @@ else
             </aside>
 
             <main class="ciit-learning-main">
+                <div class="ciit-learning-panel-pager" aria-label="Learning sections">
+                    <button type="button" data-learning-page="notes">1. Notes</button>
+                    <button type="button" data-learning-page="content">2. Content</button>
+                    <button type="button" data-learning-page="assessment">3. Assessments</button>
+                </div>
                 <article class="ciit-learning-main-card">
                     <div class="ciit-learning-lesson-header">
                         <div class="ciit-learning-lesson-heading">
                             <span class="ciit-learning-eyebrow">
-                                CHAPTER @(currentChapterIndex + 1) OF @Math.Max(orderedChapters.Count, 1)
+                                TOPIC @(Math.Max(0, Model.Topics.ToList().FindIndex(topic => topic.Id == currentItem?.Topic.Id)) + 1) OF @Math.Max(Model.Topics.Count, 1)
                             </span>
-                            <h2>@currentContent.Title</h2>
-                            <p><i class="bi bi-collection me-1"></i>@currentItem?.Topic.Title</p>
+                            <h2 class="ciit-learning-chapter-title">@(currentChapter?.Title ?? currentItem?.Topic.Title ?? currentContent.Title)</h2>
                         </div>
 
                         <div class="ciit-learning-lesson-actions">
@@ -486,15 +490,12 @@ else
                                 <p>Start with the notes, then review content and assessments.</p>
                             </div>
                         </div>
-                        @foreach (var notesChapter in Model.Topics.SelectMany(item => item.Chapters))
+                        @if (currentChapter is not null)
                         {
-                            <article class="ciit-learning-notes-content"
-                                     data-chapter-notes="@notesChapter.Id"
-                                     hidden="@(notesChapter.Id == currentChapter?.Id ? null : "hidden")">
-                                <h4>@notesChapter.Title</h4>
-                                @if (!string.IsNullOrWhiteSpace(notesChapter.NotesHtml))
+                            <article class="ciit-learning-notes-content">
+                                @if (!string.IsNullOrWhiteSpace(currentChapter.NotesHtml))
                                 {
-                                    @Html.Raw(notesChapter.NotesHtml)
+                                    @Html.Raw(currentChapter.NotesHtml)
                                 }
                                 else
                                 {
@@ -685,46 +686,18 @@ else
                         </section>
                     }
                 </article>
-                <div class="ciit-learning-panel-pager" aria-label="Learning sections">
-                    <button type="button" data-learning-page="notes">1. Notes</button>
-                    <button type="button" data-learning-page="content">2. Content</button>
-                    <button type="button" data-learning-page="assessment">3. Assessments</button>
-                </div>
                 <div class="ciit-learning-extra-panels">
                     <section class="ciit-learning-resource ciit-learning-all-assessments" data-learning-panel-content="assessment">
                         <div class="ciit-learning-resource-title">
                             <span class="ciit-learning-resource-icon"><i class="bi bi-patch-check"></i></span>
                             <div><h3>Chapter Assessments</h3><p>Select a chapter and assessment type from the learning path.</p></div>
                         </div>
-                        @foreach (var assessmentTopic in Model.Topics)
+                        @if (currentChapter is not null)
                         {
-                            @foreach (var assessmentChapter in assessmentTopic.Chapters)
-                            {
+                                var assessmentChapter = currentChapter;
                                 <section class="ciit-learning-chapter-assessment" id="chapter-assessment-@assessmentChapter.Id">
                                     <h4>@assessmentChapter.Title</h4>
-                                    <section id="chapter-mcqs-@assessmentChapter.Id" class="ciit-learning-assessment-subsection">
-                                        <h5>MCQs</h5>
-                                        @if (assessmentChapter.Questions.Count == 0)
-                                        {
-                                            <p class="ciit-learning-category-empty">No MCQs are linked to this chapter yet.</p>
-                                        }
-                                        else
-                                        {
-                                            @for (var qi = 0; qi < assessmentChapter.Questions.Count; qi++)
-                                            {
-                                                var q = assessmentChapter.Questions[qi];
-                                                <article class="ciit-learning-assessment-question">
-                                                    <strong>@(qi + 1). @q.Question</strong>
-                                                    <ol type="A">
-                                                        @foreach (var option in q.Options.Where(option => !string.IsNullOrWhiteSpace(option)))
-                                                        {
-                                                            <li>@option</li>
-                                                        }
-                                                    </ol>
-                                                </article>
-                                            }
-                                        }
-                                    </section>
+                                    <p class="ciit-learning-assessment-note">MCQs for this chapter are available in the graded Knowledge Check above.</p>
                                     <section id="chapter-interview-@assessmentChapter.Id" class="ciit-learning-assessment-subsection">
                                         <h5>Interview Questions</h5>
                                         @if (assessmentChapter.InterviewQuestions.Count == 0)
@@ -762,7 +735,6 @@ else
                                         }
                                     </section>
                                 </section>
-                            }
                         }
                     </section>
                 </div>
