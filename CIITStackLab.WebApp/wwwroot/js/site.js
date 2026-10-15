@@ -72,7 +72,46 @@ document.addEventListener("DOMContentLoaded", function () {
         const panelButtons = Array.from(document.querySelectorAll("[data-learning-page]"));
         const panelContents = Array.from(document.querySelectorAll("[data-learning-panel-content]"));
         const extraPanels = document.querySelector(".ciit-learning-extra-panels");
-        let activeContentPage = document.querySelector('[data-learning-content-page="video"]') ? "video" : "overview";
+        const learningStateKey = "ciit-learning-state:" + window.location.pathname + window.location.search;
+        let savedLearningState = {};
+        try {
+            savedLearningState = JSON.parse(window.sessionStorage.getItem(learningStateKey) || "{}");
+        } catch (error) {
+            savedLearningState = {};
+        }
+        if (!savedLearningState || typeof savedLearningState !== "object") savedLearningState = {};
+
+        let activeContentPage = savedLearningState.contentPage
+            || (document.querySelector('[data-learning-content-page="video"]') ? "video" : "overview");
+
+        function saveLearningState() {
+            try {
+                savedLearningState.panel = savedLearningState.panel || "notes";
+                savedLearningState.contentPage = activeContentPage;
+                window.sessionStorage.setItem(learningStateKey, JSON.stringify(savedLearningState));
+            } catch (error) {
+                // Learning navigation should remain usable when browser storage is unavailable.
+            }
+        }
+
+        if ("scrollRestoration" in window.history) {
+            window.history.scrollRestoration = "manual";
+        }
+
+        let scrollSaveFrame = 0;
+        window.addEventListener("scroll", function () {
+            if (scrollSaveFrame) return;
+            scrollSaveFrame = window.requestAnimationFrame(function () {
+                scrollSaveFrame = 0;
+                savedLearningState.scrollY = window.scrollY;
+                saveLearningState();
+            });
+        }, { passive: true });
+
+        window.addEventListener("pagehide", function () {
+            savedLearningState.scrollY = window.scrollY;
+            saveLearningState();
+        });
 
         function buildPager(container, pageCount, label, onChange) {
             if (pageCount <= 1) return null;
@@ -150,7 +189,17 @@ document.addEventListener("DOMContentLoaded", function () {
                 pages[Math.floor(index / pageSize)].appendChild(item);
             });
 
-            let activeIndex = 0;
+            const pageStateKey = [
+                parent.closest(".ciit-learning-chapter-assessment")?.id || "",
+                parent.id || "",
+                Array.from(parent.classList).sort().join("."),
+                label
+            ].join(":");
+            let activeIndex = Number.isInteger(savedLearningState.pages?.[pageStateKey])
+                ? savedLearningState.pages[pageStateKey]
+                : 0;
+            activeIndex = Math.max(0, Math.min(activeIndex, pages.length - 1));
+
             function showPage(nextIndex) {
                 if (nextIndex === "previous") nextIndex = activeIndex - 1;
                 if (nextIndex === "next") nextIndex = activeIndex + 1;
@@ -162,6 +211,9 @@ document.addEventListener("DOMContentLoaded", function () {
                     page.classList.toggle("is-entering", index === activeIndex);
                 });
                 pager.update(activeIndex);
+                if (!savedLearningState.pages) savedLearningState.pages = {};
+                savedLearningState.pages[pageStateKey] = activeIndex;
+                saveLearningState();
                 if (options && typeof options.onChange === "function") {
                     options.onChange(activeIndex);
                 }
@@ -218,6 +270,9 @@ document.addEventListener("DOMContentLoaded", function () {
                     }
                 }
             }
+
+            savedLearningState.panel = name;
+            saveLearningState();
 
             if (settings.scroll) {
                 const target = document.querySelector(".ciit-learning-main-card");
@@ -278,6 +333,8 @@ document.addEventListener("DOMContentLoaded", function () {
                 button.textContent = pageLabels[key] || key;
                 button.addEventListener("click", function () {
                     activeContentPage = key;
+                    savedLearningState.contentPage = key;
+                    saveLearningState();
                     showLearningPanel("content");
                     const activePage = resourcePages.find(function (item) {
                         return item.dataset.learningContentPage === activeContentPage;
@@ -386,7 +443,23 @@ document.addEventListener("DOMContentLoaded", function () {
             });
         });
 
-        showLearningPanel("notes");
+        const validPanels = ["notes", "content", "assessment"];
+        const initialPanel = validPanels.includes(savedLearningState.panel)
+            ? savedLearningState.panel
+            : "notes";
+        showLearningPanel(initialPanel);
+
+        if (Number.isFinite(savedLearningState.scrollY)) {
+            const restoreScrollPosition = function () {
+                window.scrollTo({ top: savedLearningState.scrollY, left: 0, behavior: "auto" });
+            };
+            window.requestAnimationFrame(function () {
+                restoreScrollPosition();
+                window.requestAnimationFrame(restoreScrollPosition);
+            });
+            window.setTimeout(restoreScrollPosition, 120);
+            window.setTimeout(restoreScrollPosition, 360);
+        }
     }
 
     const switchHub = document.querySelector("[data-course-hub-switch]");
