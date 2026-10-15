@@ -11,7 +11,7 @@ namespace CIITStackLab.Infrastructure.Services;
 /// </summary>
 public sealed class InterviewQuestionAnalyzerService : IInterviewQuestionAnalyzerService
 {
-    private const int RequiredQuestionCount = 20;
+    private const int MaximumQuestionCount = 100;
 
     private static readonly Regex SentenceBoundaryPattern = new(
         @"(?<=[.!?])\s+(?=[A-Z0-9""“'(])",
@@ -119,7 +119,7 @@ public sealed class InterviewQuestionAnalyzerService : IInterviewQuestionAnalyze
         foreach (var statement in statements)
         {
             cancellationToken.ThrowIfCancellationRequested();
-            if (questions.Count >= RequiredQuestionCount)
+            if (questions.Count >= MaximumQuestionCount)
             {
                 break;
             }
@@ -168,7 +168,7 @@ public sealed class InterviewQuestionAnalyzerService : IInterviewQuestionAnalyze
         foreach (var statement in statements)
         {
             cancellationToken.ThrowIfCancellationRequested();
-            if (questions.Count >= RequiredQuestionCount)
+            if (questions.Count >= MaximumQuestionCount)
             {
                 break;
             }
@@ -180,7 +180,7 @@ public sealed class InterviewQuestionAnalyzerService : IInterviewQuestionAnalyze
 
             foreach (var term in matchingTerms)
             {
-                if (questions.Count >= RequiredQuestionCount)
+                if (questions.Count >= MaximumQuestionCount)
                 {
                     break;
                 }
@@ -206,7 +206,7 @@ public sealed class InterviewQuestionAnalyzerService : IInterviewQuestionAnalyze
         foreach (var fact in facts)
         {
             cancellationToken.ThrowIfCancellationRequested();
-            if (questions.Count >= RequiredQuestionCount)
+            if (questions.Count >= MaximumQuestionCount)
             {
                 break;
             }
@@ -219,23 +219,22 @@ public sealed class InterviewQuestionAnalyzerService : IInterviewQuestionAnalyze
                 fact.LineNumber);
         }
 
-        if (questions.Count != RequiredQuestionCount)
+        if (questions.Count == 0)
         {
             throw new InvalidOperationException(
-                "The local analyzer could build only " + questions.Count +
-                " distinct source-based interview questions. It will not invent the remaining items. Upload fuller notes with more complete statements and distinct concepts. No questions were saved.");
+                "The local analyzer could not build any distinct source-based interview questions. Upload fuller notes with complete statements and distinct concepts. No questions were saved.");
         }
 
         await ReportAsync(
             reportProgress,
-            "Created 20 question-and-answer pairs. Validating empty fields and repeated questions...",
+            "Created " + questions.Count + " question-and-answer pairs. Validating empty fields and repeated questions...",
             cancellationToken);
 
         ValidateQuestions(questions);
 
         await ReportAsync(
             reportProgress,
-            "Local analysis is complete. Review all 20 Q&A pairs; nothing has been saved yet.",
+            "Local analysis is complete. Review all " + questions.Count + " Q&A pairs; nothing has been saved yet.",
             cancellationToken);
 
         return questions;
@@ -439,10 +438,10 @@ public sealed class InterviewQuestionAnalyzerService : IInterviewQuestionAnalyze
 
     private static void ValidateQuestions(IReadOnlyList<InterviewQuestionImportItemDto> questions)
     {
-        if (questions.Count != RequiredQuestionCount)
+        if (questions.Count == 0 || questions.Count > MaximumQuestionCount)
         {
             throw new InvalidOperationException(
-                "The local analyzer did not create exactly 20 interview Q&A pairs. Nothing was saved.");
+                "The local analyzer must create between 1 and 100 interview Q&A pairs. Nothing was saved.");
         }
 
         var questionKeys = new HashSet<string>(StringComparer.Ordinal);
