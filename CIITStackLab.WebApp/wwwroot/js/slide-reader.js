@@ -1,6 +1,3 @@
-const PPT_CORE_URL = 'https://esm.sh/@web-ppt/core@0.4.5?bundle';
-const PPT_ADVANCED_RENDERING_URL = 'https://esm.sh/@web-ppt/core@0.4.5/advanced-rendering?bundle';
-const PPT_MODERN_CHARTS_URL = 'https://esm.sh/@web-ppt/core@0.4.5/modern-charts?bundle';
 const PDF_JS_URL = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/4.10.38/pdf.min.mjs';
 const PDF_WORKER_URL = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/4.10.38/pdf.worker.min.mjs';
 
@@ -8,7 +5,6 @@ const root = document.querySelector('.ciit-slide-reader');
 
 if (root) {
     const slideUrl = root.dataset.slideUrl;
-    const slideType = (root.dataset.slideType || '').toLowerCase();
     const title = root.dataset.slideTitle || 'Slides';
     const stage = document.getElementById('slideStage');
     const thumbnails = document.getElementById('slideThumbnails');
@@ -26,20 +22,16 @@ if (root) {
     const fullscreen = document.getElementById('slideFullscreen');
 
     const state = {
-        type: null,
-        pptModule: null,
-        presentation: null,
         pdf: null,
         page: 0,
         zoom: 1,
-        fit: true,
-        rendered: new Map(),
-        objectUrls: [],
         pdfCanvas: null,
-        pdfContext: null
+        pdfContext: null,
+        renderTask: null,
+        renderVersion: 0
     };
 
-    const setLoading = (visible, message = 'Opening slides') => {
+    const setLoading = (visible, message = 'Opening PDF') => {
         if (!loading) return;
         loading.hidden = !visible;
         const strong = loading.querySelector('strong');
@@ -47,10 +39,9 @@ if (root) {
     };
 
     const setPageInfo = () => {
-        const count = state.type === 'pdf'
-            ? state.pdf?.numPages || 0
-            : state.presentation?.slides?.length || 0;
+        const count = state.pdf?.numPages || 0;
         const page = count > 0 ? state.page + 1 : 0;
+
         current.textContent = page;
         total.textContent = count || '—';
         controlCurrent.textContent = page;
@@ -63,32 +54,47 @@ if (root) {
         zoomLabel.textContent = `${Math.round(state.zoom * 100)}%`;
     };
 
-    const revokeUrls = () => {
-        state.objectUrls.forEach(url => URL.revokeObjectURL(url));
-        state.objectUrls = [];
+    const cancelCurrentRender = () => {
+        state.renderVersion += 1;
+
+        if (state.renderTask) {
+            try {
+                state.renderTask.cancel();
+            } catch {
+                // The task may already have completed.
+            }
+            state.renderTask = null;
+        }
     };
 
-    const renderError = (message, preserveNavigation = true) => {
+    const renderError = message => {
+        cancelCurrentRender();
         setLoading(false);
         stage.innerHTML = `
             <div class="ciit-slide-reader-error" role="alert">
                 <i class="bi bi-exclamation-triangle"></i>
-                <strong>Unable to open slide ${state.page + 1}</strong>
+                <strong>Unable to display this PDF page</strong>
                 <span>${message}</span>
-                <small>Select another slide or try this slide again.</small>
             </div>`;
-
-        // A single PowerPoint slide can contain an unsupported or malformed object.
-        // Do not destroy the whole presentation navigation when that happens.
-        if (!preserveNavigation) {
-            thumbnails.innerHTML = '';
-        }
     };
 
     const renderPdfPage = async () => {
         if (!state.pdf) return;
 
+        const renderVersion = ++state.renderVersion;
+
+        if (state.renderTask) {
+            try {
+                state.renderTask.cancel();
+            } catch {
+                // The previous task may already have completed.
+            }
+            state.renderTask = null;
+        }
+
         const page = await state.pdf.getPage(state.page + 1);
+        if (renderVersion !== state.renderVersion) return;
+
         const baseViewport = page.getViewport({ scale: 1 });
         const availableWidth = Math.max(320, stage.clientWidth - 56);
         const availableHeight = Math.max(240, stage.clientHeight - 56);
@@ -106,6 +112,9 @@ if (root) {
             stage.appendChild(canvas);
             state.pdfCanvas = canvas;
             state.pdfContext = canvas.getContext('2d', { alpha: false });
+        } else if (!stage.contains(canvas)) {
+            stage.innerHTML = '';
+            stage.appendChild(canvas);
         }
 
         canvas.width = Math.ceil(viewport.width);
@@ -113,44 +122,23 @@ if (root) {
         canvas.style.width = `${Math.ceil(viewport.width)}px`;
         canvas.style.height = `${Math.ceil(viewport.height)}px`;
 
-        await page.render({
+        state.renderTask = page.render({
             canvasContext: state.pdfContext,
             viewport
-        }).promise;
+        });
 
-        setLoading(false);
-        setZoomLabel();
-    };
-
-    const getPptSlideUrl = async index => {
-        const slides = state.presentation?.slides;
-        if (!slides?.length || !slides[index]) {
-            throw new Error(`PowerPoint slide ${index + 1} is not available after parsing.`);
+        try {
+            await state.renderTask.promise;
+        } catch (error) {
+            if (error?.name === 'RenderingCancelledException') return;
+            throw error;
+        } finally {
+            if (renderVersion === state.renderVersion) {
+                state.renderTask = null;
+            }
         }
 
-        if (state.rendered.has(index)) return state.rendered.get(index);
-
-        const svg = await state.pptModule.slideToSvgFile(
-            state.presentation,
-            slides[index]);
-
-        const blob = new Blob([svg], { type: 'image/svg+xml' });
-        const url = URL.createObjectURL(blob);
-        state.objectUrls.push(url);
-        state.rendered.set(index, url);
-        return url;
-    };
-
-    const renderPptSlide = async () => {
-        const url = await getPptSlideUrl(state.page);
-        stage.innerHTML = '';
-
-        const image = document.createElement('img');
-        image.className = 'ciit-slide-reader-ppt-image';
-        image.alt = `${title} — slide ${state.page + 1}`;
-        image.src = url;
-        image.style.transform = `scale(${state.zoom})`;
-        stage.appendChild(image);
+        if (renderVersion !== state.renderVersion) return;
 
         setLoading(false);
         setZoomLabel();
@@ -158,10 +146,13 @@ if (root) {
 
     const selectThumbnail = () => {
         thumbnails.querySelectorAll('[data-slide-index]').forEach(item => {
-            item.classList.toggle('is-active', Number(item.dataset.slideIndex) === state.page);
+            item.classList.toggle(
+                'is-active',
+                Number(item.dataset.slideIndex) === state.page);
         });
 
-        const active = thumbnails.querySelector(`[data-slide-index="${state.page}"]`);
+        const active = thumbnails.querySelector(
+            `[data-slide-index="${state.page}"]`);
         active?.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
     };
 
@@ -169,56 +160,11 @@ if (root) {
         try {
             setPageInfo();
             selectThumbnail();
-
-            if (state.type === 'pdf') {
-                await renderPdfPage();
-            } else if (state.type === 'ppt' || state.type === 'pptx') {
-                await renderPptSlide();
-            }
+            await renderPdfPage();
         } catch (error) {
-            console.error(`Slide ${state.page + 1} render failed`, error);
-            const message = error instanceof Error && error.message
-                ? error.message
-                : 'This slide could not be rendered in the browser.';
-            renderError(message);
-            selectThumbnail();
+            console.error(error);
+            renderError('This PDF page could not be rendered. Please try the page again.');
         }
-    };
-
-    const buildPptThumbnails = async () => {
-        thumbnails.innerHTML = '';
-        const slides = state.presentation.slides || [];
-
-        for (let index = 0; index < slides.length; index++) {
-            const button = document.createElement('button');
-            button.type = 'button';
-            button.className = 'ciit-slide-thumbnail';
-            button.dataset.slideIndex = String(index);
-            button.setAttribute('aria-label', `Open slide ${index + 1}`);
-
-            const image = document.createElement('img');
-            image.alt = '';
-            image.loading = index < 6 ? 'eager' : 'lazy';
-
-            const number = document.createElement('span');
-            number.textContent = String(index + 1);
-
-            button.append(image, number);
-            button.addEventListener('click', () => {
-                state.page = index;
-                renderCurrent();
-            });
-            thumbnails.appendChild(button);
-
-            try {
-                image.src = await getPptSlideUrl(index);
-            } catch (error) {
-                console.warn(`Unable to render thumbnail ${index + 1}`, error);
-                image.alt = `Slide ${index + 1} preview unavailable`;
-            }
-        }
-
-        selectThumbnail();
     };
 
     const buildPdfThumbnails = async () => {
@@ -229,7 +175,7 @@ if (root) {
             button.type = 'button';
             button.className = 'ciit-slide-thumbnail';
             button.dataset.slideIndex = String(index);
-            button.setAttribute('aria-label', `Open slide ${index + 1}`);
+            button.setAttribute('aria-label', `Open page ${index + 1}`);
 
             const canvas = document.createElement('canvas');
             const number = document.createElement('span');
@@ -246,6 +192,7 @@ if (root) {
                 const viewport = page.getViewport({ scale: 0.18 });
                 canvas.width = Math.ceil(viewport.width);
                 canvas.height = Math.ceil(viewport.height);
+
                 await page.render({
                     canvasContext: canvas.getContext('2d'),
                     viewport
@@ -261,74 +208,30 @@ if (root) {
     const loadPdf = async response => {
         const pdfjs = await import(PDF_JS_URL);
         pdfjs.GlobalWorkerOptions.workerSrc = PDF_WORKER_URL;
+
         const bytes = new Uint8Array(await response.arrayBuffer());
+        if (bytes.length === 0) {
+            throw new Error('The PDF file is empty.');
+        }
+
         state.pdf = await pdfjs.getDocument({ data: bytes }).promise;
-        state.type = 'pdf';
+
+        if (!state.pdf.numPages) {
+            throw new Error('The PDF does not contain any pages.');
+        }
+
         setPageInfo();
         await buildPdfThumbnails();
         await renderCurrent();
     };
 
-    const loadPowerPoint = async response => {
-        const pptModule = await import(PPT_CORE_URL);
-        const bytes = new Uint8Array(await response.arrayBuffer());
-        state.pptModule = pptModule;
-
-        // Match the official Web-PPT viewer opening pipeline: optional renderers are
-        // prepared before parsing so charts/EMF+/3D assets cannot leave the parser in
-        // a partially initialized state.
-        await Promise.allSettled([
-            import(PPT_ADVANCED_RENDERING_URL).then(module =>
-                module.prepareAdvancedRendering(bytes)),
-            import(PPT_MODERN_CHARTS_URL).then(module =>
-                module.prepareModernCharts(bytes))
-        ]);
-
-        const blob = new Blob([bytes], {
-            type: slideType === 'ppt'
-                ? 'application/vnd.ms-powerpoint'
-                : 'application/vnd.openxmlformats-officedocument.presentationml.presentation'
-        });
-
-        // The public API supports File/Blob/ArrayBuffer/Uint8Array. Use the Blob path
-        // first because it matches the documented browser usage, then retry once with
-        // raw bytes for compatibility with older parser builds.
-        let presentation = await pptModule.parse(blob);
-
-        if (!presentation?.slides?.length) {
-            presentation = await pptModule.parse(bytes);
-        }
-
-        if (!presentation?.slides?.length) {
-            throw new Error(
-                `PowerPoint parser returned no slides. ` +
-                `Detected format: ${slideType || 'unknown'}; file size: ${bytes.byteLength} bytes.`);
-        }
-
-        state.presentation = presentation;
-        state.type = slideType || 'pptx';
-        state.page = 0;
-        state.rendered.clear();
-        revokeUrls();
-        setPageInfo();
-        await buildPptThumbnails();
-        await renderCurrent();
-    };
-
-    const detectTypeFromContentType = contentType => {
-        if (contentType.includes('application/pdf')) return 'pdf';
-        if (contentType.includes('application/vnd.ms-powerpoint')) return 'ppt';
-        if (contentType.includes('application/vnd.openxmlformats-officedocument.presentationml.presentation')) return 'pptx';
-        return null;
-    };
-
     const load = async () => {
         if (!slideUrl) {
-            renderError('No slide file is attached to this resource.', false);
+            renderError('No PDF slide file is attached to this resource.');
             return;
         }
 
-        setLoading(true, 'Opening slides');
+        setLoading(true, 'Opening PDF');
 
         try {
             const response = await fetch(slideUrl, {
@@ -341,26 +244,25 @@ if (root) {
             }
 
             const contentType = (response.headers.get('content-type') || '').toLowerCase();
-            const detectedType = slideType || detectTypeFromContentType(contentType);
-
-            if (detectedType === 'pdf') {
-                await loadPdf(response);
-            } else if (detectedType === 'ppt' || detectedType === 'pptx') {
-                await loadPowerPoint(response);
-            } else {
-                throw new Error('Unsupported slide format.');
+            if (!contentType.includes('application/pdf')) {
+                throw new Error('The attached slide file is not a PDF.');
             }
+
+            await loadPdf(response);
         } catch (error) {
             console.error(error);
             renderError(error instanceof Error && error.message.includes('HTTP')
-                ? 'The slide file could not be loaded. Please try again.'
-                : 'This file could not be rendered in the browser.', false);
+                ? 'The PDF file could not be loaded. Please try again.'
+                : error instanceof Error && error.message
+                    ? error.message
+                    : 'This PDF could not be opened in the browser.');
         }
     };
 
     const changeZoom = delta => {
-        state.fit = false;
-        state.zoom = Math.max(0.5, Math.min(2.5, Number((state.zoom + delta).toFixed(2))));
+        state.zoom = Math.max(
+            0.5,
+            Math.min(2.5, Number((state.zoom + delta).toFixed(2))));
         renderCurrent();
     };
 
@@ -372,9 +274,7 @@ if (root) {
     });
 
     next.addEventListener('click', () => {
-        const count = state.type === 'pdf'
-            ? state.pdf?.numPages || 0
-            : state.presentation?.slides?.length || 0;
+        const count = state.pdf?.numPages || 0;
         if (state.page < count - 1) {
             state.page++;
             renderCurrent();
@@ -383,15 +283,14 @@ if (root) {
 
     zoomOut.addEventListener('click', () => changeZoom(-0.1));
     zoomIn.addEventListener('click', () => changeZoom(0.1));
+
     zoomLabel.addEventListener('click', () => {
         state.zoom = 1;
-        state.fit = false;
         renderCurrent();
     });
 
     fit.addEventListener('click', () => {
         state.zoom = 1;
-        state.fit = true;
         renderCurrent();
     });
 
@@ -433,9 +332,9 @@ if (root) {
         }
     });
 
-    window.addEventListener('beforeunload', revokeUrls);
+    window.addEventListener('beforeunload', cancelCurrentRender);
     window.addEventListener('resize', () => {
-        if (state.type === 'pdf' && state.pdf) renderCurrent();
+        if (state.pdf) renderCurrent();
     });
 
     load();
