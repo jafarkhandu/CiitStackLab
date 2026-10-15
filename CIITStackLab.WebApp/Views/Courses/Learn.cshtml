@@ -47,9 +47,56 @@
         title = System.Text.RegularExpressions.Regex.Replace(title, @"(?<=[a-z0-9])(?=[A-Z])", " ");
         title = System.Text.RegularExpressions.Regex.Replace(title, @"(?<=[A-Z])(?=[A-Z][a-z])", " ");
         title = System.Text.RegularExpressions.Regex.Replace(title, @"(?<=\d)(?=[A-Z])", " ");
-        title = System.Text.RegularExpressions.Regex.Replace(title, @"(?i)\\bandthe\\b|(?i)andthe", "and the");
-        title = System.Text.RegularExpressions.Regex.Replace(title, @"\\s{2,}", " ");
+        title = System.Text.RegularExpressions.Regex.Replace(title, @"(?i)andthe", "and the");
+        title = System.Text.RegularExpressions.Regex.Replace(title, @"\s{2,}", " ");
         return title;
+    }
+
+    string? ResolveMuxPlaybackId(string? value)
+    {
+        if (string.IsNullOrWhiteSpace(value))
+        {
+            return null;
+        }
+
+        var candidate = value.Trim();
+        if (Uri.TryCreate(candidate, UriKind.Absolute, out var uri))
+        {
+            var path = uri.AbsolutePath.Trim('/');
+            if (uri.Host.Equals("player.mux.com", StringComparison.OrdinalIgnoreCase))
+            {
+                candidate = path.Split('/', StringSplitOptions.RemoveEmptyEntries).LastOrDefault() ?? string.Empty;
+            }
+            else if (uri.Host.Equals("stream.mux.com", StringComparison.OrdinalIgnoreCase))
+            {
+                candidate = path.Split('/', StringSplitOptions.RemoveEmptyEntries).FirstOrDefault() ?? string.Empty;
+                candidate = System.IO.Path.GetFileNameWithoutExtension(candidate);
+            }
+            else if (path.StartsWith("uploads/videos/", StringComparison.OrdinalIgnoreCase))
+            {
+                candidate = path["uploads/videos/".Length..];
+            }
+            else
+            {
+                return null;
+            }
+        }
+        else
+        {
+            candidate = candidate.TrimStart('/');
+            if (candidate.StartsWith("uploads/videos/", StringComparison.OrdinalIgnoreCase))
+            {
+                candidate = candidate["uploads/videos/".Length..];
+            }
+            else if (candidate.Contains('/') || candidate.Contains('.'))
+            {
+                return null;
+            }
+        }
+
+        return System.Text.RegularExpressions.Regex.IsMatch(candidate, @"^[A-Za-z0-9_-]{20,100}$")
+            ? candidate
+            : null;
     }
 
     string ResolveResourceUrl(string? value, string folder)
@@ -542,6 +589,7 @@ else
                         var isDirectVideoFile = videoExtension.Equals(".mp4", StringComparison.OrdinalIgnoreCase)
                             || videoExtension.Equals(".webm", StringComparison.OrdinalIgnoreCase)
                             || videoExtension.Equals(".mov", StringComparison.OrdinalIgnoreCase);
+                        var muxPlaybackId = ResolveMuxPlaybackId(currentContent.VideoName);
 
                         <section class="ciit-learning-resource ciit-learning-video-section" data-learning-panel-content="content" data-learning-content-page="video">
                             <div class="ciit-learning-resource-title">
@@ -552,7 +600,19 @@ else
                                 </div>
                             </div>
 
-                            @if (isDirectVideoFile)
+                            @if (muxPlaybackId is not null)
+                            {
+                                <div class="ciit-learning-video-frame ciit-mux-watch-player"
+                                     data-playback-id="@muxPlaybackId"
+                                     data-title="@currentContent.Title"
+                                     aria-label="@currentContent.Title video player">
+                                    <div class="ciit-video-fallback">
+                                        <i class="bi bi-play-circle"></i>
+                                        <span>Preparing video player…</span>
+                                    </div>
+                                </div>
+                            }
+                            else if (isDirectVideoFile)
                             {
                                 var videoType = videoExtension.Equals(".webm", StringComparison.OrdinalIgnoreCase)
                                     ? "video/webm"
@@ -560,19 +620,17 @@ else
                                         ? "video/quicktime"
                                         : "video/mp4";
 
-                                <div class="ciit-learning-video-frame">
-                                    <video controls preload="none" playsinline data-deferred-video>
+                                <div class="ciit-learning-video-frame ciit-learning-direct-video-frame">
+                                    <video controls preload="metadata" playsinline>
+                                        <source src="@videoUrl" type="@videoType" />
                                         Your browser does not support embedded video.
                                     </video>
-                                    <button type="button" class="ciit-learning-load-video" data-video-src="@videoUrl" data-video-type="@videoType">
-                                        <i class="bi bi-play-circle me-2"></i>Load video
-                                    </button>
                                 </div>
                             }
                             else
                             {
                                 <div class="ratio ratio-16x9 ciit-learning-video-frame">
-                                    <iframe data-src="@videoUrl"
+                                    <iframe src="@videoUrl"
                                             title="@currentContent.Title video"
                                             loading="lazy"
                                             allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
