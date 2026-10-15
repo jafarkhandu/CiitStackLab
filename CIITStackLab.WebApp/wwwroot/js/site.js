@@ -83,7 +83,7 @@ document.addEventListener("DOMContentLoaded", function () {
             });
             if (name === "content") {
                 document.querySelectorAll(".ciit-learning-video-frame iframe[data-src]").forEach(function (frame) {
-                    if (!frame.src) frame.src = frame.dataset.src;
+                    if (!frame.hasAttribute("src")) frame.setAttribute("src", frame.dataset.src);
                 });
             }
             if (settings.scroll) {
