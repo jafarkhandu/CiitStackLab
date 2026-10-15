@@ -275,6 +275,12 @@ else
                                     var chapter = topic.Chapters[chapterIndex];
                                     var chapterHasCurrentContent = chapter.Contents.Any(
                                         content => content.Id == currentContent.Id);
+                                    var chapterResourceCount =
+                                        (string.IsNullOrWhiteSpace(chapter.NotesHtml) ? 0 : 1)
+                                        + (chapter.Contents.Count > 0 ? 1 : 0)
+                                        + (chapter.Questions.Count > 0 ? 1 : 0)
+                                        + (chapter.InterviewQuestions.Count > 0 ? 1 : 0)
+                                        + (chapter.PracticeQuestions.Count > 0 ? 1 : 0);
 
                                     <details class="ciit-learning-chapter"
                                              open="@(chapterHasCurrentContent ? "open" : null)">
@@ -285,7 +291,7 @@ else
                                             <span class="ciit-learning-chapter-title">
                                                 <strong>@FormatLearningTitle(chapter.Title)</strong>
                                                 <small>
-                                                    @chapter.Contents.Count resource@(chapter.Contents.Count == 1 ? "" : "s")
+                                                    @chapterResourceCount resource@(chapterResourceCount == 1 ? "" : "s")
                                                 </small>
                                             </span>
                                             <i class="bi bi-chevron-down ciit-learning-disclosure-icon" aria-hidden="true"></i>
