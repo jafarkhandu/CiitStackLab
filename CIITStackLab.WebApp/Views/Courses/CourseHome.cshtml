@@ -25,7 +25,6 @@
     var continueContentId = hasStartedLearning ? continueLesson?.Id : null;
     var totalTopicDurationMinutes = Model.Topics.Sum(topic => topic.DurationMinutes ?? 0);
     var totalDurationHours = totalTopicDurationMinutes / 60m;
-    var lessonNumber = 0;
     var totalChapters = Model.Topics.Sum(topic => topic.Chapters.Count);
 }
 
@@ -163,7 +162,7 @@
                                             {
                                                 <section class="ciit-curriculum-chapter-map">
                                                     <div class="ciit-curriculum-chapter-map-heading">
-                                                        <span class="ciit-curriculum-lesson-number">@chapter.Order</span>
+                                                        <span class="ciit-curriculum-lesson-number">@chapter.SortOrder</span>
                                                         <div><strong>@chapter.Title</strong><small>Chapter learning map</small></div>
                                                     </div>
                                                     <div class="ciit-curriculum-resource-map">
