@@ -23,9 +23,14 @@
         && !completedContentIds.Contains(lastAccessedLesson.Id);
     var continueLesson = lastAccessedLessonIsIncomplete
         ? lastAccessedLesson
-        : orderedLessons.FirstOrDefault(lesson => !completedContentIds.Contains(lesson.Id))
-            ?? orderedLessons.LastOrDefault();
-    var continueContentId = hasStartedLearning ? continueLesson?.Id : null;
+        : orderedLessons.FirstOrDefault(lesson => !completedContentIds.Contains(lesson.Id));
+    var continueTopic = continueLesson is null
+        ? Model.Topics.FirstOrDefault(topic => topic.Contents.Count == 0 && topic.Chapters.Count > 0)
+            ?? Model.Topics.FirstOrDefault(topic => topic.Chapters.Count > 0)
+        : null;
+    var continueContentId = continueLesson?.Id
+        ?? (!hasStartedLearning ? firstLesson?.Id : null);
+    var continueTopicId = continueContentId.HasValue ? null : continueTopic?.Id;
     var totalTopicDurationMinutes = Model.Topics.Sum(topic => topic.DurationMinutes ?? 0);
     var totalDurationHours = totalTopicDurationMinutes / 60m;
     var totalChapters = Model.Topics.Sum(topic => topic.Chapters.Count);
@@ -57,7 +62,8 @@
                            asp-controller="Courses"
                            asp-action="Learn"
                            asp-route-id="@Model.Id"
-                           asp-route-contentId="@continueContentId">
+                           asp-route-contentId="@continueContentId"
+                           asp-route-topicId="@continueTopicId">
                             <i class="bi bi-play-fill me-1"></i>
                             @(hasStartedLearning ? "Continue Learning" : "Start Learning")
                         </a>
