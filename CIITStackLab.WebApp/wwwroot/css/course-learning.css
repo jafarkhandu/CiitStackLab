@@ -2229,3 +2229,34 @@ details[open] > summary .ciit-learning-disclosure-icon {
 @media (prefers-reduced-motion: reduce) {
     .ciit-learning-panel-pager button { transition: none; }
 }
+
+.ciit-learning-assessment-note {
+    margin: 12px 0 0;
+    padding: 12px 14px;
+    border: 1px solid #dce8fa;
+    border-radius: 12px;
+    background: #f4f8ff;
+    color: #617793;
+    font-size: .84rem;
+    line-height: 1.65;
+}
+.ciit-learning-all-assessments .ciit-learning-assessment-question {
+    margin: 12px 0;
+    padding: 18px 19px;
+    border: 1px solid #dce7f7;
+    border-radius: 15px;
+    background: rgba(255,255,255,.9);
+    box-shadow: 0 5px 18px rgba(35,67,112,.045);
+}
+.ciit-learning-all-assessments .ciit-learning-assessment-question > strong {
+    display: block;
+    margin-bottom: 10px;
+    color: #2a4162;
+    line-height: 1.65;
+}
+.ciit-learning-all-assessments .ciit-learning-assessment-question ol {
+    margin: 0;
+    padding-left: 2rem;
+    color: #617793;
+    line-height: 1.8;
+}
