@@ -340,13 +340,35 @@ public class CoursesController : Controller
                 return NotFound();
             }
 
-            if (selectedTopic.Contents.Count > 0 && !contentId.HasValue)
+            if (!contentId.HasValue && selectedTopic.Contents.Count > 0)
             {
-                return RedirectToAction(nameof(Learn), new
+                var selectedContentId = selectedTopic.Contents[0].Id;
+
+                if (!string.IsNullOrWhiteSpace(studentUserId))
                 {
-                    id,
-                    contentId = selectedTopic.Contents[0].Id
-                });
+                    var resumeContentId = await _studentProgressService.GetResumeContentIdAsync(
+                        studentUserId,
+                        id,
+                        cancellationToken);
+
+                    if (resumeContentId.HasValue
+                        && selectedTopic.Contents.Any(content => content.Id == resumeContentId.Value))
+                    {
+                        selectedContentId = resumeContentId.Value;
+                    }
+                }
+
+                course = await _courseService.GetLearningAsync(id, selectedContentId, cancellationToken);
+                if (course is null)
+                {
+                    return NotFound();
+                }
+
+                selectedTopic = course.Topics.FirstOrDefault(topic => topic.Id == topicId.Value);
+                if (selectedTopic is null)
+                {
+                    return NotFound();
+                }
             }
 
             course.CurrentTopicId = selectedTopic.Id;
