@@ -31,6 +31,14 @@ public sealed class DynamicCourseService : ICourseService
             return null;
         }
 
+        var detailTopicIds = details.Topics.Select(topic => topic.Id).ToList();
+        var chapterCounts = await _dbContext.TrainingNotes
+            .AsNoTracking()
+            .Where(note => detailTopicIds.Contains(note.TopicId) && note.Flag == 0)
+            .GroupBy(note => note.TopicId)
+            .Select(group => new { TopicId = group.Key, Count = group.Count() })
+            .ToDictionaryAsync(item => item.TopicId, item => item.Count, cancellationToken);
+
         return new CourseDetailsDto
         {
             Id = details.Id,
@@ -48,6 +56,7 @@ public sealed class DynamicCourseService : ICourseService
                 Title = topic.Title,
                 Price = topic.Price,
                 HasNotes = topic.HasNotes,
+                ChapterCount = chapterCounts.TryGetValue(topic.Id, out var chapterCount) ? chapterCount : 0,
                 Contents = topic.Contents.Select(content => new CourseContentDto
                 {
                     Id = content.Id,
