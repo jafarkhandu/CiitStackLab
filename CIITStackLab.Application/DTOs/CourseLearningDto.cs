@@ -35,6 +35,7 @@ public sealed class CourseLearningChapterDto
     public string ChapterId { get; init; } = string.Empty;
     public string Title { get; init; } = string.Empty;
     public int SortOrder { get; init; }
+    public string NotesHtml { get; init; } = string.Empty;
     public IReadOnlyList<CourseLearningContentDto> Contents { get; init; } = Array.Empty<CourseLearningContentDto>();
     public IReadOnlyList<ContentQuestionDto> Questions { get; init; } = Array.Empty<ContentQuestionDto>();
     public IReadOnlyList<CourseLearningInterviewQuestionDto> InterviewQuestions { get; init; } = Array.Empty<CourseLearningInterviewQuestionDto>();
