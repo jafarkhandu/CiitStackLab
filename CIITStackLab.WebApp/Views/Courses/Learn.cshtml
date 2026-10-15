@@ -47,6 +47,7 @@
         title = System.Text.RegularExpressions.Regex.Replace(title, @"(?<=[a-z0-9])(?=[A-Z])", " ");
         title = System.Text.RegularExpressions.Regex.Replace(title, @"(?<=[A-Z])(?=[A-Z][a-z])", " ");
         title = System.Text.RegularExpressions.Regex.Replace(title, @"(?<=\d)(?=[A-Z])", " ");
+        title = System.Text.RegularExpressions.Regex.Replace(title, @"(?<=\d)(?=[a-z])", " ");
         title = System.Text.RegularExpressions.Regex.Replace(title, @"(?i)andthe", "and the");
         title = System.Text.RegularExpressions.Regex.Replace(title, @"\s{2,}", " ");
         return title;
