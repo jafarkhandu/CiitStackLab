@@ -51,6 +51,7 @@ public static class DependencyInjection
         services.AddScoped<IAdminCourseTopicMappingService, AdminCourseTopicMappingService>();
         services.AddScoped<IAdminContentService, AdminContentService>();
         services.AddScoped<IVimeoVideoService, VimeoVideoService>();
+        services.AddScoped<IEmailService, EmailService>();
         services.AddScoped<IAdminMcqService, AdminMcqService>();
         services.AddScoped<IAdminInterviewQuestionService, AdminInterviewQuestionService>();
         services.AddScoped<IInterviewQuestionAnalyzerService, InterviewQuestionAnalyzerService>();
