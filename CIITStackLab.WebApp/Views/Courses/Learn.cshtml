@@ -36,6 +36,22 @@
         ? orderedContents.ElementAtOrDefault(currentIndex + 1)
         : null;
 
+    string FormatLearningTitle(string? value)
+    {
+        if (string.IsNullOrWhiteSpace(value))
+        {
+            return string.Empty;
+        }
+
+        var title = value.Trim();
+        title = System.Text.RegularExpressions.Regex.Replace(title, @"(?<=[a-z0-9])(?=[A-Z])", " ");
+        title = System.Text.RegularExpressions.Regex.Replace(title, @"(?<=[A-Z])(?=[A-Z][a-z])", " ");
+        title = System.Text.RegularExpressions.Regex.Replace(title, @"(?<=\d)(?=[A-Z])", " ");
+        title = System.Text.RegularExpressions.Regex.Replace(title, @"(?i)\\bandthe\\b|(?i)andthe", "and the");
+        title = System.Text.RegularExpressions.Regex.Replace(title, @"\\s{2,}", " ");
+        return title;
+    }
+
     string ResolveResourceUrl(string? value, string folder)
     {
         if (string.IsNullOrWhiteSpace(value))
@@ -219,7 +235,7 @@ else
                                                 @((chapterIndex + 1).ToString("00"))
                                             </span>
                                             <span class="ciit-learning-chapter-title">
-                                                <strong>@chapter.Title</strong>
+                                                <strong>@FormatLearningTitle(chapter.Title)</strong>
                                                 <small>
                                                     @chapter.Contents.Count resource@(chapter.Contents.Count == 1 ? "" : "s")
                                                 </small>
@@ -405,7 +421,7 @@ else
                             <span class="ciit-learning-eyebrow">
                                 TOPIC @(Math.Max(0, Model.Topics.ToList().FindIndex(topic => topic.Id == currentItem?.Topic.Id)) + 1) OF @Math.Max(Model.Topics.Count, 1)
                             </span>
-                            <h2 class="ciit-learning-chapter-title">@(currentChapter?.Title ?? currentItem?.Topic.Title ?? currentContent.Title)</h2>
+                            <h2 class="ciit-learning-chapter-title">@FormatLearningTitle(currentChapter?.Title ?? currentItem?.Topic.Title ?? currentContent.Title)</h2>
                         </div>
 
                         <div class="ciit-learning-lesson-actions">
@@ -502,7 +518,7 @@ else
                         }
                     </section>
 
-                    <section class="ciit-learning-resource ciit-learning-content-overview" data-learning-panel-content="content">
+                    <section class="ciit-learning-resource ciit-learning-content-overview" data-learning-panel-content="content" data-learning-content-page="overview">
                                 <div class="ciit-learning-resource-title">
                                     <span class="ciit-learning-resource-icon"><i class="bi bi-lightbulb"></i></span>
                                     <div><h3>What you'll cover</h3><p>A quick overview of this lesson's learning resources.</p></div>
@@ -527,7 +543,7 @@ else
                             || videoExtension.Equals(".webm", StringComparison.OrdinalIgnoreCase)
                             || videoExtension.Equals(".mov", StringComparison.OrdinalIgnoreCase);
 
-                        <section class="ciit-learning-resource ciit-learning-video-section" data-learning-panel-content="content">
+                        <section class="ciit-learning-resource ciit-learning-video-section" data-learning-panel-content="content" data-learning-content-page="video">
                             <div class="ciit-learning-resource-title">
                                 <span class="ciit-learning-resource-icon"><i class="bi bi-play-circle"></i></span>
                                 <div>
@@ -569,7 +585,7 @@ else
 
                     @if (!string.IsNullOrWhiteSpace(currentContent.Slides))
                     {
-                        <section class="ciit-learning-resource" data-learning-panel-content="content">
+                        <section class="ciit-learning-resource" data-learning-panel-content="content" data-learning-content-page="slides">
                             <div class="ciit-learning-resource-title">
                                 <span class="ciit-learning-resource-icon"><i class="bi bi-file-earmark-slides"></i></span>
                                 <div>
@@ -687,37 +703,30 @@ else
                     <section class="ciit-learning-resource ciit-learning-all-assessments" data-learning-panel-content="assessment">
                         <div class="ciit-learning-resource-title">
                             <span class="ciit-learning-resource-icon"><i class="bi bi-patch-check"></i></span>
-                            <div><h3>Chapter Assessments</h3><p>Select a chapter and assessment type from the learning path.</p></div>
+                            <div><h3>Chapter Assessments</h3><p>MCQs, interview questions and practice programs for this chapter.</p></div>
                         </div>
                         @if (currentChapter is not null)
                         {
                                 var assessmentChapter = currentChapter;
                                 <section class="ciit-learning-chapter-assessment" id="chapter-assessment-@assessmentChapter.Id">
-                                    <h4>@assessmentChapter.Title</h4>
+                                    <h4>@FormatLearningTitle(assessmentChapter.Title)</h4>
                                     @{
                                         var chapterOnlyQuestions = assessmentChapter.Questions
                                             .Where(question => !currentContent.Questions.Any(currentQuestion => currentQuestion.Id == question.Id))
                                             .ToList();
                                     }
-                                    @if (chapterOnlyQuestions.Count == 0)
+                                    @for (var qi = 0; qi < chapterOnlyQuestions.Count; qi++)
                                     {
-                                        <p class="ciit-learning-assessment-note">MCQs are available in the graded Knowledge Check above.</p>
-                                    }
-                                    else
-                                    {
-                                        @for (var qi = 0; qi < chapterOnlyQuestions.Count; qi++)
-                                        {
-                                            var question = chapterOnlyQuestions[qi];
-                                            <article class="ciit-learning-assessment-question">
-                                                <strong>@(qi + 1). @question.Question</strong>
-                                                <ol type="A">
-                                                    @foreach (var option in question.Options.Where(option => !string.IsNullOrWhiteSpace(option)))
-                                                    {
-                                                        <li>@option</li>
-                                                    }
-                                                </ol>
-                                            </article>
-                                        }
+                                        var question = chapterOnlyQuestions[qi];
+                                        <article class="ciit-learning-assessment-question">
+                                            <strong>@(qi + 1). @question.Question</strong>
+                                            <ol type="A">
+                                                @foreach (var option in question.Options.Where(option => !string.IsNullOrWhiteSpace(option)))
+                                                {
+                                                    <li>@option</li>
+                                                }
+                                            </ol>
+                                        </article>
                                     }
                                     <section id="chapter-interview-@assessmentChapter.Id" class="ciit-learning-assessment-subsection">
                                         <h5>Interview Questions</h5>
