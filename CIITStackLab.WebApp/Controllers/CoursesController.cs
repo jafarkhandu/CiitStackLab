@@ -16,7 +16,6 @@ public class CoursesController : Controller
     private readonly IStudentProgressService _studentProgressService;
     private readonly ICourseAssessmentService _courseAssessmentService;
     private readonly CoursePurchaseService _coursePurchaseService;
-    private readonly IMuxVideoService _muxVideoService;
     private readonly ApplicationDbContext _dbContext;
 
     public CoursesController(
@@ -24,14 +23,12 @@ public class CoursesController : Controller
         IStudentProgressService studentProgressService,
         ICourseAssessmentService courseAssessmentService,
         CoursePurchaseService coursePurchaseService,
-        IMuxVideoService muxVideoService,
         ApplicationDbContext dbContext)
     {
         _courseService = courseService;
         _studentProgressService = studentProgressService;
         _courseAssessmentService = courseAssessmentService;
         _coursePurchaseService = coursePurchaseService;
-        _muxVideoService = muxVideoService;
         _dbContext = dbContext;
     }
 
@@ -342,87 +339,6 @@ public class CoursesController : Controller
         }
 
         return View(course);
-    }
-
-    [HttpGet("/uploads/videos/{playbackId}")]
-    public async Task<IActionResult> MuxVideo(
-        string playbackId,
-        int? courseId,
-        string? title,
-        CancellationToken cancellationToken)
-    {
-        if (string.IsNullOrWhiteSpace(playbackId)
-            || playbackId.Length > 256
-            || playbackId.Contains('/')
-            || playbackId.Contains('\\')
-            || playbackId.Contains('.')
-            || playbackId.Any(char.IsWhiteSpace))
-        {
-            return NotFound();
-        }
-
-        if (courseId is > 0)
-        {
-            var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
-
-            if (!User.IsInRole("Student") || string.IsNullOrWhiteSpace(userId))
-            {
-                return Challenge();
-            }
-
-            var hasAccess = TempData.Peek($"DemoPayment:{courseId.Value}") is not null
-                || await _coursePurchaseService.CanAccessCourseAsync(
-                    userId,
-                    courseId.Value,
-                    cancellationToken);
-
-            if (!hasAccess)
-            {
-                TempData["CoursePaymentMessage"] =
-                    "Payment is required before this paid course can be opened.";
-                return RedirectToAction(nameof(Details), new { id = courseId.Value });
-            }
-
-            var course = await _courseService.GetByIdAsync(courseId.Value, cancellationToken);
-
-            if (course is null)
-            {
-                return NotFound();
-            }
-
-            try
-            {
-                var publicPlaybackId = await _muxVideoService.EnsurePublicPlaybackIdAsync(
-                    playbackId,
-                    cancellationToken);
-
-                ViewData["CourseId"] = course.Id.ToString();
-                ViewData["CourseTitle"] = course.Title;
-                ViewData["VideoTitle"] = string.IsNullOrWhiteSpace(title)
-                    ? "Video lesson"
-                    : title.Trim();
-                ViewData["MuxPlaybackId"] = publicPlaybackId;
-
-                return View("Watch");
-            }
-            catch (InvalidOperationException)
-            {
-                return NotFound();
-            }
-        }
-
-        try
-        {
-            var publicPlaybackId = await _muxVideoService.EnsurePublicPlaybackIdAsync(
-                playbackId,
-                cancellationToken);
-
-            return Redirect($"https://player.mux.com/{Uri.EscapeDataString(publicPlaybackId)}");
-        }
-        catch (InvalidOperationException)
-        {
-            return NotFound();
-        }
     }
 
     [HttpPost("Courses/Learn/{id:int}/Complete/{contentId:int}")]
