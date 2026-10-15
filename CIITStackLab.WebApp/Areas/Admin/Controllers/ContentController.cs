@@ -245,9 +245,11 @@ public sealed class ContentController : Controller
 
     private async Task<string> SaveFileAsync(IFormFile file, string folder, CancellationToken cancellationToken)
     {
-        var allowed = new[] { ".pdf", ".ppt", ".pptx" };
+        var allowed = new[] { ".pdf" };
         var extension = Path.GetExtension(file.FileName).ToLowerInvariant();
-        if (!allowed.Contains(extension)) throw new InvalidOperationException($"Unsupported {folder} file type.");
+        if (!allowed.Contains(extension))
+            throw new InvalidOperationException("Unsupported slides file type. Only PDF slides are allowed.");
+
         var root = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", "uploads", folder);
         Directory.CreateDirectory(root);
         var fileName = $"{Guid.NewGuid():N}{extension}";
