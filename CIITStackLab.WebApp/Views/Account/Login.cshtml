@@ -24,7 +24,12 @@
 
                 <div class="mb-3">
                     <label asp-for="Password" class="form-label fw-semibold"></label>
-                    <input asp-for="Password" class="form-control form-control-lg" autocomplete="current-password" />
+                    <div class="ciit-password-field">
+                        <input asp-for="Password" class="form-control form-control-lg" autocomplete="current-password" />
+                        <button type="button" class="ciit-password-toggle" aria-label="Show password" aria-pressed="false" data-password-toggle>
+                            <i class="bi bi-eye" aria-hidden="true"></i>
+                        </button>
+                    </div>
                     <span asp-validation-for="Password" class="text-danger small"></span>
                 </div>
 
@@ -46,4 +51,23 @@
 
 @section Scripts {
     <partial name="_ValidationScriptsPartial" />
+    <script>
+        document.querySelectorAll("[data-password-toggle]").forEach(function (button) {
+            button.addEventListener("click", function () {
+                const field = button.closest(".ciit-password-field");
+                const input = field && field.querySelector("input");
+                const icon = button.querySelector("i");
+                if (!input) return;
+
+                const showPassword = input.type === "password";
+                input.type = showPassword ? "text" : "password";
+                button.setAttribute("aria-pressed", String(showPassword));
+                button.setAttribute("aria-label", showPassword ? "Hide password" : "Show password");
+                if (icon) {
+                    icon.classList.toggle("bi-eye", !showPassword);
+                    icon.classList.toggle("bi-eye-slash", showPassword);
+                }
+            });
+        });
+    </script>
 }
