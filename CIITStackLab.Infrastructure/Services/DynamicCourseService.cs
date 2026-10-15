@@ -55,6 +55,7 @@ public sealed class DynamicCourseService : ICourseService
                 Id = topic.Id,
                 Title = topic.Title,
                 Price = topic.Price,
+                DurationMinutes = topic.DurationMinutes,
                 HasNotes = topic.HasNotes,
                 ChapterCount = chapterCounts.TryGetValue(topic.Id, out var chapterCount) ? chapterCount : 0,
                 Contents = topic.Contents.Select(content => new CourseContentDto
