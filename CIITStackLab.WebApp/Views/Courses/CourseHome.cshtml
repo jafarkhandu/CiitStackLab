@@ -15,9 +15,13 @@
         .ToList();
     var firstLesson = orderedLessons.FirstOrDefault();
     var completedContentIds = progress?.CompletedContentIds?.ToHashSet() ?? new HashSet<int>();
-    var continueLesson = orderedLessons.FirstOrDefault(lesson => !completedContentIds.Contains(lesson.Id))
-        ?? orderedLessons.LastOrDefault();
     var hasStartedLearning = completedContentIds.Count > 0;
+    var lastAccessedLesson = progress?.LastAccessedContentId is int lastAccessedId
+        ? orderedLessons.FirstOrDefault(lesson => lesson.Id == lastAccessedId)
+        : null;
+    var continueLesson = lastAccessedLesson
+        ?? orderedLessons.FirstOrDefault(lesson => !completedContentIds.Contains(lesson.Id))
+        ?? orderedLessons.LastOrDefault();
     var continueContentId = hasStartedLearning ? continueLesson?.Id : null;
     var totalTopicDurationMinutes = Model.Topics.Sum(topic => topic.DurationMinutes ?? 0);
     var totalDurationHours = (int)Math.Ceiling(totalTopicDurationMinutes / 60m);
