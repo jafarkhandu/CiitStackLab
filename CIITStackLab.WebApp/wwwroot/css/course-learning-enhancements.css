@@ -1980,3 +1980,21 @@
         transition: none !important;
     }
 }
+
+
+/* The outer Chapter Assessments resource is the single card surface. */
+.ciit-learning-all-assessments .ciit-learning-chapter-assessment {
+    margin: 14px 0 0;
+    padding: 0;
+    border: 0;
+    border-radius: 0;
+    background: transparent;
+    box-shadow: none;
+}
+.ciit-learning-all-assessments .ciit-learning-chapter-assessment > h4 {
+    padding: 0 0 16px;
+    border-bottom: 1px solid #e4ecf8;
+}
+.ciit-learning-all-assessments .ciit-learning-chapter-assessment .ciit-learning-assessment-subsection {
+    padding-top: 16px;
+}
