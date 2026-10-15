@@ -196,7 +196,7 @@ else
                                 <div class="ciit-learning-topic-icon">
                                     <i class="bi bi-collection-play"></i>
                                 </div>
-                                <div class="ciit-learning-topic-heading-text">
+                                <div class="ciit-learning-topic-heading-text @(topic.Contents.Count > 0 && completedTopicLessons == topic.Contents.Count ? "is-completed" : "")">
                                     <strong>@topic.Title</strong>
                                     @if (topic.Contents.Count > 0 && completedTopicLessons == topic.Contents.Count)
                                     {
