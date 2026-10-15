@@ -1998,3 +1998,22 @@
 .ciit-learning-all-assessments .ciit-learning-chapter-assessment .ciit-learning-assessment-subsection {
     padding-top: 16px;
 }
+
+.ciit-video-fallback-link {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 38px;
+    padding: 8px 13px;
+    border: 1px solid rgba(137,176,238,.45);
+    border-radius: 10px;
+    color: #dce9ff;
+    background: rgba(255,255,255,.07);
+    font-size: .8rem;
+    font-weight: 750;
+    text-decoration: none;
+}
+.ciit-video-fallback-link:hover {
+    color: #fff;
+    background: rgba(255,255,255,.13);
+}
