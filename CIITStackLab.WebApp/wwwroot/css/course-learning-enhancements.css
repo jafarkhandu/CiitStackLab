@@ -2017,3 +2017,130 @@
     color: #fff;
     background: rgba(255,255,255,.13);
 }
+
+
+/* Corrected learning pagination: glass surfaces without shrinking note content. */
+.ciit-learning-panel-pager,
+.ciit-learning-subpage-pager,
+.ciit-learning-content-pager {
+    border: 1px solid rgba(255, 255, 255, .76) !important;
+    background: rgba(232, 242, 255, .56) !important;
+    -webkit-backdrop-filter: blur(26px) saturate(175%);
+    backdrop-filter: blur(26px) saturate(175%);
+    box-shadow:
+        0 12px 32px rgba(40, 78, 132, .10),
+        inset 0 1px 0 rgba(255, 255, 255, .92) !important;
+}
+.ciit-learning-panel-pager button,
+.ciit-learning-subpage-arrow,
+.ciit-learning-subpage-number,
+.ciit-learning-content-pager-buttons button {
+    border-color: rgba(255, 255, 255, .55);
+    background: rgba(255, 255, 255, .24);
+    -webkit-backdrop-filter: blur(12px);
+    backdrop-filter: blur(12px);
+    transition:
+        background .22s ease,
+        border-color .22s ease,
+        box-shadow .22s ease,
+        transform .22s ease,
+        color .22s ease;
+}
+.ciit-learning-panel-pager button.is-active,
+.ciit-learning-subpage-number.is-active,
+.ciit-learning-content-pager-buttons button.is-active {
+    border: 1px solid rgba(255, 255, 255, .95);
+    background: rgba(255, 255, 255, .82);
+    box-shadow: 0 5px 18px rgba(41, 99, 181, .13), inset 0 1px 0 #fff;
+}
+.ciit-learning-subpage-arrow:hover:not(:disabled),
+.ciit-learning-subpage-number:hover,
+.ciit-learning-content-pager-buttons button:hover {
+    background: rgba(255, 255, 255, .66);
+    border-color: rgba(255, 255, 255, .92);
+}
+.ciit-learning-subpage[hidden] { display: none !important; }
+
+/* One assessment card: chapter title, graded knowledge check, MCQs and answers. */
+.ciit-learning-all-assessments {
+    overflow: hidden;
+    border: 1px solid rgba(205, 224, 250, .95);
+    border-radius: 22px;
+    background: rgba(255, 255, 255, .72);
+    box-shadow: 0 14px 36px rgba(36, 70, 119, .07), inset 0 1px 0 rgba(255, 255, 255, .92);
+}
+.ciit-learning-all-assessments > .ciit-learning-resource-title {
+    padding-bottom: 18px;
+    border-bottom: 1px solid rgba(213, 228, 248, .9);
+}
+.ciit-learning-all-assessments .ciit-learning-chapter-assessment {
+    margin: 0;
+    padding: 18px 0 0;
+    border: 0;
+    background: transparent;
+    box-shadow: none;
+}
+.ciit-learning-all-assessments .ciit-learning-chapter-assessment > h4 {
+    margin: 0 0 18px;
+    padding: 0 0 16px;
+    border-bottom: 1px solid rgba(213, 228, 248, .9);
+}
+.ciit-learning-all-assessments .ciit-learning-assessment-section {
+    margin: 0 0 20px;
+    padding: 18px;
+    border: 1px solid rgba(211, 226, 249, .88);
+    border-radius: 17px;
+    background: rgba(245, 249, 255, .48);
+    box-shadow: none;
+}
+.ciit-learning-all-assessments .ciit-learning-assessment-section .ciit-learning-resource-title {
+    margin-bottom: 16px;
+}
+.ciit-learning-all-assessments .ciit-learning-assessment-section .ciit-assessment-submit-row {
+    margin-top: 18px;
+}
+.ciit-learning-all-assessments .ciit-learning-assessment-subsection {
+    padding-top: 16px;
+    border-top: 1px solid rgba(213, 228, 248, .9);
+}
+.ciit-learning-all-assessments .ciit-learning-assessment-subsection > h5 {
+    margin-top: 0;
+}
+.ciit-learning-all-assessments .ciit-learning-subpage-pager {
+    margin: 12px 0;
+}
+.ciit-learning-main-card .ciit-learning-notes-content {
+    line-height: 1.85;
+}
+.ciit-learning-main-card .ciit-learning-notes-content > * {
+    max-width: 100%;
+}
+.ciit-learning-main-card .ciit-learning-notes-content > [data-learning-subpage] {
+    animation: ciit-learning-subpage-enter .28s ease both;
+}
+.ciit-learning-main-card .ciit-learning-content-pager {
+    margin: 0 0 18px;
+}
+.ciit-learning-video-section .ciit-learning-video-frame {
+    width: 100%;
+    min-height: 300px;
+    aspect-ratio: 16 / 9;
+}
+.ciit-learning-video-section .ciit-mux-player,
+.ciit-learning-video-section .ciit-learning-direct-video-frame video,
+.ciit-learning-video-section iframe {
+    width: 100%;
+    min-height: 300px;
+    aspect-ratio: 16 / 9;
+}
+@media (max-width: 767.98px) {
+    .ciit-learning-all-assessments .ciit-learning-assessment-section {
+        padding: 14px;
+    }
+    .ciit-learning-video-section .ciit-learning-video-frame,
+    .ciit-learning-video-section .ciit-mux-player,
+    .ciit-learning-video-section .ciit-learning-direct-video-frame video,
+    .ciit-learning-video-section iframe {
+        min-height: 220px;
+    }
+}
