@@ -300,6 +300,10 @@ public sealed class DynamicCourseService : ICourseService
                         ChapterId = chapter.ChapterId,
                         Title = chapter.Title ?? string.Empty,
                         SortOrder = chapter.SortOrder,
+                        NotesHtml = _dbContext.TrainingNotes
+                            .Where(note => note.Id == chapter.Id && note.Flag == 0)
+                            .Select(note => note.HtmlContent)
+                            .FirstOrDefault() ?? string.Empty,
                         Questions = questions
                             .Where(question => question.NoteId == chapter.Id
                                 || (question.ContentId.HasValue
