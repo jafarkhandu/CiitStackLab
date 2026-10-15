@@ -115,6 +115,10 @@ if (root) {
     };
 
     const getPptSlideUrl = async index => {
+        if (!state.presentation?.slides?.[index]) {
+            throw new Error(`PowerPoint slide ${index + 1} is not available after parsing.`);
+        }
+
         if (state.rendered.has(index)) return state.rendered.get(index);
 
         const svg = await state.pptModule.slideToSvgFile(
@@ -253,9 +257,14 @@ if (root) {
 
     const loadPowerPoint = async response => {
         const pptModule = await import(PPT_CORE_URL);
-        const blob = await response.blob();
+        const bytes = new Uint8Array(await response.arrayBuffer());
         state.pptModule = pptModule;
-        state.presentation = await pptModule.parse(blob);
+        state.presentation = await pptModule.parse(bytes, { lazy: false });
+
+        if (!state.presentation.slides?.length) {
+            throw new Error('PowerPoint parsing completed but returned no slides.');
+        }
+
         state.type = slideType;
         setPageInfo();
         await buildPptThumbnails();
