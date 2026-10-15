@@ -227,41 +227,6 @@
                         </a>
                     </nav>
         
-                    @if (!isCourseHome)
-                    {
-                    <div class="ciit-course-global-sidebar-section">
-                        <span>LEARNING TOOLS</span>
-                        <div class="ciit-course-coming-soon-link" title="Student assessment area will be connected here.">
-                            <i class="bi bi-patch-check"></i><span>Assessments</span><small>Soon</small>
-                        </div>
-                        <div class="ciit-course-coming-soon-link" title="Practice program area will be connected here.">
-                            <i class="bi bi-code-square"></i><span>Practice Programs</span><small>Soon</small>
-                        </div>
-                        <div class="ciit-course-coming-soon-link" title="Interview question area will be connected here.">
-                            <i class="bi bi-chat-square-text"></i><span>Interview Questions</span><small>Soon</small>
-                        </div>
-                        @if (isNotesPage && !string.IsNullOrWhiteSpace(courseId))
-                        {
-                            <a class="ciit-course-coming-soon-link active"
-                               asp-controller="Notes"
-                               asp-action="Index"
-                               asp-route-topicId="@notesTopicId"
-                               asp-route-chapterId="@notesChapterId"
-                               asp-route-courseId="@courseId">
-                                <i class="bi bi-journal-text"></i><span>Notes</span><small>Open</small>
-                            </a>
-                        }
-                        else
-                        {
-                            <div class="ciit-course-coming-soon-link" title="Course notes are opened from a lesson chapter.">
-                                <i class="bi bi-journal-text"></i><span>Notes</span><small>Soon</small>
-                            </div>
-                        }
-                        <div class="ciit-course-coming-soon-link" title="Certificates will be enabled when certificate requirements are implemented.">
-                            <i class="bi bi-award"></i><span>Certificates</span><small>Soon</small>
-                        </div>
-                    </div>
-                    }
             </aside>
         }
 
