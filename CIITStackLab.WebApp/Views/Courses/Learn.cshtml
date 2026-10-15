@@ -257,12 +257,12 @@ else if (currentContent is null && currentTopic is not null)
                                     <span>@topic.Chapters.Count chapter@(topic.Chapters.Count == 1 ? "" : "s")</span>
                                 </div>
                             </summary>
-                            @if (User.IsInRole("Student") && learningProgress is not null && topic.Contents.Count > 0)
+                            @if (User.IsInRole("Student") && learningProgress is not null && topicLearningContents.Count > 0)
                             {
                                 <div class="ciit-learning-topic-progress">
                                     <div class="ciit-learning-topic-progress-labels">
                                         <span>Topic progress</span>
-                                        <strong>@completedTopicLessons / @topic.Contents.Count</strong>
+                                        <strong>@completedTopicLessons / @topicLearningContents.Count</strong>
                                     </div>
                                     <div class="ciit-learning-topic-progress-track"
                                          role="progressbar"
@@ -314,7 +314,7 @@ else if (currentContent is null && currentTopic is not null)
 
                     <div class="ciit-learning-lesson-status">
                         <div class="ciit-learning-lesson-status-copy">
-                            <span class="ciit-learning-lesson-status-icon @(learningProgress is not null && currentTopic.Contents.Count > 0 && currentTopic.Contents.All(content => learningProgress.CompletedContentIds.Contains(content.Id)) ? "is-completed" : "")">
+                            <span class="ciit-learning-lesson-status-icon @(learningProgress is not null && currentTopic.Contents.Concat(currentTopic.Chapters.SelectMany(chapter => chapter.Contents)).DistinctBy(content => content.Id).Any() && currentTopic.Contents.Concat(currentTopic.Chapters.SelectMany(chapter => chapter.Contents)).DistinctBy(content => content.Id).All(content => learningProgress.CompletedContentIds.Contains(content.Id)) ? "is-completed" : "")">
                                 <i class="bi @(learningProgress is not null && currentTopic.Contents.Count > 0 && currentTopic.Contents.All(content => learningProgress.CompletedContentIds.Contains(content.Id)) ? "bi-check2-circle" : "bi-journal-bookmark")"></i>
                             </span>
                             <div>
@@ -528,15 +528,20 @@ else
                             || (currentContent is not null && topic.Contents.Any(
                                 content => content.Id == currentContent.Id));
 
+                        var topicLearningContents = topic.Contents
+                            .Concat(topic.Chapters.SelectMany(chapter => chapter.Contents))
+                            .DistinctBy(content => content.Id)
+                            .ToList();
+
                         var completedTopicLessons = learningProgress is null
                             ? 0
-                            : topic.Contents.Count(content =>
+                            : topicLearningContents.Count(content =>
                                 learningProgress.CompletedContentIds.Contains(content.Id));
 
-                        var topicProgressPercentage = topic.Contents.Count == 0
+                        var topicProgressPercentage = topicLearningContents.Count == 0
                             ? 0
                             : (int)Math.Round(
-                                completedTopicLessons * 100d / topic.Contents.Count,
+                                completedTopicLessons * 100d / topicLearningContents.Count,
                                 MidpointRounding.AwayFromZero);
 
                         <details class="ciit-learning-topic @(topicHasCurrentContent ? "is-active-topic" : "")"
@@ -546,9 +551,9 @@ else
                                 <div class="ciit-learning-topic-icon">
                                     <i class="bi bi-collection-play"></i>
                                 </div>
-                                <div class="ciit-learning-topic-heading-text @(topic.Contents.Count > 0 && completedTopicLessons == topic.Contents.Count ? "is-completed" : "")">
+                                <div class="ciit-learning-topic-heading-text @(topicLearningContents.Count > 0 && completedTopicLessons == topicLearningContents.Count ? "is-completed" : "")">
                                     <strong>@topic.Title</strong>
-                                    @if (topic.Contents.Count > 0 && completedTopicLessons == topic.Contents.Count)
+                                    @if (topicLearningContents.Count > 0 && completedTopicLessons == topicLearningContents.Count)
                                     {
                                         <span class="ciit-learning-topic-completed" title="Topic completed" aria-label="Topic completed">
                                             <i class="bi bi-check-circle-fill" aria-hidden="true"></i>
