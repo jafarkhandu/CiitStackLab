@@ -326,7 +326,7 @@ document.addEventListener("DOMContentLoaded", function () {
                 paginateItems(
                     mcqSection,
                     Array.from(mcqSection.querySelectorAll(":scope > .ciit-learning-assessment-question")),
-                    4,
+                    5,
                     "MCQ pages"
                 );
             }
@@ -335,7 +335,7 @@ document.addEventListener("DOMContentLoaded", function () {
                 paginateItems(
                     subsection,
                     Array.from(subsection.querySelectorAll(":scope > .ciit-learning-assessment-question")),
-                    4,
+                    5,
                     subsection.querySelector("h5")?.textContent?.trim() + " pages"
                 );
             });
