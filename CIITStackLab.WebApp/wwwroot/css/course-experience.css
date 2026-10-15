@@ -977,10 +977,18 @@
 
 
 /* Completed topic indicator in the course curriculum. */
+.ciit-curriculum-topic-toggle-content > span:last-child.is-completed {
+    position: relative;
+    padding-right: 22px;
+}
+
 .ciit-curriculum-topic-completed {
+    position: absolute;
+    top: 0;
+    right: 0;
     display: inline-flex;
     align-items: center;
-    margin-top: 5px;
+    margin: 0;
     color: #16804b;
     font-size: .95rem;
 }
