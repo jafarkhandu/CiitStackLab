@@ -19,6 +19,7 @@
         ?? orderedLessons.LastOrDefault();
     var continueContentId = continueLesson?.Id;
     var lessonNumber = 0;
+    var totalChapters = Model.Topics.Sum(topic => topic.Chapters.Count);
 }
 
 @section Styles {
@@ -61,8 +62,8 @@
 
             <section class="ciit-course-stat-grid" aria-label="Course summary">
                 <div class="ciit-course-stat">
-                    <strong>@Model.ContentCount</strong>
-                    <span>Lessons</span>
+                    <strong>@totalChapters</strong>
+                    <span>Chapters</span>
                 </div>
                 <div class="ciit-course-stat">
                     <strong>@Model.TopicCount</strong>
@@ -108,7 +109,7 @@
                     </div>
                     <span class="ciit-curriculum-summary">
                         <i class="bi bi-journal-check"></i>
-                        @Model.ContentCount Lessons · @Model.TopicCount Topics
+                        @totalChapters Chapters · @Model.TopicCount Topics
                     </span>
                 </div>
 
@@ -134,7 +135,7 @@
                                         </span>
                                         <span>
                                             <strong>@topic.Title</strong>
-                                            <small>@topic.Contents.Count lessons</small>
+                                            <small>@topic.Chapters.Count chapter@(topic.Chapters.Count == 1 ? "" : "s")</small>
                                         </span>
                                     </span>
                                     <span class="ciit-curriculum-topic-toggle-end">
