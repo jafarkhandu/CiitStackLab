@@ -9,6 +9,6 @@ public sealed class CourseDto
     public string ImageUrl { get; init; } = string.Empty;
     public string Category { get; init; } = string.Empty;
     public string Level { get; init; } = string.Empty;
-    public int DurationHours { get; init; }
+    public decimal DurationHours { get; init; }
     public bool IsPublished { get; init; }
 }
