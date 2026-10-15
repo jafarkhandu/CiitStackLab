@@ -300,6 +300,20 @@ public sealed class DynamicCourseService : ICourseService
                         ChapterId = chapter.ChapterId,
                         Title = chapter.Title ?? string.Empty,
                         SortOrder = chapter.SortOrder,
+                        Questions = questions
+                            .Where(question => question.NoteId == chapter.Id
+                                || (question.ContentId.HasValue
+                                    && contentRows.Any(content => content.Id == question.ContentId.Value
+                                        && content.NoteId == chapter.Id))
+                                || (question.TopicId == topic.TopicId
+                                    && chapter.Id == chapterRows
+                                        .Where(candidate => candidate.TopicId == topic.TopicId)
+                                        .OrderBy(candidate => candidate.SortOrder)
+                                        .ThenBy(candidate => candidate.Id)
+                                        .Select(candidate => candidate.Id)
+                                        .FirstOrDefault()))
+                            .Select(MapLearningQuestion)
+                            .ToList(),
                         InterviewQuestions = interviewQuestions
                             .Where(question => question.NoteId == chapter.Id
                                 || (question.ContentId.HasValue
