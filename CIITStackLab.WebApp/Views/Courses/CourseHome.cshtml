@@ -24,7 +24,7 @@
         ?? orderedLessons.LastOrDefault();
     var continueContentId = hasStartedLearning ? continueLesson?.Id : null;
     var totalTopicDurationMinutes = Model.Topics.Sum(topic => topic.DurationMinutes ?? 0);
-    var totalDurationHours = (int)Math.Ceiling(totalTopicDurationMinutes / 60m);
+    var totalDurationHours = totalTopicDurationMinutes / 60m;
     var lessonNumber = 0;
     var totalChapters = Model.Topics.Sum(topic => topic.Chapters.Count);
 }
@@ -81,7 +81,7 @@
                     <span>Level</span>
                 </div>
                 <div class="ciit-course-stat">
-                    <strong>@totalDurationHours hrs</strong>
+                    <strong>@totalDurationHours.ToString("0.##") hrs</strong>
                     <span>Duration</span>
                 </div>
             </section>
