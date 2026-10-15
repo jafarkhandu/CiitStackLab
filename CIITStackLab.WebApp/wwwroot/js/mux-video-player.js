@@ -330,6 +330,24 @@
         wireMuxLinks();
     }
 
+    // Learning content iframes receive their src only when the Content tab opens.
+    // Watch deferred src changes so a player script loaded earlier by sidebar links
+    // still initializes the inline player instead of leaving a blank black iframe.
+    const inlineVideoObserver = new MutationObserver(mutations => {
+        if (mutations.some(mutation =>
+            mutation.type === 'attributes'
+            || (mutation.type === 'childList' && mutation.addedNodes.length > 0))) {
+            replaceInlineMuxIframe();
+        }
+    });
+
+    inlineVideoObserver.observe(document.documentElement, {
+        subtree: true,
+        childList: true,
+        attributes: true,
+        attributeFilter: ['src']
+    });
+
     if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', initialize, { once: true });
     else initialize();
 })();
