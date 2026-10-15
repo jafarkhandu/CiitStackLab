@@ -2300,3 +2300,35 @@
         backdrop-filter: none;
     }
 }
+
+/* Sticky assessment pagination: overflow:hidden ancestors prevent position:sticky
+   from following the viewport, so use clip (which does not create a scroll container). */
+.ciit-learning-mode .ciit-learning-main-card,
+.ciit-learning-all-assessments {
+    overflow: clip !important;
+}
+
+.ciit-assessment-form > .ciit-learning-subpage-pager,
+.ciit-learning-assessment-section .ciit-learning-subpage-pager,
+.ciit-learning-chapter-assessment .ciit-learning-subpage-pager {
+    position: sticky !important;
+    top: 174px;
+    z-index: 60;
+    margin-top: 12px;
+    border: 1px solid rgba(255, 255, 255, .94) !important;
+    background: rgba(239, 246, 255, .96) !important;
+    -webkit-backdrop-filter: blur(26px) saturate(175%);
+    backdrop-filter: blur(26px) saturate(175%);
+    box-shadow:
+        0 10px 26px rgba(41, 78, 132, .13),
+        inset 0 1px 0 rgba(255, 255, 255, .98) !important;
+    scroll-margin-top: 184px;
+}
+
+@media (max-width: 767.98px) {
+    .ciit-assessment-form > .ciit-learning-subpage-pager,
+    .ciit-learning-assessment-section .ciit-learning-subpage-pager,
+    .ciit-learning-chapter-assessment .ciit-learning-subpage-pager {
+        top: 126px;
+    }
+}
