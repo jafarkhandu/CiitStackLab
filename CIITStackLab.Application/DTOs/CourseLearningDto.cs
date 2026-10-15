@@ -9,7 +9,7 @@ public sealed class CourseLearningDto
     public string ImageUrl { get; init; } = string.Empty;
     public string Category { get; init; } = string.Empty;
     public string Level { get; init; } = string.Empty;
-    public int DurationHours { get; init; }
+    public decimal DurationHours { get; init; }
     public decimal TotalPrice { get; init; }
     public int TopicCount { get; init; }
     public int ContentCount { get; init; }
