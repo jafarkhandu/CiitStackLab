@@ -2435,3 +2435,41 @@ details[open] > summary .ciit-learning-disclosure-icon {
         top: 124px;
     }
 }
+
+
+/* Keep topic progress contained inside the learning sidebar on narrow layouts. */
+.ciit-learning-sidebar .ciit-learning-topic-progress {
+    display: block;
+    box-sizing: border-box;
+    width: 100%;
+    min-width: 0;
+    max-width: 100%;
+    flex: 0 1 auto;
+    padding: 12px;
+    overflow: hidden;
+}
+
+.ciit-learning-sidebar .ciit-learning-topic-progress-labels {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+    min-width: 0;
+    width: 100%;
+}
+
+.ciit-learning-sidebar .ciit-learning-topic-progress-labels span {
+    min-width: 0;
+    overflow-wrap: anywhere;
+}
+
+.ciit-learning-sidebar .ciit-learning-topic-progress-labels strong {
+    flex: 0 0 auto;
+    white-space: nowrap;
+}
+
+.ciit-learning-sidebar .ciit-learning-topic-progress-track {
+    width: 100%;
+    max-width: 100%;
+    box-sizing: border-box;
+}
