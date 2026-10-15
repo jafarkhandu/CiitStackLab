@@ -101,7 +101,12 @@ document.addEventListener("DOMContentLoaded", function () {
             });
 
             pager.append(previous, numbers, next);
-            container.insertBefore(pager, container.firstChild);
+            const sectionHeading = container.querySelector(":scope > h5, :scope > h4, :scope > h3");
+            if (sectionHeading) {
+                container.insertBefore(pager, sectionHeading.nextSibling);
+            } else {
+                container.insertBefore(pager, container.firstChild);
+            }
 
             pager.update = function (activeIndex) {
                 numbers.replaceChildren();
@@ -258,10 +263,6 @@ document.addEventListener("DOMContentLoaded", function () {
 
             const resourcePages = Array.from(extraPanels.querySelectorAll("[data-learning-content-page]"));
             const pageLabels = { overview: "Overview", video: "Video", slides: "Slides" };
-            const availablePages = resourcePages.filter(function (page) {
-                return page.dataset.learningContentPage === "overview" || !page.hidden;
-            });
-
             resourcePages.forEach(function (page) {
                 page.hidden = page.dataset.learningContentPage !== activeContentPage;
             });
@@ -293,9 +294,24 @@ document.addEventListener("DOMContentLoaded", function () {
         // Long notes are paginated by their existing semantic blocks, preserving
         // their original HTML, code samples, tables, links and images.
         document.querySelectorAll(".ciit-learning-notes-content").forEach(function (notes) {
+            let contentContainer = notes;
+            let contentBlocks = Array.from(contentContainer.children);
+
+            // Notes imported inside one wrapper still paginate by their inner
+            // paragraphs, headings, lists, tables and code blocks.
+            while (contentBlocks.length <= 4) {
+                const nestedContainer = contentBlocks.find(function (block) {
+                    return block.children.length > 4
+                        && !block.matches("pre, table, ul, ol, figure, blockquote");
+                });
+                if (!nestedContainer) break;
+                contentContainer = nestedContainer;
+                contentBlocks = Array.from(contentContainer.children);
+            }
+
             paginateItems(
-                notes,
-                Array.from(notes.children),
+                contentContainer,
+                contentBlocks,
                 4,
                 "Notes pages"
             );
