@@ -64,3 +64,92 @@ document.addEventListener("DOMContentLoaded", function () {
         hubLink.removeAttribute("aria-disabled");
     });
 });
+
+document.addEventListener("DOMContentLoaded", function () {
+    const learningPage = document.querySelector(".ciit-learning-page");
+    if (learningPage) {
+        const panelButtons = Array.from(document.querySelectorAll("[data-learning-page]"));
+        const panelContents = Array.from(document.querySelectorAll("[data-learning-panel-content]"));
+
+        function showLearningPanel(name, options) {
+            const settings = options || {};
+            panelContents.forEach(function (panel) {
+                panel.hidden = panel.dataset.learningPanelContent !== name;
+            });
+            panelButtons.forEach(function (button) {
+                const active = button.dataset.learningPage === name;
+                button.classList.toggle("is-active", active);
+                button.setAttribute("aria-current", active ? "page" : "false");
+            });
+            if (name === "content") {
+                document.querySelectorAll(".ciit-learning-video-frame iframe[data-src]").forEach(function (frame) {
+                    if (!frame.src) frame.src = frame.dataset.src;
+                });
+            }
+            if (settings.scroll) {
+                const target = document.querySelector(".ciit-learning-main-card");
+                if (target) target.scrollIntoView({ behavior: "smooth", block: "start" });
+            }
+        }
+
+        panelButtons.forEach(function (button) {
+            button.addEventListener("click", function () {
+                showLearningPanel(button.dataset.learningPage, { scroll: true });
+            });
+        });
+
+        document.querySelectorAll("[data-learning-panel='notes']").forEach(function (button) {
+            button.addEventListener("click", function () {
+                const chapterId = button.dataset.chapterId;
+                document.querySelectorAll("[data-chapter-notes]").forEach(function (notes) {
+                    notes.hidden = notes.dataset.chapterNotes !== chapterId;
+                });
+                showLearningPanel("notes", { scroll: true });
+            });
+        });
+
+        document.querySelectorAll(".ciit-learning-assessment-links a[data-learning-panel='assessment']").forEach(function (link) {
+            link.addEventListener("click", function () {
+                showLearningPanel("assessment", { scroll: false });
+                const targetId = link.getAttribute("href");
+                const target = targetId && document.querySelector(targetId);
+                if (target) {
+                    window.setTimeout(function () {
+                        target.scrollIntoView({ behavior: "smooth", block: "start" });
+                    }, 80);
+                }
+            });
+        });
+
+        document.querySelectorAll("[data-video-src]").forEach(function (button) {
+            button.addEventListener("click", function () {
+                const frame = button.parentElement && button.parentElement.querySelector("video[data-deferred-video]");
+                if (!frame) return;
+                const source = document.createElement("source");
+                source.src = button.dataset.videoSrc;
+                if (button.dataset.videoType) source.type = button.dataset.videoType;
+                frame.appendChild(source);
+                frame.load();
+                button.hidden = true;
+                frame.play().catch(function () { });
+            });
+        });
+
+        showLearningPanel("notes");
+    }
+
+    const switchHub = document.querySelector("[data-course-hub-switch]");
+    if (switchHub) {
+        switchHub.addEventListener("click", function (event) {
+            if (event.button !== 0 || event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) return;
+            event.preventDefault();
+            if (switchHub.dataset.transitioning === "true") return;
+            switchHub.dataset.transitioning = "true";
+            switchHub.classList.add("is-switching");
+            document.body.classList.add("ciit-hub-switching");
+            window.setTimeout(function () {
+                window.location.assign(switchHub.href);
+            }, window.matchMedia("(prefers-reduced-motion: reduce)").matches ? 0 : 420);
+        });
+    }
+});
