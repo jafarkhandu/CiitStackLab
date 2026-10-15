@@ -222,7 +222,7 @@ document.addEventListener("DOMContentLoaded", function () {
             const pager = buildPager(parent, pages.length, label, showPage);
             if (!pager) return;
             parent.dataset.ciitPaginated = "true";
-            showPage(0);
+            showPage(activeIndex);
 
             return {
                 showPage: showPage,
