@@ -11,7 +11,7 @@ namespace CIITStackLab.Infrastructure.Services;
 internal static class ExcelQuestionSheetParser
 {
     private const long MaximumXmlCharacters = 10 * 1024 * 1024;
-    private const int MaximumRows = 501;
+    private const int MaximumRows = 101;
 
     private static readonly XNamespace SpreadsheetNamespace =
         "http://schemas.openxmlformats.org/spreadsheetml/2006/main";
@@ -134,7 +134,7 @@ internal static class ExcelQuestionSheetParser
                 if (rows.Count > MaximumRows)
                 {
                     throw new InvalidDataException(
-                        "The spreadsheet contains too many populated rows. Excel question uploads are limited to 500 rows.");
+                        "The spreadsheet contains too many populated rows. Excel question uploads are limited to 100 questions plus the header row.");
                 }
             }
         }
