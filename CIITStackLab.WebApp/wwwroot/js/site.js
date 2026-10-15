@@ -72,7 +72,7 @@ document.addEventListener("DOMContentLoaded", function () {
         const panelButtons = Array.from(document.querySelectorAll("[data-learning-page]"));
         const panelContents = Array.from(document.querySelectorAll("[data-learning-panel-content]"));
         const extraPanels = document.querySelector(".ciit-learning-extra-panels");
-        let activeContentPage = "overview";
+        let activeContentPage = document.querySelector('[data-learning-content-page="video"]') ? "video" : "overview";
 
         function buildPager(container, pageCount, label, onChange) {
             if (pageCount <= 1) return null;
@@ -252,8 +252,9 @@ document.addEventListener("DOMContentLoaded", function () {
 
         // Each content resource has its own short page. The top-level Notes /
         // Content / Assessments navigation remains independent.
-        if (extraPanels) {
-            const overview = extraPanels.querySelector('[data-learning-content-page="overview"]');
+        const contentContainer = document.querySelector(".ciit-learning-main-card");
+        if (contentContainer) {
+            const overview = contentContainer.querySelector('[data-learning-content-page="overview"]');
             const contentPager = document.createElement("nav");
             contentPager.className = "ciit-learning-content-pager";
             contentPager.setAttribute("aria-label", "Content resources");
@@ -261,7 +262,7 @@ document.addEventListener("DOMContentLoaded", function () {
             contentPager.dataset.learningContentPager = "";
             contentPager.hidden = true;
 
-            const resourcePages = Array.from(extraPanels.querySelectorAll("[data-learning-content-page]"));
+            const resourcePages = Array.from(contentContainer.querySelectorAll("[data-learning-content-page]"));
             const pageLabels = { overview: "Overview", video: "Video", slides: "Slides" };
             resourcePages.forEach(function (page) {
                 page.hidden = page.dataset.learningContentPage !== activeContentPage;
@@ -287,8 +288,8 @@ document.addEventListener("DOMContentLoaded", function () {
             });
             contentPager.appendChild(contentButtons);
             contentPager.hidden = resourcePages.length <= 1;
-            if (overview) extraPanels.insertBefore(contentPager, overview);
-            else extraPanels.insertBefore(contentPager, extraPanels.firstChild);
+            if (overview) contentContainer.insertBefore(contentPager, overview);
+            else contentContainer.insertBefore(contentPager, contentContainer.firstChild);
         }
 
         // Long notes are paginated by their existing semantic blocks, preserving
@@ -299,9 +300,9 @@ document.addEventListener("DOMContentLoaded", function () {
 
             // Notes imported inside one wrapper still paginate by their inner
             // paragraphs, headings, lists, tables and code blocks.
-            while (contentBlocks.length <= 4) {
+            while (contentBlocks.length <= 20) {
                 const nestedContainer = contentBlocks.find(function (block) {
-                    return block.children.length > 4
+                    return block.children.length > 20
                         && !block.matches("pre, table, ul, ol, figure, blockquote");
                 });
                 if (!nestedContainer) break;
@@ -312,7 +313,7 @@ document.addEventListener("DOMContentLoaded", function () {
             paginateItems(
                 contentContainer,
                 contentBlocks,
-                4,
+                20,
                 "Notes pages"
             );
         });
