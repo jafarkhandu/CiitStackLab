@@ -61,8 +61,6 @@
     </header>
 
     <div class="ciit-notes-reader-shell">
-
-
         <main class="ciit-notes-reader-main">
             <article class="ciit-notes-reader-card">
                 <div class="ciit-notes-reader-title">
@@ -95,9 +93,12 @@
                                 <div class="d-flex gap-2 flex-wrap">
                                     @if (!string.IsNullOrWhiteSpace(media.Slides))
                                     {
-                                        <a href="@media.Slides"
-                                           target="_blank"
-                                           rel="noopener"
+                                        <a asp-controller="Notes"
+                                           asp-action="SlideReader"
+                                           asp-route-topicId="@Model.TopicId"
+                                           asp-route-chapterId="@Model.CurrentChapterId"
+                                           asp-route-contentId="@media.ContentId"
+                                           asp-route-courseId="@courseId"
                                            class="btn btn-outline-primary btn-sm">
                                             <i class="bi bi-file-earmark-slides me-1"></i>Slides
                                         </a>
