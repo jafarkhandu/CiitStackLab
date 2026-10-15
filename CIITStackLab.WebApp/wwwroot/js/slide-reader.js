@@ -6,6 +6,7 @@ const root = document.querySelector('.ciit-slide-reader');
 
 if (root) {
     const slideUrl = root.dataset.slideUrl;
+    const slideType = (root.dataset.slideType || '').toLowerCase();
     const title = root.dataset.slideTitle || 'Slides';
     const stage = document.getElementById('slideStage');
     const thumbnails = document.getElementById('slideThumbnails');
@@ -24,6 +25,7 @@ if (root) {
 
     const state = {
         type: null,
+        pptModule: null,
         presentation: null,
         pdf: null,
         page: 0,
@@ -64,7 +66,7 @@ if (root) {
         state.objectUrls = [];
     };
 
-    const renderError = (message) => {
+    const renderError = message => {
         setLoading(false);
         stage.innerHTML = `
             <div class="ciit-slide-reader-error" role="alert">
@@ -115,8 +117,11 @@ if (root) {
     const getPptSlideUrl = async index => {
         if (state.rendered.has(index)) return state.rendered.get(index);
 
-        const { slideToSvgFile } = state.pptModule;
-        const blob = await slideToSvgFile(state.presentation, state.presentation.slides[index]);
+        const svg = await state.pptModule.slideToSvgFile(
+            state.presentation,
+            state.presentation.slides[index]);
+
+        const blob = new Blob([svg], { type: 'image/svg+xml' });
         const url = URL.createObjectURL(blob);
         state.objectUrls.push(url);
         state.rendered.set(index, url);
@@ -154,7 +159,7 @@ if (root) {
 
             if (state.type === 'pdf') {
                 await renderPdfPage();
-            } else {
+            } else if (state.type === 'ppt' || state.type === 'pptx') {
                 await renderPptSlide();
             }
         } catch (error) {
@@ -251,10 +256,17 @@ if (root) {
         const blob = await response.blob();
         state.pptModule = pptModule;
         state.presentation = await pptModule.parse(blob);
-        state.type = 'ppt';
+        state.type = slideType;
         setPageInfo();
         await buildPptThumbnails();
         await renderCurrent();
+    };
+
+    const detectTypeFromContentType = contentType => {
+        if (contentType.includes('application/pdf')) return 'pdf';
+        if (contentType.includes('application/vnd.ms-powerpoint')) return 'ppt';
+        if (contentType.includes('application/vnd.openxmlformats-officedocument.presentationml.presentation')) return 'pptx';
+        return null;
     };
 
     const load = async () => {
@@ -266,15 +278,21 @@ if (root) {
         setLoading(true, 'Opening slides');
 
         try {
-            const response = await fetch(slideUrl, { credentials: 'same-origin', cache: 'no-store' });
-            if (!response.ok) throw new Error(`Slide file returned HTTP ${response.status}.`);
+            const response = await fetch(slideUrl, {
+                credentials: 'same-origin',
+                cache: 'no-store'
+            });
+
+            if (!response.ok) {
+                throw new Error(`Slide file returned HTTP ${response.status}.`);
+            }
 
             const contentType = (response.headers.get('content-type') || '').toLowerCase();
-            const extension = slideUrl.split('?')[0].split('.').pop()?.toLowerCase();
+            const detectedType = slideType || detectTypeFromContentType(contentType);
 
-            if (extension === 'pdf' || contentType.includes('application/pdf')) {
+            if (detectedType === 'pdf') {
                 await loadPdf(response);
-            } else if (extension === 'ppt' || extension === 'pptx') {
+            } else if (detectedType === 'ppt' || detectedType === 'pptx') {
                 await loadPowerPoint(response);
             } else {
                 throw new Error('Unsupported slide format.');
