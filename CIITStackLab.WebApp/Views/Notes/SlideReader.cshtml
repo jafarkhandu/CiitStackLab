@@ -6,6 +6,7 @@
     var topicId = ViewData["NotesTopicId"]?.ToString();
     var chapterId = ViewData["NotesChapterId"]?.ToString();
     var slideUrl = ViewData["SlideUrl"]?.ToString() ?? string.Empty;
+    var slideType = ViewData["SlideType"]?.ToString() ?? string.Empty;
 }
 
 @section Styles {
@@ -16,6 +17,7 @@
 
 <section class="ciit-slide-reader"
          data-slide-url="@slideUrl"
+         data-slide-type="@slideType"
          data-slide-title="@(ViewData["SlideTitle"]?.ToString() ?? "Slide Reader")">
     <header class="ciit-slide-reader-header">
         <div class="ciit-slide-reader-header-inner">
