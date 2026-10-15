@@ -59,6 +59,7 @@ public sealed class CourseLearningPracticeQuestionDto
 public sealed class CourseLearningContentDto
 {
     public int Id { get; init; }
+    public int? NoteId { get; init; }
     public string Title { get; init; } = string.Empty;
     public string? Slides { get; init; }
     public string? VideoName { get; init; }
