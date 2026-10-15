@@ -106,10 +106,10 @@ internal static class ExcelQuestionImportMapper
             result.FileErrors.Add("No question rows were found below the MCQ header row.");
         }
 
-        if (result.Questions.Count > 500)
+        if (result.Questions.Count > 100)
         {
             result.Questions.Clear();
-            result.FileErrors.Add("A single Excel upload can contain at most 500 MCQs.");
+            result.FileErrors.Add("A single Excel upload can contain at most 100 MCQs.");
         }
 
         return result;
@@ -140,7 +140,7 @@ internal static class ExcelQuestionImportMapper
 
         if (rows.Count == 0)
         {
-            result.FileErrors.Add("The Excel worksheet is empty. Add the required header row and 20 question-and-answer rows.");
+            result.FileErrors.Add("The Excel worksheet is empty. Add the required header row and between 1 and 100 question-and-answer rows.");
             return result;
         }
 
@@ -171,10 +171,14 @@ internal static class ExcelQuestionImportMapper
             result.Questions.Add(item);
         }
 
-        if (result.Questions.Count != 20)
+        if (result.Questions.Count == 0)
         {
-            result.FileErrors.Add(
-                $"Interview Excel must contain exactly 20 question-and-answer rows. Found {result.Questions.Count}.");
+            result.FileErrors.Add("Interview Excel must contain between 1 and 100 question-and-answer rows.");
+        }
+        else if (result.Questions.Count > 100)
+        {
+            result.Questions.Clear();
+            result.FileErrors.Add("A single Excel upload can contain at most 100 interview question-and-answer rows.");
         }
 
         return result;
@@ -242,10 +246,10 @@ internal static class ExcelQuestionImportMapper
             result.FileErrors.Add("No programming-question rows were found below the header row.");
         }
 
-        if (result.Questions.Count > 500)
+        if (result.Questions.Count > 100)
         {
             result.Questions.Clear();
-            result.FileErrors.Add("A single Excel upload can contain at most 500 programming questions.");
+            result.FileErrors.Add("A single Excel upload can contain at most 100 programming questions.");
         }
 
         return result;
