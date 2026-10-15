@@ -83,7 +83,7 @@
                 <div class="ciit-course-experience-card-header">
                     <div>
                         <h2>Your Progress</h2>
-                        <p>Track completed lessons and continue from where you left off.</p>
+                        <p>Track your learning progress and continue from where you left off.</p>
                     </div>
                     <strong>@percentage%</strong>
                 </div>
@@ -96,7 +96,7 @@
                     <span style="width: @percentage%"></span>
                 </div>
                 <div class="ciit-progress-meta">
-                    <span>@completedLessons of @totalLessons lessons completed</span>
+                    <span>@completedLessons of @totalLessons learning resources completed</span>
                     <span>@Model.TopicCount topics</span>
                 </div>
             </section>
@@ -105,7 +105,7 @@
                 <div class="ciit-course-experience-card-header">
                     <div>
                         <h2>Course Curriculum</h2>
-                        <p>Open a topic to reveal its lessons without leaving your course home.</p>
+                        <p>Open a topic to view its chapters and learning resources without leaving your course home.</p>
                     </div>
                     <span class="ciit-curriculum-summary">
                         <i class="bi bi-journal-check"></i>
@@ -115,7 +115,7 @@
 
                 @if (Model.Topics.Count == 0)
                 {
-                    <div class="ciit-curriculum-empty">No active lessons are available for this course yet.</div>
+                    <div class="ciit-curriculum-empty">No active chapters are available for this course yet.</div>
                 }
                 else
                 {
@@ -148,7 +148,7 @@
                                     <div class="ciit-curriculum-topic-panel-inner">
                                         @if (topic.Contents.Count == 0)
                                         {
-                                            <div class="ciit-curriculum-empty">No lessons are available in this topic yet.</div>
+                                            <div class="ciit-curriculum-empty">No learning resources are linked to this topic yet.</div>
                                         }
                                         else
                                         {
