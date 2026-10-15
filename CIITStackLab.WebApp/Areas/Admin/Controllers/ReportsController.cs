@@ -70,7 +70,7 @@ public class ReportsController : Controller
 
         if (start > end)
         {
-            (start, end) = (end.AddDays(-29), end);
+            start = end.AddDays(-29);
         }
 
         if ((end - start).TotalDays + 1 > MaxReportDays)
