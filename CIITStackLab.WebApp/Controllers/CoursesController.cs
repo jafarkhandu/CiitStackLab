@@ -259,9 +259,12 @@ public class CoursesController : Controller
     public async Task<IActionResult> Learn(
         int id,
         int? contentId,
+        int? topicId,
         CancellationToken cancellationToken)
     {
-        if (id <= 0 || (contentId.HasValue && contentId.Value <= 0))
+        if (id <= 0
+            || (contentId.HasValue && contentId.Value <= 0)
+            || (topicId.HasValue && topicId.Value <= 0))
         {
             return NotFound();
         }
@@ -307,7 +310,9 @@ public class CoursesController : Controller
             return RedirectToAction(nameof(Details), new { id });
         }
 
-        if (!string.IsNullOrWhiteSpace(studentUserId) && !contentId.HasValue)
+        if (!string.IsNullOrWhiteSpace(studentUserId)
+            && !contentId.HasValue
+            && !topicId.HasValue)
         {
             var resumeContentId = await _studentProgressService.GetResumeContentIdAsync(
                 studentUserId,
@@ -327,13 +332,36 @@ public class CoursesController : Controller
             return NotFound();
         }
 
-        if (!string.IsNullOrWhiteSpace(studentUserId) && course.CurrentContentId.HasValue)
+        if (topicId.HasValue)
         {
-            await _studentProgressService.RecordAccessAsync(
-                studentUserId,
-                id,
-                course.CurrentContentId.Value,
-                cancellationToken);
+            var selectedTopic = course.Topics.FirstOrDefault(topic => topic.Id == topicId.Value);
+            if (selectedTopic is null)
+            {
+                return NotFound();
+            }
+
+            if (selectedTopic.Contents.Count > 0 && !contentId.HasValue)
+            {
+                return RedirectToAction(nameof(Learn), new
+                {
+                    id,
+                    contentId = selectedTopic.Contents[0].Id
+                });
+            }
+
+            course.CurrentTopicId = selectedTopic.Id;
+        }
+
+        if (!string.IsNullOrWhiteSpace(studentUserId))
+        {
+            if (course.CurrentContentId.HasValue)
+            {
+                await _studentProgressService.RecordAccessAsync(
+                    studentUserId,
+                    id,
+                    course.CurrentContentId.Value,
+                    cancellationToken);
+            }
 
             course.Progress = await _studentProgressService.GetProgressAsync(
                 studentUserId,
