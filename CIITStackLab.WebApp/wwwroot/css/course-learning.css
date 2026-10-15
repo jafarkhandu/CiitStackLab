@@ -2063,3 +2063,50 @@ details[open] > summary .ciit-learning-disclosure-icon {
         grid-template-columns: 1fr;
     }
 }
+
+
+/* Notes-first learning panels with lightweight pagination. */
+.ciit-learning-panel-pager {
+    display:flex;
+    flex-wrap:wrap;
+    gap:8px;
+    margin:18px 0;
+    padding:8px;
+    border:1px solid rgba(210,226,249,.85);
+    border-radius:16px;
+    background:rgba(245,249,255,.8);
+}
+.ciit-learning-panel-pager button {
+    flex:1 1 120px;
+    border:1px solid transparent;
+    border-radius:11px;
+    padding:10px 12px;
+    color:#607796;
+    background:transparent;
+    font-weight:750;
+    transition:transform .2s ease,background .2s ease,box-shadow .2s ease,color .2s ease;
+}
+.ciit-learning-panel-pager button:hover { transform:translateY(-1px); }
+.ciit-learning-panel-pager button.is-active {
+    color:#1769ff;
+    background:#fff;
+    border-color:#d7e6ff;
+    box-shadow:0 5px 14px rgba(45,101,184,.1);
+}
+.ciit-learning-page [data-learning-panel-content][hidden],
+.ciit-learning-notes-content[hidden] { display:none !important; }
+.ciit-learning-notes-content { line-height:1.8; overflow-wrap:anywhere; }
+.ciit-learning-notes-content h4 { margin:0 0 14px; color:#243b5c; font-weight:800; }
+.ciit-learning-notes-content img { max-width:100%; height:auto; }
+.ciit-learning-content-overview ul { margin:0; padding-left:22px; color:#607796; line-height:1.9; }
+.ciit-learning-assessment-links { display:grid; gap:8px; }
+.ciit-learning-assessment-subsection { scroll-margin-top:24px; margin-top:16px; }
+.ciit-learning-assessment-subsection h5 { color:#2c4770; font-weight:800; margin-bottom:12px; }
+.ciit-learning-chapter-assessment { padding:16px 0; border-bottom:1px solid #e0eaf8; scroll-margin-top:24px; }
+.ciit-learning-chapter-assessment h4 { font-weight:850; color:#213b61; }
+.ciit-learning-load-video { margin-top:10px; border:1px solid #cfe0ff; border-radius:11px; padding:9px 14px; background:#edf5ff; color:#1769ff; font-weight:750; }
+.ciit-learning-category-link.ciit-learning-category-notes { width:100%; text-align:left; cursor:pointer; }
+.ciit-learning-page .ciit-learning-main-card { content-visibility:auto; contain-intrinsic-size:900px; }
+@media (prefers-reduced-motion:reduce) {
+    .ciit-learning-panel-pager button { transition:none; }
+}
