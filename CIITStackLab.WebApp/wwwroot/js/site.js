@@ -203,8 +203,8 @@ document.addEventListener("DOMContentLoaded", function () {
                     button.setAttribute("aria-current", active ? "page" : "false");
                 });
 
-                const videoPanel = document.querySelector('[data-learning-content-page="video"]');
-                if (activeContentPage === "video" && videoPanel) {
+                const videoPanel = document.querySelector(".ciit-learning-video-section");
+                if (videoPanel) {
                     const muxPlayer = videoPanel.querySelector(".ciit-mux-watch-player");
                     if (muxPlayer && !muxPlayer.dataset.ciitMuxReady) {
                         const existingScript = document.querySelector("script[data-ciit-mux-player]");
