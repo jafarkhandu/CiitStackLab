@@ -1494,3 +1494,21 @@ body.ciit-hub-transitioning { overflow: hidden; }
     65% { transform: scale(1.08); }
     100% { transform: scale(1); }
 }
+
+
+/* Accessible password visibility control. */
+.ciit-password-field { position:relative; }
+.ciit-password-field input { padding-right:3.25rem; }
+.ciit-password-toggle {
+    position:absolute; top:50%; right:12px; transform:translateY(-50%);
+    display:inline-flex; align-items:center; justify-content:center;
+    width:36px; height:36px; border:0; border-radius:10px;
+    color:#64748b; background:transparent; cursor:pointer;
+}
+.ciit-password-toggle:hover { color:#1769ff; background:#edf5ff; }
+.ciit-password-toggle:focus-visible { outline:2px solid #347aff; outline-offset:2px; }
+.ciit-course-switch-hub { position:relative; overflow:hidden; transition:transform .25s ease,box-shadow .25s ease; }
+.ciit-course-switch-hub:hover { transform:translateY(-2px); box-shadow:0 12px 28px rgba(37,99,235,.24); }
+.ciit-course-switch-hub.is-switching { animation:ciitCourseHubSwitch .42s ease both; pointer-events:none; }
+@keyframes ciitCourseHubSwitch { 50% { transform:scale(.97); filter:brightness(1.08); } 100% { transform:scale(.98); opacity:.8; } }
+@media (prefers-reduced-motion:reduce) { .ciit-course-switch-hub,.ciit-course-switch-hub.is-switching { animation:none; transition:none; } }
