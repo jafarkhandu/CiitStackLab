@@ -92,11 +92,11 @@
                         }
                         else if (Model.IsStudent && Model.HasAccess)
                         {
-                            <a asp-controller="Courses"
-                               asp-action="CourseHome"
-                               asp-route-id="@Model.Id"
-                               class="btn btn-primary btn-lg">
-                                <i class="bi bi-play-circle me-2"></i>Continue Learning
+                            <a asp-controller="Home"
+                               asp-action="Dashboard"
+                               class="btn btn-primary btn-lg ciit-course-switch-hub"
+                               data-course-hub-switch>
+                                <i class="bi bi-stars me-2" aria-hidden="true"></i>Switch Hub
                             </a>
                         }
                         else
