@@ -78,4 +78,68 @@ public sealed class NotesController : Controller
 
         return View(notes);
     }
+
+    [HttpGet]
+    public async Task<IActionResult> SlideReader(
+        int topicId,
+        string? chapterId,
+        int contentId,
+        int? courseId,
+        CancellationToken ct)
+    {
+        if (topicId <= 0 || contentId <= 0)
+        {
+            return NotFound();
+        }
+
+        var userId = User.Identity?.IsAuthenticated == true
+            ? User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value
+            : null;
+
+        var canAccessTopic = await _coursePurchaseService.CanAccessTopicAsync(userId, topicId, ct);
+
+        if (!canAccessTopic)
+        {
+            if (User.Identity?.IsAuthenticated != true)
+            {
+                var returnUrl = Url.Action(
+                    nameof(SlideReader),
+                    new { topicId, chapterId, contentId, courseId });
+                return RedirectToAction("Login", "Account", new { returnUrl });
+            }
+
+            TempData["CoursePaymentMessage"] =
+                "Purchase is required to open slides for this paid course.";
+            return RedirectToAction("Index", "Home");
+        }
+
+        var notes = await _notesService.GetReaderAsync(topicId, chapterId, ct);
+        var media = notes?.CurrentChapter?.Media.FirstOrDefault(x => x.ContentId == contentId);
+
+        if (media is null || string.IsNullOrWhiteSpace(media.Slides))
+        {
+            return NotFound();
+        }
+
+        if (courseId is > 0)
+        {
+            var course = await _courseService.GetLearningAsync(courseId.Value, null, ct);
+
+            if (course is null || !course.Topics.Any(topic => topic.Id == topicId))
+            {
+                return NotFound();
+            }
+
+            ViewData["LearningPathModel"] = course;
+            ViewData["CourseId"] = course.Id.ToString();
+            ViewData["CourseTitle"] = course.Title;
+        }
+
+        ViewData["NotesTopicId"] = notes.TopicId.ToString();
+        ViewData["NotesChapterId"] = notes.CurrentChapterId;
+        ViewData["SlideUrl"] = media.Slides;
+        ViewData["SlideTitle"] = media.Title;
+
+        return View();
+    }
 }
