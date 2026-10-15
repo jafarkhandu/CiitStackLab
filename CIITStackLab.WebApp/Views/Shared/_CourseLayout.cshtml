@@ -10,6 +10,9 @@
     var currentAction = ViewContext.RouteData.Values["action"]?.ToString() ?? string.Empty;
     var currentController = ViewContext.RouteData.Values["controller"]?.ToString() ?? string.Empty;
     var isNotesPage = currentController.Equals("Notes", StringComparison.OrdinalIgnoreCase);
+    var isCourseHome = currentController.Equals("Courses", StringComparison.OrdinalIgnoreCase)
+        && (currentAction.Equals("CourseHome", StringComparison.OrdinalIgnoreCase)
+            || currentAction.Equals("CourseEnvironment", StringComparison.OrdinalIgnoreCase));
     var courseTitle = ViewData["CourseTitle"]?.ToString();
     var notesTopicId = ViewData["NotesTopicId"]?.ToString();
     var notesChapterId = ViewData["NotesChapterId"]?.ToString();
@@ -200,7 +203,7 @@
                            asp-controller="Courses" asp-action="CourseHome">
                             <i class="bi bi-collection-play"></i><span>My Courses</span>
                         </a>
-                        @if (!string.IsNullOrWhiteSpace(courseId) && !currentAction.Equals("CourseHome", StringComparison.OrdinalIgnoreCase))
+                        @if (!string.IsNullOrWhiteSpace(courseId) && !isCourseHome)
                         {
                             <a class="@(currentController.Equals("Courses", StringComparison.OrdinalIgnoreCase) && currentAction.Equals("Learn", StringComparison.OrdinalIgnoreCase) ? "active" : "")"
                                asp-controller="Courses" asp-action="Learn" asp-route-id="@courseId">
