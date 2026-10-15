@@ -138,16 +138,7 @@ public sealed class NotesController : Controller
             ViewData["CourseTitle"] = course.Title;
         }
 
-        var slideExtension = Path.GetExtension(media.Slides).ToLowerInvariant();
-        var slideType = slideExtension switch
-        {
-            ".pdf" => "pdf",
-            ".ppt" => "ppt",
-            ".pptx" => "pptx",
-            _ => null
-        };
-
-        if (slideType is null)
+        if (!string.Equals(Path.GetExtension(media.Slides), ".pdf", StringComparison.OrdinalIgnoreCase))
         {
             return NotFound();
         }
@@ -157,7 +148,7 @@ public sealed class NotesController : Controller
         ViewData["SlideUrl"] = Url.Action(
             nameof(SlideFile),
             new { topicId, chapterId, contentId });
-        ViewData["SlideType"] = slideType;
+        ViewData["SlideType"] = "pdf";
         ViewData["SlideTitle"] = media.Title;
 
         return View();
@@ -206,6 +197,11 @@ public sealed class NotesController : Controller
             return NotFound();
         }
 
+        if (!string.Equals(Path.GetExtension(fileName), ".pdf", StringComparison.OrdinalIgnoreCase))
+        {
+            return NotFound();
+        }
+
         var path = Path.Combine(
             _environment.WebRootPath,
             "uploads",
@@ -217,16 +213,9 @@ public sealed class NotesController : Controller
             return NotFound();
         }
 
-        var contentType = Path.GetExtension(fileName).ToLowerInvariant() switch
-        {
-            ".pdf" => "application/pdf",
-            ".ppt" => "application/vnd.ms-powerpoint",
-            ".pptx" => "application/vnd.openxmlformats-officedocument.presentationml.presentation",
-            _ => null
-        };
-
-        return contentType is null
-            ? NotFound()
-            : PhysicalFile(path, contentType, enableRangeProcessing: true);
+        return PhysicalFile(
+            path,
+            "application/pdf",
+            enableRangeProcessing: true);
     }
 }
