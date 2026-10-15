@@ -47,7 +47,7 @@ internal static class ExcelQuestionImportMapper
 
         if (rows.Count == 0)
         {
-            result.FileErrors.Add("The Excel worksheet is empty. Add the required header row and question rows.");
+            result.FileErrors.Add("The Excel worksheet is empty. Add the required header row and between 1 and 100 question rows.");
             return result;
         }
 
@@ -103,7 +103,7 @@ internal static class ExcelQuestionImportMapper
 
         if (result.Questions.Count == 0)
         {
-            result.FileErrors.Add("No question rows were found below the MCQ header row.");
+            result.FileErrors.Add("MCQ Excel must contain between 1 and 100 questions.");
         }
 
         if (result.Questions.Count > 100)
@@ -211,7 +211,7 @@ internal static class ExcelQuestionImportMapper
         if (rows.Count == 0)
         {
             result.FileErrors.Add(
-                "The Excel worksheet is empty. Add the required header row and programming-question rows.");
+                "The Excel worksheet is empty. Add the required header row and between 1 and 100 programming-question rows.");
             return result;
         }
 
