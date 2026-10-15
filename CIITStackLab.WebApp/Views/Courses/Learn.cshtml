@@ -360,7 +360,24 @@ else
                                                             <i class="bi bi-chevron-down ciit-learning-disclosure-icon"></i>
                                                         </summary>
                                                         <div class="ciit-learning-assessment-type-body">
-                                                            <p class="ciit-learning-category-empty">Interview questions will appear here when they are linked to this chapter.</p>
+                                                            @if (chapter.InterviewQuestions.Count == 0)
+                                                            {
+                                                                <p class="ciit-learning-category-empty">Interview questions will appear here when they are linked to this chapter.</p>
+                                                            }
+                                                            else
+                                                            {
+                                                                @for (var interviewIndex = 0; interviewIndex < chapter.InterviewQuestions.Count; interviewIndex++)
+                                                                {
+                                                                    var interviewQuestion = chapter.InterviewQuestions[interviewIndex];
+                                                                    <article class="ciit-learning-assessment-question">
+                                                                        <strong>@(interviewIndex + 1). @interviewQuestion.Question</strong>
+                                                                        @if (!string.IsNullOrWhiteSpace(interviewQuestion.Answer))
+                                                                        {
+                                                                            <p>@interviewQuestion.Answer</p>
+                                                                        }
+                                                                    </article>
+                                                                }
+                                                            }
                                                         </div>
                                                     </details>
                                                     <details class="ciit-learning-assessment-type">
@@ -369,7 +386,21 @@ else
                                                             <i class="bi bi-chevron-down ciit-learning-disclosure-icon"></i>
                                                         </summary>
                                                         <div class="ciit-learning-assessment-type-body">
-                                                            <p class="ciit-learning-category-empty">Programming practice questions will appear here when they are linked to this chapter.</p>
+                                                            @if (chapter.PracticeQuestions.Count == 0)
+                                                            {
+                                                                <p class="ciit-learning-category-empty">Programming practice questions will appear here when they are linked to this chapter.</p>
+                                                            }
+                                                            else
+                                                            {
+                                                                @for (var practiceIndex = 0; practiceIndex < chapter.PracticeQuestions.Count; practiceIndex++)
+                                                                {
+                                                                    var practiceQuestion = chapter.PracticeQuestions[practiceIndex];
+                                                                    <article class="ciit-learning-assessment-question">
+                                                                        <strong>@(practiceIndex + 1). @practiceQuestion.QuestionTitle</strong>
+                                                                        <div class="ciit-practice-import-description">@practiceQuestion.QuestionDescription</div>
+                                                                    </article>
+                                                                }
+                                                            }
                                                         </div>
                                                     </details>
                                                 </div>
