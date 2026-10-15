@@ -24,6 +24,9 @@
     var currentContent = currentItem?.Content;
     var learningProgress = Model.Progress;
     var orderedChapters = Model.Topics.SelectMany(topic => topic.Chapters).ToList();
+    var currentChapter = currentContent?.NoteId is int currentNoteId
+        ? orderedChapters.FirstOrDefault(chapter => chapter.Id == currentNoteId)
+        : currentItem?.Topic.Chapters.FirstOrDefault();
     var currentChapterIndex = currentContent?.NoteId.HasValue == true
         ? orderedChapters.FindIndex(chapter => chapter.Id == currentContent.NoteId.Value)
         : 0;
@@ -476,12 +479,6 @@ else
                         }
                     }
 
-                    @{
-                        var currentChapter = Model.Topics
-                            .SelectMany(item => item.Chapters)
-                            .FirstOrDefault(item => item.Id == currentContent.NoteId)
-                            ?? Model.Topics.SelectMany(item => item.Chapters).FirstOrDefault();
-                    }
                     <section class="ciit-learning-resource ciit-learning-notes-panel" data-learning-panel-content="notes">
                         <div class="ciit-learning-resource-title">
                             <span class="ciit-learning-resource-icon"><i class="bi bi-journal-text"></i></span>
@@ -697,7 +694,31 @@ else
                                 var assessmentChapter = currentChapter;
                                 <section class="ciit-learning-chapter-assessment" id="chapter-assessment-@assessmentChapter.Id">
                                     <h4>@assessmentChapter.Title</h4>
-                                    <p class="ciit-learning-assessment-note">MCQs for this chapter are available in the graded Knowledge Check above.</p>
+                                    @{
+                                        var chapterOnlyQuestions = assessmentChapter.Questions
+                                            .Where(question => !currentContent.Questions.Any(currentQuestion => currentQuestion.Id == question.Id))
+                                            .ToList();
+                                    }
+                                    @if (chapterOnlyQuestions.Count == 0)
+                                    {
+                                        <p class="ciit-learning-assessment-note">MCQs are available in the graded Knowledge Check above.</p>
+                                    }
+                                    else
+                                    {
+                                        @for (var qi = 0; qi < chapterOnlyQuestions.Count; qi++)
+                                        {
+                                            var question = chapterOnlyQuestions[qi];
+                                            <article class="ciit-learning-assessment-question">
+                                                <strong>@(qi + 1). @question.Question</strong>
+                                                <ol type="A">
+                                                    @foreach (var option in question.Options.Where(option => !string.IsNullOrWhiteSpace(option)))
+                                                    {
+                                                        <li>@option</li>
+                                                    }
+                                                </ol>
+                                            </article>
+                                        }
+                                    }
                                     <section id="chapter-interview-@assessmentChapter.Id" class="ciit-learning-assessment-subsection">
                                         <h5>Interview Questions</h5>
                                         @if (assessmentChapter.InterviewQuestions.Count == 0)
