@@ -390,7 +390,7 @@ public sealed class DynamicCourseService : ICourseService
             ImageUrl = course.ImageUrl,
             Category = course.Category,
             Level = course.Level,
-            DurationHours = course.DurationHours,
+            DurationHours = topics.Sum(topic => topic.DurationMinutes ?? 0) / 60m,
             TotalPrice = topics.Sum(x => Math.Max(0m, x.Price)),
             TopicCount = topics.Count,
             ContentCount = allContents.Count,
