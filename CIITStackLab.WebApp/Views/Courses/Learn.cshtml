@@ -145,6 +145,85 @@
 
 @section Styles {
     <link rel="stylesheet" href="~/css/course-learning.css" asp-append-version="true" />
+    <style>
+        .ciit-learning-main-tabs {
+            display: grid;
+            grid-template-columns: repeat(3, minmax(0, 1fr));
+            gap: 8px;
+            padding: 8px;
+            margin-bottom: 20px;
+            border: 1px solid rgba(255, 255, 255, .8);
+            border-radius: 18px;
+            background: rgba(226, 238, 255, .72);
+            box-shadow: 0 8px 24px rgba(42, 94, 163, .08);
+        }
+
+        .ciit-learning-main-tab {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            min-height: 44px;
+            padding: 10px 12px;
+            border: 1px solid rgba(255, 255, 255, .8);
+            border-radius: 12px;
+            background: rgba(255, 255, 255, .35);
+            color: #58759d;
+            font-weight: 700;
+            text-align: center;
+            text-decoration: none;
+        }
+
+        .ciit-learning-main-tab:hover,
+        .ciit-learning-main-tab:focus-visible {
+            background: #fff;
+            color: #075cff;
+            text-decoration: none;
+        }
+
+        .ciit-learning-topic-progress {
+            min-width: 260px;
+            max-width: 390px;
+            flex: 1 1 320px;
+            padding: 22px 24px;
+            border: 1px solid rgba(255, 255, 255, .9);
+            border-radius: 22px;
+            background: rgba(255, 255, 255, .72);
+            box-shadow: 0 12px 32px rgba(47, 93, 151, .08);
+        }
+
+        .ciit-learning-topic-progress-track {
+            height: 8px;
+            margin-top: 14px;
+            overflow: hidden;
+            border-radius: 999px;
+            background: #dce9fb;
+        }
+
+        .ciit-learning-topic-progress-track span {
+            display: block;
+            height: 100%;
+            border-radius: inherit;
+            background: linear-gradient(90deg, #2767ff, #28b8ed);
+        }
+
+        @media (max-width: 767.98px) {
+            .ciit-learning-main-tabs {
+                gap: 4px;
+                padding: 5px;
+            }
+
+            .ciit-learning-main-tab {
+                padding: 8px 4px;
+                font-size: .8rem;
+            }
+
+            .ciit-learning-topic-progress {
+                min-width: 0;
+                max-width: none;
+                width: 100%;
+            }
+        }
+    </style>
 }
 
 @section Scripts {
@@ -195,6 +274,23 @@ else if (currentContent is null && currentTopic is not null)
                         <h1>@Model.Title</h1>
                         <p>@Model.ShortDescription</p>
                     </div>
+                    <section class="ciit-learning-topic-progress" aria-label="Course progress">
+                        <div class="d-flex align-items-center justify-content-between gap-3">
+                            <strong><i class="bi bi-graph-up-arrow me-2"></i>Your progress</strong>
+                            <strong class="text-primary fs-4">@(Model.Progress?.Percentage ?? 0)%</strong>
+                        </div>
+                        <div class="ciit-learning-topic-progress-track"
+                             role="progressbar"
+                             aria-label="Course progress"
+                             aria-valuenow="@(Model.Progress?.Percentage ?? 0)"
+                             aria-valuemin="0"
+                             aria-valuemax="100">
+                            <span style="width: @(Model.Progress?.Percentage ?? 0)%"></span>
+                        </div>
+                        <small class="d-block mt-3 text-secondary">
+                            @(Model.Progress?.CompletedLessons ?? 0) of @(Model.Progress?.TotalLessons ?? Model.ContentCount) learning resources completed
+                        </small>
+                    </section>
                 </div>
             </div>
         </header>
@@ -212,9 +308,7 @@ else if (currentContent is null && currentTopic is not null)
                     @foreach (var topic in Model.Topics)
                     {
                         <details class="ciit-learning-topic @(topic.Id == currentTopic.Id ? "is-active-topic" : "")"
-                                 data-topic-first-content-url="@(topic.Contents.FirstOrDefault() is { } firstTopicContent
-                                     ? Url.Action("Learn", "Courses", new { id = Model.Id, contentId = firstTopicContent.Id })
-                                     : Url.Action("Learn", "Courses", new { id = Model.Id, topicId = topic.Id }))"
+                                 data-topic-first-content-url="@Url.Action("Learn", "Courses", new { id = Model.Id, topicId = topic.Id })"
                                  open="@(topic.Id == currentTopic.Id ? "open" : null)">
                             <summary class="ciit-learning-topic-heading">
                                 <div class="ciit-learning-topic-icon"><i class="bi bi-collection-play"></i></div>
@@ -466,9 +560,7 @@ else
                                 MidpointRounding.AwayFromZero);
 
                         <details class="ciit-learning-topic @(topicHasCurrentContent ? "is-active-topic" : "")"
-                                 data-topic-first-content-url="@(topic.Contents.FirstOrDefault() is { } firstTopicContent
-                                     ? Url.Action("Learn", "Courses", new { id = Model.Id, contentId = firstTopicContent.Id })
-                                     : Url.Action("Learn", "Courses", new { id = Model.Id, topicId = topic.Id }))"
+                                 data-topic-first-content-url="@Url.Action("Learn", "Courses", new { id = Model.Id, topicId = topic.Id })"
                                  open="@(topicHasCurrentContent ? "open" : null)">
                             <summary class="ciit-learning-topic-heading">
                                 <div class="ciit-learning-topic-icon">
