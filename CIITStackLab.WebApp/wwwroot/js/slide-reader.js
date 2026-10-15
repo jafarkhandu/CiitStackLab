@@ -1,4 +1,6 @@
 const PPT_CORE_URL = 'https://esm.sh/@web-ppt/core@0.4.5?bundle';
+const PPT_ADVANCED_RENDERING_URL = 'https://esm.sh/@web-ppt/core@0.4.5/advanced-rendering?bundle';
+const PPT_MODERN_CHARTS_URL = 'https://esm.sh/@web-ppt/core@0.4.5/modern-charts?bundle';
 const PDF_JS_URL = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/4.10.38/pdf.min.mjs';
 const PDF_WORKER_URL = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/4.10.38/pdf.worker.min.mjs';
 
@@ -115,7 +117,8 @@ if (root) {
     };
 
     const getPptSlideUrl = async index => {
-        if (!state.presentation?.slides?.[index]) {
+        const slides = state.presentation?.slides;
+        if (!slides?.length || !slides[index]) {
             throw new Error(`PowerPoint slide ${index + 1} is not available after parsing.`);
         }
 
@@ -123,7 +126,7 @@ if (root) {
 
         const svg = await state.pptModule.slideToSvgFile(
             state.presentation,
-            state.presentation.slides[index]);
+            slides[index]);
 
         const blob = new Blob([svg], { type: 'image/svg+xml' });
         const url = URL.createObjectURL(blob);
@@ -259,13 +262,43 @@ if (root) {
         const pptModule = await import(PPT_CORE_URL);
         const bytes = new Uint8Array(await response.arrayBuffer());
         state.pptModule = pptModule;
-        state.presentation = await pptModule.parse(bytes, { lazy: false });
 
-        if (!state.presentation.slides?.length) {
-            throw new Error('PowerPoint parsing completed but returned no slides.');
+        // Match the official Web-PPT viewer opening pipeline: optional renderers are
+        // prepared before parsing so charts/EMF+/3D assets cannot leave the parser in
+        // a partially initialized state.
+        await Promise.allSettled([
+            import(PPT_ADVANCED_RENDERING_URL).then(module =>
+                module.prepareAdvancedRendering(bytes)),
+            import(PPT_MODERN_CHARTS_URL).then(module =>
+                module.prepareModernCharts(bytes))
+        ]);
+
+        const blob = new Blob([bytes], {
+            type: slideType === 'ppt'
+                ? 'application/vnd.ms-powerpoint'
+                : 'application/vnd.openxmlformats-officedocument.presentationml.presentation'
+        });
+
+        // The public API supports File/Blob/ArrayBuffer/Uint8Array. Use the Blob path
+        // first because it matches the documented browser usage, then retry once with
+        // raw bytes for compatibility with older parser builds.
+        let presentation = await pptModule.parse(blob);
+
+        if (!presentation?.slides?.length) {
+            presentation = await pptModule.parse(bytes);
         }
 
-        state.type = slideType;
+        if (!presentation?.slides?.length) {
+            throw new Error(
+                `PowerPoint parser returned no slides. ` +
+                `Detected format: ${slideType || 'unknown'}; file size: ${bytes.byteLength} bytes.`);
+        }
+
+        state.presentation = presentation;
+        state.type = slideType || 'pptx';
+        state.page = 0;
+        state.rendered.clear();
+        revokeUrls();
         setPageInfo();
         await buildPptThumbnails();
         await renderCurrent();
