@@ -242,7 +242,7 @@ else
                                                 <i class="bi bi-arrow-up-right ciit-learning-category-arrow"></i>
                                             </a>
 
-                                            <details class="ciit-learning-category" open>
+                                            <details class="ciit-learning-category">
                                                 <summary class="ciit-learning-category-heading">
                                                     <span class="ciit-learning-category-icon"><i class="bi bi-play-btn"></i></span>
                                                     <span class="ciit-learning-category-copy">
@@ -316,9 +316,7 @@ else
                                                         </summary>
                                                         <div class="ciit-learning-assessment-type-body">
                                                             @{
-                                                                var chapterQuestions = chapter.Contents
-                                                                    .SelectMany(item => item.Questions)
-                                                                    .ToList();
+                                                                var chapterQuestions = chapter.Questions;
                                                             }
                                                             @if (chapterQuestions.Count == 0)
                                                             {
