@@ -29,6 +29,27 @@
         ? null
         : currentItem?.Content;
     var learningProgress = Model.Progress;
+    var completedContentIds = learningProgress?.CompletedContentIds?.ToHashSet() ?? new HashSet<int>();
+    var courseTopicProgress = Model.Topics.Select(topic =>
+    {
+        var topicContentIds = topic.Contents
+            .Concat(topic.Chapters.SelectMany(chapter => chapter.Contents))
+            .Select(content => content.Id)
+            .Distinct()
+            .ToList();
+
+        return new
+        {
+            TopicId = topic.Id,
+            IsCompleted = topicContentIds.Count > 0
+                && topicContentIds.All(completedContentIds.Contains)
+        };
+    }).ToList();
+    var courseTotalTopics = Model.Topics.Count;
+    var courseCompletedTopics = courseTopicProgress.Count(topic => topic.IsCompleted);
+    var courseProgressPercentage = courseTotalTopics == 0
+        ? 0
+        : (int)Math.Round(courseCompletedTopics * 100d / courseTotalTopics, MidpointRounding.AwayFromZero);
     var orderedChapters = Model.Topics.SelectMany(topic => topic.Chapters).ToList();
     var currentChapter = currentContent?.NoteId is int currentNoteId
         ? orderedChapters.FirstOrDefault(chapter => chapter.Id == currentNoteId)
@@ -202,17 +223,17 @@ else if (currentContent is null && currentTopic is not null)
                             <div class="ciit-learning-course-progress" role="group" aria-label="Course completion progress">
                                 <div class="ciit-learning-course-progress-heading">
                                     <span><i class="bi bi-graph-up-arrow me-2"></i>Your progress</span>
-                                    <strong>@learningProgress.Percentage%</strong>
+                                    <strong>@courseProgressPercentage%</strong>
                                 </div>
                                 <div class="progress ciit-learning-course-progress-track"
                                      role="progressbar"
                                      aria-label="Course completion"
-                                     aria-valuenow="@learningProgress.Percentage"
+                                     aria-valuenow="@courseProgressPercentage"
                                      aria-valuemin="0"
                                      aria-valuemax="100">
-                                    <div class="progress-bar" style="width: @learningProgress.Percentage%"></div>
+                                    <div class="progress-bar" style="width: @courseProgressPercentage%"></div>
                                 </div>
-                                <small>@learningProgress.CompletedLessons of @learningProgress.TotalLessons learning resources completed</small>
+                                <small>@courseCompletedTopics of @courseTotalTopics topics completed</small>
                             </div>
                         }
                     </div>
