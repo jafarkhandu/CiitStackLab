@@ -7,14 +7,34 @@
     ViewData["CourseTitle"] = Model.Title;
 
     var progress = Model.Progress;
-    var percentage = progress?.Percentage ?? 0;
-    var totalLessons = progress?.TotalLessons ?? Model.ContentCount;
-    var completedLessons = progress?.CompletedLessons ?? 0;
+    var completedContentIds = progress?.CompletedContentIds?.ToHashSet() ?? new HashSet<int>();
+    var topicProgress = Model.Topics.Select(topic =>
+    {
+        var topicContentIds = topic.Contents
+            .Concat(topic.Chapters.SelectMany(chapter => chapter.Contents))
+            .Select(content => content.Id)
+            .Distinct()
+            .ToList();
+
+        return new
+        {
+            TopicId = topic.Id,
+            IsCompleted = topicContentIds.Count > 0
+                && topicContentIds.All(completedContentIds.Contains)
+        };
+    }).ToList();
+    var totalTopics = Model.Topics.Count;
+    var completedTopics = topicProgress.Count(topic => topic.IsCompleted);
+    var percentage = totalTopics == 0
+        ? 0
+        : (int)Math.Round(completedTopics * 100d / totalTopics, MidpointRounding.AwayFromZero);
+    var totalLessons = totalTopics;
+    var completedLessons = completedTopics;
     var orderedLessons = Model.Topics
-        .SelectMany(topic => topic.Contents)
+        .SelectMany(topic => topic.Contents.Concat(topic.Chapters.SelectMany(chapter => chapter.Contents)))
+        .DistinctBy(content => content.Id)
         .ToList();
     var firstLesson = orderedLessons.FirstOrDefault();
-    var completedContentIds = progress?.CompletedContentIds?.ToHashSet() ?? new HashSet<int>();
     var hasStartedLearning = completedContentIds.Count > 0;
     var lastAccessedLesson = progress?.LastAccessedContentId is int lastAccessedId
         ? orderedLessons.FirstOrDefault(lesson => lesson.Id == lastAccessedId)
@@ -109,7 +129,7 @@
                     <span style="width: @percentage%"></span>
                 </div>
                 <div class="ciit-progress-meta">
-                    <span>@completedLessons of @totalLessons learning resources completed</span>
+                    <span>@completedLessons of @totalLessons topics completed</span>
                     <span>@Model.TopicCount topics</span>
                 </div>
             </section>
@@ -136,8 +156,13 @@
                         @foreach (var topic in Model.Topics)
                         {
                             var topicKey = $"course-topic-{topic.Id}";
-                            var topicCompleted = topic.Contents.Count > 0
-                                && topic.Contents.All(content => completedContentIds.Contains(content.Id));
+                            var topicContentIds = topic.Contents
+                                .Concat(topic.Chapters.SelectMany(chapter => chapter.Contents))
+                                .Select(content => content.Id)
+                                .Distinct()
+                                .ToList();
+                            var topicCompleted = topicContentIds.Count > 0
+                                && topicContentIds.All(completedContentIds.Contains);
 
                             <div class="ciit-curriculum-accordion" data-curriculum-item>
                                 <button type="button"
