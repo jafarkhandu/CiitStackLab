@@ -200,7 +200,7 @@
                            asp-controller="Courses" asp-action="CourseHome">
                             <i class="bi bi-collection-play"></i><span>My Courses</span>
                         </a>
-                        @if (!string.IsNullOrWhiteSpace(courseId))
+                        @if (!string.IsNullOrWhiteSpace(courseId) && !currentAction.Equals("CourseHome", StringComparison.OrdinalIgnoreCase))
                         {
                             <a class="@(currentController.Equals("Courses", StringComparison.OrdinalIgnoreCase) && currentAction.Equals("Learn", StringComparison.OrdinalIgnoreCase) ? "active" : "")"
                                asp-controller="Courses" asp-action="Learn" asp-route-id="@courseId">
@@ -224,6 +224,8 @@
                         </a>
                     </nav>
         
+                    @if (!currentAction.Equals("CourseHome", StringComparison.OrdinalIgnoreCase))
+                    {
                     <div class="ciit-course-global-sidebar-section">
                         <span>LEARNING TOOLS</span>
                         <div class="ciit-course-coming-soon-link" title="Student assessment area will be connected here.">
@@ -268,7 +270,10 @@
         <div class="container-fluid px-3 px-lg-4">
             <div class="d-flex flex-column flex-sm-row justify-content-between align-items-center gap-2">
                 <span>&copy; @DateTime.Now.Year - CIIT Stack Lab</span>
-                <a asp-controller="Home" asp-action="Index">Exit Course</a>
+                @if (!(currentController.Equals("Courses", StringComparison.OrdinalIgnoreCase) && currentAction.Equals("Learn", StringComparison.OrdinalIgnoreCase)))
+                    {
+                        <a asp-controller="Home" asp-action="Index">Exit Course</a>
+                    }
             </div>
         </div>
     </footer>
