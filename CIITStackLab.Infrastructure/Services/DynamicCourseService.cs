@@ -142,6 +142,40 @@ public sealed class DynamicCourseService : ICourseService
         var contentIds = contentRows.Select(x => x.Id).Distinct().ToList();
         var noteIds = chapterRows.Select(x => x.Id).Distinct().ToList();
 
+        var interviewQuestions = await _dbContext.ContentInterviewQuestions
+            .AsNoTracking()
+            .Where(question => question.Flag == 0
+                && ((question.NoteId.HasValue && noteIds.Contains(question.NoteId.Value))
+                    || (question.ContentId.HasValue && contentIds.Contains(question.ContentId.Value))
+                    || (question.TopicId.HasValue && topicIds.Contains(question.TopicId.Value))))
+            .OrderBy(question => question.Id)
+            .Select(question => new
+            {
+                question.Id,
+                question.NoteId,
+                question.ContentId,
+                question.TopicId,
+                Question = question.Question ?? string.Empty,
+                Answer = question.Answer ?? string.Empty
+            })
+            .ToListAsync(cancellationToken);
+
+        var practiceQuestions = await _dbContext.ContentProgramQuestions
+            .AsNoTracking()
+            .Where(question => question.Flag == 0
+                && ((question.NoteId.HasValue && noteIds.Contains(question.NoteId.Value))
+                    || (question.ContentId.HasValue && contentIds.Contains(question.ContentId.Value))))
+            .OrderBy(question => question.Id)
+            .Select(question => new
+            {
+                question.Id,
+                question.NoteId,
+                question.ContentId,
+                question.QuestionTitle,
+                question.QuestionDescription
+            })
+            .ToListAsync(cancellationToken);
+
         var questions = await _dbContext.ContentQuestions
             .AsNoTracking()
             .Where(question =>
@@ -266,6 +300,30 @@ public sealed class DynamicCourseService : ICourseService
                         ChapterId = chapter.ChapterId,
                         Title = chapter.Title ?? string.Empty,
                         SortOrder = chapter.SortOrder,
+                        InterviewQuestions = interviewQuestions
+                            .Where(question => question.NoteId == chapter.Id
+                                || (question.ContentId.HasValue
+                                    && contentRows.Any(content => content.Id == question.ContentId.Value
+                                        && content.NoteId == chapter.Id)))
+                            .Select(question => new CourseLearningInterviewQuestionDto
+                            {
+                                Id = question.Id,
+                                Question = question.Question,
+                                Answer = question.Answer
+                            })
+                            .ToList(),
+                        PracticeQuestions = practiceQuestions
+                            .Where(question => question.NoteId == chapter.Id
+                                || (question.ContentId.HasValue
+                                    && contentRows.Any(content => content.Id == question.ContentId.Value
+                                        && content.NoteId == chapter.Id)))
+                            .Select(question => new CourseLearningPracticeQuestionDto
+                            {
+                                Id = question.Id,
+                                QuestionTitle = question.QuestionTitle,
+                                QuestionDescription = question.QuestionDescription
+                            })
+                            .ToList(),
                         Contents = contentRows
                             .Where(content => content.TopicId == topic.TopicId
                                               && content.NoteId == chapter.Id)
