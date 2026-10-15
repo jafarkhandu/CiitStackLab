@@ -6,7 +6,6 @@
     var topicId = ViewData["NotesTopicId"]?.ToString();
     var chapterId = ViewData["NotesChapterId"]?.ToString();
     var slideUrl = ViewData["SlideUrl"]?.ToString() ?? string.Empty;
-    var slideType = ViewData["SlideType"]?.ToString() ?? string.Empty;
 }
 
 @section Styles {
@@ -17,7 +16,6 @@
 
 <section class="ciit-slide-reader"
          data-slide-url="@slideUrl"
-         data-slide-type="@slideType"
          data-slide-title="@(ViewData["SlideTitle"]?.ToString() ?? "Slide Reader")">
     <header class="ciit-slide-reader-header">
         <div class="ciit-slide-reader-header-inner">
@@ -32,7 +30,7 @@
             </a>
 
             <div class="ciit-slide-reader-title">
-                <span>SLIDE READER</span>
+                <span>PDF SLIDE READER</span>
                 <h1>@(ViewData["SlideTitle"] ?? "Slides")</h1>
             </div>
 
@@ -46,9 +44,9 @@
 
     <div class="ciit-slide-reader-shell">
         <aside class="ciit-slide-reader-thumbnails"
-               aria-label="Slide thumbnails">
+               aria-label="PDF page thumbnails">
             <div id="slideThumbnails" class="ciit-slide-reader-thumbnail-list">
-                <div class="ciit-slide-reader-loading">Loading slides…</div>
+                <div class="ciit-slide-reader-loading">Loading pages…</div>
             </div>
         </aside>
 
@@ -56,15 +54,15 @@
             <div id="slideStage" class="ciit-slide-reader-stage" tabindex="0">
                 <div id="slideLoading" class="ciit-slide-reader-loading-panel">
                     <div class="spinner-border" aria-hidden="true"></div>
-                    <strong>Opening slides</strong>
-                    <span>The presentation is rendered in your browser.</span>
+                    <strong>Opening PDF</strong>
+                    <span>The PDF is rendered securely in your browser.</span>
                 </div>
             </div>
         </main>
     </div>
 
-    <footer class="ciit-slide-reader-controls" aria-label="Slide controls">
-        <button type="button" class="ciit-slide-control" id="slidePrevious" title="Previous slide">
+    <footer class="ciit-slide-reader-controls" aria-label="PDF page controls">
+        <button type="button" class="ciit-slide-control" id="slidePrevious" title="Previous page">
             <i class="bi bi-chevron-left"></i>
             <span>Previous</span>
         </button>
@@ -75,7 +73,7 @@
             <span id="slideControlTotal">—</span>
         </div>
 
-        <button type="button" class="ciit-slide-control" id="slideNext" title="Next slide">
+        <button type="button" class="ciit-slide-control" id="slideNext" title="Next page">
             <span>Next</span>
             <i class="bi bi-chevron-right"></i>
         </button>
@@ -89,7 +87,7 @@
         <button type="button" class="ciit-slide-icon-control" id="slideZoomIn" title="Zoom in" aria-label="Zoom in">
             <i class="bi bi-plus-lg"></i>
         </button>
-        <button type="button" class="ciit-slide-icon-control" id="slideFit" title="Fit slide" aria-label="Fit slide">
+        <button type="button" class="ciit-slide-icon-control" id="slideFit" title="Fit page" aria-label="Fit page">
             <i class="bi bi-arrows-angle-contract"></i>
         </button>
         <button type="button" class="ciit-slide-icon-control" id="slideFullscreen" title="Fullscreen" aria-label="Fullscreen">
