@@ -2314,3 +2314,82 @@ details[open] > summary .ciit-learning-disclosure-icon {
 .ciit-learning-topic-heading {
     cursor: pointer;
 }
+
+/* Learning topic layout additions */
+.ciit-learning-main-tabs {
+            display: grid;
+            grid-template-columns: repeat(3, minmax(0, 1fr));
+            gap: 8px;
+            padding: 8px;
+            margin-bottom: 20px;
+            border: 1px solid rgba(255, 255, 255, .8);
+            border-radius: 18px;
+            background: rgba(226, 238, 255, .72);
+            box-shadow: 0 8px 24px rgba(42, 94, 163, .08);
+        }
+
+        .ciit-learning-main-tab {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            min-height: 44px;
+            padding: 10px 12px;
+            border: 1px solid rgba(255, 255, 255, .8);
+            border-radius: 12px;
+            background: rgba(255, 255, 255, .35);
+            color: #58759d;
+            font-weight: 700;
+            text-align: center;
+            text-decoration: none;
+        }
+
+        .ciit-learning-main-tab:hover,
+        .ciit-learning-main-tab:focus-visible {
+            background: #fff;
+            color: #075cff;
+            text-decoration: none;
+        }
+
+        .ciit-learning-topic-progress {
+            min-width: 260px;
+            max-width: 390px;
+            flex: 1 1 320px;
+            padding: 22px 24px;
+            border: 1px solid rgba(255, 255, 255, .9);
+            border-radius: 22px;
+            background: rgba(255, 255, 255, .72);
+            box-shadow: 0 12px 32px rgba(47, 93, 151, .08);
+        }
+
+        .ciit-learning-topic-progress-track {
+            height: 8px;
+            margin-top: 14px;
+            overflow: hidden;
+            border-radius: 999px;
+            background: #dce9fb;
+        }
+
+        .ciit-learning-topic-progress-track span {
+            display: block;
+            height: 100%;
+            border-radius: inherit;
+            background: linear-gradient(90deg, #2767ff, #28b8ed);
+        }
+
+        @media (max-width: 767.98px) {
+            .ciit-learning-main-tabs {
+                gap: 4px;
+                padding: 5px;
+            }
+
+            .ciit-learning-main-tab {
+                padding: 8px 4px;
+                font-size: .8rem;
+            }
+
+            .ciit-learning-topic-progress {
+                min-width: 0;
+                max-width: none;
+                width: 100%;
+            }
+        }
