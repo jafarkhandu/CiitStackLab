@@ -163,7 +163,7 @@ else
                             <span class="ciit-learning-badge">@Model.Category</span>
                             <span class="ciit-learning-meta-pill">@Model.Level</span>
                             <span class="ciit-learning-meta-pill">
-                                <i class="bi bi-clock me-1"></i>@Model.DurationHours hrs
+                                <i class="bi bi-clock me-1"></i>@Model.DurationHours.ToString("0.##") hrs
                             </span>
                             <span class="ciit-learning-meta-pill">
                                 <i class="bi bi-journal-bookmark me-1"></i>@Model.Topics.Sum(topic => topic.Chapters.Count) chapters
