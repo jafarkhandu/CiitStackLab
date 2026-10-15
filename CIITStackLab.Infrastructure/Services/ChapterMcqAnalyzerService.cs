@@ -11,7 +11,7 @@ namespace CIITStackLab.Infrastructure.Services;
 /// </summary>
 public sealed class ChapterMcqAnalyzerService : IChapterMcqAnalyzerService
 {
-    private const int RequiredQuestionCount = 20;
+    private const int MaximumQuestionCount = 100;
 
     private static readonly Regex SentenceBoundaryPattern = new(
         @"(?<=[.!?])\s+(?=[A-Z0-9""“'(])",
@@ -118,14 +118,14 @@ public sealed class ChapterMcqAnalyzerService : IChapterMcqAnalyzerService
         {
             cancellationToken.ThrowIfCancellationRequested();
 
-            if (questions.Count >= RequiredQuestionCount)
+            if (questions.Count >= MaximumQuestionCount)
             {
                 break;
             }
 
             foreach (var term in terms.OrderByDescending(value => value.Length))
             {
-                if (questions.Count >= RequiredQuestionCount)
+                if (questions.Count >= MaximumQuestionCount)
                 {
                     break;
                 }
@@ -165,7 +165,7 @@ public sealed class ChapterMcqAnalyzerService : IChapterMcqAnalyzerService
         {
             cancellationToken.ThrowIfCancellationRequested();
 
-            if (questions.Count >= RequiredQuestionCount)
+            if (questions.Count >= MaximumQuestionCount)
             {
                 break;
             }
@@ -199,7 +199,7 @@ public sealed class ChapterMcqAnalyzerService : IChapterMcqAnalyzerService
         {
             cancellationToken.ThrowIfCancellationRequested();
 
-            if (questions.Count >= RequiredQuestionCount)
+            if (questions.Count >= MaximumQuestionCount)
             {
                 break;
             }
@@ -217,24 +217,22 @@ public sealed class ChapterMcqAnalyzerService : IChapterMcqAnalyzerService
                 fact.LineNumber);
         }
 
-        if (questions.Count != RequiredQuestionCount)
+        if (questions.Count == 0)
         {
             throw new InvalidOperationException(
-                "The local analyzer found enough material for only " + questions.Count +
-                " distinct, source-grounded MCQs; it will not invent the remaining questions. " +
-                "Upload fuller chapter notes with more complete statements and distinct concepts, or upload a preformatted MCQ file. No MCQs were saved.");
+                "The local analyzer could not build any distinct, source-grounded MCQs. Upload fuller chapter notes with complete statements and distinct concepts. No MCQs were saved.");
         }
 
         await ReportAsync(
             reportProgress,
-            "Created 20 questions from extracted chapter statements and terms. Checking question and option uniqueness...",
+            "Created " + questions.Count + " questions from extracted chapter statements and terms. Checking question and option uniqueness...",
             cancellationToken);
 
         ValidateGeneratedQuestions(questions);
 
         await ReportAsync(
             reportProgress,
-            "Local analysis is complete. The 20-question preview is ready; nothing has been saved yet.",
+            "Local analysis is complete. The " + questions.Count + "-question preview is ready; nothing has been saved yet.",
             cancellationToken);
 
         return questions;
@@ -531,10 +529,10 @@ public sealed class ChapterMcqAnalyzerService : IChapterMcqAnalyzerService
 
     private static void ValidateGeneratedQuestions(IReadOnlyList<McqImportQuestionDto> questions)
     {
-        if (questions.Count != RequiredQuestionCount)
+        if (questions.Count == 0 || questions.Count > MaximumQuestionCount)
         {
             throw new InvalidOperationException(
-                "Local analysis did not produce exactly 20 questions. Nothing was saved.");
+                "Local analysis must produce between 1 and 100 questions. Nothing was saved.");
         }
 
         var normalizedQuestions = new HashSet<string>(StringComparer.Ordinal);
