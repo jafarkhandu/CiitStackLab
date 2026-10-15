@@ -2144,3 +2144,18 @@
         min-height: 220px;
     }
 }
+
+
+/* Keep Knowledge Check as a section of the same card, not a nested card. */
+.ciit-learning-all-assessments .ciit-learning-assessment-section {
+    margin: 18px 0;
+    padding: 18px 0;
+    border: 0;
+    border-top: 1px solid rgba(213, 228, 248, .9);
+    border-radius: 0;
+    background: transparent;
+    box-shadow: none;
+}
+.ciit-learning-all-assessments .ciit-learning-assessment-section .ciit-learning-resource-title {
+    margin-bottom: 16px;
+}
