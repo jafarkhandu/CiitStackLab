@@ -23,6 +23,11 @@
     var currentItem = orderedContents.ElementAtOrDefault(currentIndex);
     var currentContent = currentItem?.Content;
     var learningProgress = Model.Progress;
+    var orderedChapters = Model.Topics.SelectMany(topic => topic.Chapters).ToList();
+    var currentChapterIndex = currentContent?.NoteId.HasValue == true
+        ? orderedChapters.FindIndex(chapter => chapter.Id == currentContent.NoteId.Value)
+        : 0;
+    if (currentChapterIndex < 0) currentChapterIndex = 0;
     var previousItem = currentIndex > 0 ? orderedContents[currentIndex - 1] : null;
     var nextItem = currentIndex < orderedContents.Count - 1
         ? orderedContents.ElementAtOrDefault(currentIndex + 1)
@@ -119,7 +124,7 @@ else
                                     <div class="progress-bar"
                                          style="width: @learningProgress.Percentage%"></div>
                                 </div>
-                                <small>@learningProgress.CompletedLessons of @learningProgress.TotalLessons lessons completed</small>
+                                <small>@learningProgress.CompletedLessons of @learningProgress.TotalLessons learning resources completed</small>
                             </div>
                         }
                     </div>
@@ -390,7 +395,7 @@ else
                     <div class="ciit-learning-lesson-header">
                         <div class="ciit-learning-lesson-heading">
                             <span class="ciit-learning-eyebrow">
-                                LESSON @(currentIndex + 1) OF @orderedContents.Count
+                                CHAPTER @(currentChapterIndex + 1) OF @Math.Max(orderedChapters.Count, 1)
                             </span>
                             <h2>@currentContent.Title</h2>
                             <p><i class="bi bi-collection me-1"></i>@currentItem?.Topic.Title</p>
@@ -499,6 +504,23 @@ else
                         }
                     </section>
 
+                    @if (!string.IsNullOrWhiteSpace(currentContent.VideoName) || !string.IsNullOrWhiteSpace(currentContent.Slides))
+                    {
+                            <section class="ciit-learning-resource ciit-learning-content-overview" data-learning-panel-content="content">
+                                <div class="ciit-learning-resource-title">
+                                    <span class="ciit-learning-resource-icon"><i class="bi bi-lightbulb"></i></span>
+                                    <div><h3>What you'll cover</h3><p>A quick overview of this lesson's learning resources.</p></div>
+                                </div>
+                                <ul>
+                                    <li><strong>Lesson:</strong> @currentContent.Title</li>
+                                    <li><strong>Video:</strong> @(string.IsNullOrWhiteSpace(currentContent.VideoName) ? "Not provided for this lesson" : "Available — load it when you're ready")</li>
+                                    <li><strong>Slides:</strong> @(string.IsNullOrWhiteSpace(currentContent.Slides) ? "Not provided for this lesson" : "Available as supplementary study material")</li>
+                                    <li><strong>Practice:</strong> Review the chapter assessment section after studying the notes and lesson resources.</li>
+                                    <li><strong>Suggested order:</strong> Notes → lesson content → chapter assessments.</li>
+                                </ul>
+                            </section>
+                    }
+
                     @if (!string.IsNullOrWhiteSpace(currentContent.VideoName))
                     {
                         var videoUrl = ResolveResourceUrl(currentContent.VideoName, "videos");
@@ -509,20 +531,6 @@ else
                         var isDirectVideoFile = videoExtension.Equals(".mp4", StringComparison.OrdinalIgnoreCase)
                             || videoExtension.Equals(".webm", StringComparison.OrdinalIgnoreCase)
                             || videoExtension.Equals(".mov", StringComparison.OrdinalIgnoreCase);
-
-                        <section class="ciit-learning-resource ciit-learning-content-overview" data-learning-panel-content="content">
-                            <div class="ciit-learning-resource-title">
-                                <span class="ciit-learning-resource-icon"><i class="bi bi-lightbulb"></i></span>
-                                <div><h3>What you'll cover</h3><p>A quick overview of this lesson's learning resources.</p></div>
-                            </div>
-                            <ul>
-                                <li><strong>Lesson:</strong> @currentContent.Title</li>
-                                <li><strong>Video:</strong> @(string.IsNullOrWhiteSpace(currentContent.VideoName) ? "Not provided for this lesson" : "Available — load it when you're ready")</li>
-                                <li><strong>Slides:</strong> @(string.IsNullOrWhiteSpace(currentContent.Slides) ? "Not provided for this lesson" : "Available as supplementary study material")</li>
-                                <li><strong>Practice:</strong> Review the chapter assessment section after studying the notes and lesson resources.</li>
-                                <li><strong>Suggested order:</strong> Notes → lesson content → chapter assessments.</li>
-                            </ul>
-                        </section>
 
                         <section class="ciit-learning-resource ciit-learning-video-section" data-learning-panel-content="content">
                             <div class="ciit-learning-resource-title">
