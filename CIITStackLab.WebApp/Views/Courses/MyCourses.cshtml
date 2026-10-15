@@ -42,7 +42,7 @@
             </article>
             <article class="ciit-learning-overview-card">
                 <span class="ciit-learning-overview-icon ciit-learning-overview-icon-cyan"><i class="bi bi-clock-history" aria-hidden="true"></i></span>
-                <div><span class="ciit-learning-overview-label">Learning time</span><strong>@totalLearningHours <em>hrs</em></strong><small>Combined course duration</small></div>
+                <div><span class="ciit-learning-overview-label">Learning time</span><strong>@totalLearningHours.ToString("0.##") <em>hrs</em></strong><small>Combined course duration</small></div>
             </article>
             <article class="ciit-learning-overview-card ciit-learning-overview-card-note">
                 <span class="ciit-learning-overview-icon ciit-learning-overview-icon-green"><i class="bi bi-stars" aria-hidden="true"></i></span>
@@ -103,7 +103,7 @@
                                 <p class="ciit-my-course-description">@(string.IsNullOrWhiteSpace(course.ShortDescription) ? "Continue building your skills with this structured course." : course.ShortDescription)</p>
                                 <div class="ciit-my-course-meta">
                                     <span><i class="bi bi-bar-chart-line" aria-hidden="true"></i>@course.Level</span>
-                                    <span><i class="bi bi-clock" aria-hidden="true"></i>@course.DurationHours hrs</span>
+                                    <span><i class="bi bi-clock" aria-hidden="true"></i>@course.DurationHours.ToString("0.##") hrs</span>
                                 </div>
                                 <a asp-controller="Courses"
                                    asp-action="CourseEnvironment"
