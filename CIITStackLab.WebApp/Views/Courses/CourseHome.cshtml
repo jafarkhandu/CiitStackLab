@@ -144,7 +144,7 @@
                                         <span class="ciit-curriculum-topic-icon">
                                             <i class="bi bi-collection"></i>
                                         </span>
-                                        <span>
+                                        <span class="@(topicCompleted ? "is-completed" : "")">
                                             <strong>@topic.Title</strong>
                                             <small>@topic.Chapters.Count chapter@(topic.Chapters.Count == 1 ? "" : "s")</small>
                                             @if (topicCompleted)
