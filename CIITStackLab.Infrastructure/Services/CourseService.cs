@@ -91,7 +91,17 @@ public sealed class CourseService
             .OrderBy(x => x.Title)
             .ToListAsync(cancellationToken);
 
-        return courses.Select(Map).ToList();
+        var durationHoursByCourseId = await GetDurationHoursByCourseIdsAsync(
+            courses.Select(course => course.Id).ToList(),
+            cancellationToken);
+
+        return courses
+            .Select(course => Map(
+                course,
+                durationHoursByCourseId.TryGetValue(course.Id, out var durationHours)
+                    ? durationHours
+                    : 0m))
+            .ToList();
     }
 
     public async Task<CourseDto?> GetByIdAsync(
@@ -104,7 +114,20 @@ public sealed class CourseService
                 x => x.Id == id && x.Flag == 0,
                 cancellationToken);
 
-        return course is null ? null : Map(course);
+        if (course is null)
+        {
+            return null;
+        }
+
+        var durationHoursByCourseId = await GetDurationHoursByCourseIdsAsync(
+            new[] { course.Id },
+            cancellationToken);
+
+        return Map(
+            course,
+            durationHoursByCourseId.TryGetValue(course.Id, out var durationHours)
+                ? durationHours
+                : 0m);
     }
 
     public async Task<CourseDetailsDto?> GetDetailsAsync(
@@ -306,13 +329,44 @@ public sealed class CourseService
             ImageUrl = presentation.ImageUrl,
             Category = presentation.Category,
             Level = presentation.Level,
-            DurationHours = presentation.DurationHours,
+            DurationHours = topics.Sum(topic => topic.DurationMinutes ?? 0) / 60m,
             TotalPrice = topics.Sum(topic => Math.Max(0m, topic.Price)),
             Topics = topics
         };
     }
 
-    private static CourseDto Map(CIITStackLab.Domain.Entities.Course course)
+    private async Task<IReadOnlyDictionary<int, decimal>> GetDurationHoursByCourseIdsAsync(
+        IReadOnlyCollection<int> courseIds,
+        CancellationToken cancellationToken)
+    {
+        if (courseIds.Count == 0)
+        {
+            return new Dictionary<int, decimal>();
+        }
+
+        var durations = await (
+            from courseTopic in _dbContext.CourseModules.AsNoTracking()
+            join topic in _dbContext.Topics.AsNoTracking()
+                on courseTopic.TopicId equals topic.Id
+            where courseIds.Contains(courseTopic.CourseId)
+                  && courseTopic.Flag == 0
+                  && topic.Flag == 0
+            group topic by courseTopic.CourseId into topicGroup
+            select new
+            {
+                CourseId = topicGroup.Key,
+                TotalMinutes = topicGroup.Sum(topic => topic.DurationMinutes ?? 0)
+            })
+            .ToListAsync(cancellationToken);
+
+        return durations.ToDictionary(
+            item => item.CourseId,
+            item => item.TotalMinutes / 60m);
+    }
+
+    private static CourseDto Map(
+        CIITStackLab.Domain.Entities.Course course,
+        decimal durationHours)
     {
         var presentation = Presentations.TryGetValue(course.Title, out var known)
             ? known
@@ -327,7 +381,7 @@ public sealed class CourseService
             ImageUrl = presentation.ImageUrl,
             Category = presentation.Category,
             Level = presentation.Level,
-            DurationHours = presentation.DurationHours,
+            DurationHours = durationHours,
             IsPublished = course.Flag == 0
         };
     }
