@@ -22,6 +22,7 @@ public sealed class CourseTopicDto
     public string Title { get; init; } = string.Empty;
     public decimal Price { get; init; }
     public bool HasNotes { get; init; }
+    public int ChapterCount { get; init; }
     public IReadOnlyList<CourseContentDto> Contents { get; init; } = Array.Empty<CourseContentDto>();
 }
 
