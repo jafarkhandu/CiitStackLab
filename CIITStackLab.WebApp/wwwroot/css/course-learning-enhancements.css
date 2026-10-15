@@ -1725,3 +1725,95 @@
     .ciit-learning-category-body,.ciit-learning-assessment-type-body {animation:none!important}
     .ciit-learning-category-link,.ciit-learning-category-heading,.ciit-learning-category-arrow {transition:none!important}
 }
+
+
+/* Readable chapter names and one cohesive assessment surface. */
+.ciit-learning-chapter-summary .ciit-learning-chapter-title {
+    min-width: 0;
+    flex: 1 1 auto;
+}
+.ciit-learning-chapter-summary .ciit-learning-chapter-title strong {
+    display: block;
+    color: #263d5f;
+    font-size: .86rem !important;
+    font-weight: 800;
+    line-height: 1.5 !important;
+    letter-spacing: -.012em;
+    overflow-wrap: anywhere;
+    word-break: normal;
+}
+.ciit-learning-chapter-summary .ciit-learning-chapter-title small {
+    display: block;
+    margin-top: 4px;
+    color: #7889a4;
+    font-size: .72rem !important;
+    line-height: 1.45;
+}
+.ciit-learning-chapter-assessment {
+    margin-top: 18px;
+    padding: clamp(18px, 2.4vw, 30px);
+    border: 1px solid rgba(211,226,249,.95);
+    border-radius: 22px;
+    background: rgba(255,255,255,.82);
+    box-shadow: 0 14px 36px rgba(36,70,119,.07), inset 0 1px 0 rgba(255,255,255,.9);
+}
+.ciit-learning-chapter-assessment > h4 {
+    margin: 0 0 20px;
+    font-size: clamp(1.25rem, 2vw, 1.65rem);
+    line-height: 1.35;
+    font-weight: 850;
+    letter-spacing: -.025em;
+}
+.ciit-learning-chapter-assessment .ciit-learning-assessment-subsection {
+    margin: 22px 0 0;
+    padding-top: 20px;
+    border-top: 1px solid #e4ecf8;
+}
+.ciit-learning-chapter-assessment .ciit-learning-assessment-subsection h5 {
+    margin: 0 0 14px;
+    font-size: 1.05rem;
+    line-height: 1.45;
+    font-weight: 850;
+}
+.ciit-learning-chapter-assessment .ciit-learning-assessment-question {
+    margin: 0;
+    padding: 18px 4px;
+    border: 0;
+    border-bottom: 1px solid #e8eef8;
+    border-radius: 0;
+    background: transparent;
+    box-shadow: none;
+}
+.ciit-learning-chapter-assessment .ciit-learning-assessment-question:last-child {
+    border-bottom: 0;
+}
+.ciit-learning-chapter-assessment .ciit-learning-assessment-question > strong {
+    display: block;
+    margin: 0 0 10px;
+    color: #263d5f;
+    font-size: .98rem;
+    line-height: 1.75;
+    font-weight: 800;
+    overflow-wrap: anywhere;
+}
+.ciit-learning-chapter-assessment .ciit-learning-assessment-question p,
+.ciit-learning-chapter-assessment .ciit-practice-import-description {
+    margin: 0;
+    color: #506783;
+    font-size: .94rem;
+    line-height: 1.85;
+    overflow-wrap: anywhere;
+}
+.ciit-learning-chapter-assessment .ciit-learning-assessment-question ol {
+    margin: 0;
+    padding-left: 1.5rem;
+    color: #526985;
+    font-size: .9rem;
+    line-height: 1.85;
+}
+.ciit-learning-chapter-assessment .ciit-learning-assessment-question li { padding-left: .25rem; }
+@media (max-width: 767.98px) {
+    .ciit-learning-chapter-assessment { padding: 17px; border-radius: 17px; }
+    .ciit-learning-chapter-assessment .ciit-learning-assessment-question { padding: 15px 1px; }
+    .ciit-learning-chapter-assessment .ciit-learning-assessment-question > strong { font-size: .92rem; }
+}
