@@ -504,9 +504,7 @@ else
                         }
                     </section>
 
-                    @if (!string.IsNullOrWhiteSpace(currentContent.VideoName) || !string.IsNullOrWhiteSpace(currentContent.Slides))
-                    {
-                            <section class="ciit-learning-resource ciit-learning-content-overview" data-learning-panel-content="content">
+                    <section class="ciit-learning-resource ciit-learning-content-overview" data-learning-panel-content="content">
                                 <div class="ciit-learning-resource-title">
                                     <span class="ciit-learning-resource-icon"><i class="bi bi-lightbulb"></i></span>
                                     <div><h3>What you'll cover</h3><p>A quick overview of this lesson's learning resources.</p></div>
@@ -518,8 +516,7 @@ else
                                     <li><strong>Practice:</strong> Review the chapter assessment section after studying the notes and lesson resources.</li>
                                     <li><strong>Suggested order:</strong> Notes → lesson content → chapter assessments.</li>
                                 </ul>
-                            </section>
-                    }
+                    </section>
 
                     @if (!string.IsNullOrWhiteSpace(currentContent.VideoName))
                     {
