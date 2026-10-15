@@ -13,8 +13,45 @@
             <div class="ciit-content-field"><label asp-for="TopicId">Topic</label><select asp-for="TopicId" asp-items="ViewBag.Topics" class="form-select" id="contentTopic"><option value="0">Select topic</option></select><span asp-validation-for="TopicId" class="text-danger"></span></div>
             <div class="ciit-content-field"><label asp-for="NoteId">Notes / Chapter</label><select asp-for="NoteId" asp-items="ViewBag.Notes" class="form-select" id="contentNote"><option value="0">Select note chapter</option></select><span asp-validation-for="NoteId" class="text-danger"></span><small>Only note chapters belonging to the selected topic are available.</small></div>
             <div class="ciit-content-field full-width"><label asp-for="Title">Content Name</label><input asp-for="Title" class="form-control" maxlength="100" autocomplete="off" /><span asp-validation-for="Title" class="text-danger"></span></div>
-            <div class="ciit-content-field"><label>Replace Slides</label><input type="file" name="slidesFile" class="form-control" accept=".pdf,application/pdf" /><small>@(string.IsNullOrWhiteSpace(Model.Slides) ? "No slides uploaded." : "Upload a PDF to replace the current slides file.")</small></div>
-            <div class="ciit-content-field"><label>Replace Video</label><input type="file" name="videoFile" class="form-control" accept=".mp4,.webm,.mov" /><small>@(string.IsNullOrWhiteSpace(Model.VideoName) ? "No video uploaded." : "A new upload will replace the current video. The video uploads directly to Vimeo.")</small></div>
+            <div class="ciit-content-field">
+                <label>Replace Slides</label>
+                <input type="file" name="slidesFile" class="form-control" accept=".pdf,application/pdf" />
+                <div class="ciit-content-existing-media">
+                    <span class="ciit-content-existing-media-label">Current slides</span>
+                    @if (string.IsNullOrWhiteSpace(Model.Slides))
+                    {
+                        <strong class="is-muted">No slides uploaded</strong>
+                    }
+                    else
+                    {
+                        <strong title="@Model.Slides">@System.IO.Path.GetFileName(Model.Slides)</strong>
+                        <span>Currently attached to this content.</span>
+                    }
+                </div>
+                <small>Choose a PDF file to replace the current slides. Only PDF files are supported.</small>
+            </div>
+            <div class="ciit-content-field">
+                <label>Replace Video</label>
+                <input type="file" name="videoFile" class="form-control" accept=".mp4,.webm,.mov" />
+                <div class="ciit-content-existing-media">
+                    <span class="ciit-content-existing-media-label">Current video</span>
+                    @if (string.IsNullOrWhiteSpace(Model.VideoName))
+                    {
+                        <strong class="is-muted">No video uploaded</strong>
+                    }
+                    else if (Uri.TryCreate(Model.VideoName, UriKind.Absolute, out var currentVideoUri))
+                    {
+                        <strong><a href="@currentVideoUri" target="_blank" rel="noopener noreferrer">Open current video</a></strong>
+                        <span>Current video is attached to this content.</span>
+                    }
+                    else
+                    {
+                        <strong title="@Model.VideoName">@Model.VideoName</strong>
+                        <span>Current video is attached to this content.</span>
+                    }
+                </div>
+                <small>Choose a video file to replace the current video. New video uploads are sent directly to Vimeo.</small>
+            </div>
         </div>
         <div class="ciit-content-form-footer"><a asp-action="Index" class="ciit-content-secondary-btn">Cancel</a><button type="submit" class="ciit-content-primary-btn"><i class="bi bi-check2-circle"></i> Save Changes</button></div>
     </form>
