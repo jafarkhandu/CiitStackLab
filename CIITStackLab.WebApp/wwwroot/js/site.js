@@ -84,6 +84,14 @@ document.addEventListener("DOMContentLoaded", function () {
             if (name === "content") {
                 document.querySelectorAll(".ciit-learning-video-frame iframe[data-src]").forEach(function (frame) {
                     if (!frame.hasAttribute("src")) frame.setAttribute("src", frame.dataset.src);
+                    if (frame.src.indexOf("/uploads/videos/") >= 0
+                        && !document.querySelector("script[data-ciit-mux-player]")) {
+                        const playerScript = document.createElement("script");
+                        playerScript.src = "/js/mux-video-player.js?v=1";
+                        playerScript.async = true;
+                        playerScript.dataset.ciitMuxPlayer = "true";
+                        document.body.appendChild(playerScript);
+                    }
                 });
             }
             if (settings.scroll) {
