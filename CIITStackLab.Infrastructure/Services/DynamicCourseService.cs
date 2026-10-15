@@ -287,6 +287,7 @@ public sealed class DynamicCourseService : ICourseService
                     .Select(content => new CourseLearningContentDto
                     {
                         Id = content.Id,
+                        NoteId = content.NoteId,
                         Title = content.Title ?? string.Empty,
                         Slides = content.Slides,
                         VideoName = content.VideoName,
