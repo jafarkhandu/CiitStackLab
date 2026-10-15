@@ -974,3 +974,13 @@
         transition: none !important;
     }
 }
+
+
+/* Completed topic indicator in the course curriculum. */
+.ciit-curriculum-topic-completed {
+    display: inline-flex;
+    align-items: center;
+    margin-top: 5px;
+    color: #16804b;
+    font-size: .95rem;
+}
