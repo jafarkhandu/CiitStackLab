@@ -25,7 +25,42 @@ public sealed class StudentProgressService : IStudentProgressService
             courseId,
             cancellationToken);
 
-        return progress.LastAccessedContentId;
+        var completedContentIds = progress.CompletedContentIds.ToHashSet();
+
+        if (progress.LastAccessedContentId is int lastAccessedContentId
+            && !completedContentIds.Contains(lastAccessedContentId))
+        {
+            return lastAccessedContentId;
+        }
+
+        var orderedContentIds = await (
+            from course in _dbContext.Courses.AsNoTracking()
+            join courseTopic in _dbContext.CourseModules.AsNoTracking()
+                on course.Id equals courseTopic.CourseId
+            join topic in _dbContext.Topics.AsNoTracking()
+                on courseTopic.TopicId equals topic.Id
+            join lesson in _dbContext.Lessons.AsNoTracking()
+                on (int?)topic.Id equals lesson.TopicId
+            where course.Id == courseId
+                  && course.Flag == 0
+                  && courseTopic.Flag == 0
+                  && topic.Flag == 0
+                  && lesson.Flag == 0
+            orderby topic.Id, lesson.Id
+            select lesson.Id)
+            .Distinct()
+            .ToListAsync(cancellationToken);
+
+        var nextContentId = orderedContentIds
+            .FirstOrDefault(contentId => !completedContentIds.Contains(contentId));
+
+        if (nextContentId > 0)
+        {
+            return nextContentId;
+        }
+
+        return progress.LastAccessedContentId
+            ?? orderedContentIds.LastOrDefault();
     }
 
     public async Task<CourseLearningProgressDto> GetProgressAsync(
