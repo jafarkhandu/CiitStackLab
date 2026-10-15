@@ -26,7 +26,7 @@ public sealed class InterviewQuestionImportPreviewDto
         !string.IsNullOrWhiteSpace(PreviewToken)
         && NoteId > 0
         && FileErrors.Count == 0
-        && Questions.Count == 20
+        && Questions.Count is >= 1 and <= 100
         && Questions.All(question => question.IsValid);
 }
 
