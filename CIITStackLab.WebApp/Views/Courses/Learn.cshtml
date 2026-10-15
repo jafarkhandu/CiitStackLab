@@ -232,14 +232,18 @@ else if (currentContent is null && currentTopic is not null)
                 <div class="ciit-learning-sidebar-scroll">
                     @foreach (var topic in Model.Topics)
                     {
+                        var topicLearningContents = topic.Contents
+                            .Concat(topic.Chapters.SelectMany(chapter => chapter.Contents))
+                            .DistinctBy(content => content.Id)
+                            .ToList();
                         var completedTopicLessons = learningProgress is null
                             ? 0
-                            : topic.Contents.Count(content => learningProgress.CompletedContentIds.Contains(content.Id));
-                        var topicIsCompleted = topic.Contents.Count > 0
-                            && completedTopicLessons == topic.Contents.Count;
-                        var topicProgressPercentage = topic.Contents.Count == 0
+                            : topicLearningContents.Count(content => learningProgress.CompletedContentIds.Contains(content.Id));
+                        var topicIsCompleted = topicLearningContents.Count > 0
+                            && completedTopicLessons == topicLearningContents.Count;
+                        var topicProgressPercentage = topicLearningContents.Count == 0
                             ? 0
-                            : (int)Math.Round(completedTopicLessons * 100d / topic.Contents.Count, MidpointRounding.AwayFromZero);
+                            : (int)Math.Round(completedTopicLessons * 100d / topicLearningContents.Count, MidpointRounding.AwayFromZero);
 
                         <details class="ciit-learning-topic @(topic.Id == currentTopic.Id ? "is-active-topic" : "")"
                                  data-topic-first-content-url="@Url.Action("Learn", "Courses", new { id = Model.Id, topicId = topic.Id })"
@@ -315,14 +319,14 @@ else if (currentContent is null && currentTopic is not null)
                     <div class="ciit-learning-lesson-status">
                         <div class="ciit-learning-lesson-status-copy">
                             <span class="ciit-learning-lesson-status-icon @(learningProgress is not null && currentTopic.Contents.Concat(currentTopic.Chapters.SelectMany(chapter => chapter.Contents)).DistinctBy(content => content.Id).Any() && currentTopic.Contents.Concat(currentTopic.Chapters.SelectMany(chapter => chapter.Contents)).DistinctBy(content => content.Id).All(content => learningProgress.CompletedContentIds.Contains(content.Id)) ? "is-completed" : "")">
-                                <i class="bi @(learningProgress is not null && currentTopic.Contents.Count > 0 && currentTopic.Contents.All(content => learningProgress.CompletedContentIds.Contains(content.Id)) ? "bi-check2-circle" : "bi-journal-bookmark")"></i>
+                                <i class="bi @(learningProgress is not null && currentTopic.Contents.Concat(currentTopic.Chapters.SelectMany(chapter => chapter.Contents)).DistinctBy(content => content.Id).Any() && currentTopic.Contents.Concat(currentTopic.Chapters.SelectMany(chapter => chapter.Contents)).DistinctBy(content => content.Id).All(content => learningProgress.CompletedContentIds.Contains(content.Id)) ? "bi-check2-circle" : "bi-journal-bookmark")"></i>
                             </span>
                             <div>
-                                <strong>@(learningProgress is not null && currentTopic.Contents.Count > 0 && currentTopic.Contents.All(content => learningProgress.CompletedContentIds.Contains(content.Id)) ? "Topic completed" : "Topic learning material")</strong>
+                                <strong>@(learningProgress is not null && currentTopic.Contents.Concat(currentTopic.Chapters.SelectMany(chapter => chapter.Contents)).DistinctBy(content => content.Id).Any() && currentTopic.Contents.Concat(currentTopic.Chapters.SelectMany(chapter => chapter.Contents)).DistinctBy(content => content.Id).All(content => learningProgress.CompletedContentIds.Contains(content.Id)) ? "Topic completed" : "Topic learning material")</strong>
                                 <small>@(currentTopic.Contents.Count > 0 ? "Review the notes, lesson content and assessments for this topic." : "Review the notes and assessments available for this topic.")</small>
                             </div>
                         </div>
-                        @if (learningProgress is not null && currentTopic.Contents.Count > 0 && currentTopic.Contents.All(content => learningProgress.CompletedContentIds.Contains(content.Id)))
+                        @if (learningProgress is not null && currentTopic.Contents.Concat(currentTopic.Chapters.SelectMany(chapter => chapter.Contents)).DistinctBy(content => content.Id).Any() && currentTopic.Contents.Concat(currentTopic.Chapters.SelectMany(chapter => chapter.Contents)).DistinctBy(content => content.Id).All(content => learningProgress.CompletedContentIds.Contains(content.Id)))
                         {
                             <span class="ciit-learning-completed-pill"><i class="bi bi-check-lg"></i> Completed</span>
                         }
