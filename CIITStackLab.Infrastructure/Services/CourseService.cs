@@ -139,6 +139,7 @@ public sealed class CourseService
                 TopicId = topic.Id,
                 TopicTitle = topic.Title,
                 TopicPrice = topic.Price,
+                TopicDurationMinutes = topic.DurationMinutes,
                 ContentId = (int?)content.Id,
                 NoteId = (int?)content.NoteId,
                 ContentTitle = content.Title,
@@ -270,12 +271,13 @@ public sealed class CourseService
         }
 
         var topics = rows
-            .GroupBy(x => new { x.TopicId, x.TopicTitle, x.TopicPrice })
+            .GroupBy(x => new { x.TopicId, x.TopicTitle, x.TopicPrice, x.TopicDurationMinutes })
             .Select(group => new CourseTopicDto
             {
                 Id = group.Key.TopicId,
                 Title = group.Key.TopicTitle,
                 Price = group.Key.TopicPrice,
+                DurationMinutes = group.Key.TopicDurationMinutes,
                 HasNotes = topicsWithNotes.Contains(group.Key.TopicId),
                 Contents = group
                     .Where(x => x.ContentId.HasValue)
