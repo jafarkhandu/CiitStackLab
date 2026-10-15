@@ -24,7 +24,7 @@
                 && topicContentIds.All(completedContentIds.Contains)
         };
     }).ToList();
-    var totalTopics = topicProgress.Count(topic => topic.HasResources);
+    var totalTopics = Model.Topics.Count;
     var completedTopics = topicProgress.Count(topic => topic.IsCompleted);
     var percentage = totalTopics == 0
         ? 0
