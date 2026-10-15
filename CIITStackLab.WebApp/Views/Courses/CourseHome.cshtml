@@ -26,7 +26,8 @@
         : orderedLessons.FirstOrDefault(lesson => !completedContentIds.Contains(lesson.Id));
     var continueTopic = continueLesson is null
         ? Model.Topics.FirstOrDefault(topic => topic.Contents.Count == 0 && topic.Chapters.Count > 0)
-            ?? Model.Topics.FirstOrDefault(topic => topic.Chapters.Count > 0)
+            ?? Model.Topics.LastOrDefault(topic => topic.Chapters.Count > 0)
+            ?? Model.Topics.LastOrDefault()
         : null;
     var continueContentId = continueLesson?.Id
         ?? (!hasStartedLearning ? firstLesson?.Id : null);
