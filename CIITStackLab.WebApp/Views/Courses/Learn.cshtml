@@ -478,16 +478,24 @@ else
                             <span class="ciit-learning-resource-icon"><i class="bi bi-journal-text"></i></span>
                             <div>
                                 <h3>Chapter Notes</h3>
-                                <p>@(currentChapter?.Title ?? "Learning notes")</p>
+                                <p>Start with the notes, then review content and assessments.</p>
                             </div>
                         </div>
-                        @if (currentChapter is not null && !string.IsNullOrWhiteSpace(currentChapter.NotesHtml))
+                        @foreach (var notesChapter in Model.Topics.SelectMany(item => item.Chapters))
                         {
-                            <div class="ciit-learning-notes-content">@Html.Raw(currentChapter.NotesHtml)</div>
-                        }
-                        else
-                        {
-                            <p class="ciit-learning-category-empty">No notes have been added to this chapter yet.</p>
+                            <article class="ciit-learning-notes-content"
+                                     data-chapter-notes="@notesChapter.Id"
+                                     hidden="@(notesChapter.Id == currentChapter?.Id ? null : "hidden")">
+                                <h4>@notesChapter.Title</h4>
+                                @if (!string.IsNullOrWhiteSpace(notesChapter.NotesHtml))
+                                {
+                                    @Html.Raw(notesChapter.NotesHtml)
+                                }
+                                else
+                                {
+                                    <p class="ciit-learning-category-empty">No notes have been added to this chapter yet.</p>
+                                }
+                            </article>
                         }
                     </section>
 
@@ -501,6 +509,20 @@ else
                         var isDirectVideoFile = videoExtension.Equals(".mp4", StringComparison.OrdinalIgnoreCase)
                             || videoExtension.Equals(".webm", StringComparison.OrdinalIgnoreCase)
                             || videoExtension.Equals(".mov", StringComparison.OrdinalIgnoreCase);
+
+                        <section class="ciit-learning-resource ciit-learning-content-overview" data-learning-panel-content="content">
+                            <div class="ciit-learning-resource-title">
+                                <span class="ciit-learning-resource-icon"><i class="bi bi-lightbulb"></i></span>
+                                <div><h3>What you'll cover</h3><p>A quick overview of this lesson's learning resources.</p></div>
+                            </div>
+                            <ul>
+                                <li><strong>Lesson:</strong> @currentContent.Title</li>
+                                <li><strong>Video:</strong> @(string.IsNullOrWhiteSpace(currentContent.VideoName) ? "Not provided for this lesson" : "Available — load it when you're ready")</li>
+                                <li><strong>Slides:</strong> @(string.IsNullOrWhiteSpace(currentContent.Slides) ? "Not provided for this lesson" : "Available as supplementary study material")</li>
+                                <li><strong>Practice:</strong> Review the chapter assessment section after studying the notes and lesson resources.</li>
+                                <li><strong>Suggested order:</strong> Notes → lesson content → chapter assessments.</li>
+                            </ul>
+                        </section>
 
                         <section class="ciit-learning-resource ciit-learning-video-section" data-learning-panel-content="content">
                             <div class="ciit-learning-resource-title">
