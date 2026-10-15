@@ -68,15 +68,21 @@ if (root) {
         state.objectUrls = [];
     };
 
-    const renderError = message => {
+    const renderError = (message, preserveNavigation = true) => {
         setLoading(false);
         stage.innerHTML = `
             <div class="ciit-slide-reader-error" role="alert">
                 <i class="bi bi-exclamation-triangle"></i>
-                <strong>Unable to open these slides</strong>
+                <strong>Unable to open slide ${state.page + 1}</strong>
                 <span>${message}</span>
+                <small>Select another slide or try this slide again.</small>
             </div>`;
-        thumbnails.innerHTML = '';
+
+        // A single PowerPoint slide can contain an unsupported or malformed object.
+        // Do not destroy the whole presentation navigation when that happens.
+        if (!preserveNavigation) {
+            thumbnails.innerHTML = '';
+        }
     };
 
     const renderPdfPage = async () => {
@@ -170,8 +176,12 @@ if (root) {
                 await renderPptSlide();
             }
         } catch (error) {
-            console.error(error);
-            renderError('This file could not be rendered in the browser. Try another presentation file.');
+            console.error(`Slide ${state.page + 1} render failed`, error);
+            const message = error instanceof Error && error.message
+                ? error.message
+                : 'This slide could not be rendered in the browser.';
+            renderError(message);
+            selectThumbnail();
         }
     };
 
@@ -204,6 +214,7 @@ if (root) {
                 image.src = await getPptSlideUrl(index);
             } catch (error) {
                 console.warn(`Unable to render thumbnail ${index + 1}`, error);
+                image.alt = `Slide ${index + 1} preview unavailable`;
             }
         }
 
@@ -313,7 +324,7 @@ if (root) {
 
     const load = async () => {
         if (!slideUrl) {
-            renderError('No slide file is attached to this resource.');
+            renderError('No slide file is attached to this resource.', false);
             return;
         }
 
@@ -343,7 +354,7 @@ if (root) {
             console.error(error);
             renderError(error instanceof Error && error.message.includes('HTTP')
                 ? 'The slide file could not be loaded. Please try again.'
-                : 'This file could not be rendered in the browser.');
+                : 'This file could not be rendered in the browser.', false);
         }
     };
 
