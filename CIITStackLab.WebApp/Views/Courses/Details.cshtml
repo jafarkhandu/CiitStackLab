@@ -3,7 +3,7 @@
 @{
     ViewData["Title"] = Model.Title;
     var totalTopicDurationMinutes = Model.Topics.Sum(topic => topic.DurationMinutes ?? 0);
-    var totalDurationHours = (int)Math.Ceiling(totalTopicDurationMinutes / 60m);
+    var totalDurationHours = totalTopicDurationMinutes / 60m;
 }
 
 @section Styles {
@@ -64,7 +64,7 @@
 
                     <div class="ciit-course-meta-row ciit-student-course-stats">
                         <div><strong>@Model.Level</strong><span>Level</span></div>
-                        <div><strong>@totalDurationHours hrs</strong><span>Duration</span></div>
+                        <div><strong>@totalDurationHours.ToString("0.##") hrs</strong><span>Duration</span></div>
                         <div><strong>@Model.Topics.Count</strong><span>Topics</span></div>
                     </div>
 
