@@ -2159,3 +2159,13 @@
 .ciit-learning-all-assessments .ciit-learning-assessment-section .ciit-learning-resource-title {
     margin-bottom: 16px;
 }
+
+
+/* Improve readability of the chapter resource count. */
+.ciit-learning-chapter-summary .ciit-learning-chapter-title small {
+    color: #5f7392;
+    font-size: .8rem !important;
+    font-weight: 650;
+    line-height: 1.5;
+    letter-spacing: -.005em;
+}
