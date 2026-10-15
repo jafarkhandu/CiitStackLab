@@ -151,46 +151,46 @@
                                     </span>
                                 </button>
 
-                                <div id="@topicKey" class="ciit-curriculum-topic-panel" hidden>
+                                                                <div id="@topicKey" class="ciit-curriculum-topic-panel" hidden>
                                     <div class="ciit-curriculum-topic-panel-inner">
-                                        @if (topic.Contents.Count == 0)
+                                        @if (topic.Chapters.Count == 0 && topic.Contents.Count == 0)
                                         {
                                             <div class="ciit-curriculum-empty">No learning resources are linked to this topic yet.</div>
                                         }
                                         else
                                         {
-                                            @foreach (var lesson in topic.Contents)
+                                            @foreach (var chapter in topic.Chapters)
                                             {
-                                                lessonNumber++;
-                                                var completed = progress?.CompletedContentIds?.Contains(lesson.Id) == true;
-
-                                                <div class="ciit-curriculum-lesson">
-                                                    <div class="ciit-curriculum-lesson-title">
-                                                        <span class="ciit-curriculum-lesson-number">@lessonNumber.ToString("00")</span>
-                                                        <div>
-                                                            <strong>@lesson.Title</strong>
-                                                            <small>
-                                                                @if (completed)
-                                                                {
-                                                                    <span>Completed</span>
-                                                                }
-                                                                else
-                                                                {
-                                                                    <span>Ready to learn</span>
-                                                                }
-                                                            </small>
-                                                        </div>
+                                                <section class="ciit-curriculum-chapter-map">
+                                                    <div class="ciit-curriculum-chapter-map-heading">
+                                                        <span class="ciit-curriculum-lesson-number">@chapter.Order</span>
+                                                        <div><strong>@chapter.Title</strong><small>Chapter learning map</small></div>
                                                     </div>
-
-                                                    <a class="btn @(completed ? "btn-outline-primary" : "btn-primary") btn-sm"
-                                                       asp-controller="Courses"
-                                                       asp-action="Learn"
-                                                       asp-route-id="@Model.Id"
-                                                       asp-route-contentId="@lesson.Id">
-                                                        @(completed ? "Review" : "Start")
-                                                        <i class="bi bi-arrow-right ms-1"></i>
-                                                    </a>
-                                                </div>
+                                                    <div class="ciit-curriculum-resource-map">
+                                                        @if (!string.IsNullOrWhiteSpace(chapter.NotesHtml)) { <span class="ciit-curriculum-resource-chip"><i class="bi bi-journal-text"></i> Notes</span> }
+                                                        @if (chapter.Contents.Count > 0)
+                                                        {
+                                                            <div class="ciit-curriculum-resource-group">
+                                                                <span class="ciit-curriculum-resource-chip"><i class="bi bi-play-btn"></i> Content (@chapter.Contents.Count)</span>
+                                                                @foreach (var resource in chapter.Contents)
+                                                                {
+                                                                    <p class="ciit-curriculum-resource-detail">@resource.Title@if (!string.IsNullOrWhiteSpace(resource.VideoName)) { <span> · Video</span> }@if (!string.IsNullOrWhiteSpace(resource.Slides)) { <span> · Slides</span> }</p>
+                                                                }
+                                                            </div>
+                                                        }
+                                                        @if (chapter.Questions.Count > 0) { <span class="ciit-curriculum-resource-chip"><i class="bi bi-ui-checks-grid"></i> MCQs (@chapter.Questions.Count)</span> }
+                                                        @if (chapter.InterviewQuestions.Count > 0) { <span class="ciit-curriculum-resource-chip"><i class="bi bi-chat-square-text"></i> Interview Questions (@chapter.InterviewQuestions.Count)</span> }
+                                                        @if (chapter.PracticeQuestions.Count > 0) { <span class="ciit-curriculum-resource-chip"><i class="bi bi-code-square"></i> Practice Programs (@chapter.PracticeQuestions.Count)</span> }
+                                                        @if (string.IsNullOrWhiteSpace(chapter.NotesHtml) && chapter.Contents.Count == 0 && chapter.Questions.Count == 0 && chapter.InterviewQuestions.Count == 0 && chapter.PracticeQuestions.Count == 0)
+                                                        { <p class="ciit-curriculum-empty">No resources are linked to this chapter yet.</p> }
+                                                    </div>
+                                                </section>
+                                            }
+                                            @if (topic.Chapters.Count == 0 && topic.Contents.Count > 0)
+                                            {
+                                                <section class="ciit-curriculum-chapter-map"><div class="ciit-curriculum-chapter-map-heading"><strong>Learning content</strong></div>
+                                                    @foreach (var resource in topic.Contents) { <p class="ciit-curriculum-resource-detail">@resource.Title</p> }
+                                                </section>
                                             }
                                         }
                                     </div>
