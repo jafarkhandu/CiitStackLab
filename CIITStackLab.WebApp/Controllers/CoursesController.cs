@@ -340,9 +340,14 @@ public class CoursesController : Controller
                 return NotFound();
             }
 
-            if (!contentId.HasValue && selectedTopic.Contents.Count > 0)
+            var topicContents = selectedTopic.Contents
+                .Concat(selectedTopic.Chapters.SelectMany(chapter => chapter.Contents))
+                .DistinctBy(content => content.Id)
+                .ToList();
+
+            if (!contentId.HasValue && topicContents.Count > 0)
             {
-                var selectedContentId = selectedTopic.Contents[0].Id;
+                var selectedContentId = topicContents[0].Id;
 
                 if (!string.IsNullOrWhiteSpace(studentUserId))
                 {
@@ -352,7 +357,7 @@ public class CoursesController : Controller
                         cancellationToken);
 
                     if (resumeContentId.HasValue
-                        && selectedTopic.Contents.Any(content => content.Id == resumeContentId.Value))
+                        && topicContents.Any(content => content.Id == resumeContentId.Value))
                     {
                         selectedContentId = resumeContentId.Value;
                     }
