@@ -139,6 +139,24 @@
     <link rel="stylesheet" href="~/css/course-learning.css" asp-append-version="true" />
 }
 
+@section Scripts {
+    <script>
+        document.querySelectorAll('.ciit-learning-topic').forEach(function (topic) {
+            const heading = topic.querySelector(':scope > .ciit-learning-topic-heading');
+            const firstContentUrl = topic.dataset.topicFirstContentUrl;
+
+            if (!heading || !firstContentUrl || topic.classList.contains('is-active-topic')) {
+                return;
+            }
+
+            heading.addEventListener('click', function (event) {
+                event.preventDefault();
+                window.location.assign(firstContentUrl);
+            });
+        });
+    </script>
+}
+
 @if (currentContent is null)
 {
     <main class="ciit-learning-empty container py-5">
@@ -236,13 +254,21 @@ else
                                 completedTopicLessons * 100d / topic.Contents.Count,
                                 MidpointRounding.AwayFromZero);
 
-                        <details class="ciit-learning-topic @(topicHasCurrentContent ? "is-active-topic" : "")" open="@(topicHasCurrentContent ? "open" : null)">
+                        <details class="ciit-learning-topic @(topicHasCurrentContent ? "is-active-topic" : "")"
+                                 data-topic-first-content-url="@(topic.Contents.FirstOrDefault() is { } firstTopicContent ? Url.Action("Learn", "Courses", new { id = Model.Id, contentId = firstTopicContent.Id }) : string.Empty)"
+                                 open="@(topicHasCurrentContent ? "open" : null)">
                             <summary class="ciit-learning-topic-heading">
                                 <div class="ciit-learning-topic-icon">
                                     <i class="bi bi-collection-play"></i>
                                 </div>
                                 <div class="ciit-learning-topic-heading-text">
                                     <strong>@topic.Title</strong>
+                                    @if (topic.Contents.Count > 0 && completedTopicLessons == topic.Contents.Count)
+                                    {
+                                        <span class="ciit-learning-topic-completed" title="Topic completed" aria-label="Topic completed">
+                                            <i class="bi bi-check-circle-fill" aria-hidden="true"></i>
+                                        </span>
+                                    }
                                     <span>
                                         @topic.Chapters.Count chapter@(topic.Chapters.Count == 1 ? "" : "s")
  
