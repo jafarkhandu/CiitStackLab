@@ -72,7 +72,9 @@ document.addEventListener("DOMContentLoaded", function () {
         const panelButtons = Array.from(document.querySelectorAll("[data-learning-page]"));
         const panelContents = Array.from(document.querySelectorAll("[data-learning-panel-content]"));
         const extraPanels = document.querySelector(".ciit-learning-extra-panels");
-        const learningStateKey = "ciit-learning-state:" + window.location.pathname + window.location.search;
+        // Keep the selected tab, pagination and scroll position across topic/content URLs
+        // within the same course, while isolating state between different courses.
+        const learningStateKey = "ciit-learning-state:" + window.location.pathname;
         let savedLearningState = {};
         try {
             savedLearningState = JSON.parse(window.sessionStorage.getItem(learningStateKey) || "{}");

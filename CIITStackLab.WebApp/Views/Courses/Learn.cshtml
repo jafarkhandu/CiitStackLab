@@ -189,29 +189,33 @@ else if (currentContent is null && currentTopic is not null)
                             <span class="ciit-learning-badge">@Model.Category</span>
                             <span class="ciit-learning-meta-pill">@Model.Level</span>
                             <span class="ciit-learning-meta-pill">
-                                <i class="bi bi-journal-bookmark me-1"></i>@currentTopic.Chapters.Count chapters
+                                <i class="bi bi-clock me-1"></i>@Model.DurationHours.ToString("0.##") hrs
+                            </span>
+                            <span class="ciit-learning-meta-pill">
+                                <i class="bi bi-journal-bookmark me-1"></i>@Model.Topics.Sum(topic => topic.Chapters.Count) chapters
                             </span>
                         </div>
                         <h1>@Model.Title</h1>
                         <p>@Model.ShortDescription</p>
+                        @if (User.IsInRole("Student") && learningProgress is not null)
+                        {
+                            <div class="ciit-learning-course-progress" role="group" aria-label="Course completion progress">
+                                <div class="ciit-learning-course-progress-heading">
+                                    <span><i class="bi bi-graph-up-arrow me-2"></i>Your progress</span>
+                                    <strong>@learningProgress.Percentage%</strong>
+                                </div>
+                                <div class="progress ciit-learning-course-progress-track"
+                                     role="progressbar"
+                                     aria-label="Course completion"
+                                     aria-valuenow="@learningProgress.Percentage"
+                                     aria-valuemin="0"
+                                     aria-valuemax="100">
+                                    <div class="progress-bar" style="width: @learningProgress.Percentage%"></div>
+                                </div>
+                                <small>@learningProgress.CompletedLessons of @learningProgress.TotalLessons learning resources completed</small>
+                            </div>
+                        }
                     </div>
-                    <section class="ciit-learning-topic-progress" aria-label="Course progress">
-                        <div class="d-flex align-items-center justify-content-between gap-3">
-                            <strong><i class="bi bi-graph-up-arrow me-2"></i>Your progress</strong>
-                            <strong class="text-primary fs-4">@(Model.Progress?.Percentage ?? 0)%</strong>
-                        </div>
-                        <div class="ciit-learning-topic-progress-track"
-                             role="progressbar"
-                             aria-label="Course progress"
-                             aria-valuenow="@(Model.Progress?.Percentage ?? 0)"
-                             aria-valuemin="0"
-                             aria-valuemax="100">
-                            <span style="width: @(Model.Progress?.Percentage ?? 0)%"></span>
-                        </div>
-                        <small class="d-block mt-3 text-secondary">
-                            @(Model.Progress?.CompletedLessons ?? 0) of @(Model.Progress?.TotalLessons ?? Model.ContentCount) learning resources completed
-                        </small>
-                    </section>
                 </div>
             </div>
         </header>
@@ -228,16 +232,52 @@ else if (currentContent is null && currentTopic is not null)
                 <div class="ciit-learning-sidebar-scroll">
                     @foreach (var topic in Model.Topics)
                     {
+                        var topicLearningContents = topic.Contents
+                            .Concat(topic.Chapters.SelectMany(chapter => chapter.Contents))
+                            .DistinctBy(content => content.Id)
+                            .ToList();
+                        var completedTopicLessons = learningProgress is null
+                            ? 0
+                            : topicLearningContents.Count(content => learningProgress.CompletedContentIds.Contains(content.Id));
+                        var topicIsCompleted = topicLearningContents.Count > 0
+                            && completedTopicLessons == topicLearningContents.Count;
+                        var topicProgressPercentage = topicLearningContents.Count == 0
+                            ? 0
+                            : (int)Math.Round(completedTopicLessons * 100d / topicLearningContents.Count, MidpointRounding.AwayFromZero);
+
                         <details class="ciit-learning-topic @(topic.Id == currentTopic.Id ? "is-active-topic" : "")"
                                  data-topic-first-content-url="@Url.Action("Learn", "Courses", new { id = Model.Id, topicId = topic.Id })"
                                  open="@(topic.Id == currentTopic.Id ? "open" : null)">
                             <summary class="ciit-learning-topic-heading">
                                 <div class="ciit-learning-topic-icon"><i class="bi bi-collection-play"></i></div>
-                                <div class="ciit-learning-topic-heading-text">
+                                <div class="ciit-learning-topic-heading-text @(topicIsCompleted ? "is-completed" : "")">
                                     <strong>@topic.Title</strong>
+                                    @if (topicIsCompleted)
+                                    {
+                                        <span class="ciit-learning-topic-completed" title="Topic completed" aria-label="Topic completed">
+                                            <i class="bi bi-check-circle-fill" aria-hidden="true"></i>
+                                        </span>
+                                    }
                                     <span>@topic.Chapters.Count chapter@(topic.Chapters.Count == 1 ? "" : "s")</span>
                                 </div>
                             </summary>
+                            @if (User.IsInRole("Student") && learningProgress is not null && topicLearningContents.Count > 0)
+                            {
+                                <div class="ciit-learning-topic-progress">
+                                    <div class="ciit-learning-topic-progress-labels">
+                                        <span>Topic progress</span>
+                                        <strong>@completedTopicLessons / @topicLearningContents.Count</strong>
+                                    </div>
+                                    <div class="ciit-learning-topic-progress-track"
+                                         role="progressbar"
+                                         aria-label="@topic.Title completion"
+                                         aria-valuenow="@topicProgressPercentage"
+                                         aria-valuemin="0"
+                                         aria-valuemax="100">
+                                        <span style="width: @topicProgressPercentage%"></span>
+                                    </div>
+                                </div>
+                            }
                             @foreach (var chapter in topic.Chapters)
                             {
                                 <div class="ciit-learning-chapter ciit-learning-chapter-summary">
@@ -254,24 +294,45 @@ else if (currentContent is null && currentTopic is not null)
             </aside>
 
             <main class="ciit-learning-main">
-                <div class="ciit-learning-main-tabs" role="tablist" aria-label="Learning sections">
-                    <a class="ciit-learning-main-tab" href="#topic-notes">1. Notes</a>
-                    <a class="ciit-learning-main-tab" href="#topic-content">2. Content</a>
-                    <a class="ciit-learning-main-tab" href="#topic-assessments">3. Assessments</a>
+                <div class="ciit-learning-panel-pager" aria-label="Learning sections">
+                    <button type="button" data-learning-page="notes">1. Notes</button>
+                    <button type="button" data-learning-page="content">2. Content</button>
+                    <button type="button" data-learning-page="assessment">3. Assessments</button>
                 </div>
+                <article class="ciit-learning-main-card">
+                    <a asp-action="CourseEnvironment"
+                       asp-route-id="@Model.Id"
+                       class="ciit-learning-back-button">
+                        <i class="bi bi-arrow-left" aria-hidden="true"></i>
+                        Back to Start Learning
+                    </a>
 
-                <section class="ciit-learning-lesson-shell">
-                    <div class="ciit-learning-lesson-heading">
-                        <a class="btn btn-outline-primary" asp-controller="Courses" asp-action="CourseEnvironment" asp-route-id="@Model.Id">
-                            <i class="bi bi-arrow-left me-2"></i>Back to Start Learning
-                        </a>
-                        <span class="ciit-learning-eyebrow mt-4 d-block">
-                            TOPIC @(Math.Max(0, Model.Topics.ToList().FindIndex(topic => topic.Id == currentTopic.Id)) + 1) OF @Math.Max(Model.Topics.Count, 1)
-                        </span>
-                        <h2 class="ciit-learning-chapter-title">@FormatLearningTitle(currentTopic.Title)</h2>
+                    <div class="ciit-learning-lesson-header">
+                        <div class="ciit-learning-lesson-heading">
+                            <span class="ciit-learning-eyebrow">
+                                TOPIC @(Math.Max(0, Model.Topics.ToList().FindIndex(topic => topic.Id == currentTopic.Id)) + 1) OF @Math.Max(Model.Topics.Count, 1)
+                            </span>
+                            <h2 class="ciit-learning-chapter-title">@FormatLearningTitle(currentTopic.Title)</h2>
+                        </div>
                     </div>
 
-                    <section id="topic-notes" class="ciit-learning-resource ciit-learning-notes-panel">
+                    <div class="ciit-learning-lesson-status">
+                        <div class="ciit-learning-lesson-status-copy">
+                            <span class="ciit-learning-lesson-status-icon @(learningProgress is not null && currentTopic.Contents.Concat(currentTopic.Chapters.SelectMany(chapter => chapter.Contents)).DistinctBy(content => content.Id).Any() && currentTopic.Contents.Concat(currentTopic.Chapters.SelectMany(chapter => chapter.Contents)).DistinctBy(content => content.Id).All(content => learningProgress.CompletedContentIds.Contains(content.Id)) ? "is-completed" : "")">
+                                <i class="bi @(learningProgress is not null && currentTopic.Contents.Concat(currentTopic.Chapters.SelectMany(chapter => chapter.Contents)).DistinctBy(content => content.Id).Any() && currentTopic.Contents.Concat(currentTopic.Chapters.SelectMany(chapter => chapter.Contents)).DistinctBy(content => content.Id).All(content => learningProgress.CompletedContentIds.Contains(content.Id)) ? "bi-check2-circle" : "bi-journal-bookmark")"></i>
+                            </span>
+                            <div>
+                                <strong>@(learningProgress is not null && currentTopic.Contents.Concat(currentTopic.Chapters.SelectMany(chapter => chapter.Contents)).DistinctBy(content => content.Id).Any() && currentTopic.Contents.Concat(currentTopic.Chapters.SelectMany(chapter => chapter.Contents)).DistinctBy(content => content.Id).All(content => learningProgress.CompletedContentIds.Contains(content.Id)) ? "Topic completed" : "Topic learning material")</strong>
+                                <small>@(currentTopic.Contents.Count > 0 ? "Review the notes, lesson content and assessments for this topic." : "Review the notes and assessments available for this topic.")</small>
+                            </div>
+                        </div>
+                        @if (learningProgress is not null && currentTopic.Contents.Concat(currentTopic.Chapters.SelectMany(chapter => chapter.Contents)).DistinctBy(content => content.Id).Any() && currentTopic.Contents.Concat(currentTopic.Chapters.SelectMany(chapter => chapter.Contents)).DistinctBy(content => content.Id).All(content => learningProgress.CompletedContentIds.Contains(content.Id)))
+                        {
+                            <span class="ciit-learning-completed-pill"><i class="bi bi-check-lg"></i> Completed</span>
+                        }
+                    </div>
+
+                    <section class="ciit-learning-resource ciit-learning-notes-panel" data-learning-panel-content="notes">
                         <div class="ciit-learning-resource-title">
                             <span class="ciit-learning-resource-icon"><i class="bi bi-journal-text"></i></span>
                             <div><h3>Chapter Notes</h3><p>Notes for @currentTopic.Title.</p></div>
@@ -296,7 +357,9 @@ else if (currentContent is null && currentTopic is not null)
                         }
                     </section>
 
-                    <section id="topic-content" class="ciit-learning-resource ciit-learning-content-overview">
+                    <section class="ciit-learning-resource ciit-learning-content-overview"
+                             data-learning-panel-content="content"
+                             data-learning-content-page="overview">
                         <div class="ciit-learning-resource-title">
                             <span class="ciit-learning-resource-icon"><i class="bi bi-lightbulb"></i></span>
                             <div><h3>Topic content</h3><p>Learning material linked to this topic.</p></div>
@@ -324,16 +387,16 @@ else if (currentContent is null && currentTopic is not null)
                         }
                     </section>
 
-                    <section id="topic-assessments" class="ciit-learning-resource ciit-learning-all-assessments">
+                    <section class="ciit-learning-resource ciit-learning-all-assessments" data-learning-panel-content="assessment">
                         <div class="ciit-learning-resource-title">
                             <span class="ciit-learning-resource-icon"><i class="bi bi-patch-check"></i></span>
                             <div><h3>Chapter Assessments</h3><p>MCQs, interview questions and practice programs for this topic.</p></div>
                         </div>
                         @foreach (var chapter in currentTopic.Chapters)
                         {
-                            <section class="ciit-learning-chapter-assessment">
+                            <section class="ciit-learning-chapter-assessment" id="chapter-assessment-@chapter.Id">
                                 <h4>@FormatLearningTitle(chapter.Title)</h4>
-                                <section class="ciit-learning-assessment-subsection">
+                                <section class="ciit-learning-assessment-subsection" id="chapter-mcqs-@chapter.Id">
                                     <h5>MCQs</h5>
                                     @if (chapter.Questions.Count == 0)
                                     {
@@ -353,7 +416,7 @@ else if (currentContent is null && currentTopic is not null)
                                         </article>
                                     }
                                 </section>
-                                <section class="ciit-learning-assessment-subsection">
+                                <section class="ciit-learning-assessment-subsection" id="chapter-interview-@chapter.Id">
                                     <h5>Interview Questions</h5>
                                     @if (chapter.InterviewQuestions.Count == 0)
                                     {
@@ -370,7 +433,7 @@ else if (currentContent is null && currentTopic is not null)
                                         </article>
                                     }
                                 </section>
-                                <section class="ciit-learning-assessment-subsection">
+                                <section class="ciit-learning-assessment-subsection" id="chapter-practice-@chapter.Id">
                                     <h5>Practice Programs</h5>
                                     @if (chapter.PracticeQuestions.Count == 0)
                                     {
@@ -390,7 +453,7 @@ else if (currentContent is null && currentTopic is not null)
                             </section>
                         }
                     </section>
-                </section>
+                </article>
             </main>
         </div>
     </section>
@@ -469,15 +532,20 @@ else
                             || (currentContent is not null && topic.Contents.Any(
                                 content => content.Id == currentContent.Id));
 
+                        var topicLearningContents = topic.Contents
+                            .Concat(topic.Chapters.SelectMany(chapter => chapter.Contents))
+                            .DistinctBy(content => content.Id)
+                            .ToList();
+
                         var completedTopicLessons = learningProgress is null
                             ? 0
-                            : topic.Contents.Count(content =>
+                            : topicLearningContents.Count(content =>
                                 learningProgress.CompletedContentIds.Contains(content.Id));
 
-                        var topicProgressPercentage = topic.Contents.Count == 0
+                        var topicProgressPercentage = topicLearningContents.Count == 0
                             ? 0
                             : (int)Math.Round(
-                                completedTopicLessons * 100d / topic.Contents.Count,
+                                completedTopicLessons * 100d / topicLearningContents.Count,
                                 MidpointRounding.AwayFromZero);
 
                         <details class="ciit-learning-topic @(topicHasCurrentContent ? "is-active-topic" : "")"
@@ -487,9 +555,9 @@ else
                                 <div class="ciit-learning-topic-icon">
                                     <i class="bi bi-collection-play"></i>
                                 </div>
-                                <div class="ciit-learning-topic-heading-text @(topic.Contents.Count > 0 && completedTopicLessons == topic.Contents.Count ? "is-completed" : "")">
+                                <div class="ciit-learning-topic-heading-text @(topicLearningContents.Count > 0 && completedTopicLessons == topicLearningContents.Count ? "is-completed" : "")">
                                     <strong>@topic.Title</strong>
-                                    @if (topic.Contents.Count > 0 && completedTopicLessons == topic.Contents.Count)
+                                    @if (topicLearningContents.Count > 0 && completedTopicLessons == topicLearningContents.Count)
                                     {
                                         <span class="ciit-learning-topic-completed" title="Topic completed" aria-label="Topic completed">
                                             <i class="bi bi-check-circle-fill" aria-hidden="true"></i>
