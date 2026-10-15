@@ -138,11 +138,26 @@ public sealed class NotesController : Controller
             ViewData["CourseTitle"] = course.Title;
         }
 
+        var slideExtension = Path.GetExtension(media.Slides).ToLowerInvariant();
+        var slideType = slideExtension switch
+        {
+            ".pdf" => "pdf",
+            ".ppt" => "ppt",
+            ".pptx" => "pptx",
+            _ => null
+        };
+
+        if (slideType is null)
+        {
+            return NotFound();
+        }
+
         ViewData["NotesTopicId"] = notes.TopicId.ToString();
         ViewData["NotesChapterId"] = notes.CurrentChapterId;
         ViewData["SlideUrl"] = Url.Action(
             nameof(SlideFile),
             new { topicId, chapterId, contentId });
+        ViewData["SlideType"] = slideType;
         ViewData["SlideTitle"] = media.Title;
 
         return View();
