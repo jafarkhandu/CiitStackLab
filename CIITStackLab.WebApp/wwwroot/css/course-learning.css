@@ -15,6 +15,34 @@
     font-weight:600
 }
 
+.ciit-learning-back-button {
+    display: inline-flex;
+    align-items: center;
+    gap: 9px;
+    width: fit-content;
+    margin-bottom: 20px;
+    padding: 10px 15px;
+    border: 1px solid #d7e5fb;
+    border-radius: 11px;
+    background: #f5f9ff;
+    color: #1769ff;
+    font-size: .84rem;
+    font-weight: 750;
+    text-decoration: none;
+    transition: background-color .2s ease, border-color .2s ease;
+}
+
+.ciit-learning-back-button:hover {
+    border-color: #b8d1ff;
+    background: #eaf2ff;
+    color: #0e57dc;
+}
+
+.ciit-learning-back-button:focus-visible {
+    outline: 3px solid rgba(23, 105, 255, .3);
+    outline-offset: 2px;
+}
+
 .ciit-learning-header-row {
     display:flex;
     justify-content:space-between;
