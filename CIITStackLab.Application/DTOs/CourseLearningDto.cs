@@ -36,6 +36,22 @@ public sealed class CourseLearningChapterDto
     public string Title { get; init; } = string.Empty;
     public int SortOrder { get; init; }
     public IReadOnlyList<CourseLearningContentDto> Contents { get; init; } = Array.Empty<CourseLearningContentDto>();
+    public IReadOnlyList<CourseLearningInterviewQuestionDto> InterviewQuestions { get; init; } = Array.Empty<CourseLearningInterviewQuestionDto>();
+    public IReadOnlyList<CourseLearningPracticeQuestionDto> PracticeQuestions { get; init; } = Array.Empty<CourseLearningPracticeQuestionDto>();
+}
+
+public sealed class CourseLearningInterviewQuestionDto
+{
+    public int Id { get; init; }
+    public string Question { get; init; } = string.Empty;
+    public string Answer { get; init; } = string.Empty;
+}
+
+public sealed class CourseLearningPracticeQuestionDto
+{
+    public int Id { get; init; }
+    public string QuestionTitle { get; init; } = string.Empty;
+    public string QuestionDescription { get; init; } = string.Empty;
 }
 
 public sealed class CourseLearningContentDto
