@@ -1,0 +1,103 @@
+@{
+    ViewData["Title"] = $"Slides — {ViewData["SlideTitle"] ?? "Slide Reader"}";
+    Layout = "_CourseLayout";
+
+    var courseId = ViewData["CourseId"]?.ToString();
+    var topicId = ViewData["NotesTopicId"]?.ToString();
+    var chapterId = ViewData["NotesChapterId"]?.ToString();
+    var slideUrl = ViewData["SlideUrl"]?.ToString() ?? string.Empty;
+}
+
+@section Styles {
+    <link rel="stylesheet"
+          href="~/css/slide-reader.css"
+          asp-append-version="true" />
+}
+
+<section class="ciit-slide-reader"
+         data-slide-url="@slideUrl"
+         data-slide-title="@(ViewData["SlideTitle"]?.ToString() ?? "Slide Reader")">
+    <header class="ciit-slide-reader-header">
+        <div class="ciit-slide-reader-header-inner">
+            <a asp-controller="Notes"
+               asp-action="Index"
+               asp-route-topicId="@topicId"
+               asp-route-chapterId="@chapterId"
+               asp-route-courseId="@courseId"
+               class="ciit-slide-reader-back">
+                <i class="bi bi-arrow-left"></i>
+                Back to Chapter
+            </a>
+
+            <div class="ciit-slide-reader-title">
+                <span>SLIDE READER</span>
+                <h1>@(ViewData["SlideTitle"] ?? "Slides")</h1>
+            </div>
+
+            <div class="ciit-slide-reader-page" aria-live="polite">
+                <span id="slideCurrent">1</span>
+                <span class="ciit-slide-reader-page-divider">/</span>
+                <span id="slideTotal">—</span>
+            </div>
+        </div>
+    </header>
+
+    <div class="ciit-slide-reader-shell">
+        <aside class="ciit-slide-reader-thumbnails"
+               aria-label="Slide thumbnails">
+            <div id="slideThumbnails" class="ciit-slide-reader-thumbnail-list">
+                <div class="ciit-slide-reader-loading">Loading slides…</div>
+            </div>
+        </aside>
+
+        <main class="ciit-slide-reader-main">
+            <div id="slideStage" class="ciit-slide-reader-stage" tabindex="0">
+                <div id="slideLoading" class="ciit-slide-reader-loading-panel">
+                    <div class="spinner-border" aria-hidden="true"></div>
+                    <strong>Opening slides</strong>
+                    <span>The presentation is rendered in your browser.</span>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <footer class="ciit-slide-reader-controls" aria-label="Slide controls">
+        <button type="button" class="ciit-slide-control" id="slidePrevious" title="Previous slide">
+            <i class="bi bi-chevron-left"></i>
+            <span>Previous</span>
+        </button>
+
+        <div class="ciit-slide-reader-counter">
+            <span id="slideControlCurrent">1</span>
+            <span>/</span>
+            <span id="slideControlTotal">—</span>
+        </div>
+
+        <button type="button" class="ciit-slide-control" id="slideNext" title="Next slide">
+            <span>Next</span>
+            <i class="bi bi-chevron-right"></i>
+        </button>
+
+        <div class="ciit-slide-reader-divider"></div>
+
+        <button type="button" class="ciit-slide-icon-control" id="slideZoomOut" title="Zoom out" aria-label="Zoom out">
+            <i class="bi bi-dash-lg"></i>
+        </button>
+        <button type="button" class="ciit-slide-zoom-label" id="slideZoomLabel" title="Reset zoom">100%</button>
+        <button type="button" class="ciit-slide-icon-control" id="slideZoomIn" title="Zoom in" aria-label="Zoom in">
+            <i class="bi bi-plus-lg"></i>
+        </button>
+        <button type="button" class="ciit-slide-icon-control" id="slideFit" title="Fit slide" aria-label="Fit slide">
+            <i class="bi bi-arrows-angle-contract"></i>
+        </button>
+        <button type="button" class="ciit-slide-icon-control" id="slideFullscreen" title="Fullscreen" aria-label="Fullscreen">
+            <i class="bi bi-fullscreen"></i>
+        </button>
+    </footer>
+</section>
+
+@section Scripts {
+    <script type="module"
+            src="~/js/slide-reader.js"
+            asp-append-version="true"></script>
+}
