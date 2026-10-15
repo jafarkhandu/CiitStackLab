@@ -13,7 +13,7 @@
                 <div>
                     <span class="ciit-admin-eyebrow">Assessment tools</span>
                     <h2 class="modal-title" id="interviewQuestionImportModalTitle">Interview Questions Analyzer</h2>
-                    <p class="mb-0">Upload a fixed-column Excel workbook, review 20 question-and-answer rows, then confirm the import.</p>
+                    <p class="mb-0">Upload a fixed-column Excel workbook, review up to 100 question-and-answer rows, then confirm the import.</p>
                 </div>
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
@@ -67,7 +67,7 @@
                             <input type="file" name="file" id="ImportInterviewFile" accept=".xlsx" required />
                             <span class="ciit-interview-import-file-icon"><i class="bi bi-cloud-arrow-up"></i></span>
                             <strong>Choose an Excel .xlsx file</strong>
-                            <span>Maximum 5 MB · Exactly 20 question-and-answer rows</span>
+                            <span>Maximum 5 MB · 1–100 question-and-answer rows</span>
                         </label>
                     </div>
                     <div class="ciit-interview-import-format">
@@ -75,11 +75,11 @@
                             <span><i class="bi bi-shield-check"></i></span>
                             <div>
                                 <strong>Fixed-column Excel validation</strong>
-                                <p>Row 1 must contain <b>Question</b> in column A and <b>Answer</b> in column B; add exactly 20 Q&amp;A rows below. Embedded line breaks remain inside their own cells. No paid AI API or API key is used.</p>
+                                <p>Row 1 must contain <b>Question</b> in column A and <b>Answer</b> in column B; add between 1 and 100 Q&amp;A rows below. Embedded line breaks remain inside their own cells. No paid AI API or API key is used.</p>
                             </div>
                         </div>
                         <div class="ciit-interview-import-format-steps">
-                            <span><b>01</b> Read worksheet</span><span><b>02</b> Preserve each cell</span><span><b>03</b> Validate 20 Q&amp;A pairs</span>
+                            <span><b>01</b> Read worksheet</span><span><b>02</b> Preserve each cell</span><span><b>03</b> Validate up to 100 Q&amp;A pairs</span>
                         </div>
                     </div>
                     <div class="ciit-interview-import-upload-actions">
