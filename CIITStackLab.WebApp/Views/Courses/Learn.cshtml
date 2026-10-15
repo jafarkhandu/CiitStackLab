@@ -773,19 +773,22 @@ else
                                             .Where(question => !currentContent.Questions.Any(currentQuestion => currentQuestion.Id == question.Id))
                                             .ToList();
                                     }
-                                    @for (var qi = 0; qi < chapterOnlyQuestions.Count; qi++)
-                                    {
-                                        var question = chapterOnlyQuestions[qi];
-                                        <article class="ciit-learning-assessment-question">
-                                            <strong>@(qi + 1). @question.Question</strong>
-                                            <ol type="A">
-                                                @foreach (var option in question.Options.Where(option => !string.IsNullOrWhiteSpace(option)))
-                                                {
-                                                    <li>@option</li>
-                                                }
-                                            </ol>
-                                        </article>
-                                    }
+                                    <section id="chapter-mcqs-@assessmentChapter.Id" class="ciit-learning-assessment-subsection">
+                                        <h5>MCQs</h5>
+                                        @for (var qi = 0; qi < chapterOnlyQuestions.Count; qi++)
+                                        {
+                                            var question = chapterOnlyQuestions[qi];
+                                            <article class="ciit-learning-assessment-question">
+                                                <strong>@(qi + 1). @question.Question</strong>
+                                                <ol type="A">
+                                                    @foreach (var option in question.Options.Where(option => !string.IsNullOrWhiteSpace(option)))
+                                                    {
+                                                        <li>@option</li>
+                                                    }
+                                                </ol>
+                                            </article>
+                                        }
+                                    </section>
                                     <section id="chapter-interview-@assessmentChapter.Id" class="ciit-learning-assessment-subsection">
                                         <h5>Interview Questions</h5>
                                         @if (assessmentChapter.InterviewQuestions.Count == 0)
