@@ -547,3 +547,430 @@
         transition: none !important;
     }
 }
+
+
+/* Premium course-home refresh: polished learning hierarchy, responsive cards and subtle motion. */
+.ciit-course-experience {
+    position: relative;
+    isolation: isolate;
+    padding: clamp(24px, 3vw, 42px) 0 64px;
+    background:
+        radial-gradient(ellipse at 88% 0%, rgba(205, 225, 255, .5), transparent 34%),
+        linear-gradient(180deg, #f5f8ff 0%, #f7f9fd 45%, #f3f7fd 100%);
+}
+
+.ciit-course-experience::before {
+    position: absolute;
+    z-index: -1;
+    top: 0;
+    right: 0;
+    left: 0;
+    height: 320px;
+    background: linear-gradient(135deg, rgba(226, 238, 255, .42), transparent 75%);
+    content: "";
+    pointer-events: none;
+}
+
+.ciit-course-experience > .container-fluid {
+    position: relative;
+}
+
+.ciit-course-experience-card,
+.ciit-curriculum-card {
+    border-color: #e0e9f7;
+    border-radius: 22px;
+    background: rgba(255, 255, 255, .94);
+    box-shadow: 0 10px 30px rgba(24, 54, 104, .045), 0 1px 2px rgba(24, 54, 104, .025);
+    transition: border-color .22s ease, box-shadow .22s ease, transform .22s ease;
+}
+
+.ciit-course-experience-main > section {
+    animation: ciit-course-enter .55s cubic-bezier(.2, .7, .2, 1) both;
+}
+
+.ciit-course-experience-main > section:nth-child(2) { animation-delay: .06s; }
+.ciit-course-experience-main > section:nth-child(3) { animation-delay: .12s; }
+.ciit-course-experience-main > section:nth-child(4) { animation-delay: .18s; }
+
+@keyframes ciit-course-enter {
+    from { opacity: 0; transform: translateY(12px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+.ciit-course-experience-hero {
+    min-height: clamp(270px, 25vw, 350px);
+    padding: clamp(24px, 3vw, 42px);
+    border: 1px solid rgba(208, 224, 250, .55);
+    border-radius: 24px;
+    background: linear-gradient(120deg, #0b1833 0%, #102e60 58%, #1769ff 100%);
+    box-shadow: 0 20px 46px rgba(18, 49, 103, .15);
+}
+
+.ciit-course-hero-image {
+    object-position: center 42%;
+    transform: scale(1.015);
+    transition: transform 1s cubic-bezier(.2, .7, .2, 1);
+}
+
+.ciit-course-experience-hero:hover .ciit-course-hero-image {
+    transform: scale(1.045);
+}
+
+.ciit-course-hero-overlay {
+    background:
+        linear-gradient(90deg, rgba(8, 19, 42, .94) 0%, rgba(10, 29, 62, .78) 48%, rgba(9, 24, 51, .32) 100%),
+        linear-gradient(0deg, rgba(6, 17, 38, .55), transparent 70%);
+}
+
+.ciit-course-hero-content {
+    max-width: 760px;
+}
+
+.ciit-course-experience-eyebrow {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 7px 11px;
+    border: 1px solid rgba(255, 255, 255, .2);
+    border-radius: 999px;
+    background: rgba(255, 255, 255, .12);
+    color: #e5efff;
+    font-size: .7rem;
+    font-weight: 800;
+    letter-spacing: .065em;
+    text-transform: uppercase;
+    backdrop-filter: blur(12px);
+}
+
+.ciit-course-hero-content h1 {
+    max-width: 850px;
+    margin: 15px 0 9px;
+    color: #fff;
+    font-size: clamp(2rem, 3.5vw, 3.15rem);
+    font-weight: 800;
+    letter-spacing: -.055em;
+    line-height: 1.08;
+    text-wrap: balance;
+}
+
+.ciit-course-hero-content p {
+    max-width: 650px;
+    margin-bottom: 22px;
+    color: rgba(239, 245, 255, .82);
+    font-size: clamp(.95rem, 1.2vw, 1.08rem);
+    line-height: 1.7;
+}
+
+.ciit-course-hero-actions {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 12px;
+}
+
+.ciit-course-hero-actions .btn {
+    min-height: 48px;
+    padding: 12px 19px;
+    border: 1px solid rgba(255, 255, 255, .62);
+    border-radius: 13px;
+    background: #fff;
+    color: #12315f;
+    box-shadow: 0 8px 22px rgba(0, 0, 0, .14);
+    font-weight: 800;
+    transition: transform .2s ease, box-shadow .2s ease, background .2s ease;
+}
+
+.ciit-course-hero-actions .btn:hover {
+    transform: translateY(-2px);
+    background: #f2f7ff;
+    box-shadow: 0 12px 26px rgba(0, 0, 0, .2);
+}
+
+.ciit-course-access-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+    padding: 10px 13px;
+    border: 1px solid rgba(108, 231, 192, .22);
+    border-radius: 999px;
+    background: rgba(16, 185, 129, .16);
+    color: #c7ffea;
+    font-size: .78rem;
+    font-weight: 750;
+}
+
+.ciit-course-stat-grid {
+    gap: 14px;
+    margin: 18px 0;
+}
+
+.ciit-course-stat {
+    min-height: 104px;
+    padding: 21px 22px;
+    border: 1px solid #e1eaf8;
+    border-radius: 17px;
+    background: linear-gradient(145deg, #fff 0%, #fbfdff 100%);
+    box-shadow: 0 7px 22px rgba(27, 57, 104, .035);
+    transition: transform .2s ease, border-color .2s ease, box-shadow .2s ease;
+}
+
+.ciit-course-stat:hover {
+    transform: translateY(-3px);
+    border-color: #c9dcff;
+    box-shadow: 0 12px 26px rgba(28, 75, 148, .075);
+}
+
+.ciit-course-stat strong {
+    color: #172b4d;
+    font-size: clamp(1.3rem, 1.8vw, 1.7rem);
+    font-weight: 800;
+    letter-spacing: -.045em;
+}
+
+.ciit-course-stat span {
+    margin-top: 5px;
+    color: #8190a8;
+    font-size: .79rem;
+    font-weight: 600;
+}
+
+.ciit-course-experience-card {
+    margin-top: 18px;
+    padding: clamp(20px, 2.3vw, 28px);
+}
+
+.ciit-course-experience-card-header {
+    gap: 18px;
+    margin-bottom: 20px;
+}
+
+.ciit-course-experience-card-header h2 {
+    margin: 0 0 5px;
+    color: #172b4d;
+    font-size: clamp(1.15rem, 1.65vw, 1.4rem);
+    font-weight: 800;
+    letter-spacing: -.035em;
+}
+
+.ciit-course-experience-card-header p {
+    margin: 0;
+    color: #7d8da7;
+    font-size: .88rem;
+    line-height: 1.6;
+}
+
+.ciit-course-experience-card-header > strong {
+    color: #1b5ee8;
+    font-size: 1rem;
+    font-weight: 800;
+}
+
+.ciit-progress-track {
+    height: 10px;
+    overflow: hidden;
+    border-radius: 999px;
+    background: #eaf0fa;
+}
+
+.ciit-progress-track span {
+    display: block;
+    height: 100%;
+    border-radius: inherit;
+    background: linear-gradient(90deg, #1769ff, #42a5ff);
+    box-shadow: 0 0 16px rgba(23, 105, 255, .22);
+    transition: width .6s cubic-bezier(.2, .7, .2, 1);
+}
+
+.ciit-progress-meta {
+    display: flex;
+    justify-content: space-between;
+    gap: 12px;
+    margin-top: 11px;
+    color: #8190a8;
+    font-size: .76rem;
+    font-weight: 600;
+}
+
+.ciit-curriculum-summary {
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+    padding: 8px 11px;
+    border: 1px solid #d8f2e8;
+    border-radius: 999px;
+    background: #effbf6;
+    color: #07835f;
+    font-size: .75rem;
+    font-weight: 800;
+}
+
+.ciit-course-curriculum-list {
+    display: grid;
+    gap: 10px;
+}
+
+.ciit-curriculum-accordion {
+    overflow: hidden;
+    border: 1px solid #e2eaf7;
+    border-radius: 15px;
+    background: #fbfcff;
+    transition: border-color .2s ease, background .2s ease, box-shadow .2s ease;
+}
+
+.ciit-curriculum-accordion:hover,
+.ciit-curriculum-accordion.is-expanded {
+    border-color: #cbdcff;
+    background: #fff;
+    box-shadow: 0 7px 20px rgba(25, 67, 135, .05);
+}
+
+.ciit-curriculum-topic-toggle {
+    min-height: 68px;
+    padding: 15px 18px;
+    transition: background .2s ease;
+}
+
+.ciit-curriculum-topic-toggle:hover {
+    background: #f7faff;
+}
+
+.ciit-curriculum-topic-icon {
+    display: grid;
+    place-items: center;
+    width: 42px;
+    height: 42px;
+    border: 1px solid #deebff;
+    border-radius: 13px;
+    background: linear-gradient(145deg, #f0f6ff, #e7f0ff);
+    color: #347cff;
+}
+
+.ciit-curriculum-topic-toggle-content strong {
+    color: #203556;
+    font-size: .92rem;
+    font-weight: 800;
+}
+
+.ciit-curriculum-topic-toggle-content small {
+    margin-top: 4px;
+    color: #8190a8;
+    font-size: .76rem;
+}
+
+.ciit-curriculum-topic-status {
+    color: #7285a2;
+    font-size: .68rem;
+    font-weight: 800;
+    letter-spacing: .05em;
+    text-transform: uppercase;
+}
+
+.ciit-curriculum-topic-toggle-end i {
+    color: #6880a2;
+    transition: transform .25s ease;
+}
+
+.ciit-curriculum-accordion.is-expanded .ciit-curriculum-topic-toggle-end i {
+    transform: rotate(180deg);
+}
+
+.ciit-curriculum-topic-panel-inner {
+    padding: 0 18px 15px;
+}
+
+.ciit-curriculum-lesson {
+    padding: 14px 0;
+    border-top-color: #edf2fa;
+}
+
+.ciit-curriculum-lesson-title strong {
+    color: #243958;
+    font-weight: 750;
+}
+
+.ciit-curriculum-lesson-title small {
+    color: #8190a8;
+}
+
+.ciit-curriculum-lesson .btn {
+    min-height: 36px;
+    padding: 7px 13px;
+    border-radius: 10px;
+    font-weight: 750;
+}
+
+.ciit-continue-card {
+    padding: 20px;
+    border: 1px solid #dce8ff;
+    border-radius: 17px;
+    background: linear-gradient(115deg, #f0f6ff, #fbfdff 75%);
+}
+
+.ciit-continue-card-label {
+    color: #2468e8;
+    font-size: .7rem;
+    font-weight: 800;
+    letter-spacing: .1em;
+    text-transform: uppercase;
+}
+
+.ciit-continue-card-content h3 {
+    margin: 7px 0;
+    color: #172b4d;
+    font-size: 1.12rem;
+    font-weight: 800;
+    letter-spacing: -.025em;
+}
+
+.ciit-continue-card-content p {
+    margin: 0;
+    color: #7d8da7;
+    font-size: .84rem;
+}
+
+@media (max-width: 767.98px) {
+    .ciit-course-experience {
+        padding-top: 20px;
+    }
+
+    .ciit-course-experience-hero {
+        min-height: 330px;
+        padding: 22px;
+        border-radius: 19px;
+    }
+
+    .ciit-course-hero-overlay {
+        background: linear-gradient(90deg, rgba(8, 19, 42, .92), rgba(9, 24, 51, .56));
+    }
+
+    .ciit-course-stat-grid {
+        gap: 10px;
+    }
+
+    .ciit-course-stat {
+        min-height: 88px;
+        padding: 15px;
+    }
+
+    .ciit-course-experience-card {
+        padding: 18px;
+        border-radius: 18px;
+    }
+
+    .ciit-progress-meta {
+        flex-wrap: wrap;
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .ciit-course-experience-main > section {
+        animation: none !important;
+    }
+
+    .ciit-course-experience *,
+    .ciit-course-experience *::before,
+    .ciit-course-experience *::after {
+        scroll-behavior: auto !important;
+        transition: none !important;
+    }
+}

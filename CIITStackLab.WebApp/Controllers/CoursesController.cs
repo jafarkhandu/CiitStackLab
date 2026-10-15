@@ -2,6 +2,9 @@ using System.Security.Claims;
 using CIITStackLab.Application.DTOs;
 using CIITStackLab.Application.Interfaces;
 using CIITStackLab.Infrastructure.Services;
+using CIITStackLab.Infrastructure.Persistence;
+using CIITStackLab.WebApp.Models;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
@@ -14,19 +17,22 @@ public class CoursesController : Controller
     private readonly ICourseAssessmentService _courseAssessmentService;
     private readonly CoursePurchaseService _coursePurchaseService;
     private readonly IMuxVideoService _muxVideoService;
+    private readonly ApplicationDbContext _dbContext;
 
     public CoursesController(
         ICourseService courseService,
         IStudentProgressService studentProgressService,
         ICourseAssessmentService courseAssessmentService,
         CoursePurchaseService coursePurchaseService,
-        IMuxVideoService muxVideoService)
+        IMuxVideoService muxVideoService,
+        ApplicationDbContext dbContext)
     {
         _courseService = courseService;
         _studentProgressService = studentProgressService;
         _courseAssessmentService = courseAssessmentService;
         _coursePurchaseService = coursePurchaseService;
         _muxVideoService = muxVideoService;
+        _dbContext = dbContext;
     }
 
     [HttpGet]
@@ -127,6 +133,37 @@ public class CoursesController : Controller
             .ToList();
 
         return View("MyCourses", courses);
+    }
+
+    [HttpGet("Courses/PaymentHistory")]
+    [Authorize(Roles = "Student")]
+    public async Task<IActionResult> PaymentHistory(CancellationToken cancellationToken)
+    {
+        var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+
+        if (string.IsNullOrWhiteSpace(userId))
+        {
+            return Challenge();
+        }
+
+        var purchases = await _dbContext.StudentCoursePurchases
+            .AsNoTracking()
+            .Where(purchase => purchase.UserId == userId)
+            .Join(
+                _dbContext.Courses.AsNoTracking(),
+                purchase => purchase.CourseId,
+                course => course.Id,
+                (purchase, course) => new CoursePurchaseHistoryViewModel
+                {
+                    PurchaseId = purchase.Id,
+                    CourseTitle = course.Title,
+                    Amount = purchase.PurchasePrice,
+                    PurchasedAt = purchase.PurchasedAt
+                })
+            .OrderByDescending(purchase => purchase.PurchasedAt)
+            .ToListAsync(cancellationToken);
+
+        return View(purchases);
     }
 
     [HttpGet("Courses/Course/{id:int}")]

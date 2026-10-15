@@ -415,3 +415,16 @@
         text-align: left;
     }
 }
+
+/* Full-width glass notes reader; duplicate Chapter Library removed from markup. */
+.ciit-notes-reader{padding:28px clamp(18px,3vw,42px) 48px;background:radial-gradient(ellipse at 85% 5%,rgba(87,145,255,.12),transparent 35%),linear-gradient(145deg,rgba(239,246,255,.7),rgba(248,251,255,.84))}
+.ciit-notes-reader-shell{display:block;width:100%;max-width:1440px}
+.ciit-notes-reader-sidebar{display:none!important}
+.ciit-notes-reader-main{width:100%;min-width:0}
+.ciit-notes-reader-card{overflow:hidden;border:1px solid rgba(255,255,255,.92);border-radius:24px;background:linear-gradient(145deg,rgba(255,255,255,.8),rgba(247,250,255,.58));box-shadow:0 22px 58px rgba(34,67,122,.08),inset 0 1px 0 rgba(255,255,255,.96);backdrop-filter:blur(30px) saturate(160%);animation:ciit-notes-reader-enter .62s cubic-bezier(.2,.7,.25,1) both}
+.ciit-notes-reader-title{background:rgba(255,255,255,.32)}
+.ciit-notes-reader-count{border-color:rgba(255,255,255,.95);background:rgba(255,255,255,.58);box-shadow:0 8px 24px rgba(34,67,122,.06),inset 0 1px 0 #fff;backdrop-filter:blur(18px)}
+.ciit-notes-reader-pager a{transition:transform .2s ease,box-shadow .2s ease}
+.ciit-notes-reader-pager a:hover{transform:translateY(-2px)}
+@keyframes ciit-notes-reader-enter{from{opacity:0;transform:translateY(18px);filter:blur(3px)}to{opacity:1;transform:translateY(0);filter:blur(0)}}
+@media(prefers-reduced-motion:reduce){.ciit-notes-reader-card{animation:none!important}.ciit-notes-reader-pager a{transition:none!important}}
