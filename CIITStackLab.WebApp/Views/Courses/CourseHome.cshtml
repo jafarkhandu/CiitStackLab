@@ -17,7 +17,10 @@
     var completedContentIds = progress?.CompletedContentIds?.ToHashSet() ?? new HashSet<int>();
     var continueLesson = orderedLessons.FirstOrDefault(lesson => !completedContentIds.Contains(lesson.Id))
         ?? orderedLessons.LastOrDefault();
-    var continueContentId = continueLesson?.Id;
+    var hasStartedLearning = completedContentIds.Count > 0;
+    var continueContentId = hasStartedLearning ? continueLesson?.Id : null;
+    var totalTopicDurationMinutes = Model.Topics.Sum(topic => topic.DurationMinutes ?? 0);
+    var totalDurationHours = (int)Math.Ceiling(totalTopicDurationMinutes / 60m);
     var lessonNumber = 0;
     var totalChapters = Model.Topics.Sum(topic => topic.Chapters.Count);
 }
@@ -50,7 +53,7 @@
                            asp-route-id="@Model.Id"
                            asp-route-contentId="@continueContentId">
                             <i class="bi bi-play-fill me-1"></i>
-                            @(continueContentId.HasValue ? "Continue Learning" : "Start Learning")
+                            @(hasStartedLearning ? "Continue Learning" : "Start Learning")
                         </a>
                         <span class="ciit-course-access-badge">
                             <i class="bi bi-check-circle-fill"></i>
@@ -74,7 +77,7 @@
                     <span>Level</span>
                 </div>
                 <div class="ciit-course-stat">
-                    <strong>@Model.DurationHours hrs</strong>
+                    <strong>@totalDurationHours hrs</strong>
                     <span>Duration</span>
                 </div>
             </section>
