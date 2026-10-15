@@ -470,6 +470,12 @@ else
                     <button type="button" data-learning-page="assessment">3. Assessments</button>
                 </div>
                 <article class="ciit-learning-main-card">
+                    <a asp-action="CourseEnvironment"
+                       asp-route-id="@Model.Id"
+                       class="ciit-learning-back-button">
+                        <i class="bi bi-arrow-left" aria-hidden="true"></i>
+                        Back to Start Learning
+                    </a>
                     <div class="ciit-learning-lesson-header">
                         <div class="ciit-learning-lesson-heading">
                             <span class="ciit-learning-eyebrow">
@@ -676,8 +682,6 @@ else
                         </section>
                     }
 
-                </article>
-                <div class="ciit-learning-extra-panels">
                     <section class="ciit-learning-resource ciit-learning-all-assessments" data-learning-panel-content="assessment">
                         <div class="ciit-learning-resource-title">
                             <span class="ciit-learning-resource-icon"><i class="bi bi-patch-check"></i></span>
@@ -837,7 +841,7 @@ else
                                 </section>
                         }
                     </section>
-                </div>
+                </article>
             </main>
         </div>
     </section>
