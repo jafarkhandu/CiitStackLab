@@ -285,6 +285,7 @@ document.addEventListener("DOMContentLoaded", function () {
                 contentButtons.appendChild(button);
             });
             contentPager.appendChild(contentButtons);
+            contentPager.hidden = resourcePages.length <= 1;
             if (overview) extraPanels.insertBefore(contentPager, overview);
             else extraPanels.insertBefore(contentPager, extraPanels.firstChild);
         }
@@ -329,6 +330,10 @@ document.addEventListener("DOMContentLoaded", function () {
             const questions = Array.from(form.querySelectorAll(":scope > .ciit-learning-question"));
             const pagination = paginateItems(form, questions, 5, "Knowledge check pages");
             if (!pagination) return;
+
+            form.querySelectorAll('input[type="radio"][required]').forEach(function (input) {
+                input.removeAttribute("required");
+            });
 
             form.addEventListener("submit", function (event) {
                 const unanswered = questions.find(function (question) {
