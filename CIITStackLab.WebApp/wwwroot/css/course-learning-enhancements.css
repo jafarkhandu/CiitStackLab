@@ -2239,3 +2239,58 @@
 }
 .ciit-curriculum-resource-group { flex-basis: 100%; }
 .ciit-curriculum-resource-group .ciit-curriculum-resource-chip { margin-bottom: 8px; }
+
+
+/* Refined premium glassmorphism for the Previous / page numbers / Next bar. */
+.ciit-learning-subpage-pager,
+.ciit-learning-content-pager {
+    border: 1px solid rgba(255, 255, 255, .88) !important;
+    border-radius: 18px;
+    background: linear-gradient(
+        120deg,
+        rgba(242, 248, 255, .72),
+        rgba(221, 235, 255, .48) 52%,
+        rgba(248, 251, 255, .68)
+    ) !important;
+    -webkit-backdrop-filter: blur(30px) saturate(185%);
+    backdrop-filter: blur(30px) saturate(185%);
+    box-shadow:
+        0 12px 30px rgba(41, 78, 132, .09),
+        inset 0 1px 0 rgba(255, 255, 255, .96),
+        inset 0 -1px 0 rgba(195, 216, 246, .3) !important;
+}
+
+.ciit-learning-subpage-arrow,
+.ciit-learning-subpage-number,
+.ciit-learning-content-pager-buttons button {
+    border: 1px solid rgba(255, 255, 255, .84);
+    border-radius: 12px;
+    background: rgba(255, 255, 255, .38);
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, .76);
+}
+
+.ciit-learning-subpage-arrow:not(:disabled):hover,
+.ciit-learning-subpage-number:hover,
+.ciit-learning-content-pager-buttons button:hover {
+    background: rgba(255, 255, 255, .78);
+    border-color: rgba(255, 255, 255, .98);
+    box-shadow: 0 6px 16px rgba(43, 91, 159, .1), inset 0 1px 0 #fff;
+}
+
+.ciit-learning-subpage-number.is-active,
+.ciit-learning-content-pager-buttons button.is-active {
+    border-color: rgba(255, 255, 255, .98);
+    background: linear-gradient(145deg, rgba(255, 255, 255, .98), rgba(234, 243, 255, .88));
+    box-shadow:
+        0 5px 16px rgba(37, 99, 190, .14),
+        inset 0 1px 0 #fff;
+}
+
+@media (prefers-reduced-transparency: reduce) {
+    .ciit-learning-subpage-pager,
+    .ciit-learning-content-pager {
+        background: #eef5ff !important;
+        -webkit-backdrop-filter: none;
+        backdrop-filter: none;
+    }
+}
