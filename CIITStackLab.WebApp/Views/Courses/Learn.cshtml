@@ -21,15 +21,23 @@
     }
 
     var currentItem = orderedContents.ElementAtOrDefault(currentIndex);
-    var currentContent = currentItem?.Content;
+    var selectedTopic = Model.CurrentTopicId.HasValue
+        ? Model.Topics.FirstOrDefault(topic => topic.Id == Model.CurrentTopicId.Value)
+        : null;
+    var currentTopic = selectedTopic ?? currentItem?.Topic;
+    var currentContent = selectedTopic is not null && selectedTopic.Contents.Count == 0
+        ? null
+        : currentItem?.Content;
     var learningProgress = Model.Progress;
     var orderedChapters = Model.Topics.SelectMany(topic => topic.Chapters).ToList();
     var currentChapter = currentContent?.NoteId is int currentNoteId
         ? orderedChapters.FirstOrDefault(chapter => chapter.Id == currentNoteId)
-        : currentItem?.Topic.Chapters.FirstOrDefault();
+        : currentTopic?.Chapters.FirstOrDefault();
     var currentChapterIndex = currentContent?.NoteId.HasValue == true
         ? orderedChapters.FindIndex(chapter => chapter.Id == currentContent.NoteId.Value)
-        : 0;
+        : currentChapter is not null
+            ? orderedChapters.FindIndex(chapter => chapter.Id == currentChapter.Id)
+            : 0;
     if (currentChapterIndex < 0) currentChapterIndex = 0;
     var previousItem = currentIndex > 0 ? orderedContents[currentIndex - 1] : null;
     var nextItem = currentIndex < orderedContents.Count - 1
@@ -157,7 +165,7 @@
     </script>
 }
 
-@if (currentContent is null)
+@if (currentContent is null && currentTopic is null)
 {
     <main class="ciit-learning-empty container py-5">
         <div class="ciit-learning-empty-card text-center">
@@ -169,6 +177,208 @@
             </a>
         </div>
     </main>
+}
+else if (currentContent is null && currentTopic is not null)
+{
+    <section class="ciit-learning-page">
+        <header class="ciit-learning-header">
+            <div class="container">
+                <div class="ciit-learning-header-row">
+                    <div class="ciit-learning-course-intro">
+                        <div class="ciit-learning-pills">
+                            <span class="ciit-learning-badge">@Model.Category</span>
+                            <span class="ciit-learning-meta-pill">@Model.Level</span>
+                            <span class="ciit-learning-meta-pill">
+                                <i class="bi bi-journal-bookmark me-1"></i>@currentTopic.Chapters.Count chapters
+                            </span>
+                        </div>
+                        <h1>@Model.Title</h1>
+                        <p>@Model.ShortDescription</p>
+                    </div>
+                </div>
+            </div>
+        </header>
+
+        <div class="container ciit-learning-shell">
+            <aside class="ciit-learning-sidebar" aria-label="Course chapters and resources">
+                <div class="ciit-learning-sidebar-head">
+                    <div>
+                        <span class="ciit-learning-eyebrow">YOUR LEARNING PATH</span>
+                        <h2>Chapters &amp; Resources</h2>
+                    </div>
+                    <span class="ciit-learning-count">@Model.ContentCount</span>
+                </div>
+                <div class="ciit-learning-sidebar-scroll">
+                    @foreach (var topic in Model.Topics)
+                    {
+                        <details class="ciit-learning-topic @(topic.Id == currentTopic.Id ? "is-active-topic" : "")"
+                                 data-topic-first-content-url="@(topic.Contents.FirstOrDefault() is { } firstTopicContent
+                                     ? Url.Action("Learn", "Courses", new { id = Model.Id, contentId = firstTopicContent.Id })
+                                     : Url.Action("Learn", "Courses", new { id = Model.Id, topicId = topic.Id }))"
+                                 open="@(topic.Id == currentTopic.Id ? "open" : null)">
+                            <summary class="ciit-learning-topic-heading">
+                                <div class="ciit-learning-topic-icon"><i class="bi bi-collection-play"></i></div>
+                                <div class="ciit-learning-topic-heading-text">
+                                    <strong>@topic.Title</strong>
+                                    <span>@topic.Chapters.Count chapter@(topic.Chapters.Count == 1 ? "" : "s")</span>
+                                </div>
+                            </summary>
+                            @foreach (var chapter in topic.Chapters)
+                            {
+                                <div class="ciit-learning-chapter ciit-learning-chapter-summary">
+                                    <span class="ciit-learning-chapter-number">@chapter.SortOrder.ToString("00")</span>
+                                    <span class="ciit-learning-chapter-title">
+                                        <strong>@FormatLearningTitle(chapter.Title)</strong>
+                                        <small>@chapter.Contents.Count resources</small>
+                                    </span>
+                                </div>
+                            }
+                        </details>
+                    }
+                </div>
+            </aside>
+
+            <main class="ciit-learning-main">
+                <div class="ciit-learning-main-tabs" role="tablist" aria-label="Learning sections">
+                    <a class="ciit-learning-main-tab" href="#topic-notes">1. Notes</a>
+                    <a class="ciit-learning-main-tab" href="#topic-content">2. Content</a>
+                    <a class="ciit-learning-main-tab" href="#topic-assessments">3. Assessments</a>
+                </div>
+
+                <section class="ciit-learning-lesson-shell">
+                    <div class="ciit-learning-lesson-heading">
+                        <a class="btn btn-outline-primary" asp-controller="Courses" asp-action="CourseEnvironment" asp-route-id="@Model.Id">
+                            <i class="bi bi-arrow-left me-2"></i>Back to Start Learning
+                        </a>
+                        <span class="ciit-learning-eyebrow mt-4 d-block">
+                            TOPIC @(Math.Max(0, Model.Topics.ToList().FindIndex(topic => topic.Id == currentTopic.Id)) + 1) OF @Math.Max(Model.Topics.Count, 1)
+                        </span>
+                        <h2 class="ciit-learning-chapter-title">@FormatLearningTitle(currentTopic.Title)</h2>
+                    </div>
+
+                    <section id="topic-notes" class="ciit-learning-resource ciit-learning-notes-panel">
+                        <div class="ciit-learning-resource-title">
+                            <span class="ciit-learning-resource-icon"><i class="bi bi-journal-text"></i></span>
+                            <div><h3>Chapter Notes</h3><p>Notes for @currentTopic.Title.</p></div>
+                        </div>
+                        @if (currentTopic.Chapters.Count == 0)
+                        {
+                            <p class="ciit-learning-category-empty">No notes or chapters have been added to this topic yet.</p>
+                        }
+                        @foreach (var chapter in currentTopic.Chapters)
+                        {
+                            <article class="ciit-learning-notes-content">
+                                <h4>@FormatLearningTitle(chapter.Title)</h4>
+                                @if (!string.IsNullOrWhiteSpace(chapter.NotesHtml))
+                                {
+                                    @Html.Raw(chapter.NotesHtml)
+                                }
+                                else
+                                {
+                                    <p class="ciit-learning-category-empty">No notes have been added to this chapter yet.</p>
+                                }
+                            </article>
+                        }
+                    </section>
+
+                    <section id="topic-content" class="ciit-learning-resource ciit-learning-content-overview">
+                        <div class="ciit-learning-resource-title">
+                            <span class="ciit-learning-resource-icon"><i class="bi bi-lightbulb"></i></span>
+                            <div><h3>Topic content</h3><p>Learning material linked to this topic.</p></div>
+                        </div>
+                        @if (currentTopic.Contents.Count > 0)
+                        {
+                            @foreach (var content in currentTopic.Contents)
+                            {
+                                <article class="ciit-learning-assessment-question">
+                                    <strong>@content.Title</strong>
+                                    @if (!string.IsNullOrWhiteSpace(content.Slides))
+                                    {
+                                        <p>@content.Slides</p>
+                                    }
+                                    @if (!string.IsNullOrWhiteSpace(content.VideoName))
+                                    {
+                                        <p><i class="bi bi-play-circle me-2"></i>@content.VideoName</p>
+                                    }
+                                </article>
+                            }
+                        }
+                        else
+                        {
+                            <p class="ciit-learning-category-empty">This topic has notes and assessments but no separate video/slide lesson.</p>
+                        }
+                    </section>
+
+                    <section id="topic-assessments" class="ciit-learning-resource ciit-learning-all-assessments">
+                        <div class="ciit-learning-resource-title">
+                            <span class="ciit-learning-resource-icon"><i class="bi bi-patch-check"></i></span>
+                            <div><h3>Chapter Assessments</h3><p>MCQs, interview questions and practice programs for this topic.</p></div>
+                        </div>
+                        @foreach (var chapter in currentTopic.Chapters)
+                        {
+                            <section class="ciit-learning-chapter-assessment">
+                                <h4>@FormatLearningTitle(chapter.Title)</h4>
+                                <section class="ciit-learning-assessment-subsection">
+                                    <h5>MCQs</h5>
+                                    @if (chapter.Questions.Count == 0)
+                                    {
+                                        <p class="ciit-learning-category-empty">No MCQs have been added to this chapter yet.</p>
+                                    }
+                                    @for (var questionIndex = 0; questionIndex < chapter.Questions.Count; questionIndex++)
+                                    {
+                                        var question = chapter.Questions[questionIndex];
+                                        <article class="ciit-learning-assessment-question">
+                                            <strong>@(questionIndex + 1). @question.Question</strong>
+                                            <ol type="A">
+                                                @foreach (var option in question.Options.Where(option => !string.IsNullOrWhiteSpace(option)))
+                                                {
+                                                    <li>@option</li>
+                                                }
+                                            </ol>
+                                        </article>
+                                    }
+                                </section>
+                                <section class="ciit-learning-assessment-subsection">
+                                    <h5>Interview Questions</h5>
+                                    @if (chapter.InterviewQuestions.Count == 0)
+                                    {
+                                        <p class="ciit-learning-category-empty">No interview questions have been added to this chapter yet.</p>
+                                    }
+                                    @foreach (var question in chapter.InterviewQuestions)
+                                    {
+                                        <article class="ciit-learning-assessment-question">
+                                            <strong>@question.Question</strong>
+                                            @if (!string.IsNullOrWhiteSpace(question.Answer))
+                                            {
+                                                <p>@question.Answer</p>
+                                            }
+                                        </article>
+                                    }
+                                </section>
+                                <section class="ciit-learning-assessment-subsection">
+                                    <h5>Practice Programs</h5>
+                                    @if (chapter.PracticeQuestions.Count == 0)
+                                    {
+                                        <p class="ciit-learning-category-empty">No practice programs have been added to this chapter yet.</p>
+                                    }
+                                    @foreach (var question in chapter.PracticeQuestions)
+                                    {
+                                        <article class="ciit-learning-assessment-question">
+                                            <strong>@question.QuestionTitle</strong>
+                                            @if (!string.IsNullOrWhiteSpace(question.QuestionDescription))
+                                            {
+                                                <p>@question.QuestionDescription</p>
+                                            }
+                                        </article>
+                                    }
+                                </section>
+                            </section>
+                        }
+                    </section>
+                </section>
+            </main>
+        </div>
+    </section>
 }
 else
 {
@@ -240,8 +450,9 @@ else
                             .Where(content => !chapterContentIds.Contains(content.Id))
                             .ToList();
 
-                        var topicHasCurrentContent = topic.Contents.Any(
-                            content => content.Id == currentContent.Id);
+                        var topicHasCurrentContent = currentTopic?.Id == topic.Id
+                            || (currentContent is not null && topic.Contents.Any(
+                                content => content.Id == currentContent.Id));
 
                         var completedTopicLessons = learningProgress is null
                             ? 0
@@ -255,7 +466,9 @@ else
                                 MidpointRounding.AwayFromZero);
 
                         <details class="ciit-learning-topic @(topicHasCurrentContent ? "is-active-topic" : "")"
-                                 data-topic-first-content-url="@(topic.Contents.FirstOrDefault() is { } firstTopicContent ? Url.Action("Learn", "Courses", new { id = Model.Id, contentId = firstTopicContent.Id }) : string.Empty)"
+                                 data-topic-first-content-url="@(topic.Contents.FirstOrDefault() is { } firstTopicContent
+                                     ? Url.Action("Learn", "Courses", new { id = Model.Id, contentId = firstTopicContent.Id })
+                                     : Url.Action("Learn", "Courses", new { id = Model.Id, topicId = topic.Id }))"
                                  open="@(topicHasCurrentContent ? "open" : null)">
                             <summary class="ciit-learning-topic-heading">
                                 <div class="ciit-learning-topic-icon">
@@ -505,9 +718,9 @@ else
                     <div class="ciit-learning-lesson-header">
                         <div class="ciit-learning-lesson-heading">
                             <span class="ciit-learning-eyebrow">
-                                TOPIC @(Math.Max(0, Model.Topics.ToList().FindIndex(topic => topic.Id == currentItem?.Topic.Id)) + 1) OF @Math.Max(Model.Topics.Count, 1)
+                                TOPIC @(Math.Max(0, Model.Topics.ToList().FindIndex(topic => topic.Id == currentTopic?.Id)) + 1) OF @Math.Max(Model.Topics.Count, 1)
                             </span>
-                            <h2 class="ciit-learning-chapter-title">@FormatLearningTitle(currentChapter?.Title ?? currentItem?.Topic.Title ?? currentContent.Title)</h2>
+                            <h2 class="ciit-learning-chapter-title">@FormatLearningTitle(currentChapter?.Title ?? currentTopic?.Title ?? currentContent.Title)</h2>
                         </div>
 
                         <div class="ciit-learning-lesson-actions">
