@@ -12,7 +12,7 @@
         <span class="ciit-interview-import-review-pill"><i class="bi bi-shield-check"></i> Nothing saved yet</span>
     </header>
     <div class="ciit-interview-import-stats">
-        <div><span>Questions detected</span><strong>@Model.Questions.Count / 20</strong></div>
+        <div><span>Questions detected</span><strong>@Model.Questions.Count / 100</strong></div>
         <div class="is-valid"><span>Valid Q&amp;A pairs</span><strong>@Model.ValidQuestionCount</strong></div>
         <div class="@(Model.InvalidQuestionCount > 0 || Model.FileErrors.Count > 0 ? "is-invalid" : string.Empty)">
             <span>Needs attention</span><strong>@(Model.InvalidQuestionCount + Model.FileErrors.Count)</strong>
@@ -65,12 +65,12 @@
             @if (Model.CanImport)
             {
                 <strong><i class="bi bi-check-circle-fill"></i> Ready to import</strong>
-                <p>20 interview questions will be linked directly to chapter <b>@Model.ChapterTitle</b> after confirmation.</p>
+                <p>@Model.Questions.Count interview questions will be linked directly to chapter <b>@Model.ChapterTitle</b> after confirmation.</p>
             }
             else
             {
                 <strong><i class="bi bi-exclamation-triangle-fill"></i> Import is blocked</strong>
-                <p>Exactly 20 valid, non-duplicate Q&amp;A pairs are required. Review the errors or upload fuller source notes.</p>
+                <p>Between 1 and 100 valid, non-duplicate Q&amp;A pairs are required. Review the errors or upload fuller source notes.</p>
             }
         </div>
         <form asp-area="Admin" asp-controller="Assessments" asp-action="ConfirmInterviewQuestionImport" method="post">
