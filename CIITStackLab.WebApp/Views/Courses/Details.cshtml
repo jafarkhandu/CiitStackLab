@@ -159,7 +159,7 @@
                                         <p>@Model.ShortDescription</p>
                                         <div class="ciit-payment-course-meta">
                                             <span><i class="bi bi-bar-chart"></i>@Model.Level</span>
-                                            <span><i class="bi bi-clock"></i>@Model.DurationHours hrs</span>
+                                            <span><i class="bi bi-clock"></i>@totalDurationHours.ToString("0.##") hrs</span>
                                             <span><i class="bi bi-collection-play"></i>@Model.Topics.Count topics</span>
                                         </div>
                                     </div>
