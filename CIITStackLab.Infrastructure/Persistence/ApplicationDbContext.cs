@@ -210,8 +210,7 @@ public class ApplicationDbContext : IdentityDbContext<ApplicationUser>
                 .IsRequired();
 
             entity.Property(x => x.ContentId)
-                .HasColumnName("content_id")
-                .IsRequired();
+                .HasColumnName("content_id");
 
             entity.Property(x => x.IsCompleted)
                 .HasColumnName("is_completed")
