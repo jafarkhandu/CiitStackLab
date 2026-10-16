@@ -21,79 +21,120 @@ public sealed class CourseAssessmentService : ICourseAssessmentService
     public async Task<AssessmentSubmissionOutcomeDto> SubmitAsync(
         string userId,
         int courseId,
-        int contentId,
+        int? contentId,
+        int? topicId,
         IReadOnlyList<AssessmentAnswerDto> answers,
         CancellationToken cancellationToken = default)
     {
-        if (string.IsNullOrWhiteSpace(userId) || courseId <= 0 || contentId <= 0)
+        if (string.IsNullOrWhiteSpace(userId)
+            || courseId <= 0
+            || (contentId is null && topicId is null)
+            || contentId is <= 0
+            || topicId is <= 0)
         {
             return AssessmentSubmissionOutcomeDto.Failure(
                 "The assessment request is not valid. Reload the lesson and try again.");
         }
 
-        var lessonBelongsToCourse = await IsActiveCourseLessonAsync(
-            courseId,
-            contentId,
-            cancellationToken);
+        List<ContentQuestion> questions;
 
-        if (!lessonBelongsToCourse)
+        if (contentId.HasValue)
         {
-            return AssessmentSubmissionOutcomeDto.Failure(
-                "This lesson is no longer available in the selected course.");
-        }
+            var lessonBelongsToCourse = await IsActiveCourseLessonAsync(
+                courseId,
+                contentId.Value,
+                cancellationToken);
 
-        var lessonTopicId = await _dbContext.Lessons
-            .AsNoTracking()
-            .Where(lesson => lesson.Id == contentId && lesson.Flag == 0)
-            .Select(lesson => lesson.TopicId)
-            .SingleOrDefaultAsync(cancellationToken);
+            if (!lessonBelongsToCourse)
+            {
+                return AssessmentSubmissionOutcomeDto.Failure(
+                    "This lesson is no longer available in the selected course.");
+            }
 
-        var lessonNoteId = await _dbContext.Lessons
-            .AsNoTracking()
-            .Where(lesson => lesson.Id == contentId && lesson.Flag == 0)
-            .Select(lesson => lesson.NoteId)
-            .SingleOrDefaultAsync(cancellationToken);
-
-        int? firstActiveContentId = null;
-        int? firstActiveChapterContentId = null;
-
-        if (lessonTopicId.HasValue)
-        {
-            firstActiveContentId = await _dbContext.Lessons
+            var lessonTopicId = await _dbContext.Lessons
                 .AsNoTracking()
-                .Where(lesson =>
-                    lesson.TopicId == lessonTopicId.Value
-                    && lesson.Flag == 0)
-                .OrderBy(lesson => lesson.Id)
-                .Select(lesson => (int?)lesson.Id)
-                .FirstOrDefaultAsync(cancellationToken);
-        }
+                .Where(lesson => lesson.Id == contentId.Value && lesson.Flag == 0)
+                .Select(lesson => lesson.TopicId)
+                .SingleOrDefaultAsync(cancellationToken);
 
-        if (lessonNoteId.HasValue)
-        {
-            firstActiveChapterContentId = await _dbContext.Lessons
+            var lessonNoteId = await _dbContext.Lessons
                 .AsNoTracking()
-                .Where(lesson =>
-                    lesson.NoteId == lessonNoteId.Value
-                    && lesson.Flag == 0)
-                .OrderBy(lesson => lesson.Id)
-                .Select(lesson => (int?)lesson.Id)
-                .FirstOrDefaultAsync(cancellationToken);
-        }
+                .Where(lesson => lesson.Id == contentId.Value && lesson.Flag == 0)
+                .Select(lesson => lesson.NoteId)
+                .SingleOrDefaultAsync(cancellationToken);
 
-        var questions = await _dbContext.ContentQuestions
-            .AsNoTracking()
-            .Where(question =>
-                question.Flag == 0
-                && (question.ContentId == contentId
-                    || (lessonTopicId.HasValue
-                        && firstActiveContentId == contentId
-                        && question.TopicId == lessonTopicId.Value)
-                    || (lessonNoteId.HasValue
-                        && firstActiveChapterContentId == contentId
-                        && question.NoteId == lessonNoteId.Value)))
-            .OrderBy(question => question.Id)
-            .ToListAsync(cancellationToken);
+            int? firstActiveContentId = null;
+            int? firstActiveChapterContentId = null;
+
+            if (lessonTopicId.HasValue)
+            {
+                firstActiveContentId = await _dbContext.Lessons
+                    .AsNoTracking()
+                    .Where(lesson => lesson.TopicId == lessonTopicId.Value && lesson.Flag == 0)
+                    .OrderBy(lesson => lesson.Id)
+                    .Select(lesson => (int?)lesson.Id)
+                    .FirstOrDefaultAsync(cancellationToken);
+            }
+
+            if (lessonNoteId.HasValue)
+            {
+                firstActiveChapterContentId = await _dbContext.Lessons
+                    .AsNoTracking()
+                    .Where(lesson => lesson.NoteId == lessonNoteId.Value && lesson.Flag == 0)
+                    .OrderBy(lesson => lesson.Id)
+                    .Select(lesson => (int?)lesson.Id)
+                    .FirstOrDefaultAsync(cancellationToken);
+            }
+
+            questions = await _dbContext.ContentQuestions
+                .AsNoTracking()
+                .Where(question =>
+                    question.Flag == 0
+                    && (question.ContentId == contentId.Value
+                        || (lessonTopicId.HasValue
+                            && firstActiveContentId == contentId.Value
+                            && question.TopicId == lessonTopicId.Value)
+                        || (lessonNoteId.HasValue
+                            && firstActiveChapterContentId == contentId.Value
+                            && question.NoteId == lessonNoteId.Value)))
+                .OrderBy(question => question.Id)
+                .ToListAsync(cancellationToken);
+        }
+        else
+        {
+            var topicBelongsToCourse = await IsActiveCourseTopicAsync(
+                courseId,
+                topicId!.Value,
+                cancellationToken);
+
+            if (!topicBelongsToCourse)
+            {
+                return AssessmentSubmissionOutcomeDto.Failure(
+                    "This topic is no longer available in the selected course.");
+            }
+
+            var topicNoteIds = await _dbContext.TrainingNotes
+                .AsNoTracking()
+                .Where(note => note.TopicId == topicId.Value && note.Flag == 0)
+                .Select(note => note.Id)
+                .ToListAsync(cancellationToken);
+
+            var topicLessonIds = await _dbContext.Lessons
+                .AsNoTracking()
+                .Where(lesson => lesson.TopicId == topicId.Value && lesson.Flag == 0)
+                .Select(lesson => lesson.Id)
+                .ToListAsync(cancellationToken);
+
+            questions = await _dbContext.ContentQuestions
+                .AsNoTracking()
+                .Where(question =>
+                    question.Flag == 0
+                    && (question.TopicId == topicId.Value
+                        || (question.NoteId.HasValue && topicNoteIds.Contains(question.NoteId.Value))
+                        || (question.ContentId.HasValue && topicLessonIds.Contains(question.ContentId.Value))))
+                .OrderBy(question => question.Id)
+                .ToListAsync(cancellationToken);
+        }
 
         if (questions.Count == 0)
         {
@@ -268,6 +309,26 @@ public sealed class CourseAssessmentService : ICourseAssessmentService
                   && lesson.Flag == 0
                   && lesson.Id == contentId
             select lesson.Id)
+            .AnyAsync(cancellationToken);
+    }
+
+    private async Task<bool> IsActiveCourseTopicAsync(
+        int courseId,
+        int topicId,
+        CancellationToken cancellationToken)
+    {
+        return await (
+            from course in _dbContext.Courses.AsNoTracking()
+            join courseTopic in _dbContext.CourseModules.AsNoTracking()
+                on course.Id equals courseTopic.CourseId
+            join topic in _dbContext.Topics.AsNoTracking()
+                on courseTopic.TopicId equals topic.Id
+            where course.Id == courseId
+                  && course.Flag == 0
+                  && courseTopic.Flag == 0
+                  && topic.Flag == 0
+                  && topic.Id == topicId
+            select topic.Id)
             .AnyAsync(cancellationToken);
     }
 
