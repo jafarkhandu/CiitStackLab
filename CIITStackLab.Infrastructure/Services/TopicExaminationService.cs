@@ -143,17 +143,17 @@ public sealed class TopicExaminationService : ITopicExaminationService
             return (false, "This exam attempt is locked to its original device.", null);
         var now = DateTime.UtcNow;
         var examEndUtc = attempt.ScheduledAtUtc.AddMinutes(ExamDurationMinutes);
-        if (now < attempt.ScheduledAtUtc)
-            return (false, "The exam will start at the scheduled time. The countdown page is not the exam.", null);
-        if (!attempt.VerificationStartedAtUtc.HasValue
-            || now < attempt.VerificationStartedAtUtc.Value.AddMinutes(1))
-            return (false, "Complete the full one-minute pre-exam verification before starting.", null);
         if (now >= examEndUtc)
         {
             if (attempt.Status is "Scheduled" or "Ready" or "InProgress")
                 await FinalizeAsync(attempt, "TimedOut", now, cancellationToken);
             return (false, "Time's up. The exam window has closed.", null);
         }
+        if (now < attempt.ScheduledAtUtc)
+            return (false, "The exam will start at the scheduled time. The countdown page is not the exam.", null);
+        if (!attempt.VerificationStartedAtUtc.HasValue
+            || now < attempt.VerificationStartedAtUtc.Value.AddMinutes(1))
+            return (false, "Complete the full one-minute pre-exam verification before starting.", null);
         if (attempt.Status == "InProgress")
         {
             if (attempt.DeadlineAtUtc.HasValue && now >= attempt.DeadlineAtUtc.Value)
