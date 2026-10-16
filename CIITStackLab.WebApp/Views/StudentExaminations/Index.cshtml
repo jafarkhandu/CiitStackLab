@@ -90,12 +90,6 @@
 </section>
 @section Scripts {
 <script>
-    document.getElementById('timezoneOffsetMinutes').value = new Date().getTimezoneOffset();
-    document.getElementById('topicOption')?.addEventListener('change', function () {
-        const parts = this.value.split('|');
-        document.getElementById('courseId').value = parts[0] || '';
-        document.getElementById('topicId').value = parts[1] || '';
-    });
     document.querySelectorAll('.exam-local-time').forEach(function (element) {
         const date = new Date(element.dateTime);
         if (!Number.isNaN(date.getTime())) element.textContent = date.toLocaleString();
