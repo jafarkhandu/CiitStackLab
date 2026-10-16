@@ -53,6 +53,7 @@
     const video = document.getElementById('exam-camera');
     const cameraStatus = document.getElementById('camera-status');
     let cameraReady = false;
+    const verificationEndsAt = Date.now() + 60 * 1000;
     let cameraStream = null;
     let faceDetector = null;
     let faceCheckTimer = null;
@@ -103,17 +104,25 @@
     }
 
     function updateButton() {
-        const remaining = scheduledAt - Date.now();
-        if (remaining > 0) {
-            const total = Math.ceil(remaining / 1000);
+        const verificationRemaining = verificationEndsAt - Date.now();
+        const scheduledRemaining = scheduledAt - Date.now();
+        if (verificationRemaining > 0) {
+            const total = Math.ceil(verificationRemaining / 1000);
+            const m = Math.floor(total / 60), s = total % 60;
+            countdown.textContent = [m, s].map(x => String(x).padStart(2, '0')).join(':');
+            help.textContent = 'Security and camera checks are running. You can start after this 1-minute verification and when your scheduled time is reached.';
+            button.disabled = true;
+            button.textContent = 'Verifying…';
+        } else if (scheduledRemaining > 0) {
+            const total = Math.ceil(scheduledRemaining / 1000);
             const h = Math.floor(total / 3600), m = Math.floor((total % 3600) / 60), s = total % 60;
             countdown.textContent = [h, m, s].map(x => String(x).padStart(2, '0')).join(':');
-            help.textContent = 'The exam remains closed until the scheduled time. This page does not start the exam timer.';
+            help.textContent = 'Verification completed. The exam will unlock at the scheduled time.';
             button.disabled = true;
             button.textContent = 'Available at scheduled time';
         } else {
-            countdown.textContent = 'Scheduled time reached';
-            help.textContent = 'The exam timer begins only after you start the examination.';
+            countdown.textContent = 'Verification complete';
+            help.textContent = 'Camera must be connected. The exam timer begins after you start the examination.';
             button.disabled = !cameraReady;
             button.textContent = cameraReady ? 'Start examination' : 'Enable camera to continue';
         }
