@@ -191,6 +191,13 @@
                 window.location.assign(firstContentUrl);
             });
         });
+        document.querySelectorAll('.exam-timezone-offset').forEach(function (input) {
+            input.value = new Date().getTimezoneOffset();
+        });
+        const examApplicationModal = document.getElementById('topicExamApplicationModal');
+        if (examApplicationModal && window.bootstrap) {
+            window.bootstrap.Modal.getOrCreateInstance(examApplicationModal).show();
+        }
     </script>
 }
 
@@ -550,6 +557,38 @@ else if (currentContent is null && currentTopic is not null)
             </main>
         </div>
     </section>
+}
+
+@if (User.IsInRole("Student") && ViewBag.ShowExamApplicationModal == true && currentTopic is not null)
+{
+    <div class="modal fade" id="topicExamApplicationModal" tabindex="-1" aria-labelledby="topicExamApplicationTitle" aria-hidden="true" data-bs-backdrop="static" data-bs-keyboard="false">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <div>
+                        <span class="text-uppercase text-primary small fw-bold">Topic completed</span>
+                        <h2 class="modal-title fs-5 mt-1" id="topicExamApplicationTitle">Apply for @currentTopic.Title examination</h2>
+                    </div>
+                </div>
+                <form asp-controller="StudentExaminations" asp-action="Schedule" method="post">
+                    @Html.AntiForgeryToken()
+                    <div class="modal-body">
+                        <p>Your topic is complete. Schedule your 50-question examination. You can revise this topic while waiting for the scheduled time.</p>
+                        <input type="hidden" name="CourseId" value="@Model.Id" />
+                        <input type="hidden" name="TopicId" value="@currentTopic.Id" />
+                        <input type="hidden" name="TimezoneOffsetMinutes" class="exam-timezone-offset" />
+                        <label class="form-label" for="topicExamScheduledAt">Exam date and time</label>
+                        <input class="form-control" type="datetime-local" id="topicExamScheduledAt" name="ScheduledAtLocal" required />
+                        <div class="form-text">The exam instructions button opens 30 minutes before your scheduled time. The exam itself starts only at the scheduled time.</div>
+                    </div>
+                    <div class="modal-footer">
+                        <a asp-controller="StudentExaminations" asp-action="Index" class="btn btn-outline-secondary">Later</a>
+                        <button type="submit" class="btn btn-primary">Schedule examination</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
 }
 else
 {
