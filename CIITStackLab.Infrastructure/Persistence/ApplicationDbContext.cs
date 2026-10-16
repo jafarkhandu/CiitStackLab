@@ -328,6 +328,7 @@ public class ApplicationDbContext : IdentityDbContext<ApplicationUser>
             entity.Property(x => x.StartedAtUtc).HasColumnName("started_at_utc").HasColumnType("datetime2");
             entity.Property(x => x.SubmittedAtUtc).HasColumnName("submitted_at_utc").HasColumnType("datetime2");
             entity.Property(x => x.DeadlineAtUtc).HasColumnName("deadline_at_utc").HasColumnType("datetime2");
+            entity.Property(x => x.VerificationStartedAtUtc).HasColumnName("verification_started_at_utc").HasColumnType("datetime2");
             entity.Property(x => x.Status).HasColumnName("status").HasMaxLength(30).IsRequired();
             entity.Property(x => x.QuestionIdsJson).HasColumnName("question_ids_json").HasColumnType("nvarchar(max)").IsRequired();
             entity.Property(x => x.OptionOrderJson).HasColumnName("option_order_json").HasColumnType("nvarchar(max)").IsRequired();
@@ -344,7 +345,7 @@ public class ApplicationDbContext : IdentityDbContext<ApplicationUser>
             entity.HasIndex(x => new { x.UserId, x.CourseId, x.TopicId, x.Status })
                 .HasDatabaseName("IX_topic_exam_user_topic_status");
             entity.HasIndex(x => new { x.UserId, x.CourseId, x.TopicId }).IsUnique()
-                .HasFilter("[status] <> 'Passed' AND [status] <> 'Failed' AND [status] <> 'Terminated'")
+                .HasFilter("[status] <> 'Passed' AND [status] <> 'Failed' AND [status] <> 'Terminated' AND [status] <> 'TimedOut'")
                 .HasDatabaseName("UX_topic_exam_one_active_attempt");
         });
 
