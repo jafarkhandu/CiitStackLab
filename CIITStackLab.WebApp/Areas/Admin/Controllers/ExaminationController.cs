@@ -87,10 +87,25 @@ public sealed class ExaminationController : Controller
                 return RedirectToAction(nameof(Index));
             }
             var expected = new[] { "Question", "Option1", "Option2", "Option3", "Option4", "CorrectOptionNumber" };
-            if (!rows[0].Select(x => x.Trim()).SequenceEqual(expected, StringComparer.OrdinalIgnoreCase))
+            var actualHeaders = rows[0].Select(x => x.Trim().TrimStart('\uFEFF')).ToList();
+            var headerIssues = new List<string>();
+            foreach (var requiredHeader in expected)
             {
-                TempData["ExamAdminError"] = "Excel headers do not match the required format.";
-                return RedirectToAction(nameof(Index));
+                if (!actualHeaders.Contains(requiredHeader, StringComparer.OrdinalIgnoreCase))
+                {
+                    headerIssues.Add($"Missing required column '{requiredHeader}'. Rename the matching column to '{requiredHeader}'.");
+                }
+            }
+            foreach (var actualHeader in actualHeaders.Where(x => !string.IsNullOrWhiteSpace(x)))
+            {
+                if (!expected.Contains(actualHeader, StringComparer.OrdinalIgnoreCase))
+                {
+                    headerIssues.Add($"Unexpected column '{actualHeader}'. Use only these required headers: {string.Join(", ", expected)}.");
+                }
+            }
+            if (actualHeaders.Count != expected.Length)
+            {
+                headerIssues.Add($"The first row must contain exactly {expected.Length} columns in this order: {string.Join(", ", expected)}.");
             }
 
             var existingKeys = await _db.TopicExamQuestions.AsNoTracking()
@@ -99,41 +114,64 @@ public sealed class ExaminationController : Controller
             var keys = existingKeys.Select(Normalize).Where(x => x.Length > 0).ToHashSet(StringComparer.OrdinalIgnoreCase);
             var batchKeys = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
             var additions = new List<TopicExamQuestion>();
+            var analysisRows = new List<ExamImportRow>();
             var rowNumber = 1;
             var invalidRows = 0;
 
-            foreach (var fields in rows.Skip(1))
+            if (headerIssues.Count == 0)
             {
-                rowNumber++;
-                if (fields.All(string.IsNullOrWhiteSpace)) continue;
-                if (fields.Count != 6 || string.IsNullOrWhiteSpace(fields[0])
-                    || fields.Skip(1).Take(4).Any(string.IsNullOrWhiteSpace)
-                    || fields.Skip(1).Take(4).Select(Normalize).Distinct(StringComparer.OrdinalIgnoreCase).Count() != 4
-                    || !int.TryParse(fields[5], NumberStyles.Integer, CultureInfo.InvariantCulture, out var correct)
-                    || correct is < 1 or > 4)
+                foreach (var fields in rows.Skip(1))
                 {
-                    invalidRows++;
-                    continue;
-                }
-                var key = Normalize(fields[0]);
-                if (key.Length == 0 || keys.Contains(key) || !batchKeys.Add(key))
-                {
-                    invalidRows++;
-                    continue;
-                }
-                additions.Add(new TopicExamQuestion
-                {
-                    TopicId = topicId, Question = fields[0].Trim(),
-                    Option1 = fields[1].Trim(), Option2 = fields[2].Trim(),
-                    Option3 = fields[3].Trim(), Option4 = fields[4].Trim(),
-                    CorrectOptionNumber = correct, Flag = 0, CreatedAtUtc = DateTime.UtcNow
-                });
-            }
+                    rowNumber++;
+                    if (fields.All(string.IsNullOrWhiteSpace)) continue;
 
-            if (additions.Count == 0)
-            {
-                TempData["ExamAdminError"] = $"No valid new questions were found. Invalid or duplicate rows: {invalidRows}.";
-                return RedirectToAction(nameof(Index));
+                    var question = GetField(fields, 0);
+                    var option1 = GetField(fields, 1);
+                    var option2 = GetField(fields, 2);
+                    var option3 = GetField(fields, 3);
+                    var option4 = GetField(fields, 4);
+                    var answerText = GetField(fields, 5);
+                    var issues = new List<string>();
+                    var correct = 0;
+
+                    if (fields.Count != 6)
+                        issues.Add($"This row has {fields.Count} columns; it must have exactly 6. Check for an extra comma or missing cell.");
+                    if (string.IsNullOrWhiteSpace(question))
+                        issues.Add("Question is missing. Enter the full question in the Question column.");
+                    if (string.IsNullOrWhiteSpace(option1)) issues.Add("Option1 (A) is missing. Add the first answer choice.");
+                    if (string.IsNullOrWhiteSpace(option2)) issues.Add("Option2 (B) is missing. Add the second answer choice.");
+                    if (string.IsNullOrWhiteSpace(option3)) issues.Add("Option3 (C) is missing. Add the third answer choice.");
+                    if (string.IsNullOrWhiteSpace(option4)) issues.Add("Option4 (D) is missing. Add the fourth answer choice.");
+                    var options = new[] { option1, option2, option3, option4 };
+                    if (options.All(x => !string.IsNullOrWhiteSpace(x))
+                        && options.Select(Normalize).Distinct(StringComparer.OrdinalIgnoreCase).Count() != 4)
+                        issues.Add("Answer choices contain duplicates. Provide four distinct options in Option1–Option4.");
+                    if (!int.TryParse(answerText, NumberStyles.Integer, CultureInfo.InvariantCulture, out correct)
+                        || correct is < 1 or > 4)
+                        issues.Add($"CorrectOptionNumber is '{answerText}', but it must be 1, 2, 3, or 4 (1=A, 2=B, 3=C, 4=D).");
+
+                    var key = Normalize(question);
+                    var isDuplicate = key.Length > 0 && (keys.Contains(key) || !batchKeys.Add(key));
+                    if (isDuplicate)
+                        issues.Add("This question duplicates a question already stored for the selected topic or another row in this workbook. Rewrite it or remove the duplicate row.");
+
+                    var valid = issues.Count == 0;
+                    analysisRows.Add(new ExamImportRow(rowNumber, question, option1, option2, option3, option4,
+                        correct is >= 1 and <= 4 ? correct : null, valid, isDuplicate, issues));
+                    if (!valid)
+                    {
+                        invalidRows++;
+                        continue;
+                    }
+
+                    additions.Add(new TopicExamQuestion
+                    {
+                        TopicId = topicId, Question = question.Trim(),
+                        Option1 = option1.Trim(), Option2 = option2.Trim(),
+                        Option3 = option3.Trim(), Option4 = option4.Trim(),
+                        CorrectOptionNumber = correct, Flag = 0, CreatedAtUtc = DateTime.UtcNow
+                    });
+                }
             }
 
             var previewToken = Guid.NewGuid().ToString("N");
@@ -141,10 +179,10 @@ public sealed class ExaminationController : Controller
             if (string.IsNullOrWhiteSpace(userId))
                 return Unauthorized();
 
-            _cache.Set(GetPreviewKey(previewToken),
-                new ExamImportPreview(userId, topicId, topic.Title, additions, invalidRows),
-                TimeSpan.FromMinutes(20));
-            TempData["ExamAdminMessage"] = $"Analysis complete: {additions.Count} valid new questions; {invalidRows} invalid or duplicate rows skipped. Review before confirming.";
+            var preview = new ExamImportPreview(userId, topicId, topic.Title, additions, invalidRows,
+                analysisRows, headerIssues, Path.GetFileName(file.FileName));
+            _cache.Set(GetPreviewKey(previewToken), preview, TimeSpan.FromMinutes(20));
+            TempData["ExamAdminMessage"] = $"Analysis complete: {additions.Count} valid questions; {invalidRows} rows need attention. Nothing has been saved yet.";
             return RedirectToAction(nameof(Index), new { previewToken });
         }
         catch (Exception exception) when (exception is InvalidDataException or System.Xml.XmlException)
@@ -210,6 +248,9 @@ public sealed class ExaminationController : Controller
     }
 
     private static string GetPreviewKey(string token) => $"topic-exam-import:{token}";
+
+    private static string GetField(IReadOnlyList<string> fields, int index) =>
+        index < fields.Count ? fields[index].Trim() : string.Empty;
 
     private static string Normalize(string? value) =>
         string.Join(' ', (value ?? string.Empty).Split((char[]?)null, StringSplitOptions.RemoveEmptyEntries)).Trim();
@@ -328,8 +369,27 @@ public sealed class ExaminationController : Controller
         return fields;
     }
 
+    public sealed record ExamImportRow(
+        int RowNumber,
+        string Question,
+        string Option1,
+        string Option2,
+        string Option3,
+        string Option4,
+        int? CorrectOptionNumber,
+        bool IsValid,
+        bool IsDuplicate,
+        List<string> Issues);
+
     public sealed record ExamImportPreview(
-        string UserId, int TopicId, string TopicTitle, List<TopicExamQuestion> Questions, int InvalidRows);
+        string UserId,
+        int TopicId,
+        string TopicTitle,
+        List<TopicExamQuestion> Questions,
+        int InvalidRows,
+        List<ExamImportRow> Rows,
+        List<string> HeaderIssues,
+        string FileName);
 
     public sealed class ExaminationTopicRow
     {
