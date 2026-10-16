@@ -719,7 +719,7 @@ namespace CIITStackLab.Infrastructure.Migrations
                     b.HasKey("Id");
                     b.HasIndex("UserId", "CourseId", "TopicId", "CreatedAtUtc").HasDatabaseName("IX_topic_exam_user_course_topic");
                     b.HasIndex("UserId", "CourseId", "TopicId", "Status").HasDatabaseName("IX_topic_exam_user_topic_status");
-                    b.HasIndex("UserId", "CourseId", "TopicId").IsUnique().HasFilter("[status] IN ('Scheduled', 'Ready', 'InProgress')").HasDatabaseName("UX_topic_exam_one_active_attempt");
+                    b.HasIndex("UserId", "CourseId", "TopicId").IsUnique().HasFilter("[status] <> 'Passed' AND [status] <> 'Failed' AND [status] <> 'Terminated'").HasDatabaseName("UX_topic_exam_one_active_attempt");
                     b.ToTable("tblstudent_topic_exam_attempts", "erpsystem");
                 });
 
