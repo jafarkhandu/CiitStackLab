@@ -277,7 +277,7 @@ public sealed class TopicExaminationService : ITopicExaminationService
     {
         var ids = DeserializeIds(attempt.QuestionIdsJson);
         var answers = JsonSerializer.Deserialize<Dictionary<int, int?>>(attempt.AnswersJson, JsonOptions) ?? new();
-        var questions = await _db.ContentQuestions.AsNoTracking()
+        var questions = await _db.TopicExamQuestions.AsNoTracking()
             .Where(q => ids.Contains(q.Id)).ToDictionaryAsync(q => q.Id, cancellationToken);
         var optionOrders = DeserializeOptionOrders(attempt.OptionOrderJson);
         var score = 0;
@@ -362,7 +362,7 @@ public sealed class TopicExaminationService : ITopicExaminationService
     private async Task<TopicExamSessionDto> BuildSessionAsync(TopicExamAttempt attempt, bool includeAnswers, bool includeQuestions, CancellationToken cancellationToken)
     {
         var ids = DeserializeIds(attempt.QuestionIdsJson);
-        var questions = includeQuestions ? await _db.ContentQuestions.AsNoTracking().Where(q => ids.Contains(q.Id)).ToListAsync(cancellationToken) : new List<ContentQuestion>();
+        var questions = includeQuestions ? await _db.ContentQuestions.AsNoTracking().Where(q => ids.Contains(q.Id)).ToListAsync(cancellationToken) : new List<TopicExamQuestion>();
         var answerMap = includeAnswers
             ? JsonSerializer.Deserialize<Dictionary<int, int?>>(attempt.AnswersJson, JsonOptions) ?? new()
             : new Dictionary<int, int?>();
@@ -399,7 +399,7 @@ public sealed class TopicExaminationService : ITopicExaminationService
         };
     }
 
-    private static IReadOnlyList<string> GetShuffledOptions(ContentQuestion question, string orderJson)
+    private static IReadOnlyList<string> GetShuffledOptions(TopicExamQuestion question, string orderJson)
     {
         var original = new[]
         {
