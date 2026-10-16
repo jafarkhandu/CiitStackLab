@@ -416,6 +416,26 @@ public class CoursesController : Controller
                 studentUserId,
                 id,
                 cancellationToken);
+
+            var examTopicId = course.CurrentTopicId ?? topicId;
+            if (examTopicId.HasValue)
+            {
+                var examTopic = course.Topics.FirstOrDefault(t => t.Id == examTopicId.Value);
+                var topicContentIds = examTopic is null
+                    ? new List<int>()
+                    : examTopic.Contents.Concat(examTopic.Chapters.SelectMany(chapter => chapter.Contents))
+                        .Select(content => content.Id).Distinct().ToList();
+                var topicCompleted = topicContentIds.Count > 0
+                    && topicContentIds.All(course.Progress.CompletedContentIds.Contains);
+                var hasPendingOrPassedExam = await _dbContext.TopicExamAttempts.AsNoTracking().AnyAsync(
+                    attempt => attempt.UserId == studentUserId
+                        && attempt.CourseId == id && attempt.TopicId == examTopicId.Value
+                        && (attempt.Status == "Scheduled" || attempt.Status == "Ready"
+                            || attempt.Status == "InProgress" || attempt.Status == "Passed"),
+                    cancellationToken);
+                ViewBag.ShowExamApplicationModal = topicCompleted && !hasPendingOrPassedExam;
+                ViewBag.ExamApplicationTopicId = examTopicId.Value;
+            }
         }
 
         return View(course);
