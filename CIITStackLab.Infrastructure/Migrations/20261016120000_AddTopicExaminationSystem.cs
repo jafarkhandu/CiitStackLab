@@ -70,7 +70,7 @@ namespace CIITStackLab.Infrastructure.Migrations
                 table: "tblstudent_topic_exam_attempts",
                 columns: new[] { "user_id", "course_id", "topic_id" },
                 unique: true,
-                filter: "[status] IN ('Scheduled', 'Ready', 'InProgress')");
+                filter: "[status] <> 'Passed' AND [status] <> 'Failed' AND [status] <> 'Terminated'");
 
             migrationBuilder.CreateIndex(
                 name: "IX_topic_exam_events_attempt_date",
