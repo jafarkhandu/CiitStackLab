@@ -544,7 +544,10 @@ public class CoursesController : Controller
         [FromForm] List<AssessmentAnswerDto> answers,
         CancellationToken cancellationToken)
     {
-        if (id <= 0 || contentId <= 0)
+        if (id <= 0
+            || (contentId is null && topicId is null)
+            || contentId is <= 0
+            || topicId is <= 0)
         {
             return NotFound();
         }
@@ -583,7 +586,7 @@ public class CoursesController : Controller
             TempData["AssessmentError"] = outcome.ErrorMessage
                 ?? "The assessment could not be submitted. Please try again.";
 
-            return RedirectToAction(nameof(Learn), new { id, contentId });
+            return RedirectToAction(nameof(Learn), new { id, contentId, topicId });
         }
 
         return RedirectToAction(
