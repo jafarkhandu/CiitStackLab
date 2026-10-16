@@ -442,7 +442,7 @@ namespace CIITStackLab.Infrastructure.Migrations
                         .HasColumnType("nvarchar(max)")
                         .HasColumnName("answers_json");
 
-                    b.Property<int>("ContentId")
+                    b.Property<int?>("ContentId")
                         .HasColumnType("int")
                         .HasColumnName("content_id");
 
