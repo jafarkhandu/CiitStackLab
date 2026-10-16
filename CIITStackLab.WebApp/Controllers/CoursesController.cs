@@ -488,7 +488,10 @@ public class CoursesController : Controller
         int contentId,
         CancellationToken cancellationToken)
     {
-        if (id <= 0 || contentId <= 0)
+        if (id <= 0
+            || (contentId is null && topicId is null)
+            || contentId is <= 0
+            || topicId is <= 0)
         {
             return NotFound();
         }
@@ -527,15 +530,17 @@ public class CoursesController : Controller
 
         TempData["LearningProgressMessage"] = "Lesson marked as complete.";
 
-        return RedirectToAction(nameof(Learn), new { id, contentId });
+        return RedirectToAction(nameof(Learn), new { id, contentId, topicId });
     }
 
     [HttpPost("Courses/Learn/{id:int}/Assessment/{contentId:int}")]
+    [HttpPost("Courses/Learn/{id:int}/TopicAssessment/{topicId:int}")]
     [Authorize(Roles = "Student")]
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> SubmitAssessment(
         int id,
-        int contentId,
+        int? contentId,
+        int? topicId,
         [FromForm] List<AssessmentAnswerDto> answers,
         CancellationToken cancellationToken)
     {
@@ -569,6 +574,7 @@ public class CoursesController : Controller
             userId,
             id,
             contentId,
+            topicId,
             answers ?? new List<AssessmentAnswerDto>(),
             cancellationToken);
 
