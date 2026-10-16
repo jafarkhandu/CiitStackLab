@@ -131,6 +131,14 @@
             event(['c','v','x'].includes(key) ? ({c:'Copy',v:'Paste',x:'Cut'}[key]) : 'ScreenshotShortcut', 'Restricted keyboard shortcut');
         }
         if (e.key === 'PrintScreen') event('ScreenshotShortcut', 'PrintScreen key');
+        if ((e.ctrlKey || e.metaKey) && e.shiftKey && key === '5') {
+            e.preventDefault();
+            event('ScreenshotShortcut', 'Screenshot keyboard shortcut');
+        }
+        if ((e.ctrlKey || e.metaKey) && e.shiftKey && key === 'r' || e.metaKey && e.altKey && key === 'r') {
+            e.preventDefault();
+            event('RecordingShortcut', 'Possible screen recording shortcut');
+        }
     });
     document.addEventListener('contextmenu', e => e.preventDefault());
     document.getElementById('exam-start-form').addEventListener('submit', e => {
