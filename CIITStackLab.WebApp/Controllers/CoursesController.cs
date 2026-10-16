@@ -444,7 +444,7 @@ public class CoursesController : Controller
                     cancellationToken);
                 ViewBag.ShowExamApplicationModal = topicCompleted
                     && !hasPendingOrPassedExam
-                    && TempData.Peek("OpenExamApplicationModal") is true;
+                    && TempData["OpenExamApplicationModal"] is true;
                 ViewBag.ExamApplicationTopicId = examTopicId.Value;
             }
         }
