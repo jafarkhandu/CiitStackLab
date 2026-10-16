@@ -637,6 +637,10 @@ else
                             }
                         </div>
 
+                        @if (TempData["ExamError"] is string examError)
+                        {
+                            <div class="alert alert-danger ciit-learning-progress-alert" role="alert">@examError</div>
+                        }
                         @if (TempData["LearningProgressMessage"] is string progressMessage)
                         {
                             <div class="alert alert-success ciit-learning-progress-alert" role="status">
