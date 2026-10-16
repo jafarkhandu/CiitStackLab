@@ -157,7 +157,12 @@ public sealed class TopicExaminationService : ITopicExaminationService
             || (a.SelectedOptionNumber.HasValue && a.SelectedOptionNumber.Value is < 1 or > 4)))
             return (false, "Submitted answers contain invalid question or option identifiers.", null);
 
-        var answerMap = submitted.GroupBy(a => a.QuestionId).ToDictionary(g => g.Key, g => g.Last().SelectedOptionNumber);
+        var answerMap = JsonSerializer.Deserialize<Dictionary<int, int?>>(attempt.AnswersJson, JsonOptions) ?? new();
+        foreach (var answer in submitted.GroupBy(a => a.QuestionId).Select(group => group.Last()))
+        {
+            if (answer.SelectedOptionNumber.HasValue || !answerMap.ContainsKey(answer.QuestionId))
+                answerMap[answer.QuestionId] = answer.SelectedOptionNumber;
+        }
         attempt.AnswersJson = JsonSerializer.Serialize(answerMap, JsonOptions);
         if (now >= attempt.DeadlineAtUtc.Value)
             await FinalizeAsync(attempt, "TimedOut", now, cancellationToken);
