@@ -221,6 +221,13 @@
                            asp-controller="Courses" asp-action="PaymentHistory">
                             <i class="bi bi-receipt"></i><span>Payment History</span>
                         </a>
+                        @if (User.IsInRole("Student"))
+                        {
+                            <a class="@(currentController.Equals("StudentExaminations", StringComparison.OrdinalIgnoreCase) ? "active" : "")"
+                               asp-controller="StudentExaminations" asp-action="Index">
+                                <i class="bi bi-shield-check"></i><span>Examinations</span>
+                            </a>
+                        }
                         <a class="@(currentController.Equals("Account", StringComparison.OrdinalIgnoreCase) && currentAction.Equals("Profile", StringComparison.OrdinalIgnoreCase) ? "active" : "")"
                            asp-controller="Account" asp-action="Profile">
                             <i class="bi bi-person-circle"></i><span>My Profile</span>
