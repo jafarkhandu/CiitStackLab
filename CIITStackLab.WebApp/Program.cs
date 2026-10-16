@@ -1,6 +1,7 @@
 using CIITStackLab.Infrastructure;
 using CIITStackLab.Infrastructure.Identity;
 using CIITStackLab.Infrastructure.Persistence;
+using Microsoft.AspNetCore.StaticFiles;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -23,7 +24,15 @@ if (!app.Environment.IsDevelopment())
 }
 
 app.UseHttpsRedirection();
-app.UseStaticFiles();
+
+var contentTypeProvider = new FileExtensionContentTypeProvider();
+contentTypeProvider.Mappings[".tflite"] = "application/octet-stream";
+
+app.UseStaticFiles(new StaticFileOptions
+{
+    ContentTypeProvider = contentTypeProvider
+});
+
 app.UseRouting();
 
 app.UseAuthentication();
