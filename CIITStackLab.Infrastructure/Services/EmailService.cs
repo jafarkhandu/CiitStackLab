@@ -57,11 +57,11 @@ public sealed class EmailService : IEmailService
     {
         var safeUserName = HtmlEncode(userName);
         var safeCourseTitle = HtmlEncode(courseTitle);
-        var formattedAmount = $"₹{amount:0.00}";
+        var formattedAmount = $"INR {amount:0.00}";
         var formattedDate = purchasedAt.ToLocalTime().ToString("dd MMM yyyy, hh:mm tt");
-        var invoiceHtml = BuildInvoiceHtml(
-            safeUserName,
-            safeCourseTitle,
+        var invoicePdf = BuildInvoicePdf(
+            userName,
+            courseTitle,
             formattedAmount,
             purchaseId,
             formattedDate);
@@ -81,19 +81,20 @@ public sealed class EmailService : IEmailService
                 </table>
             </div>
             <div style="margin:20px 0;padding:16px 18px;border:1px dashed #b7c9e8;border-radius:14px;background:#fff;">
-                <strong style="color:{DarkText};">Invoice attached</strong>
-                <div style="margin-top:5px;color:{MutedText};font-size:13px;line-height:1.6;">Download the attached invoice file for your records.</div>
+                <strong style="color:{DarkText};">PDF invoice attached</strong>
+                <div style="margin-top:5px;color:{MutedText};font-size:13px;line-height:1.6;">Download the attached PDF invoice for your records.</div>
             </div>
             """);
 
         return SendEmailAsync(
             toEmail,
             "CIIT Stack Lab Purchase Confirmation",
-            $"Purchase confirmed. Course: {courseTitle}. Amount: {formattedAmount}. Purchase ID: {purchaseId}.",
+            $"Purchase confirmed. Course: {courseTitle}. Amount: {formattedAmount}. Purchase ID: {purchaseId}. A PDF invoice is attached.",
             html,
             cancellationToken,
-            Encoding.UTF8.GetBytes(invoiceHtml),
-            $"CIIT-Stack-Lab-Invoice-{purchaseId}.html");
+            invoicePdf,
+            $"CIIT-Stack-Lab-Invoice-{purchaseId}.pdf",
+            new ContentType("application", "pdf"));
     }
 
     public Task SendPasswordResetOtpAsync(
@@ -133,7 +134,8 @@ public sealed class EmailService : IEmailService
         string htmlBody,
         CancellationToken cancellationToken,
         byte[]? attachmentBytes = null,
-        string? attachmentFileName = null)
+        string? attachmentFileName = null,
+        ContentType? attachmentContentType = null)
     {
         if (string.IsNullOrWhiteSpace(toEmail))
         {
@@ -176,7 +178,10 @@ public sealed class EmailService : IEmailService
 
         if (attachmentBytes is not null && !string.IsNullOrWhiteSpace(attachmentFileName))
         {
-            bodyBuilder.Attachments.Add(attachmentFileName, attachmentBytes);
+            bodyBuilder.Attachments.Add(
+                attachmentFileName,
+                attachmentBytes,
+                attachmentContentType ?? new ContentType("application", "octet-stream"));
         }
 
         message.Body = bodyBuilder.ToMessageBody();
@@ -214,38 +219,104 @@ public sealed class EmailService : IEmailService
         """;
     }
 
-    private static string BuildInvoiceHtml(
+    private static byte[] BuildInvoicePdf(
         string userName,
         string courseTitle,
         string amount,
         int purchaseId,
         string purchasedAt)
     {
-        return $"""
-        <!doctype html>
-        <html>
-        <head><meta charset="utf-8"><title>CIIT Stack Lab Invoice</title></head>
-        <body style="margin:0;padding:32px;background:#eef6ff;font-family:Arial,Helvetica,sans-serif;color:{DarkText};">
-            <div style="max-width:720px;margin:auto;background:#fff;border:1px solid #dbeafe;border-radius:22px;overflow:hidden;box-shadow:0 18px 45px rgba(23,105,255,.12);">
-                <div style="padding:28px;background:linear-gradient(135deg,#1769ff,#06b6d4);color:#fff;">
-                    <div style="display:inline-block;padding:7px 10px;border:1px solid rgba(255,255,255,.45);border-radius:10px;background:rgba(255,255,255,.15);font-size:20px;font-weight:800;">CIIT</div>
-                    <div style="margin-top:8px;font-size:12px;font-weight:700;letter-spacing:.14em;">STACK LAB</div>
-                    <h1 style="margin:22px 0 0;font-size:30px;">Purchase Invoice</h1>
-                </div>
-                <div style="padding:30px;">
-                    <p style="margin-top:0;">Issued to <strong>{userName}</strong></p>
-                    <table width="100%" cellpadding="0" cellspacing="0" style="border-collapse:collapse;margin-top:22px;">
-                        <tr><td style="padding:14px;border-bottom:1px solid #e5edf7;color:{MutedText};">Purchase ID</td><td style="padding:14px;border-bottom:1px solid #e5edf7;text-align:right;font-weight:700;">{purchaseId}</td></tr>
-                        <tr><td style="padding:14px;border-bottom:1px solid #e5edf7;color:{MutedText};">Course</td><td style="padding:14px;border-bottom:1px solid #e5edf7;text-align:right;font-weight:700;">{courseTitle}</td></tr>
-                        <tr><td style="padding:14px;border-bottom:1px solid #e5edf7;color:{MutedText};">Purchase date</td><td style="padding:14px;border-bottom:1px solid #e5edf7;text-align:right;font-weight:700;">{purchasedAt}</td></tr>
-                        <tr><td style="padding:16px 14px;font-size:18px;font-weight:800;">Total paid</td><td style="padding:16px 14px;text-align:right;font-size:20px;font-weight:800;color:{PrimaryBlue};">{amount}</td></tr>
-                    </table>
-                    <p style="margin:26px 0 0;color:{MutedText};font-size:13px;">Thank you for choosing CIIT Stack Lab. Please keep this invoice for your records.</p>
-                </div>
-            </div>
-        </body>
-        </html>
-        """;
+        var content = new StringBuilder();
+        content.AppendLine("q");
+        content.AppendLine("0.09 0.41 1 rg");
+        content.AppendLine("0 692 612 100 re f");
+        content.AppendLine("Q");
+        AppendPdfText(content, 40, 748, 24, "CIIT STACK LAB", true, "1 1 1");
+        AppendPdfText(content, 40, 720, 11, "PURCHASE INVOICE", false, "1 1 1");
+        AppendPdfText(content, 40, 650, 11, "Invoice / Purchase ID", false, "0.39 0.45 0.55");
+        AppendPdfText(content, 430, 650, 11, purchaseId.ToString(), true, "0.09 0.41 1");
+        AppendPdfText(content, 40, 612, 11, "Issued to", false, "0.39 0.45 0.55");
+        AppendPdfText(content, 40, 588, 14, SafePdfText(userName), true, "0.09 0.13 0.20");
+        AppendPdfText(content, 40, 540, 11, "Course", false, "0.39 0.45 0.55");
+        AppendPdfText(content, 40, 516, 14, SafePdfText(courseTitle), true, "0.09 0.13 0.20");
+        AppendPdfText(content, 40, 468, 11, "Purchase date", false, "0.39 0.45 0.55");
+        AppendPdfText(content, 40, 444, 13, SafePdfText(purchasedAt), false, "0.09 0.13 0.20");
+        content.AppendLine("0.86 0.90 0.96 RG");
+        content.AppendLine("40 400 m 572 400 l S");
+        AppendPdfText(content, 40, 360, 15, "Total paid", true, "0.09 0.13 0.20");
+        AppendPdfText(content, 430, 360, 17, SafePdfText(amount), true, "0.09 0.41 1");
+        AppendPdfText(content, 40, 300, 10, "Thank you for choosing CIIT Stack Lab. Please keep this invoice for your records.", false, "0.39 0.45 0.55");
+
+        var contentBytes = Encoding.ASCII.GetBytes(content.ToString());
+        var objects = new List<string>
+        {
+            "<< /Type /Catalog /Pages 2 0 R >>",
+            "<< /Type /Pages /Kids [3 0 R] /Count 1 >>",
+            "<< /Type /Page /Parent 2 0 R /MediaBox [0 0 612 792] /Resources << /Font << /F1 4 0 R /F2 5 0 R >> >> /Contents 6 0 R >>",
+            "<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica >>",
+            "<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica-Bold >>",
+            $"<< /Length {contentBytes.Length} >>\nstream\n{content}\nendstream",
+            "<< /Title (CIIT Stack Lab Purchase Invoice) /Producer (CIIT Stack Lab) >>"
+        };
+
+        using var stream = new MemoryStream();
+        WriteAscii(stream, "%PDF-1.4\n");
+        var offsets = new List<long> { 0 };
+
+        foreach (var pdfObject in objects)
+        {
+            offsets.Add(stream.Position);
+            WriteAscii(stream, $"{offsets.Count - 1} 0 obj\n{pdfObject}\nendobj\n");
+        }
+
+        var xrefOffset = stream.Position;
+        WriteAscii(stream, $"xref\n0 {objects.Count + 1}\n");
+        WriteAscii(stream, "0000000000 65535 f \n");
+        for (var index = 1; index < offsets.Count; index++)
+        {
+            WriteAscii(stream, $"{offsets[index]:D10} 00000 n \n");
+        }
+
+        WriteAscii(stream, $"trailer\n<< /Size {objects.Count + 1} /Root 1 0 R /Info 7 0 R >>\nstartxref\n{xrefOffset}\n%%EOF\n");
+        return stream.ToArray();
+    }
+
+    private static void AppendPdfText(
+        StringBuilder builder,
+        int x,
+        int y,
+        int fontSize,
+        string text,
+        bool bold,
+        string rgb)
+    {
+        var font = bold ? "/F2" : "/F1";
+        builder.AppendLine($"BT {rgb} rg {font} {fontSize} Tf {x} {y} Td ({EscapePdfText(text)}) Tj ET");
+    }
+
+    private static string SafePdfText(string value)
+    {
+        var builder = new StringBuilder(value.Length);
+        foreach (var character in value ?? string.Empty)
+        {
+            builder.Append(character is >= ' ' and <= '~' ? character : '?');
+        }
+
+        return builder.ToString();
+    }
+
+    private static string EscapePdfText(string value)
+    {
+        return SafePdfText(value)
+            .Replace("\\", "\\\\", StringComparison.Ordinal)
+            .Replace("(", "\\(", StringComparison.Ordinal)
+            .Replace(")", "\\)", StringComparison.Ordinal);
+    }
+
+    private static void WriteAscii(Stream stream, string value)
+    {
+        var bytes = Encoding.ASCII.GetBytes(value);
+        stream.Write(bytes, 0, bytes.Length);
     }
 
     private string GetRequiredSetting(string key)
