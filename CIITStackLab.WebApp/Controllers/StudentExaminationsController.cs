@@ -1,6 +1,8 @@
 using System.Security.Claims;
 using CIITStackLab.Application.DTOs;
 using CIITStackLab.Application.Interfaces;
+using CIITStackLab.Infrastructure.Persistence;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
@@ -11,14 +13,28 @@ namespace CIITStackLab.WebApp.Controllers;
 public sealed class StudentExaminationsController : Controller
 {
     private readonly ITopicExaminationService _exams;
+    private readonly ApplicationDbContext _db;
 
-    public StudentExaminationsController(ITopicExaminationService exams) => _exams = exams;
+    public StudentExaminationsController(ITopicExaminationService exams, ApplicationDbContext db)
+    {
+        _exams = exams;
+        _db = db;
+    }
 
     [HttpGet("")]
     public async Task<IActionResult> Index(CancellationToken cancellationToken)
     {
         var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
         if (string.IsNullOrWhiteSpace(userId)) return Challenge();
+        ViewBag.AvailableTopics = await (
+            from cm in _db.CourseModules.AsNoTracking()
+            join course in _db.Courses.AsNoTracking() on cm.CourseId equals course.Id
+            join topic in _db.Topics.AsNoTracking() on cm.TopicId equals topic.Id
+            where cm.Flag == 0 && course.Flag == 0 && topic.Flag == 0
+                && (course.FeesAmount <= 0 || _db.StudentCoursePurchases.Any(p => p.UserId == userId && p.CourseId == course.Id))
+            orderby course.Title, topic.Title
+            select new ExamTopicOption { CourseId = course.Id, CourseTitle = course.Title, TopicId = topic.Id, TopicTitle = topic.Title }
+        ).ToListAsync(cancellationToken);
         return View(await _exams.GetStudentExamsAsync(userId, cancellationToken));
     }
 
@@ -98,6 +114,14 @@ public sealed class StudentExaminationsController : Controller
         var deviceToken = Request.Cookies[DeviceCookieName(attemptId)] ?? string.Empty;
         var accepted = await _exams.RecordSecurityEventAsync(userId, attemptId, input.EventType, input.Details, deviceToken, cancellationToken);
         return accepted ? Ok() : BadRequest();
+    }
+
+    public sealed class ExamTopicOption
+    {
+        public int CourseId { get; init; }
+        public string CourseTitle { get; init; } = string.Empty;
+        public int TopicId { get; init; }
+        public string TopicTitle { get; init; } = string.Empty;
     }
 
     private static string DeviceCookieName(long attemptId) => $"ciit-exam-device-{attemptId}";
