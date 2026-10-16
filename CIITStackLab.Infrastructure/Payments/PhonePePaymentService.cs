@@ -50,10 +50,10 @@ public sealed class PhonePePaymentService
 
         var response = await _client.Value.Pay(request);
 
-        if (!response.Success || string.IsNullOrWhiteSpace(response.RedirectUrl))
+        if (string.IsNullOrWhiteSpace(response.RedirectUrl))
         {
             throw new InvalidOperationException(
-                $"PhonePe could not create the checkout order. Code: {response.Code}, Message: {response.Message}");
+                "PhonePe could not create the checkout order because no redirect URL was returned.");
         }
 
         _logger.LogInformation(
