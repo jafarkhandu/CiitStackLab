@@ -306,13 +306,22 @@ public sealed class TopicExaminationService : ITopicExaminationService
     private async Task<TopicExamAttempt?> FindOwnedAttemptAsync(string userId, long attemptId, CancellationToken cancellationToken) =>
         await _db.TopicExamAttempts.SingleOrDefaultAsync(x => x.Id == attemptId && x.UserId == userId, cancellationToken);
 
-    private static async Task<bool> ClaimDeviceAsync(TopicExamAttempt attempt, string token, CancellationToken cancellationToken)
+    private async Task<bool> ClaimDeviceAsync(TopicExamAttempt attempt, string token, CancellationToken cancellationToken)
     {
         if (string.IsNullOrWhiteSpace(token)) return false;
         var hash = Convert.ToHexString(SHA256.HashData(Encoding.UTF8.GetBytes(token)));
-        if (attempt.DeviceTokenHash is null) attempt.DeviceTokenHash = hash;
-        return CryptographicOperations.FixedTimeEquals(
-            Convert.FromHexString(attempt.DeviceTokenHash), Convert.FromHexString(hash));
+
+        var claimed = await _db.TopicExamAttempts
+            .Where(x => x.Id == attempt.Id
+                && x.UserId == attempt.UserId
+                && (x.DeviceTokenHash == null || x.DeviceTokenHash == hash))
+            .ExecuteUpdateAsync(
+                setters => setters.SetProperty(x => x.DeviceTokenHash, hash),
+                cancellationToken);
+
+        if (claimed == 0) return false;
+        await _db.Entry(attempt).ReloadAsync(cancellationToken);
+        return string.Equals(attempt.DeviceTokenHash, hash, StringComparison.Ordinal);
     }
 
     private static Task<bool> DeviceMatchesAsync(TopicExamAttempt attempt, string token)
