@@ -23,7 +23,7 @@ BEGIN
     );
     CREATE INDEX [IX_topic_exam_user_course_topic] ON [erpsystem].[tblstudent_topic_exam_attempts] ([user_id], [course_id], [topic_id], [created_at_utc]);
     CREATE INDEX [IX_topic_exam_user_topic_status] ON [erpsystem].[tblstudent_topic_exam_attempts] ([user_id], [course_id], [topic_id], [status]);
-    CREATE UNIQUE INDEX [UX_topic_exam_one_active_attempt] ON [erpsystem].[tblstudent_topic_exam_attempts] ([user_id], [course_id], [topic_id]) WHERE [status] IN ('Scheduled', 'Ready', 'InProgress');
+    CREATE UNIQUE INDEX [UX_topic_exam_one_active_attempt] ON [erpsystem].[tblstudent_topic_exam_attempts] ([user_id], [course_id], [topic_id]) WHERE [status] <> 'Passed' AND [status] <> 'Failed' AND [status] <> 'Terminated';
 END;
 GO
 
