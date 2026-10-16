@@ -73,7 +73,15 @@
                                 <td class="text-end">
                                     @if (exam.Status is "Scheduled" or "Ready")
                                     {
-                                        <a class="btn btn-outline-primary btn-sm" asp-action="Instructions" asp-route-attemptId="@exam.AttemptId">Start / Instructions</a>
+                                        var openAtUtc = exam.ScheduledAtUtc.AddMinutes(-30);
+                                        var canOpen = DateTime.UtcNow >= openAtUtc;
+                                        <a class="btn btn-outline-primary btn-sm exam-open-button @(canOpen ? "" : "disabled")"
+                                           href="@(canOpen ? Url.Action("Instructions", "StudentExaminations", new { attemptId = exam.AttemptId }) : "#")"
+                                           data-open-at="@openAtUtc.ToString("O")"
+                                           data-target-url="@Url.Action("Instructions", "StudentExaminations", new { attemptId = exam.AttemptId })"
+                                           aria-disabled="@(!canOpen ? "true" : "false")"
+                                           tabindex="@(!canOpen ? "-1" : "0")">Start / Instructions</a>
+                                        <div class="small text-secondary exam-open-countdown" data-open-at="@openAtUtc.ToString("O")"></div>
                                     }
                                     else if (exam.Status == "InProgress")
                                     {
@@ -105,5 +113,32 @@
         const date = new Date(element.dateTime);
         if (!Number.isNaN(date.getTime())) element.textContent = date.toLocaleString();
     });
+    function updateExamOpenButtons() {
+        document.querySelectorAll('.exam-open-button').forEach(function (button) {
+            const openAt = new Date(button.dataset.openAt).getTime();
+            const remaining = openAt - Date.now();
+            const label = button.parentElement.querySelector('.exam-open-countdown');
+            if (remaining <= 0) {
+                button.href = button.dataset.targetUrl;
+                button.classList.remove('disabled');
+                button.setAttribute('aria-disabled', 'false');
+                button.tabIndex = 0;
+                if (label) label.textContent = 'Instructions available now';
+            } else {
+                const seconds = Math.ceil(remaining / 1000);
+                const hours = Math.floor(seconds / 3600);
+                const minutes = Math.floor((seconds % 3600) / 60);
+                const secs = seconds % 60;
+                if (label) label.textContent = 'Instructions open in ' + [hours, minutes, secs].map(x => String(x).padStart(2, '0')).join(':');
+            }
+        });
+    }
+    document.querySelectorAll('.exam-open-button').forEach(function (button) {
+        button.addEventListener('click', function (event) {
+            if (button.getAttribute('aria-disabled') === 'true') event.preventDefault();
+        });
+    });
+    updateExamOpenButtons();
+    window.setInterval(updateExamOpenButtons, 1000);
 </script>
 }
