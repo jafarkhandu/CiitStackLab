@@ -1,4 +1,5 @@
 using System.Globalization;
+using System.Security.Claims;
 using System.Data.Common;
 using System.Text;
 using CIITStackLab.Domain.Entities;
@@ -6,6 +7,7 @@ using CIITStackLab.Infrastructure.Persistence;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Caching.Memory;
 
 namespace CIITStackLab.WebApp.Areas.Admin.Controllers;
 
@@ -16,15 +18,17 @@ public sealed class ExaminationController : Controller
 {
     private readonly ApplicationDbContext _db;
     private readonly ILogger<ExaminationController> _logger;
+    private readonly IMemoryCache _cache;
 
-    public ExaminationController(ApplicationDbContext db, ILogger<ExaminationController> logger)
+    public ExaminationController(ApplicationDbContext db, ILogger<ExaminationController> logger, IMemoryCache cache)
     {
         _db = db;
         _logger = logger;
+        _cache = cache;
     }
 
     [HttpGet("")]
-    public async Task<IActionResult> Index(CancellationToken cancellationToken)
+    public async Task<IActionResult> Index(string? previewToken, CancellationToken cancellationToken)
     {
         ViewBag.Topics = await _db.Topics.AsNoTracking()
             .Where(x => x.Flag == 0).OrderBy(x => x.Title)
@@ -35,6 +39,15 @@ public sealed class ExaminationController : Controller
                     && (q.TopicId == x.Id || (q.NoteId.HasValue && _db.TrainingNotes.Any(n => n.Id == q.NoteId && n.TopicId == x.Id))
                     || (q.ContentId.HasValue && _db.Lessons.Any(l => l.Id == q.ContentId && l.TopicId == x.Id))))
             }).ToListAsync(cancellationToken);
+        var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+        if (!string.IsNullOrWhiteSpace(previewToken)
+            && _cache.TryGetValue<ExamImportPreview>(GetPreviewKey(previewToken), out var preview)
+            && preview is not null
+            && string.Equals(preview.UserId, userId, StringComparison.Ordinal))
+        {
+            ViewBag.Preview = preview;
+            ViewBag.PreviewToken = previewToken;
+        }
         ViewBag.Message = TempData["ExamAdminMessage"];
         ViewBag.Error = TempData["ExamAdminError"];
         return View();
@@ -121,9 +134,16 @@ public sealed class ExaminationController : Controller
                 return RedirectToAction(nameof(Index));
             }
 
-            _db.ContentQuestions.AddRange(additions);
-            await _db.SaveChangesAsync(cancellationToken);
-            TempData["ExamAdminMessage"] = $"Imported {additions.Count} questions for {topic.Title}. Invalid or duplicate rows skipped: {invalidRows}.";
+            var previewToken = Guid.NewGuid().ToString("N");
+            var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+            if (string.IsNullOrWhiteSpace(userId))
+                return Unauthorized();
+
+            _cache.Set(GetPreviewKey(previewToken),
+                new ExamImportPreview(userId, topicId, topic.Title, additions, invalidRows),
+                TimeSpan.FromMinutes(20));
+            TempData["ExamAdminMessage"] = $"Analysis complete: {additions.Count} valid new questions; {invalidRows} invalid or duplicate rows skipped. Review before confirming.";
+            return RedirectToAction(nameof(Index), new { previewToken });
         }
         catch (DecoderFallbackException)
         {
@@ -137,6 +157,59 @@ public sealed class ExaminationController : Controller
 
         return RedirectToAction(nameof(Index));
     }
+
+    [HttpPost("ConfirmImport")]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> ConfirmImport(string previewToken, CancellationToken cancellationToken)
+    {
+        var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+        if (string.IsNullOrWhiteSpace(userId) || string.IsNullOrWhiteSpace(previewToken)
+            || !_cache.TryGetValue<ExamImportPreview>(GetPreviewKey(previewToken), out var preview)
+            || preview is null
+            || !string.Equals(preview.UserId, userId, StringComparison.Ordinal))
+        {
+            TempData["ExamAdminError"] = "The import preview expired or belongs to another administrator. Analyze the file again.";
+            return RedirectToAction(nameof(Index));
+        }
+
+        var topicExists = await _db.Topics.AsNoTracking()
+            .AnyAsync(t => t.Id == preview.TopicId && t.Flag == 0, cancellationToken);
+        if (!topicExists)
+        {
+            TempData["ExamAdminError"] = "The selected topic is no longer active. Nothing was imported.";
+            return RedirectToAction(nameof(Index));
+        }
+
+        var existingQuestions = await _db.ContentQuestions.AsNoTracking()
+            .Where(q => q.Flag == 0 && (q.TopicId == preview.TopicId
+                || (q.NoteId.HasValue && _db.TrainingNotes.Any(n => n.Id == q.NoteId && n.TopicId == preview.TopicId))
+                || (q.ContentId.HasValue && _db.Lessons.Any(l => l.Id == q.ContentId && l.TopicId == preview.TopicId))))
+            .Select(q => q.Question).ToListAsync(cancellationToken);
+        var existingKeys = existingQuestions.Select(Normalize).Where(x => x.Length > 0)
+            .ToHashSet(StringComparer.OrdinalIgnoreCase);
+        if (preview.Questions.Any(q => existingKeys.Contains(Normalize(q.Question))))
+        {
+            _cache.Remove(GetPreviewKey(previewToken));
+            TempData["ExamAdminError"] = "Questions changed in the database after analysis. Nothing was imported; analyze the file again.";
+            return RedirectToAction(nameof(Index));
+        }
+
+        try
+        {
+            _db.ContentQuestions.AddRange(preview.Questions);
+            await _db.SaveChangesAsync(cancellationToken);
+            _cache.Remove(GetPreviewKey(previewToken));
+            TempData["ExamAdminMessage"] = $"Imported {preview.Questions.Count} questions for {preview.TopicTitle}. Invalid or duplicate rows skipped: {preview.InvalidRows}.";
+        }
+        catch (Exception exception) when (exception is DbUpdateException or DbException)
+        {
+            _logger.LogError(exception, "Exam question import confirmation failed for topic {TopicId}.", preview.TopicId);
+            TempData["ExamAdminError"] = "The import could not be saved. Check the database and try analyzing the file again.";
+        }
+        return RedirectToAction(nameof(Index));
+    }
+
+    private static string GetPreviewKey(string token) => $"topic-exam-import:{token}";
 
     private static string Normalize(string? value) =>
         string.Join(' ', (value ?? string.Empty).Split((char[]?)null, StringSplitOptions.RemoveEmptyEntries)).Trim();
@@ -168,6 +241,9 @@ public sealed class ExaminationController : Controller
         fields.Add(value.ToString());
         return fields;
     }
+
+    public sealed record ExamImportPreview(
+        string UserId, int TopicId, string TopicTitle, List<ContentQuestion> Questions, int InvalidRows);
 
     public sealed class ExaminationTopicRow
     {
