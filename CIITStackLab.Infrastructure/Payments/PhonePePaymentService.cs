@@ -9,9 +9,9 @@ namespace CIITStackLab.Infrastructure.Payments;
 
 public sealed class PhonePePaymentService
 {
-    private readonly StandardCheckoutClient _client;
     private readonly PhonePeOptions _options;
     private readonly ILogger<PhonePePaymentService> _logger;
+    private readonly Lazy<StandardCheckoutClient> _client;
 
     public PhonePePaymentService(
         IOptions<PhonePeOptions> options,
@@ -19,27 +19,7 @@ public sealed class PhonePePaymentService
     {
         _options = options.Value;
         _logger = logger;
-
-        if (string.IsNullOrWhiteSpace(_options.ClientId)
-            || string.IsNullOrWhiteSpace(_options.ClientSecret)
-            || _options.ClientVersion <= 0)
-        {
-            throw new InvalidOperationException(
-                "PhonePe credentials are not configured. Configure PhonePe:ClientId, ClientSecret and ClientVersion.");
-        }
-
-        var environment = _options.Environment.Equals(
-            "PRODUCTION",
-            StringComparison.OrdinalIgnoreCase)
-            ? Env.PRODUCTION
-            : Env.SANDBOX;
-
-        _client = StandardCheckoutClient.GetInstance(
-            _options.ClientId,
-            _options.ClientSecret,
-            _options.ClientVersion,
-            environment,
-            null);
+        _client = new Lazy<StandardCheckoutClient>(CreateClient);
     }
 
     public async Task<string> CreateCheckoutAsync(
@@ -68,7 +48,7 @@ public sealed class PhonePePaymentService
             .SetRedirectUrl(redirectUrl)
             .Build();
 
-        var response = await _client.Pay(request);
+        var response = await _client.Value.Pay(request);
 
         if (!response.Success || string.IsNullOrWhiteSpace(response.RedirectUrl))
         {
@@ -85,7 +65,12 @@ public sealed class PhonePePaymentService
 
     public async Task<string> GetOrderStateAsync(string merchantOrderId)
     {
-        var response = await _client.GetOrderStatus(merchantOrderId);
+        if (string.IsNullOrWhiteSpace(merchantOrderId))
+        {
+            throw new ArgumentException("Merchant order ID is required.", nameof(merchantOrderId));
+        }
+
+        var response = await _client.Value.GetOrderStatus(merchantOrderId);
         return response.State;
     }
 
@@ -100,10 +85,39 @@ public sealed class PhonePePaymentService
                 "PhonePe callback credentials are not configured.");
         }
 
-        return _client.ValidateCallback(
+        if (string.IsNullOrWhiteSpace(authorizationHeader))
+        {
+            throw new InvalidOperationException("PhonePe callback authorization is missing.");
+        }
+
+        return _client.Value.ValidateCallback(
             _options.CallbackUsername,
             _options.CallbackPassword,
             authorizationHeader,
             requestBody);
+    }
+
+    private StandardCheckoutClient CreateClient()
+    {
+        if (string.IsNullOrWhiteSpace(_options.ClientId)
+            || string.IsNullOrWhiteSpace(_options.ClientSecret)
+            || _options.ClientVersion <= 0)
+        {
+            throw new InvalidOperationException(
+                "PhonePe credentials are not configured. Configure PhonePe:ClientId, ClientSecret and ClientVersion.");
+        }
+
+        var environment = _options.Environment.Equals(
+            "PRODUCTION",
+            StringComparison.OrdinalIgnoreCase)
+            ? Env.PRODUCTION
+            : Env.SANDBOX;
+
+        return StandardCheckoutClient.GetInstance(
+            _options.ClientId,
+            _options.ClientSecret,
+            _options.ClientVersion,
+            environment,
+            null);
     }
 }
