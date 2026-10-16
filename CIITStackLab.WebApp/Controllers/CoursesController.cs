@@ -536,6 +536,22 @@ public class CoursesController : Controller
             return RedirectToAction(nameof(Details), new { id });
         }
 
+        var allowedTopicId = await _topicExaminationService.GetCurrentTopicIdAsync(userId, id, cancellationToken);
+        var contentTopicId = await (
+            from lesson in _dbContext.Lessons.AsNoTracking()
+            join topic in _dbContext.Topics.AsNoTracking() on lesson.TopicId equals topic.Id into topicJoin
+            from topic in topicJoin.DefaultIfEmpty()
+            join note in _dbContext.TrainingNotes.AsNoTracking() on lesson.NoteId equals note.Id into noteJoin
+            from note in noteJoin.DefaultIfEmpty()
+            where lesson.Id == contentId && lesson.Flag == 0
+            select (int?)(topic != null ? topic.Id : note != null ? note.TopicId : null))
+            .SingleOrDefaultAsync(cancellationToken);
+
+        if (allowedTopicId.HasValue && contentTopicId.HasValue && allowedTopicId.Value != contentTopicId.Value)
+        {
+            return Forbid();
+        }
+
         var markedCompleted = await _studentProgressService.MarkCompletedAsync(
             userId,
             id,
