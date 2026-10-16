@@ -180,50 +180,21 @@
     }
 
     async function loadFaceDetector() {
-        // Use independent module CDNs. Some networks block one CDN while allowing another.
-        // Try independent CDN hosts, including jsDelivr mirrors used on restricted networks.
-        // The model itself is fetched separately by MediaPipe, so keep that URL explicit below.
-        const sources = [
-            {
-                module: 'https://cdn.jsdelivr.net/npm/@@mediapipe/tasks-vision@0.10.22/vision_bundle.mjs',
-                wasm: 'https://cdn.jsdelivr.net/npm/@@mediapipe/tasks-vision@0.10.22/wasm'
+        const moduleUrl = '@Url.Content("~/lib/mediapipe/vision_bundle.mjs")';
+        const wasmPath = '@Url.Content("~/lib/mediapipe/wasm")';
+        const modelPath = '@Url.Content("~/lib/mediapipe/models/blaze_face_short_range.tflite")';
+
+        const vision = await import(moduleUrl);
+        const files = await vision.FilesetResolver.forVisionTasks(wasmPath);
+
+        return await vision.FaceDetector.createFromOptions(files, {
+            baseOptions: {
+                modelAssetPath: modelPath,
+                delegate: 'CPU'
             },
-            {
-                module: 'https://fastly.jsdelivr.net/npm/@@mediapipe/tasks-vision@0.10.22/vision_bundle.mjs',
-                wasm: 'https://fastly.jsdelivr.net/npm/@@mediapipe/tasks-vision@0.10.22/wasm'
-            },
-            {
-                module: 'https://gcore.jsdelivr.net/npm/@@mediapipe/tasks-vision@0.10.22/vision_bundle.mjs',
-                wasm: 'https://gcore.jsdelivr.net/npm/@@mediapipe/tasks-vision@0.10.22/wasm'
-            },
-            {
-                module: 'https://unpkg.com/@@mediapipe/tasks-vision@0.10.22/vision_bundle.mjs',
-                wasm: 'https://unpkg.com/@@mediapipe/tasks-vision@0.10.22/wasm'
-            },
-            {
-                module: 'https://esm.sh/@@mediapipe/tasks-vision@0.10.22?bundle',
-                wasm: 'https://cdn.jsdelivr.net/npm/@@mediapipe/tasks-vision@0.10.22/wasm'
-            }
-        ];
-        let lastError;
-        for (const source of sources) {
-            try {
-                const vision = await import(source.module);
-                const files = await vision.FilesetResolver.forVisionTasks(source.wasm);
-                return await vision.FaceDetector.createFromOptions(files, {
-                    baseOptions: {
-                        modelAssetPath: 'https://storage.googleapis.com/mediapipe-models/face_detector/blaze_face_short_range/float16/1/blaze_face_short_range.tflite',
-                        delegate: 'CPU'
-                    },
-                    runningMode: 'VIDEO',
-                    minDetectionConfidence: 0.6
-                });
-            } catch (error) {
-                lastError = error;
-                console.warn('Face detector source failed; trying next CDN.', source.module, error);
-            }
-        }
-        throw new Error('Face detector library could not be downloaded from the available CDN mirrors. This is a network/CDN access failure, not a camera permission problem. Check whether the network blocks jsDelivr, unpkg, or esm.sh, then retry. ' + (lastError?.message || 'Unknown loading error.'));
+            runningMode: 'VIDEO',
+            minDetectionConfidence: 0.6
+        });
     }
 
     async function detectFace() {
