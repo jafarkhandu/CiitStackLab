@@ -694,6 +694,46 @@ namespace CIITStackLab.Infrastructure.Migrations
                     b.ToTable("tbltraining_topics", "erpsystem");
                 });
 
+            modelBuilder.Entity("CIITStackLab.Domain.Entities.TopicExamAttempt", b =>
+                {
+                    b.Property<long>("Id").ValueGeneratedOnAdd().HasColumnType("bigint").HasColumnName("exam_attempt_id");
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<long>("Id"));
+                    b.Property<string>("UserId").IsRequired().HasMaxLength(450).HasColumnType("nvarchar(450)").HasColumnName("user_id");
+                    b.Property<int>("CourseId").HasColumnType("int").HasColumnName("course_id");
+                    b.Property<int>("TopicId").HasColumnType("int").HasColumnName("topic_id");
+                    b.Property<DateTime>("ScheduledAtUtc").HasColumnType("datetime2").HasColumnName("scheduled_at_utc");
+                    b.Property<DateTime?>("StartedAtUtc").HasColumnType("datetime2").HasColumnName("started_at_utc");
+                    b.Property<DateTime?>("SubmittedAtUtc").HasColumnType("datetime2").HasColumnName("submitted_at_utc");
+                    b.Property<DateTime?>("DeadlineAtUtc").HasColumnType("datetime2").HasColumnName("deadline_at_utc");
+                    b.Property<string>("Status").IsRequired().HasMaxLength(30).HasColumnType("nvarchar(30)").HasColumnName("status");
+                    b.Property<string>("QuestionIdsJson").IsRequired().HasColumnType("nvarchar(max)").HasColumnName("question_ids_json");
+                    b.Property<string>("AnswersJson").IsRequired().HasColumnType("nvarchar(max)").HasColumnName("answers_json");
+                    b.Property<string>("DeviceTokenHash").HasMaxLength(128).HasColumnType("nvarchar(128)").HasColumnName("device_token_hash");
+                    b.Property<int>("WarningCount").ValueGeneratedOnAdd().HasColumnType("int").HasDefaultValue(0).HasColumnName("warning_count");
+                    b.Property<int>("Score").ValueGeneratedOnAdd().HasColumnType("int").HasDefaultValue(0).HasColumnName("score");
+                    b.Property<int>("TotalQuestions").ValueGeneratedOnAdd().HasColumnType("int").HasDefaultValue(0).HasColumnName("total_questions");
+                    b.Property<bool>("Passed").ValueGeneratedOnAdd().HasColumnType("bit").HasDefaultValue(false).HasColumnName("passed");
+                    b.Property<string>("TerminationReason").HasMaxLength(200).HasColumnType("nvarchar(200)").HasColumnName("termination_reason");
+                    b.Property<DateTime>("CreatedAtUtc").HasColumnType("datetime2").HasColumnName("created_at_utc");
+                    b.HasKey("Id");
+                    b.HasIndex("UserId", "CourseId", "TopicId", "CreatedAtUtc").HasDatabaseName("IX_topic_exam_user_course_topic");
+                    b.HasIndex("UserId", "CourseId", "TopicId", "Status").HasDatabaseName("IX_topic_exam_user_topic_status");
+                    b.ToTable("tblstudent_topic_exam_attempts", "erpsystem");
+                });
+
+            modelBuilder.Entity("CIITStackLab.Domain.Entities.TopicExamSecurityEvent", b =>
+                {
+                    b.Property<long>("Id").ValueGeneratedOnAdd().HasColumnType("bigint").HasColumnName("event_id");
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<long>("Id"));
+                    b.Property<long>("ExamAttemptId").HasColumnType("bigint").HasColumnName("exam_attempt_id");
+                    b.Property<string>("EventType").IsRequired().HasMaxLength(80).HasColumnType("nvarchar(80)").HasColumnName("event_type");
+                    b.Property<string>("Details").HasMaxLength(1000).HasColumnType("nvarchar(1000)").HasColumnName("details");
+                    b.Property<DateTime>("OccurredAtUtc").HasColumnType("datetime2").HasColumnName("occurred_at_utc");
+                    b.HasKey("Id");
+                    b.HasIndex("ExamAttemptId", "OccurredAtUtc").HasDatabaseName("IX_topic_exam_events_attempt_date");
+                    b.ToTable("tblstudent_topic_exam_security_events", "erpsystem");
+                });
+
             modelBuilder.Entity("CIITStackLab.Domain.Entities.TrainingNote", b =>
                 {
                     b.Property<int>("Id")
