@@ -191,6 +191,71 @@ namespace CIITStackLab.Infrastructure.Migrations
                     b.ToTable("tblcontent_program_questions", "erpsystem");
                 });
 
+            modelBuilder.Entity("CIITStackLab.Domain.Entities.TopicExamQuestion", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int")
+                        .HasColumnName("exam_question_id");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<int>("CorrectOptionNumber")
+                        .HasColumnType("int")
+                        .HasColumnName("correct_option_number");
+
+                    b.Property<DateTime>("CreatedAtUtc")
+                        .HasColumnType("datetime2")
+                        .HasColumnName("created_at_utc");
+
+                    b.Property<int>("Flag")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int")
+                        .HasDefaultValue(0)
+                        .HasColumnName("flag");
+
+                    b.Property<string>("Option1")
+                        .IsRequired()
+                        .HasMaxLength(1000)
+                        .HasColumnType("nvarchar(1000)")
+                        .HasColumnName("option1");
+
+                    b.Property<string>("Option2")
+                        .IsRequired()
+                        .HasMaxLength(1000)
+                        .HasColumnType("nvarchar(1000)")
+                        .HasColumnName("option2");
+
+                    b.Property<string>("Option3")
+                        .IsRequired()
+                        .HasMaxLength(1000)
+                        .HasColumnType("nvarchar(1000)")
+                        .HasColumnName("option3");
+
+                    b.Property<string>("Option4")
+                        .IsRequired()
+                        .HasMaxLength(1000)
+                        .HasColumnType("nvarchar(1000)")
+                        .HasColumnName("option4");
+
+                    b.Property<string>("Question")
+                        .IsRequired()
+                        .HasMaxLength(2000)
+                        .HasColumnType("nvarchar(2000)")
+                        .HasColumnName("question");
+
+                    b.Property<int>("TopicId")
+                        .HasColumnType("int")
+                        .HasColumnName("topic_id");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("TopicId")
+                        .HasDatabaseName("IX_topic_exam_questions_topic_id");
+
+                    b.ToTable("tblstudent_topic_exam_questions", "erpsystem");
+                });
+
             modelBuilder.Entity("CIITStackLab.Domain.Entities.ContentQuestion", b =>
                 {
                     b.Property<int>("Id")
