@@ -197,7 +197,7 @@
                 const files = await vision.FilesetResolver.forVisionTasks(source.wasm);
                 return await vision.FaceDetector.createFromOptions(files, {
                     baseOptions: {
-                        modelAssetPath: 'https://storage.googleapis.com/mediapipe-models/face_detector/blaze_face_short_range/float16/1/face_detector.tflite',
+                        modelAssetPath: 'https://storage.googleapis.com/mediapipe-models/face_detector/blaze_face_short_range/float16/1/blaze_face_short_range.tflite',
                         delegate: 'CPU'
                     },
                     runningMode: 'VIDEO',
@@ -255,9 +255,9 @@
             faceCheckTimer = window.setInterval(detectFace, 1200);
         } catch (error) {
             console.error('Face detector retry failed:', error);
+            setFaceState('bad', 'Detector unavailable.');
             faceStatus.textContent = 'Detector failed to load (' + (error?.message || 'network/model error') + '). Check internet access and retry.';
             retryFaceDetectorButton.hidden = false;
-            setFaceState('bad', 'Detector unavailable.');
         } finally {
             retryFaceDetectorButton.disabled = false;
             retryFaceDetectorButton.textContent = 'Retry face detection';
@@ -302,9 +302,9 @@
                 faceCheckTimer = window.setInterval(detectFace, 1200);
             } catch (error) {
                 console.error('Face detector initialization failed:', error);
+                setFaceState('bad', 'Detector unavailable.');
                 faceStatus.textContent = 'Detector failed to load (' + (error?.message || 'network/model error') + '). Check internet access and retry.';
                 retryFaceDetectorButton.hidden = false;
-                setFaceState('bad', 'Detector unavailable.');
             }
         } catch (error) {
             cameraReady = false;
