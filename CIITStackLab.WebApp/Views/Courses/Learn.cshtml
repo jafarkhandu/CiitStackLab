@@ -317,7 +317,7 @@ else if (currentContent is null && currentTopic is not null)
                     <section class="ciit-learning-resource ciit-learning-notes-panel" data-learning-panel-content="notes">
                         <div class="ciit-learning-resource-title">
                             <span class="ciit-learning-resource-icon"><i class="bi bi-journal-text"></i></span>
-                            <div><h3>Chapter Notes</h3><p>Notes for @currentTopic.Title.</p></div>
+                            <div><h3>Chapter Notes</h3><p>Notes for @(currentTopic?.Title ?? Model.Title).</p></div>
                         </div>
                         @if (currentTopic.Chapters.Count == 0)
                         {
@@ -571,7 +571,7 @@ else
                             <span class="ciit-learning-eyebrow">
                                 TOPIC @(Math.Max(0, Model.Topics.ToList().FindIndex(topic => topic.Id == currentTopic?.Id)) + 1) OF @Math.Max(Model.Topics.Count, 1)
                             </span>
-                            <h2 class="ciit-learning-chapter-title">@FormatLearningTitle(currentChapter?.Title ?? currentTopic?.Title ?? currentContent.Title)</h2>
+                            <h2 class="ciit-learning-chapter-title">@FormatLearningTitle(currentChapter?.Title ?? currentTopic?.Title ?? currentContent?.Title)</h2>
                         </div>
 
                         <div class="ciit-learning-lesson-actions">
@@ -600,7 +600,7 @@ else
                     @if (User.IsInRole("Student") && learningProgress is not null)
                     {
                         var isCurrentLessonCompleted =
-                            learningProgress.CompletedContentIds.Contains(currentContent.Id);
+                            currentContent is not null && learningProgress.CompletedContentIds.Contains(currentContent.Id);
 
                         <div class="ciit-learning-lesson-status">
                             <div class="ciit-learning-lesson-status-copy">
@@ -678,9 +678,9 @@ else
                                     <div><h3>What you'll cover</h3><p>A quick overview of this lesson's learning resources.</p></div>
                                 </div>
                                 <ul>
-                                    <li><strong>Lesson:</strong> @currentContent.Title</li>
-                                    <li><strong>Video:</strong> @(string.IsNullOrWhiteSpace(currentContent.VideoName) ? "Not provided for this lesson" : "Available — load it when you're ready")</li>
-                                    <li><strong>Slides:</strong> @(string.IsNullOrWhiteSpace(currentContent.Slides) ? "Not provided for this lesson" : "Available as supplementary study material")</li>
+                                    <li><strong>Lesson:</strong> @(currentContent?.Title ?? "Lesson")</li>
+                                    <li><strong>Video:</strong> @(string.IsNullOrWhiteSpace(currentContent?.VideoName) ? "Not provided for this lesson" : "Available — load it when you're ready")</li>
+                                    <li><strong>Slides:</strong> @(string.IsNullOrWhiteSpace(currentContent?.Slides) ? "Not provided for this lesson" : "Available as supplementary study material")</li>
                                     <li><strong>Practice:</strong> Review the chapter assessment section after studying the notes and lesson resources.</li>
                                     <li><strong>Suggested order:</strong> Notes → lesson content → chapter assessments.</li>
                                 </ul>
@@ -921,7 +921,7 @@ else
                 <div class="modal-header">
                     <div>
                         <span class="text-uppercase text-primary small fw-bold">Topic completed</span>
-                        <h2 class="modal-title fs-5 mt-1" id="topicExamApplicationTitle">Apply for @currentTopic.Title examination</h2>
+                        <h2 class="modal-title fs-5 mt-1" id="topicExamApplicationTitle">Apply for @(currentTopic?.Title ?? "this topic") examination</h2>
                     </div>
                 </div>
                 <form asp-controller="StudentExaminations" asp-action="Schedule" method="post">
