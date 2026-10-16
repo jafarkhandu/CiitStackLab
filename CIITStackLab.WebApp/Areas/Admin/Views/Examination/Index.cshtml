@@ -6,12 +6,12 @@
     var previewToken = ViewBag.PreviewToken as string;
 }
 
-<section class="container py-4">
+<section class="container py-4 ciit-admin-page assessment-page">
     <div class="d-flex flex-wrap justify-content-between align-items-start gap-3 mb-4">
         <div>
             <span class="text-uppercase text-primary small fw-bold">Examination Center</span>
             <h1 class="h2 mt-2">Topic Examination Question Bank</h1>
-            <p class="text-secondary mb-0">Import topic-specific MCQs. There is no question-count limit per CSV upload.</p>
+            <p class="text-secondary mb-0">Import topic-specific examination MCQs from Excel. There is no question-count limit per upload.</p>
         </div>
     </div>
 
@@ -55,7 +55,7 @@
     <div class="card shadow-sm mb-4">
         <div class="card-body p-4">
             <h2 class="h5">Bulk import questions</h2>
-            <p class="text-secondary">The importer validates each row and skips invalid or duplicate questions. Existing topic MCQs are reused from the current question bank.</p>
+            <p class="text-secondary">The importer validates each row and skips invalid or duplicate questions. Examination questions are stored separately from practice questions.</p>
             <form asp-area="Admin" asp-controller="Examination" asp-action="Import" method="post" enctype="multipart/form-data" class="row g-3">
                 @Html.AntiForgeryToken()
                 <div class="col-md-5">
@@ -69,11 +69,11 @@
                     </select>
                 </div>
                 <div class="col-md-5">
-                    <label class="form-label" for="file">CSV file</label>
-                    <input class="form-control" id="file" name="file" type="file" accept=".csv,text/csv" required />
+                    <label class="form-label" for="file">Excel workbook</label>
+                    <input class="form-control" id="file" name="file" type="file" accept=".xlsx,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" required />
                 </div>
                 <div class="col-md-2 d-flex align-items-end">
-                    <button class="btn btn-primary w-100" type="submit">Analyze CSV</button>
+                    <button class="btn btn-primary w-100" type="submit">Analyze Excel</button>
                 </div>
             </form>
             <div class="mt-3 small text-secondary">
