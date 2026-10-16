@@ -312,6 +312,7 @@ public class ApplicationDbContext : IdentityDbContext<ApplicationUser>
             entity.Property(x => x.DeadlineAtUtc).HasColumnName("deadline_at_utc").HasColumnType("datetime2");
             entity.Property(x => x.Status).HasColumnName("status").HasMaxLength(30).IsRequired();
             entity.Property(x => x.QuestionIdsJson).HasColumnName("question_ids_json").HasColumnType("nvarchar(max)").IsRequired();
+            entity.Property(x => x.OptionOrderJson).HasColumnName("option_order_json").HasColumnType("nvarchar(max)").IsRequired();
             entity.Property(x => x.AnswersJson).HasColumnName("answers_json").HasColumnType("nvarchar(max)").IsRequired();
             entity.Property(x => x.DeviceTokenHash).HasColumnName("device_token_hash").HasMaxLength(128);
             entity.Property(x => x.WarningCount).HasColumnName("warning_count").HasDefaultValue(0).IsRequired();
