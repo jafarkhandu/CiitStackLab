@@ -17,19 +17,25 @@ public class CoursesController : Controller
     private readonly ICourseAssessmentService _courseAssessmentService;
     private readonly CoursePurchaseService _coursePurchaseService;
     private readonly ApplicationDbContext _dbContext;
+    private readonly IEmailService _emailService;
+    private readonly ILogger<CoursesController> _logger;
 
     public CoursesController(
         ICourseService courseService,
         IStudentProgressService studentProgressService,
         ICourseAssessmentService courseAssessmentService,
         CoursePurchaseService coursePurchaseService,
-        ApplicationDbContext dbContext)
+        ApplicationDbContext dbContext,
+        IEmailService emailService,
+        ILogger<CoursesController> logger)
     {
         _courseService = courseService;
         _studentProgressService = studentProgressService;
         _courseAssessmentService = courseAssessmentService;
         _coursePurchaseService = coursePurchaseService;
         _dbContext = dbContext;
+        _emailService = emailService;
+        _logger = logger;
     }
 
     [HttpGet]
@@ -89,6 +95,11 @@ public class CoursesController : Controller
             return Unauthorized();
         }
 
+        var alreadyPurchased = await _coursePurchaseService.HasPurchasedCourseAsync(
+            userId,
+            id,
+            cancellationToken);
+
         var purchaseCompleted = await _coursePurchaseService.CompleteAsync(
             userId,
             id,
@@ -99,6 +110,44 @@ public class CoursesController : Controller
             TempData["CoursePaymentMessage"] =
                 "The demo payment could not be completed. Please try again.";
             return RedirectToAction(nameof(Details), new { id });
+        }
+
+        if (!alreadyPurchased)
+        {
+            var purchase = await _dbContext.StudentCoursePurchases
+                .AsNoTracking()
+                .Where(item => item.UserId == userId && item.CourseId == id)
+                .OrderByDescending(item => item.PurchasedAt)
+                .FirstOrDefaultAsync(cancellationToken);
+
+            var user = await _dbContext.Users
+                .AsNoTracking()
+                .Where(item => item.Id == userId && item.IsActive)
+                .Select(item => new { item.Email, item.UserName })
+                .FirstOrDefaultAsync(cancellationToken);
+
+            if (purchase is not null && !string.IsNullOrWhiteSpace(user?.Email))
+            {
+                try
+                {
+                    await _emailService.SendPurchaseInvoiceEmailAsync(
+                        user.Email,
+                        user.UserName ?? "Student",
+                        course.Title,
+                        purchase.PurchasePrice,
+                        purchase.Id,
+                        purchase.PurchasedAt,
+                        cancellationToken);
+                }
+                catch (Exception ex)
+                {
+                    _logger.LogWarning(
+                        ex,
+                        "Purchase email could not be sent for purchase {PurchaseId} to {Email}.",
+                        purchase.Id,
+                        user.Email);
+                }
+            }
         }
 
         TempData["CoursePaymentMessage"] =
