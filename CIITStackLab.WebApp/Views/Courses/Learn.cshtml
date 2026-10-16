@@ -182,7 +182,7 @@
             const heading = topic.querySelector(':scope > .ciit-learning-topic-heading');
             const firstContentUrl = topic.dataset.topicFirstContentUrl;
 
-            if (!heading || !firstContentUrl || topic.classList.contains('is-active-topic')) {
+            if (!heading || !firstContentUrl || topic.classList.contains('is-active-topic') || topic.classList.contains('is-locked-topic')) {
                 return;
             }
 
@@ -281,11 +281,13 @@ else if (currentContent is null && currentTopic is not null)
                             ? 0
                             : (int)Math.Round(completedTopicLessons * 100d / topicLearningContents.Count, MidpointRounding.AwayFromZero);
 
-                        <details class="ciit-learning-topic @(topic.Id == currentTopic.Id ? "is-active-topic" : "")"
+                        var topicIsLocked = User.IsInRole("Student") && ViewBag.AllowedTopicId is int allowedTopicId && topic.Id != allowedTopicId;
+
+                        <details class="ciit-learning-topic @(topic.Id == currentTopic.Id ? "is-active-topic" : "") @(topicIsLocked ? "is-locked-topic" : "")"
                                  data-topic-first-content-url="@Url.Action("Learn", "Courses", new { id = Model.Id, topicId = topic.Id })"
                                  open="@(topic.Id == currentTopic.Id ? "open" : null)">
                             <summary class="ciit-learning-topic-heading">
-                                <div class="ciit-learning-topic-icon"><i class="bi bi-collection-play"></i></div>
+                                <div class="ciit-learning-topic-icon"><i class="bi @(topicIsLocked ? "bi-lock-fill" : "bi-collection-play")"></i></div>
                                 <div class="ciit-learning-topic-heading-text @(topicIsCompleted ? "is-completed" : "")">
                                     <strong>@topic.Title</strong>
                                     @if (topicIsCompleted)
@@ -649,12 +651,14 @@ else
                                 completedTopicLessons * 100d / topicLearningContents.Count,
                                 MidpointRounding.AwayFromZero);
 
-                        <details class="ciit-learning-topic @(topicHasCurrentContent ? "is-active-topic" : "")"
+                        var topicIsLocked = User.IsInRole("Student") && ViewBag.AllowedTopicId is int allowedTopicId && topic.Id != allowedTopicId;
+
+                        <details class="ciit-learning-topic @(topicHasCurrentContent ? "is-active-topic" : "") @(topicIsLocked ? "is-locked-topic" : "")"
                                  data-topic-first-content-url="@Url.Action("Learn", "Courses", new { id = Model.Id, topicId = topic.Id })"
                                  open="@(topicHasCurrentContent ? "open" : null)">
                             <summary class="ciit-learning-topic-heading">
                                 <div class="ciit-learning-topic-icon">
-                                    <i class="bi bi-collection-play"></i>
+                                    <i class="bi @(topicIsLocked ? "bi-lock-fill" : "bi-collection-play")"></i>
                                 </div>
                                 <div class="ciit-learning-topic-heading-text @(topicLearningContents.Count > 0 && completedTopicLessons == topicLearningContents.Count ? "is-completed" : "")">
                                     <strong>@topic.Title</strong>
