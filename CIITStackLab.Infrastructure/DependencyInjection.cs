@@ -1,72 +1,81 @@
-using CIITStackLab.Application.Interfaces;
-using CIITStackLab.Infrastructure.Identity;
-using Microsoft.AspNetCore.Identity;
-using CIITStackLab.Infrastructure.Persistence;
-using CIITStackLab.Infrastructure.Services;
-using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.Configuration;
-using Microsoft.Extensions.DependencyInjection;
-
-namespace CIITStackLab.Infrastructure;
-
-public static class DependencyInjection
-{
-    public static IServiceCollection AddInfrastructure(this IServiceCollection services, IConfiguration configuration)
-    {
-        var connectionString = configuration.GetConnectionString("DefaultConnection")
-            ?? throw new InvalidOperationException("DefaultConnection is not configured.");
-
-        services.AddMemoryCache();
-        services.AddHttpClient();
-
-        services.AddDbContext<ApplicationDbContext>(options =>
-            options.UseSqlServer(connectionString, sqlOptions => { sqlOptions.EnableRetryOnFailure(); }));
-
-        services.AddIdentity<ApplicationUser, IdentityRole>(options =>
-        {
-            options.Password.RequiredLength = 8;
-            options.Password.RequireDigit = true;
-            options.Password.RequireUppercase = true;
-            options.Password.RequireLowercase = true;
-            options.Password.RequireNonAlphanumeric = true;
-            options.User.RequireUniqueEmail = true;
-            options.SignIn.RequireConfirmedAccount = false;
-        })
-        .AddEntityFrameworkStores<ApplicationDbContext>()
-        .AddDefaultTokenProviders();
-
-        services.ConfigureApplicationCookie(options =>
-        {
-            options.LoginPath = "/Account/Login";
-            options.AccessDeniedPath = "/Account/AccessDenied";
-            options.ExpireTimeSpan = TimeSpan.FromDays(14);
-            options.SlidingExpiration = true;
-        });
-
-        services.AddScoped<CourseService>();
-        services.AddScoped<ICourseService, DynamicCourseService>();
-        services.AddScoped<IAdminDashboardService, AdminDashboardService>();
-        services.AddScoped<IAdminCourseService, AdminCourseService>();
-        services.AddScoped<IAdminTopicService, AdminTopicService>();
-        services.AddScoped<IAdminCourseTopicMappingService, AdminCourseTopicMappingService>();
-        services.AddScoped<IAdminContentService, AdminContentService>();
-        services.AddScoped<IMuxVideoService, MuxVideoService>();
-        services.AddScoped<IAdminMcqService, AdminMcqService>();
-        services.AddScoped<IAdminInterviewQuestionService, AdminInterviewQuestionService>();
-        services.AddScoped<IInterviewQuestionAnalyzerService, InterviewQuestionAnalyzerService>();
-        services.AddScoped<IInterviewQuestionImportService, InterviewQuestionImportService>();
-        services.AddScoped<IAdminPracticeProgramService, AdminPracticeProgramService>();
-        services.AddScoped<IPracticeProgramImportService, PracticeProgramImportService>();
-        services.AddScoped<INotesService, NotesService>();
-        services.AddScoped<IChapterMcqAnalyzerService, ChapterMcqAnalyzerService>();
-        services.AddScoped<IMcqImportService, McqImportService>();
-        services.AddScoped<IStudentProgressService, StudentProgressService>();
-        services.AddScoped<ICourseAssessmentService, CourseAssessmentService>();
-        services.AddScoped<CoursePurchaseService>();
-        services.AddScoped<IAdminStudentService, AdminStudentService>();
-        services.AddScoped<IAdminSettingsService, AdminSettingsService>();
-        services.AddScoped<IAdminReportsService, AdminReportsService>();
-
-        return services;
-    }
-}
+dXNpbmcgQ0lJVFN0YWNrTGFiLkFwcGxpY2F0aW9uLkludGVyZmFjZXM7CnVz
+aW5nIENJSVRTdGFja0xhYi5JbmZyYXN0cnVjdHVyZS5JZGVudGl0eTsKdXNp
+bmcgTWljcm9zb2Z0LkFzcE5ldENvcmUuSWRlbnRpdHk7CnVzaW5nIENJSVRT
+dGFja0xhYi5JbmZyYXN0cnVjdHVyZS5QZXJzaXN0ZW5jZTsKdXNpbmcgQ0lJ
+VFN0YWNrTGFiLkluZnJhc3RydWN0dXJlLlNlcnZpY2VzOwp1c2luZyBNaWNy
+b3NvZnQuRW50aXR5RnJhbWV3b3JrQ29yZTsKdXNpbmcgTWljcm9zb2Z0LkV4
+dGVuc2lvbnMuQ29uZmlndXJhdGlvbjsKdXNpbmcgTWljcm9zb2Z0LkV4dGVu
+c2lvbnMuRGVwZW5kZW5jeUluamVjdGlvbjsKCm5hbWVzcGFjZSBDSUlUU3Rh
+Y2tMYWIuSW5mcmFzdHJ1Y3R1cmU7CgpwdWJsaWMgc3RhdGljIGNsYXNzIERl
+cGVuZGVuY3lJbmplY3Rpb24KewogICAgcHVibGljIHN0YXRpYyBJU2Vydmlj
+ZUNvbGxlY3Rpb24gQWRkSW5mcmFzdHJ1Y3R1cmUodGhpcyBJU2VydmljZUNv
+bGxlY3Rpb24gc2VydmljZXMsIElDb25maWd1cmF0aW9uIGNvbmZpZ3VyYXRp
+b24pCiAgICB7CiAgICAgICAgdmFyIGNvbm5lY3Rpb25TdHJpbmcgPSBjb25m
+aWd1cmF0aW9uLkdldENvbm5lY3Rpb25TdHJpbmcoIkRlZmF1bHRDb25uZWN0
+aW9uIikKICAgICAgICAgICAgPz8gdGhyb3cgbmV3IEludmFsaWRPcGVyYXRp
+b25FeGNlcHRpb24oIkRlZmF1bHRDb25uZWN0aW9uIGlzIG5vdCBjb25maWd1
+cmVkLiIpOwoKICAgICAgICBzZXJ2aWNlcy5BZGRNZW1vcnlDYWNoZSgpOwog
+ICAgICAgIHNlcnZpY2VzLkFkZEh0dHBDbGllbnQoKTsKCiAgICAgICAgc2Vy
+dmljZXMuQWRkRGJDb250ZXh0PEFwcGxpY2F0aW9uRGJDb250ZXh0PihvcHRp
+b25zID0+CiAgICAgICAgICAgIG9wdGlvbnMuVXNlU3FsU2VydmVyKGNvbm5l
+Y3Rpb25TdHJpbmcsIHNxbE9wdGlvbnMgPT4geyBzcWxPcHRpb25zLkVuYWJs
+ZVJldHJ5T25GYWlsdXJlKCk7IH0pKTsKCiAgICAgICAgc2VydmljZXMuQWRk
+SWRlbnRpdHk8QXBwbGljYXRpb25Vc2VyLCBJZGVudGl0eVJvbGU+KG9wdGlv
+bnMgPT4KICAgICAgICB7CiAgICAgICAgICAgIG9wdGlvbnMuUGFzc3dvcmQu
+UmVxdWlyZWRMZW5ndGggPSA4OwogICAgICAgICAgICBvcHRpb25zLlBhc3N3
+b3JkLlJlcXVpcmVEaWdpdCA9IHRydWU7CiAgICAgICAgICAgIG9wdGlvbnMu
+UGFzc3dvcmQuUmVxdWlyZVVwcGVyY2FzZSA9IHRydWU7CiAgICAgICAgICAg
+IG9wdGlvbnMuUGFzc3dvcmQuUmVxdWlyZUxvd2VyY2FzZSA9IHRydWU7CiAg
+ICAgICAgICAgIG9wdGlvbnMuUGFzc3dvcmQuUmVxdWlyZU5vbkFscGhhbnVt
+ZXJpYyA9IHRydWU7CiAgICAgICAgICAgIG9wdGlvbnMuVXNlci5SZXF1aXJl
+VW5pcXVlRW1haWwgPSB0cnVlOwogICAgICAgICAgICBvcHRpb25zLlNpZ25J
+bi5SZXF1aXJlQ29uZmlybWVkQWNjb3VudCA9IGZhbHNlOwogICAgICAgIH0p
+CiAgICAgICAgLkFkZEVudGl0eUZyYW1ld29ya1N0b3JlczxBcHBsaWNhdGlv
+bkRiQ29udGV4dD4oKQogICAgICAgIC5BZGREZWZhdWx0VG9rZW5Qcm92aWRl
+cnMoKTsKCiAgICAgICAgc2VydmljZXMuQ29uZmlndXJlQXBwbGljYXRpb25D
+b29raWUob3B0aW9ucyA9PgogICAgICAgIHsKICAgICAgICAgICAgb3B0aW9u
+cy5Mb2dpblBhdGggPSAiL0FjY291bnQvTG9naW4iOwogICAgICAgICAgICBv
+cHRpb25zLkFjY2Vzc0RlbmllZFBhdGggPSAiL0FjY291bnQvQWNjZXNzRGVu
+aWVkIjsKICAgICAgICAgICAgb3B0aW9ucy5FeHBpcmVUaW1lU3BhbiA9IFRp
+bWVTcGFuLkZyb21EYXlzKDE0KTsKICAgICAgICAgICAgb3B0aW9ucy5TbGlk
+aW5nRXhwaXJhdGlvbiA9IHRydWU7CiAgICAgICAgfSk7CgogICAgICAgIHNl
+cnZpY2VzLkFkZFNjb3BlZDxDb3Vyc2VTZXJ2aWNlPigpOwogICAgICAgIHNl
+cnZpY2VzLkFkZFNjb3BlZDxJQ291cnNlU2VydmljZSwgRHluYW1pY0NvdXJz
+ZVNlcnZpY2U+KCk7CiAgICAgICAgc2VydmljZXMuQWRkU2NvcGVkPElBZG1p
+bkRhc2hib2FyZFNlcnZpY2UsIEFkbWluRGFzaGJvYXJkU2VydmljZT4oKTsK
+ICAgICAgICBzZXJ2aWNlcy5BZGRTY29wZWQ8SUFkbWluQ291cnNlU2Vydmlj
+ZSwgQWRtaW5Db3Vyc2VTZXJ2aWNlPigpOwogICAgICAgIHNlcnZpY2VzLkFk
+ZFNjb3BlZDxJQWRtaW5Ub3BpY1NlcnZpY2UsIEFkbWluVG9waWNTZXJ2aWNl
+PigpOwogICAgICAgIHNlcnZpY2VzLkFkZFNjb3BlZDxJQWRtaW5Db3Vyc2VU
+b3BpY01hcHBpbmdTZXJ2aWNlLCBBZG1pbkNvdXJzZVRvcGljTWFwcGluZ1Nl
+cnZpY2U+KCk7CiAgICAgICAgc2VydmljZXMuQWRkU2NvcGVkPElBZG1pbkNv
+bnRlbnRTZXJ2aWNlLCBBZG1pbkNvbnRlbnRTZXJ2aWNlPigpOwogICAgICAg
+IHNlcnZpY2VzLkFkZFNjb3BlZDxJTXV4VmlkZW9TZXJ2aWNlLCBNdXhWaWRl
+b1NlcnZpY2U+KCk7CiAgICAgICAgc2VydmljZXMuQWRkU2NvcGVkPElBZG1p
+bk1jcVNlcnZpY2UsIEFkbWluTWNxU2VydmljZT4oKTsKICAgICAgICBzZXJ2
+aWNlcy5BZGRTY29wZWQ8SUFkbWluSW50ZXJ2aWV3UXVlc3Rpb25TZXJ2aWNl
+LCBBZG1pbkludGVydmlld1F1ZXN0aW9uU2VydmljZT4oKTsKICAgICAgICBz
+ZXJ2aWNlcy5BZGRTY29wZWQ8SUludGVydmlld1F1ZXN0aW9uQW5hbHl6ZXJT
+ZXJ2aWNlLCBJbnRlcnZpZXdRdWVzdGlvbkFuYWx5emVyU2VydmljZT4oKTsK
+ICAgICAgICBzZXJ2aWNlcy5BZGRTY29wZWQ8SUludGVydmlld1F1ZXN0aW9u
+SW1wb3J0U2VydmljZSwgSW50ZXJ2aWV3UXVlc3Rpb25JbXBvcnRTZXJ2aWNl
+PigpOwogICAgICAgIHNlcnZpY2VzLkFkZFNjb3BlZDxJQWRtaW5QcmFjdGlj
+ZVByb2dyYW1TZXJ2aWNlLCBBZG1pblByYWN0aWNlUHJvZ3JhbVNlcnZpY2U+
+KCk7CiAgICAgICAgc2VydmljZXMuQWRkU2NvcGVkPElQcmFjdGljZVByb2dy
+YW1JbXBvcnRTZXJ2aWNlLCBQcmFjdGljZVByb2dyYW1JbXBvcnRTZXJ2aWNl
+PigpOwogICAgICAgIHNlcnZpY2VzLkFkZFNjb3BlZDxJTm90ZXNTZXJ2aWNl
+LCBOb3Rlc1NlcnZpY2U+KCk7CiAgICAgICAgc2VydmljZXMuQWRkU2NvcGVk
+PElDaGFwdGVyTWNxQW5hbHl6ZXJTZXJ2aWNlLCBDaGFwdGVyTWNxQW5hbHl6
+ZXJTZXJ2aWNlPigpOwogICAgICAgIHNlcnZpY2VzLkFkZFNjb3BlZDxJTWNx
+SW1wb3J0U2VydmljZSwgTWNxSW1wb3J0U2VydmljZT4oKTsKICAgICAgICBz
+ZXJ2aWNlcy5BZGRTY29wZWQ8SVN0dWRlbnRQcm9ncmVzc1NlcnZpY2UsIFN0
+dWRlbnRQcm9ncmVzc1NlcnZpY2U+KCk7CiAgICAgICAgc2VydmljZXMuQWRk
+U2NvcGVkPElDb3Vyc2VBc3Nlc3NtZW50U2VydmljZSwgQ291cnNlQXNzZXNz
+bWVudFNlcnZpY2U+KCk7CiAgICAgICAgc2VydmljZXMuQWRkU2NvcGVkPENv
+dXJzZVB1cmNoYXNlU2VydmljZT4oKTsKICAgICAgICBzZXJ2aWNlcy5BZGRT
+Y29wZWQ8SUFkbWluU3R1ZGVudFNlcnZpY2UsIEFkbWluU3R1ZGVudFNlcnZp
+Y2U+KCk7CiAgICAgICAgc2VydmljZXMuQWRkU2NvcGVkPElBZG1pblNldHRp
+bmdzU2VydmljZSwgQWRtaW5TZXR0aW5nc1NlcnZpY2U+KCk7CiAgICAgICAg
+c2VydmljZXMuQWRkU2NvcGVkPElBZG1pblJlcG9ydHNTZXJ2aWNlLCBBZG1p
+blJlcG9ydHNTZXJ2aWNlPigpOwoKICAgICAgICByZXR1cm4gc2VydmljZXM7
+CiAgICB9Cn0K
