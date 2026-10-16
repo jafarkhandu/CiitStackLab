@@ -297,20 +297,15 @@ public sealed class TopicExaminationService : ITopicExaminationService
 
     private async Task<List<int>> GetEligibleQuestionIdsAsync(int topicId, CancellationToken cancellationToken)
     {
-        var noteIds = await _db.TrainingNotes.AsNoTracking()
-            .Where(n => n.TopicId == topicId && n.Flag == 0).Select(n => n.Id).ToListAsync(cancellationToken);
-        var contentIds = await _db.Lessons.AsNoTracking()
-            .Where(l => l.Flag == 0 && (l.TopicId == topicId || (l.NoteId.HasValue && noteIds.Contains(l.NoteId.Value))))
-            .Select(l => l.Id).ToListAsync(cancellationToken);
         return await _db.TopicExamQuestions.AsNoTracking()
-            .Where(q => q.Flag == 0 && q.CorrectOptionNumber >= 1 && q.CorrectOptionNumber <= 4
+            .Where(q => q.Flag == 0
+                && q.TopicId == topicId
+                && q.CorrectOptionNumber >= 1 && q.CorrectOptionNumber <= 4
                 && !string.IsNullOrWhiteSpace(q.Question)
                 && !string.IsNullOrWhiteSpace(q.Option1) && !string.IsNullOrWhiteSpace(q.Option2)
                 && !string.IsNullOrWhiteSpace(q.Option3) && !string.IsNullOrWhiteSpace(q.Option4)
                 && q.Option1 != q.Option2 && q.Option1 != q.Option3 && q.Option1 != q.Option4
-                && q.Option2 != q.Option3 && q.Option2 != q.Option4 && q.Option3 != q.Option4
-                && ((q.TopicId == topicId) || (q.NoteId.HasValue && noteIds.Contains(q.NoteId.Value))
-                    || (q.ContentId.HasValue && contentIds.Contains(q.ContentId.Value))))
+                && q.Option2 != q.Option3 && q.Option2 != q.Option4 && q.Option3 != q.Option4)
             .Select(q => q.Id).Distinct().ToListAsync(cancellationToken);
     }
 
