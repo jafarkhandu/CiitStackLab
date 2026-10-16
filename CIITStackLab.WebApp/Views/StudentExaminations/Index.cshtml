@@ -25,7 +25,7 @@
 .ciit-exam-table tbody td:first-child{border-left:1px solid #dee9f9;border-radius:13px 0 0 13px}.ciit-exam-table tbody td:last-child{border-right:1px solid #dee9f9;border-radius:0 13px 13px 0}
 .ciit-exam-topic{display:block;color:#243c60;font-weight:820}.ciit-exam-sub{display:block;margin-top:5px;color:#8a9ab0;font-size:.76rem}
 .ciit-exam-status{display:inline-flex;padding:6px 10px;border:1px solid #dbe8fa;border-radius:999px;background:#f1f6ff;color:#52709a;font-size:.74rem;font-weight:800}
-.ciit-exam-status[data-status="Passed"]{border-color:#c8f0dd;background:#edfbf4;color:#168154}.ciit-exam-status[data-status="Failed"],.ciit-exam-status[data-status="Terminated"]{border-color:#f7d9d9;background:#fff3f3;color:#b74747}
+.ciit-exam-status[data-status="Passed"]{border-color:#c8f0dd;background:#edfbf4;color:#168154}.ciit-exam-status[data-status="Failed"],.ciit-exam-status[data-status="Terminated"],.ciit-exam-status[data-status="TimedOut"]{border-color:#f7d9d9;background:#fff3f3;color:#b74747}
 .ciit-exam-action{display:inline-flex;align-items:center;justify-content:center;min-height:38px;padding:9px 13px;border:1px solid #cfe0ff;border-radius:11px;background:linear-gradient(135deg,#fff,#edf4ff);color:#2167ed;font-size:.78rem;font-weight:820;text-decoration:none;white-space:nowrap}.ciit-exam-action:hover{border-color:#8fb7ff;background:#eaf2ff;color:#1354d7}.ciit-exam-action.disabled{opacity:.45;pointer-events:none}
 .ciit-exam-empty{padding:54px 20px;text-align:center}.ciit-exam-empty-icon{display:grid;place-items:center;width:58px;height:58px;margin:0 auto 16px;border:1px solid #dce9ff;border-radius:19px;background:linear-gradient(145deg,#fff,#eaf3ff);color:#3679ef;font-size:1.35rem;box-shadow:0 10px 25px rgba(45,101,184,.1)}
 .ciit-exam-empty h3{margin:0 0 7px;color:#294365;font-size:1rem;font-weight:820}.ciit-exam-empty p{margin:0;color:#8494aa;font-size:.87rem}.ciit-exam-flash{margin-top:18px;border-radius:14px}
@@ -63,10 +63,10 @@
                     {
                         <tr>
                             <td><span class="ciit-exam-topic">@exam.TopicTitle</span><span class="ciit-exam-sub">Attempt #@exam.AttemptId</span></td>
-                            <td><time class="exam-local-time" datetime="@exam.ScheduledAtUtc.ToString("O")">@exam.ScheduledAtUtc.ToString("yyyy-MM-dd HH:mm") UTC</time></td>
+                            <td><time class="exam-local-time" datetime="@DateTime.SpecifyKind(exam.ScheduledAtUtc, DateTimeKind.Utc).ToString("O")">@exam.ScheduledAtUtc.ToString("yyyy-MM-dd HH:mm") UTC</time></td>
                             <td><span class="ciit-exam-status" data-status="@exam.Status">@exam.Status</span></td>
                             <td>
-                                @if (exam.Status is "Passed" or "Failed" or "Terminated") { <strong>@exam.Score / @exam.TotalQuestions</strong><span class="ciit-exam-sub">@((exam.Passed) ? "Passed" : "Not passed")</span> }
+                                @if (exam.Status is "Passed" or "Failed" or "Terminated" or "TimedOut") { <strong>@exam.Score / @exam.TotalQuestions</strong><span class="ciit-exam-sub">@((exam.Passed) ? "Passed" : "Not passed")</span> }
                                 else { <span class="ciit-exam-sub">Pending result</span> }
                             </td>
                             <td class="text-end">
@@ -74,7 +74,7 @@
                                 {
                                     var openAtUtc = exam.ScheduledAtUtc.AddMinutes(-30);
                                     var canOpen = DateTime.UtcNow >= openAtUtc;
-                                    <a class="ciit-exam-action exam-open-button @(canOpen ? "" : "disabled")" href="@(canOpen ? Url.Action("Instructions", "StudentExaminations", new { attemptId = exam.AttemptId }) : "#")" data-open-at="@openAtUtc.ToString("O")" data-target-url="@Url.Action("Instructions", "StudentExaminations", new { attemptId = exam.AttemptId })" aria-disabled="@(!canOpen ? "true" : "false")" tabindex="@(!canOpen ? "-1" : "0")">Instructions / Start</a>
+                                    <a class="ciit-exam-action exam-open-button @(canOpen ? "" : "disabled")" href="@(canOpen ? Url.Action("Instructions", "StudentExaminations", new { attemptId = exam.AttemptId }) : "#")" data-open-at="@DateTime.SpecifyKind(openAtUtc, DateTimeKind.Utc).ToString("O")" data-target-url="@Url.Action("Instructions", "StudentExaminations", new { attemptId = exam.AttemptId })" aria-disabled="@(!canOpen ? "true" : "false")" tabindex="@(!canOpen ? "-1" : "0")">Instructions / Start</a>
                                     <span class="ciit-exam-sub exam-open-countdown" data-open-at="@openAtUtc.ToString("O")"></span>
                                 }
                                 else if (exam.Status == "InProgress") { <a class="ciit-exam-action" asp-action="Instructions" asp-route-attemptId="@exam.AttemptId">Resume exam</a> }
