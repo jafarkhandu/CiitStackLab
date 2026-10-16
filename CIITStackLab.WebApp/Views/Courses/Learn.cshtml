@@ -318,13 +318,42 @@ else if (currentContent is null && currentTopic is not null)
                             }
                             @foreach (var chapter in topic.Chapters)
                             {
-                                <div class="ciit-learning-chapter ciit-learning-chapter-summary">
-                                    <span class="ciit-learning-chapter-number">@chapter.SortOrder.ToString("00")</span>
-                                    <span class="ciit-learning-chapter-title">
-                                        <strong>@FormatLearningTitle(chapter.Title)</strong>
-                                        <small>@chapter.Contents.Count resources</small>
-                                    </span>
-                                </div>
+                                var chapterResourceCount =
+                                    (string.IsNullOrWhiteSpace(chapter.NotesHtml) ? 0 : 1)
+                                    + chapter.Contents.Count
+                                    + chapter.Questions.Count
+                                    + chapter.InterviewQuestions.Count
+                                    + chapter.PracticeQuestions.Count;
+                                <details class="ciit-learning-chapter">
+                                    <summary class="ciit-learning-chapter-summary">
+                                        <span class="ciit-learning-chapter-number">@chapter.SortOrder.ToString("00")</span>
+                                        <span class="ciit-learning-chapter-title">
+                                            <strong>@FormatLearningTitle(chapter.Title)</strong>
+                                            <small>@chapterResourceCount resource@(chapterResourceCount == 1 ? "" : "s")</small>
+                                        </span>
+                                        <i class="bi bi-chevron-down ciit-learning-disclosure-icon" aria-hidden="true"></i>
+                                    </summary>
+                                    <div class="ciit-learning-chapter-body">
+                                        @if (!string.IsNullOrWhiteSpace(chapter.NotesHtml))
+                                        {
+                                            <button type="button" class="ciit-learning-category-link ciit-learning-category-notes" data-learning-page="notes">
+                                                <i class="bi bi-journal-text" aria-hidden="true"></i><span>Chapter notes</span><small>Read notes</small>
+                                            </button>
+                                        }
+                                        @foreach (var content in chapter.Contents)
+                                        {
+                                            <a class="ciit-learning-content-link" asp-action="Learn" asp-route-id="@Model.Id" asp-route-contentId="@content.Id">
+                                                <span class="ciit-learning-content-link-icon"><i class="bi bi-play-circle" aria-hidden="true"></i></span>
+                                                <span><strong>@content.Title</strong><small>@(string.IsNullOrWhiteSpace(content.VideoName) ? "Learning resource" : "Video lesson")</small></span>
+                                                <i class="bi bi-chevron-right ms-auto" aria-hidden="true"></i>
+                                            </a>
+                                        }
+                                        @if (chapterResourceCount == 0)
+                                        {
+                                            <p class="ciit-learning-no-resources">No resources have been linked to this chapter yet.</p>
+                                        }
+                                    </div>
+                                </details>
                             }
                         </details>
                     }
@@ -373,17 +402,16 @@ else if (currentContent is null && currentTopic is not null)
                             var topicContentIdsForCompletion = currentTopic.Contents
                                 .Concat(currentTopic.Chapters.SelectMany(chapter => chapter.Contents))
                                 .Select(content => content.Id).Distinct().ToList();
-                            var topicMarkedComplete = topicContentIdsForCompletion.Count > 0
-                                && topicContentIdsForCompletion.All(learningProgress.CompletedContentIds.Contains);
-                            if (!topicMarkedComplete)
-                            {
-                                <form asp-controller="Courses" asp-action="CompleteTopic" asp-route-id="@Model.Id" asp-route-topicId="@currentTopic.Id" method="post" class="mt-3">
-                                    @Html.AntiForgeryToken()
-                                    <button type="submit" class="btn btn-primary">
-                                        <i class="bi bi-check2-circle me-2"></i>Mark as Complete
-                                    </button>
-                                </form>
-                            }
+                            var topicMarkedComplete = topicContentIdsForCompletion.Count == 0
+                                || topicContentIdsForCompletion.All(learningProgress.CompletedContentIds.Contains);
+                            <form asp-controller="Courses" asp-action="CompleteTopic" asp-route-id="@Model.Id" asp-route-topicId="@currentTopic.Id" method="post" class="mt-3">
+                                @Html.AntiForgeryToken()
+                                <button type="submit" class="ciit-topic-completion-button">
+                                    <i class="bi @(topicMarkedComplete ? "bi-calendar2-check" : "bi-check2-circle")" aria-hidden="true"></i>
+                                    <span>@(topicMarkedComplete ? "Apply for Examination" : "Mark as Complete")</span>
+                                    <i class="bi bi-arrow-up-right ms-auto" aria-hidden="true"></i>
+                                </button>
+                            </form>
                         }
                     </div>
 
@@ -1284,8 +1312,9 @@ else
                         <div class="form-text">The exam instructions button opens 30 minutes before your scheduled time. The exam itself starts only at the scheduled time.</div>
                     </div>
                     <div class="modal-footer">
-                        <a asp-controller="StudentExaminations" asp-action="Index" class="btn btn-outline-secondary">Later</a>
-                        <button type="submit" class="btn btn-primary">Schedule examination</button>
+                        <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Later</button>
+                        <button type="submit" class="btn btn-primary" formaction="/Examinations/StartNow" formnovalidate>Start now <i class="bi bi-arrow-right ms-1" aria-hidden="true"></i></button>
+                        <button type="submit" class="btn btn-outline-primary">Schedule examination</button>
                     </div>
                 </form>
             </div>
