@@ -18,6 +18,7 @@ public class CoursesController : Controller
     private readonly CoursePurchaseService _coursePurchaseService;
     private readonly IMuxVideoService _muxVideoService;
     private readonly ApplicationDbContext _dbContext;
+    private readonly ITopicExaminationService _topicExaminationService;
 
     public CoursesController(
         ICourseService courseService,
@@ -25,7 +26,8 @@ public class CoursesController : Controller
         ICourseAssessmentService courseAssessmentService,
         CoursePurchaseService coursePurchaseService,
         IMuxVideoService muxVideoService,
-        ApplicationDbContext dbContext)
+        ApplicationDbContext dbContext,
+        ITopicExaminationService topicExaminationService)
     {
         _courseService = courseService;
         _studentProgressService = studentProgressService;
@@ -33,6 +35,7 @@ public class CoursesController : Controller
         _coursePurchaseService = coursePurchaseService;
         _muxVideoService = muxVideoService;
         _dbContext = dbContext;
+        _topicExaminationService = topicExaminationService;
     }
 
     [HttpGet]
@@ -330,6 +333,25 @@ public class CoursesController : Controller
         if (course is null)
         {
             return NotFound();
+        }
+
+        if (!string.IsNullOrWhiteSpace(studentUserId))
+        {
+            var allowedTopicId = await _topicExaminationService.GetCurrentTopicIdAsync(
+                studentUserId, id, cancellationToken);
+            var requestedTopicId = topicId ?? course.CurrentTopicId;
+            if (requestedTopicId is null && contentId.HasValue)
+            {
+                requestedTopicId = course.Topics.FirstOrDefault(topic =>
+                    topic.Contents.Any(content => content.Id == contentId.Value)
+                    || topic.Chapters.Any(chapter => chapter.Contents.Any(content => content.Id == contentId.Value)))?.Id;
+            }
+
+            if (allowedTopicId.HasValue && requestedTopicId.HasValue && requestedTopicId.Value != allowedTopicId.Value)
+            {
+                TempData["LearningProgressMessage"] = "This topic is locked until you pass the current topic examination.";
+                return RedirectToAction(nameof(Learn), new { id, topicId = allowedTopicId.Value });
+            }
         }
 
         if (topicId.HasValue)
