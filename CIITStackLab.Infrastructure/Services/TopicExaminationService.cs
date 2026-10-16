@@ -216,6 +216,17 @@ public sealed class TopicExaminationService : ITopicExaminationService
         return true;
     }
 
+    public async Task<int> FinalizeExpiredAttemptsAsync(CancellationToken cancellationToken = default)
+    {
+        var now = DateTime.UtcNow;
+        var expired = await _db.TopicExamAttempts
+            .Where(x => x.Status == "InProgress" && x.DeadlineAtUtc.HasValue && x.DeadlineAtUtc <= now)
+            .ToListAsync(cancellationToken);
+        foreach (var attempt in expired)
+            await FinalizeAsync(attempt, "TimedOut", now, cancellationToken);
+        return expired.Count;
+    }
+
     public async Task<bool> HasPassedTopicAsync(string userId, int courseId, int topicId, CancellationToken cancellationToken = default)
     {
         return await _db.TopicExamAttempts.AsNoTracking().AnyAsync(x =>
