@@ -123,7 +123,7 @@ public sealed class TopicExaminationService : ITopicExaminationService
         attempt.DeadlineAtUtc = now.AddMinutes(ExamDurationMinutes);
         attempt.Status = "InProgress";
         await _db.SaveChangesAsync(cancellationToken);
-        return (true, null, await BuildSessionAsync(attempt, true, cancellationToken));
+        return (true, null, await BuildSessionAsync(attempt, true, true, cancellationToken));
     }
 
     public async Task<(bool Succeeded, string? Error, TopicExamSummaryDto? Result)> SaveAnswersAsync(
