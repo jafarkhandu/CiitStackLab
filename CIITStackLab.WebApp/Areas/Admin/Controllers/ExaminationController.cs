@@ -107,6 +107,10 @@ public sealed class ExaminationController : Controller
             {
                 headerIssues.Add($"The first row must contain exactly {expected.Length} columns in this order: {string.Join(", ", expected)}.");
             }
+            else if (!actualHeaders.SequenceEqual(expected, StringComparer.OrdinalIgnoreCase))
+            {
+                headerIssues.Add($"The column names are present but in the wrong order. Required order: {string.Join(", ", expected)}. Current order: {string.Join(", ", actualHeaders)}.");
+            }
 
             var existingKeys = await _db.TopicExamQuestions.AsNoTracking()
                 .Where(q => q.Flag == 0 && q.TopicId == topicId)
@@ -133,6 +137,19 @@ public sealed class ExaminationController : Controller
                     var answerText = GetField(fields, 5);
                     var issues = new List<string>();
                     var correct = 0;
+                    var normalizedAnswer = answerText.Trim();
+                    if (normalizedAnswer.Length == 1 && normalizedAnswer[0] is >= 'A' and <= 'D')
+                    {
+                        correct = normalizedAnswer[0] - 'A' + 1;
+                    }
+                    else if (normalizedAnswer.Length == 1 && normalizedAnswer[0] is >= 'a' and <= 'd')
+                    {
+                        correct = normalizedAnswer[0] - 'a' + 1;
+                    }
+                    else if (!int.TryParse(normalizedAnswer, NumberStyles.Integer, CultureInfo.InvariantCulture, out correct))
+                    {
+                        correct = 0;
+                    }
 
                     if (fields.Count != 6)
                         issues.Add($"This row has {fields.Count} columns; it must have exactly 6. Check for an extra comma or missing cell.");
@@ -146,9 +163,8 @@ public sealed class ExaminationController : Controller
                     if (options.All(x => !string.IsNullOrWhiteSpace(x))
                         && options.Select(Normalize).Distinct(StringComparer.OrdinalIgnoreCase).Count() != 4)
                         issues.Add("Answer choices contain duplicates. Provide four distinct options in Option1–Option4.");
-                    if (!int.TryParse(answerText, NumberStyles.Integer, CultureInfo.InvariantCulture, out correct)
-                        || correct is < 1 or > 4)
-                        issues.Add($"CorrectOptionNumber is '{answerText}', but it must be 1, 2, 3, or 4 (1=A, 2=B, 3=C, 4=D).");
+                    if (correct is < 1 or > 4)
+                        issues.Add($"CorrectOptionNumber is '{answerText}', but it must be 1, 2, 3, or 4 (1=A, 2=B, 3=C, 4=D). You may also enter A, B, C, or D.");
 
                     var key = Normalize(question);
                     var isDuplicate = key.Length > 0 && (keys.Contains(key) || !batchKeys.Add(key));
@@ -192,7 +208,7 @@ public sealed class ExaminationController : Controller
         catch (Exception exception) when (exception is DbUpdateException or DbException or IOException)
         {
             _logger.LogError(exception, "Exam question import failed for topic {TopicId}.", topicId);
-            TempData["ExamAdminError"] = "Import failed. No success was reported; check the database and uploaded CSV.";
+            TempData["ExamAdminError"] = "Import failed. No success was reported; check the database and uploaded Excel workbook.";
         }
 
         return RedirectToAction(nameof(Index));
