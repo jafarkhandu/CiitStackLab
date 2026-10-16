@@ -1,0 +1,325 @@
+using System.Security.Cryptography;
+using System.Text;
+using System.Text.Json;
+using CIITStackLab.Application.DTOs;
+using CIITStackLab.Application.Interfaces;
+using CIITStackLab.Domain.Entities;
+using CIITStackLab.Infrastructure.Persistence;
+using Microsoft.EntityFrameworkCore;
+
+namespace CIITStackLab.Infrastructure.Services;
+
+public sealed class TopicExaminationService : ITopicExaminationService
+{
+    private const int QuestionCount = 50;
+    private const int PassingScore = 35;
+    private const int ExamDurationMinutes = 60;
+    private static readonly JsonSerializerOptions JsonOptions = new(JsonSerializerDefaults.Web);
+    private readonly ApplicationDbContext _db;
+
+    public TopicExaminationService(ApplicationDbContext db) => _db = db;
+
+    public async Task<IReadOnlyList<TopicExamSummaryDto>> GetStudentExamsAsync(string userId, CancellationToken cancellationToken = default)
+    {
+        if (string.IsNullOrWhiteSpace(userId)) return Array.Empty<TopicExamSummaryDto>();
+        return await _db.TopicExamAttempts.AsNoTracking()
+            .Where(x => x.UserId == userId)
+            .Join(_db.Topics.AsNoTracking(), x => x.TopicId, t => t.Id,
+                (x, t) => new TopicExamSummaryDto
+                {
+                    AttemptId = x.Id, CourseId = x.CourseId, TopicId = x.TopicId, TopicTitle = t.Title,
+                    ScheduledAtUtc = x.ScheduledAtUtc, StartedAtUtc = x.StartedAtUtc,
+                    DeadlineAtUtc = x.DeadlineAtUtc, SubmittedAtUtc = x.SubmittedAtUtc,
+                    Status = x.Status, Score = x.Score, TotalQuestions = x.TotalQuestions,
+                    Passed = x.Passed, WarningCount = x.WarningCount, TerminationReason = x.TerminationReason
+                })
+            .OrderByDescending(x => x.ScheduledAtUtc).ToListAsync(cancellationToken);
+    }
+
+    public async Task<(bool Succeeded, string? Error, TopicExamSummaryDto? Exam)> ScheduleAsync(
+        string userId, int courseId, int topicId, DateTime scheduledAtUtc, CancellationToken cancellationToken = default)
+    {
+        if (string.IsNullOrWhiteSpace(userId) || courseId <= 0 || topicId <= 0)
+            return (false, "Invalid exam request.", null);
+        scheduledAtUtc = DateTime.SpecifyKind(scheduledAtUtc, DateTimeKind.Utc);
+        var now = DateTime.UtcNow;
+        if (scheduledAtUtc < now.AddMinutes(30))
+            return (false, "Schedule the exam at least 30 minutes in advance.", null);
+
+        var topicExists = await (
+            from cm in _db.CourseModules.AsNoTracking()
+            join course in _db.Courses.AsNoTracking() on cm.CourseId equals course.Id
+            join topic in _db.Topics.AsNoTracking() on cm.TopicId equals topic.Id
+            where cm.CourseId == courseId && cm.TopicId == topicId
+                && cm.Flag == 0 && course.Flag == 0 && topic.Flag == 0
+            select topic.Id).AnyAsync(cancellationToken);
+        if (!topicExists) return (false, "The selected topic is not active in this course.", null);
+
+        var hasAccess = await _db.StudentCoursePurchases.AsNoTracking()
+            .AnyAsync(x => x.UserId == userId && x.CourseId == courseId, cancellationToken)
+            || await _db.Courses.AsNoTracking().AnyAsync(x => x.Id == courseId && x.Flag == 0 && x.FeesAmount <= 0, cancellationToken);
+        if (!hasAccess) return (false, "You do not have access to this course.", null);
+
+        if (await HasPassedTopicAsync(userId, courseId, topicId, cancellationToken))
+            return (false, "You have already passed this topic's examination.", null);
+
+        var activeAttempt = await _db.TopicExamAttempts.AnyAsync(x =>
+            x.UserId == userId && x.CourseId == courseId && x.TopicId == topicId
+            && (x.Status == "Scheduled" || x.Status == "Ready" || x.Status == "InProgress"), cancellationToken);
+        if (activeAttempt) return (false, "An exam is already scheduled or active for this topic.", null);
+
+        var allQuestionIds = await GetEligibleQuestionIdsAsync(topicId, cancellationToken);
+        var previouslyUsed = await GetPreviouslyUsedQuestionIdsAsync(userId, courseId, topicId, cancellationToken);
+        var unseenIds = allQuestionIds.Where(id => !previouslyUsed.Contains(id)).ToList();
+        if (unseenIds.Count < QuestionCount)
+            return (false, $"Only {unseenIds.Count} unseen valid questions remain. Add at least {QuestionCount - unseenIds.Count} new questions before scheduling a re-exam.", null);
+
+        var chosenIds = unseenIds.OrderBy(_ => RandomNumberGenerator.GetInt32(int.MaxValue)).Take(QuestionCount).ToList();
+        var attempt = new TopicExamAttempt
+        {
+            UserId = userId, CourseId = courseId, TopicId = topicId,
+            ScheduledAtUtc = scheduledAtUtc, Status = "Scheduled",
+            QuestionIdsJson = JsonSerializer.Serialize(chosenIds, JsonOptions),
+            AnswersJson = "{}", TotalQuestions = QuestionCount, CreatedAtUtc = now
+        };
+        _db.TopicExamAttempts.Add(attempt);
+        await _db.SaveChangesAsync(cancellationToken);
+        return (true, null, await MapSummaryAsync(attempt, cancellationToken));
+    }
+
+    public async Task<(bool Succeeded, string? Error, TopicExamSessionDto? Session)> OpenPreExamAsync(
+        string userId, long attemptId, string deviceToken, CancellationToken cancellationToken = default)
+    {
+        var attempt = await FindOwnedAttemptAsync(userId, attemptId, cancellationToken);
+        if (attempt is null) return (false, "Exam not found.", null);
+        var now = DateTime.UtcNow;
+        if (now < attempt.ScheduledAtUtc.AddMinutes(-30))
+            return (false, "The pre-exam instructions become available 30 minutes before the scheduled exam.", null);
+        if (attempt.Status is "Submitted" or "Terminated" or "Passed" or "Failed")
+            return (false, "This exam attempt is already closed.", null);
+        if (!await ClaimDeviceAsync(attempt, deviceToken, cancellationToken))
+            return (false, "This exam attempt is locked to the first device used.", null);
+        if (attempt.Status == "Scheduled") attempt.Status = "Ready";
+        await _db.SaveChangesAsync(cancellationToken);
+        return (true, null, await BuildSessionAsync(attempt, includeAnswers: true, cancellationToken));
+    }
+
+    public async Task<(bool Succeeded, string? Error, TopicExamSessionDto? Session)> StartAsync(
+        string userId, long attemptId, string deviceToken, CancellationToken cancellationToken = default)
+    {
+        var attempt = await FindOwnedAttemptAsync(userId, attemptId, cancellationToken);
+        if (attempt is null) return (false, "Exam not found.", null);
+        if (!await DeviceMatchesAsync(attempt, deviceToken))
+            return (false, "This exam attempt is locked to its original device.", null);
+        var now = DateTime.UtcNow;
+        if (now < attempt.ScheduledAtUtc)
+            return (false, "The exam will start at the scheduled time. The countdown page is not the exam.", null);
+        if (attempt.Status == "InProgress")
+            return (true, null, await BuildSessionAsync(attempt, true, cancellationToken));
+        if (attempt.Status != "Ready")
+            return (false, "Open the pre-exam instructions first.", null);
+
+        attempt.StartedAtUtc = now;
+        attempt.DeadlineAtUtc = now.AddMinutes(ExamDurationMinutes);
+        attempt.Status = "InProgress";
+        await _db.SaveChangesAsync(cancellationToken);
+        return (true, null, await BuildSessionAsync(attempt, true, cancellationToken));
+    }
+
+    public async Task<(bool Succeeded, string? Error, TopicExamSummaryDto? Result)> SaveAnswersAsync(
+        string userId, long attemptId, IReadOnlyList<TopicExamAnswerInput> answers, CancellationToken cancellationToken = default)
+    {
+        var attempt = await FindOwnedAttemptAsync(userId, attemptId, cancellationToken);
+        if (attempt is null) return (false, "Exam not found.", null);
+        if (attempt.Status != "InProgress" || attempt.DeadlineAtUtc is null)
+            return (false, "This exam is not active.", await MapSummaryAsync(attempt, cancellationToken));
+        var now = DateTime.UtcNow;
+        var questionIds = DeserializeIds(attempt.QuestionIdsJson);
+        var submitted = answers ?? Array.Empty<TopicExamAnswerInput>();
+        if (submitted.Any(a => !questionIds.Contains(a.QuestionId)
+            || (a.SelectedOptionNumber.HasValue && a.SelectedOptionNumber.Value is < 1 or > 4)))
+            return (false, "Submitted answers contain invalid question or option identifiers.", null);
+
+        var answerMap = submitted.GroupBy(a => a.QuestionId).ToDictionary(g => g.Key, g => g.Last().SelectedOptionNumber);
+        attempt.AnswersJson = JsonSerializer.Serialize(answerMap, JsonOptions);
+        if (now >= attempt.DeadlineAtUtc.Value)
+            await FinalizeAsync(attempt, "TimedOut", now, cancellationToken);
+        else
+            await _db.SaveChangesAsync(cancellationToken);
+        return (true, null, await MapSummaryAsync(attempt, cancellationToken));
+    }
+
+    public async Task<bool> RecordSecurityEventAsync(
+        string userId, long attemptId, string eventType, string? details, string deviceToken, CancellationToken cancellationToken = default)
+    {
+        var attempt = await FindOwnedAttemptAsync(userId, attemptId, cancellationToken);
+        if (attempt is null || attempt.Status != "InProgress" || !await DeviceMatchesAsync(attempt, deviceToken))
+            return false;
+        var normalized = (eventType ?? string.Empty).Trim();
+        var allowed = new HashSet<string>(StringComparer.OrdinalIgnoreCase)
+        {
+            "TabSwitch", "WindowBlur", "Copy", "Paste", "Cut", "ScreenshotShortcut",
+            "RecordingShortcut", "CameraLost", "MultipleFaces", "FaceMissing", "SuspiciousActivity",
+            "FullscreenExit", "NetworkDisconnected"
+        };
+        if (!allowed.Contains(normalized)) return false;
+
+        _db.TopicExamSecurityEvents.Add(new TopicExamSecurityEvent
+        {
+            ExamAttemptId = attempt.Id, EventType = normalized,
+            Details = string.IsNullOrWhiteSpace(details) ? null : details[..Math.Min(details.Length, 1000)],
+            OccurredAtUtc = DateTime.UtcNow
+        });
+
+        if (normalized.Equals("TabSwitch", StringComparison.OrdinalIgnoreCase)
+            || normalized.Equals("WindowBlur", StringComparison.OrdinalIgnoreCase)
+            || normalized.Equals("FullscreenExit", StringComparison.OrdinalIgnoreCase))
+        {
+            attempt.TerminationReason = normalized;
+            await FinalizeAsync(attempt, "Terminated", DateTime.UtcNow, cancellationToken);
+        }
+        else if (normalized.Equals("SuspiciousActivity", StringComparison.OrdinalIgnoreCase)
+            || normalized.Equals("MultipleFaces", StringComparison.OrdinalIgnoreCase)
+            || normalized.Equals("FaceMissing", StringComparison.OrdinalIgnoreCase))
+        {
+            attempt.WarningCount++;
+            if (attempt.WarningCount > 2)
+            {
+                attempt.TerminationReason = "Exceeded two proctoring warnings";
+                await FinalizeAsync(attempt, "Terminated", DateTime.UtcNow, cancellationToken);
+            }
+            else
+            {
+                await _db.SaveChangesAsync(cancellationToken);
+            }
+        }
+        else
+        {
+            await _db.SaveChangesAsync(cancellationToken);
+        }
+        return true;
+    }
+
+    public async Task<bool> HasPassedTopicAsync(string userId, int courseId, int topicId, CancellationToken cancellationToken = default)
+    {
+        return await _db.TopicExamAttempts.AsNoTracking().AnyAsync(x =>
+            x.UserId == userId && x.CourseId == courseId && x.TopicId == topicId
+            && x.Passed && x.Status == "Passed", cancellationToken);
+    }
+
+    private async Task FinalizeAsync(TopicExamAttempt attempt, string finalStatus, DateTime submittedAtUtc, CancellationToken cancellationToken)
+    {
+        var ids = DeserializeIds(attempt.QuestionIdsJson);
+        var answers = JsonSerializer.Deserialize<Dictionary<int, int?>>(attempt.AnswersJson, JsonOptions) ?? new();
+        var questions = await _db.ContentQuestions.AsNoTracking()
+            .Where(q => ids.Contains(q.Id)).ToDictionaryAsync(q => q.Id, cancellationToken);
+        var score = 0;
+        foreach (var id in ids)
+        {
+            if (!answers.TryGetValue(id, out var selected) || !selected.HasValue || !questions.TryGetValue(id, out var q)) continue;
+            if (q.CorrectOptionNumber == selected.Value) score++;
+        }
+        attempt.Score = score;
+        attempt.TotalQuestions = ids.Count;
+        attempt.Passed = score >= PassingScore;
+        attempt.Status = attempt.Passed ? "Passed" : (finalStatus == "Terminated" ? "Terminated" : "Failed");
+        attempt.SubmittedAtUtc = submittedAtUtc;
+        await _db.SaveChangesAsync(cancellationToken);
+    }
+
+    private async Task<List<int>> GetEligibleQuestionIdsAsync(int topicId, CancellationToken cancellationToken)
+    {
+        var noteIds = await _db.TrainingNotes.AsNoTracking()
+            .Where(n => n.TopicId == topicId && n.Flag == 0).Select(n => n.Id).ToListAsync(cancellationToken);
+        var contentIds = await _db.Lessons.AsNoTracking()
+            .Where(l => l.TopicId == topicId && l.Flag == 0).Select(l => l.Id).ToListAsync(cancellationToken);
+        return await _db.ContentQuestions.AsNoTracking()
+            .Where(q => q.Flag == 0 && q.CorrectOptionNumber >= 1 && q.CorrectOptionNumber <= 4
+                && ((q.TopicId == topicId) || (q.NoteId.HasValue && noteIds.Contains(q.NoteId.Value))
+                    || (q.ContentId.HasValue && contentIds.Contains(q.ContentId.Value))))
+            .Select(q => q.Id).Distinct().ToListAsync(cancellationToken);
+    }
+
+    private async Task<HashSet<int>> GetPreviouslyUsedQuestionIdsAsync(string userId, int courseId, int topicId, CancellationToken cancellationToken)
+    {
+        var snapshots = await _db.TopicExamAttempts.AsNoTracking()
+            .Where(x => x.UserId == userId && x.CourseId == courseId && x.TopicId == topicId)
+            .Select(x => x.QuestionIdsJson).ToListAsync(cancellationToken);
+        var result = new HashSet<int>();
+        foreach (var snapshot in snapshots)
+            foreach (var id in DeserializeIds(snapshot)) result.Add(id);
+        return result;
+    }
+
+    private async Task<TopicExamAttempt?> FindOwnedAttemptAsync(string userId, long attemptId, CancellationToken cancellationToken) =>
+        await _db.TopicExamAttempts.SingleOrDefaultAsync(x => x.Id == attemptId && x.UserId == userId, cancellationToken);
+
+    private static async Task<bool> ClaimDeviceAsync(TopicExamAttempt attempt, string token, CancellationToken cancellationToken)
+    {
+        if (string.IsNullOrWhiteSpace(token)) return false;
+        var hash = Convert.ToHexString(SHA256.HashData(Encoding.UTF8.GetBytes(token)));
+        if (attempt.DeviceTokenHash is null) attempt.DeviceTokenHash = hash;
+        return CryptographicOperations.FixedTimeEquals(
+            Convert.FromHexString(attempt.DeviceTokenHash), Convert.FromHexString(hash));
+    }
+
+    private static Task<bool> DeviceMatchesAsync(TopicExamAttempt attempt, string token)
+    {
+        if (string.IsNullOrWhiteSpace(token) || string.IsNullOrWhiteSpace(attempt.DeviceTokenHash))
+            return Task.FromResult(false);
+        var hash = Convert.ToHexString(SHA256.HashData(Encoding.UTF8.GetBytes(token)));
+        try
+        {
+            return Task.FromResult(CryptographicOperations.FixedTimeEquals(
+                Convert.FromHexString(attempt.DeviceTokenHash), Convert.FromHexString(hash)));
+        }
+        catch (FormatException) { return Task.FromResult(false); }
+    }
+
+    private async Task<TopicExamSessionDto> BuildSessionAsync(TopicExamAttempt attempt, bool includeAnswers, CancellationToken cancellationToken)
+    {
+        var ids = DeserializeIds(attempt.QuestionIdsJson);
+        var questions = await _db.ContentQuestions.AsNoTracking().Where(q => ids.Contains(q.Id)).ToListAsync(cancellationToken);
+        var answerMap = includeAnswers
+            ? JsonSerializer.Deserialize<Dictionary<int, int?>>(attempt.AnswersJson, JsonOptions) ?? new()
+            : new Dictionary<int, int?>();
+        var mapped = ids.Where(id => questions.Any(q => q.Id == id)).Select(id =>
+        {
+            var q = questions.Single(x => x.Id == id);
+            return new TopicExamQuestionDto
+            {
+                QuestionId = q.Id,
+                Question = q.Question ?? string.Empty,
+                Options = new[] { q.Option1, q.Option2, q.Option3, q.Option4 }
+                    .Where(x => !string.IsNullOrWhiteSpace(x)).Select(x => x!).ToArray(),
+                SelectedOptionNumber = answerMap.GetValueOrDefault(id)
+            };
+        }).ToList();
+        return new TopicExamSessionDto
+        {
+            AttemptId = attempt.Id, ScheduledAtUtc = attempt.ScheduledAtUtc,
+            DeadlineAtUtc = attempt.DeadlineAtUtc, Status = attempt.Status, Questions = mapped
+        };
+    }
+
+    private async Task<TopicExamSummaryDto> MapSummaryAsync(TopicExamAttempt attempt, CancellationToken cancellationToken)
+    {
+        var title = await _db.Topics.AsNoTracking().Where(t => t.Id == attempt.TopicId)
+            .Select(t => t.Title).SingleOrDefaultAsync(cancellationToken) ?? "Topic";
+        return new TopicExamSummaryDto
+        {
+            AttemptId = attempt.Id, CourseId = attempt.CourseId, TopicId = attempt.TopicId,
+            TopicTitle = title, ScheduledAtUtc = attempt.ScheduledAtUtc,
+            StartedAtUtc = attempt.StartedAtUtc, DeadlineAtUtc = attempt.DeadlineAtUtc,
+            SubmittedAtUtc = attempt.SubmittedAtUtc, Status = attempt.Status, Score = attempt.Score,
+            TotalQuestions = attempt.TotalQuestions, Passed = attempt.Passed,
+            WarningCount = attempt.WarningCount, TerminationReason = attempt.TerminationReason
+        };
+    }
+
+    private static List<int> DeserializeIds(string json)
+    {
+        try { return JsonSerializer.Deserialize<List<int>>(json, JsonOptions) ?? new(); }
+        catch (JsonException) { return new(); }
+    }
+}
