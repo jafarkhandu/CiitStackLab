@@ -5,6 +5,7 @@ public sealed class TopicExamScheduleRequest
     public int CourseId { get; set; }
     public int TopicId { get; set; }
     public DateTime ScheduledAtLocal { get; set; }
+    public int TimezoneOffsetMinutes { get; set; }
 }
 
 public sealed class TopicExamSummaryDto
