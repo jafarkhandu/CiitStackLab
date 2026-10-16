@@ -1,8 +1,9 @@
 @model CIITStackLab.Application.DTOs.TopicExamSessionDto
 @{
+    Layout = "_CourseLayout";
     ViewData["Title"] = "Exam Instructions";
 }
-<section class="container py-4" data-exam-instructions data-scheduled="@Model.ScheduledAtUtc.ToString("O")" data-attempt-id="@Model.AttemptId">
+<section class="container py-4 ciit-examination-page" data-exam-instructions data-scheduled="@Model.ScheduledAtUtc.ToString("O")" data-attempt-id="@Model.AttemptId">
     <div class="card shadow-sm mx-auto" style="max-width: 900px;">
         <div class="card-body p-4 p-lg-5">
             <span class="text-uppercase text-primary small fw-bold">Pre-exam verification</span>
