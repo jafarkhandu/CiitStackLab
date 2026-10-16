@@ -57,7 +57,7 @@ public sealed class TopicExaminationService : ITopicExaminationService
 
         var hasAccess = await _db.StudentCoursePurchases.AsNoTracking()
             .AnyAsync(x => x.UserId == userId && x.CourseId == courseId, cancellationToken)
-            || await _db.Courses.AsNoTracking().AnyAsync(x => x.Id == courseId && x.Flag == 0 && x.FeesAmount <= 0, cancellationToken);
+            || await _db.Courses.AsNoTracking().AnyAsync(x => x.Id == courseId && x.Flag == 0 && (!x.FeesAmount.HasValue || x.FeesAmount <= 0), cancellationToken);
         if (!hasAccess) return (false, "You do not have access to this course.", null);
 
         if (await HasPassedTopicAsync(userId, courseId, topicId, cancellationToken))
