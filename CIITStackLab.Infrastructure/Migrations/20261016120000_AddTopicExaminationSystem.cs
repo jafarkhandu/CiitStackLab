@@ -27,6 +27,7 @@ namespace CIITStackLab.Infrastructure.Migrations
                     deadline_at_utc = table.Column<DateTime>(type: "datetime2", nullable: true),
                     status = table.Column<string>(type: "nvarchar(30)", maxLength: 30, nullable: false),
                     question_ids_json = table.Column<string>(type: "nvarchar(max)", nullable: false),
+                    option_order_json = table.Column<string>(type: "nvarchar(max)", nullable: false),
                     answers_json = table.Column<string>(type: "nvarchar(max)", nullable: false),
                     device_token_hash = table.Column<string>(type: "nvarchar(128)", maxLength: 128, nullable: true),
                     warning_count = table.Column<int>(type: "int", nullable: false, defaultValue: 0),
