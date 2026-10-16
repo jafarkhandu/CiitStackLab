@@ -339,6 +339,7 @@ public class CoursesController : Controller
         {
             var allowedTopicId = await _topicExaminationService.GetCurrentTopicIdAsync(
                 studentUserId, id, cancellationToken);
+            ViewBag.AllowedTopicId = allowedTopicId;
             var requestedTopicId = topicId ?? course.CurrentTopicId;
             if (requestedTopicId is null && contentId.HasValue)
             {
