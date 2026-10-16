@@ -770,6 +770,7 @@ namespace CIITStackLab.Infrastructure.Migrations
                     b.Property<DateTime?>("StartedAtUtc").HasColumnType("datetime2").HasColumnName("started_at_utc");
                     b.Property<DateTime?>("SubmittedAtUtc").HasColumnType("datetime2").HasColumnName("submitted_at_utc");
                     b.Property<DateTime?>("DeadlineAtUtc").HasColumnType("datetime2").HasColumnName("deadline_at_utc");
+                    b.Property<DateTime?>("VerificationStartedAtUtc").HasColumnType("datetime2").HasColumnName("verification_started_at_utc");
                     b.Property<string>("Status").IsRequired().HasMaxLength(30).HasColumnType("nvarchar(30)").HasColumnName("status");
                     b.Property<string>("QuestionIdsJson").IsRequired().HasColumnType("nvarchar(max)").HasColumnName("question_ids_json");
                     b.Property<string>("OptionOrderJson").IsRequired().HasColumnType("nvarchar(max)").HasColumnName("option_order_json");
@@ -784,7 +785,7 @@ namespace CIITStackLab.Infrastructure.Migrations
                     b.HasKey("Id");
                     b.HasIndex("UserId", "CourseId", "TopicId", "CreatedAtUtc").HasDatabaseName("IX_topic_exam_user_course_topic");
                     b.HasIndex("UserId", "CourseId", "TopicId", "Status").HasDatabaseName("IX_topic_exam_user_topic_status");
-                    b.HasIndex("UserId", "CourseId", "TopicId").IsUnique().HasFilter("[status] <> 'Passed' AND [status] <> 'Failed' AND [status] <> 'Terminated'").HasDatabaseName("UX_topic_exam_one_active_attempt");
+                    b.HasIndex("UserId", "CourseId", "TopicId").IsUnique().HasFilter("[status] <> 'Passed' AND [status] <> 'Failed' AND [status] <> 'Terminated' AND [status] <> 'TimedOut'").HasDatabaseName("UX_topic_exam_one_active_attempt");
                     b.ToTable("tblstudent_topic_exam_attempts", "erpsystem");
                 });
 
