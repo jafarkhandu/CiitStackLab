@@ -1,8 +1,10 @@
 using System.Security.Claims;
 using CIITStackLab.Application.DTOs;
 using CIITStackLab.Application.Interfaces;
-using CIITStackLab.Infrastructure.Services;
+using CIITStackLab.Domain.Entities;
+using CIITStackLab.Infrastructure.Payments;
 using CIITStackLab.Infrastructure.Persistence;
+using CIITStackLab.Infrastructure.Services;
 using CIITStackLab.WebApp.Models;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.AspNetCore.Authorization;
@@ -18,6 +20,7 @@ public class CoursesController : Controller
     private readonly CoursePurchaseService _coursePurchaseService;
     private readonly ApplicationDbContext _dbContext;
     private readonly IEmailService _emailService;
+    private readonly PhonePePaymentService _phonePePaymentService;
     private readonly ILogger<CoursesController> _logger;
 
     public CoursesController(
@@ -27,6 +30,7 @@ public class CoursesController : Controller
         CoursePurchaseService coursePurchaseService,
         ApplicationDbContext dbContext,
         IEmailService emailService,
+        PhonePePaymentService phonePePaymentService,
         ILogger<CoursesController> logger)
     {
         _courseService = courseService;
@@ -35,6 +39,7 @@ public class CoursesController : Controller
         _coursePurchaseService = coursePurchaseService;
         _dbContext = dbContext;
         _emailService = emailService;
+        _phonePePaymentService = phonePePaymentService;
         _logger = logger;
     }
 
@@ -95,65 +100,296 @@ public class CoursesController : Controller
             return Unauthorized();
         }
 
-        var alreadyPurchased = await _coursePurchaseService.HasPurchasedCourseAsync(
-            userId,
-            id,
-            cancellationToken);
-
-        var purchaseCompleted = await _coursePurchaseService.CompleteAsync(
-            userId,
-            id,
-            cancellationToken);
-
-        if (!purchaseCompleted)
+        if (await _coursePurchaseService.HasPurchasedCourseAsync(userId, id, cancellationToken))
         {
-            TempData["CoursePaymentMessage"] =
-                "The demo payment could not be completed. Please try again.";
+            return RedirectToAction(nameof(CourseHome));
+        }
+
+        var merchantOrderId = $"CIIT-{Guid.NewGuid():N}";
+        var transaction = new PaymentTransaction
+        {
+            UserId = userId,
+            CourseId = id,
+            MerchantOrderId = merchantOrderId,
+            Amount = price,
+            Status = "Created",
+            CreatedAt = DateTime.UtcNow,
+            UpdatedAt = DateTime.UtcNow
+        };
+
+        _dbContext.PaymentTransactions.Add(transaction);
+        await _dbContext.SaveChangesAsync(cancellationToken);
+
+        var redirectUrl = Url.Action(
+            nameof(PhonePeReturn),
+            "Courses",
+            new { merchantOrderId },
+            Request.Scheme,
+            Request.Host.Value);
+
+        if (string.IsNullOrWhiteSpace(redirectUrl))
+        {
+            transaction.Status = "Failed";
+            transaction.UpdatedAt = DateTime.UtcNow;
+            await _dbContext.SaveChangesAsync(cancellationToken);
+
+            TempData["CoursePaymentMessage"] = "Payment could not be started. Please try again.";
             return RedirectToAction(nameof(Details), new { id });
         }
 
-        if (!alreadyPurchased)
+        try
         {
-            var purchase = await _dbContext.StudentCoursePurchases
-                .AsNoTracking()
-                .Where(item => item.UserId == userId && item.CourseId == id)
-                .OrderByDescending(item => item.PurchasedAt)
-                .FirstOrDefaultAsync(cancellationToken);
+            var amountInPaise = checked((long)Math.Round(price * 100m, 0, MidpointRounding.AwayFromZero));
 
-            var user = await _dbContext.Users
-                .AsNoTracking()
-                .Where(item => item.Id == userId && item.IsActive)
-                .Select(item => new { item.Email, item.UserName })
-                .FirstOrDefaultAsync(cancellationToken);
+            var checkoutUrl = await _phonePePaymentService.CreateCheckoutAsync(
+                merchantOrderId,
+                amountInPaise,
+                redirectUrl);
 
-            if (purchase is not null && !string.IsNullOrWhiteSpace(user?.Email))
-            {
-                try
-                {
-                    await _emailService.SendPurchaseInvoiceEmailAsync(
-                        user.Email,
-                        user.UserName ?? "Student",
-                        course.Title,
-                        purchase.PurchasePrice,
-                        purchase.Id,
-                        purchase.PurchasedAt,
-                        cancellationToken);
-                }
-                catch (Exception ex)
-                {
-                    _logger.LogWarning(
-                        ex,
-                        "Purchase email could not be sent for purchase {PurchaseId} to {Email}.",
-                        purchase.Id,
-                        user.Email);
-                }
-            }
+            transaction.Status = "Pending";
+            transaction.UpdatedAt = DateTime.UtcNow;
+            await _dbContext.SaveChangesAsync(cancellationToken);
+
+            return Redirect(checkoutUrl);
+        }
+        catch (Exception ex)
+        {
+            transaction.Status = "Failed";
+            transaction.UpdatedAt = DateTime.UtcNow;
+            await _dbContext.SaveChangesAsync(cancellationToken);
+
+            _logger.LogError(
+                ex,
+                "PhonePe checkout could not be created for merchant order {MerchantOrderId}.",
+                merchantOrderId);
+
+            TempData["CoursePaymentMessage"] =
+                "The payment gateway could not be reached. Please try again.";
+
+            return RedirectToAction(nameof(Details), new { id });
+        }
+    }
+
+    [HttpGet("Courses/PhonePeReturn")]
+    [AllowAnonymous]
+    public async Task<IActionResult> PhonePeReturn(
+        string merchantOrderId,
+        CancellationToken cancellationToken)
+    {
+        if (string.IsNullOrWhiteSpace(merchantOrderId))
+        {
+            return RedirectToAction(nameof(CourseHome));
         }
 
-        TempData["CoursePaymentMessage"] =
-            $"Demo payment successful. {course.Title} has been added to My Courses.";
+        var transaction = await _dbContext.PaymentTransactions
+            .FirstOrDefaultAsync(
+                item => item.MerchantOrderId == merchantOrderId,
+                cancellationToken);
 
-        return RedirectToAction(nameof(CourseHome));
+        if (transaction is null)
+        {
+            TempData["CoursePaymentMessage"] = "The payment order could not be found.";
+            return RedirectToAction(nameof(CourseHome));
+        }
+
+        try
+        {
+            var state = await _phonePePaymentService.GetOrderStateAsync(merchantOrderId);
+
+            await ProcessPhonePeStateAsync(transaction, state, cancellationToken);
+
+            if (string.Equals(state, "COMPLETED", StringComparison.OrdinalIgnoreCase))
+            {
+                TempData["CoursePaymentMessage"] =
+                    "Payment successful. Your course is now available in My Courses.";
+            }
+            else if (string.Equals(state, "FAILED", StringComparison.OrdinalIgnoreCase))
+            {
+                TempData["CoursePaymentMessage"] =
+                    "The payment was not completed. No course access was granted.";
+            }
+            else
+            {
+                TempData["CoursePaymentMessage"] =
+                    "Your payment is still being processed. Please check My Courses again shortly.";
+            }
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(
+                ex,
+                "PhonePe status verification failed for merchant order {MerchantOrderId}.",
+                merchantOrderId);
+
+            TempData["CoursePaymentMessage"] =
+                "We could not verify the payment yet. Please try again shortly.";
+        }
+
+        return RedirectToAction(nameof(Details), new { id = transaction.CourseId });
+    }
+
+    [HttpPost("Courses/PhonePeCallback")]
+    [AllowAnonymous]
+    [IgnoreAntiforgeryToken]
+    public async Task<IActionResult> PhonePeCallback(CancellationToken cancellationToken)
+    {
+        var authorization = Request.Headers.Authorization.ToString();
+
+        if (string.IsNullOrWhiteSpace(authorization))
+        {
+            return Unauthorized();
+        }
+
+        using var reader = new StreamReader(Request.Body);
+        var requestBody = await reader.ReadToEndAsync(cancellationToken);
+
+        if (string.IsNullOrWhiteSpace(requestBody))
+        {
+            return BadRequest();
+        }
+
+        try
+        {
+            var callback = _phonePePaymentService.ValidateCallback(
+                authorization,
+                requestBody);
+            var merchantOrderId = callback.payload.orderId;
+            var state = callback.payload.state;
+
+            if (string.IsNullOrWhiteSpace(merchantOrderId))
+            {
+                return BadRequest();
+            }
+
+            var transaction = await _dbContext.PaymentTransactions
+                .FirstOrDefaultAsync(
+                    item => item.MerchantOrderId == merchantOrderId,
+                    cancellationToken);
+
+            if (transaction is null)
+            {
+                return NotFound();
+            }
+
+            await ProcessPhonePeStateAsync(transaction, state, cancellationToken);
+
+            return Ok();
+        }
+        catch (Exception ex)
+        {
+            _logger.LogWarning(ex, "Invalid PhonePe callback received.");
+            return Unauthorized();
+        }
+    }
+
+    private async Task ProcessPhonePeStateAsync(
+        PaymentTransaction transaction,
+        string state,
+        CancellationToken cancellationToken)
+    {
+        if (string.Equals(state, "COMPLETED", StringComparison.OrdinalIgnoreCase))
+        {
+            if (string.Equals(transaction.Status, "Completed", StringComparison.OrdinalIgnoreCase))
+            {
+                return;
+            }
+
+            var alreadyPurchased = await _coursePurchaseService.HasPurchasedCourseAsync(
+                transaction.UserId,
+                transaction.CourseId,
+                cancellationToken);
+
+            var purchaseCompleted = await _coursePurchaseService.CompleteAsync(
+                transaction.UserId,
+                transaction.CourseId,
+                cancellationToken);
+
+            if (!purchaseCompleted)
+            {
+                transaction.Status = "Failed";
+                transaction.UpdatedAt = DateTime.UtcNow;
+                await _dbContext.SaveChangesAsync(cancellationToken);
+                return;
+            }
+
+            transaction.Status = "Completed";
+            transaction.CompletedAt = DateTime.UtcNow;
+            transaction.UpdatedAt = DateTime.UtcNow;
+            await _dbContext.SaveChangesAsync(cancellationToken);
+
+            if (!alreadyPurchased)
+            {
+                await TrySendPurchaseInvoiceAsync(
+                    transaction.UserId,
+                    transaction.CourseId,
+                    cancellationToken);
+            }
+
+            return;
+        }
+
+        if (string.Equals(state, "FAILED", StringComparison.OrdinalIgnoreCase))
+        {
+            transaction.Status = "Failed";
+        }
+        else
+        {
+            transaction.Status = "Pending";
+        }
+
+        transaction.UpdatedAt = DateTime.UtcNow;
+        await _dbContext.SaveChangesAsync(cancellationToken);
+    }
+
+    private async Task TrySendPurchaseInvoiceAsync(
+        string userId,
+        int courseId,
+        CancellationToken cancellationToken)
+    {
+        var purchase = await _dbContext.StudentCoursePurchases
+            .AsNoTracking()
+            .Where(item => item.UserId == userId && item.CourseId == courseId)
+            .OrderByDescending(item => item.PurchasedAt)
+            .FirstOrDefaultAsync(cancellationToken);
+
+        var course = await _dbContext.Courses
+            .AsNoTracking()
+            .Where(item => item.Id == courseId)
+            .Select(item => new { item.Title })
+            .FirstOrDefaultAsync(cancellationToken);
+
+        var user = await _dbContext.Users
+            .AsNoTracking()
+            .Where(item => item.Id == userId && item.IsActive)
+            .Select(item => new { item.Email, item.UserName })
+            .FirstOrDefaultAsync(cancellationToken);
+
+        if (purchase is null
+            || course is null
+            || string.IsNullOrWhiteSpace(user?.Email))
+        {
+            return;
+        }
+
+        try
+        {
+            await _emailService.SendPurchaseInvoiceEmailAsync(
+                user.Email,
+                user.UserName ?? "Student",
+                course.Title,
+                purchase.PurchasePrice,
+                purchase.Id,
+                purchase.PurchasedAt,
+                cancellationToken);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogWarning(
+                ex,
+                "Purchase invoice could not be sent for purchase {PurchaseId} to {Email}.",
+                purchase.Id,
+                user.Email);
+        }
     }
 
     [HttpGet("Courses/Home")]
