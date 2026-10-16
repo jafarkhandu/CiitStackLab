@@ -350,17 +350,12 @@ public class CoursesController : Controller
 
             if (allowedTopicId.HasValue && requestedTopicId.HasValue)
             {
-                var allowedTopicOrder = await _dbContext.CourseModules.AsNoTracking()
-                    .Where(module => module.CourseId == id && module.TopicId == allowedTopicId.Value && module.Flag == 0)
-                    .Select(module => (int?)module.SortOrder)
-                    .FirstOrDefaultAsync(cancellationToken);
-                var requestedTopicOrder = await _dbContext.CourseModules.AsNoTracking()
-                    .Where(module => module.CourseId == id && module.TopicId == requestedTopicId.Value && module.Flag == 0)
-                    .Select(module => (int?)module.SortOrder)
-                    .FirstOrDefaultAsync(cancellationToken);
+                var allowedTopicPosition = course.Topics.ToList()
+                    .FindIndex(topic => topic.Id == allowedTopicId.Value);
+                var requestedTopicPosition = course.Topics.ToList()
+                    .FindIndex(topic => topic.Id == requestedTopicId.Value);
 
-                if (allowedTopicOrder.HasValue && requestedTopicOrder.HasValue
-                    && requestedTopicOrder.Value > allowedTopicOrder.Value)
+                if (allowedTopicPosition >= 0 && requestedTopicPosition > allowedTopicPosition)
                 {
                     TempData["LearningProgressMessage"] = "This topic is locked until you pass the current topic examination.";
                     return RedirectToAction(nameof(Learn), new { id, topicId = allowedTopicId.Value });
