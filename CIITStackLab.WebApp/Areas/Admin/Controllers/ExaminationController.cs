@@ -147,7 +147,7 @@ public sealed class ExaminationController : Controller
             TempData["ExamAdminMessage"] = $"Analysis complete: {additions.Count} valid new questions; {invalidRows} invalid or duplicate rows skipped. Review before confirming.";
             return RedirectToAction(nameof(Index), new { previewToken });
         }
-        catch (InvalidDataException)
+        catch (Exception exception) when (exception is InvalidDataException or System.Xml.XmlException)
         {
             TempData["ExamAdminError"] = "The uploaded file is not a valid .xlsx workbook or its first worksheet could not be read.";
         }
