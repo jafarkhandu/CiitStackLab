@@ -30,6 +30,7 @@
                     </select>
                     <input type="hidden" name="CourseId" id="courseId" />
                     <input type="hidden" name="TopicId" id="topicId" />
+                    <input type="hidden" name="TimezoneOffsetMinutes" id="timezoneOffsetMinutes" />
                 </div>
                 <div class="col-md-5">
                     <label class="form-label" for="ScheduledAtLocal">Exam date and time</label>
@@ -94,6 +95,7 @@
 </section>
 @section Scripts {
 <script>
+    document.getElementById('timezoneOffsetMinutes').value = new Date().getTimezoneOffset();
     document.getElementById('topicOption')?.addEventListener('change', function () {
         const parts = this.value.split('|');
         document.getElementById('courseId').value = parts[0] || '';
