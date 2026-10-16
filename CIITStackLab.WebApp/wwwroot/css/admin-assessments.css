@@ -474,3 +474,16 @@
         transform: none;
     }
 }
+
+
+/* Topic examination administration premium glass surface. */
+.ciit-topic-exam-admin .assessment-hero,.ciit-topic-exam-admin .assessment-workspace-card{border:1px solid rgba(255,255,255,.84);border-radius:22px;background:linear-gradient(135deg,rgba(255,255,255,.94),rgba(236,244,255,.8));box-shadow:0 18px 48px rgba(28,62,110,.09),inset 0 1px 0 rgba(255,255,255,.95);-webkit-backdrop-filter:blur(22px) saturate(150%);backdrop-filter:blur(22px) saturate(150%)}
+.ciit-topic-exam-admin .assessment-hero{padding:30px}.ciit-topic-exam-admin .assessment-workspace-card{overflow:hidden}.ciit-topic-exam-admin .assessment-workspace-card .card-body{padding:26px!important}
+.ciit-topic-exam-admin .assessment-workspace-card h2{color:#213b60;font-weight:850;letter-spacing:-.025em}
+.ciit-topic-exam-admin .form-control,.ciit-topic-exam-admin .form-select{min-height:44px;border-color:#dce7f7;border-radius:11px;background-color:rgba(255,255,255,.9)}
+.ciit-topic-exam-admin .form-control:focus,.ciit-topic-exam-admin .form-select:focus{border-color:#8bb5ff;box-shadow:0 0 0 .22rem rgba(43,111,235,.12)}
+.ciit-topic-exam-admin .btn{min-height:42px;border-radius:11px;font-weight:800}.ciit-topic-exam-admin .table{--bs-table-bg:transparent}
+.ciit-topic-exam-admin .table thead th{color:#7b8ca5;font-size:.72rem;font-weight:850;letter-spacing:.06em;text-transform:uppercase}
+.ciit-topic-exam-admin .table tbody td{padding-top:13px;padding-bottom:13px;border-color:#e4edf9;color:#3f5675}
+.ciit-topic-exam-admin code{color:#225fd1;background:#edf4ff;border-radius:5px;padding:3px 5px}
+@media(max-width:767.98px){.ciit-topic-exam-admin .assessment-hero{padding:23px 20px}.ciit-topic-exam-admin .assessment-workspace-card .card-body{padding:19px!important}}
