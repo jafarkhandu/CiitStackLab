@@ -150,6 +150,14 @@
             postEvent(['c','v','x'].includes(key) ? ({c:'Copy',v:'Paste',x:'Cut'}[key]) : 'ScreenshotShortcut', 'Restricted shortcut');
         }
         if (e.key === 'PrintScreen') postEvent('ScreenshotShortcut', 'PrintScreen key');
+        if ((e.ctrlKey || e.metaKey) && e.shiftKey && key === '5') {
+            e.preventDefault();
+            postEvent('ScreenshotShortcut', 'Screenshot keyboard shortcut');
+        }
+        if (((e.ctrlKey || e.metaKey) && e.shiftKey && key === 'r') || (e.metaKey && e.altKey && key === 'r')) {
+            e.preventDefault();
+            postEvent('RecordingShortcut', 'Possible screen recording shortcut');
+        }
     });
 
     async function initCamera() {
