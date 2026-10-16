@@ -100,7 +100,7 @@ public sealed class StudentExaminationsController : Controller
         if (string.IsNullOrWhiteSpace(userId)) return Unauthorized();
         var deviceToken = Request.Cookies[DeviceCookieName(attemptId)] ?? string.Empty;
         // Device verification is also required for event logging; answer submission is scoped to the authenticated owner.
-        var result = await _exams.SaveAnswersAsync(userId, attemptId, answers, cancellationToken);
+        var result = await _exams.SaveAnswersAsync(userId, attemptId, answers, deviceToken, cancellationToken);
         if (!result.Succeeded) return BadRequest(new { error = result.Error });
         return Json(new { success = true, status = result.Result?.Status, score = result.Result?.Score, passed = result.Result?.Passed });
     }
