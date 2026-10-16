@@ -64,7 +64,7 @@
                         <tr>
                             <td><span class="ciit-exam-topic">@exam.TopicTitle</span><span class="ciit-exam-sub">Attempt #@exam.AttemptId</span></td>
                             <td><time class="exam-local-time" datetime="@DateTime.SpecifyKind(exam.ScheduledAtUtc, DateTimeKind.Utc).ToString("O")">@exam.ScheduledAtUtc.ToString("yyyy-MM-dd HH:mm") UTC</time></td>
-                            <td><span class="ciit-exam-status" data-status="@exam.Status">@exam.Status</span></td>
+                            <td><span class="ciit-exam-status" data-status="@exam.Status">@(exam.Status == "TimedOut" ? "Time’s up" : exam.Status)</span></td>
                             <td>
                                 @if (exam.Status is "Passed" or "Failed" or "Terminated" or "TimedOut") { <strong>@exam.Score / @exam.TotalQuestions</strong><span class="ciit-exam-sub">@((exam.Passed) ? "Passed" : "Not passed")</span> }
                                 else { <span class="ciit-exam-sub">Pending result</span> }
