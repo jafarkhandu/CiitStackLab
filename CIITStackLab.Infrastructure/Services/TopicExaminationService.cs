@@ -367,6 +367,36 @@ public sealed class TopicExaminationService : ITopicExaminationService
         };
     }
 
+    private static IReadOnlyList<string> GetShuffledOptions(ContentQuestion question, string orderJson)
+    {
+        var original = new[]
+        {
+            question.Option1 ?? string.Empty,
+            question.Option2 ?? string.Empty,
+            question.Option3 ?? string.Empty,
+            question.Option4 ?? string.Empty
+        };
+        var orders = DeserializeOptionOrders(orderJson);
+        if (!orders.TryGetValue(question.Id, out var order) || order.Count != 4
+            || order.Any(index => index is < 1 or > 4) || order.Distinct().Count() != 4)
+        {
+            return original;
+        }
+        return order.Select(index => original[index - 1]).ToArray();
+    }
+
+    private static Dictionary<int, List<int>> DeserializeOptionOrders(string json)
+    {
+        try
+        {
+            return JsonSerializer.Deserialize<Dictionary<int, List<int>>>(json, JsonOptions) ?? new();
+        }
+        catch (JsonException)
+        {
+            return new();
+        }
+    }
+
     private static List<int> DeserializeIds(string json)
     {
         try { return JsonSerializer.Deserialize<List<int>>(json, JsonOptions) ?? new(); }
