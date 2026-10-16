@@ -11,6 +11,7 @@ BEGIN
         [deadline_at_utc] DATETIME2 NULL,
         [status] NVARCHAR(30) NOT NULL,
         [question_ids_json] NVARCHAR(MAX) NOT NULL,
+        [option_order_json] NVARCHAR(MAX) NOT NULL,
         [answers_json] NVARCHAR(MAX) NOT NULL,
         [device_token_hash] NVARCHAR(128) NULL,
         [warning_count] INT NOT NULL CONSTRAINT [DF_topic_exam_warning_count] DEFAULT (0),
