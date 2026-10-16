@@ -68,6 +68,19 @@ public sealed class TopicExaminationService : ITopicExaminationService
             && (x.Status == "Scheduled" || x.Status == "Ready" || x.Status == "InProgress"), cancellationToken);
         if (activeAttempt) return (false, "An exam is already scheduled or active for this topic.", null);
 
+        var topicNoteIds = await _db.TrainingNotes.AsNoTracking()
+            .Where(n => n.TopicId == topicId && n.Flag == 0).Select(n => n.Id).ToListAsync(cancellationToken);
+        var topicContentIds = await _db.Lessons.AsNoTracking()
+            .Where(l => l.Flag == 0 && (l.TopicId == topicId || (l.NoteId.HasValue && topicNoteIds.Contains(l.NoteId.Value))))
+            .Select(l => l.Id).Distinct().ToListAsync(cancellationToken);
+        if (topicContentIds.Count == 0)
+            return (false, "This topic has no active learning content yet.", null);
+        var completedContentIds = await _db.StudentLessonProgress.AsNoTracking()
+            .Where(p => p.UserId == userId && p.CourseId == courseId && p.IsCompleted && topicContentIds.Contains(p.ContentId))
+            .Select(p => p.ContentId).Distinct().ToListAsync(cancellationToken);
+        if (completedContentIds.Count != topicContentIds.Count)
+            return (false, "Complete all lessons in this topic before scheduling its exam.", null);
+
         var allQuestionIds = await GetEligibleQuestionIdsAsync(topicId, cancellationToken);
         var previouslyUsed = await GetPreviouslyUsedQuestionIdsAsync(userId, courseId, topicId, cancellationToken);
         var unseenIds = allQuestionIds.Where(id => !previouslyUsed.Contains(id)).ToList();
@@ -205,6 +218,22 @@ public sealed class TopicExaminationService : ITopicExaminationService
         return await _db.TopicExamAttempts.AsNoTracking().AnyAsync(x =>
             x.UserId == userId && x.CourseId == courseId && x.TopicId == topicId
             && x.Passed && x.Status == "Passed", cancellationToken);
+    }
+
+    public async Task<int?> GetCurrentTopicIdAsync(string userId, int courseId, CancellationToken cancellationToken = default)
+    {
+        var topicIds = await _db.CourseModules.AsNoTracking()
+            .Where(cm => cm.CourseId == courseId && cm.Flag == 0 && cm.Topic.Flag == 0 && cm.Course.Flag == 0)
+            .OrderBy(cm => cm.Id)
+            .Select(cm => cm.TopicId)
+            .Distinct()
+            .ToListAsync(cancellationToken);
+        foreach (var topicId in topicIds)
+        {
+            if (!await HasPassedTopicAsync(userId, courseId, topicId, cancellationToken))
+                return topicId;
+        }
+        return topicIds.LastOrDefault() is var last && last > 0 ? last : null;
     }
 
     private async Task FinalizeAsync(TopicExamAttempt attempt, string finalStatus, DateTime submittedAtUtc, CancellationToken cancellationToken)
