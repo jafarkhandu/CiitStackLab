@@ -225,7 +225,24 @@ public sealed class TopicExaminationService : ITopicExaminationService
             .ToListAsync(cancellationToken);
         foreach (var attempt in expired)
             await FinalizeAsync(attempt, "TimedOut", now, cancellationToken);
-        return expired.Count;
+
+        var missed = await _db.TopicExamAttempts
+            .Where(x => (x.Status == "Scheduled" || x.Status == "Ready")
+                && !x.StartedAtUtc.HasValue
+                && x.ScheduledAtUtc.AddMinutes(ExamDurationMinutes) <= now)
+            .ToListAsync(cancellationToken);
+        foreach (var attempt in missed)
+        {
+            attempt.Status = "Failed";
+            attempt.Passed = false;
+            attempt.Score = 0;
+            attempt.TotalQuestions = QuestionCount;
+            attempt.SubmittedAtUtc = now;
+            attempt.TerminationReason = "Exam start window missed";
+        }
+        if (missed.Count > 0)
+            await _db.SaveChangesAsync(cancellationToken);
+        return expired.Count + missed.Count;
     }
 
     public async Task<bool> HasPassedTopicAsync(string userId, int courseId, int topicId, CancellationToken cancellationToken = default)
@@ -295,7 +312,7 @@ public sealed class TopicExaminationService : ITopicExaminationService
     private async Task<HashSet<int>> GetPreviouslyUsedQuestionIdsAsync(string userId, int courseId, int topicId, CancellationToken cancellationToken)
     {
         var snapshots = await _db.TopicExamAttempts.AsNoTracking()
-            .Where(x => x.UserId == userId && x.CourseId == courseId && x.TopicId == topicId)
+            .Where(x => x.UserId == userId && x.CourseId == courseId && x.TopicId == topicId && x.StartedAtUtc.HasValue)
             .Select(x => x.QuestionIdsJson).ToListAsync(cancellationToken);
         var result = new HashSet<int>();
         foreach (var snapshot in snapshots)
