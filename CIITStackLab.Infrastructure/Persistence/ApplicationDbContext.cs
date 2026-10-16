@@ -27,6 +27,8 @@ public class ApplicationDbContext : IdentityDbContext<ApplicationUser>
     public DbSet<StudentLessonProgress> StudentLessonProgress => Set<StudentLessonProgress>();
     public DbSet<StudentAssessmentAttempt> StudentAssessmentAttempts => Set<StudentAssessmentAttempt>();
     public DbSet<StudentCoursePurchase> StudentCoursePurchases => Set<StudentCoursePurchase>();
+    public DbSet<TopicExamAttempt> TopicExamAttempts => Set<TopicExamAttempt>();
+    public DbSet<TopicExamSecurityEvent> TopicExamSecurityEvents => Set<TopicExamSecurityEvent>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -296,6 +298,47 @@ public class ApplicationDbContext : IdentityDbContext<ApplicationUser>
                 .HasForeignKey(x => x.CourseId)
                 .OnDelete(DeleteBehavior.NoAction);
         });
+        modelBuilder.Entity<TopicExamAttempt>(entity =>
+        {
+            entity.ToTable("tblstudent_topic_exam_attempts", ExistingSchema);
+            entity.HasKey(x => x.Id);
+            entity.Property(x => x.Id).HasColumnName("exam_attempt_id").ValueGeneratedOnAdd();
+            entity.Property(x => x.UserId).HasColumnName("user_id").HasMaxLength(450).IsRequired();
+            entity.Property(x => x.CourseId).HasColumnName("course_id").IsRequired();
+            entity.Property(x => x.TopicId).HasColumnName("topic_id").IsRequired();
+            entity.Property(x => x.ScheduledAtUtc).HasColumnName("scheduled_at_utc").HasColumnType("datetime2").IsRequired();
+            entity.Property(x => x.StartedAtUtc).HasColumnName("started_at_utc").HasColumnType("datetime2");
+            entity.Property(x => x.SubmittedAtUtc).HasColumnName("submitted_at_utc").HasColumnType("datetime2");
+            entity.Property(x => x.DeadlineAtUtc).HasColumnName("deadline_at_utc").HasColumnType("datetime2");
+            entity.Property(x => x.Status).HasColumnName("status").HasMaxLength(30).IsRequired();
+            entity.Property(x => x.QuestionIdsJson).HasColumnName("question_ids_json").HasColumnType("nvarchar(max)").IsRequired();
+            entity.Property(x => x.AnswersJson).HasColumnName("answers_json").HasColumnType("nvarchar(max)").IsRequired();
+            entity.Property(x => x.DeviceTokenHash).HasColumnName("device_token_hash").HasMaxLength(128);
+            entity.Property(x => x.WarningCount).HasColumnName("warning_count").HasDefaultValue(0).IsRequired();
+            entity.Property(x => x.Score).HasColumnName("score").HasDefaultValue(0).IsRequired();
+            entity.Property(x => x.TotalQuestions).HasColumnName("total_questions").HasDefaultValue(0).IsRequired();
+            entity.Property(x => x.Passed).HasColumnName("passed").HasDefaultValue(false).IsRequired();
+            entity.Property(x => x.TerminationReason).HasColumnName("termination_reason").HasMaxLength(200);
+            entity.Property(x => x.CreatedAtUtc).HasColumnName("created_at_utc").HasColumnType("datetime2").IsRequired();
+            entity.HasIndex(x => new { x.UserId, x.CourseId, x.TopicId, x.CreatedAtUtc })
+                .HasDatabaseName("IX_topic_exam_user_course_topic");
+            entity.HasIndex(x => new { x.UserId, x.CourseId, x.TopicId, x.Status })
+                .HasDatabaseName("IX_topic_exam_user_topic_status");
+        });
+
+        modelBuilder.Entity<TopicExamSecurityEvent>(entity =>
+        {
+            entity.ToTable("tblstudent_topic_exam_security_events", ExistingSchema);
+            entity.HasKey(x => x.Id);
+            entity.Property(x => x.Id).HasColumnName("event_id").ValueGeneratedOnAdd();
+            entity.Property(x => x.ExamAttemptId).HasColumnName("exam_attempt_id").IsRequired();
+            entity.Property(x => x.EventType).HasColumnName("event_type").HasMaxLength(80).IsRequired();
+            entity.Property(x => x.Details).HasColumnName("details").HasMaxLength(1000);
+            entity.Property(x => x.OccurredAtUtc).HasColumnName("occurred_at_utc").HasColumnType("datetime2").IsRequired();
+            entity.HasIndex(x => new { x.ExamAttemptId, x.OccurredAtUtc })
+                .HasDatabaseName("IX_topic_exam_events_attempt_date");
+        });
+
         modelBuilder.Entity<TrainingNote>(entity =>
         {
             entity.ToTable("tbltraining_notes", ExistingSchema);
