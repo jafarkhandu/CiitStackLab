@@ -589,6 +589,62 @@ public class CoursesController : Controller
         return RedirectToAction(nameof(Learn), new { id, contentId });
     }
 
+    [HttpPost("Courses/Learn/{id:int}/CompleteTopic/{topicId:int}")]
+    [Authorize(Roles = "Student")]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> CompleteTopic(
+        int id,
+        int topicId,
+        CancellationToken cancellationToken)
+    {
+        if (id <= 0 || topicId <= 0)
+            return NotFound();
+
+        var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+        if (string.IsNullOrWhiteSpace(userId))
+            return Unauthorized();
+
+        var hasDemoAccess = TempData.Peek($"DemoPayment:{id}") is not null;
+        var hasCourseAccess = hasDemoAccess
+            || await _coursePurchaseService.CanAccessCourseAsync(userId, id, cancellationToken);
+        if (!hasCourseAccess)
+        {
+            TempData["CoursePaymentMessage"] = "Payment is required before paid-course progress can be updated.";
+            return RedirectToAction(nameof(Details), new { id });
+        }
+
+        var topicBelongsToCourse = await _dbContext.CourseModules.AsNoTracking()
+            .AnyAsync(x => x.CourseId == id && x.TopicId == topicId && x.Flag == 0, cancellationToken);
+        if (!topicBelongsToCourse)
+            return NotFound();
+
+        var topicNoteIds = await _dbContext.TrainingNotes.AsNoTracking()
+            .Where(x => x.TopicId == topicId && x.Flag == 0)
+            .Select(x => x.Id).ToListAsync(cancellationToken);
+        var contentIds = await _dbContext.Lessons.AsNoTracking()
+            .Where(x => x.Flag == 0 && (x.TopicId == topicId
+                || (x.NoteId.HasValue && topicNoteIds.Contains(x.NoteId.Value))))
+            .Select(x => x.Id).Distinct().ToListAsync(cancellationToken);
+        if (contentIds.Count == 0)
+        {
+            TempData["LearningProgressMessage"] = "This topic has no active lessons to complete yet.";
+            return RedirectToAction(nameof(Learn), new { id, topicId });
+        }
+
+        foreach (var contentId in contentIds)
+        {
+            var marked = await _studentProgressService.MarkCompletedAsync(userId, id, contentId, cancellationToken);
+            if (!marked)
+            {
+                TempData["LearningProgressMessage"] = "Topic completion could not be saved. Please refresh and try again.";
+                return RedirectToAction(nameof(Learn), new { id, topicId });
+            }
+        }
+
+        TempData["LearningProgressMessage"] = "Topic marked as complete. You can now apply for its examination.";
+        return RedirectToAction(nameof(Learn), new { id, topicId });
+    }
+
     [HttpPost("Courses/Learn/{id:int}/Assessment/{contentId:int}")]
     [HttpPost("Courses/Learn/{id:int}/TopicAssessment/{topicId:int}")]
     [Authorize(Roles = "Student")]
