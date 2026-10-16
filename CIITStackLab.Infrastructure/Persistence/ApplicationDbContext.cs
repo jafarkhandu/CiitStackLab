@@ -326,7 +326,7 @@ public class ApplicationDbContext : IdentityDbContext<ApplicationUser>
             entity.HasIndex(x => new { x.UserId, x.CourseId, x.TopicId, x.Status })
                 .HasDatabaseName("IX_topic_exam_user_topic_status");
             entity.HasIndex(x => new { x.UserId, x.CourseId, x.TopicId }).IsUnique()
-                .HasFilter("[status] IN ('Scheduled', 'Ready', 'InProgress')")
+                .HasFilter("[status] <> 'Passed' AND [status] <> 'Failed' AND [status] <> 'Terminated'")
                 .HasDatabaseName("UX_topic_exam_one_active_attempt");
         });
 
