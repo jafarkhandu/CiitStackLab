@@ -302,7 +302,7 @@ public sealed class TopicExaminationService : ITopicExaminationService
         var contentIds = await _db.Lessons.AsNoTracking()
             .Where(l => l.Flag == 0 && (l.TopicId == topicId || (l.NoteId.HasValue && noteIds.Contains(l.NoteId.Value))))
             .Select(l => l.Id).ToListAsync(cancellationToken);
-        return await _db.ContentQuestions.AsNoTracking()
+        return await _db.TopicExamQuestions.AsNoTracking()
             .Where(q => q.Flag == 0 && q.CorrectOptionNumber >= 1 && q.CorrectOptionNumber <= 4
                 && !string.IsNullOrWhiteSpace(q.Question)
                 && !string.IsNullOrWhiteSpace(q.Option1) && !string.IsNullOrWhiteSpace(q.Option2)
@@ -362,7 +362,7 @@ public sealed class TopicExaminationService : ITopicExaminationService
     private async Task<TopicExamSessionDto> BuildSessionAsync(TopicExamAttempt attempt, bool includeAnswers, bool includeQuestions, CancellationToken cancellationToken)
     {
         var ids = DeserializeIds(attempt.QuestionIdsJson);
-        var questions = includeQuestions ? await _db.ContentQuestions.AsNoTracking().Where(q => ids.Contains(q.Id)).ToListAsync(cancellationToken) : new List<TopicExamQuestion>();
+        var questions = includeQuestions ? await _db.TopicExamQuestions.AsNoTracking().Where(q => ids.Contains(q.Id)).ToListAsync(cancellationToken) : new List<TopicExamQuestion>();
         var answerMap = includeAnswers
             ? JsonSerializer.Deserialize<Dictionary<int, int?>>(attempt.AnswersJson, JsonOptions) ?? new()
             : new Dictionary<int, int?>();
