@@ -80,12 +80,16 @@ public sealed class ExaminationController : Controller
 
         try
         {
-            using var reader = new StreamReader(file.OpenReadStream(), new UTF8Encoding(false, true));
-            var header = ParseCsvLine(await reader.ReadLineAsync(cancellationToken) ?? string.Empty);
-            var expected = new[] { "Question", "Option1", "Option2", "Option3", "Option4", "CorrectOptionNumber" };
-            if (!header.Select(x => x.Trim()).SequenceEqual(expected, StringComparer.OrdinalIgnoreCase))
+            var rows = ReadExcelRows(file.OpenReadStream());
+            if (rows.Count == 0)
             {
-                TempData["ExamAdminError"] = "CSV headers do not match the required format.";
+                TempData["ExamAdminError"] = "The first worksheet is empty.";
+                return RedirectToAction(nameof(Index));
+            }
+            var expected = new[] { "Question", "Option1", "Option2", "Option3", "Option4", "CorrectOptionNumber" };
+            if (!rows[0].Select(x => x.Trim()).SequenceEqual(expected, StringComparer.OrdinalIgnoreCase))
+            {
+                TempData["ExamAdminError"] = "Excel headers do not match the required format.";
                 return RedirectToAction(nameof(Index));
             }
 
@@ -98,11 +102,10 @@ public sealed class ExaminationController : Controller
             var rowNumber = 1;
             var invalidRows = 0;
 
-            while (await reader.ReadLineAsync(cancellationToken) is { } line)
+            foreach (var fields in rows.Skip(1))
             {
                 rowNumber++;
-                if (string.IsNullOrWhiteSpace(line)) continue;
-                var fields = ParseCsvLine(line);
+                if (fields.All(string.IsNullOrWhiteSpace)) continue;
                 if (fields.Count != 6 || string.IsNullOrWhiteSpace(fields[0])
                     || fields.Skip(1).Take(4).Any(string.IsNullOrWhiteSpace)
                     || fields.Skip(1).Take(4).Select(Normalize).Distinct(StringComparer.OrdinalIgnoreCase).Count() != 4
@@ -144,9 +147,9 @@ public sealed class ExaminationController : Controller
             TempData["ExamAdminMessage"] = $"Analysis complete: {additions.Count} valid new questions; {invalidRows} invalid or duplicate rows skipped. Review before confirming.";
             return RedirectToAction(nameof(Index), new { previewToken });
         }
-        catch (DecoderFallbackException)
+        catch (InvalidDataException)
         {
-            TempData["ExamAdminError"] = "The CSV is not valid UTF-8. Save it as UTF-8 and upload again.";
+            TempData["ExamAdminError"] = "The uploaded file is not a valid .xlsx workbook or its first worksheet could not be read.";
         }
         catch (Exception exception) when (exception is DbUpdateException or DbException or IOException)
         {
