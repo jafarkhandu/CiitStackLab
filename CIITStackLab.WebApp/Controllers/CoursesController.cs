@@ -426,8 +426,8 @@ public class CoursesController : Controller
                     ? new List<int>()
                     : examTopic.Contents.Concat(examTopic.Chapters.SelectMany(chapter => chapter.Contents))
                         .Select(content => content.Id).Distinct().ToList();
-                var topicCompleted = topicContentIds.Count > 0
-                    && topicContentIds.All(course.Progress.CompletedContentIds.Contains);
+                var topicCompleted = topicContentIds.Count == 0
+                    || topicContentIds.All(course.Progress.CompletedContentIds.Contains);
                 var hasPendingOrPassedExam = await _dbContext.TopicExamAttempts.AsNoTracking().AnyAsync(
                     attempt => attempt.UserId == studentUserId
                         && attempt.CourseId == id && attempt.TopicId == examTopicId.Value
@@ -625,12 +625,6 @@ public class CoursesController : Controller
             .Where(x => x.Flag == 0 && (x.TopicId == topicId
                 || (x.NoteId.HasValue && topicNoteIds.Contains(x.NoteId.Value))))
             .Select(x => x.Id).Distinct().ToListAsync(cancellationToken);
-        if (contentIds.Count == 0)
-        {
-            TempData["LearningProgressMessage"] = "This topic has no active lessons to complete yet.";
-            return RedirectToAction(nameof(Learn), new { id, topicId });
-        }
-
         foreach (var contentId in contentIds)
         {
             var marked = await _studentProgressService.MarkCompletedAsync(userId, id, contentId, cancellationToken);
