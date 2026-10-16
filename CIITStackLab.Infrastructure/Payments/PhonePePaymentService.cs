@@ -1,0 +1,109 @@
+using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Options;
+using pg_sdk_dotnet;
+using pg_sdk_dotnet.Common.Models.Response;
+using pg_sdk_dotnet.Payments.v2;
+using pg_sdk_dotnet.Payments.v2.Models.Request;
+
+namespace CIITStackLab.Infrastructure.Payments;
+
+public sealed class PhonePePaymentService
+{
+    private readonly StandardCheckoutClient _client;
+    private readonly PhonePeOptions _options;
+    private readonly ILogger<PhonePePaymentService> _logger;
+
+    public PhonePePaymentService(
+        IOptions<PhonePeOptions> options,
+        ILogger<PhonePePaymentService> logger)
+    {
+        _options = options.Value;
+        _logger = logger;
+
+        if (string.IsNullOrWhiteSpace(_options.ClientId)
+            || string.IsNullOrWhiteSpace(_options.ClientSecret)
+            || _options.ClientVersion <= 0)
+        {
+            throw new InvalidOperationException(
+                "PhonePe credentials are not configured. Configure PhonePe:ClientId, ClientSecret and ClientVersion.");
+        }
+
+        var environment = _options.Environment.Equals(
+            "PRODUCTION",
+            StringComparison.OrdinalIgnoreCase)
+            ? Env.PRODUCTION
+            : Env.SANDBOX;
+
+        _client = StandardCheckoutClient.GetInstance(
+            _options.ClientId,
+            _options.ClientSecret,
+            _options.ClientVersion,
+            environment,
+            null);
+    }
+
+    public async Task<string> CreateCheckoutAsync(
+        string merchantOrderId,
+        long amountInPaise,
+        string redirectUrl)
+    {
+        if (string.IsNullOrWhiteSpace(merchantOrderId))
+        {
+            throw new ArgumentException("Merchant order ID is required.", nameof(merchantOrderId));
+        }
+
+        if (amountInPaise <= 0)
+        {
+            throw new ArgumentOutOfRangeException(nameof(amountInPaise));
+        }
+
+        if (string.IsNullOrWhiteSpace(redirectUrl))
+        {
+            throw new ArgumentException("Redirect URL is required.", nameof(redirectUrl));
+        }
+
+        var request = StandardCheckoutPayRequest.Builder()
+            .SetMerchantOrderId(merchantOrderId)
+            .SetAmount(amountInPaise)
+            .SetRedirectUrl(redirectUrl)
+            .Build();
+
+        var response = await _client.Pay(request);
+
+        if (!response.Success || string.IsNullOrWhiteSpace(response.RedirectUrl))
+        {
+            throw new InvalidOperationException(
+                $"PhonePe could not create the checkout order. Code: {response.Code}, Message: {response.Message}");
+        }
+
+        _logger.LogInformation(
+            "PhonePe checkout created for merchant order {MerchantOrderId}.",
+            merchantOrderId);
+
+        return response.RedirectUrl;
+    }
+
+    public async Task<string> GetOrderStateAsync(string merchantOrderId)
+    {
+        var response = await _client.GetOrderStatus(merchantOrderId);
+        return response.State;
+    }
+
+    public CallbackResponse ValidateCallback(
+        string authorizationHeader,
+        string requestBody)
+    {
+        if (string.IsNullOrWhiteSpace(_options.CallbackUsername)
+            || string.IsNullOrWhiteSpace(_options.CallbackPassword))
+        {
+            throw new InvalidOperationException(
+                "PhonePe callback credentials are not configured.");
+        }
+
+        return _client.ValidateCallback(
+            _options.CallbackUsername,
+            _options.CallbackPassword,
+            authorizationHeader,
+            requestBody);
+    }
+}
