@@ -96,6 +96,7 @@ public sealed class TopicExaminationService : ITopicExaminationService
             UserId = userId, CourseId = courseId, TopicId = topicId,
             ScheduledAtUtc = scheduledAtUtc, Status = "Scheduled",
             QuestionIdsJson = JsonSerializer.Serialize(chosenIds, JsonOptions),
+            OptionOrderJson = JsonSerializer.Serialize(optionOrders, JsonOptions),
             AnswersJson = "{}", TotalQuestions = QuestionCount, CreatedAtUtc = now
         };
         _db.TopicExamAttempts.Add(attempt);
@@ -256,6 +257,7 @@ public sealed class TopicExaminationService : ITopicExaminationService
         var answers = JsonSerializer.Deserialize<Dictionary<int, int?>>(attempt.AnswersJson, JsonOptions) ?? new();
         var questions = await _db.ContentQuestions.AsNoTracking()
             .Where(q => ids.Contains(q.Id)).ToDictionaryAsync(q => q.Id, cancellationToken);
+        var optionOrders = DeserializeOptionOrders(attempt.OptionOrderJson);
         var score = 0;
         foreach (var id in ids)
         {
@@ -264,8 +266,8 @@ public sealed class TopicExaminationService : ITopicExaminationService
         }
         attempt.Score = score;
         attempt.TotalQuestions = ids.Count;
-        attempt.Passed = score >= PassingScore;
-        attempt.Status = attempt.Passed ? "Passed" : (finalStatus == "Terminated" ? "Terminated" : "Failed");
+        attempt.Passed = finalStatus != "Terminated" && score >= PassingScore;
+        attempt.Status = finalStatus == "Terminated" ? "Terminated" : (attempt.Passed ? "Passed" : "Failed");
         attempt.SubmittedAtUtc = submittedAtUtc;
         await _db.SaveChangesAsync(cancellationToken);
     }
