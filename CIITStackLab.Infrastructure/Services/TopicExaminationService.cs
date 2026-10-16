@@ -117,7 +117,13 @@ public sealed class TopicExaminationService : ITopicExaminationService
         var now = DateTime.UtcNow;
         if (now < attempt.ScheduledAtUtc.AddMinutes(-30))
             return (false, "The pre-exam instructions become available 30 minutes before the scheduled exam.", null);
-        if (attempt.Status is "Submitted" or "Terminated" or "Passed" or "Failed")
+        var examEndUtc = attempt.ScheduledAtUtc.AddMinutes(ExamDurationMinutes);
+        if (now >= examEndUtc && attempt.Status is "Scheduled" or "Ready" or "InProgress")
+        {
+            await FinalizeAsync(attempt, "TimedOut", now, cancellationToken);
+            return (false, "Time's up. The exam window has closed.", null);
+        }
+        if (attempt.Status is "Submitted" or "Terminated" or "Passed" or "Failed" or "TimedOut")
             return (false, "This exam attempt is already closed.", null);
         if (!await ClaimDeviceAsync(attempt, deviceToken, cancellationToken))
             return (false, "This exam attempt is locked to the first device used.", null);
@@ -134,15 +140,29 @@ public sealed class TopicExaminationService : ITopicExaminationService
         if (!await DeviceMatchesAsync(attempt, deviceToken))
             return (false, "This exam attempt is locked to its original device.", null);
         var now = DateTime.UtcNow;
+        var examEndUtc = attempt.ScheduledAtUtc.AddMinutes(ExamDurationMinutes);
         if (now < attempt.ScheduledAtUtc)
             return (false, "The exam will start at the scheduled time. The countdown page is not the exam.", null);
+        if (now >= examEndUtc)
+        {
+            if (attempt.Status is "Scheduled" or "Ready" or "InProgress")
+                await FinalizeAsync(attempt, "TimedOut", now, cancellationToken);
+            return (false, "Time's up. The exam window has closed.", null);
+        }
         if (attempt.Status == "InProgress")
+        {
+            if (attempt.DeadlineAtUtc.HasValue && now >= attempt.DeadlineAtUtc.Value)
+            {
+                await FinalizeAsync(attempt, "TimedOut", now, cancellationToken);
+                return (false, "Time's up. The exam window has closed.", null);
+            }
             return (true, null, await BuildSessionAsync(attempt, true, true, cancellationToken));
+        }
         if (attempt.Status != "Ready")
             return (false, "Open the pre-exam instructions first.", null);
 
         attempt.StartedAtUtc = now;
-        attempt.DeadlineAtUtc = now.AddMinutes(ExamDurationMinutes);
+        attempt.DeadlineAtUtc = examEndUtc;
         attempt.Status = "InProgress";
         await _db.SaveChangesAsync(cancellationToken);
         return (true, null, await BuildSessionAsync(attempt, true, true, cancellationToken));
