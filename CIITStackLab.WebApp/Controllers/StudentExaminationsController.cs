@@ -51,6 +51,22 @@ public sealed class StudentExaminationsController : Controller
         return RedirectToAction(nameof(Index));
     }
 
+    [HttpPost("StartNow")]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> StartNow(TopicExamScheduleRequest request, CancellationToken cancellationToken)
+    {
+        var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+        if (string.IsNullOrWhiteSpace(userId)) return Unauthorized();
+        var result = await _exams.ScheduleAsync(userId, request.CourseId, request.TopicId,
+            DateTime.UtcNow, cancellationToken, startNow: true);
+        if (!result.Succeeded || result.Exam is null)
+        {
+            TempData["ExamError"] = result.Error;
+            return RedirectToAction("Learn", "Courses", new { id = request.CourseId, topicId = request.TopicId });
+        }
+        return RedirectToAction(nameof(Instructions), new { attemptId = result.Exam.AttemptId });
+    }
+
     [HttpGet("{attemptId:long}/Instructions")]
     [ResponseCache(Duration = 0, Location = ResponseCacheLocation.None, NoStore = true)]
     public async Task<IActionResult> Instructions(long attemptId, CancellationToken cancellationToken)
