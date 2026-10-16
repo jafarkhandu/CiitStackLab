@@ -726,12 +726,12 @@ else
                                 </div>
                             </summary>
 
-                            @if (User.IsInRole("Student") && learningProgress is not null && topic.Contents.Count > 0)
+                            @if (User.IsInRole("Student") && learningProgress is not null && topicLearningContents.Count > 0)
                             {
                                 <div class="ciit-learning-topic-progress">
                                     <div class="ciit-learning-topic-progress-labels">
                                         <span>Topic progress</span>
-                                        <strong>@completedTopicLessons / @topic.Contents.Count</strong>
+                                        <strong>@completedTopicLessons / @topicLearningContents.Count</strong>
                                     </div>
                                     <div class="ciit-learning-topic-progress-track"
                                          role="progressbar"
