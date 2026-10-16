@@ -281,7 +281,13 @@ else if (currentContent is null && currentTopic is not null)
                             ? 0
                             : (int)Math.Round(completedTopicLessons * 100d / topicLearningContents.Count, MidpointRounding.AwayFromZero);
 
-                        var topicIsLocked = User.IsInRole("Student") && ViewBag.AllowedTopicId is int allowedTopicId && topic.Id != allowedTopicId;
+                        var topicPosition = Model.Topics.ToList().FindIndex(item => item.Id == topic.Id);
+                        var allowedTopicPosition = ViewBag.AllowedTopicId is int allowedTopicId
+                            ? Model.Topics.ToList().FindIndex(item => item.Id == allowedTopicId)
+                            : -1;
+                        var topicIsLocked = User.IsInRole("Student")
+                            && allowedTopicPosition >= 0
+                            && topicPosition > allowedTopicPosition;
 
                         <details class="ciit-learning-topic @(topic.Id == currentTopic.Id ? "is-active-topic" : "") @(topicIsLocked ? "is-locked-topic" : "")"
                                  data-topic-first-content-url="@Url.Action("Learn", "Courses", new { id = Model.Id, topicId = topic.Id })"
@@ -743,14 +749,14 @@ else
                                 @for (var chapterIndex = 0; chapterIndex < topic.Chapters.Count; chapterIndex++)
                                 {
                                     var chapter = topic.Chapters[chapterIndex];
-                                    var chapterHasCurrentContent = chapter.Contents.Any(
+                                    var chapterHasCurrentContent = currentContent is not null && chapter.Contents.Any(
                                         content => content.Id == currentContent.Id);
                                     var chapterResourceCount =
                                         (string.IsNullOrWhiteSpace(chapter.NotesHtml) ? 0 : 1)
-                                        + (chapter.Contents.Count > 0 ? 1 : 0)
-                                        + (chapter.Questions.Count > 0 ? 1 : 0)
-                                        + (chapter.InterviewQuestions.Count > 0 ? 1 : 0)
-                                        + (chapter.PracticeQuestions.Count > 0 ? 1 : 0);
+                                        + chapter.Contents.Count
+                                        + chapter.Questions.Count
+                                        + chapter.InterviewQuestions.Count
+                                        + chapter.PracticeQuestions.Count;
 
                                     <details class="ciit-learning-chapter"
                                              open="@(chapterHasCurrentContent ? "open" : null)">
@@ -775,7 +781,7 @@ else
                                                 <span class="ciit-learning-category-icon"><i class="bi bi-journal-text"></i></span>
                                                 <span class="ciit-learning-category-copy">
                                                     <strong>Notes</strong>
-                                                    <small>Read this chapter's notes</small>
+                                                    <small>Chapter notes</small>
                                                 </span>
                                                 <i class="bi bi-arrow-right ciit-learning-category-arrow"></i>
                                             </button>
@@ -840,17 +846,17 @@ else
                                             <div class="ciit-learning-assessment-links">
                                                 <a class="ciit-learning-category-link" href="#chapter-mcqs-@chapter.Id" data-learning-panel="assessment">
                                                     <span class="ciit-learning-category-icon"><i class="bi bi-ui-radios-grid"></i></span>
-                                                    <span class="ciit-learning-category-copy"><strong>MCQs</strong><small>@chapter.Questions.Count questions</small></span>
+                                                    <span class="ciit-learning-category-copy"><strong>MCQs</strong><small>@chapter.Questions.Count questions</small><span class="ciit-learning-category-count">@chapter.Questions.Count</span></span>
                                                     <i class="bi bi-arrow-right ciit-learning-category-arrow"></i>
                                                 </a>
                                                 <a class="ciit-learning-category-link" href="#chapter-interview-@chapter.Id" data-learning-panel="assessment">
                                                     <span class="ciit-learning-category-icon"><i class="bi bi-chat-square-text"></i></span>
-                                                    <span class="ciit-learning-category-copy"><strong>Interview Questions</strong><small>@chapter.InterviewQuestions.Count questions</small></span>
+                                                    <span class="ciit-learning-category-copy"><strong>Interview Questions</strong><small>@chapter.InterviewQuestions.Count questions</small><span class="ciit-learning-category-count">@chapter.InterviewQuestions.Count</span></span>
                                                     <i class="bi bi-arrow-right ciit-learning-category-arrow"></i>
                                                 </a>
                                                 <a class="ciit-learning-category-link" href="#chapter-practice-@chapter.Id" data-learning-panel="assessment">
                                                     <span class="ciit-learning-category-icon"><i class="bi bi-code-square"></i></span>
-                                                    <span class="ciit-learning-category-copy"><strong>Practice Programs</strong><small>@chapter.PracticeQuestions.Count questions</small></span>
+                                                    <span class="ciit-learning-category-copy"><strong>Practice Programs</strong><small>@chapter.PracticeQuestions.Count questions</small><span class="ciit-learning-category-count">@chapter.PracticeQuestions.Count</span></span>
                                                     <i class="bi bi-arrow-right ciit-learning-category-arrow"></i>
                                                 </a>
                                             </div>
