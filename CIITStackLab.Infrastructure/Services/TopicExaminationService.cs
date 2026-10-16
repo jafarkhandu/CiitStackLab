@@ -152,8 +152,8 @@ public sealed class TopicExaminationService : ITopicExaminationService
         if (now < attempt.ScheduledAtUtc)
             return (false, "The exam will start at the scheduled time. The countdown page is not the exam.", null);
         if (!attempt.VerificationStartedAtUtc.HasValue
-            || now < attempt.VerificationStartedAtUtc.Value.AddMinutes(1))
-            return (false, "Complete the full one-minute pre-exam verification before starting.", null);
+            || now < attempt.VerificationStartedAtUtc.Value.AddSeconds(30))
+            return (false, "Complete the full 30-second pre-exam verification before starting.", null);
         if (attempt.Status == "InProgress")
         {
             if (attempt.DeadlineAtUtc.HasValue && now >= attempt.DeadlineAtUtc.Value)
