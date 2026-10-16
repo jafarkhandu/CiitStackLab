@@ -12,4 +12,5 @@ public interface ITopicExaminationService
     Task<bool> RecordSecurityEventAsync(string userId, long attemptId, string eventType, string? details, string deviceToken, CancellationToken cancellationToken = default);
     Task<bool> HasPassedTopicAsync(string userId, int courseId, int topicId, CancellationToken cancellationToken = default);
     Task<int?> GetCurrentTopicIdAsync(string userId, int courseId, CancellationToken cancellationToken = default);
+    Task<int> FinalizeExpiredAttemptsAsync(CancellationToken cancellationToken = default);
 }
