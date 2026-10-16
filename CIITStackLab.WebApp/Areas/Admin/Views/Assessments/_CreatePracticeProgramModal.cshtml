@@ -55,5 +55,28 @@
         if (modal && modal.parentElement !== document.body) {
             document.body.appendChild(modal);
         }
+
+        if (!modal) {
+            return;
+        }
+
+        modal.addEventListener("hidden.bs.modal", function () {
+            const form = modal.querySelector("form");
+            if (!form) {
+                return;
+            }
+
+            form.querySelectorAll("input:not([type='hidden']), textarea").forEach(function (field) {
+                field.value = "";
+            });
+
+            form.querySelectorAll("select").forEach(function (select) {
+                select.selectedIndex = 0;
+            });
+
+            form.querySelectorAll(".text-danger").forEach(function (element) {
+                element.textContent = "";
+            });
+        });
     })();
 </script>
