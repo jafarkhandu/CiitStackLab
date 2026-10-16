@@ -57,7 +57,7 @@
     const video = document.getElementById('exam-camera');
     const cameraStatus = document.getElementById('camera-status');
     const csrf = form.querySelector('input[name="__RequestVerificationToken"]').value;
-    let finishing = false, cameraStream = null, faceDetector = null, warningCount = 0;
+    let finishing = false, terminating = false, cameraStream = null, faceDetector = null, warningCount = 0;
     let lastSave = Promise.resolve();
 
     async function postEvent(type, details) {
@@ -113,6 +113,18 @@
         await saveAnswers(true);
     }
 
+    async function terminateForSecurity(type, details, message) {
+        if (finishing || terminating) return;
+        terminating = true;
+        submitButton.disabled = true;
+        saveStatus.textContent = message || 'Saving answers before security termination…';
+        await lastSave;
+        await saveAnswers(false);
+        await postEvent(type, details);
+        finishing = true;
+        window.location.assign('/Examinations');
+    }
+
     form.addEventListener('change', () => {
         lastSave = lastSave.then(() => saveAnswers(false));
     });
@@ -122,14 +134,10 @@
     });
 
     document.addEventListener('visibilitychange', () => {
-        if (document.hidden) {
-            postEvent('TabSwitch', 'Exam tab became hidden');
-            finishExam('Exam terminated because the exam tab was left.');
-        }
+        if (document.hidden) terminateForSecurity('TabSwitch', 'Exam tab became hidden', 'Exam terminated because the exam tab was left.');
     });
     window.addEventListener('blur', () => {
-        postEvent('WindowBlur', 'Exam window lost focus');
-        finishExam('Exam terminated because the exam window lost focus.');
+        terminateForSecurity('WindowBlur', 'Exam window lost focus', 'Exam terminated because the exam window lost focus.');
     });
     document.addEventListener('copy', e => { e.preventDefault(); postEvent('Copy', 'Copy blocked'); });
     document.addEventListener('cut', e => { e.preventDefault(); postEvent('Cut', 'Cut blocked'); });
@@ -150,8 +158,7 @@
             video.srcObject = cameraStream;
             cameraStatus.textContent = 'Camera active.';
             cameraStream.getVideoTracks().forEach(track => track.addEventListener('ended', () => {
-                postEvent('CameraLost', 'Camera track ended');
-                finishExam('Exam ended because the camera disconnected.');
+                terminateForSecurity('CameraLost', 'Camera track ended', 'Exam ended because the camera disconnected.');
             }));
             if ('FaceDetector' in window) {
                 try { faceDetector = new FaceDetector({ fastMode: true, maxDetectedFaces: 3 }); } catch (_) {}
@@ -169,8 +176,7 @@
             }
         } catch (_) {
             cameraStatus.textContent = 'Camera unavailable. Exam is being terminated.';
-            await postEvent('CameraLost', 'Camera permission or device unavailable');
-            finishExam('Exam ended because camera monitoring is unavailable.');
+            await terminateForSecurity('CameraLost', 'Camera permission or device unavailable', 'Exam ended because camera monitoring is unavailable.');
         }
     }
 
