@@ -707,6 +707,7 @@ namespace CIITStackLab.Infrastructure.Migrations
                     b.Property<DateTime?>("DeadlineAtUtc").HasColumnType("datetime2").HasColumnName("deadline_at_utc");
                     b.Property<string>("Status").IsRequired().HasMaxLength(30).HasColumnType("nvarchar(30)").HasColumnName("status");
                     b.Property<string>("QuestionIdsJson").IsRequired().HasColumnType("nvarchar(max)").HasColumnName("question_ids_json");
+                    b.Property<string>("OptionOrderJson").IsRequired().HasColumnType("nvarchar(max)").HasColumnName("option_order_json");
                     b.Property<string>("AnswersJson").IsRequired().HasColumnType("nvarchar(max)").HasColumnName("answers_json");
                     b.Property<string>("DeviceTokenHash").HasMaxLength(128).HasColumnType("nvarchar(128)").HasColumnName("device_token_hash");
                     b.Property<int>("WarningCount").ValueGeneratedOnAdd().HasColumnType("int").HasDefaultValue(0).HasColumnName("warning_count");
