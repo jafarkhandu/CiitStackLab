@@ -5,7 +5,7 @@
 }
 
 <section class="ciit-exam-verify-page" data-exam-instructions
-         data-scheduled="@Model.ScheduledAtUtc.ToString("O")"
+         data-scheduled="@DateTime.SpecifyKind(Model.ScheduledAtUtc, DateTimeKind.Utc).ToString("O")"
          data-attempt-id="@Model.AttemptId">
     <div class="ciit-exam-verify-glow ciit-exam-verify-glow-one"></div>
     <div class="ciit-exam-verify-glow ciit-exam-verify-glow-two"></div>
@@ -118,6 +118,7 @@
 
     const attemptId = root.dataset.attemptId;
     const scheduledAt = new Date(root.dataset.scheduled).getTime();
+    const scheduledEndAt = scheduledAt + 60 * 60 * 1000;
     const countdown = document.getElementById('exam-countdown');
     const button = document.getElementById('exam-start-button');
     const help = document.getElementById('exam-countdown-help');
@@ -304,6 +305,11 @@
             help.textContent = 'A connected camera and exactly one detected face are required to continue.';
             button.disabled = true;
             button.querySelector('span').textContent = 'Complete face check';
+        } else if (now >= scheduledEndAt) {
+            countdown.textContent = 'TIME UP';
+            help.textContent = 'The scheduled examination window has ended. Starting is no longer available.';
+            button.disabled = true;
+            button.querySelector('span').textContent = "Time's up";
         } else if (scheduledRemaining > 0) {
             const total = Math.ceil(scheduledRemaining / 1000);
             const h = Math.floor(total / 3600), m = Math.floor((total % 3600) / 60), s = total % 60;
