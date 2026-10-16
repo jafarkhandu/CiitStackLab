@@ -1,0 +1,191 @@
+@model CIITStackLab.Application.DTOs.TopicExamSessionDto
+@{
+    ViewData["Title"] = "Topic Examination";
+}
+<section class="container py-4" id="exam-app" data-attempt-id="@Model.AttemptId" data-deadline="@Model.DeadlineAtUtc?.ToString("O")">
+    <div class="d-flex flex-wrap justify-content-between align-items-center gap-3 mb-4">
+        <div><span class="text-uppercase text-primary small fw-bold">Secure Examination</span><h1 class="h2 mt-2">Topic examination</h1></div>
+        <div class="border rounded p-3 text-center"><span class="small text-secondary d-block">Time remaining</span><strong id="exam-timer" class="h3 font-monospace mb-0">--:--</strong></div>
+    </div>
+    <div class="alert alert-danger fw-bold">Do not switch tabs or windows. Tab switching ends the exam immediately. Camera monitoring must remain enabled.</div>
+    <div class="row g-4">
+        <div class="col-lg-8">
+            <form id="exam-answer-form" asp-action="Submit" asp-route-attemptId="@Model.AttemptId" method="post">
+                @Html.AntiForgeryToken()
+                @for (var i = 0; i < Model.Questions.Count; i++)
+                {
+                    var q = Model.Questions[i];
+                    <article class="card shadow-sm mb-3">
+                        <div class="card-body p-4">
+                            <input type="hidden" name="answers[@i].QuestionId" value="@q.QuestionId" />
+                            <h2 class="h6"><span class="text-primary me-2">@(i + 1).</span>@q.Question</h2>
+                            @for (var j = 0; j < q.Options.Count; j++)
+                            {
+                                <label class="d-flex gap-2 align-items-start border rounded p-3 mt-2">
+                                    <input type="radio" name="answers[@i].SelectedOptionNumber" value="@(j + 1)" checked="@(q.SelectedOptionNumber == j + 1)" />
+                                    <span>@q.Options[j]</span>
+                                </label>
+                            }
+                        </div>
+                    </article>
+                }
+                <button type="submit" id="exam-submit" class="btn btn-primary btn-lg">Submit examination</button>
+            </form>
+        </div>
+        <div class="col-lg-4">
+            <div class="card shadow-sm">
+                <div class="card-body">
+                    <h2 class="h5">Camera monitoring</h2>
+                    <video id="exam-camera" autoplay muted playsinline class="w-100 rounded border" style="max-height:200px;background:#111"></video>
+                    <p id="camera-status" class="small text-secondary mt-2">Connecting camera…</p>
+                    <p id="save-status" class="small text-secondary">Answers save automatically.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+@section Scripts {
+<script>
+(function () {
+    const root = document.getElementById('exam-app');
+    const attemptId = root.dataset.attemptId;
+    const deadline = new Date(root.dataset.deadline).getTime();
+    const form = document.getElementById('exam-answer-form');
+    const timer = document.getElementById('exam-timer');
+    const submitButton = document.getElementById('exam-submit');
+    const saveStatus = document.getElementById('save-status');
+    const video = document.getElementById('exam-camera');
+    const cameraStatus = document.getElementById('camera-status');
+    const csrf = form.querySelector('input[name="__RequestVerificationToken"]').value;
+    let finishing = false, cameraStream = null, faceDetector = null, warningCount = 0;
+    let lastSave = Promise.resolve();
+
+    async function postEvent(type, details) {
+        const data = new URLSearchParams({ EventType: type, Details: details || '' });
+        data.append('__RequestVerificationToken', csrf);
+        try {
+            const response = await fetch('/Examinations/' + attemptId + '/SecurityEvent', {
+                method: 'POST', credentials: 'same-origin',
+                headers: { 'Content-Type': 'application/x-www-form-urlencoded' }, body: data
+            });
+            if (type === 'SuspiciousActivity' || type === 'FaceMissing' || type === 'MultipleFaces') {
+                warningCount++;
+                if (warningCount <= 2) alert('Proctoring warning ' + warningCount + ' of 2. Further suspicious activity may end this exam.');
+                else finishExam('Exam ended after repeated suspicious activity.');
+            }
+            if (!response.ok && response.status !== 400) console.warn('Security event was not accepted.');
+        } catch (_) {}
+    }
+
+    function answerPayload() {
+        return new URLSearchParams(new FormData(form));
+    }
+
+    async function saveAnswers(finalSubmission) {
+        if (finishing && !finalSubmission) return;
+        const payload = answerPayload();
+        try {
+            const response = await fetch(form.action, {
+                method: 'POST', credentials: 'same-origin',
+                headers: { 'Content-Type': 'application/x-www-form-urlencoded' }, body: payload
+            });
+            if (!response.ok) throw new Error('Save failed');
+            const result = await response.json();
+            saveStatus.textContent = finalSubmission ? 'Exam submitted.' : 'Answers saved ' + new Date().toLocaleTimeString();
+            if (finalSubmission) {
+                alert('Exam submitted. Status: ' + result.status + '. Score: ' + result.score + '/50.');
+                window.location.assign('/Examinations');
+            }
+        } catch (_) {
+            saveStatus.textContent = 'Save failed. Check your connection; the server deadline still applies.';
+        }
+    }
+
+    async function finishExam(message) {
+        if (finishing) return;
+        finishing = true;
+        submitButton.disabled = true;
+        saveStatus.textContent = message || 'Submitting saved answers…';
+        await lastSave;
+        await saveAnswers(true);
+    }
+
+    form.addEventListener('change', () => {
+        lastSave = lastSave.then(() => saveAnswers(false));
+    });
+    form.addEventListener('submit', e => {
+        e.preventDefault();
+        finishExam('Submitting examination…');
+    });
+
+    document.addEventListener('visibilitychange', () => {
+        if (document.hidden) {
+            postEvent('TabSwitch', 'Exam tab became hidden');
+            finishExam('Exam terminated because the exam tab was left.');
+        }
+    });
+    window.addEventListener('blur', () => {
+        postEvent('WindowBlur', 'Exam window lost focus');
+        finishExam('Exam terminated because the exam window lost focus.');
+    });
+    document.addEventListener('copy', e => { e.preventDefault(); postEvent('Copy', 'Copy blocked'); });
+    document.addEventListener('cut', e => { e.preventDefault(); postEvent('Cut', 'Cut blocked'); });
+    document.addEventListener('paste', e => { e.preventDefault(); postEvent('Paste', 'Paste blocked'); });
+    document.addEventListener('contextmenu', e => e.preventDefault());
+    document.addEventListener('keydown', e => {
+        const key = e.key.toLowerCase();
+        if ((e.ctrlKey || e.metaKey) && ['c','v','x','p','s'].includes(key)) {
+            e.preventDefault();
+            postEvent(['c','v','x'].includes(key) ? ({c:'Copy',v:'Paste',x:'Cut'}[key]) : 'ScreenshotShortcut', 'Restricted shortcut');
+        }
+        if (e.key === 'PrintScreen') postEvent('ScreenshotShortcut', 'PrintScreen key');
+    });
+
+    async function initCamera() {
+        try {
+            cameraStream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'user' }, audio: false });
+            video.srcObject = cameraStream;
+            cameraStatus.textContent = 'Camera active.';
+            cameraStream.getVideoTracks().forEach(track => track.addEventListener('ended', () => {
+                postEvent('CameraLost', 'Camera track ended');
+                finishExam('Exam ended because the camera disconnected.');
+            }));
+            if ('FaceDetector' in window) {
+                try { faceDetector = new FaceDetector({ fastMode: true, maxDetectedFaces: 3 }); } catch (_) {}
+            }
+            if (faceDetector) {
+                window.setInterval(async () => {
+                    if (finishing || video.readyState < 2) return;
+                    try {
+                        const faces = await faceDetector.detect(video);
+                        if (faces.length === 0 || faces.length > 1) {
+                            await postEvent(faces.length === 0 ? 'FaceMissing' : 'MultipleFaces', faces.length === 0 ? 'No face detected' : 'Multiple faces detected');
+                        }
+                    } catch (_) {}
+                }, 8000);
+            }
+        } catch (_) {
+            cameraStatus.textContent = 'Camera unavailable. Exam is being terminated.';
+            await postEvent('CameraLost', 'Camera permission or device unavailable');
+            finishExam('Exam ended because camera monitoring is unavailable.');
+        }
+    }
+
+    function tick() {
+        if (finishing) return;
+        const remaining = deadline - Date.now();
+        if (remaining <= 0) {
+            timer.textContent = '00:00';
+            finishExam('Time is over. Submitting saved answers…');
+            return;
+        }
+        const seconds = Math.ceil(remaining / 1000);
+        timer.textContent = String(Math.floor(seconds / 60)).padStart(2, '0') + ':' + String(seconds % 60).padStart(2, '0');
+    }
+    window.setInterval(() => { if (!finishing) saveAnswers(false); }, 15000);
+    window.setInterval(tick, 1000);
+    tick();
+    initCamera();
+})();
+</script>
+}
