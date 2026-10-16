@@ -281,6 +281,11 @@ public sealed class TopicExaminationService : ITopicExaminationService
             .Where(l => l.TopicId == topicId && l.Flag == 0).Select(l => l.Id).ToListAsync(cancellationToken);
         return await _db.ContentQuestions.AsNoTracking()
             .Where(q => q.Flag == 0 && q.CorrectOptionNumber >= 1 && q.CorrectOptionNumber <= 4
+                && !string.IsNullOrWhiteSpace(q.Question)
+                && !string.IsNullOrWhiteSpace(q.Option1) && !string.IsNullOrWhiteSpace(q.Option2)
+                && !string.IsNullOrWhiteSpace(q.Option3) && !string.IsNullOrWhiteSpace(q.Option4)
+                && q.Option1 != q.Option2 && q.Option1 != q.Option3 && q.Option1 != q.Option4
+                && q.Option2 != q.Option3 && q.Option2 != q.Option4 && q.Option3 != q.Option4
                 && ((q.TopicId == topicId) || (q.NoteId.HasValue && noteIds.Contains(q.NoteId.Value))
                     || (q.ContentId.HasValue && contentIds.Contains(q.ContentId.Value))))
             .Select(q => q.Id).Distinct().ToListAsync(cancellationToken);
@@ -336,8 +341,7 @@ public sealed class TopicExaminationService : ITopicExaminationService
             {
                 QuestionId = q.Id,
                 Question = q.Question ?? string.Empty,
-                Options = new[] { q.Option1, q.Option2, q.Option3, q.Option4 }
-                    .Where(x => !string.IsNullOrWhiteSpace(x)).Select(x => x!).ToArray(),
+                Options = GetShuffledOptions(q, attempt.OptionOrderJson),
                 SelectedOptionNumber = answerMap.GetValueOrDefault(id)
             };
         }).ToList() : new List<TopicExamQuestionDto>();
