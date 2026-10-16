@@ -107,6 +107,7 @@ public sealed class ExaminationController : Controller
                 var fields = ParseCsvLine(line);
                 if (fields.Count != 6 || string.IsNullOrWhiteSpace(fields[0])
                     || fields.Skip(1).Take(4).Any(string.IsNullOrWhiteSpace)
+                    || fields.Skip(1).Take(4).Select(Normalize).Distinct(StringComparer.OrdinalIgnoreCase).Count() != 4
                     || !int.TryParse(fields[5], NumberStyles.Integer, CultureInfo.InvariantCulture, out var correct)
                     || correct is < 1 or > 4)
                 {
