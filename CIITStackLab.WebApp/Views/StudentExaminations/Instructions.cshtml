@@ -130,7 +130,12 @@
     const faceDot = document.getElementById('face-check-dot');
     const placeholder = document.getElementById('camera-placeholder');
     const scheduledLabel = document.getElementById('exam-scheduled-time');
-    const verificationEndsAt = Date.now() + 60 * 1000;
+    const verificationStorageKey = 'ciit-exam-verification-end-' + attemptId;
+    let verificationEndsAt = Number(sessionStorage.getItem(verificationStorageKey));
+    if (!Number.isFinite(verificationEndsAt) || verificationEndsAt <= 0) {
+        verificationEndsAt = Date.now() + 60 * 1000;
+        sessionStorage.setItem(verificationStorageKey, String(verificationEndsAt));
+    }
     const csrf = document.querySelector('#exam-start-form input[name="__RequestVerificationToken"]')?.value || '';
     let cameraReady = false;
     let faceDetector = null;
@@ -172,19 +177,35 @@
     }
 
     async function loadFaceDetector() {
-        // MediaPipe provides a consistent client-side detector on browsers without the experimental FaceDetector API.
-        const vision = await import('https://cdn.jsdelivr.net/npm/@@mediapipe/tasks-vision@0.10.22/+esm');
-        const files = await vision.FilesetResolver.forVisionTasks(
-            'https://cdn.jsdelivr.net/npm/@@mediapipe/tasks-vision@0.10.22/wasm'
-        );
-        return vision.FaceDetector.createFromOptions(files, {
-            baseOptions: {
-                modelAssetPath: 'https://storage.googleapis.com/mediapipe-models/face_detector/blaze_face_short_range/float16/1/blaze_face_short_range.tflite',
-                delegate: 'CPU'
+        const sources = [
+            {
+                module: 'https://cdn.jsdelivr.net/npm/@@mediapipe/tasks-vision@0.10.22/+esm',
+                wasm: 'https://cdn.jsdelivr.net/npm/@@mediapipe/tasks-vision@0.10.22/wasm'
             },
-            runningMode: 'VIDEO',
-            minDetectionConfidence: 0.6
-        });
+            {
+                module: 'https://unpkg.com/@@mediapipe/tasks-vision@0.10.22/vision_bundle.mjs',
+                wasm: 'https://unpkg.com/@@mediapipe/tasks-vision@0.10.22/wasm'
+            }
+        ];
+        let lastError;
+        for (const source of sources) {
+            try {
+                const vision = await import(source.module);
+                const files = await vision.FilesetResolver.forVisionTasks(source.wasm);
+                return await vision.FaceDetector.createFromOptions(files, {
+                    baseOptions: {
+                        modelAssetPath: 'https://storage.googleapis.com/mediapipe-models/face_detector/blaze_face_short_range/float16/1/blaze_face_short_range.tflite',
+                        delegate: 'CPU'
+                    },
+                    runningMode: 'VIDEO',
+                    minDetectionConfidence: 0.6
+                });
+            } catch (error) {
+                lastError = error;
+                console.warn('Face detector source failed; trying fallback.', error);
+            }
+        }
+        throw lastError || new Error('No face detector source could be loaded.');
     }
 
     async function detectFace() {
@@ -250,7 +271,8 @@
                 faceCheckTimer = window.setInterval(detectFace, 1200);
             } catch (error) {
                 console.error('Face detector initialization failed:', error);
-                setFaceState('bad', 'Face detection could not load. Check internet access and reload this page.');
+                faceStatus.textContent = 'Face detection could not load. Check internet access, then retry.';
+                setFaceState('bad', 'Detector unavailable.');
             }
         } catch (error) {
             cameraReady = false;
