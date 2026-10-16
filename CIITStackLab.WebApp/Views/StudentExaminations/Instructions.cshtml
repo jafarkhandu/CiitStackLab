@@ -43,9 +43,9 @@
             <section class="ciit-exam-verify-timing">
                 <div class="ciit-exam-verify-section-heading">
                     <span class="ciit-exam-verify-section-icon"><i class="bi bi-stopwatch"></i></span>
-                    <div><h2>Verification countdown</h2><p>One-minute pre-exam check</p></div>
+                    <div><h2>Verification countdown</h2><p>30-second pre-exam check</p></div>
                 </div>
-                <div class="ciit-exam-verify-countdown" id="exam-countdown" aria-live="polite">01:00</div>
+                <div class="ciit-exam-verify-countdown" id="exam-countdown" aria-live="polite">00:30</div>
                 <div class="ciit-exam-verify-progress"><span id="verification-progress"></span></div>
                 <p id="exam-countdown-help" class="ciit-exam-verify-muted">Complete the camera and face checks to continue.</p>
                 <div class="ciit-exam-verify-schedule">
@@ -79,7 +79,7 @@
                 </div>
                 <div class="ciit-exam-verify-diagnostics">
                     <div class="ciit-exam-verify-diagnostic"><span id="camera-check-dot" class="ciit-exam-check-dot"></span><span><strong>Camera permission</strong><small id="camera-status">Requesting camera permission…</small></span></div>
-                    <div class="ciit-exam-verify-diagnostic"><span id="face-check-dot" class="ciit-exam-check-dot"></span><span><strong>Face detection</strong><small id="face-status">Loading on-device face detector…</small></span></div>
+                    <div class="ciit-exam-verify-diagnostic"><span id="face-check-dot" class="ciit-exam-check-dot"></span><span><strong>Face detection</strong><small id="face-status">Loading on-device face detector…</small><button type="button" id="retry-face-detector" class="ciit-exam-retry" hidden>Retry face detection</button></span></div>
                 </div>
                 <p class="ciit-exam-verify-note"><i class="bi bi-info-circle"></i> Keep only your face in view, use good lighting and look toward the camera.</p>
             </section>
@@ -105,7 +105,7 @@
 .ciit-exam-verify-privacy{margin:13px 0 0;color:#8391a8;font-size:10px;line-height:1.6}.ciit-exam-verify-privacy i{margin-right:4px;color:#4d80df}
 .ciit-exam-verify-camera-heading{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:16px}.ciit-exam-verify-status{display:inline-flex;align-items:center;gap:7px;flex-shrink:0;padding:7px 10px;border:1px solid #e1e8f4;border-radius:999px;background:#f6f8fc;color:#78879d;font-size:10px;font-weight:800}.ciit-exam-verify-status>span{width:7px;height:7px;border-radius:50%;background:#a2afc2}.ciit-exam-verify-status.is-good{border-color:#b9ead6;background:#e9fbf3;color:#16845b}.ciit-exam-verify-status.is-good>span{background:#20b77a}.ciit-exam-verify-status.is-bad{border-color:#f3c5ca;background:#fff0f1;color:#bf3e4b}.ciit-exam-verify-status.is-bad>span{background:#d94b58}.ciit-exam-verify-video-wrap{position:relative;min-height:245px;overflow:hidden;border:1px solid rgba(91,124,183,.35);border-radius:19px;background:radial-gradient(ellipse at 50% 30%,#263957,#0c1525 75%);box-shadow:inset 0 0 35px rgba(0,0,0,.35)}.ciit-exam-verify-video-wrap video{display:block;width:100%;height:260px;object-fit:cover;transform:scaleX(-1)}.ciit-exam-verify-camera-overlay{position:absolute;inset:13px;pointer-events:none}.ciit-exam-face-corner{position:absolute;width:25px;height:25px;border-color:rgba(130,184,255,.92);border-style:solid}.ciit-exam-face-corner.top-left{top:0;left:0;border-width:2px 0 0 2px;border-radius:8px 0 0}.ciit-exam-face-corner.top-right{top:0;right:0;border-width:2px 2px 0 0;border-radius:0 8px 0 0}.ciit-exam-face-corner.bottom-left{bottom:0;left:0;border-width:0 0 2px 2px;border-radius:0 0 0 8px}.ciit-exam-face-corner.bottom-right{bottom:0;right:0;border-width:0 2px 2px 0;border-radius:0 0 8px}.ciit-exam-face-guide{position:absolute;left:50%;top:50%;width:118px;height:158px;transform:translate(-50%,-50%);border:1px dashed rgba(158,199,255,.55);border-radius:48% 48% 43% 43%}
 .ciit-exam-camera-placeholder{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;flex-direction:column;gap:7px;color:#e6efff;background:rgba(8,18,34,.66);text-align:center}.ciit-exam-camera-placeholder>span{display:grid;place-items:center;width:49px;height:49px;margin-bottom:4px;border:1px solid rgba(180,208,255,.3);border-radius:16px;background:rgba(92,138,219,.18);font-size:22px}.ciit-exam-camera-placeholder strong{font-size:12px}.ciit-exam-camera-placeholder small{color:#a9bad6;font-size:10px}
-.ciit-exam-verify-diagnostics{display:grid;gap:12px;margin-top:18px}.ciit-exam-verify-diagnostic{display:flex;align-items:flex-start;gap:11px}.ciit-exam-check-dot{flex:0 0 9px;width:9px;height:9px;margin-top:5px;border-radius:50%;background:#9cabc0;box-shadow:0 0 0 4px rgba(156,171,192,.12)}.ciit-exam-check-dot.is-good{background:#1bb47a;box-shadow:0 0 0 4px rgba(27,180,122,.12)}.ciit-exam-check-dot.is-bad{background:#df4d5c;box-shadow:0 0 0 4px rgba(223,77,92,.12)}.ciit-exam-verify-diagnostic strong,.ciit-exam-verify-diagnostic small{display:block}.ciit-exam-verify-diagnostic strong{color:#304667;font-size:11px}.ciit-exam-verify-diagnostic small{margin-top:3px;color:#8290a5;font-size:10px;line-height:1.55}
+.ciit-exam-verify-diagnostics{display:grid;gap:12px;margin-top:18px}.ciit-exam-retry{display:block;margin-top:6px;border:1px solid #b8cfff;border-radius:8px;background:#f3f7ff;color:#1859c9;padding:5px 9px;font-size:12px;font-weight:600;cursor:pointer}.ciit-exam-retry[hidden]{display:none}.ciit-exam-verify-diagnostic{display:flex;align-items:flex-start;gap:11px}.ciit-exam-check-dot{flex:0 0 9px;width:9px;height:9px;margin-top:5px;border-radius:50%;background:#9cabc0;box-shadow:0 0 0 4px rgba(156,171,192,.12)}.ciit-exam-check-dot.is-good{background:#1bb47a;box-shadow:0 0 0 4px rgba(27,180,122,.12)}.ciit-exam-check-dot.is-bad{background:#df4d5c;box-shadow:0 0 0 4px rgba(223,77,92,.12)}.ciit-exam-verify-diagnostic strong,.ciit-exam-verify-diagnostic small{display:block}.ciit-exam-verify-diagnostic strong{color:#304667;font-size:11px}.ciit-exam-verify-diagnostic small{margin-top:3px;color:#8290a5;font-size:10px;line-height:1.55}
 .ciit-exam-verify-note{margin:16px 0 0;padding-top:13px;border-top:1px solid #e5ecf7;color:#8491a6;font-size:10px;line-height:1.6}.ciit-exam-verify-note i{margin-right:5px;color:#4d82e8}
 @@media(max-width:760px){.ciit-exam-verify-page{padding:16px 10px 32px}.ciit-exam-verify-card{border-radius:22px}.ciit-exam-verify-checks{grid-template-columns:1fr;padding-top:20px}.ciit-exam-verify-rules{padding:18px;margin:16px 14px 0}.ciit-exam-verify-rules ul{font-size:11.5px}.ciit-exam-verify-camera-panel,.ciit-exam-verify-timing{padding:17px}.ciit-exam-verify-video-wrap video{height:230px}.ciit-exam-verify-header{padding:24px 20px}}
 @@media(prefers-reduced-motion:reduce){.ciit-exam-verify-start,.ciit-exam-verify-progress span{transition:none}}
@@ -127,6 +127,7 @@
     const video = document.getElementById('exam-camera');
     const cameraStatus = document.getElementById('camera-status');
     const faceStatus = document.getElementById('face-status');
+    const retryFaceDetectorButton = document.getElementById('retry-face-detector');
     const facePill = document.getElementById('face-status-pill');
     const cameraDot = document.getElementById('camera-check-dot');
     const faceDot = document.getElementById('face-check-dot');
@@ -181,7 +182,7 @@
     async function loadFaceDetector() {
         const sources = [
             {
-                module: 'https://cdn.jsdelivr.net/npm/@@mediapipe/tasks-vision@0.10.22/+esm',
+                module: 'https://cdn.jsdelivr.net/npm/@@mediapipe/tasks-vision@0.10.22/vision_bundle.mjs',
                 wasm: 'https://cdn.jsdelivr.net/npm/@@mediapipe/tasks-vision@0.10.22/wasm'
             },
             {
@@ -196,7 +197,7 @@
                 const files = await vision.FilesetResolver.forVisionTasks(source.wasm);
                 return await vision.FaceDetector.createFromOptions(files, {
                     baseOptions: {
-                        modelAssetPath: 'https://storage.googleapis.com/mediapipe-models/face_detector/blaze_face_short_range/float16/1/blaze_face_short_range.tflite',
+                        modelAssetPath: 'https://storage.googleapis.com/mediapipe-models/face_detector/blaze_face_short_range/float16/1/face_detector.tflite',
                         delegate: 'CPU'
                     },
                     runningMode: 'VIDEO',
@@ -238,6 +239,34 @@
         updateButton();
     }
 
+    async function retryFaceDetector() {
+        retryFaceDetectorButton.disabled = true;
+        retryFaceDetectorButton.textContent = 'Loading…';
+        faceStatus.textContent = 'Retrying on-device face detector…';
+        try {
+            faceDetector?.close?.();
+            faceDetector = await loadFaceDetector();
+            lastFaceState = null;
+            retryFaceDetectorButton.hidden = true;
+            faceStatus.textContent = 'Detector loaded. Checking for one visible face…';
+            setFaceState('pending', 'Looking for your face…');
+            await detectFace();
+            if (faceCheckTimer) clearInterval(faceCheckTimer);
+            faceCheckTimer = window.setInterval(detectFace, 1200);
+        } catch (error) {
+            console.error('Face detector retry failed:', error);
+            faceStatus.textContent = 'Detector failed to load (' + (error?.message || 'network/model error') + '). Check internet access and retry.';
+            retryFaceDetectorButton.hidden = false;
+            setFaceState('bad', 'Detector unavailable.');
+        } finally {
+            retryFaceDetectorButton.disabled = false;
+            retryFaceDetectorButton.textContent = 'Retry face detection';
+            updateButton();
+        }
+    }
+
+    retryFaceDetectorButton.addEventListener('click', retryFaceDetector);
+
     async function initCamera() {
         try {
             if (!navigator.mediaDevices?.getUserMedia) {
@@ -273,7 +302,8 @@
                 faceCheckTimer = window.setInterval(detectFace, 1200);
             } catch (error) {
                 console.error('Face detector initialization failed:', error);
-                faceStatus.textContent = 'Face detection could not load. Check internet access, then retry.';
+                faceStatus.textContent = 'Detector failed to load (' + (error?.message || 'network/model error') + '). Check internet access and retry.';
+                retryFaceDetectorButton.hidden = false;
                 setFaceState('bad', 'Detector unavailable.');
             }
         } catch (error) {
