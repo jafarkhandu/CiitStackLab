@@ -37,14 +37,16 @@ public sealed class TopicExaminationService : ITopicExaminationService
     }
 
     public async Task<(bool Succeeded, string? Error, TopicExamSummaryDto? Exam)> ScheduleAsync(
-        string userId, int courseId, int topicId, DateTime scheduledAtUtc, CancellationToken cancellationToken = default)
+        string userId, int courseId, int topicId, DateTime scheduledAtUtc, CancellationToken cancellationToken = default, bool startNow = false)
     {
         if (string.IsNullOrWhiteSpace(userId) || courseId <= 0 || topicId <= 0)
             return (false, "Invalid exam request.", null);
         scheduledAtUtc = DateTime.SpecifyKind(scheduledAtUtc, DateTimeKind.Utc);
         var now = DateTime.UtcNow;
-        if (scheduledAtUtc < now.AddMinutes(30))
+        if (!startNow && scheduledAtUtc < now.AddMinutes(30))
             return (false, "Schedule the exam at least 30 minutes in advance.", null);
+        if (startNow)
+            scheduledAtUtc = now;
 
         var topicExists = await (
             from cm in _db.CourseModules.AsNoTracking()
