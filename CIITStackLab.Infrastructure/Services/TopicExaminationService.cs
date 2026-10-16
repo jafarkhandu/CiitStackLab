@@ -278,7 +278,8 @@ public sealed class TopicExaminationService : ITopicExaminationService
         var noteIds = await _db.TrainingNotes.AsNoTracking()
             .Where(n => n.TopicId == topicId && n.Flag == 0).Select(n => n.Id).ToListAsync(cancellationToken);
         var contentIds = await _db.Lessons.AsNoTracking()
-            .Where(l => l.TopicId == topicId && l.Flag == 0).Select(l => l.Id).ToListAsync(cancellationToken);
+            .Where(l => l.Flag == 0 && (l.TopicId == topicId || (l.NoteId.HasValue && noteIds.Contains(l.NoteId.Value))))
+            .Select(l => l.Id).ToListAsync(cancellationToken);
         return await _db.ContentQuestions.AsNoTracking()
             .Where(q => q.Flag == 0 && q.CorrectOptionNumber >= 1 && q.CorrectOptionNumber <= 4
                 && !string.IsNullOrWhiteSpace(q.Question)
