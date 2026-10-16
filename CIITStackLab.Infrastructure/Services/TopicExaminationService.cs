@@ -75,12 +75,15 @@ public sealed class TopicExaminationService : ITopicExaminationService
         var topicContentIds = await _db.Lessons.AsNoTracking()
             .Where(l => l.Flag == 0 && (l.TopicId == topicId || (l.NoteId.HasValue && topicNoteIds.Contains(l.NoteId.Value))))
             .Select(l => l.Id).Distinct().ToListAsync(cancellationToken);
-        if (topicContentIds.Count == 0)
-            return (false, "This topic has no active learning content yet.", null);
-        var completedContentIds = await _db.StudentLessonProgress.AsNoTracking()
-            .Where(p => p.UserId == userId && p.CourseId == courseId && p.IsCompleted && topicContentIds.Contains(p.ContentId))
-            .Select(p => p.ContentId).Distinct().ToListAsync(cancellationToken);
-        if (completedContentIds.Count != topicContentIds.Count)
+        var completedContentIds = topicContentIds.Count == 0
+            ? new List<int>()
+            : await _db.StudentLessonProgress.AsNoTracking()
+                .Where(p => p.UserId == userId && p.CourseId == courseId && p.IsCompleted && topicContentIds.Contains(p.ContentId))
+                .Select(p => p.ContentId).Distinct().ToListAsync(cancellationToken);
+        // Keep the server-side gate consistent with the learning page: a topic with no
+        // lesson rows is treated as complete there, so it must not be rejected here
+        // with a contradictory "no active learning content" error.
+        if (topicContentIds.Count > 0 && completedContentIds.Count != topicContentIds.Count)
             return (false, "Complete all lessons in this topic before scheduling its exam.", null);
 
         var allQuestionIds = await GetEligibleQuestionIdsAsync(topicId, cancellationToken);
