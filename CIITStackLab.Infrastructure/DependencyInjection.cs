@@ -2,6 +2,7 @@ using CIITStackLab.Application.Interfaces;
 using CIITStackLab.Infrastructure.Identity;
 using Microsoft.AspNetCore.Identity;
 using CIITStackLab.Infrastructure.Persistence;
+using CIITStackLab.Infrastructure.Payments;
 using CIITStackLab.Infrastructure.Services;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
@@ -42,6 +43,9 @@ public static class DependencyInjection
             options.ExpireTimeSpan = TimeSpan.FromDays(14);
             options.SlidingExpiration = true;
         });
+
+        services.Configure<PhonePeOptions>(configuration.GetSection("PhonePe"));
+        services.AddSingleton<PhonePePaymentService>();
 
         services.AddScoped<CourseService>();
         services.AddScoped<ICourseService, DynamicCourseService>();
