@@ -46,7 +46,7 @@ public sealed class EmailService : IEmailService
     {
         var safeUserName = HtmlEncode(userName);
         var safeCourseTitle = HtmlEncode(courseTitle);
-        var formattedAmount = amount.ToString("C", System.Globalization.CultureInfo.InvariantCulture);
+        var formattedAmount = $"₹{amount:0.00}";
         var formattedDate = purchasedAt.ToLocalTime().ToString("dd MMM yyyy, hh:mm tt");
 
         return SendEmailAsync(
