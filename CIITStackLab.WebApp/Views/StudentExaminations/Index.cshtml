@@ -1,10 +1,11 @@
 @model IReadOnlyList<CIITStackLab.Application.DTOs.TopicExamSummaryDto>
 @{
+    Layout = "_CourseLayout";
     ViewData["Title"] = "Examinations";
     var options = ViewBag.AvailableTopics as IReadOnlyList<CIITStackLab.WebApp.Controllers.StudentExaminationsController.ExamTopicOption>
         ?? Array.Empty<CIITStackLab.WebApp.Controllers.StudentExaminationsController.ExamTopicOption>();
 }
-<section class="container py-4">
+<section class="container py-4 ciit-examination-page">
     <div class="mb-4">
         <span class="text-uppercase text-primary small fw-bold">Student Workspace</span>
         <h1 class="h2 mt-2">Examinations</h1>
