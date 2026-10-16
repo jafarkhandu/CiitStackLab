@@ -7,7 +7,8 @@ public interface ICourseAssessmentService
     Task<AssessmentSubmissionOutcomeDto> SubmitAsync(
         string userId,
         int courseId,
-        int contentId,
+        int? contentId,
+        int? topicId,
         IReadOnlyList<AssessmentAnswerDto> answers,
         CancellationToken cancellationToken = default);
 
