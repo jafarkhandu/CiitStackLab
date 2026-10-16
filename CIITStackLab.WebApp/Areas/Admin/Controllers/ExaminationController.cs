@@ -214,6 +214,92 @@ public sealed class ExaminationController : Controller
     private static string Normalize(string? value) =>
         string.Join(' ', (value ?? string.Empty).Split((char[]?)null, StringSplitOptions.RemoveEmptyEntries)).Trim();
 
+    private static List<List<string>> ReadExcelRows(Stream stream)
+    {
+        using var archive = new ZipArchive(stream, ZipArchiveMode.Read, leaveOpen: true);
+        XNamespace main = "http://schemas.openxmlformats.org/spreadsheetml/2006/main";
+        XNamespace rel = "http://schemas.openxmlformats.org/officeDocument/2006/relationships";
+        XNamespace packageRel = "http://schemas.openxmlformats.org/package/2006/relationships";
+
+        var workbookEntry = archive.GetEntry("xl/workbook.xml") ?? throw new InvalidDataException();
+        var relationshipsEntry = archive.GetEntry("xl/_rels/workbook.xml.rels") ?? throw new InvalidDataException();
+        XDocument workbook;
+        XDocument relationships;
+        using (var reader = workbookEntry.Open()) workbook = XDocument.Load(reader);
+        using (var reader = relationshipsEntry.Open()) relationships = XDocument.Load(reader);
+
+        var firstSheet = workbook.Root?.Element(main + "sheets")?.Elements(main + "sheet").FirstOrDefault();
+        var relationshipId = (string?)firstSheet?.Attribute(rel + "id");
+        if (string.IsNullOrWhiteSpace(relationshipId)) throw new InvalidDataException();
+
+        var target = relationships.Root?.Elements(packageRel + "Relationship")
+            .Where(x => (string?)x.Attribute("Id") == relationshipId)
+            .Select(x => (string?)x.Attribute("Target")).FirstOrDefault();
+        if (string.IsNullOrWhiteSpace(target)) throw new InvalidDataException();
+
+        var worksheetPath = target.StartsWith("/", StringComparison.Ordinal)
+            ? target.TrimStart('/')
+            : "xl/" + target;
+        var pathParts = new List<string>();
+        foreach (var part in worksheetPath.Split('/'))
+        {
+            if (part == "..")
+            {
+                if (pathParts.Count > 0) pathParts.RemoveAt(pathParts.Count - 1);
+            }
+            else if (part != "." && part.Length > 0)
+            {
+                pathParts.Add(part);
+            }
+        }
+        worksheetPath = string.Join("/", pathParts);
+        var sheetEntry = archive.GetEntry(worksheetPath) ?? throw new InvalidDataException();
+
+        var sharedStrings = new List<string>();
+        if (archive.GetEntry("xl/sharedStrings.xml") is { } sharedEntry)
+        {
+            using var reader = sharedEntry.Open();
+            var sharedDoc = XDocument.Load(reader);
+            sharedStrings = sharedDoc.Root?.Elements(main + "si")
+                .Select(si => string.Concat(si.Descendants(main + "t").Select(t => t.Value)))
+                .ToList() ?? new List<string>();
+        }
+
+        using var sheetReader = sheetEntry.Open();
+        var sheet = XDocument.Load(sheetReader);
+        var rows = new List<List<string>>();
+        foreach (var row in sheet.Descendants(main + "sheetData").Elements(main + "row"))
+        {
+            var cells = new SortedDictionary<int, string>();
+            foreach (var cell in row.Elements(main + "c"))
+            {
+                var reference = (string?)cell.Attribute("r") ?? string.Empty;
+                var column = 0;
+                foreach (var ch in reference.TakeWhile(char.IsLetter))
+                    column = column * 26 + char.ToUpperInvariant(ch) - 'A' + 1;
+                if (column <= 0) continue;
+
+                var type = (string?)cell.Attribute("t");
+                var value = cell.Element(main + "v")?.Value ?? string.Empty;
+                if (type == "s" && int.TryParse(value, out var sharedIndex)
+                    && sharedIndex >= 0 && sharedIndex < sharedStrings.Count)
+                {
+                    value = sharedStrings[sharedIndex];
+                }
+                else if (type == "inlineStr")
+                {
+                    value = string.Concat(cell.Descendants(main + "t").Select(t => t.Value));
+                }
+                cells[column - 1] = value;
+            }
+
+            var maxColumn = cells.Count == 0 ? 0 : cells.Keys.Max() + 1;
+            rows.Add(Enumerable.Range(0, maxColumn)
+                .Select(index => cells.GetValueOrDefault(index, string.Empty)).ToList());
+        }
+        return rows;
+    }
+
     private static List<string> ParseCsvLine(string line)
     {
         var fields = new List<string>();
