@@ -63,3 +63,52 @@ document.addEventListener("DOMContentLoaded", function () {
         hubLink.removeAttribute("aria-disabled");
     });
 });
+
+document.addEventListener("DOMContentLoaded", function () {
+    const paymentForm = document.getElementById("ciit-demo-payment-form");
+
+    if (!paymentForm) {
+        return;
+    }
+
+    const modalEyebrow = document.querySelector(".ciit-payment-modal-eyebrow");
+    const modalSubtitle = document.querySelector(".ciit-payment-modal-subtitle");
+    const paymentButton = document.getElementById("ciit-demo-payment-button");
+    const paymentNote = paymentForm.nextElementSibling;
+    const processingTitle = document.querySelector("#ciit-payment-processing-state > strong");
+    const processingDescription = document.querySelector("#ciit-payment-processing-state > span");
+    const processingStep = document.querySelector('[data-payment-step="process"] span');
+    const successNote = document.querySelector(".ciit-payment-success-note");
+
+    if (modalEyebrow) {
+        modalEyebrow.textContent = "Secure checkout";
+    }
+
+    if (modalSubtitle) {
+        modalSubtitle.textContent = "You will be securely redirected to PhonePe to complete your payment.";
+    }
+
+    if (paymentButton) {
+        paymentButton.innerHTML = '<i class="bi bi-shield-lock-fill me-2"></i>Continue to PhonePe';
+    }
+
+    if (paymentNote) {
+        paymentNote.textContent = "You will complete the payment on PhonePe. Your course is activated only after the payment is verified server-side.";
+    }
+
+    if (processingTitle) {
+        processingTitle.textContent = "Connecting to PhonePe";
+    }
+
+    if (processingDescription) {
+        processingDescription.textContent = "Preparing your secure payment session. Please wait...";
+    }
+
+    if (processingStep) {
+        processingStep.textContent = "Redirecting to PhonePe checkout...";
+    }
+
+    if (successNote) {
+        successNote.textContent = "Payment verification will be completed by the server before access is granted.";
+    }
+});
