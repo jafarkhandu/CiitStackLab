@@ -6,7 +6,8 @@
 
 <section class="ciit-exam-verify-page" data-exam-instructions
          data-scheduled="@DateTime.SpecifyKind(Model.ScheduledAtUtc, DateTimeKind.Utc).ToString("O")"
-         data-attempt-id="@Model.AttemptId">
+         data-attempt-id="@Model.AttemptId"
+         data-verification-started="@(Model.VerificationStartedAtUtc.HasValue ? DateTime.SpecifyKind(Model.VerificationStartedAtUtc.Value, DateTimeKind.Utc).ToString("O") : string.Empty)">
     <div class="ciit-exam-verify-glow ciit-exam-verify-glow-one"></div>
     <div class="ciit-exam-verify-glow ciit-exam-verify-glow-two"></div>
 
@@ -131,12 +132,12 @@
     const faceDot = document.getElementById('face-check-dot');
     const placeholder = document.getElementById('camera-placeholder');
     const scheduledLabel = document.getElementById('exam-scheduled-time');
-    const verificationStorageKey = 'ciit-exam-verification-end-' + attemptId;
-    let verificationEndsAt = Number(sessionStorage.getItem(verificationStorageKey));
-    if (!Number.isFinite(verificationEndsAt) || verificationEndsAt <= 0) {
-        verificationEndsAt = Date.now() + 60 * 1000;
-        sessionStorage.setItem(verificationStorageKey, String(verificationEndsAt));
-    }
+    const verificationStartedAt = root.dataset.verificationStarted
+        ? new Date(root.dataset.verificationStarted).getTime()
+        : Number.NaN;
+    const verificationEndsAt = Number.isFinite(verificationStartedAt)
+        ? verificationStartedAt + 60 * 1000
+        : Number.POSITIVE_INFINITY;
     const csrf = document.querySelector('#exam-start-form input[name="__RequestVerificationToken"]')?.value || '';
     let cameraReady = false;
     let faceDetector = null;
