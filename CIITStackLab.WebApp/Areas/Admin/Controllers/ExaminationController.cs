@@ -37,7 +37,7 @@ public sealed class ExaminationController : Controller
                 Id = x.Id, Title = x.Title,
                 QuestionCount = _db.ContentQuestions.Count(q => q.Flag == 0
                     && (q.TopicId == x.Id || (q.NoteId.HasValue && _db.TrainingNotes.Any(n => n.Id == q.NoteId && n.TopicId == x.Id))
-                    || (q.ContentId.HasValue && _db.Lessons.Any(l => l.Id == q.ContentId && l.TopicId == x.Id))))
+                    || (q.ContentId.HasValue && _db.Lessons.Any(l => l.Id == q.ContentId && (l.TopicId == x.Id || (l.NoteId.HasValue && _db.TrainingNotes.Any(n => n.Id == l.NoteId && n.TopicId == x.Id)))))))
             }).ToListAsync(cancellationToken);
         var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
         if (!string.IsNullOrWhiteSpace(previewToken)
