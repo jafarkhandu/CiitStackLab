@@ -3,164 +3,338 @@
     Layout = "_CourseLayout";
     ViewData["Title"] = "Exam Instructions";
 }
-<section class="container py-4 ciit-examination-page" data-exam-instructions data-scheduled="@Model.ScheduledAtUtc.ToString("O")" data-attempt-id="@Model.AttemptId">
-    <div class="card shadow-sm mx-auto" style="max-width: 900px;">
-        <div class="card-body p-4 p-lg-5">
-            <span class="text-uppercase text-primary small fw-bold">Pre-exam verification</span>
-            <h1 class="h2 mt-2">Read all instructions carefully</h1>
-            <div class="alert alert-danger mt-4">
-                <h2 class="h5 fw-bold">MANDATORY EXAM RULES</h2>
-                <ul class="mb-0 fw-bold">
-                    <li>Switching tabs/windows or leaving the exam page will automatically terminate the exam. Saved answers will be submitted.</li>
-                    <li>Copy, paste, cut, screenshot shortcuts and recording shortcuts are prohibited and may be logged.</li>
-                    <li>Camera permission must remain enabled during the examination. Camera loss and suspicious events are recorded.</li>
-                    <li>Two proctoring warnings are allowed. A further detected suspicious event terminates the exam automatically.</li>
-                    <li>This attempt is locked to the first device. Do not clear site cookies or switch devices.</li>
-                    <li>The exam lasts 60 minutes, contains 50 random MCQs, and each question carries 1 mark.</li>
-                    <li>Answers are saved periodically. At the deadline, the server submits saved answers automatically.</li>
-                    <li>Passing score is 35/50. Re-exams exclude questions used in previous attempts.</li>
-                </ul>
+
+<section class="ciit-exam-verify-page" data-exam-instructions
+         data-scheduled="@Model.ScheduledAtUtc.ToString("O")"
+         data-attempt-id="@Model.AttemptId">
+    <div class="ciit-exam-verify-glow ciit-exam-verify-glow-one"></div>
+    <div class="ciit-exam-verify-glow ciit-exam-verify-glow-two"></div>
+
+    <article class="ciit-exam-verify-card">
+        <header class="ciit-exam-verify-header">
+            <div class="ciit-exam-verify-brand">
+                <span class="ciit-exam-verify-brand-icon"><i class="bi bi-shield-lock"></i></span>
+                <span>CIIT STACK LAB <small>SECURE EXAMINATION</small></span>
             </div>
-            <div class="row g-4 align-items-center mt-1">
-                <div class="col-md-6">
-                    <h2 class="h5">Scheduled start countdown</h2>
-                    <div id="exam-countdown" class="display-6 fw-bold font-monospace" aria-live="polite">Loading…</div>
-                    <p id="exam-countdown-help" class="text-secondary">The actual exam will not start on this page.</p>
-                    <form asp-action="Start" asp-route-attemptId="@Model.AttemptId" method="post" id="exam-start-form">
-                        @Html.AntiForgeryToken()
-                        <button id="exam-start-button" type="submit" class="btn btn-primary btn-lg" disabled>Start examination</button>
-                    </form>
-                </div>
-                <div class="col-md-6">
-                    <h2 class="h5">Camera check</h2>
-                    <video id="exam-camera" autoplay muted playsinline class="w-100 rounded border" style="max-height:240px;background:#111"></video>
-                    <p id="camera-status" class="small text-secondary mt-2">Requesting camera permission…</p>
-                </div>
+            <span class="ciit-exam-verify-step"><span></span> PRE-EXAM CHECK</span>
+            <h1>Prepare for your examination</h1>
+            <p class="ciit-exam-verify-lead">Review the exam rules, complete the identity and camera checks, then start when your scheduled session unlocks.</p>
+        </header>
+
+        <section class="ciit-exam-verify-rules">
+            <div class="ciit-exam-verify-section-heading">
+                <span class="ciit-exam-verify-section-icon"><i class="bi bi-shield-check"></i></span>
+                <div><h2>Examination rules</h2><p>Please read before continuing</p></div>
             </div>
+            <ul>
+                <li>Switching tabs/windows or leaving the exam page may terminate the exam. Saved answers will be submitted.</li>
+                <li>Copy, paste, cut and restricted screenshot/recording shortcuts are prohibited and may be logged.</li>
+                <li>Keep camera permission enabled throughout the exam. Camera loss and detected suspicious events are recorded.</li>
+                <li>Two proctoring warnings are allowed. A further detected suspicious event may terminate the attempt.</li>
+                <li>This attempt is locked to the first device. Do not clear site cookies or switch devices.</li>
+                <li>The exam lasts 60 minutes, contains 50 random MCQs, and each question carries 1 mark.</li>
+                <li>Answers are saved periodically. At the deadline, the server submits saved answers automatically.</li>
+                <li>Passing score is 35/50. Re-exams exclude questions used in previous attempts.</li>
+            </ul>
+        </section>
+
+        <div class="ciit-exam-verify-checks">
+            <section class="ciit-exam-verify-timing">
+                <div class="ciit-exam-verify-section-heading">
+                    <span class="ciit-exam-verify-section-icon"><i class="bi bi-stopwatch"></i></span>
+                    <div><h2>Verification countdown</h2><p>One-minute pre-exam check</p></div>
+                </div>
+                <div class="ciit-exam-verify-countdown" id="exam-countdown" aria-live="polite">01:00</div>
+                <div class="ciit-exam-verify-progress"><span id="verification-progress"></span></div>
+                <p id="exam-countdown-help" class="ciit-exam-verify-muted">Complete the camera and face checks to continue.</p>
+                <div class="ciit-exam-verify-schedule">
+                    <i class="bi bi-calendar-event"></i>
+                    <div><small>Scheduled start</small><strong id="exam-scheduled-time">Checking schedule…</strong></div>
+                </div>
+                <form asp-action="Start" asp-route-attemptId="@Model.AttemptId" method="post" id="exam-start-form">
+                    @Html.AntiForgeryToken()
+                    <button id="exam-start-button" type="submit" class="ciit-exam-verify-start" disabled>
+                        <span>Verifying…</span><i class="bi bi-arrow-right"></i>
+                    </button>
+                </form>
+                <p class="ciit-exam-verify-privacy"><i class="bi bi-lock-fill"></i> Face analysis runs in this browser. Camera frames are not uploaded by the face detector.</p>
+            </section>
+
+            <section class="ciit-exam-verify-camera-panel">
+                <div class="ciit-exam-verify-camera-heading">
+                    <div><h2>Camera &amp; face check</h2><p>Position your face clearly in the frame</p></div>
+                    <span id="face-status-pill" class="ciit-exam-verify-status is-pending"><span></span> Checking</span>
+                </div>
+                <div class="ciit-exam-verify-video-wrap">
+                    <video id="exam-camera" autoplay muted playsinline></video>
+                    <div class="ciit-exam-verify-camera-overlay">
+                        <span class="ciit-exam-face-corner top-left"></span><span class="ciit-exam-face-corner top-right"></span>
+                        <span class="ciit-exam-face-corner bottom-left"></span><span class="ciit-exam-face-corner bottom-right"></span>
+                        <div class="ciit-exam-face-guide"></div>
+                    </div>
+                    <div id="camera-placeholder" class="ciit-exam-camera-placeholder">
+                        <span><i class="bi bi-camera-video"></i></span><strong>Connecting to your camera</strong><small>Allow camera access when prompted</small>
+                    </div>
+                </div>
+                <div class="ciit-exam-verify-diagnostics">
+                    <div class="ciit-exam-verify-diagnostic"><span id="camera-check-dot" class="ciit-exam-check-dot"></span><span><strong>Camera permission</strong><small id="camera-status">Requesting camera permission…</small></span></div>
+                    <div class="ciit-exam-verify-diagnostic"><span id="face-check-dot" class="ciit-exam-check-dot"></span><span><strong>Face detection</strong><small id="face-status">Loading on-device face detector…</small></span></div>
+                </div>
+                <p class="ciit-exam-verify-note"><i class="bi bi-info-circle"></i> Keep only your face in view, use good lighting and look toward the camera.</p>
+            </section>
         </div>
-    </div>
+    </article>
 </section>
+
+<style>
+.ciit-exam-verify-page{position:relative;isolation:isolate;min-height:calc(100vh - 110px);padding:clamp(20px,4vw,52px) 18px 60px;overflow:hidden;background:radial-gradient(ellipse at 12% 8%,rgba(89,151,255,.18),transparent 35%),radial-gradient(ellipse at 90% 75%,rgba(107,91,255,.13),transparent 32%),linear-gradient(145deg,#edf5ff 0%,#f7faff 48%,#e8f0ff 100%)}
+.ciit-exam-verify-glow{position:absolute;z-index:-1;border-radius:50%;filter:blur(2px);pointer-events:none}.ciit-exam-verify-glow-one{width:310px;height:310px;top:4%;right:7%;background:rgba(122,174,255,.14)}.ciit-exam-verify-glow-two{width:260px;height:260px;bottom:4%;left:4%;background:rgba(145,130,255,.11)}
+.ciit-exam-verify-card{width:min(1120px,100%);margin:0 auto;border:1px solid rgba(255,255,255,.88);border-radius:30px;overflow:hidden;background:rgba(255,255,255,.68);box-shadow:0 28px 90px rgba(48,81,145,.14),inset 0 1px 0 rgba(255,255,255,.95);backdrop-filter:blur(24px);-webkit-backdrop-filter:blur(24px)}
+.ciit-exam-verify-header{padding:clamp(24px,4vw,42px);background:linear-gradient(120deg,rgba(255,255,255,.8),rgba(225,238,255,.56));border-bottom:1px solid rgba(133,169,232,.22)}
+.ciit-exam-verify-brand{display:flex;align-items:center;gap:11px;color:#163568;font-size:12px;font-weight:850;letter-spacing:.09em}.ciit-exam-verify-brand-icon{display:grid;place-items:center;width:42px;height:42px;border-radius:14px;color:#fff;font-size:20px;background:linear-gradient(140deg,#2677ff,#6658f5);box-shadow:0 8px 18px rgba(45,104,242,.24)}.ciit-exam-verify-brand small{display:block;margin-top:3px;color:#7b8ba8;font-size:9px;letter-spacing:.17em}
+.ciit-exam-verify-step{display:inline-flex;align-items:center;gap:8px;margin-top:28px;padding:8px 12px;border:1px solid #cfe0ff;border-radius:999px;background:rgba(232,241,255,.8);color:#2869df;font-size:10px;font-weight:850;letter-spacing:.11em}.ciit-exam-verify-step span{width:7px;height:7px;border-radius:50%;background:#3280ff;box-shadow:0 0 0 4px rgba(50,128,255,.12)}
+.ciit-exam-verify-header h1{margin:16px 0 9px;color:#172c50;font-size:clamp(27px,3.2vw,39px);font-weight:850;letter-spacing:-.045em}.ciit-exam-verify-lead{max-width:760px;margin:0;color:#6c7f9e;font-size:14px;line-height:1.75}
+.ciit-exam-verify-rules{margin:24px clamp(18px,3vw,36px) 0;padding:22px 24px;border:1px solid rgba(237,174,178,.65);border-radius:20px;background:linear-gradient(135deg,rgba(255,245,246,.94),rgba(255,237,239,.72));box-shadow:inset 0 1px 0 rgba(255,255,255,.85)}
+.ciit-exam-verify-section-heading{display:flex;align-items:center;gap:12px;margin-bottom:17px}.ciit-exam-verify-section-icon{display:grid;place-items:center;flex:0 0 42px;width:42px;height:42px;border:1px solid rgba(89,139,255,.19);border-radius:14px;background:linear-gradient(145deg,#fff,#e8f1ff);color:#3378f5;font-size:19px;box-shadow:0 5px 14px rgba(46,102,206,.08)}.ciit-exam-verify-section-heading h2,.ciit-exam-verify-camera-heading h2{margin:0;color:#1b3155;font-size:15px;font-weight:800}.ciit-exam-verify-section-heading p,.ciit-exam-verify-camera-heading p{margin:4px 0 0;color:#8190a9;font-size:12px}
+.ciit-exam-verify-rules .ciit-exam-verify-section-icon{color:#c34754;background:linear-gradient(145deg,#fff,#ffe3e6)}.ciit-exam-verify-rules ul{display:grid;gap:9px;margin:0;padding-left:22px;color:#753a44;font-size:12.5px;line-height:1.55}.ciit-exam-verify-rules li{padding-left:3px}
+.ciit-exam-verify-checks{display:grid;grid-template-columns:minmax(0,.86fr) minmax(0,1.14fr);gap:clamp(22px,4vw,42px);padding:28px clamp(18px,3vw,36px) 34px}.ciit-exam-verify-timing,.ciit-exam-verify-camera-panel{min-width:0;padding:23px;border:1px solid rgba(255,255,255,.95);border-radius:22px;background:rgba(255,255,255,.59);box-shadow:0 12px 35px rgba(61,93,150,.07),inset 0 1px 0 #fff}
+.ciit-exam-verify-countdown{margin:21px 0 12px;color:#1d3d71;font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:clamp(38px,5vw,54px);font-weight:850;letter-spacing:-.06em;font-variant-numeric:tabular-nums}.ciit-exam-verify-progress{height:7px;overflow:hidden;border-radius:99px;background:#e1eafa}.ciit-exam-verify-progress span{display:block;width:0;height:100%;border-radius:inherit;background:linear-gradient(90deg,#2683ff,#6d67ff);transition:width .3s ease}.ciit-exam-verify-muted{min-height:44px;margin:12px 0 20px;color:#7485a0;font-size:12px;line-height:1.65}
+.ciit-exam-verify-schedule{display:flex;align-items:center;gap:12px;margin-bottom:20px;padding:13px;border:1px solid #e0eaff;border-radius:15px;background:rgba(243,247,255,.8);color:#3779eb}.ciit-exam-verify-schedule>i{font-size:19px}.ciit-exam-verify-schedule small,.ciit-exam-verify-schedule strong{display:block}.ciit-exam-verify-schedule small{color:#8190a9;font-size:10px}.ciit-exam-verify-schedule strong{margin-top:3px;color:#30496e;font-size:12px}
+.ciit-exam-verify-start{display:flex;align-items:center;justify-content:center;gap:12px;width:100%;min-height:50px;padding:12px 18px;border:1px solid rgba(255,255,255,.55);border-radius:15px;background:linear-gradient(110deg,#2778ff,#645cf4);color:white;font-size:13px;font-weight:800;box-shadow:0 10px 22px rgba(49,103,237,.23);transition:transform .2s,box-shadow .2s}.ciit-exam-verify-start:not(:disabled):hover{transform:translateY(-2px);box-shadow:0 14px 28px rgba(49,103,237,.3)}.ciit-exam-verify-start:disabled{cursor:not-allowed;opacity:.55;box-shadow:none}.ciit-exam-verify-start i{font-size:17px}
+.ciit-exam-verify-privacy{margin:13px 0 0;color:#8391a8;font-size:10px;line-height:1.6}.ciit-exam-verify-privacy i{margin-right:4px;color:#4d80df}
+.ciit-exam-verify-camera-heading{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:16px}.ciit-exam-verify-status{display:inline-flex;align-items:center;gap:7px;flex-shrink:0;padding:7px 10px;border:1px solid #e1e8f4;border-radius:999px;background:#f6f8fc;color:#78879d;font-size:10px;font-weight:800}.ciit-exam-verify-status>span{width:7px;height:7px;border-radius:50%;background:#a2afc2}.ciit-exam-verify-status.is-good{border-color:#b9ead6;background:#e9fbf3;color:#16845b}.ciit-exam-verify-status.is-good>span{background:#20b77a}.ciit-exam-verify-status.is-bad{border-color:#f3c5ca;background:#fff0f1;color:#bf3e4b}.ciit-exam-verify-status.is-bad>span{background:#d94b58}.ciit-exam-verify-video-wrap{position:relative;min-height:245px;overflow:hidden;border:1px solid rgba(91,124,183,.35);border-radius:19px;background:radial-gradient(ellipse at 50% 30%,#263957,#0c1525 75%);box-shadow:inset 0 0 35px rgba(0,0,0,.35)}.ciit-exam-verify-video-wrap video{display:block;width:100%;height:260px;object-fit:cover;transform:scaleX(-1)}.ciit-exam-verify-camera-overlay{position:absolute;inset:13px;pointer-events:none}.ciit-exam-face-corner{position:absolute;width:25px;height:25px;border-color:rgba(130,184,255,.92);border-style:solid}.ciit-exam-face-corner.top-left{top:0;left:0;border-width:2px 0 0 2px;border-radius:8px 0 0}.ciit-exam-face-corner.top-right{top:0;right:0;border-width:2px 2px 0 0;border-radius:0 8px 0 0}.ciit-exam-face-corner.bottom-left{bottom:0;left:0;border-width:0 0 2px 2px;border-radius:0 0 0 8px}.ciit-exam-face-corner.bottom-right{bottom:0;right:0;border-width:0 2px 2px 0;border-radius:0 0 8px}.ciit-exam-face-guide{position:absolute;left:50%;top:50%;width:118px;height:158px;transform:translate(-50%,-50%);border:1px dashed rgba(158,199,255,.55);border-radius:48% 48% 43% 43%}
+.ciit-exam-camera-placeholder{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;flex-direction:column;gap:7px;color:#e6efff;background:rgba(8,18,34,.66);text-align:center}.ciit-exam-camera-placeholder>span{display:grid;place-items:center;width:49px;height:49px;margin-bottom:4px;border:1px solid rgba(180,208,255,.3);border-radius:16px;background:rgba(92,138,219,.18);font-size:22px}.ciit-exam-camera-placeholder strong{font-size:12px}.ciit-exam-camera-placeholder small{color:#a9bad6;font-size:10px}
+.ciit-exam-verify-diagnostics{display:grid;gap:12px;margin-top:18px}.ciit-exam-verify-diagnostic{display:flex;align-items:flex-start;gap:11px}.ciit-exam-check-dot{flex:0 0 9px;width:9px;height:9px;margin-top:5px;border-radius:50%;background:#9cabc0;box-shadow:0 0 0 4px rgba(156,171,192,.12)}.ciit-exam-check-dot.is-good{background:#1bb47a;box-shadow:0 0 0 4px rgba(27,180,122,.12)}.ciit-exam-check-dot.is-bad{background:#df4d5c;box-shadow:0 0 0 4px rgba(223,77,92,.12)}.ciit-exam-verify-diagnostic strong,.ciit-exam-verify-diagnostic small{display:block}.ciit-exam-verify-diagnostic strong{color:#304667;font-size:11px}.ciit-exam-verify-diagnostic small{margin-top:3px;color:#8290a5;font-size:10px;line-height:1.55}
+.ciit-exam-verify-note{margin:16px 0 0;padding-top:13px;border-top:1px solid #e5ecf7;color:#8491a6;font-size:10px;line-height:1.6}.ciit-exam-verify-note i{margin-right:5px;color:#4d82e8}
+@media(max-width:760px){.ciit-exam-verify-page{padding:16px 10px 32px}.ciit-exam-verify-card{border-radius:22px}.ciit-exam-verify-checks{grid-template-columns:1fr;padding-top:20px}.ciit-exam-verify-rules{padding:18px;margin:16px 14px 0}.ciit-exam-verify-rules ul{font-size:11.5px}.ciit-exam-verify-camera-panel,.ciit-exam-verify-timing{padding:17px}.ciit-exam-verify-video-wrap video{height:230px}.ciit-exam-verify-header{padding:24px 20px}}
+@media(prefers-reduced-motion:reduce){.ciit-exam-verify-start,.ciit-exam-verify-progress span{transition:none}}
+</style>
+
 @section Scripts {
-<script>
-(function () {
+<script type="module">
+(async function () {
     const root = document.querySelector('[data-exam-instructions]');
     if (!root) return;
+
     const attemptId = root.dataset.attemptId;
     const scheduledAt = new Date(root.dataset.scheduled).getTime();
     const countdown = document.getElementById('exam-countdown');
     const button = document.getElementById('exam-start-button');
     const help = document.getElementById('exam-countdown-help');
+    const progress = document.getElementById('verification-progress');
     const video = document.getElementById('exam-camera');
     const cameraStatus = document.getElementById('camera-status');
-    let cameraReady = false;
+    const faceStatus = document.getElementById('face-status');
+    const facePill = document.getElementById('face-status-pill');
+    const cameraDot = document.getElementById('camera-check-dot');
+    const faceDot = document.getElementById('face-check-dot');
+    const placeholder = document.getElementById('camera-placeholder');
+    const scheduledLabel = document.getElementById('exam-scheduled-time');
     const verificationEndsAt = Date.now() + 60 * 1000;
-    let cameraStream = null;
-    let faceDetector = null;
-    let faceCheckTimer = null;
     const csrf = document.querySelector('#exam-start-form input[name="__RequestVerificationToken"]')?.value || '';
+    let cameraReady = false;
+    let faceDetector = null;
+    let cameraStream = null;
+    let faceCheckTimer = null;
+    let lastFaceState = null;
+    let detectionBusy = false;
 
-    function event(type, details) {
+    scheduledLabel.textContent = Number.isFinite(scheduledAt)
+        ? new Date(scheduledAt).toLocaleString([], { dateStyle: 'medium', timeStyle: 'short' })
+        : 'Schedule unavailable';
+
+    function setDot(element, state) {
+        element.classList.toggle('is-good', state === 'good');
+        element.classList.toggle('is-bad', state === 'bad');
+    }
+
+    function setFaceState(state, message) {
+        faceStatus.textContent = message;
+        facePill.classList.toggle('is-good', state === 'good');
+        facePill.classList.toggle('is-bad', state === 'bad');
+        facePill.classList.toggle('is-pending', state === 'pending');
+        facePill.querySelector('span').style.background = state === 'pending' ? '' : state === 'good' ? '#20b77a' : '#d94b58';
+        facePill.lastChild.textContent = state === 'good' ? ' Verified' : state === 'bad' ? ' Attention' : ' Checking';
+        setDot(faceDot, state);
+    }
+
+    async function recordEvent(type, details) {
         const data = new URLSearchParams({ EventType: type, Details: details || '' });
         data.append('__RequestVerificationToken', csrf);
-        return fetch('/Examinations/' + attemptId + '/SecurityEvent', {
-            method: 'POST', credentials: 'same-origin',
-            headers: { 'Content-Type': 'application/x-www-form-urlencoded' }, body: data
+        try {
+            await fetch('/Examinations/' + attemptId + '/SecurityEvent', {
+                method: 'POST', credentials: 'same-origin',
+                headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+                body: data,
+                keepalive: true
+            });
+        } catch (_) { /* Do not block local verification on a transient logging failure. */ }
+    }
+
+    async function loadFaceDetector() {
+        // MediaPipe provides a consistent client-side detector on browsers without the experimental FaceDetector API.
+        const vision = await import('https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.22/+esm');
+        const files = await vision.FilesetResolver.forVisionTasks(
+            'https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.22/wasm'
+        );
+        return vision.FaceDetector.createFromOptions(files, {
+            baseOptions: {
+                modelAssetPath: 'https://storage.googleapis.com/mediapipe-models/face_detector/blaze_face_short_range/float16/1/blaze_face_short_range.tflite',
+                delegate: 'CPU'
+            },
+            runningMode: 'VIDEO',
+            minDetectionConfidence: 0.6
         });
+    }
+
+    async function detectFace() {
+        if (!cameraReady || !faceDetector || detectionBusy || video.readyState < HTMLMediaElement.HAVE_CURRENT_DATA) return;
+        detectionBusy = true;
+        try {
+            const result = faceDetector.detectForVideo(video, performance.now());
+            const faces = result.detections || [];
+            const nextState = faces.length === 1 ? 'good' : 'bad';
+            if (nextState !== lastFaceState) {
+                lastFaceState = nextState;
+                if (faces.length === 1) {
+                    setFaceState('good', 'One face detected. Keep your face in frame.');
+                    await recordEvent('FaceDetected', 'Exactly one face detected during pre-exam verification');
+                } else if (faces.length === 0) {
+                    setFaceState('bad', 'No face detected. Center your face in the frame.');
+                    await recordEvent('FaceMissing', 'No face detected during pre-exam verification');
+                } else {
+                    setFaceState('bad', 'Multiple faces detected. Ensure you are alone.');
+                    await recordEvent('MultipleFaces', 'Multiple faces detected during pre-exam verification');
+                }
+            }
+        } catch (_) {
+            setFaceState('bad', 'Face detection paused. Adjust lighting and keep the camera visible.');
+        } finally {
+            detectionBusy = false;
+        }
+        updateButton();
     }
 
     async function initCamera() {
         try {
-            if (!navigator.mediaDevices?.getUserMedia) throw new Error('Camera access is not supported by this browser.');
-            cameraStream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'user' }, audio: false });
+            if (!navigator.mediaDevices?.getUserMedia) {
+                throw new Error('Camera access requires HTTPS or localhost and a supported browser.');
+            }
+            cameraStream = await navigator.mediaDevices.getUserMedia({
+                video: { facingMode: 'user', width: { ideal: 1280 }, height: { ideal: 720 } },
+                audio: false
+            });
             video.srcObject = cameraStream;
+            await video.play();
             cameraReady = true;
-            cameraStatus.textContent = 'Camera connected. Keep it enabled for the whole exam.';
+            placeholder.hidden = true;
+            cameraStatus.textContent = 'Camera connected and streaming.';
+            setDot(cameraDot, 'good');
             cameraStream.getVideoTracks().forEach(track => track.addEventListener('ended', () => {
                 cameraReady = false;
-                cameraStatus.textContent = 'Camera disconnected. Exam access is blocked.';
-                event('CameraLost', 'Camera track ended');
+                cameraStatus.textContent = 'Camera disconnected. Re-enable camera to continue.';
+                setDot(cameraDot, 'bad');
+                setFaceState('bad', 'Camera unavailable.');
+                recordEvent('CameraLost', 'Camera track ended during pre-exam verification');
                 updateButton();
             }));
-            if ('FaceDetector' in window) {
-                try { faceDetector = new FaceDetector({ fastMode: true, maxDetectedFaces: 3 }); } catch (_) {}
-            }
-            if (faceDetector) {
-                faceCheckTimer = window.setInterval(async () => {
-                    if (!cameraReady || video.readyState < 2) return;
-                    try {
-                        const faces = await faceDetector.detect(video);
-                        if (faces.length === 0) await event('FaceMissing', 'No face detected');
-                        if (faces.length > 1) await event('MultipleFaces', 'More than one face detected');
-                    } catch (_) {}
-                }, 8000);
-            } else {
-                cameraStatus.textContent = 'Camera connected. Automatic face detection is not supported in this browser; camera permission alone is not AI proctoring.';
+
+            try {
+                if ('FaceDetector' in window) {
+                    try { faceDetector = new FaceDetector({ fastMode: true, maxDetectedFaces: 3 }); } catch (_) {}
+                }
+                if (!faceDetector) faceDetector = await loadFaceDetector();
+                faceStatus.textContent = 'Detector loaded. Checking for one visible face…';
+                setFaceState('pending', 'Looking for your face…');
+                await detectFace();
+                faceCheckTimer = window.setInterval(detectFace, 1200);
+            } catch (error) {
+                console.error('Face detector initialization failed:', error);
+                setFaceState('bad', 'Face detection could not load. Check internet access and reload this page.');
             }
         } catch (error) {
             cameraReady = false;
             cameraStatus.textContent = error.message || 'Camera permission is required.';
+            setDot(cameraDot, 'bad');
+            setFaceState('bad', 'Camera is required before face detection can run.');
+            placeholder.hidden = false;
+            placeholder.querySelector('strong').textContent = 'Camera access required';
+            placeholder.querySelector('small').textContent = 'Allow camera access and reload this page';
         }
         updateButton();
     }
 
     function updateButton() {
-        const verificationRemaining = verificationEndsAt - Date.now();
-        const scheduledRemaining = scheduledAt - Date.now();
+        const now = Date.now();
+        const verificationRemaining = verificationEndsAt - now;
+        const scheduledRemaining = scheduledAt - now;
+        const verificationTotal = Math.max(0, verificationRemaining);
+        progress.style.width = ((60 - verificationTotal / 1000) / 60 * 100) + '%';
+
         if (verificationRemaining > 0) {
             const total = Math.ceil(verificationRemaining / 1000);
-            const m = Math.floor(total / 60), s = total % 60;
-            countdown.textContent = [m, s].map(x => String(x).padStart(2, '0')).join(':');
-            help.textContent = 'Security and camera checks are running. You can start after this 1-minute verification and when your scheduled time is reached.';
+            countdown.textContent = [Math.floor(total / 60), total % 60].map(x => String(x).padStart(2, '0')).join(':');
+            help.textContent = 'Security and face checks are running. Verification completes after one minute.';
             button.disabled = true;
-            button.textContent = 'Verifying…';
+            button.querySelector('span').textContent = 'Verifying…';
+        } else if (!cameraReady || !faceDetector || lastFaceState !== 'good') {
+            countdown.textContent = 'CHECK';
+            help.textContent = 'A connected camera and exactly one detected face are required to continue.';
+            button.disabled = true;
+            button.querySelector('span').textContent = 'Complete face check';
         } else if (scheduledRemaining > 0) {
             const total = Math.ceil(scheduledRemaining / 1000);
             const h = Math.floor(total / 3600), m = Math.floor((total % 3600) / 60), s = total % 60;
             countdown.textContent = [h, m, s].map(x => String(x).padStart(2, '0')).join(':');
-            help.textContent = 'Verification completed. The exam will unlock at the scheduled time.';
+            help.textContent = 'Verification complete. The exam unlocks at its scheduled start time.';
             button.disabled = true;
-            button.textContent = 'Available at scheduled time';
+            button.querySelector('span').textContent = 'Available at scheduled time';
         } else {
-            countdown.textContent = 'Verification complete';
-            help.textContent = 'Camera must be connected. The exam timer begins after you start the examination.';
-            button.disabled = !cameraReady;
-            button.textContent = cameraReady ? 'Start examination' : 'Enable camera to continue';
+            countdown.textContent = 'READY';
+            help.textContent = 'Verification complete. You can now start your 60-minute examination.';
+            button.disabled = false;
+            button.querySelector('span').textContent = 'Start examination';
         }
     }
 
     document.addEventListener('visibilitychange', () => {
-        if (document.hidden) event('TabSwitch', 'Page became hidden before exam start');
+        if (document.hidden) recordEvent('TabSwitch', 'Page became hidden before exam start');
     });
-    document.addEventListener('copy', e => { e.preventDefault(); event('Copy', 'Copy action blocked'); });
-    document.addEventListener('cut', e => { e.preventDefault(); event('Cut', 'Cut action blocked'); });
-    document.addEventListener('paste', e => { e.preventDefault(); event('Paste', 'Paste action blocked'); });
+    document.addEventListener('copy', e => { e.preventDefault(); recordEvent('Copy', 'Copy action blocked'); });
+    document.addEventListener('cut', e => { e.preventDefault(); recordEvent('Cut', 'Cut action blocked'); });
+    document.addEventListener('paste', e => { e.preventDefault(); recordEvent('Paste', 'Paste action blocked'); });
     document.addEventListener('keydown', e => {
         const key = e.key.toLowerCase();
-        if ((e.ctrlKey || e.metaKey) && ['c','v','x','p','s'].includes(key)) {
+        if ((e.ctrlKey || e.metaKey) && ['c', 'v', 'x', 'p', 's'].includes(key)) {
             e.preventDefault();
-            event(['c','v','x'].includes(key) ? ({c:'Copy',v:'Paste',x:'Cut'}[key]) : 'ScreenshotShortcut', 'Restricted keyboard shortcut');
+            recordEvent(['c', 'v', 'x'].includes(key) ? ({ c: 'Copy', v: 'Paste', x: 'Cut' }[key]) : 'ScreenshotShortcut', 'Restricted keyboard shortcut');
         }
-        if (e.key === 'PrintScreen') event('ScreenshotShortcut', 'PrintScreen key');
+        if (e.key === 'PrintScreen') recordEvent('ScreenshotShortcut', 'PrintScreen key');
         if ((e.ctrlKey || e.metaKey) && e.shiftKey && key === '5') {
             e.preventDefault();
-            event('ScreenshotShortcut', 'Screenshot keyboard shortcut');
+            recordEvent('ScreenshotShortcut', 'Screenshot keyboard shortcut');
         }
-        if ((e.ctrlKey || e.metaKey) && e.shiftKey && key === 'r' || e.metaKey && e.altKey && key === 'r') {
+        if (((e.ctrlKey || e.metaKey) && e.shiftKey && key === 'r') || (e.metaKey && e.altKey && key === 'r')) {
             e.preventDefault();
-            event('RecordingShortcut', 'Possible screen recording shortcut');
+            recordEvent('RecordingShortcut', 'Possible screen recording shortcut');
         }
     });
     document.addEventListener('contextmenu', e => e.preventDefault());
     document.getElementById('exam-start-form').addEventListener('submit', e => {
-        if (!cameraReady || Date.now() < scheduledAt) { e.preventDefault(); updateButton(); }
+        if (!cameraReady || !faceDetector || lastFaceState !== 'good' || Date.now() < verificationEndsAt || Date.now() < scheduledAt) {
+            e.preventDefault();
+            updateButton();
+        }
     });
     window.addEventListener('beforeunload', () => {
         if (faceCheckTimer) clearInterval(faceCheckTimer);
         cameraStream?.getTracks().forEach(track => track.stop());
+        faceDetector?.close?.();
     });
-    initCamera();
+
     updateButton();
-    window.setInterval(updateButton, 1000);
+    await initCamera();
+    window.setInterval(updateButton, 250);
 })();
 </script>
 }
