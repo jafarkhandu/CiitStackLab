@@ -45,7 +45,7 @@ public sealed class StudentExaminationsController : Controller
         var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
         if (string.IsNullOrWhiteSpace(userId)) return Unauthorized();
         var result = await _exams.ScheduleAsync(userId, request.CourseId, request.TopicId,
-            DateTime.SpecifyKind(request.ScheduledAtLocal, DateTimeKind.Local).ToUniversalTime(), cancellationToken);
+            DateTime.SpecifyKind(request.ScheduledAtLocal, DateTimeKind.Unspecified).AddMinutes(request.TimezoneOffsetMinutes).ToUniversalTime(), cancellationToken);
         TempData[result.Succeeded ? "ExamMessage" : "ExamError"] =
             result.Succeeded ? "Exam scheduled successfully." : result.Error;
         return RedirectToAction(nameof(Index));
