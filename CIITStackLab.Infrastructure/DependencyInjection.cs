@@ -51,7 +51,6 @@ public static class DependencyInjection
         services.AddScoped<IAdminCourseTopicMappingService, AdminCourseTopicMappingService>();
         services.AddScoped<IAdminContentService, AdminContentService>();
         services.AddScoped<IVimeoVideoService, VimeoVideoService>();
-        services.AddScoped<IEmailService, EmailService>();
         services.AddScoped<IAdminMcqService, AdminMcqService>();
         services.AddScoped<IAdminInterviewQuestionService, AdminInterviewQuestionService>();
         services.AddScoped<IInterviewQuestionAnalyzerService, InterviewQuestionAnalyzerService>();
@@ -64,6 +63,7 @@ public static class DependencyInjection
         services.AddScoped<IStudentProgressService, StudentProgressService>();
         services.AddScoped<ICourseAssessmentService, CourseAssessmentService>();
         services.AddScoped<CoursePurchaseService>();
+        services.AddScoped<IEmailService, EmailService>();
         services.AddScoped<IAdminStudentService, AdminStudentService>();
         services.AddScoped<IAdminSettingsService, AdminSettingsService>();
         services.AddScoped<IAdminReportsService, AdminReportsService>();

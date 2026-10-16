@@ -2,9 +2,23 @@ namespace CIITStackLab.Application.Interfaces;
 
 public interface IEmailService
 {
-    Task SendEmailAsync(
+    Task SendRegistrationEmailAsync(
         string toEmail,
-        string subject,
-        string htmlBody,
+        string userName,
+        CancellationToken cancellationToken = default);
+
+    Task SendPurchaseInvoiceEmailAsync(
+        string toEmail,
+        string userName,
+        string courseTitle,
+        decimal amount,
+        int purchaseId,
+        DateTime purchasedAt,
+        CancellationToken cancellationToken = default);
+
+    Task SendPasswordResetOtpAsync(
+        string toEmail,
+        string otp,
+        DateTime expiresAt,
         CancellationToken cancellationToken = default);
 }

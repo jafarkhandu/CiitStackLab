@@ -1,10 +1,12 @@
+using System.Security.Claims;
+using System.Security.Cryptography;
+using System.Text;
 using CIITStackLab.Application.Interfaces;
 using CIITStackLab.Infrastructure.Identity;
 using CIITStackLab.WebApp.Models;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
-using System.Security.Cryptography;
 
 namespace CIITStackLab.WebApp.Controllers;
 
@@ -15,22 +17,28 @@ public class AccountController : Controller
     private const string PasswordResetOtpKey = "PasswordResetOtp";
     private const string PasswordResetEmailKey = "PasswordResetEmail";
     private const string PasswordResetExpiryKey = "PasswordResetExpiry";
+    private const string PasswordResetAttemptsKey = "PasswordResetAttempts";
+    private const string PasswordResetVerifiedKey = "PasswordResetVerified";
+    private const int MaxPasswordResetOtpAttempts = 5;
 
     private readonly UserManager<ApplicationUser> _userManager;
     private readonly RoleManager<IdentityRole> _roleManager;
     private readonly SignInManager<ApplicationUser> _signInManager;
     private readonly IEmailService _emailService;
+    private readonly ILogger<AccountController> _logger;
 
     public AccountController(
         UserManager<ApplicationUser> userManager,
         SignInManager<ApplicationUser> signInManager,
         RoleManager<IdentityRole> roleManager,
-        IEmailService emailService)
+        IEmailService emailService,
+        ILogger<AccountController> logger)
     {
         _userManager = userManager;
         _signInManager = signInManager;
         _roleManager = roleManager;
         _emailService = emailService;
+        _logger = logger;
     }
 
     [HttpGet]
@@ -95,156 +103,6 @@ public class AccountController : Controller
             "Your account does not have an assigned application role.");
 
         return View(model);
-    }
-
-    [HttpGet]
-    [AllowAnonymous]
-    public IActionResult ForgotPassword()
-    {
-        return View(new ForgotPasswordViewModel());
-    }
-
-    [HttpPost]
-    [AllowAnonymous]
-    [ValidateAntiForgeryToken]
-    public async Task<IActionResult> ForgotPassword(ForgotPasswordViewModel model)
-    {
-        if (!ModelState.IsValid)
-        {
-            return View(model);
-        }
-
-        var email = model.Email.Trim();
-        var user = await _userManager.FindByEmailAsync(email);
-
-        if (user is null || !user.IsActive || string.IsNullOrWhiteSpace(user.Email))
-        {
-            ModelState.AddModelError(nameof(model.Email), "No active account was found for this email address.");
-            return View(model);
-        }
-
-        var otp = RandomNumberGenerator.GetInt32(100000, 1000000).ToString();
-        HttpContext.Session.SetString(PasswordResetOtpKey, otp);
-        HttpContext.Session.SetString(PasswordResetEmailKey, user.Email);
-        HttpContext.Session.SetString(
-            PasswordResetExpiryKey,
-            DateTimeOffset.UtcNow.AddMinutes(10).ToUnixTimeSeconds().ToString());
-
-        var body = $"""
-                   <h2>CIIT Stack Lab Password Reset</h2>
-                   <p>Your password reset OTP is:</p>
-                   <p style="font-size:24px;font-weight:bold;letter-spacing:4px;">{otp}</p>
-                   <p>This OTP expires in 10 minutes.</p>
-                   <p>If you did not request this, you can ignore this email.</p>
-                   """;
-
-        await _emailService.SendEmailAsync(
-            user.Email,
-            "CIIT Stack Lab Password Reset OTP",
-            body);
-
-        return RedirectToAction(nameof(VerifyPasswordResetOtp));
-    }
-
-    [HttpGet]
-    [AllowAnonymous]
-    public IActionResult VerifyPasswordResetOtp()
-    {
-        if (string.IsNullOrWhiteSpace(HttpContext.Session.GetString(PasswordResetEmailKey)))
-        {
-            return RedirectToAction(nameof(ForgotPassword));
-        }
-
-        return View(new VerifyPasswordResetOtpViewModel());
-    }
-
-    [HttpPost]
-    [AllowAnonymous]
-    [ValidateAntiForgeryToken]
-    public IActionResult VerifyPasswordResetOtp(VerifyPasswordResetOtpViewModel model)
-    {
-        if (!ModelState.IsValid)
-        {
-            return View(model);
-        }
-
-        var storedOtp = HttpContext.Session.GetString(PasswordResetOtpKey);
-        var expiryValue = HttpContext.Session.GetString(PasswordResetExpiryKey);
-
-        if (!long.TryParse(expiryValue, out var expiry) ||
-            DateTimeOffset.UtcNow.ToUnixTimeSeconds() > expiry ||
-            string.IsNullOrWhiteSpace(storedOtp) ||
-            !CryptographicOperations.FixedTimeEquals(
-                System.Text.Encoding.UTF8.GetBytes(storedOtp),
-                System.Text.Encoding.UTF8.GetBytes(model.Otp.Trim())))
-        {
-            ModelState.AddModelError(nameof(model.Otp), "The OTP is invalid or has expired.");
-            return View(model);
-        }
-
-        HttpContext.Session.SetString("PasswordResetOtpVerified", "true");
-        return RedirectToAction(nameof(ResetPassword));
-    }
-
-    [HttpGet]
-    [AllowAnonymous]
-    public IActionResult ResetPassword()
-    {
-        if (HttpContext.Session.GetString("PasswordResetOtpVerified") != "true")
-        {
-            return RedirectToAction(nameof(ForgotPassword));
-        }
-
-        return View(new ResetPasswordViewModel());
-    }
-
-    [HttpPost]
-    [AllowAnonymous]
-    [ValidateAntiForgeryToken]
-    public async Task<IActionResult> ResetPassword(ResetPasswordViewModel model)
-    {
-        if (!ModelState.IsValid)
-        {
-            return View(model);
-        }
-
-        if (HttpContext.Session.GetString("PasswordResetOtpVerified") != "true")
-        {
-            return RedirectToAction(nameof(ForgotPassword));
-        }
-
-        var email = HttpContext.Session.GetString(PasswordResetEmailKey);
-        if (string.IsNullOrWhiteSpace(email))
-        {
-            return RedirectToAction(nameof(ForgotPassword));
-        }
-
-        var user = await _userManager.FindByEmailAsync(email);
-        if (user is null || !user.IsActive)
-        {
-            return RedirectToAction(nameof(ForgotPassword));
-        }
-
-        var resetToken = await _userManager.GeneratePasswordResetTokenAsync(user);
-        var result = await _userManager.ResetPasswordAsync(user, resetToken, model.Password);
-
-        if (!result.Succeeded)
-        {
-            foreach (var error in result.Errors)
-            {
-                ModelState.AddModelError(string.Empty, error.Description);
-            }
-
-            return View(model);
-        }
-
-        HttpContext.Session.Remove(PasswordResetOtpKey);
-        HttpContext.Session.Remove(PasswordResetEmailKey);
-        HttpContext.Session.Remove(PasswordResetExpiryKey);
-        HttpContext.Session.Remove("PasswordResetOtpVerified");
-
-        TempData["PasswordResetSuccess"] = "Your password has been reset successfully. You can now sign in.";
-        return RedirectToAction(nameof(Login));
     }
 
     [HttpGet]
@@ -332,9 +190,228 @@ public class AccountController : Controller
             return View(model);
         }
 
+        try
+        {
+            await _emailService.SendRegistrationEmailAsync(
+                email,
+                userName,
+                HttpContext.RequestAborted);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogWarning(
+                ex,
+                "Registration email could not be sent to {Email}.",
+                email);
+        }
+
         await _signInManager.SignInAsync(user, isPersistent: false);
 
         return RedirectToAction("Index", "Home");
+    }
+
+    [HttpGet]
+    [AllowAnonymous]
+    public IActionResult ForgotPassword()
+    {
+        return View(new ForgotPasswordViewModel());
+    }
+
+    [HttpPost]
+    [AllowAnonymous]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> ForgotPassword(ForgotPasswordViewModel model)
+    {
+        if (!ModelState.IsValid)
+        {
+            return View(model);
+        }
+
+        var email = model.Email.Trim();
+        var user = await _userManager.FindByEmailAsync(email);
+
+        if (user is not null && user.IsActive && !string.IsNullOrWhiteSpace(user.Email))
+        {
+            var otp = RandomNumberGenerator.GetInt32(100000, 1000000).ToString();
+            var expiresAt = DateTime.UtcNow.AddMinutes(10);
+
+            HttpContext.Session.SetString(PasswordResetOtpKey, otp);
+            HttpContext.Session.SetString(PasswordResetEmailKey, email);
+            HttpContext.Session.SetString(
+                PasswordResetExpiryKey,
+                expiresAt.ToString("O"));
+            HttpContext.Session.SetInt32(PasswordResetAttemptsKey, 0);
+            HttpContext.Session.Remove(PasswordResetVerifiedKey);
+
+            try
+            {
+                await _emailService.SendPasswordResetOtpAsync(
+                    email,
+                    otp,
+                    expiresAt,
+                    HttpContext.RequestAborted);
+            }
+            catch (Exception ex)
+            {
+                ClearPasswordResetSession();
+                _logger.LogWarning(
+                    ex,
+                    "Password reset OTP could not be sent to {Email}.",
+                    email);
+            }
+        }
+
+        TempData["PasswordResetMessage"] =
+            "If an active account exists for that email, a password reset OTP has been sent.";
+
+        return RedirectToAction(nameof(VerifyPasswordResetOtp));
+    }
+
+    [HttpGet]
+    [AllowAnonymous]
+    public IActionResult VerifyPasswordResetOtp()
+    {
+        if (string.IsNullOrWhiteSpace(HttpContext.Session.GetString(PasswordResetOtpKey)))
+        {
+            return RedirectToAction(nameof(ForgotPassword));
+        }
+
+        ViewData["PasswordResetMessage"] = TempData["PasswordResetMessage"];
+        return View(new VerifyPasswordResetOtpViewModel());
+    }
+
+    [HttpPost]
+    [AllowAnonymous]
+    [ValidateAntiForgeryToken]
+    public IActionResult VerifyPasswordResetOtp(VerifyPasswordResetOtpViewModel model)
+    {
+        if (!ModelState.IsValid)
+        {
+            return View(model);
+        }
+
+        var storedOtp = HttpContext.Session.GetString(PasswordResetOtpKey);
+        var expiresValue = HttpContext.Session.GetString(PasswordResetExpiryKey);
+        var attempts = HttpContext.Session.GetInt32(PasswordResetAttemptsKey) ?? 0;
+
+        if (string.IsNullOrWhiteSpace(storedOtp) || string.IsNullOrWhiteSpace(expiresValue))
+        {
+            ModelState.AddModelError(string.Empty, "Your OTP session has expired. Please request a new OTP.");
+            return View(model);
+        }
+
+        if (!DateTime.TryParse(
+                expiresValue,
+                null,
+                System.Globalization.DateTimeStyles.RoundtripKind,
+                out var expiresAt)
+            || DateTime.UtcNow > expiresAt)
+        {
+            ClearPasswordResetSession();
+            ModelState.AddModelError(string.Empty, "Your OTP has expired. Please request a new OTP.");
+            return View(model);
+        }
+
+        if (attempts >= MaxPasswordResetOtpAttempts)
+        {
+            ClearPasswordResetSession();
+            ModelState.AddModelError(string.Empty, "Too many incorrect OTP attempts. Please request a new OTP.");
+            return View(model);
+        }
+
+        var providedOtp = model.Otp.Trim();
+        var matches = providedOtp.Length == storedOtp.Length
+            && CryptographicOperations.FixedTimeEquals(
+                Encoding.UTF8.GetBytes(providedOtp),
+                Encoding.UTF8.GetBytes(storedOtp));
+
+        if (!matches)
+        {
+            attempts++;
+            HttpContext.Session.SetInt32(PasswordResetAttemptsKey, attempts);
+            ModelState.AddModelError(
+                string.Empty,
+                attempts >= MaxPasswordResetOtpAttempts
+                    ? "Too many incorrect OTP attempts. Please request a new OTP."
+                    : "The OTP is incorrect.");
+
+            if (attempts >= MaxPasswordResetOtpAttempts)
+            {
+                ClearPasswordResetSession();
+            }
+
+            return View(model);
+        }
+
+        HttpContext.Session.SetString(PasswordResetVerifiedKey, "true");
+        HttpContext.Session.Remove(PasswordResetOtpKey);
+        HttpContext.Session.Remove(PasswordResetAttemptsKey);
+
+        return RedirectToAction(nameof(ResetPassword));
+    }
+
+    [HttpGet]
+    [AllowAnonymous]
+    public IActionResult ResetPassword()
+    {
+        if (HttpContext.Session.GetString(PasswordResetVerifiedKey) != "true")
+        {
+            return RedirectToAction(nameof(ForgotPassword));
+        }
+
+        return View(new ResetPasswordViewModel());
+    }
+
+    [HttpPost]
+    [AllowAnonymous]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> ResetPassword(ResetPasswordViewModel model)
+    {
+        if (HttpContext.Session.GetString(PasswordResetVerifiedKey) != "true")
+        {
+            return RedirectToAction(nameof(ForgotPassword));
+        }
+
+        if (!ModelState.IsValid)
+        {
+            return View(model);
+        }
+
+        var email = HttpContext.Session.GetString(PasswordResetEmailKey);
+        if (string.IsNullOrWhiteSpace(email))
+        {
+            ClearPasswordResetSession();
+            return RedirectToAction(nameof(ForgotPassword));
+        }
+
+        var user = await _userManager.FindByEmailAsync(email);
+        if (user is null || !user.IsActive)
+        {
+            ClearPasswordResetSession();
+            return RedirectToAction(nameof(ForgotPassword));
+        }
+
+        var resetToken = await _userManager.GeneratePasswordResetTokenAsync(user);
+        var resetResult = await _userManager.ResetPasswordAsync(
+            user,
+            resetToken,
+            model.Password);
+
+        if (!resetResult.Succeeded)
+        {
+            foreach (var error in resetResult.Errors)
+            {
+                ModelState.AddModelError(string.Empty, error.Description);
+            }
+
+            return View(model);
+        }
+
+        ClearPasswordResetSession();
+        TempData["PasswordResetSuccess"] =
+            "Your password has been reset successfully. You can now sign in.";
+
+        return RedirectToAction(nameof(Login));
     }
 
     [HttpGet]
@@ -483,4 +560,13 @@ public class AccountController : Controller
     [HttpGet]
     [AllowAnonymous]
     public IActionResult AccessDenied() => View();
+
+    private void ClearPasswordResetSession()
+    {
+        HttpContext.Session.Remove(PasswordResetOtpKey);
+        HttpContext.Session.Remove(PasswordResetEmailKey);
+        HttpContext.Session.Remove(PasswordResetExpiryKey);
+        HttpContext.Session.Remove(PasswordResetAttemptsKey);
+        HttpContext.Session.Remove(PasswordResetVerifiedKey);
+    }
 }
