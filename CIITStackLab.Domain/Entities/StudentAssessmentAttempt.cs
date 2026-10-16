@@ -8,7 +8,7 @@ public sealed class StudentAssessmentAttempt
 
     public int CourseId { get; set; }
 
-    public int ContentId { get; set; }
+    public int? ContentId { get; set; }
 
     public int Score { get; set; }
 
