@@ -2,6 +2,8 @@ using System.Globalization;
 using System.Security.Claims;
 using System.Data.Common;
 using System.Text;
+using System.IO.Compression;
+using System.Xml.Linq;
 using CIITStackLab.Domain.Entities;
 using CIITStackLab.Infrastructure.Persistence;
 using Microsoft.AspNetCore.Authorization;
@@ -35,9 +37,7 @@ public sealed class ExaminationController : Controller
             .Select(x => new ExaminationTopicRow
             {
                 Id = x.Id, Title = x.Title,
-                QuestionCount = _db.ContentQuestions.Count(q => q.Flag == 0
-                    && (q.TopicId == x.Id || (q.NoteId.HasValue && _db.TrainingNotes.Any(n => n.Id == q.NoteId && n.TopicId == x.Id))
-                    || (q.ContentId.HasValue && _db.Lessons.Any(l => l.Id == q.ContentId && (l.TopicId == x.Id || (l.NoteId.HasValue && _db.TrainingNotes.Any(n => n.Id == l.NoteId && n.TopicId == x.Id)))))))
+                QuestionCount = _db.TopicExamQuestions.Count(q => q.Flag == 0 && q.TopicId == x.Id)
             }).ToListAsync(cancellationToken);
         var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
         if (!string.IsNullOrWhiteSpace(previewToken)
@@ -61,7 +61,7 @@ public sealed class ExaminationController : Controller
     {
         if (topicId <= 0 || file is null || file.Length == 0)
         {
-            TempData["ExamAdminError"] = "Select a topic and a non-empty CSV file.";
+            TempData["ExamAdminError"] = "Select a topic and a non-empty Excel file.";
             return RedirectToAction(nameof(Index));
         }
 
@@ -72,9 +72,9 @@ public sealed class ExaminationController : Controller
             TempData["ExamAdminError"] = "The selected topic is not active.";
             return RedirectToAction(nameof(Index));
         }
-        if (!Path.GetExtension(file.FileName).Equals(".csv", StringComparison.OrdinalIgnoreCase))
+        if (!Path.GetExtension(file.FileName).Equals(".xlsx", StringComparison.OrdinalIgnoreCase))
         {
-            TempData["ExamAdminError"] = "Upload a UTF-8 CSV file. Required columns: Question, Option1, Option2, Option3, Option4, CorrectOptionNumber.";
+            TempData["ExamAdminError"] = "Upload an .xlsx Excel workbook. The first worksheet must contain: Question, Option1, Option2, Option3, Option4, CorrectOptionNumber.";
             return RedirectToAction(nameof(Index));
         }
 
@@ -89,14 +89,12 @@ public sealed class ExaminationController : Controller
                 return RedirectToAction(nameof(Index));
             }
 
-            var existingKeys = await _db.ContentQuestions.AsNoTracking()
-                .Where(q => q.Flag == 0 && (q.TopicId == topicId
-                    || (q.NoteId.HasValue && _db.TrainingNotes.Any(n => n.Id == q.NoteId && n.TopicId == topicId))
-                    || (q.ContentId.HasValue && _db.Lessons.Any(l => l.Id == q.ContentId && l.TopicId == topicId))))
+            var existingKeys = await _db.TopicExamQuestions.AsNoTracking()
+                .Where(q => q.Flag == 0 && q.TopicId == topicId)
                 .Select(q => q.Question).ToListAsync(cancellationToken);
             var keys = existingKeys.Select(Normalize).Where(x => x.Length > 0).ToHashSet(StringComparer.OrdinalIgnoreCase);
             var batchKeys = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
-            var additions = new List<ContentQuestion>();
+            var additions = new List<TopicExamQuestion>();
             var rowNumber = 1;
             var invalidRows = 0;
 
@@ -120,12 +118,12 @@ public sealed class ExaminationController : Controller
                     invalidRows++;
                     continue;
                 }
-                additions.Add(new ContentQuestion
+                additions.Add(new TopicExamQuestion
                 {
                     TopicId = topicId, Question = fields[0].Trim(),
                     Option1 = fields[1].Trim(), Option2 = fields[2].Trim(),
                     Option3 = fields[3].Trim(), Option4 = fields[4].Trim(),
-                    CorrectOptionNumber = correct, Flag = 0, CreatedAt = DateTime.UtcNow
+                    CorrectOptionNumber = correct, Flag = 0, CreatedAtUtc = DateTime.UtcNow
                 });
             }
 
@@ -181,10 +179,8 @@ public sealed class ExaminationController : Controller
             return RedirectToAction(nameof(Index));
         }
 
-        var existingQuestions = await _db.ContentQuestions.AsNoTracking()
-            .Where(q => q.Flag == 0 && (q.TopicId == preview.TopicId
-                || (q.NoteId.HasValue && _db.TrainingNotes.Any(n => n.Id == q.NoteId && n.TopicId == preview.TopicId))
-                || (q.ContentId.HasValue && _db.Lessons.Any(l => l.Id == q.ContentId && l.TopicId == preview.TopicId))))
+        var existingQuestions = await _db.TopicExamQuestions.AsNoTracking()
+            .Where(q => q.Flag == 0 && q.TopicId == preview.TopicId)
             .Select(q => q.Question).ToListAsync(cancellationToken);
         var existingKeys = existingQuestions.Select(Normalize).Where(x => x.Length > 0)
             .ToHashSet(StringComparer.OrdinalIgnoreCase);
@@ -197,7 +193,7 @@ public sealed class ExaminationController : Controller
 
         try
         {
-            _db.ContentQuestions.AddRange(preview.Questions);
+            _db.TopicExamQuestions.AddRange(preview.Questions);
             await _db.SaveChangesAsync(cancellationToken);
             _cache.Remove(GetPreviewKey(previewToken));
             TempData["ExamAdminMessage"] = $"Imported {preview.Questions.Count} questions for {preview.TopicTitle}. Invalid or duplicate rows skipped: {preview.InvalidRows}.";
@@ -244,7 +240,7 @@ public sealed class ExaminationController : Controller
     }
 
     public sealed record ExamImportPreview(
-        string UserId, int TopicId, string TopicTitle, List<ContentQuestion> Questions, int InvalidRows);
+        string UserId, int TopicId, string TopicTitle, List<TopicExamQuestion> Questions, int InvalidRows);
 
     public sealed class ExaminationTopicRow
     {
