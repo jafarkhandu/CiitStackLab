@@ -442,9 +442,11 @@ public class CoursesController : Controller
                         && (attempt.Status == "Scheduled" || attempt.Status == "Ready"
                             || attempt.Status == "InProgress" || attempt.Status == "Passed"),
                     cancellationToken);
+                var openExamApplicationModal = TempData["OpenExamApplicationModal"] is true;
                 ViewBag.ShowExamApplicationModal = topicCompleted
                     && !hasPendingOrPassedExam
-                    && TempData["OpenExamApplicationModal"] is true;
+                    && openExamApplicationModal
+                    && TempData.Peek("ExamError") is null;
                 ViewBag.ExamApplicationTopicId = examTopicId.Value;
             }
         }
