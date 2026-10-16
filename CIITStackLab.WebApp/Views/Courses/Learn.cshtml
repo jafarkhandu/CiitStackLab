@@ -702,7 +702,13 @@ else
                                 completedTopicLessons * 100d / topicLearningContents.Count,
                                 MidpointRounding.AwayFromZero);
 
-                        var topicIsLocked = User.IsInRole("Student") && ViewBag.AllowedTopicId is int allowedTopicId && topic.Id != allowedTopicId;
+                        var topicPosition = Model.Topics.ToList().FindIndex(item => item.Id == topic.Id);
+                        var allowedTopicPosition = ViewBag.AllowedTopicId is int allowedTopicId
+                            ? Model.Topics.ToList().FindIndex(item => item.Id == allowedTopicId)
+                            : -1;
+                        var topicIsLocked = User.IsInRole("Student")
+                            && allowedTopicPosition >= 0
+                            && topicPosition > allowedTopicPosition;
 
                         <details class="ciit-learning-topic @(topicHasCurrentContent ? "is-active-topic" : "") @(topicIsLocked ? "is-locked-topic" : "")"
                                  data-topic-first-content-url="@Url.Action("Learn", "Courses", new { id = Model.Id, topicId = topic.Id })"
