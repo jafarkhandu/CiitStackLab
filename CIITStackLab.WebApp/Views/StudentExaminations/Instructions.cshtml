@@ -181,18 +181,28 @@
 
     async function loadFaceDetector() {
         // Use independent module CDNs. Some networks block one CDN while allowing another.
+        // Try independent CDN hosts, including jsDelivr mirrors used on restricted networks.
+        // The model itself is fetched separately by MediaPipe, so keep that URL explicit below.
         const sources = [
-            {
-                module: 'https://esm.sh/@@mediapipe/tasks-vision@0.10.22?bundle',
-                wasm: 'https://cdn.jsdelivr.net/npm/@@mediapipe/tasks-vision@0.10.22/wasm'
-            },
             {
                 module: 'https://cdn.jsdelivr.net/npm/@@mediapipe/tasks-vision@0.10.22/vision_bundle.mjs',
                 wasm: 'https://cdn.jsdelivr.net/npm/@@mediapipe/tasks-vision@0.10.22/wasm'
             },
             {
+                module: 'https://fastly.jsdelivr.net/npm/@@mediapipe/tasks-vision@0.10.22/vision_bundle.mjs',
+                wasm: 'https://fastly.jsdelivr.net/npm/@@mediapipe/tasks-vision@0.10.22/wasm'
+            },
+            {
+                module: 'https://gcore.jsdelivr.net/npm/@@mediapipe/tasks-vision@0.10.22/vision_bundle.mjs',
+                wasm: 'https://gcore.jsdelivr.net/npm/@@mediapipe/tasks-vision@0.10.22/wasm'
+            },
+            {
                 module: 'https://unpkg.com/@@mediapipe/tasks-vision@0.10.22/vision_bundle.mjs',
                 wasm: 'https://unpkg.com/@@mediapipe/tasks-vision@0.10.22/wasm'
+            },
+            {
+                module: 'https://esm.sh/@@mediapipe/tasks-vision@0.10.22?bundle',
+                wasm: 'https://cdn.jsdelivr.net/npm/@@mediapipe/tasks-vision@0.10.22/wasm'
             }
         ];
         let lastError;
@@ -213,7 +223,7 @@
                 console.warn('Face detector source failed; trying next CDN.', source.module, error);
             }
         }
-        throw new Error('Face detector could not load from any configured CDN. Check whether this network allows esm.sh, jsDelivr, unpkg, and Google Storage. ' + (lastError?.message || 'Unknown loading error.'));
+        throw new Error('Face detector library could not be downloaded from the available CDN mirrors. This is a network/CDN access failure, not a camera permission problem. Check whether the network blocks jsDelivr, unpkg, or esm.sh, then retry. ' + (lastError?.message || 'Unknown loading error.'));
     }
 
     async function detectFace() {
