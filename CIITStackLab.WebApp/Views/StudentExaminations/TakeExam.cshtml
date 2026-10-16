@@ -2,6 +2,7 @@
 @{
     Layout = "_CourseLayout";
     ViewData["Title"] = "Topic Examination";
+    var isDevelopment = ViewContext.HttpContext.RequestServices.GetRequiredService<Microsoft.AspNetCore.Hosting.IWebHostEnvironment>().IsDevelopment();
 }
 <section class="container py-4 ciit-examination-page" id="exam-app" data-attempt-id="@Model.AttemptId" data-deadline="@(Model.DeadlineAtUtc.HasValue ? DateTime.SpecifyKind(Model.DeadlineAtUtc.Value, DateTimeKind.Utc).ToString("O") : string.Empty)">
     <div class="d-flex flex-wrap justify-content-between align-items-center gap-3 mb-4">
@@ -58,7 +59,7 @@
     const video = document.getElementById('exam-camera');
     const cameraStatus = document.getElementById('camera-status');
     const csrf = form.querySelector('input[name="__RequestVerificationToken"]').value;
-    const isDevelopment = @ViewContext.HttpContext.RequestServices.GetRequiredService<Microsoft.AspNetCore.Hosting.IWebHostEnvironment>().IsDevelopment().ToString().ToLowerInvariant();
+    const isDevelopment = @(isDevelopment ? "true" : "false");
     let finishing = false, terminating = false, cameraStream = null, faceDetector = null, warningCount = 0;
     let lastSave = Promise.resolve();
 
