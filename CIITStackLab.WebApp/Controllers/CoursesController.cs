@@ -488,10 +488,7 @@ public class CoursesController : Controller
         int contentId,
         CancellationToken cancellationToken)
     {
-        if (id <= 0
-            || (contentId is null && topicId is null)
-            || contentId is <= 0
-            || topicId is <= 0)
+        if (id <= 0 || contentId <= 0)
         {
             return NotFound();
         }
@@ -530,7 +527,7 @@ public class CoursesController : Controller
 
         TempData["LearningProgressMessage"] = "Lesson marked as complete.";
 
-        return RedirectToAction(nameof(Learn), new { id, contentId, topicId });
+        return RedirectToAction(nameof(Learn), new { id, contentId });
     }
 
     [HttpPost("Courses/Learn/{id:int}/Assessment/{contentId:int}")]
