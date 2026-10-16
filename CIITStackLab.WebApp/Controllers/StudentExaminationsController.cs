@@ -31,7 +31,7 @@ public sealed class StudentExaminationsController : Controller
             join course in _db.Courses.AsNoTracking() on cm.CourseId equals course.Id
             join topic in _db.Topics.AsNoTracking() on cm.TopicId equals topic.Id
             where cm.Flag == 0 && course.Flag == 0 && topic.Flag == 0
-                && (course.FeesAmount <= 0 || _db.StudentCoursePurchases.Any(p => p.UserId == userId && p.CourseId == course.Id))
+                && (!course.FeesAmount.HasValue || course.FeesAmount <= 0 || _db.StudentCoursePurchases.Any(p => p.UserId == userId && p.CourseId == course.Id))
             orderby course.Title, topic.Title
             select new ExamTopicOption { CourseId = course.Id, CourseTitle = course.Title, TopicId = topic.Id, TopicTitle = topic.Title }
         ).ToListAsync(cancellationToken);
