@@ -65,6 +65,14 @@ namespace CIITStackLab.Infrastructure.Migrations
                 columns: new[] { "user_id", "course_id", "topic_id", "status" });
 
             migrationBuilder.CreateIndex(
+                name: "UX_topic_exam_one_active_attempt",
+                schema: "erpsystem",
+                table: "tblstudent_topic_exam_attempts",
+                columns: new[] { "user_id", "course_id", "topic_id" },
+                unique: true,
+                filter: "[status] IN ('Scheduled', 'Ready', 'InProgress')");
+
+            migrationBuilder.CreateIndex(
                 name: "IX_topic_exam_events_attempt_date",
                 schema: "erpsystem",
                 table: "tblstudent_topic_exam_security_events",
