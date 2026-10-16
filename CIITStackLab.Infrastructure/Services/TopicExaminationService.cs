@@ -262,7 +262,8 @@ public sealed class TopicExaminationService : ITopicExaminationService
         foreach (var id in ids)
         {
             if (!answers.TryGetValue(id, out var selected) || !selected.HasValue || !questions.TryGetValue(id, out var q)) continue;
-            if (optionOrders.TryGetValue(id, out var order) && selected.Value >= 1 && selected.Value <= order.Count\n                && q.CorrectOptionNumber == order[selected.Value - 1]) score++;
+            if (optionOrders.TryGetValue(id, out var order) && selected.Value >= 1 && selected.Value <= order.Count
+                && q.CorrectOptionNumber == order[selected.Value - 1]) score++;
         }
         attempt.Score = score;
         attempt.TotalQuestions = ids.Count;
