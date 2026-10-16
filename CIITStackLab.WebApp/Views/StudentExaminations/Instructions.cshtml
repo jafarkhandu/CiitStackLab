@@ -1,0 +1,148 @@
+@model CIITStackLab.Application.DTOs.TopicExamSessionDto
+@{
+    ViewData["Title"] = "Exam Instructions";
+}
+<section class="container py-4" data-exam-instructions data-scheduled="@Model.ScheduledAtUtc.ToString("O")" data-attempt-id="@Model.AttemptId">
+    <div class="card shadow-sm mx-auto" style="max-width: 900px;">
+        <div class="card-body p-4 p-lg-5">
+            <span class="text-uppercase text-primary small fw-bold">Pre-exam verification</span>
+            <h1 class="h2 mt-2">Read all instructions carefully</h1>
+            <div class="alert alert-danger mt-4">
+                <h2 class="h5 fw-bold">MANDATORY EXAM RULES</h2>
+                <ul class="mb-0 fw-bold">
+                    <li>Switching tabs/windows or leaving the exam page will automatically terminate the exam. Saved answers will be submitted.</li>
+                    <li>Copy, paste, cut, screenshot shortcuts and recording shortcuts are prohibited and may be logged.</li>
+                    <li>Camera permission must remain enabled during the examination. Camera loss and suspicious events are recorded.</li>
+                    <li>Two proctoring warnings are allowed. A further detected suspicious event terminates the exam automatically.</li>
+                    <li>This attempt is locked to the first device. Do not clear site cookies or switch devices.</li>
+                    <li>The exam lasts 60 minutes, contains 50 random MCQs, and each question carries 1 mark.</li>
+                    <li>Answers are saved periodically. At the deadline, the server submits saved answers automatically.</li>
+                    <li>Passing score is 35/50. Re-exams exclude questions used in previous attempts.</li>
+                </ul>
+            </div>
+            <div class="row g-4 align-items-center mt-1">
+                <div class="col-md-6">
+                    <h2 class="h5">Scheduled start countdown</h2>
+                    <div id="exam-countdown" class="display-6 fw-bold font-monospace" aria-live="polite">Loading…</div>
+                    <p id="exam-countdown-help" class="text-secondary">The actual exam will not start on this page.</p>
+                    <form asp-action="Start" asp-route-attemptId="@Model.AttemptId" method="post" id="exam-start-form">
+                        @Html.AntiForgeryToken()
+                        <button id="exam-start-button" type="submit" class="btn btn-primary btn-lg" disabled>Start examination</button>
+                    </form>
+                </div>
+                <div class="col-md-6">
+                    <h2 class="h5">Camera check</h2>
+                    <video id="exam-camera" autoplay muted playsinline class="w-100 rounded border" style="max-height:240px;background:#111"></video>
+                    <p id="camera-status" class="small text-secondary mt-2">Requesting camera permission…</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+@section Scripts {
+<script>
+(function () {
+    const root = document.querySelector('[data-exam-instructions]');
+    if (!root) return;
+    const attemptId = root.dataset.attemptId;
+    const scheduledAt = new Date(root.dataset.scheduled).getTime();
+    const countdown = document.getElementById('exam-countdown');
+    const button = document.getElementById('exam-start-button');
+    const help = document.getElementById('exam-countdown-help');
+    const video = document.getElementById('exam-camera');
+    const cameraStatus = document.getElementById('camera-status');
+    let cameraReady = false;
+    let cameraStream = null;
+    let faceDetector = null;
+    let faceCheckTimer = null;
+    const csrf = document.querySelector('#exam-start-form input[name="__RequestVerificationToken"]')?.value || '';
+
+    function event(type, details) {
+        const data = new URLSearchParams({ EventType: type, Details: details || '' });
+        data.append('__RequestVerificationToken', csrf);
+        return fetch('/Examinations/' + attemptId + '/SecurityEvent', {
+            method: 'POST', credentials: 'same-origin',
+            headers: { 'Content-Type': 'application/x-www-form-urlencoded' }, body: data
+        });
+    }
+
+    async function initCamera() {
+        try {
+            if (!navigator.mediaDevices?.getUserMedia) throw new Error('Camera access is not supported by this browser.');
+            cameraStream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'user' }, audio: false });
+            video.srcObject = cameraStream;
+            cameraReady = true;
+            cameraStatus.textContent = 'Camera connected. Keep it enabled for the whole exam.';
+            cameraStream.getVideoTracks().forEach(track => track.addEventListener('ended', () => {
+                cameraReady = false;
+                cameraStatus.textContent = 'Camera disconnected. Exam access is blocked.';
+                event('CameraLost', 'Camera track ended');
+                updateButton();
+            }));
+            if ('FaceDetector' in window) {
+                try { faceDetector = new FaceDetector({ fastMode: true, maxDetectedFaces: 3 }); } catch (_) {}
+            }
+            if (faceDetector) {
+                faceCheckTimer = window.setInterval(async () => {
+                    if (!cameraReady || video.readyState < 2) return;
+                    try {
+                        const faces = await faceDetector.detect(video);
+                        if (faces.length === 0) await event('FaceMissing', 'No face detected');
+                        if (faces.length > 1) await event('MultipleFaces', 'More than one face detected');
+                    } catch (_) {}
+                }, 8000);
+            } else {
+                cameraStatus.textContent = 'Camera connected. Automatic face detection is not supported in this browser; camera permission alone is not AI proctoring.';
+            }
+        } catch (error) {
+            cameraReady = false;
+            cameraStatus.textContent = error.message || 'Camera permission is required.';
+        }
+        updateButton();
+    }
+
+    function updateButton() {
+        const remaining = scheduledAt - Date.now();
+        if (remaining > 0) {
+            const total = Math.ceil(remaining / 1000);
+            const h = Math.floor(total / 3600), m = Math.floor((total % 3600) / 60), s = total % 60;
+            countdown.textContent = [h, m, s].map(x => String(x).padStart(2, '0')).join(':');
+            help.textContent = 'The exam remains closed until the scheduled time. This page does not start the exam timer.';
+            button.disabled = true;
+            button.textContent = 'Available at scheduled time';
+        } else {
+            countdown.textContent = 'Scheduled time reached';
+            help.textContent = 'The exam timer begins only after you start the examination.';
+            button.disabled = !cameraReady;
+            button.textContent = cameraReady ? 'Start examination' : 'Enable camera to continue';
+        }
+    }
+
+    document.addEventListener('visibilitychange', () => {
+        if (document.hidden) event('TabSwitch', 'Page became hidden before exam start');
+    });
+    document.addEventListener('copy', e => { e.preventDefault(); event('Copy', 'Copy action blocked'); });
+    document.addEventListener('cut', e => { e.preventDefault(); event('Cut', 'Cut action blocked'); });
+    document.addEventListener('paste', e => { e.preventDefault(); event('Paste', 'Paste action blocked'); });
+    document.addEventListener('keydown', e => {
+        const key = e.key.toLowerCase();
+        if ((e.ctrlKey || e.metaKey) && ['c','v','x','p','s'].includes(key)) {
+            e.preventDefault();
+            event(['c','v','x'].includes(key) ? ({c:'Copy',v:'Paste',x:'Cut'}[key]) : 'ScreenshotShortcut', 'Restricted keyboard shortcut');
+        }
+        if (e.key === 'PrintScreen') event('ScreenshotShortcut', 'PrintScreen key');
+    });
+    document.addEventListener('contextmenu', e => e.preventDefault());
+    document.getElementById('exam-start-form').addEventListener('submit', e => {
+        if (!cameraReady || Date.now() < scheduledAt) { e.preventDefault(); updateButton(); }
+    });
+    window.addEventListener('beforeunload', () => {
+        if (faceCheckTimer) clearInterval(faceCheckTimer);
+        cameraStream?.getTracks().forEach(track => track.stop());
+    });
+    initCamera();
+    updateButton();
+    window.setInterval(updateButton, 1000);
+})();
+</script>
+}
