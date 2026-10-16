@@ -58,6 +58,7 @@
     const video = document.getElementById('exam-camera');
     const cameraStatus = document.getElementById('camera-status');
     const csrf = form.querySelector('input[name="__RequestVerificationToken"]').value;
+    const isDevelopment = @ViewContext.HttpContext.RequestServices.GetRequiredService<Microsoft.AspNetCore.Hosting.IWebHostEnvironment>().IsDevelopment().ToString().ToLowerInvariant();
     let finishing = false, terminating = false, cameraStream = null, faceDetector = null, warningCount = 0;
     let lastSave = Promise.resolve();
 
@@ -134,29 +135,32 @@
         finishExam('Submitting examination…');
     });
 
-    document.addEventListener('visibilitychange', () => {
-        if (document.hidden) terminateForSecurity('TabSwitch', 'Exam tab became hidden', 'Exam terminated because the exam tab was left.');
-    });
-    window.addEventListener('blur', () => {
-        terminateForSecurity('WindowBlur', 'Exam window lost focus', 'Exam terminated because the exam window lost focus.');
-    });
+    if (!isDevelopment) {
+        document.addEventListener('visibilitychange', () => {
+            if (document.hidden) terminateForSecurity('TabSwitch', 'Exam tab became hidden', 'Exam terminated because the exam tab was left.');
+        });
+        window.addEventListener('blur', () => {
+            terminateForSecurity('WindowBlur', 'Exam window lost focus', 'Exam terminated because the exam window lost focus.');
+        });
+    }
     document.addEventListener('copy', e => { e.preventDefault(); postEvent('Copy', 'Copy blocked'); });
     document.addEventListener('cut', e => { e.preventDefault(); postEvent('Cut', 'Cut blocked'); });
     document.addEventListener('paste', e => { e.preventDefault(); postEvent('Paste', 'Paste blocked'); });
     document.addEventListener('contextmenu', e => e.preventDefault());
     document.addEventListener('keydown', e => {
         const key = e.key.toLowerCase();
-        if ((e.ctrlKey || e.metaKey) && ['c','v','x','p','s'].includes(key)) {
+        if ((e.ctrlKey || e.metaKey) && ['c', 'v', 'x'].includes(key)) {
             e.preventDefault();
-            postEvent(['c','v','x'].includes(key) ? ({c:'Copy',v:'Paste',x:'Cut'}[key]) : 'ScreenshotShortcut', 'Restricted shortcut');
+            postEvent(({ c: 'Copy', v: 'Paste', x: 'Cut' })[key], 'Restricted shortcut');
         }
-        if (e.key === 'PrintScreen') postEvent('ScreenshotShortcut', 'PrintScreen key');
-        if ((e.ctrlKey || e.metaKey) && e.shiftKey && key === '5') {
+        if (!isDevelopment && (e.key === 'PrintScreen'
+            || ((e.ctrlKey || e.metaKey) && e.shiftKey && key === '5')
+            || ((e.ctrlKey || e.metaKey) && ['p', 's'].includes(key)))) {
             e.preventDefault();
-            postEvent('ScreenshotShortcut', 'Screenshot keyboard shortcut');
+            postEvent('ScreenshotShortcut', 'Restricted screenshot/print shortcut');
         }
         if (((e.ctrlKey || e.metaKey) && e.shiftKey && key === 'r') || (e.metaKey && e.altKey && key === 'r')) {
-            e.preventDefault();
+            if (!isDevelopment) e.preventDefault();
             postEvent('RecordingShortcut', 'Possible screen recording shortcut');
         }
     });
