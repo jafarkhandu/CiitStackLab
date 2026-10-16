@@ -73,9 +73,10 @@
                                 @if (exam.Status is "Scheduled" or "Ready")
                                 {
                                     var openAtUtc = exam.ScheduledAtUtc.AddMinutes(-30);
-                                    var canOpen = DateTime.UtcNow >= openAtUtc;
-                                    <a class="ciit-exam-action exam-open-button @(canOpen ? "" : "disabled")" href="@(canOpen ? Url.Action("Instructions", "StudentExaminations", new { attemptId = exam.AttemptId }) : "#")" data-open-at="@DateTime.SpecifyKind(openAtUtc, DateTimeKind.Utc).ToString("O")" data-target-url="@Url.Action("Instructions", "StudentExaminations", new { attemptId = exam.AttemptId })" aria-disabled="@(!canOpen ? "true" : "false")" tabindex="@(!canOpen ? "-1" : "0")">Instructions / Start</a>
-                                    <span class="ciit-exam-sub exam-open-countdown" data-open-at="@openAtUtc.ToString("O")"></span>
+                                    var examEndUtc = exam.ScheduledAtUtc.AddMinutes(60);
+                                    var canOpen = DateTime.UtcNow >= openAtUtc && DateTime.UtcNow < examEndUtc;
+                                    <a class="ciit-exam-action exam-open-button @(canOpen ? "" : "disabled")" href="@(canOpen ? Url.Action("Instructions", "StudentExaminations", new { attemptId = exam.AttemptId }) : "#")" data-open-at="@DateTime.SpecifyKind(openAtUtc, DateTimeKind.Utc).ToString("O")" data-exam-end="@DateTime.SpecifyKind(examEndUtc, DateTimeKind.Utc).ToString("O")" data-target-url="@Url.Action("Instructions", "StudentExaminations", new { attemptId = exam.AttemptId })" aria-disabled="@(!canOpen ? "true" : "false")" tabindex="@(!canOpen ? "-1" : "0")">@(DateTime.UtcNow >= examEndUtc ? "Time's up" : "Instructions / Start")</a>
+                                    <span class="ciit-exam-sub exam-open-countdown" data-open-at="@DateTime.SpecifyKind(openAtUtc, DateTimeKind.Utc).ToString("O")" data-exam-end="@DateTime.SpecifyKind(examEndUtc, DateTimeKind.Utc).ToString("O")"></span>
                                 }
                                 else if (exam.Status == "InProgress") { <a class="ciit-exam-action" asp-action="Instructions" asp-route-attemptId="@exam.AttemptId">Resume exam</a> }
                                 else { <span class="ciit-exam-sub">Closed</span> }
@@ -96,10 +97,19 @@
     });
     function updateExamOpenButtons() {
         document.querySelectorAll('.exam-open-button').forEach(function (button) {
+            const now = Date.now();
             const openAt = new Date(button.dataset.openAt).getTime();
-            const remaining = openAt - Date.now();
+            const examEnd = new Date(button.dataset.examEnd).getTime();
+            const remaining = openAt - now;
             const label = button.parentElement.querySelector('.exam-open-countdown');
-            if (remaining <= 0) {
+            if (Number.isFinite(examEnd) && now >= examEnd) {
+                button.href = '#';
+                button.classList.add('disabled');
+                button.setAttribute('aria-disabled', 'true');
+                button.tabIndex = -1;
+                button.textContent = "Time's up";
+                if (label) label.textContent = 'Scheduled exam window has ended';
+            } else if (remaining <= 0) {
                 button.href = button.dataset.targetUrl;
                 button.classList.remove('disabled');
                 button.setAttribute('aria-disabled', 'false');
