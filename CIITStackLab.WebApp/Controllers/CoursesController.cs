@@ -434,7 +434,9 @@ public class CoursesController : Controller
                         && (attempt.Status == "Scheduled" || attempt.Status == "Ready"
                             || attempt.Status == "InProgress" || attempt.Status == "Passed"),
                     cancellationToken);
-                ViewBag.ShowExamApplicationModal = topicCompleted && !hasPendingOrPassedExam;
+                ViewBag.ShowExamApplicationModal = topicCompleted
+                    && !hasPendingOrPassedExam
+                    && TempData.Peek("OpenExamApplicationModal") is true;
                 ViewBag.ExamApplicationTopicId = examTopicId.Value;
             }
         }
@@ -636,6 +638,7 @@ public class CoursesController : Controller
         }
 
         TempData["LearningProgressMessage"] = "Topic marked as complete. You can now apply for its examination.";
+        TempData["OpenExamApplicationModal"] = true;
         return RedirectToAction(nameof(Learn), new { id, topicId });
     }
 
