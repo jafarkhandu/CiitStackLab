@@ -10,6 +10,7 @@ public sealed class TopicExamAttempt
     public DateTime? StartedAtUtc { get; set; }
     public DateTime? SubmittedAtUtc { get; set; }
     public DateTime? DeadlineAtUtc { get; set; }
+    public DateTime? VerificationStartedAtUtc { get; set; }
     public string Status { get; set; } = "Scheduled";
     public string QuestionIdsJson { get; set; } = "[]";
     public string OptionOrderJson { get; set; } = "{}";
