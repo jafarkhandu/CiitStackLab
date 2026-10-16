@@ -258,6 +258,12 @@ public class AccountController : Controller
                     ex,
                     "Password reset OTP could not be sent to {Email}.",
                     email);
+
+                ModelState.AddModelError(
+                    string.Empty,
+                    "We could not send the password reset OTP right now. Please try again.");
+
+                return View(model);
             }
         }
 
