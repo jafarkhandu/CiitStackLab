@@ -2478,3 +2478,30 @@ details[open] > summary .ciit-learning-disclosure-icon {
 /* Topic examination progression states */
 .ciit-learning-topic.is-locked-topic > .ciit-learning-topic-heading { opacity: .65; cursor: not-allowed; }
 .ciit-learning-topic.is-locked-topic .ciit-learning-topic-icon { color: #64748b; }
+
+
+/* Topic examination application modal: premium glass surface. */
+#topicExamApplicationModal .modal-dialog { max-width: 590px; }
+#topicExamApplicationModal .modal-content {
+    overflow: hidden;
+    border: 1px solid rgba(255,255,255,.88);
+    border-radius: 24px;
+    background: linear-gradient(145deg,rgba(255,255,255,.96),rgba(235,244,255,.94));
+    box-shadow: 0 28px 90px rgba(17,43,83,.24), inset 0 1px 0 #fff;
+    -webkit-backdrop-filter: blur(28px) saturate(160%);
+    backdrop-filter: blur(28px) saturate(160%);
+}
+#topicExamApplicationModal .modal-header,
+#topicExamApplicationModal .modal-footer { padding: 22px 26px; border-color: rgba(211,226,247,.8); }
+#topicExamApplicationModal .modal-body { padding: 24px 26px; color: #60738f; line-height: 1.7; }
+#topicExamApplicationModal .modal-title { color: #1f385d; font-weight: 850; letter-spacing: -.025em; }
+#topicExamApplicationModal .form-control { min-height: 46px; border: 1px solid #d9e6f8; border-radius: 12px; background: rgba(255,255,255,.9); }
+#topicExamApplicationModal .form-control:focus { border-color: #8cb5ff; box-shadow: 0 0 0 .22rem rgba(43,111,235,.13); }
+#topicExamApplicationModal .btn { min-height: 42px; border-radius: 11px; font-weight: 800; }
+.modal-backdrop.show { opacity: .48; }
+@media(max-width:575.98px) {
+    #topicExamApplicationModal .modal-dialog { margin: 12px; }
+    #topicExamApplicationModal .modal-header,
+    #topicExamApplicationModal .modal-footer,
+    #topicExamApplicationModal .modal-body { padding: 19px; }
+}
