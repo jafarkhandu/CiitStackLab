@@ -44,7 +44,7 @@ public sealed class AssessmentAttemptResultDto
 
     public int CourseId { get; init; }
 
-    public int ContentId { get; init; }
+    public int? ContentId { get; init; }
 
     public int Score { get; init; }
 
