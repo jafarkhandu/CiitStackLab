@@ -106,8 +106,8 @@
 .ciit-exam-camera-placeholder{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;flex-direction:column;gap:7px;color:#e6efff;background:rgba(8,18,34,.66);text-align:center}.ciit-exam-camera-placeholder>span{display:grid;place-items:center;width:49px;height:49px;margin-bottom:4px;border:1px solid rgba(180,208,255,.3);border-radius:16px;background:rgba(92,138,219,.18);font-size:22px}.ciit-exam-camera-placeholder strong{font-size:12px}.ciit-exam-camera-placeholder small{color:#a9bad6;font-size:10px}
 .ciit-exam-verify-diagnostics{display:grid;gap:12px;margin-top:18px}.ciit-exam-verify-diagnostic{display:flex;align-items:flex-start;gap:11px}.ciit-exam-check-dot{flex:0 0 9px;width:9px;height:9px;margin-top:5px;border-radius:50%;background:#9cabc0;box-shadow:0 0 0 4px rgba(156,171,192,.12)}.ciit-exam-check-dot.is-good{background:#1bb47a;box-shadow:0 0 0 4px rgba(27,180,122,.12)}.ciit-exam-check-dot.is-bad{background:#df4d5c;box-shadow:0 0 0 4px rgba(223,77,92,.12)}.ciit-exam-verify-diagnostic strong,.ciit-exam-verify-diagnostic small{display:block}.ciit-exam-verify-diagnostic strong{color:#304667;font-size:11px}.ciit-exam-verify-diagnostic small{margin-top:3px;color:#8290a5;font-size:10px;line-height:1.55}
 .ciit-exam-verify-note{margin:16px 0 0;padding-top:13px;border-top:1px solid #e5ecf7;color:#8491a6;font-size:10px;line-height:1.6}.ciit-exam-verify-note i{margin-right:5px;color:#4d82e8}
-@media(max-width:760px){.ciit-exam-verify-page{padding:16px 10px 32px}.ciit-exam-verify-card{border-radius:22px}.ciit-exam-verify-checks{grid-template-columns:1fr;padding-top:20px}.ciit-exam-verify-rules{padding:18px;margin:16px 14px 0}.ciit-exam-verify-rules ul{font-size:11.5px}.ciit-exam-verify-camera-panel,.ciit-exam-verify-timing{padding:17px}.ciit-exam-verify-video-wrap video{height:230px}.ciit-exam-verify-header{padding:24px 20px}}
-@media(prefers-reduced-motion:reduce){.ciit-exam-verify-start,.ciit-exam-verify-progress span{transition:none}}
+@@media(max-width:760px){.ciit-exam-verify-page{padding:16px 10px 32px}.ciit-exam-verify-card{border-radius:22px}.ciit-exam-verify-checks{grid-template-columns:1fr;padding-top:20px}.ciit-exam-verify-rules{padding:18px;margin:16px 14px 0}.ciit-exam-verify-rules ul{font-size:11.5px}.ciit-exam-verify-camera-panel,.ciit-exam-verify-timing{padding:17px}.ciit-exam-verify-video-wrap video{height:230px}.ciit-exam-verify-header{padding:24px 20px}}
+@@media(prefers-reduced-motion:reduce){.ciit-exam-verify-start,.ciit-exam-verify-progress span{transition:none}}
 </style>
 
 @section Scripts {
@@ -173,9 +173,9 @@
 
     async function loadFaceDetector() {
         // MediaPipe provides a consistent client-side detector on browsers without the experimental FaceDetector API.
-        const vision = await import('https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.22/+esm');
+        const vision = await import('https://cdn.jsdelivr.net/npm/@@@mediapipe/tasks-vision@0.10.22/+esm');
         const files = await vision.FilesetResolver.forVisionTasks(
-            'https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.22/wasm'
+            'https://cdn.jsdelivr.net/npm/@@@mediapipe/tasks-vision@0.10.22/wasm'
         );
         return vision.FaceDetector.createFromOptions(files, {
             baseOptions: {
