@@ -12,6 +12,7 @@ public sealed class TopicExamAttempt
     public DateTime? DeadlineAtUtc { get; set; }
     public string Status { get; set; } = "Scheduled";
     public string QuestionIdsJson { get; set; } = "[]";
+    public string OptionOrderJson { get; set; } = "{}";
     public string AnswersJson { get; set; } = "{}";
     public string? DeviceTokenHash { get; set; }
     public int WarningCount { get; set; }
