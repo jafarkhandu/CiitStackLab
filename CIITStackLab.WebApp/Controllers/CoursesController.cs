@@ -348,10 +348,23 @@ public class CoursesController : Controller
                     || topic.Chapters.Any(chapter => chapter.Contents.Any(content => content.Id == contentId.Value)))?.Id;
             }
 
-            if (allowedTopicId.HasValue && requestedTopicId.HasValue && requestedTopicId.Value != allowedTopicId.Value)
+            if (allowedTopicId.HasValue && requestedTopicId.HasValue)
             {
-                TempData["LearningProgressMessage"] = "This topic is locked until you pass the current topic examination.";
-                return RedirectToAction(nameof(Learn), new { id, topicId = allowedTopicId.Value });
+                var allowedTopicOrder = await _dbContext.CourseModules.AsNoTracking()
+                    .Where(module => module.CourseId == id && module.TopicId == allowedTopicId.Value && module.Flag == 0)
+                    .Select(module => (int?)module.SortOrder)
+                    .FirstOrDefaultAsync(cancellationToken);
+                var requestedTopicOrder = await _dbContext.CourseModules.AsNoTracking()
+                    .Where(module => module.CourseId == id && module.TopicId == requestedTopicId.Value && module.Flag == 0)
+                    .Select(module => (int?)module.SortOrder)
+                    .FirstOrDefaultAsync(cancellationToken);
+
+                if (allowedTopicOrder.HasValue && requestedTopicOrder.HasValue
+                    && requestedTopicOrder.Value > allowedTopicOrder.Value)
+                {
+                    TempData["LearningProgressMessage"] = "This topic is locked until you pass the current topic examination.";
+                    return RedirectToAction(nameof(Learn), new { id, topicId = allowedTopicId.Value });
+                }
             }
         }
 
