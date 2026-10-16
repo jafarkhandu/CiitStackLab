@@ -1,0 +1,85 @@
+@{
+    ViewData["Title"] = "Topic Examinations";
+    var topics = ViewBag.Topics as IReadOnlyList<CIITStackLab.WebApp.Areas.Admin.Controllers.ExaminationController.ExaminationTopicRow>
+        ?? Array.Empty<CIITStackLab.WebApp.Areas.Admin.Controllers.ExaminationController.ExaminationTopicRow>();
+}
+
+<section class="container py-4">
+    <div class="d-flex flex-wrap justify-content-between align-items-start gap-3 mb-4">
+        <div>
+            <span class="text-uppercase text-primary small fw-bold">Examination Center</span>
+            <h1 class="h2 mt-2">Topic Examination Question Bank</h1>
+            <p class="text-secondary mb-0">Import topic-specific MCQs. There is no question-count limit per CSV upload.</p>
+        </div>
+    </div>
+
+    @if (ViewBag.Message is string message)
+    {
+        <div class="alert alert-success" role="status">@message</div>
+    }
+    @if (ViewBag.Error is string error)
+    {
+        <div class="alert alert-danger" role="alert">@error</div>
+    }
+
+    <div class="card shadow-sm mb-4">
+        <div class="card-body p-4">
+            <h2 class="h5">Bulk import questions</h2>
+            <p class="text-secondary">The importer validates each row and skips invalid or duplicate questions. Existing topic MCQs are reused from the current question bank.</p>
+            <form asp-area="Admin" asp-controller="Examination" asp-action="Import" method="post" enctype="multipart/form-data" class="row g-3">
+                @Html.AntiForgeryToken()
+                <div class="col-md-5">
+                    <label class="form-label" for="topicId">Topic</label>
+                    <select class="form-select" id="topicId" name="topicId" required>
+                        <option value="">Select topic</option>
+                        @foreach (var topic in topics)
+                        {
+                            <option value="@topic.Id">@topic.Title (@topic.QuestionCount questions)</option>
+                        }
+                    </select>
+                </div>
+                <div class="col-md-5">
+                    <label class="form-label" for="file">CSV file</label>
+                    <input class="form-control" id="file" name="file" type="file" accept=".csv,text/csv" required />
+                </div>
+                <div class="col-md-2 d-flex align-items-end">
+                    <button class="btn btn-primary w-100" type="submit">Validate &amp; Import</button>
+                </div>
+            </form>
+            <div class="mt-3 small text-secondary">
+                Required header: <code>Question,Option1,Option2,Option3,Option4,CorrectOptionNumber</code>
+                <p class="mb-0 mt-2">CorrectOptionNumber must be 1, 2, 3, or 4. Use UTF-8 CSV. Repeated question text for a topic is skipped.</p>
+            </div>
+        </div>
+    </div>
+
+    <div class="card shadow-sm">
+        <div class="card-body p-4">
+            <h2 class="h5 mb-3">Topic question availability</h2>
+            <div class="table-responsive">
+                <table class="table align-middle">
+                    <thead><tr><th>Topic</th><th class="text-end">Valid question count</th><th class="text-end">Exam readiness</th></tr></thead>
+                    <tbody>
+                    @foreach (var topic in topics)
+                    {
+                        <tr>
+                            <td>@topic.Title</td>
+                            <td class="text-end">@topic.QuestionCount</td>
+                            <td class="text-end">
+                                @if (topic.QuestionCount >= 50)
+                                {
+                                    <span class="badge text-bg-success">Ready</span>
+                                }
+                                else
+                                {
+                                    <span class="badge text-bg-warning">Need @(50 - topic.QuestionCount) more</span>
+                                }
+                            </td>
+                        </tr>
+                    }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</section>
