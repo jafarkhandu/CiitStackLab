@@ -127,6 +127,8 @@ public sealed class TopicExaminationService : ITopicExaminationService
             return (false, "This exam attempt is already closed.", null);
         if (!await ClaimDeviceAsync(attempt, deviceToken, cancellationToken))
             return (false, "This exam attempt is locked to the first device used.", null);
+        if (attempt.VerificationStartedAtUtc is null)
+            attempt.VerificationStartedAtUtc = now;
         if (attempt.Status == "Scheduled") attempt.Status = "Ready";
         await _db.SaveChangesAsync(cancellationToken);
         return (true, null, await BuildSessionAsync(attempt, includeAnswers: false, includeQuestions: false, cancellationToken));
@@ -143,6 +145,9 @@ public sealed class TopicExaminationService : ITopicExaminationService
         var examEndUtc = attempt.ScheduledAtUtc.AddMinutes(ExamDurationMinutes);
         if (now < attempt.ScheduledAtUtc)
             return (false, "The exam will start at the scheduled time. The countdown page is not the exam.", null);
+        if (!attempt.VerificationStartedAtUtc.HasValue
+            || now < attempt.VerificationStartedAtUtc.Value.AddMinutes(1))
+            return (false, "Complete the full one-minute pre-exam verification before starting.", null);
         if (now >= examEndUtc)
         {
             if (attempt.Status is "Scheduled" or "Ready" or "InProgress")
@@ -410,6 +415,7 @@ public sealed class TopicExaminationService : ITopicExaminationService
         return new TopicExamSessionDto
         {
             AttemptId = attempt.Id, ScheduledAtUtc = attempt.ScheduledAtUtc,
+            VerificationStartedAtUtc = attempt.VerificationStartedAtUtc,
             DeadlineAtUtc = attempt.DeadlineAtUtc, Status = attempt.Status, Questions = mapped
         };
     }
