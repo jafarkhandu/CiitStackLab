@@ -136,7 +136,7 @@
         ? new Date(root.dataset.verificationStarted).getTime()
         : Number.NaN;
     const verificationEndsAt = Number.isFinite(verificationStartedAt)
-        ? verificationStartedAt + 60 * 1000
+        ? verificationStartedAt + 30 * 1000
         : Number.POSITIVE_INFINITY;
     const csrf = document.querySelector('#exam-start-form input[name="__RequestVerificationToken"]')?.value || '';
     let cameraReady = false;
@@ -293,12 +293,12 @@
         const verificationRemaining = verificationEndsAt - now;
         const scheduledRemaining = scheduledAt - now;
         const verificationTotal = Math.max(0, verificationRemaining);
-        progress.style.width = ((60 - verificationTotal / 1000) / 60 * 100) + '%';
+        progress.style.width = ((30 - verificationTotal / 1000) / 30 * 100) + '%';
 
         if (verificationRemaining > 0) {
             const total = Math.ceil(verificationRemaining / 1000);
             countdown.textContent = [Math.floor(total / 60), total % 60].map(x => String(x).padStart(2, '0')).join(':');
-            help.textContent = 'Security and face checks are running. Verification completes after one minute.';
+            help.textContent = 'Security and face checks are running. Verification completes after 30 seconds.';
             button.disabled = true;
             button.querySelector('span').textContent = 'Verifying…';
         } else if (!cameraReady || !faceDetector || lastFaceState !== 'good') {
