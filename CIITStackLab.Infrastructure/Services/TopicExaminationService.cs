@@ -101,7 +101,7 @@ public sealed class TopicExaminationService : ITopicExaminationService
             return (false, "This exam attempt is locked to the first device used.", null);
         if (attempt.Status == "Scheduled") attempt.Status = "Ready";
         await _db.SaveChangesAsync(cancellationToken);
-        return (true, null, await BuildSessionAsync(attempt, includeAnswers: true, cancellationToken));
+        return (true, null, await BuildSessionAsync(attempt, includeAnswers: false, includeQuestions: false, cancellationToken));
     }
 
     public async Task<(bool Succeeded, string? Error, TopicExamSessionDto? Session)> StartAsync(
@@ -115,7 +115,7 @@ public sealed class TopicExaminationService : ITopicExaminationService
         if (now < attempt.ScheduledAtUtc)
             return (false, "The exam will start at the scheduled time. The countdown page is not the exam.", null);
         if (attempt.Status == "InProgress")
-            return (true, null, await BuildSessionAsync(attempt, true, cancellationToken));
+            return (true, null, await BuildSessionAsync(attempt, true, true, cancellationToken));
         if (attempt.Status != "Ready")
             return (false, "Open the pre-exam instructions first.", null);
 
@@ -127,11 +127,11 @@ public sealed class TopicExaminationService : ITopicExaminationService
     }
 
     public async Task<(bool Succeeded, string? Error, TopicExamSummaryDto? Result)> SaveAnswersAsync(
-        string userId, long attemptId, IReadOnlyList<TopicExamAnswerInput> answers, CancellationToken cancellationToken = default)
+        string userId, long attemptId, IReadOnlyList<TopicExamAnswerInput> answers, string deviceToken, CancellationToken cancellationToken = default)
     {
         var attempt = await FindOwnedAttemptAsync(userId, attemptId, cancellationToken);
         if (attempt is null) return (false, "Exam not found.", null);
-        if (attempt.Status != "InProgress" || attempt.DeadlineAtUtc is null)
+        if (attempt.Status != "InProgress" || attempt.DeadlineAtUtc is null || !await DeviceMatchesAsync(attempt, deviceToken))
             return (false, "This exam is not active.", await MapSummaryAsync(attempt, cancellationToken));
         var now = DateTime.UtcNow;
         var questionIds = DeserializeIds(attempt.QuestionIdsJson);
@@ -276,14 +276,14 @@ public sealed class TopicExaminationService : ITopicExaminationService
         catch (FormatException) { return Task.FromResult(false); }
     }
 
-    private async Task<TopicExamSessionDto> BuildSessionAsync(TopicExamAttempt attempt, bool includeAnswers, CancellationToken cancellationToken)
+    private async Task<TopicExamSessionDto> BuildSessionAsync(TopicExamAttempt attempt, bool includeAnswers, bool includeQuestions, CancellationToken cancellationToken)
     {
         var ids = DeserializeIds(attempt.QuestionIdsJson);
-        var questions = await _db.ContentQuestions.AsNoTracking().Where(q => ids.Contains(q.Id)).ToListAsync(cancellationToken);
+        var questions = includeQuestions ? await _db.ContentQuestions.AsNoTracking().Where(q => ids.Contains(q.Id)).ToListAsync(cancellationToken) : new List<ContentQuestion>();
         var answerMap = includeAnswers
             ? JsonSerializer.Deserialize<Dictionary<int, int?>>(attempt.AnswersJson, JsonOptions) ?? new()
             : new Dictionary<int, int?>();
-        var mapped = ids.Where(id => questions.Any(q => q.Id == id)).Select(id =>
+        var mapped = includeQuestions ? ids.Where(id => questions.Any(q => q.Id == id)).Select(id =>
         {
             var q = questions.Single(x => x.Id == id);
             return new TopicExamQuestionDto
@@ -294,7 +294,7 @@ public sealed class TopicExaminationService : ITopicExaminationService
                     .Where(x => !string.IsNullOrWhiteSpace(x)).Select(x => x!).ToArray(),
                 SelectedOptionNumber = answerMap.GetValueOrDefault(id)
             };
-        }).ToList();
+        }).ToList() : new List<TopicExamQuestionDto>();
         return new TopicExamSessionDto
         {
             AttemptId = attempt.Id, ScheduledAtUtc = attempt.ScheduledAtUtc,
