@@ -2473,3 +2473,8 @@ details[open] > summary .ciit-learning-disclosure-icon {
     max-width: 100%;
     box-sizing: border-box;
 }
+
+
+/* Topic examination progression states */
+.ciit-learning-topic.is-locked-topic > .ciit-learning-topic-heading { opacity: .65; cursor: not-allowed; }
+.ciit-learning-topic.is-locked-topic .ciit-learning-topic-icon { color: #64748b; }
