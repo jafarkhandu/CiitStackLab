@@ -88,6 +88,9 @@ public sealed class TopicExaminationService : ITopicExaminationService
             return (false, $"Only {unseenIds.Count} unseen valid questions remain. Add at least {QuestionCount - unseenIds.Count} new questions before scheduling a re-exam.", null);
 
         var chosenIds = unseenIds.OrderBy(_ => RandomNumberGenerator.GetInt32(int.MaxValue)).Take(QuestionCount).ToList();
+        var optionOrders = new Dictionary<int, List<int>>();
+        foreach (var questionId in chosenIds)
+            optionOrders[questionId] = new[] { 1, 2, 3, 4 }.OrderBy(_ => RandomNumberGenerator.GetInt32(int.MaxValue)).ToList();
         var attempt = new TopicExamAttempt
         {
             UserId = userId, CourseId = courseId, TopicId = topicId,
@@ -246,7 +249,7 @@ public sealed class TopicExaminationService : ITopicExaminationService
         foreach (var id in ids)
         {
             if (!answers.TryGetValue(id, out var selected) || !selected.HasValue || !questions.TryGetValue(id, out var q)) continue;
-            if (q.CorrectOptionNumber == selected.Value) score++;
+            if (optionOrders.TryGetValue(id, out var order) && selected.Value >= 1 && selected.Value <= order.Count\n                && q.CorrectOptionNumber == order[selected.Value - 1]) score++;
         }
         attempt.Score = score;
         attempt.TotalQuestions = ids.Count;
