@@ -44,6 +44,10 @@
                     @if (User.Identity?.IsAuthenticated == true)
                     {
                         <span class="text-secondary small d-none d-xl-inline">Hi, @User.Identity.Name</span>
+                        @if (User.IsInRole("Student"))
+                        {
+                            <a asp-controller="StudentExaminations" asp-action="Index" class="btn btn-outline-primary fw-semibold">Examinations</a>
+                        }
 
                         @if (User.IsInRole("Admin") || User.IsInRole("Super User"))
                         {
