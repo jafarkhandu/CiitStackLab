@@ -18,6 +18,7 @@ public class ApplicationDbContext : IdentityDbContext<ApplicationUser>
     public DbSet<Lesson> Lessons => Set<Lesson>();
     public DbSet<Topic> Topics => Set<Topic>();
     public DbSet<ContentQuestion> ContentQuestions => Set<ContentQuestion>();
+    public DbSet<TopicExamQuestion> TopicExamQuestions => Set<TopicExamQuestion>();
     public DbSet<ContentInterviewQuestion> ContentInterviewQuestions => Set<ContentInterviewQuestion>();
     public DbSet<ContentProgramQuestion> ContentProgramQuestions => Set<ContentProgramQuestion>();
     public DbSet<ContentProgramAnswer> ContentProgramAnswers => Set<ContentProgramAnswer>();
@@ -89,6 +90,23 @@ public class ApplicationDbContext : IdentityDbContext<ApplicationUser>
             entity.Property(x => x.DeletedAt).HasColumnName("DeletedAt");
             entity.Property(x => x.RestoredAt).HasColumnName("RestoredAt");
             entity.HasMany(x => x.Lessons).WithOne(x => x.Topic).HasForeignKey(x => x.TopicId).OnDelete(DeleteBehavior.NoAction);
+        });
+
+        modelBuilder.Entity<TopicExamQuestion>(entity =>
+        {
+            entity.ToTable("tblstudent_topic_exam_questions", ExistingSchema);
+            entity.HasKey(x => x.Id);
+            entity.Property(x => x.Id).HasColumnName("exam_question_id");
+            entity.Property(x => x.TopicId).HasColumnName("topic_id");
+            entity.Property(x => x.Question).HasColumnName("question").HasMaxLength(2000).IsRequired();
+            entity.Property(x => x.Option1).HasColumnName("option1").HasMaxLength(1000).IsRequired();
+            entity.Property(x => x.Option2).HasColumnName("option2").HasMaxLength(1000).IsRequired();
+            entity.Property(x => x.Option3).HasColumnName("option3").HasMaxLength(1000).IsRequired();
+            entity.Property(x => x.Option4).HasColumnName("option4").HasMaxLength(1000).IsRequired();
+            entity.Property(x => x.CorrectOptionNumber).HasColumnName("correct_option_number");
+            entity.Property(x => x.Flag).HasColumnName("flag").HasDefaultValue(0);
+            entity.Property(x => x.CreatedAtUtc).HasColumnName("created_at_utc");
+            entity.HasIndex(x => x.TopicId).HasDatabaseName("IX_topic_exam_questions_topic_id");
         });
 
         modelBuilder.Entity<ContentQuestion>(entity =>
