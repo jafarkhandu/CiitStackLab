@@ -251,28 +251,33 @@ public sealed class TopicExaminationService : ITopicExaminationService
     {
         var now = DateTime.UtcNow;
         var expired = await _db.TopicExamAttempts
-            .Where(x => x.Status == "InProgress" && x.DeadlineAtUtc.HasValue && x.DeadlineAtUtc <= now)
+            .Where(x => (x.Status == "InProgress" && x.DeadlineAtUtc.HasValue && x.DeadlineAtUtc <= now)
+                || ((x.Status == "Scheduled" || x.Status == "Ready")
+                    && !x.StartedAtUtc.HasValue
+                    && x.ScheduledAtUtc.AddMinutes(ExamDurationMinutes) <= now))
             .ToListAsync(cancellationToken);
         foreach (var attempt in expired)
             await FinalizeAsync(attempt, "TimedOut", now, cancellationToken);
 
-        var missed = await _db.TopicExamAttempts
-            .Where(x => (x.Status == "Scheduled" || x.Status == "Ready")
-                && !x.StartedAtUtc.HasValue
-                && x.ScheduledAtUtc.AddMinutes(ExamDurationMinutes) <= now)
-            .ToListAsync(cancellationToken);
-        foreach (var attempt in missed)
+        foreach (var attempt in expired)
         {
-            attempt.Status = "Failed";
-            attempt.Passed = false;
-            attempt.Score = 0;
-            attempt.TotalQuestions = QuestionCount;
-            attempt.SubmittedAtUtc = now;
-            attempt.TerminationReason = "Exam start window missed";
+            if (attempt.Status == "InProgress")
+            {
+                await FinalizeAsync(attempt, "TimedOut", now, cancellationToken);
+            }
+            else
+            {
+                attempt.Status = "TimedOut";
+                attempt.Passed = false;
+                attempt.Score = 0;
+                attempt.TotalQuestions = QuestionCount;
+                attempt.SubmittedAtUtc = now;
+                attempt.TerminationReason = "Exam start window missed";
+            }
         }
-        if (missed.Count > 0)
+        if (expired.Count > 0)
             await _db.SaveChangesAsync(cancellationToken);
-        return expired.Count + missed.Count;
+        return expired.Count;
     }
 
     public async Task<bool> HasPassedTopicAsync(string userId, int courseId, int topicId, CancellationToken cancellationToken = default)
@@ -315,7 +320,12 @@ public sealed class TopicExaminationService : ITopicExaminationService
         attempt.Score = score;
         attempt.TotalQuestions = ids.Count;
         attempt.Passed = finalStatus != "Terminated" && score >= PassingScore;
-        attempt.Status = finalStatus == "Terminated" ? "Terminated" : (attempt.Passed ? "Passed" : "Failed");
+        attempt.Status = finalStatus switch
+        {
+            "Terminated" => "Terminated",
+            "TimedOut" => "TimedOut",
+            _ => attempt.Passed ? "Passed" : "Failed"
+        };
         attempt.SubmittedAtUtc = submittedAtUtc;
         await _db.SaveChangesAsync(cancellationToken);
     }
