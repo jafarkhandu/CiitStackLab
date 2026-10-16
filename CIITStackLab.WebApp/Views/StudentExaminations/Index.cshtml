@@ -5,102 +5,88 @@
     var options = ViewBag.AvailableTopics as IReadOnlyList<CIITStackLab.WebApp.Controllers.StudentExaminationsController.ExamTopicOption>
         ?? Array.Empty<CIITStackLab.WebApp.Controllers.StudentExaminationsController.ExamTopicOption>();
 }
-<section class="container py-4 ciit-examination-page">
-    <div class="mb-4">
-        <span class="text-uppercase text-primary small fw-bold">Student Workspace</span>
-        <h1 class="h2 mt-2">Examinations</h1>
-        <p class="text-secondary">Schedule topic exams, review upcoming sessions, and track your results.</p>
-    </div>
-    @if (TempData["ExamMessage"] is string message) { <div class="alert alert-success" role="status">@message</div> }
-    @if (TempData["ExamError"] is string error) { <div class="alert alert-warning" role="alert">@error</div> }
-
-    <div class="card shadow-sm mb-4">
-        <div class="card-body p-4">
-            <h2 class="h5">Apply for a topic exam</h2>
-            <p class="text-secondary">You can schedule an exam only after completing the topic. Choose a date and time at least 30 minutes ahead.</p>
-            <form asp-controller="StudentExaminations" asp-action="Schedule" method="post" class="row g-3">
-                @Html.AntiForgeryToken()
-                <div class="col-md-5">
-                    <label class="form-label" for="topicOption">Course / topic</label>
-                    <select id="topicOption" class="form-select" required>
-                        <option value="">Select a topic</option>
-                        @foreach (var option in options)
-                        {
-                            <option value="@option.CourseId|@option.TopicId">@option.CourseTitle — @option.TopicTitle</option>
-                        }
-                    </select>
-                    <input type="hidden" name="CourseId" id="courseId" />
-                    <input type="hidden" name="TopicId" id="topicId" />
-                    <input type="hidden" name="TimezoneOffsetMinutes" id="timezoneOffsetMinutes" />
-                </div>
-                <div class="col-md-5">
-                    <label class="form-label" for="ScheduledAtLocal">Exam date and time</label>
-                    <input class="form-control" type="datetime-local" id="ScheduledAtLocal" name="ScheduledAtLocal" required />
-                </div>
-                <div class="col-md-2 d-flex align-items-end">
-                    <button type="submit" class="btn btn-primary w-100">Schedule</button>
-                </div>
-            </form>
+@section Styles {
+<style>
+.ciit-examination-page{max-width:1280px;padding-top:34px;padding-bottom:54px;color:#1b3153}
+.ciit-exam-hero{position:relative;overflow:hidden;padding:30px 34px;border:1px solid rgba(255,255,255,.88);border-radius:26px;background:linear-gradient(125deg,rgba(255,255,255,.92),rgba(229,240,255,.76));box-shadow:0 20px 55px rgba(44,83,140,.1),inset 0 1px 0 #fff;-webkit-backdrop-filter:blur(24px);backdrop-filter:blur(24px)}
+.ciit-exam-hero:after{content:"";position:absolute;width:260px;height:260px;right:-70px;top:-130px;border-radius:50%;background:radial-gradient(circle,rgba(63,132,255,.23),transparent 70%);pointer-events:none}
+.ciit-exam-kicker{display:inline-flex;align-items:center;gap:9px;color:#2368e8;font-size:.73rem;font-weight:850;letter-spacing:.13em;text-transform:uppercase}
+.ciit-exam-kicker:before{content:"";width:7px;height:7px;border-radius:50%;background:#3a8cff;box-shadow:0 0 0 5px rgba(58,140,255,.12)}
+.ciit-exam-hero h1{margin:12px 0 8px;font-size:clamp(1.8rem,3vw,2.55rem);font-weight:850;letter-spacing:-.045em}
+.ciit-exam-hero p{max-width:650px;margin:0;color:#71839e;line-height:1.7}
+.ciit-exam-panel{margin-top:24px;border:1px solid rgba(255,255,255,.9);border-radius:23px;background:rgba(255,255,255,.76);box-shadow:0 16px 42px rgba(38,74,125,.075),inset 0 1px 0 #fff;-webkit-backdrop-filter:blur(22px);backdrop-filter:blur(22px);overflow:hidden}
+.ciit-exam-panel-head{display:flex;align-items:center;justify-content:space-between;gap:16px;padding:24px 26px;border-bottom:1px solid rgba(211,226,247,.8)}
+.ciit-exam-panel-head h2{margin:0;font-size:1.08rem;font-weight:820}.ciit-exam-panel-head p{margin:6px 0 0;color:#7c8da5;font-size:.86rem}
+.ciit-exam-count{display:grid;place-items:center;min-width:38px;height:38px;padding:0 12px;border:1px solid #d8e7ff;border-radius:13px;background:#eef5ff;color:#2167ee;font-weight:850}
+.ciit-exam-table-wrap{padding:8px 24px 18px}.ciit-exam-table{width:100%;margin:0;border-collapse:separate;border-spacing:0 8px}
+.ciit-exam-table thead th{padding:12px 14px;border:0;color:#8191a9;font-size:.7rem;font-weight:850;letter-spacing:.09em;text-transform:uppercase;white-space:nowrap}
+.ciit-exam-table tbody tr{background:rgba(246,249,255,.88);transition:transform .18s ease,background .18s ease}.ciit-exam-table tbody tr:hover{background:#fff;transform:translateY(-1px)}
+.ciit-exam-table tbody td{padding:16px 14px;border-top:1px solid #dee9f9;border-bottom:1px solid #dee9f9;color:#526783;vertical-align:middle}
+.ciit-exam-table tbody td:first-child{border-left:1px solid #dee9f9;border-radius:13px 0 0 13px}.ciit-exam-table tbody td:last-child{border-right:1px solid #dee9f9;border-radius:0 13px 13px 0}
+.ciit-exam-topic{display:block;color:#243c60;font-weight:820}.ciit-exam-sub{display:block;margin-top:5px;color:#8a9ab0;font-size:.76rem}
+.ciit-exam-status{display:inline-flex;padding:6px 10px;border:1px solid #dbe8fa;border-radius:999px;background:#f1f6ff;color:#52709a;font-size:.74rem;font-weight:800}
+.ciit-exam-status[data-status="Passed"]{border-color:#c8f0dd;background:#edfbf4;color:#168154}.ciit-exam-status[data-status="Failed"],.ciit-exam-status[data-status="Terminated"]{border-color:#f7d9d9;background:#fff3f3;color:#b74747}
+.ciit-exam-action{display:inline-flex;align-items:center;justify-content:center;min-height:38px;padding:9px 13px;border:1px solid #cfe0ff;border-radius:11px;background:linear-gradient(135deg,#fff,#edf4ff);color:#2167ed;font-size:.78rem;font-weight:820;text-decoration:none;white-space:nowrap}.ciit-exam-action:hover{border-color:#8fb7ff;background:#eaf2ff;color:#1354d7}.ciit-exam-action.disabled{opacity:.45;pointer-events:none}
+.ciit-exam-empty{padding:54px 20px;text-align:center}.ciit-exam-empty-icon{display:grid;place-items:center;width:58px;height:58px;margin:0 auto 16px;border:1px solid #dce9ff;border-radius:19px;background:linear-gradient(145deg,#fff,#eaf3ff);color:#3679ef;font-size:1.35rem;box-shadow:0 10px 25px rgba(45,101,184,.1)}
+.ciit-exam-empty h3{margin:0 0 7px;color:#294365;font-size:1rem;font-weight:820}.ciit-exam-empty p{margin:0;color:#8494aa;font-size:.87rem}.ciit-exam-flash{margin-top:18px;border-radius:14px}
+@media(max-width:767.98px){.ciit-exam-hero{padding:24px 21px;border-radius:20px}.ciit-exam-panel-head{padding:20px;align-items:flex-start}.ciit-exam-table-wrap{padding:8px 12px 14px}.ciit-exam-table{min-width:760px}.ciit-examination-page{padding-top:20px}}
+@media(prefers-reduced-motion:reduce){.ciit-exam-table tbody tr{transition:none}}
+</style>
+}
+<section class="container ciit-examination-page">
+    <header class="ciit-exam-hero">
+        <span class="ciit-exam-kicker">Student workspace</span>
+        <h1>Your examinations</h1>
+        <p>Track your scheduled exams, ongoing attempts, and results. Apply for an examination from the topic learning page after marking it complete.</p>
+    </header>
+    @if (TempData["ExamMessage"] is string message) { <div class="alert alert-success ciit-exam-flash" role="status">@message</div> }
+    @if (TempData["ExamError"] is string error) { <div class="alert alert-warning ciit-exam-flash" role="alert">@error</div> }
+    <section class="ciit-exam-panel" aria-labelledby="exam-records-heading">
+        <div class="ciit-exam-panel-head">
+            <div><h2 id="exam-records-heading">Exam records</h2><p>Current and previous examination sessions</p></div>
+            <span class="ciit-exam-count">@Model.Count</span>
         </div>
-    </div>
-
-    <div class="card shadow-sm">
-        <div class="card-body p-4">
-            <h2 class="h5 mb-3">Your exam records</h2>
-            @if (Model.Count == 0)
-            {
-                <p class="text-secondary mb-0">No examinations scheduled yet.</p>
-            }
-            else
-            {
-                <div class="table-responsive">
-                    <table class="table align-middle">
-                        <thead><tr><th>Topic</th><th>Scheduled time (local)</th><th>Status</th><th>Result</th><th class="text-end">Action</th></tr></thead>
-                        <tbody>
-                        @foreach (var exam in Model)
-                        {
-                            <tr>
-                                <td><strong>@exam.TopicTitle</strong><div class="small text-secondary">Attempt #@exam.AttemptId</div></td>
-                                <td><time class="exam-local-time" datetime="@exam.ScheduledAtUtc.ToString("O")">@exam.ScheduledAtUtc.ToString("yyyy-MM-dd HH:mm") UTC</time></td>
-                                <td>@exam.Status</td>
-                                <td>
-                                    @if (exam.Status is "Passed" or "Failed" or "Terminated")
-                                    {
-                                        <strong>@exam.Score / @exam.TotalQuestions</strong>
-                                        <div class="small">@((exam.Passed) ? "Passed" : "Not passed")</div>
-                                    }
-                                    else { <span class="text-secondary">Pending</span> }
-                                </td>
-                                <td class="text-end">
-                                    @if (exam.Status is "Scheduled" or "Ready")
-                                    {
-                                        var openAtUtc = exam.ScheduledAtUtc.AddMinutes(-30);
-                                        var canOpen = DateTime.UtcNow >= openAtUtc;
-                                        <a class="btn btn-outline-primary btn-sm exam-open-button @(canOpen ? "" : "disabled")"
-                                           href="@(canOpen ? Url.Action("Instructions", "StudentExaminations", new { attemptId = exam.AttemptId }) : "#")"
-                                           data-open-at="@openAtUtc.ToString("O")"
-                                           data-target-url="@Url.Action("Instructions", "StudentExaminations", new { attemptId = exam.AttemptId })"
-                                           aria-disabled="@(!canOpen ? "true" : "false")"
-                                           tabindex="@(!canOpen ? "-1" : "0")">Start / Instructions</a>
-                                        <div class="small text-secondary exam-open-countdown" data-open-at="@openAtUtc.ToString("O")"></div>
-                                    }
-                                    else if (exam.Status == "InProgress")
-                                    {
-                                        <a class="btn btn-primary btn-sm" asp-action="Instructions" asp-route-attemptId="@exam.AttemptId">Resume exam</a>
-                                    }
-                                    else
-                                    {
-                                        <span class="small text-secondary">Closed</span>
-                                    }
-                                </td>
-                            </tr>
-                        }
-                        </tbody>
-                    </table>
-                </div>
-            }
-        </div>
-    </div>
+        @if (Model.Count == 0)
+        {
+            <div class="ciit-exam-empty">
+                <span class="ciit-exam-empty-icon" aria-hidden="true"><i class="bi bi-calendar2-check"></i></span>
+                <h3>No exam records yet</h3><p>Complete a topic in your learning area to apply for its examination.</p>
+            </div>
+        }
+        else
+        {
+            <div class="table-responsive ciit-exam-table-wrap">
+                <table class="ciit-exam-table">
+                    <thead><tr><th>Topic</th><th>Scheduled time</th><th>Status</th><th>Result</th><th class="text-end">Action</th></tr></thead>
+                    <tbody>
+                    @foreach (var exam in Model)
+                    {
+                        <tr>
+                            <td><span class="ciit-exam-topic">@exam.TopicTitle</span><span class="ciit-exam-sub">Attempt #@exam.AttemptId</span></td>
+                            <td><time class="exam-local-time" datetime="@exam.ScheduledAtUtc.ToString("O")">@exam.ScheduledAtUtc.ToString("yyyy-MM-dd HH:mm") UTC</time></td>
+                            <td><span class="ciit-exam-status" data-status="@exam.Status">@exam.Status</span></td>
+                            <td>
+                                @if (exam.Status is "Passed" or "Failed" or "Terminated") { <strong>@exam.Score / @exam.TotalQuestions</strong><span class="ciit-exam-sub">@((exam.Passed) ? "Passed" : "Not passed")</span> }
+                                else { <span class="ciit-exam-sub">Pending result</span> }
+                            </td>
+                            <td class="text-end">
+                                @if (exam.Status is "Scheduled" or "Ready")
+                                {
+                                    var openAtUtc = exam.ScheduledAtUtc.AddMinutes(-30);
+                                    var canOpen = DateTime.UtcNow >= openAtUtc;
+                                    <a class="ciit-exam-action exam-open-button @(canOpen ? "" : "disabled")" href="@(canOpen ? Url.Action("Instructions", "StudentExaminations", new { attemptId = exam.AttemptId }) : "#")" data-open-at="@openAtUtc.ToString("O")" data-target-url="@Url.Action("Instructions", "StudentExaminations", new { attemptId = exam.AttemptId })" aria-disabled="@(!canOpen ? "true" : "false")" tabindex="@(!canOpen ? "-1" : "0")">Instructions / Start</a>
+                                    <span class="ciit-exam-sub exam-open-countdown" data-open-at="@openAtUtc.ToString("O")"></span>
+                                }
+                                else if (exam.Status == "InProgress") { <a class="ciit-exam-action" asp-action="Instructions" asp-route-attemptId="@exam.AttemptId">Resume exam</a> }
+                                else { <span class="ciit-exam-sub">Closed</span> }
+                            </td>
+                        </tr>
+                    }
+                    </tbody>
+                </table>
+            </div>
+        }
+    </section>
 </section>
 @section Scripts {
 <script>
