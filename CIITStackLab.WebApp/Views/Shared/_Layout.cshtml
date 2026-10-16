@@ -10,14 +10,14 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="anonymous" />
     <link href="https://fonts.googleapis.com/css2?family=Fira+Code:wght@400;500;600&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
     <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
+    <link rel="stylesheet" href="~/css/auth.css" asp-append-version="true" />
     @await RenderSectionAsync("Styles", required: false)
 </head>
 <body>
     <nav class="navbar navbar-expand-lg navbar-light bg-white sticky-top ciit-main-navbar">
         <div class="container-fluid">
             <a class="navbar-brand ciit-brand" asp-controller="Home" asp-action="Index">CIIT<span> Stack Lab</span></a>
-            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#ciitNavbar"
-                    aria-controls="ciitNavbar" aria-expanded="false" aria-label="Toggle navigation">
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#ciitNavbar" aria-controls="ciitNavbar" aria-expanded="false" aria-label="Toggle navigation">
                 <span class="navbar-toggler-icon"></span>
             </button>
             <div class="collapse navbar-collapse" id="ciitNavbar">
@@ -25,10 +25,7 @@
                     @if (ViewBag.ShowLearningHub == true)
                     {
                         <li class="nav-item">
-                            <a asp-controller="Home"
-                               asp-action="Dashboard"
-                               class="ciit-learning-hub-switch"
-                               data-learning-hub-transition>
+                            <a asp-controller="Home" asp-action="Dashboard" class="ciit-learning-hub-switch" data-learning-hub-transition>
                                 <i class="bi bi-stars" aria-hidden="true"></i>
                                 <span>Switch to Learning Hub</span>
                                 <i class="bi bi-arrow-up-right" aria-hidden="true"></i>
@@ -44,18 +41,13 @@
                     @if (User.Identity?.IsAuthenticated == true)
                     {
                         <span class="text-secondary small d-none d-xl-inline">Hi, @User.Identity.Name</span>
-
                         @if (User.IsInRole("Admin") || User.IsInRole("Super User"))
                         {
-                            <a asp-area="Admin"
-                               asp-controller="Dashboard"
-                               asp-action="Index"
-                               class="ciit-admin-return-btn">
+                            <a asp-area="Admin" asp-controller="Dashboard" asp-action="Index" class="ciit-admin-return-btn">
                                 <i class="bi bi-grid-1x2-fill"></i>
                                 <span>Admin Dashboard</span>
                             </a>
                         }
-
                         <form asp-controller="Account" asp-action="Logout" method="post" class="m-0">
                             <button type="submit" class="btn btn-outline-primary fw-semibold ciit-signin-btn">Sign Out</button>
                         </form>
@@ -110,7 +102,6 @@
                 </div>
             </div>
         }
-
         @RenderBody()
     </main>
 
