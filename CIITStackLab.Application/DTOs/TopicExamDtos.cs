@@ -38,6 +38,7 @@ public sealed class TopicExamSessionDto
 {
     public long AttemptId { get; init; }
     public DateTime ScheduledAtUtc { get; init; }
+    public DateTime? VerificationStartedAtUtc { get; init; }
     public DateTime? DeadlineAtUtc { get; init; }
     public string Status { get; init; } = string.Empty;
     public IReadOnlyList<TopicExamQuestionDto> Questions { get; init; } = Array.Empty<TopicExamQuestionDto>();
