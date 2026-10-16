@@ -95,9 +95,12 @@
             if (finalSubmission) {
                 alert('Exam submitted. Status: ' + result.status + '. Score: ' + result.score + '/50.');
                 window.location.assign('/Examinations');
+            } else if (result.status && result.status !== 'InProgress') {
+                window.location.assign('/Examinations');
             }
         } catch (_) {
             saveStatus.textContent = 'Save failed. Check your connection; the server deadline still applies.';
+            if (finalSubmission) window.location.assign('/Examinations');
         }
     }
 
