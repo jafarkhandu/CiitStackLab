@@ -198,8 +198,8 @@
                         </div>
                         <div class="modal-footer ciit-access-glass-footer">
                             <button type="button" class="ciit-access-secondary-btn" data-bs-dismiss="modal">Maybe later</button>
-                            <a class="ciit-access-primary-btn" asp-controller="Home" asp-action="Index" asp-fragment="tutorials"
-                               data-bs-dismiss="modal">
+                            <a id="learningHubExploreCoursesLink" class="ciit-access-primary-btn"
+                               asp-controller="Home" asp-action="Index" asp-fragment="tutorials">
                                 Explore courses <i class="bi bi-arrow-up-right" aria-hidden="true"></i>
                             </a>
                         </div>
@@ -209,8 +209,24 @@
             <script>
                 document.addEventListener('DOMContentLoaded', function () {
                     var accessDeniedModal = document.getElementById('learningHubAccessDeniedModal');
+                    var exploreCoursesLink = document.getElementById('learningHubExploreCoursesLink');
+
                     if (accessDeniedModal && window.bootstrap) {
-                        bootstrap.Modal.getOrCreateInstance(accessDeniedModal).show();
+                        var accessDeniedModalInstance = bootstrap.Modal.getOrCreateInstance(accessDeniedModal);
+                        accessDeniedModalInstance.show();
+
+                        if (exploreCoursesLink) {
+                            exploreCoursesLink.addEventListener('click', function (event) {
+                                event.preventDefault();
+                                var destination = exploreCoursesLink.href;
+
+                                accessDeniedModal.addEventListener('hidden.bs.modal', function () {
+                                    window.location.assign(destination);
+                                }, { once: true });
+
+                                accessDeniedModalInstance.hide();
+                            });
+                        }
                     }
                 });
             </script>
