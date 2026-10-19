@@ -110,6 +110,41 @@
             </div>
         }
 
+        @if (TempData["LearningHubAccessDenied"] is string learningHubAccessDenied)
+        {
+            <div class="modal fade" id="learningHubAccessDeniedModal" tabindex="-1"
+                 aria-labelledby="learningHubAccessDeniedTitle" aria-hidden="true">
+                <div class="modal-dialog modal-dialog-centered">
+                    <div class="modal-content border-0 shadow-lg" style="border-radius: 20px; overflow: hidden;">
+                        <div class="modal-header border-0 pb-0">
+                            <div class="d-flex align-items-center gap-3">
+                                <span class="d-inline-flex align-items-center justify-content-center bg-danger-subtle text-danger rounded-circle"
+                                      style="width: 46px; height: 46px; font-size: 1.25rem;">
+                                    <i class="bi bi-shield-lock-fill" aria-hidden="true"></i>
+                                </span>
+                                <h2 class="modal-title fs-5 fw-bold" id="learningHubAccessDeniedTitle">Access denied</h2>
+                            </div>
+                            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                        </div>
+                        <div class="modal-body pt-3 pb-4">
+                            <p class="mb-0 text-secondary">@learningHubAccessDenied</p>
+                        </div>
+                        <div class="modal-footer border-0 pt-0">
+                            <button type="button" class="btn btn-primary px-4" data-bs-dismiss="modal">Okay</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <script>
+                document.addEventListener('DOMContentLoaded', function () {
+                    var accessDeniedModal = document.getElementById('learningHubAccessDeniedModal');
+                    if (accessDeniedModal && window.bootstrap) {
+                        bootstrap.Modal.getOrCreateInstance(accessDeniedModal).show();
+                    }
+                });
+            </script>
+        }
+
         @RenderBody()
     </main>
 
