@@ -705,65 +705,89 @@
             cameraStream.getVideoTracks().forEach(track => track.addEventListener('ended', () => {
                 terminateForSecurity('CameraLost', 'Camera track ended', 'Exam ended because the camera disconnected.');
             }));
-            if ('FaceDetector' in window) {
-                try { faceDetector = new FaceDetector({ fastMode: true, maxDetectedFaces: 3 }); } catch (_) {}
-            }
-
-            cameraStatus.textContent = faceDetector
-                ? 'Camera active; face monitoring enabled.'
-                : 'Camera active; automatic face detection is not supported in this browser.';
-
-            if (faceDetector) {
-                let detectorBusy = false;
-                window.setInterval(async () => {
-                    if (finishing || detectorBusy || camera.readyState < 2) return;
-                    detectorBusy = true;
-                    try {
-                        const faces = await faceDetector.detect(camera);
-                        if (faces.length === 0) {
-                            lastFaceCenter = null;
-                            multipleFacesActive = false;
-                            if (!faceMissingActive) {
-                                faceMissingActive = true;
-                                await postEvent('FaceMissing', 'No face detected in the camera frame');
-                            }
-                            return;
-                        }
-
-                        faceMissingActive = false;
-                        if (faces.length > 1) {
-                            lastFaceCenter = null;
-                            if (!multipleFacesActive) {
-                                multipleFacesActive = true;
-                                await postEvent('MultipleFaces', 'Multiple faces detected in the camera frame');
-                            }
-                            return;
-                        }
-
-                        multipleFacesActive = false;
-                        const box = faces[0].boundingBox;
-                        if (box && camera.videoWidth > 0 && camera.videoHeight > 0) {
-                            const center = {
-                                x: (box.x + box.width / 2) / camera.videoWidth,
-                                y: (box.y + box.height / 2) / camera.videoHeight
-                            };
-                            const now = Date.now();
-                            if (lastFaceCenter) {
-                                const movement = Math.hypot(center.x - lastFaceCenter.x, center.y - lastFaceCenter.y);
-                                if (movement > 0.22 && now - lastMovementWarningAt > 15000) {
-                                    lastMovementWarningAt = now;
-                                    await postEvent('SuspiciousActivity', 'Large face-position change; possible repeated looking away');
-                                }
-                            }
-                            lastFaceCenter = center;
-                        }
-                    } catch (_) {
-                        // FaceDetector is experimental and not available in every browser.
-                    } finally {
-                        detectorBusy = false;
+            try {
+                const visionModule = await import('https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.22/+esm');
+                const visionFiles = await visionModule.FilesetResolver.forVisionTasks(
+                    'https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.22/wasm'
+                );
+                faceDetector = await visionModule.FaceDetector.createFromModelPath(
+                    visionFiles,
+                    'https://storage.googleapis.com/mediapipe-models/face_detector/blaze_face_short_range/float16/1/blaze_face_short_range.tflite',
+                    {
+                        runningMode: 'IMAGE',
+                        minDetectionConfidence: 0.5
                     }
-                }, 8000);
+                );
+            } catch (detectorError) {
+                console.error('Face monitoring initialization failed.', detectorError);
+                cameraStatus.textContent = 'Camera active; face monitoring could not start. Check internet access and reload the exam.';
+                showMessage('Camera is active, but automatic face monitoring could not load. Check the internet connection.', 'error');
+                return;
             }
+
+            cameraStatus.textContent = 'Camera active; face monitoring enabled.';
+
+            let detectorBusy = false;
+            window.setInterval(async () => {
+                if (finishing || detectorBusy || camera.readyState < 2) return;
+                detectorBusy = true;
+                try {
+                    const result = faceDetector.detect(camera);
+                    const faces = (result.detections || []).map(detection => {
+                        const box = detection.boundingBox;
+                        return box ? {
+                            boundingBox: {
+                                x: box.originX,
+                                y: box.originY,
+                                width: box.width,
+                                height: box.height
+                            }
+                        } : null;
+                    }).filter(Boolean);
+
+                    if (faces.length === 0) {
+                        lastFaceCenter = null;
+                        multipleFacesActive = false;
+                        if (!faceMissingActive) {
+                            faceMissingActive = true;
+                            await postEvent('FaceMissing', 'No face detected in the camera frame');
+                        }
+                        return;
+                    }
+
+                    faceMissingActive = false;
+                    if (faces.length > 1) {
+                        lastFaceCenter = null;
+                        if (!multipleFacesActive) {
+                            multipleFacesActive = true;
+                            await postEvent('MultipleFaces', 'Multiple faces detected in the camera frame');
+                        }
+                        return;
+                    }
+
+                    multipleFacesActive = false;
+                    const box = faces[0].boundingBox;
+                    if (box && camera.videoWidth > 0 && camera.videoHeight > 0) {
+                        const center = {
+                            x: (box.x + box.width / 2) / camera.videoWidth,
+                            y: (box.y + box.height / 2) / camera.videoHeight
+                        };
+                        const now = Date.now();
+                        if (lastFaceCenter) {
+                            const movement = Math.hypot(center.x - lastFaceCenter.x, center.y - lastFaceCenter.y);
+                            if (movement > 0.22 && now - lastMovementWarningAt > 15000) {
+                                lastMovementWarningAt = now;
+                                await postEvent('SuspiciousActivity', 'Large face-position change; possible repeated looking away');
+                            }
+                        }
+                        lastFaceCenter = center;
+                    }
+                } catch (detectorError) {
+                    console.warn('Face detection frame failed.', detectorError);
+                } finally {
+                    detectorBusy = false;
+                }
+            }, 2000);
         } catch (_) {
             cameraStatus.textContent = 'Camera unavailable. Check browser permission and reconnect.';
             showMessage('Camera access is required to continue this secure examination.', 'error');
