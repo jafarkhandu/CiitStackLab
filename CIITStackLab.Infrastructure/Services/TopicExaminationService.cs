@@ -16,8 +16,15 @@ public sealed class TopicExaminationService : ITopicExaminationService
     private const int ExamDurationMinutes = 60;
     private static readonly JsonSerializerOptions JsonOptions = new(JsonSerializerDefaults.Web);
     private readonly ApplicationDbContext _db;
+    private readonly CoursePurchaseService _coursePurchaseService;
 
-    public TopicExaminationService(ApplicationDbContext db) => _db = db;
+    public TopicExaminationService(
+        ApplicationDbContext db,
+        CoursePurchaseService coursePurchaseService)
+    {
+        _db = db;
+        _coursePurchaseService = coursePurchaseService;
+    }
 
     public async Task<IReadOnlyList<TopicExamSummaryDto>> GetStudentExamsAsync(string userId, CancellationToken cancellationToken = default)
     {
@@ -57,9 +64,13 @@ public sealed class TopicExaminationService : ITopicExaminationService
             select topic.Id).AnyAsync(cancellationToken);
         if (!topicExists) return (false, "The selected topic is not active in this course.", null);
 
-        var hasAccess = await _db.StudentCoursePurchases.AsNoTracking()
-            .AnyAsync(x => x.UserId == userId && x.CourseId == courseId, cancellationToken)
-            || await _db.Courses.AsNoTracking().AnyAsync(x => x.Id == courseId && x.Flag == 0 && (!x.FeesAmount.HasValue || x.FeesAmount <= 0), cancellationToken);
+        // Use the same access rule as the learning and payment flows.
+        // Topic-based pricing is authoritative; the legacy Courses.FeesAmount field
+        // can disagree with the actual course price and incorrectly block exam access.
+        var hasAccess = await _coursePurchaseService.CanAccessCourseAsync(
+            userId,
+            courseId,
+            cancellationToken);
         if (!hasAccess) return (false, "You do not have access to this course.", null);
 
         if (await HasPassedTopicAsync(userId, courseId, topicId, cancellationToken))
