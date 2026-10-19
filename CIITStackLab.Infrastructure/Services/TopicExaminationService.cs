@@ -369,7 +369,8 @@ public sealed class TopicExaminationService : ITopicExaminationService
     {
         var topicIds = await _db.CourseModules.AsNoTracking()
             .Where(cm => cm.CourseId == courseId && cm.Flag == 0 && cm.Topic.Flag == 0 && cm.Course.Flag == 0)
-            .OrderBy(cm => cm.Id)
+            // Keep exam progression in the same order used by DynamicCourseService and Learn.cshtml.
+            .OrderBy(cm => cm.TopicId)
             .Select(cm => cm.TopicId)
             .Distinct()
             .ToListAsync(cancellationToken);
