@@ -79,6 +79,15 @@
                                     <span class="ciit-exam-sub exam-open-countdown" data-open-at="@DateTime.SpecifyKind(openAtUtc, DateTimeKind.Utc).ToString("O")" data-exam-end="@DateTime.SpecifyKind(examEndUtc, DateTimeKind.Utc).ToString("O")"></span>
                                 }
                                 else if (exam.Status == "InProgress") { <a class="ciit-exam-action" asp-action="Instructions" asp-route-attemptId="@exam.AttemptId">Resume exam</a> }
+                                else if (exam.Status is "Terminated" or "Failed" or "TimedOut")
+                                {
+                                    <form asp-controller="StudentExaminations" asp-action="ReExam" method="post" class="d-inline">
+                                        @Html.AntiForgeryToken()
+                                        <input type="hidden" name="courseId" value="@exam.CourseId" />
+                                        <input type="hidden" name="topicId" value="@exam.TopicId" />
+                                        <button type="submit" class="ciit-exam-action">Start re-exam</button>
+                                    </form>
+                                }
                                 else { <span class="ciit-exam-sub">Closed</span> }
                             </td>
                         </tr>
