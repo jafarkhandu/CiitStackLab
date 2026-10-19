@@ -69,9 +69,8 @@
                 <table class="ciit-exam-table">
                     <thead><tr><th>Topic</th><th>Scheduled time</th><th>Status</th><th class="text-end">Action</th></tr></thead>
                     <tbody>
-                    @foreach (var exam in Model.Select((item, rowIndex) => new { Exam = item, RowIndex = rowIndex }))
+                    @foreach (var row in Model.Select((item, rowIndex) => new { Exam = item, RowIndex = rowIndex }))
                     {
-                        var row = exam;
                         var exam = row.Exam;
                         <tr style="--row-index: @row.RowIndex">
                             <td><span class="ciit-exam-topic">@exam.TopicTitle</span><span class="ciit-exam-sub">Attempt #@exam.AttemptId</span></td>
