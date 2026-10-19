@@ -35,6 +35,17 @@ public class HomeController : Controller
             return Challenge();
         }
 
+        var hasAnyPurchasedCourse = await _coursePurchaseService.HasAnyActivePurchaseAsync(
+            userId,
+            cancellationToken);
+
+        if (!hasAnyPurchasedCourse)
+        {
+            TempData["LearningHubAccessDenied"] =
+                "Access denied. Please purchase at least one course to access the Learning Hub.";
+            return RedirectToAction(nameof(Index));
+        }
+
         var activeCourseIds = await _coursePurchaseService.GetAccessibleCourseIdsAsync(
             userId,
             cancellationToken);
