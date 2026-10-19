@@ -986,15 +986,16 @@ public class CoursesController : Controller
             cancellationToken);
         if (!questionAvailability.IsAvailable)
         {
-            TempData["ExamError"] = questionAvailability.Error
+            var examAvailabilityMessage = questionAvailability.Error
                 ?? "Exam questions are not available for this topic right now. Please try applying again later.";
+            TempData["ExamError"] = examAvailabilityMessage;
 
             await NotifyExamQuestionsUnavailableAsync(
                 userId,
                 id,
                 topicId,
                 questionAvailability.ValidQuestionCount,
-                TempData["ExamError"]?.ToString() ?? string.Empty,
+                examAvailabilityMessage,
                 cancellationToken);
 
             return RedirectToAction(nameof(Learn), new { id, topicId });
