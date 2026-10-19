@@ -722,7 +722,7 @@
                 terminateForSecurity('CameraLost', 'Camera track ended', 'Exam ended because the camera disconnected.');
             }));
             try {
-                const visionModule = await import('https://cdn.jsdelivr.net/npm/@@mediapipe/tasks-vision@0.10.22/+esm');
+                const visionModule = await import('https://cdn.jsdelivr.net/npm/@@mediapipe/tasks-vision@0.10.22/vision_bundle.mjs');
                 const visionFiles = await visionModule.FilesetResolver.forVisionTasks(
                     'https://cdn.jsdelivr.net/npm/@@mediapipe/tasks-vision@0.10.22/wasm'
                 );
@@ -855,9 +855,11 @@
             terminateForSecurity('TabSwitch', 'Exam tab became hidden', 'Exam terminated because the exam tab was left.');
         }
     });
-    // Losing window focus alone is not a reliable sign of leaving the exam:
-    // operating-system screenshot tools and browser permission dialogs can trigger blur.
-    // The visibilitychange handler above still handles an exam tab becoming hidden.
+    // Losing focus is treated as a security event, including when a capture tool
+    // takes focus away from the exam window.
+    window.addEventListener('blur', () => {
+        terminateForSecurity('WindowBlur', 'Exam window lost focus', 'Exam terminated because the exam window lost focus.');
+    });
     document.addEventListener('fullscreenchange', () => {
         if (!document.fullscreenElement) {
             terminateForSecurity('FullscreenExit', 'Fullscreen mode was exited', 'Exam terminated because fullscreen mode was exited.');
@@ -885,7 +887,11 @@
 
         if (screenshotShortcut) {
             event.preventDefault();
-            postEvent('ScreenshotShortcut', 'Possible screenshot shortcut detected');
+            terminateForSecurity(
+                'ScreenshotShortcut',
+                'Possible screenshot shortcut detected',
+                'Exam terminated because a screenshot shortcut was detected.'
+            );
         }
 
         if ((event.ctrlKey || event.metaKey) && ['p', 's'].includes(key)) {
@@ -893,7 +899,11 @@
         }
         if (((event.ctrlKey || event.metaKey) && event.shiftKey && key === 'r') || (event.metaKey && event.altKey && key === 'r')) {
             event.preventDefault();
-            postEvent('RecordingShortcut', 'Possible screen recording shortcut detected');
+            terminateForSecurity(
+                'RecordingShortcut',
+                'Possible screen recording shortcut detected',
+                'Exam terminated because a screen-recording shortcut was detected.'
+            );
         }
     });
 
