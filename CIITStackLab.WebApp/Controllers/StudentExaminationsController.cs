@@ -110,13 +110,18 @@ public sealed class StudentExaminationsController : Controller
 
     [HttpPost("{attemptId:long}/Submit")]
     [ValidateAntiForgeryToken]
-    public async Task<IActionResult> Submit(long attemptId, [FromForm] List<TopicExamAnswerInput> answers, CancellationToken cancellationToken)
+    public async Task<IActionResult> Submit(
+        long attemptId,
+        [FromForm] List<TopicExamAnswerInput> answers,
+        [FromForm] bool finalSubmission,
+        CancellationToken cancellationToken)
     {
         var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
         if (string.IsNullOrWhiteSpace(userId)) return Unauthorized();
         var deviceToken = Request.Cookies[DeviceCookieName(attemptId)] ?? string.Empty;
         // Device verification is also required for event logging; answer submission is scoped to the authenticated owner.
-        var result = await _exams.SaveAnswersAsync(userId, attemptId, answers, deviceToken, cancellationToken);
+        var result = await _exams.SaveAnswersAsync(
+            userId, attemptId, answers, deviceToken, cancellationToken, finalSubmission);
         if (!result.Succeeded) return BadRequest(new { error = result.Error });
         return Json(new { success = true, status = result.Result?.Status, score = result.Result?.Score, passed = result.Result?.Passed });
     }
