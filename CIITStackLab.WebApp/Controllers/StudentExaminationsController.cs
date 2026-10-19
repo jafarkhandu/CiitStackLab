@@ -67,6 +67,26 @@ public sealed class StudentExaminationsController : Controller
         return RedirectToAction(nameof(Instructions), new { attemptId = result.Exam.AttemptId });
     }
 
+    [HttpPost("ReExam")]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> ReExam(int courseId, int topicId, CancellationToken cancellationToken)
+    {
+        var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+        if (string.IsNullOrWhiteSpace(userId)) return Challenge();
+
+        // A retake is a new attempt; never reopen or accept answers for a terminated attempt.
+        var result = await _exams.ScheduleAsync(
+            userId, courseId, topicId, DateTime.UtcNow, cancellationToken, startNow: true);
+
+        if (!result.Succeeded || result.Exam is null)
+        {
+            TempData["ExamError"] = result.Error ?? "A new exam attempt could not be created.";
+            return RedirectToAction(nameof(Index));
+        }
+
+        return RedirectToAction(nameof(Instructions), new { attemptId = result.Exam.AttemptId });
+    }
+
     [HttpGet("{attemptId:long}/Instructions")]
     [ResponseCache(Duration = 0, Location = ResponseCacheLocation.None, NoStore = true)]
     public async Task<IActionResult> Instructions(long attemptId, CancellationToken cancellationToken)
