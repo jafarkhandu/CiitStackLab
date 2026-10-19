@@ -201,6 +201,20 @@
     </script>
 }
 
+@if (User.IsInRole("Student") && TempData["ExamError"] is string examAvailabilityError)
+{
+    <div class="container ciit-exam-availability-alert" role="alert" aria-live="assertive">
+        <span class="ciit-exam-availability-alert-icon" aria-hidden="true">
+            <i class="bi bi-hourglass-split"></i>
+        </span>
+        <div>
+            <strong>Exam questions are not ready yet</strong>
+            <p>@examAvailabilityError</p>
+            <small>Please try applying again later. The administrator can review the topic question bank.</small>
+        </div>
+    </div>
+}
+
 @if (currentContent is null && currentTopic is null)
 {
     <main class="ciit-learning-empty container py-5">
@@ -621,10 +635,6 @@ else
                             </form>
                         </div>
 
-                        @if (TempData["ExamError"] is string examError)
-                        {
-                            <div class="alert alert-danger ciit-learning-progress-alert" role="alert">@examError</div>
-                        }
                         @if (TempData["LearningProgressMessage"] is string progressMessage)
                         {
                             <div class="alert alert-success ciit-learning-progress-alert" role="status">
