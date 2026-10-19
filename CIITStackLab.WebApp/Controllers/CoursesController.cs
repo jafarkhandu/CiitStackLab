@@ -9,6 +9,8 @@ using CIITStackLab.WebApp.Models;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.SignalR;
+using CIITStackLab.WebApp.Hubs;
 
 namespace CIITStackLab.WebApp.Controllers;
 
@@ -25,6 +27,7 @@ public class CoursesController : Controller
     private readonly PhonePePaymentService _phonePePaymentService;
     private readonly PaymentNotificationService _paymentNotificationService;
     private readonly ILogger<CoursesController> _logger;
+    private readonly IHubContext<ExamApplicationNotificationHub> _examApplicationHub;
 
     public CoursesController(
         ICourseService courseService,
@@ -37,7 +40,8 @@ public class CoursesController : Controller
         IEmailService emailService,
         PhonePePaymentService phonePePaymentService,
         PaymentNotificationService paymentNotificationService,
-        ILogger<CoursesController> logger)
+        ILogger<CoursesController> logger,
+        IHubContext<ExamApplicationNotificationHub> examApplicationHub)
     {
         _courseService = courseService;
         _studentProgressService = studentProgressService;
@@ -50,6 +54,7 @@ public class CoursesController : Controller
         _phonePePaymentService = phonePePaymentService;
         _paymentNotificationService = paymentNotificationService;
         _logger = logger;
+        _examApplicationHub = examApplicationHub;
     }
 
     [HttpGet]
@@ -974,6 +979,27 @@ public class CoursesController : Controller
             return RedirectToAction(nameof(Learn), new { id, topicId = allowedTopicId.Value });
         }
 
+        var questionAvailability = await _topicExaminationService.CheckQuestionAvailabilityAsync(
+            userId,
+            id,
+            topicId,
+            cancellationToken);
+        if (!questionAvailability.IsAvailable)
+        {
+            TempData["ExamError"] = questionAvailability.Error
+                ?? "Exam questions are not available for this topic right now. Please try applying again later.";
+
+            await NotifyExamQuestionsUnavailableAsync(
+                userId,
+                id,
+                topicId,
+                questionAvailability.ValidQuestionCount,
+                TempData["ExamError"]?.ToString() ?? string.Empty,
+                cancellationToken);
+
+            return RedirectToAction(nameof(Learn), new { id, topicId });
+        }
+
         var topicNoteIds = await _dbContext.TrainingNotes.AsNoTracking()
             .Where(x => x.TopicId == topicId && x.Flag == 0)
             .Select(x => x.Id).ToListAsync(cancellationToken);
@@ -994,6 +1020,56 @@ public class CoursesController : Controller
         TempData["LearningProgressMessage"] = "Topic marked as complete. You can now apply for its examination.";
         TempData["OpenExamApplicationModal"] = true;
         return RedirectToAction(nameof(Learn), new { id, topicId });
+    }
+
+    private async Task NotifyExamQuestionsUnavailableAsync(
+        string userId,
+        int courseId,
+        int topicId,
+        int validQuestionCount,
+        string reason,
+        CancellationToken cancellationToken)
+    {
+        var context = await (
+            from courseModule in _dbContext.CourseModules.AsNoTracking()
+            join course in _dbContext.Courses.AsNoTracking()
+                on courseModule.CourseId equals course.Id
+            join topic in _dbContext.Topics.AsNoTracking()
+                on courseModule.TopicId equals topic.Id
+            where courseModule.CourseId == courseId
+                && courseModule.TopicId == topicId
+                && courseModule.Flag == 0
+                && course.Flag == 0
+                && topic.Flag == 0
+            select new
+            {
+                CourseTitle = course.Title,
+                TopicTitle = topic.Title
+            })
+            .FirstOrDefaultAsync(cancellationToken);
+
+        if (context is null)
+        {
+            return;
+        }
+
+        await _examApplicationHub.Clients
+            .Group(ExamApplicationNotificationHub.AdminGroup)
+            .SendAsync(
+                "ExamQuestionsUnavailable",
+                new
+                {
+                    courseId,
+                    courseTitle = context.CourseTitle,
+                    topicId,
+                    topicTitle = context.TopicTitle,
+                    studentName = User.Identity?.Name ?? userId,
+                    validQuestionCount,
+                    requiredQuestionCount = 50,
+                    reason,
+                    occurredAtUtc = DateTime.UtcNow
+                },
+                cancellationToken);
     }
 
     [HttpPost("Courses/Learn/{id:int}/Assessment/{contentId:int}")]
