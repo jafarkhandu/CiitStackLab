@@ -415,9 +415,13 @@ public sealed class TopicExaminationService : ITopicExaminationService
                 SelectedOptionNumber = answerMap.GetValueOrDefault(id)
             };
         }).ToList() : new List<TopicExamQuestionDto>();
+        var topicTitle = await _db.Topics.AsNoTracking()
+            .Where(topic => topic.Id == attempt.TopicId)
+            .Select(topic => topic.Title)
+            .SingleOrDefaultAsync(cancellationToken) ?? "Topic Examination";
         return new TopicExamSessionDto
         {
-            AttemptId = attempt.Id, ScheduledAtUtc = attempt.ScheduledAtUtc,
+            AttemptId = attempt.Id, TopicTitle = topicTitle, ScheduledAtUtc = attempt.ScheduledAtUtc,
             VerificationStartedAtUtc = attempt.VerificationStartedAtUtc,
             DeadlineAtUtc = attempt.DeadlineAtUtc, Status = attempt.Status, Questions = mapped
         };
