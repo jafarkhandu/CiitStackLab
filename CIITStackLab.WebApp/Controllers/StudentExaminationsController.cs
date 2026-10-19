@@ -5,6 +5,8 @@ using CIITStackLab.Infrastructure.Persistence;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.SignalR;
+using CIITStackLab.WebApp.Hubs;
 
 namespace CIITStackLab.WebApp.Controllers;
 
@@ -14,11 +16,16 @@ public sealed class StudentExaminationsController : Controller
 {
     private readonly ITopicExaminationService _exams;
     private readonly ApplicationDbContext _db;
+    private readonly IHubContext<ExamApplicationNotificationHub> _examApplicationHub;
 
-    public StudentExaminationsController(ITopicExaminationService exams, ApplicationDbContext db)
+    public StudentExaminationsController(
+        ITopicExaminationService exams,
+        ApplicationDbContext db,
+        IHubContext<ExamApplicationNotificationHub> examApplicationHub)
     {
         _exams = exams;
         _db = db;
+        _examApplicationHub = examApplicationHub;
     }
 
     [HttpGet("")]
@@ -48,6 +55,15 @@ public sealed class StudentExaminationsController : Controller
             DateTime.SpecifyKind(request.ScheduledAtLocal.AddMinutes(request.TimezoneOffsetMinutes), DateTimeKind.Utc), cancellationToken);
         TempData[result.Succeeded ? "ExamMessage" : "ExamError"] =
             result.Succeeded ? "Exam scheduled successfully." : result.Error;
+        if (!result.Succeeded)
+        {
+            await NotifyIfQuestionBankUnavailableAsync(
+                userId,
+                request.CourseId,
+                request.TopicId,
+                result.Error,
+                cancellationToken);
+        }
         return RedirectToAction(nameof(Index));
     }
 
@@ -61,7 +77,14 @@ public sealed class StudentExaminationsController : Controller
             DateTime.UtcNow, cancellationToken, startNow: true);
         if (!result.Succeeded || result.Exam is null)
         {
-            TempData["ExamError"] = result.Error;
+            TempData["ExamError"] = result.Error
+                ?? "Exam questions are not available for this topic right now. Please try applying again later.";
+            await NotifyIfQuestionBankUnavailableAsync(
+                userId,
+                request.CourseId,
+                request.TopicId,
+                result.Error,
+                cancellationToken);
             return RedirectToAction("Learn", "Courses", new { id = request.CourseId, topicId = request.TopicId });
         }
         return RedirectToAction(nameof(Instructions), new { attemptId = result.Exam.AttemptId });
@@ -81,10 +104,76 @@ public sealed class StudentExaminationsController : Controller
         if (!result.Succeeded || result.Exam is null)
         {
             TempData["ExamError"] = result.Error ?? "A new exam attempt could not be created.";
+            await NotifyIfQuestionBankUnavailableAsync(
+                userId,
+                courseId,
+                topicId,
+                result.Error,
+                cancellationToken);
             return RedirectToAction(nameof(Index));
         }
 
         return RedirectToAction(nameof(Instructions), new { attemptId = result.Exam.AttemptId });
+    }
+
+    private async Task NotifyIfQuestionBankUnavailableAsync(
+        string userId,
+        int courseId,
+        int topicId,
+        string? error,
+        CancellationToken cancellationToken)
+    {
+        if (string.IsNullOrWhiteSpace(error)
+            || !error.Contains("question", StringComparison.OrdinalIgnoreCase))
+        {
+            return;
+        }
+
+        var availability = await _exams.CheckQuestionAvailabilityAsync(
+            userId,
+            courseId,
+            topicId,
+            cancellationToken);
+        var details = await (
+            from courseModule in _db.CourseModules.AsNoTracking()
+            join course in _db.Courses.AsNoTracking()
+                on courseModule.CourseId equals course.Id
+            join topic in _db.Topics.AsNoTracking()
+                on courseModule.TopicId equals topic.Id
+            where courseModule.CourseId == courseId
+                && courseModule.TopicId == topicId
+                && courseModule.Flag == 0
+                && course.Flag == 0
+                && topic.Flag == 0
+            select new
+            {
+                CourseTitle = course.Title,
+                TopicTitle = topic.Title
+            })
+            .FirstOrDefaultAsync(cancellationToken);
+
+        if (details is null)
+        {
+            return;
+        }
+
+        await _examApplicationHub.Clients
+            .Group(ExamApplicationNotificationHub.AdminGroup)
+            .SendAsync(
+                "ExamQuestionsUnavailable",
+                new
+                {
+                    courseId,
+                    courseTitle = details.CourseTitle,
+                    topicId,
+                    topicTitle = details.TopicTitle,
+                    studentName = User.Identity?.Name ?? userId,
+                    validQuestionCount = availability.ValidQuestionCount,
+                    requiredQuestionCount = 50,
+                    reason = error,
+                    occurredAtUtc = DateTime.UtcNow
+                },
+                cancellationToken);
     }
 
     [HttpGet("{attemptId:long}/Instructions")]
