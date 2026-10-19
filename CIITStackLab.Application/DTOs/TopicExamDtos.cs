@@ -38,7 +38,6 @@ public sealed class TopicExamSessionDto
 {
     public long AttemptId { get; init; }
     public string TopicTitle { get; init; } = "Topic Examination";
-    public string TopicTitle { get; init; } = "Topic Examination";
     public DateTime ScheduledAtUtc { get; init; }
     public DateTime? VerificationStartedAtUtc { get; init; }
     public DateTime? DeadlineAtUtc { get; init; }
