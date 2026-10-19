@@ -21,9 +21,19 @@ public class CoursesController : Controller
     private readonly ApplicationDbContext _dbContext;
     private readonly IEmailService _emailService;
     private readonly PhonePePaymentService _phonePePaymentService;
+    private readonly PaymentNotificationService _paymentNotificationService;
     private readonly ILogger<CoursesController> _logger;
 
-    public CoursesController(ICourseService courseService, IStudentProgressService studentProgressService, ICourseAssessmentService courseAssessmentService, CoursePurchaseService coursePurchaseService, ApplicationDbContext dbContext, IEmailService emailService, PhonePePaymentService phonePePaymentService, ILogger<CoursesController> logger)
+    public CoursesController(
+        ICourseService courseService,
+        IStudentProgressService studentProgressService,
+        ICourseAssessmentService courseAssessmentService,
+        CoursePurchaseService coursePurchaseService,
+        ApplicationDbContext dbContext,
+        IEmailService emailService,
+        PhonePePaymentService phonePePaymentService,
+        PaymentNotificationService paymentNotificationService,
+        ILogger<CoursesController> logger)
     {
         _courseService = courseService;
         _studentProgressService = studentProgressService;
@@ -32,6 +42,7 @@ public class CoursesController : Controller
         _dbContext = dbContext;
         _emailService = emailService;
         _phonePePaymentService = phonePePaymentService;
+        _paymentNotificationService = paymentNotificationService;
         _logger = logger;
     }
 
@@ -62,6 +73,7 @@ public class CoursesController : Controller
             if (wantsJsonResponse) return Json(new { redirectUrl = Url.Action(nameof(CourseHome), "Courses") });
             return RedirectToAction(nameof(CourseHome));
         }
+
         var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
         if (string.IsNullOrWhiteSpace(userId)) return Unauthorized();
         if (await _coursePurchaseService.HasPurchasedCourseAsync(userId, id, cancellationToken))
@@ -69,11 +81,29 @@ public class CoursesController : Controller
             if (wantsJsonResponse) return Json(new { redirectUrl = Url.Action(nameof(CourseHome), "Courses") });
             return RedirectToAction(nameof(CourseHome));
         }
+
         var merchantOrderId = $"CIIT-{Guid.NewGuid():N}";
-        var transaction = new PaymentTransaction { UserId = userId, CourseId = id, MerchantOrderId = merchantOrderId, Amount = price, Status = "Created", CreatedAt = DateTime.UtcNow, UpdatedAt = DateTime.UtcNow };
+        var transaction = new PaymentTransaction
+        {
+            UserId = userId,
+            CourseId = id,
+            MerchantOrderId = merchantOrderId,
+            Amount = price,
+            Status = "Created",
+            CreatedAt = DateTime.UtcNow,
+            UpdatedAt = DateTime.UtcNow
+        };
+
         _dbContext.PaymentTransactions.Add(transaction);
         await _dbContext.SaveChangesAsync(cancellationToken);
-        var redirectUrl = Url.Action(nameof(PhonePeReturn), "Courses", new { merchantOrderId }, Request.Scheme, Request.Host.Value);
+
+        var redirectUrl = Url.Action(
+            nameof(PhonePeReturn),
+            "Courses",
+            new { merchantOrderId },
+            Request.Scheme,
+            Request.Host.Value);
+
         if (string.IsNullOrWhiteSpace(redirectUrl))
         {
             transaction.Status = "Failed";
@@ -83,6 +113,7 @@ public class CoursesController : Controller
             TempData["CoursePaymentMessage"] = "Payment could not be started. Please try again.";
             return RedirectToAction(nameof(Details), new { id });
         }
+
         try
         {
             var amountInPaise = checked((long)Math.Round(price * 100m, 0, MidpointRounding.AwayFromZero));
@@ -90,53 +121,128 @@ public class CoursesController : Controller
             transaction.Status = "Pending";
             transaction.UpdatedAt = DateTime.UtcNow;
             await _dbContext.SaveChangesAsync(cancellationToken);
+
             if (wantsJsonResponse) return Json(new { checkoutUrl, merchantOrderId });
             return Redirect(checkoutUrl);
         }
+        catch (TimeoutException ex)
+        {
+            transaction.Status = "Pending";
+            transaction.UpdatedAt = DateTime.UtcNow;
+            await _dbContext.SaveChangesAsync(CancellationToken.None);
+            _logger.LogWarning(ex, "PhonePe checkout creation timed out for merchant order {MerchantOrderId}.", merchantOrderId);
+            var message = "The payment gateway is taking too long to respond. Your payment order is still pending and has not granted course access.";
+            if (wantsJsonResponse) return StatusCode(StatusCodes.Status504GatewayTimeout, new { message });
+            TempData["CoursePaymentMessage"] = message;
+            return RedirectToAction(nameof(Details), new { id });
+        }
+        catch (OperationCanceledException ex) when (!cancellationToken.IsCancellationRequested)
+        {
+            transaction.Status = "Pending";
+            transaction.UpdatedAt = DateTime.UtcNow;
+            await _dbContext.SaveChangesAsync(CancellationToken.None);
+            _logger.LogWarning(ex, "PhonePe checkout creation was cancelled by the gateway for merchant order {MerchantOrderId}.", merchantOrderId);
+            var message = "The payment gateway connection was interrupted. Your payment order remains pending and will not grant access until verified.";
+            if (wantsJsonResponse) return StatusCode(StatusCodes.Status504GatewayTimeout, new { message });
+            TempData["CoursePaymentMessage"] = message;
+            return RedirectToAction(nameof(Details), new { id });
+        }
         catch (Exception ex)
         {
-            transaction.Status = "Failed";
+            transaction.Status = ex is ArgumentException or InvalidOperationException ? "Failed" : "Pending";
             transaction.UpdatedAt = DateTime.UtcNow;
-            await _dbContext.SaveChangesAsync(cancellationToken);
+            await _dbContext.SaveChangesAsync(CancellationToken.None);
             _logger.LogError(ex, "PhonePe checkout could not be created for merchant order {MerchantOrderId}.", merchantOrderId);
-            if (wantsJsonResponse) return StatusCode(StatusCodes.Status502BadGateway, new { message = "The payment gateway could not be reached. Please try again." });
-            TempData["CoursePaymentMessage"] = "The payment gateway could not be reached. Please try again.";
+            var message = transaction.Status == "Failed"
+                ? "The payment could not be started. Please check the payment configuration and try again."
+                : "We could not confirm the payment gateway response. Your payment order remains pending and course access was not granted.";
+            if (wantsJsonResponse) return StatusCode(StatusCodes.Status502BadGateway, new { message });
+            TempData["CoursePaymentMessage"] = message;
             return RedirectToAction(nameof(Details), new { id });
         }
     }
 
     [HttpGet("Courses/PhonePeReturn")]
-    [AllowAnonymous]
+    [Authorize(Roles = "Student")]
     public async Task<IActionResult> PhonePeReturn(string merchantOrderId, CancellationToken cancellationToken)
     {
-        if (string.IsNullOrWhiteSpace(merchantOrderId)) return RedirectToAction(nameof(CourseHome));
-        var transaction = await _dbContext.PaymentTransactions.FirstOrDefaultAsync(item => item.MerchantOrderId == merchantOrderId, cancellationToken);
+        var wantsJsonResponse = Request.Headers.Accept.Any(value => value.Contains("application/json", StringComparison.OrdinalIgnoreCase));
+        if (string.IsNullOrWhiteSpace(merchantOrderId))
+        {
+            if (wantsJsonResponse) return BadRequest(new { message = "Payment order ID is required." });
+            return RedirectToAction(nameof(CourseHome));
+        }
+
+        var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+        if (string.IsNullOrWhiteSpace(userId)) return Challenge();
+
+        var transaction = await _dbContext.PaymentTransactions.FirstOrDefaultAsync(
+            item => item.MerchantOrderId == merchantOrderId && item.UserId == userId,
+            cancellationToken);
+
         if (transaction is null)
         {
+            if (wantsJsonResponse) return NotFound(new { message = "The payment order could not be found." });
             TempData["CoursePaymentMessage"] = "The payment order could not be found.";
             return RedirectToAction(nameof(CourseHome));
         }
 
         string? state = null;
+        string message;
+
         try
         {
             state = await _phonePePaymentService.GetOrderStateAsync(merchantOrderId);
             await ProcessPhonePeStateAsync(transaction, state, cancellationToken);
+
             if (string.Equals(state, "COMPLETED", StringComparison.OrdinalIgnoreCase))
-                TempData["CoursePaymentMessage"] = "Payment successful. Your course is now available in My Courses.";
+            {
+                message = "Payment successful. Your course is now available.";
+            }
             else if (string.Equals(state, "FAILED", StringComparison.OrdinalIgnoreCase))
-                TempData["CoursePaymentMessage"] = "The payment was not completed. No course access was granted.";
+            {
+                message = "Payment failed. No course access was granted.";
+            }
             else
-                TempData["CoursePaymentMessage"] = "Your payment is still being processed. Please check My Courses again shortly.";
+            {
+                message = "Payment is still being processed. No course access has been granted yet.";
+            }
+        }
+        catch (TimeoutException ex)
+        {
+            _logger.LogWarning(ex, "PhonePe status verification timed out for merchant order {MerchantOrderId}.", merchantOrderId);
+            message = "We could not confirm the payment because the payment gateway timed out. Your order remains pending.";
+            if (wantsJsonResponse) return StatusCode(StatusCodes.Status504GatewayTimeout, new { success = false, state = "PENDING", message, courseId = transaction.CourseId });
+            TempData["CoursePaymentMessage"] = message;
+            return RedirectToAction(nameof(Details), new { id = transaction.CourseId });
         }
         catch (Exception ex)
         {
             _logger.LogError(ex, "PhonePe status verification failed for merchant order {MerchantOrderId}.", merchantOrderId);
-            TempData["CoursePaymentMessage"] = "We could not verify the payment yet. Please try again shortly.";
+            message = "We could not verify the payment yet. Your order remains pending. Please try again shortly.";
+            if (wantsJsonResponse) return StatusCode(StatusCodes.Status503ServiceUnavailable, new { success = false, state = "PENDING", message, courseId = transaction.CourseId });
+            TempData["CoursePaymentMessage"] = message;
+            return RedirectToAction(nameof(Details), new { id = transaction.CourseId });
         }
 
-        if (string.Equals(state, "COMPLETED", StringComparison.OrdinalIgnoreCase))
+        var completed = string.Equals(state, "COMPLETED", StringComparison.OrdinalIgnoreCase);
+
+        if (wantsJsonResponse)
+        {
+            return Json(new
+            {
+                success = completed,
+                state,
+                message,
+                courseId = transaction.CourseId
+            });
+        }
+
+        TempData["CoursePaymentMessage"] = message;
+
+        if (completed)
             return RedirectToAction(nameof(CourseEnvironment), new { id = transaction.CourseId });
+
         return RedirectToAction(nameof(Details), new { id = transaction.CourseId });
     }
 
@@ -150,15 +256,22 @@ public class CoursesController : Controller
         using var reader = new StreamReader(Request.Body);
         var requestBody = await reader.ReadToEndAsync(cancellationToken);
         if (string.IsNullOrWhiteSpace(requestBody)) return BadRequest();
+
         try
         {
             var callback = _phonePePaymentService.ValidateCallback(authorization, requestBody);
             if (callback.Payload is null) return BadRequest();
+
             var merchantOrderId = callback.Payload.OrderId;
             var state = callback.Payload.State;
             if (string.IsNullOrWhiteSpace(merchantOrderId) || string.IsNullOrWhiteSpace(state)) return BadRequest();
-            var transaction = await _dbContext.PaymentTransactions.FirstOrDefaultAsync(item => item.MerchantOrderId == merchantOrderId, cancellationToken);
+
+            var transaction = await _dbContext.PaymentTransactions.FirstOrDefaultAsync(
+                item => item.MerchantOrderId == merchantOrderId,
+                cancellationToken);
+
             if (transaction is null) return NotFound();
+
             await ProcessPhonePeStateAsync(transaction, state, cancellationToken);
             return Ok();
         }
@@ -174,8 +287,18 @@ public class CoursesController : Controller
         if (string.Equals(state, "COMPLETED", StringComparison.OrdinalIgnoreCase))
         {
             if (string.Equals(transaction.Status, "Completed", StringComparison.OrdinalIgnoreCase)) return;
-            var alreadyPurchased = await _coursePurchaseService.HasPurchasedCourseAsync(transaction.UserId, transaction.CourseId, cancellationToken);
-            var purchaseCompleted = await _coursePurchaseService.CompleteAsync(transaction.UserId, transaction.CourseId, cancellationToken);
+
+            var alreadyPurchased = await _coursePurchaseService.HasPurchasedCourseAsync(
+                transaction.UserId,
+                transaction.CourseId,
+                cancellationToken);
+
+            var purchaseCompleted = await _coursePurchaseService.CompleteWithPriceAsync(
+                transaction.UserId,
+                transaction.CourseId,
+                transaction.Amount,
+                cancellationToken);
+
             if (!purchaseCompleted)
             {
                 transaction.Status = "Failed";
@@ -183,31 +306,109 @@ public class CoursesController : Controller
                 await _dbContext.SaveChangesAsync(cancellationToken);
                 return;
             }
+
             transaction.Status = "Completed";
             transaction.CompletedAt = DateTime.UtcNow;
             transaction.UpdatedAt = DateTime.UtcNow;
             await _dbContext.SaveChangesAsync(cancellationToken);
-            if (!alreadyPurchased) await TrySendPurchaseInvoiceAsync(transaction.UserId, transaction.CourseId, cancellationToken);
+
+            if (!alreadyPurchased)
+            {
+                await TrySendPurchaseInvoiceAsync(transaction.UserId, transaction.CourseId, cancellationToken);
+            }
+
             return;
         }
-        transaction.Status = string.Equals(state, "FAILED", StringComparison.OrdinalIgnoreCase) ? "Failed" : "Pending";
+
+        var wasAlreadyFailed = string.Equals(transaction.Status, "Failed", StringComparison.OrdinalIgnoreCase);
+        transaction.Status = string.Equals(state, "FAILED", StringComparison.OrdinalIgnoreCase)
+            ? "Failed"
+            : "Pending";
         transaction.UpdatedAt = DateTime.UtcNow;
         await _dbContext.SaveChangesAsync(cancellationToken);
+
+        if (string.Equals(state, "FAILED", StringComparison.OrdinalIgnoreCase) && !wasAlreadyFailed)
+        {
+            await TrySendPaymentFailureEmailAsync(transaction, cancellationToken);
+        }
     }
 
     private async Task TrySendPurchaseInvoiceAsync(string userId, int courseId, CancellationToken cancellationToken)
     {
-        var purchase = await _dbContext.StudentCoursePurchases.AsNoTracking().Where(item => item.UserId == userId && item.CourseId == courseId).OrderByDescending(item => item.PurchasedAt).FirstOrDefaultAsync(cancellationToken);
-        var course = await _dbContext.Courses.AsNoTracking().Where(item => item.Id == courseId).Select(item => new { item.Title }).FirstOrDefaultAsync(cancellationToken);
-        var user = await _dbContext.Users.AsNoTracking().Where(item => item.Id == userId && item.IsActive).Select(item => new { item.Email, item.UserName }).FirstOrDefaultAsync(cancellationToken);
+        var purchase = await _dbContext.StudentCoursePurchases
+            .AsNoTracking()
+            .Where(item => item.UserId == userId && item.CourseId == courseId)
+            .OrderByDescending(item => item.PurchasedAt)
+            .FirstOrDefaultAsync(cancellationToken);
+
+        var course = await _dbContext.Courses
+            .AsNoTracking()
+            .Where(item => item.Id == courseId)
+            .Select(item => new { item.Title })
+            .FirstOrDefaultAsync(cancellationToken);
+
+        var user = await _dbContext.Users
+            .AsNoTracking()
+            .Where(item => item.Id == userId && item.IsActive)
+            .Select(item => new { item.Email, item.UserName })
+            .FirstOrDefaultAsync(cancellationToken);
+
         if (purchase is null || course is null || string.IsNullOrWhiteSpace(user?.Email)) return;
+
         try
         {
-            await _emailService.SendPurchaseInvoiceEmailAsync(user.Email, user.UserName ?? "Student", course.Title, purchase.PurchasePrice, purchase.Id, purchase.PurchasedAt, cancellationToken);
+            await _emailService.SendPurchaseInvoiceEmailAsync(
+                user.Email,
+                user.UserName ?? "Student",
+                course.Title,
+                purchase.PurchasePrice,
+                purchase.Id,
+                purchase.PurchasedAt,
+                cancellationToken);
         }
         catch (Exception ex)
         {
-            _logger.LogWarning(ex, "Purchase invoice could not be sent for purchase {PurchaseId} to {Email}.", purchase.Id, user.Email);
+            _logger.LogWarning(
+                ex,
+                "Purchase invoice could not be sent for purchase {PurchaseId} to {Email}.",
+                purchase.Id,
+                user.Email);
+        }
+    }
+
+    private async Task TrySendPaymentFailureEmailAsync(PaymentTransaction transaction, CancellationToken cancellationToken)
+    {
+        var courseTitle = await _dbContext.Courses
+            .AsNoTracking()
+            .Where(item => item.Id == transaction.CourseId)
+            .Select(item => item.Title)
+            .FirstOrDefaultAsync(cancellationToken);
+
+        var user = await _dbContext.Users
+            .AsNoTracking()
+            .Where(item => item.Id == transaction.UserId && item.IsActive)
+            .Select(item => new { item.Email, item.UserName })
+            .FirstOrDefaultAsync(cancellationToken);
+
+        if (string.IsNullOrWhiteSpace(user?.Email) || string.IsNullOrWhiteSpace(courseTitle)) return;
+
+        try
+        {
+            await _paymentNotificationService.SendPaymentFailureEmailAsync(
+                user.Email,
+                user.UserName ?? "Student",
+                courseTitle,
+                transaction.Amount,
+                transaction.MerchantOrderId,
+                cancellationToken);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogWarning(
+                ex,
+                "Payment failure email could not be sent for merchant order {MerchantOrderId} to {Email}.",
+                transaction.MerchantOrderId,
+                user.Email);
         }
     }
 
