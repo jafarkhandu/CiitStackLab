@@ -194,6 +194,58 @@
             .question-palette { grid-template-columns: repeat(5, minmax(0, 1fr)); }
         }
         @@media (prefers-reduced-motion: reduce) { *, *::before, *::after { transition: none !important; } }
+
+        /* Compact, translucent desktop layout: keep the question, actions, camera and palette in view. */
+        @@media (min-width: 761px) {
+            .exam-shell { padding: 12px clamp(14px, 1.6vw, 24px) 10px; }
+            .exam-header { margin-bottom: 12px; padding-bottom: 12px; gap: 14px; }
+            .brand-mark { width: 38px; height: 38px; flex-basis: 38px; border-radius: 12px; font-size: 18px; }
+            .exam-title { font-size: clamp(18px, 1.7vw, 24px); }
+            .exam-subtitle { margin-top: 2px; font-size: 11px; }
+            .timer-card { min-width: 162px; padding: 9px 13px; gap: 9px; border-radius: 14px; }
+            .timer-icon { font-size: 20px; }
+            .timer-label { font-size: 9px; }
+            #exam-timer { font-size: 22px; }
+            .exam-grid { gap: 14px; align-items: start; }
+            .glass-card {
+                background: linear-gradient(135deg, rgba(255,255,255,.62), rgba(255,255,255,.38));
+                border: 1px solid rgba(255,255,255,.78);
+                box-shadow: 0 16px 42px rgba(42,79,130,.11), inset 0 1px 0 rgba(255,255,255,.9);
+                backdrop-filter: blur(28px) saturate(155%);
+                -webkit-backdrop-filter: blur(28px) saturate(155%);
+            }
+            .question-card { min-height: 0; padding: 18px 20px; border-radius: 20px; }
+            .question-count { padding: 7px 11px; font-size: 11px; border-radius: 9px; }
+            .question-prompt { margin: 15px 0 14px; font-size: clamp(17px, 1.35vw, 21px); line-height: 1.45; }
+            .options { gap: 8px; }
+            .option { min-height: 47px; padding: 10px 13px; gap: 11px; border-radius: 11px; }
+            .option-text { font-size: 12px; line-height: 1.4; }
+            .option input { width: 17px; height: 17px; flex-basis: 17px; }
+            .option input::before { width: 7px; height: 7px; }
+            .question-actions { margin-top: 15px; padding-top: 0; gap: 8px; grid-template-columns: .82fr 1.22fr 1fr; }
+            .action-btn { min-height: 40px; padding: 7px 9px; border-radius: 10px; font-size: 11px; gap: 6px; }
+            .exam-side { grid-template-rows: auto 1fr; gap: 12px; }
+            .side-card { padding: 14px; border-radius: 18px; }
+            .side-heading { margin-bottom: 9px; font-size: 13px; }
+            #exam-camera { height: 138px; max-height: 138px; border-radius: 12px; }
+            .camera-footer { margin-top: 8px; }
+            #camera-status { font-size: 10px; }
+            #save-status { margin-top: 6px; font-size: 10px; min-height: 14px; }
+            .secure-chip { padding: 5px 7px; font-size: 9px; }
+            .palette-legend { gap: 5px 8px; margin-bottom: 9px; }
+            .legend-item { gap: 4px; font-size: 9px; }
+            .legend-dot { width: 8px; height: 8px; }
+            .question-palette { grid-template-columns: repeat(10, minmax(0, 1fr)); gap: 4px; }
+            .palette-btn { min-height: 29px; padding: 3px 0; border-radius: 7px; font-size: 10px; }
+            .palette-summary { margin-top: 8px; padding-top: 7px; gap: 5px; font-size: 9px; }
+            .exam-bottom { margin-top: 8px; font-size: 9px; }
+            .submit-final { padding: 8px 12px; border-radius: 9px; font-size: 10px; }
+        }
+        @@media (min-width: 761px) and (max-width: 1050px) {
+            .exam-grid { grid-template-columns: minmax(0, 1.5fr) minmax(315px, .9fr); }
+            .side-card { padding: 11px; }
+            #exam-camera { height: 120px; max-height: 120px; }
+        }
     </style>
 </head>
 <body>
@@ -219,9 +271,6 @@
             <main class="glass-card question-card">
                 <div class="question-top">
                     <span class="question-count" id="question-count">Question 1 of @Model.Questions.Count</span>
-                    <button class="review-toggle" id="mark-review-top" type="button" aria-pressed="false">
-                        <span class="review-box" aria-hidden="true"></span><span>Mark for review</span>
-                    </button>
                 </div>
                 <div id="question-stack">
                     @for (var i = 0; i < Model.Questions.Count; i++)
@@ -304,7 +353,6 @@
     const saveNextButton = document.getElementById('save-next-button');
     const skipButton = document.getElementById('skip-button');
     const reviewButton = document.getElementById('mark-review-button');
-    const reviewTopButton = document.getElementById('mark-review-top');
     const submitButton = document.getElementById('submit-exam-button');
     const camera = document.getElementById('exam-camera');
     const cameraStatus = document.getElementById('camera-status');
@@ -327,9 +375,35 @@
         if (selectedOption(index) !== null) saved.add(index);
     });
 
+    const defaultSaveStatus = 'Your answers are saved only when you select Save & Next.';
+    let messageTimeoutId = null;
+    let saveStatusTimeoutId = null;
+
     function showMessage(message, kind) {
+        if (messageTimeoutId !== null) window.clearTimeout(messageTimeoutId);
         saveMessage.textContent = message;
         saveMessage.className = 'message-bar show ' + (kind === 'error' ? 'error' : 'success');
+        messageTimeoutId = window.setTimeout(() => {
+            saveMessage.className = 'message-bar';
+            saveMessage.textContent = '';
+        }, kind === 'error' ? 5500 : 3000);
+    }
+
+    function setSaveStatus(message, autoDismiss = false) {
+        if (saveStatusTimeoutId !== null) window.clearTimeout(saveStatusTimeoutId);
+        saveStatus.textContent = message;
+        if (autoDismiss) {
+            saveStatusTimeoutId = window.setTimeout(() => {
+                if (saveStatus.textContent === message) {
+                    saveStatus.textContent = defaultSaveStatus;
+                }
+            }, 5500);
+        }
+    }
+
+    function showSaveError(message) {
+        setSaveStatus('Save failed. Your selected answer is still on this page.', true);
+        showMessage(message, 'error');
     }
 
     function selectedOption(index) {
@@ -350,13 +424,8 @@
         document.getElementById('saved-count').textContent = String(saved.size);
         document.getElementById('review-count').textContent = String(marked.size);
         document.getElementById('skipped-count').textContent = String(skipped.size);
-        const isMarked = marked.has(currentIndex);
-        [reviewButton, reviewTopButton].forEach(button => {
-            button.setAttribute('aria-pressed', String(isMarked));
-            const text = button.querySelector('span:last-child');
-            if (button === reviewTopButton && text) text.textContent = isMarked ? 'Marked for review' : 'Mark for review';
-            if (button === reviewButton) button.innerHTML = isMarked ? '<span aria-hidden="true">⚑</span> Remove Review Mark' : '<span aria-hidden="true">⚑</span> Mark for Review';
-        });
+        reviewButton.setAttribute('aria-pressed', String(marked.has(currentIndex)));
+        reviewButton.innerHTML = '<span aria-hidden="true">⚑</span> Mark for Review &amp; Next';
         document.getElementById('question-count').textContent = 'Question ' + (currentIndex + 1) + ' of ' + questions.length;
     }
 
@@ -416,7 +485,7 @@
         }
         saveNextButton.disabled = true;
         skipButton.disabled = true;
-        saveStatus.textContent = 'Saving question ' + (currentIndex + 1) + '…';
+        setSaveStatus('Saving question ' + (currentIndex + 1) + '…');
         try {
             const response = await fetch(form.action, {
                 method: 'POST',
@@ -428,7 +497,7 @@
             const result = await response.json();
             if (result.status && result.status !== 'InProgress') {
                 showMessage('This exam is no longer active (' + result.status + ').', 'error');
-                saveStatus.textContent = 'The server reports that this exam is no longer active.';
+                setSaveStatus('The server reports that this exam is no longer active.', true);
                 return;
             }
             saved.add(currentIndex);
@@ -438,8 +507,7 @@
             paintPalette();
             nextQuestion();
         } catch (error) {
-            saveStatus.textContent = 'Save failed. Your selected answer is still on this page.';
-            showMessage(error.message || 'Could not save this answer. Please retry.', 'error');
+            showSaveError(error.message || 'Could not save this answer. Please retry.');
         } finally {
             saveNextButton.disabled = false;
             skipButton.disabled = false;
@@ -453,11 +521,11 @@
         paintPalette();
     }
 
-    function toggleReview() {
+    function markReviewAndNext() {
         if (finishing) return;
-        if (marked.has(currentIndex)) marked.delete(currentIndex);
-        else marked.add(currentIndex);
+        marked.add(currentIndex);
         paintPalette();
+        nextQuestion();
     }
 
     async function postEvent(type, details) {
@@ -481,7 +549,7 @@
     async function finishExam(message, securityTermination) {
         if (finishing) return;
         finishing = true;
-        [saveNextButton, skipButton, reviewButton, reviewTopButton, submitButton].forEach(button => button.disabled = true);
+        [saveNextButton, skipButton, reviewButton, submitButton].forEach(button => button.disabled = true);
         saveStatus.textContent = message || 'Submitting examination…';
 
         // The server has already finalized an attempt after the third proctoring warning.
@@ -510,9 +578,8 @@
         } catch (error) {
             finishing = false;
             finalFlag.value = 'false';
-            [saveNextButton, skipButton, reviewButton, reviewTopButton, submitButton].forEach(button => button.disabled = false);
-            saveStatus.textContent = 'Submission failed. Your answers remain on this page.';
-            showMessage(error.message || 'Could not submit the examination. Please retry before the deadline.', 'error');
+            [saveNextButton, skipButton, reviewButton, submitButton].forEach(button => button.disabled = false);
+            showSaveError(error.message || 'Could not submit the examination. Please retry before the deadline.');
         }
     }
 
@@ -583,8 +650,7 @@
     paletteButtons.forEach(button => button.addEventListener('click', () => goToQuestion(Number(button.dataset.goTo))));
     saveNextButton.addEventListener('click', saveCurrentAndNext);
     skipButton.addEventListener('click', skipCurrent);
-    reviewButton.addEventListener('click', toggleReview);
-    reviewTopButton.addEventListener('click', toggleReview);
+    reviewButton.addEventListener('click', markReviewAndNext);
     submitButton.addEventListener('click', () => {
         const unanswered = questions.filter((_, index) => !saved.has(index) && selectedOption(index) !== null).length;
         const message = unanswered > 0
