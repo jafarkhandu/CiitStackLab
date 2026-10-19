@@ -20,9 +20,19 @@
 .ciit-exam-count{display:grid;place-items:center;min-width:38px;height:38px;padding:0 12px;border:1px solid #d8e7ff;border-radius:13px;background:#eef5ff;color:#2167ee;font-weight:850}
 .ciit-exam-table-wrap{padding:8px 24px 18px}.ciit-exam-table{width:100%;margin:0;border-collapse:separate;border-spacing:0 8px}
 .ciit-exam-table thead th{padding:12px 14px;border:0;color:#8191a9;font-size:.7rem;font-weight:850;letter-spacing:.09em;text-transform:uppercase;white-space:nowrap}
-.ciit-exam-table tbody tr{background:rgba(246,249,255,.88);transition:transform .18s ease,background .18s ease}.ciit-exam-table tbody tr:hover{background:#fff;transform:translateY(-1px)}
-.ciit-exam-table tbody td{padding:16px 14px;border-top:1px solid #dee9f9;border-bottom:1px solid #dee9f9;color:#526783;vertical-align:middle}
-.ciit-exam-table tbody td:first-child{border-left:1px solid #dee9f9;border-radius:13px 0 0 13px}.ciit-exam-table tbody td:last-child{border-right:1px solid #dee9f9;border-radius:0 13px 13px 0}
+.ciit-exam-table{border-spacing:0 10px}
+.ciit-exam-table tbody tr{background:linear-gradient(115deg,rgba(255,255,255,.96),rgba(239,246,255,.88));filter:drop-shadow(0 5px 12px rgba(39,78,138,.045));transition:transform .24s ease,filter .24s ease}
+.ciit-exam-table tbody tr:hover{background:linear-gradient(115deg,#fff,#edf5ff);transform:translateY(-3px);filter:drop-shadow(0 12px 18px rgba(39,91,170,.12))}
+.ciit-exam-table tbody td{padding:18px 14px;border-top:1px solid rgba(207,224,249,.9);border-bottom:1px solid rgba(207,224,249,.9);color:#526783;vertical-align:middle}
+.ciit-exam-table tbody td:first-child{border-left:1px solid #d4e4fb;border-radius:16px 0 0 16px}.ciit-exam-table tbody td:last-child{border-right:1px solid #d4e4fb;border-radius:0 16px 16px 0}
+.ciit-exam-topic{font-size:.93rem;letter-spacing:-.015em}
+.ciit-exam-action{position:relative;overflow:hidden;min-height:41px;padding:10px 16px;border-color:#c9ddff;border-radius:12px;background:linear-gradient(135deg,#fff 0%,#eaf2ff 100%);box-shadow:0 4px 10px rgba(37,99,235,.07);transition:transform .2s ease,box-shadow .2s ease,border-color .2s ease}
+.ciit-exam-action:hover{transform:translateY(-2px);box-shadow:0 8px 17px rgba(37,99,235,.16)}
+.ciit-exam-action:focus-visible{outline:3px solid rgba(37,99,235,.25);outline-offset:3px}
+.ciit-exam-status{box-shadow:inset 0 1px 0 rgba(255,255,255,.8)}
+.ciit-exam-table tbody tr{animation:exam-row-enter .42s both;animation-delay:calc(var(--row-index,0)*35ms)}
+@@keyframes exam-row-enter{from{opacity:0;transform:translateY(9px)}to{opacity:1;transform:translateY(0)}}
+@@media(prefers-reduced-motion:reduce){.ciit-exam-table tbody tr{animation:none;transition:none}.ciit-exam-action{transition:none}}
 .ciit-exam-topic{display:block;color:#243c60;font-weight:820}.ciit-exam-sub{display:block;margin-top:5px;color:#8a9ab0;font-size:.76rem}
 .ciit-exam-status{display:inline-flex;padding:6px 10px;border:1px solid #dbe8fa;border-radius:999px;background:#f1f6ff;color:#52709a;font-size:.74rem;font-weight:800}
 .ciit-exam-status[data-status="Passed"]{border-color:#c8f0dd;background:#edfbf4;color:#168154}.ciit-exam-status[data-status="Failed"],.ciit-exam-status[data-status="Terminated"],.ciit-exam-status[data-status="TimedOut"]{border-color:#f7d9d9;background:#fff3f3;color:#b74747}
@@ -37,7 +47,7 @@
     <header class="ciit-exam-hero">
         <span class="ciit-exam-kicker">Student workspace</span>
         <h1>Your examinations</h1>
-        <p>Track your scheduled exams, ongoing attempts, and results. Apply for an examination from the topic learning page after marking it complete.</p>
+        <p>Track your scheduled exams and attempts. Examination results are available separately after submission.</p>
     </header>
     @if (TempData["ExamMessage"] is string message) { <div class="alert alert-success ciit-exam-flash" role="status">@message</div> }
     @if (TempData["ExamError"] is string error) { <div class="alert alert-warning ciit-exam-flash" role="alert">@error</div> }
@@ -57,18 +67,16 @@
         {
             <div class="table-responsive ciit-exam-table-wrap">
                 <table class="ciit-exam-table">
-                    <thead><tr><th>Topic</th><th>Scheduled time</th><th>Status</th><th>Result</th><th class="text-end">Action</th></tr></thead>
+                    <thead><tr><th>Topic</th><th>Scheduled time</th><th>Status</th><th class="text-end">Action</th></tr></thead>
                     <tbody>
-                    @foreach (var exam in Model)
+                    @foreach (var exam in Model.Select((item, rowIndex) => new { Exam = item, RowIndex = rowIndex }))
                     {
-                        <tr>
+                        var row = exam;
+                        var exam = row.Exam;
+                        <tr style="--row-index: @row.RowIndex">
                             <td><span class="ciit-exam-topic">@exam.TopicTitle</span><span class="ciit-exam-sub">Attempt #@exam.AttemptId</span></td>
                             <td><time class="exam-local-time" datetime="@DateTime.SpecifyKind(exam.ScheduledAtUtc, DateTimeKind.Utc).ToString("O")">@exam.ScheduledAtUtc.ToString("yyyy-MM-dd HH:mm") UTC</time></td>
                             <td><span class="ciit-exam-status" data-status="@exam.Status">@(exam.Status == "TimedOut" ? "Time’s up" : exam.Status)</span></td>
-                            <td>
-                                @if (exam.Status is "Passed" or "Failed" or "Terminated" or "TimedOut") { <strong>@exam.Score / @exam.TotalQuestions</strong><span class="ciit-exam-sub">@((exam.Passed) ? "Passed" : "Not passed")</span> }
-                                else { <span class="ciit-exam-sub">Pending result</span> }
-                            </td>
                             <td class="text-end">
                                 @if (exam.Status is "Scheduled" or "Ready")
                                 {
