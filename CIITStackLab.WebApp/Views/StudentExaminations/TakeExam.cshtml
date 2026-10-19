@@ -708,6 +708,11 @@
             if ('FaceDetector' in window) {
                 try { faceDetector = new FaceDetector({ fastMode: true, maxDetectedFaces: 3 }); } catch (_) {}
             }
+
+            cameraStatus.textContent = faceDetector
+                ? 'Camera active; face monitoring enabled.'
+                : 'Camera active; automatic face detection is not supported in this browser.';
+
             if (faceDetector) {
                 let detectorBusy = false;
                 window.setInterval(async () => {
@@ -810,9 +815,9 @@
             terminateForSecurity('TabSwitch', 'Exam tab became hidden', 'Exam terminated because the exam tab was left.');
         }
     });
-    window.addEventListener('blur', () => {
-        terminateForSecurity('WindowBlur', 'Exam window lost focus', 'Exam terminated because the exam window lost focus.');
-    });
+    // Losing window focus alone is not a reliable sign of leaving the exam:
+    // operating-system screenshot tools and browser permission dialogs can trigger blur.
+    // The visibilitychange handler above still handles an exam tab becoming hidden.
     document.addEventListener('fullscreenchange', () => {
         if (!document.fullscreenElement) {
             terminateForSecurity('FullscreenExit', 'Fullscreen mode was exited', 'Exam terminated because fullscreen mode was exited.');
@@ -834,12 +839,18 @@
             event.preventDefault();
             postEvent(({ c: 'Copy', v: 'Paste', x: 'Cut' })[key], 'Restricted shortcut');
         }
-        if (event.key === 'PrintScreen'
-            || ((event.metaKey && event.shiftKey && ['3', '4', '5'].includes(key))
-            || ((event.ctrlKey || event.metaKey) && event.shiftKey && key === '5')
-            || ((event.ctrlKey || event.metaKey) && ['p', 's'].includes(key)))) {
+        const screenshotShortcut = event.key === 'PrintScreen'
+            || (event.metaKey && event.shiftKey && ['3', '4', '5'].includes(key))
+            || ((event.ctrlKey || event.metaKey) && event.shiftKey && key === '5');
+
+        if (screenshotShortcut) {
+            // Browsers cannot reliably block OS-level screenshots. Log the attempt,
+            // but do not prevent the shortcut or terminate the exam.
+            postEvent('ScreenshotShortcut', 'Possible screenshot shortcut');
+        }
+
+        if ((event.ctrlKey || event.metaKey) && ['p', 's'].includes(key)) {
             event.preventDefault();
-            postEvent('ScreenshotShortcut', 'Possible screenshot or print shortcut');
         }
         if (((event.ctrlKey || event.metaKey) && event.shiftKey && key === 'r') || (event.metaKey && event.altKey && key === 'r')) {
             event.preventDefault();
