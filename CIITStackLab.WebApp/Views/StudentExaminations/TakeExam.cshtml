@@ -254,7 +254,7 @@
             }
             .question-card {
                 min-height: 0;
-                height: min(70vh, 680px);
+                height: min(82vh, 740px);
                 padding: 20px 24px;
             }
             .question-prompt { font-size: clamp(18px, 1.4vw, 22px); line-height: 1.5; margin: 18px 0 17px; }
@@ -263,9 +263,9 @@
             .question-actions { margin-top: 18px; }
             .action-btn { min-height: 42px; font-size: 12px; }
             .exam-side {
-                min-height: min(70vh, 680px);
-                height: min(70vh, 680px);
-                grid-template-rows: minmax(0, .9fr) minmax(0, 1.1fr);
+                min-height: min(82vh, 740px);
+                height: min(82vh, 740px);
+                grid-template-rows: minmax(0, .72fr) minmax(0, 1fr);
                 align-content: stretch;
                 gap: 12px;
             }
@@ -278,17 +278,17 @@
         }
         @@media (min-width: 761px) and (max-height: 800px) {
             .exam-header { margin-bottom: 10px; padding-bottom: 10px; }
-            .question-card { height: min(70vh, 640px); padding: 16px 20px; }
+            .question-card { height: min(82vh, 700px); padding: 16px 20px; }
             .question-prompt { margin: 12px 0; line-height: 1.4; }
             .option { min-height: 43px; padding: 8px 12px; }
             .question-actions { margin-top: 12px; }
-            .exam-side { height: min(70vh, 640px); min-height: min(70vh, 640px); }
+            .exam-side { height: min(82vh, 700px); min-height: min(82vh, 700px); }
             #exam-camera { height: clamp(125px, 15vw, 165px); max-height: 165px; }
             .side-card { padding: 12px; }
         }
         @@media (min-width: 761px) and (max-width: 1050px) {
             .exam-grid { grid-template-columns: minmax(0, 1.5fr) minmax(300px, .9fr); }
-            .exam-side { grid-template-rows: minmax(0, .9fr) minmax(0, 1.1fr); }
+            .exam-side { grid-template-rows: minmax(0, .72fr) minmax(0, 1fr); }
             .side-card { padding: 11px; }
             #exam-camera { height: 120px; max-height: 120px; }
         }
