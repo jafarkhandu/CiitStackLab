@@ -13,4 +13,6 @@ public sealed class PhonePeOptions
     public string CallbackUsername { get; set; } = string.Empty;
 
     public string CallbackPassword { get; set; } = string.Empty;
+
+    public int TimeoutSeconds { get; set; } = 30;
 }
