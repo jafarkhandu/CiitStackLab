@@ -137,6 +137,11 @@ public sealed class StudentExaminationsController : Controller
             courseId,
             topicId,
             cancellationToken);
+        if (availability.IsAvailable)
+        {
+            return;
+        }
+
         var details = await (
             from courseModule in _db.CourseModules.AsNoTracking()
             join course in _db.Courses.AsNoTracking()
