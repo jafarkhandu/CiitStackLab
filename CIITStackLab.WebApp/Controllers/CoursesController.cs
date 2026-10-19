@@ -958,6 +958,22 @@ public class CoursesController : Controller
             return RedirectToAction(nameof(Learn), new { id, topicId = allowedTopicId.Value });
         }
 
+        var hasExistingExam = await _dbContext.TopicExamAttempts.AsNoTracking().AnyAsync(
+            attempt => attempt.UserId == userId
+                && attempt.CourseId == id
+                && attempt.TopicId == topicId
+                && (attempt.Status == "Scheduled"
+                    || attempt.Status == "Ready"
+                    || attempt.Status == "InProgress"
+                    || attempt.Status == "Passed"),
+            cancellationToken);
+        if (hasExistingExam)
+        {
+            TempData["LearningProgressMessage"] =
+                "An examination record already exists for this topic. Open it to continue or review your result.";
+            return RedirectToAction("Index", "StudentExaminations");
+        }
+
         var topicNoteIds = await _dbContext.TrainingNotes.AsNoTracking()
             .Where(x => x.TopicId == topicId && x.Flag == 0)
             .Select(x => x.Id).ToListAsync(cancellationToken);
