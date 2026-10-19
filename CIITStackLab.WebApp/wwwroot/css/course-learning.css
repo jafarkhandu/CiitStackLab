@@ -2542,3 +2542,35 @@ details[open] > summary .ciit-learning-disclosure-icon {
 .ciit-learning-topic.is-locked-topic .ciit-learning-topic-heading{opacity:.65}
 @media(max-width:575.98px){#topicExamApplicationModal .modal-header,#topicExamApplicationModal .modal-footer{padding:18px}#topicExamApplicationModal .modal-body{padding:20px 18px}#topicExamApplicationModal .modal-footer{flex-wrap:wrap}#topicExamApplicationModal .modal-footer .btn{flex:1 1 auto}}
 @media(prefers-reduced-motion:reduce){#topicExamApplicationModal .btn{transition:none}}
+
+/* Topic-exam availability feedback: glass treatment consistent with the learning workspace. */
+.ciit-exam-availability-alert {
+    position: relative;
+    isolation: isolate;
+    overflow: hidden;
+    margin-top: 18px;
+    margin-bottom: 18px;
+}
+
+.ciit-exam-availability-alert::after {
+    position: absolute;
+    z-index: -1;
+    top: -58px;
+    right: -36px;
+    width: 140px;
+    height: 140px;
+    border-radius: 50%;
+    background: radial-gradient(circle, rgba(71, 132, 246, .13), transparent 70%);
+    content: "";
+    pointer-events: none;
+}
+
+.ciit-exam-availability-alert p {
+    overflow-wrap: anywhere;
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .ciit-exam-availability-alert {
+        scroll-behavior: auto;
+    }
+}
