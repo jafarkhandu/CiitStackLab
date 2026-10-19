@@ -813,6 +813,11 @@
     window.addEventListener('blur', () => {
         terminateForSecurity('WindowBlur', 'Exam window lost focus', 'Exam terminated because the exam window lost focus.');
     });
+    document.addEventListener('fullscreenchange', () => {
+        if (!document.fullscreenElement) {
+            terminateForSecurity('FullscreenExit', 'Fullscreen mode was exited', 'Exam terminated because fullscreen mode was exited.');
+        }
+    });
     window.addEventListener('pagehide', () => {
         if (!finishing && !terminating) {
             postEvent('PageExit', 'Exam page was left, refreshed, or navigated away from', true);
