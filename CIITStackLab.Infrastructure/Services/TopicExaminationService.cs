@@ -179,9 +179,20 @@ public sealed class TopicExaminationService : ITopicExaminationService
     {
         var attempt = await FindOwnedAttemptAsync(userId, attemptId, cancellationToken);
         if (attempt is null) return (false, "Exam not found.", null);
-        if (attempt.Status != "InProgress" || attempt.DeadlineAtUtc is null || !await DeviceMatchesAsync(attempt, deviceToken))
-            return (false, "This exam is not active.", await MapSummaryAsync(attempt, cancellationToken));
+        if (attempt.Status != "InProgress")
+            return (false, $"This exam attempt is closed (status: {attempt.Status}). A closed attempt cannot accept more answers.", await MapSummaryAsync(attempt, cancellationToken));
+        if (attempt.DeadlineAtUtc is null)
+            return (false, "This exam has no recorded deadline, so the server cannot safely accept answers.", await MapSummaryAsync(attempt, cancellationToken));
+
         var now = DateTime.UtcNow;
+        if (now >= attempt.DeadlineAtUtc.Value)
+        {
+            await FinalizeAsync(attempt, "TimedOut", now, cancellationToken);
+            return (false, "The exam deadline has passed. This attempt has been closed.", await MapSummaryAsync(attempt, cancellationToken));
+        }
+        if (!await DeviceMatchesAsync(attempt, deviceToken))
+            return (false, "Device verification failed for this exam attempt. Reopen the exam from its original device and session.", await MapSummaryAsync(attempt, cancellationToken));
+
         var questionIds = DeserializeIds(attempt.QuestionIdsJson);
         var submitted = answers ?? Array.Empty<TopicExamAnswerInput>();
         if (submitted.Any(a => !questionIds.Contains(a.QuestionId)
