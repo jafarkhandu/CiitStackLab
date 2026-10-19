@@ -392,11 +392,16 @@
 
     async function readFailure(response) {
         let detail = '';
+        let rawBody = '';
+        try { rawBody = await response.clone().text(); } catch (_) {}
         try {
-            const body = await response.json();
+            const body = JSON.parse(rawBody);
             detail = body.error || body.message || '';
         } catch (_) {
-            try { detail = (await response.text()).trim(); } catch (_) {}
+            const trimmedBody = rawBody.trim();
+            if (trimmedBody && !trimmedBody.startsWith('<')) {
+                detail = trimmedBody.slice(0, 300);
+            }
         }
         if (!detail) detail = 'The server rejected the request (HTTP ' + response.status + ').';
         return detail;
@@ -568,7 +573,10 @@
         if (event.target.matches('input[type="radio"]')) {
             const question = event.target.closest('.exam-question');
             const index = Number(question.dataset.index);
-            if (!saved.has(index)) paintPalette();
+            // A changed answer must be explicitly saved again before it is shown as saved.
+            saved.delete(index);
+            skipped.delete(index);
+            paintPalette();
             saveStatus.textContent = 'Answer selected. Use Save & Next to save it.';
         }
     });
