@@ -478,10 +478,18 @@
         finishing = true;
         [saveNextButton, skipButton, reviewButton, reviewTopButton, submitButton].forEach(button => button.disabled = true);
         saveStatus.textContent = message || 'Submitting examination…';
+
+        // The server has already finalized an attempt after the third proctoring warning.
+        // Do not send a second submission request for an attempt that is already closed.
+        if (securityTermination) {
+            if (cameraStream) cameraStream.getTracks().forEach(track => track.stop());
+            window.location.assign('/Examinations');
+            return;
+        }
+
         finalFlag.value = 'true';
         const payload = new URLSearchParams(new FormData(form));
         payload.set('finalSubmission', 'true');
-        if (securityTermination) payload.set('securityTerminated', 'true');
         try {
             const response = await fetch(form.action, {
                 method: 'POST', credentials: 'same-origin',
@@ -540,7 +548,6 @@
         } catch (_) {
             cameraStatus.textContent = 'Camera unavailable. Check browser permission and reconnect.';
             showMessage('Camera access is required to continue this secure examination.', 'error');
-            await postEvent('CameraLost', 'Camera permission or device unavailable');
             await terminateForSecurity('CameraLost', 'Camera permission or device unavailable', 'Exam ended because camera monitoring is unavailable.');
         }
     }
