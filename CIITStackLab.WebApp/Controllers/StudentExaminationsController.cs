@@ -17,15 +17,18 @@ public sealed class StudentExaminationsController : Controller
     private readonly ITopicExaminationService _exams;
     private readonly ApplicationDbContext _db;
     private readonly IHubContext<ExamApplicationNotificationHub> _examApplicationHub;
+    private readonly ILogger<StudentExaminationsController> _logger;
 
     public StudentExaminationsController(
         ITopicExaminationService exams,
         ApplicationDbContext db,
-        IHubContext<ExamApplicationNotificationHub> examApplicationHub)
+        IHubContext<ExamApplicationNotificationHub> examApplicationHub,
+        ILogger<StudentExaminationsController> logger)
     {
         _exams = exams;
         _db = db;
         _examApplicationHub = examApplicationHub;
+        _logger = logger;
     }
 
     [HttpGet("")]
@@ -157,23 +160,38 @@ public sealed class StudentExaminationsController : Controller
             return;
         }
 
-        await _examApplicationHub.Clients
-            .Group(ExamApplicationNotificationHub.AdminGroup)
-            .SendAsync(
-                "ExamQuestionsUnavailable",
-                new
-                {
-                    courseId,
-                    courseTitle = details.CourseTitle,
-                    topicId,
-                    topicTitle = details.TopicTitle,
-                    studentName = User.Identity?.Name ?? userId,
-                    validQuestionCount = availability.ValidQuestionCount,
-                    requiredQuestionCount = 50,
-                    reason = error,
-                    occurredAtUtc = DateTime.UtcNow
-                },
-                cancellationToken);
+        try
+        {
+            await _examApplicationHub.Clients
+                .Group(ExamApplicationNotificationHub.AdminGroup)
+                .SendAsync(
+                    "ExamQuestionsUnavailable",
+                    new
+                    {
+                        courseId,
+                        courseTitle = details.CourseTitle,
+                        topicId,
+                        topicTitle = details.TopicTitle,
+                        studentName = User.Identity?.Name ?? userId,
+                        validQuestionCount = availability.ValidQuestionCount,
+                        requiredQuestionCount = 50,
+                        reason = error,
+                        occurredAtUtc = DateTime.UtcNow
+                    },
+                    cancellationToken);
+        }
+        catch (OperationCanceledException)
+        {
+            throw;
+        }
+        catch (Exception exception)
+        {
+            _logger.LogWarning(
+                exception,
+                "Unable to deliver the live exam-question alert for course {CourseId}, topic {TopicId}.",
+                courseId,
+                topicId);
+        }
     }
 
     [HttpGet("{attemptId:long}/Instructions")]
