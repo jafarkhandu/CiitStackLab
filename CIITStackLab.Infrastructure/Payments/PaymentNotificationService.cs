@@ -54,30 +54,40 @@ public sealed class PaymentNotificationService
         var message = new MimeMessage();
         message.From.Add(new MailboxAddress(senderName, senderEmail));
         message.To.Add(MailboxAddress.Parse(toEmail));
-        message.Subject = "CIIT Stack Lab Payment Update";
+        message.Subject = "Payment failed — CIIT Stack Lab";
 
         var body = new BodyBuilder
         {
-            TextBody = $"Hello {userName}, your payment for {courseTitle} ({formattedAmount}) was not completed. Merchant order: {merchantOrderId}. No course access was granted. If money was debited, please wait for the gateway/bank reversal or contact support.",
+            TextBody = $"Hello {userName}, your payment for {courseTitle} ({formattedAmount}) was not completed. No course access was granted. Merchant order: {merchantOrderId}. If money was debited, please wait for the gateway/bank reversal or contact support.",
             HtmlBody = $"""
             <!doctype html>
             <html>
-            <body style="margin:0;padding:24px;background:#f8fafc;font-family:Arial,Helvetica,sans-serif;color:#172033;">
-                <div style="max-width:620px;margin:0 auto;background:#fff;border:1px solid #e2e8f0;border-radius:18px;overflow:hidden;">
-                    <div style="padding:22px 24px;background:#dc3545;color:#fff;">
-                        <div style="font-size:20px;font-weight:800;">CIIT Stack Lab</div>
-                        <div style="margin-top:5px;font-size:13px;opacity:.92;">Payment status update</div>
+            <body style="margin:0;padding:32px 14px;background:#eef4ff;font-family:Arial,Helvetica,sans-serif;color:#172033;">
+                <div style="max-width:720px;margin:0 auto;background:#fff;border:1px solid #dce6f4;border-radius:24px;overflow:hidden;box-shadow:0 18px 50px rgba(23,105,255,.14);">
+                    <div style="padding:32px 34px;background:linear-gradient(135deg,#dc3545 0%,#ef4444 58%,#fb7185 100%);color:#fff;">
+                        <div style="font-size:24px;font-weight:800;letter-spacing:-.02em;">CIIT Stack Lab</div>
+                        <div style="margin-top:7px;font-size:13px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;opacity:.92;">Payment status update</div>
+                        <div style="margin-top:28px;font-size:32px;font-weight:800;line-height:1.2;">Payment Failed</div>
+                        <div style="margin-top:9px;font-size:15px;line-height:1.6;opacity:.94;">Your payment was not completed and your course access remains protected.</div>
                     </div>
-                    <div style="padding:26px 24px;line-height:1.6;">
-                        <p>Hello <strong>{safeUserName}</strong>,</p>
-                        <p>Your payment could not be completed. <strong>No course access was granted.</strong></p>
-                        <div style="margin:20px 0;padding:16px;border:1px solid #fecaca;border-radius:12px;background:#fff7f7;">
-                            <div><strong>Course:</strong> {safeCourseTitle}</div>
-                            <div><strong>Amount:</strong> {formattedAmount}</div>
-                            <div><strong>Order:</strong> {safeOrderId}</div>
+                    <div style="padding:34px;background:#fff;font-size:16px;line-height:1.7;">
+                        <p style="margin:0 0 18px;">Hello <strong>{safeUserName}</strong>,</p>
+                        <p style="margin:0 0 24px;">We could not complete the payment for your course. <strong>No course access was granted.</strong></p>
+                        <div style="margin:26px 0;padding:22px 24px;border:1px solid #fecaca;border-radius:18px;background:#fff7f7;">
+                            <div style="font-size:12px;font-weight:800;letter-spacing:.1em;text-transform:uppercase;color:#b91c1c;margin-bottom:14px;">Payment details</div>
+                            <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="border-collapse:collapse;font-size:15px;">
+                                <tr><td style="padding:9px 0;color:#64748b;">Course</td><td align="right" style="padding:9px 0;color:#172033;font-weight:700;">{safeCourseTitle}</td></tr>
+                                <tr><td style="padding:9px 0;color:#64748b;">Amount</td><td align="right" style="padding:9px 0;color:#172033;font-weight:700;">{formattedAmount}</td></tr>
+                                <tr><td style="padding:9px 0;color:#64748b;">Order ID</td><td align="right" style="padding:9px 0;color:#172033;font-weight:700;word-break:break-all;">{safeOrderId}</td></tr>
+                            </table>
                         </div>
-                        <p>If your bank or payment provider shows a debit despite the failed status, please allow the provider's reversal process to complete before retrying. Contact support if the amount is not reversed.</p>
+                        <div style="margin:26px 0;padding:20px 22px;border:1px solid #dbeafe;border-radius:16px;background:#f8fbff;">
+                            <div style="font-weight:800;color:#172033;font-size:16px;">If money was debited</div>
+                            <div style="margin-top:7px;color:#64748b;font-size:14px;line-height:1.7;">Please allow the payment provider or bank reversal process to complete before trying again. If the amount is not reversed, contact support with the order ID above.</div>
+                        </div>
+                        <p style="margin:0;color:#64748b;font-size:14px;">You can return to CIIT Stack Lab and retry the payment whenever you are ready.</p>
                     </div>
+                    <div style="padding:20px 34px;background:#f8fafc;border-top:1px solid #e5edf7;color:#64748b;font-size:12px;line-height:1.7;">This is an automated payment notification from CIIT Stack Lab.<br />Please do not reply directly to this email.</div>
                 </div>
             </body>
             </html>
@@ -88,7 +98,11 @@ public sealed class PaymentNotificationService
 
         // Payment failure notifications are a durable side effect. Do not cancel SMTP delivery
         // merely because the browser verification request was closed or timed out.
-        using var client = new SmtpClient();
+        using var client = new SmtpClient
+        {
+            Timeout = 15000
+        };
+
         await client.ConnectAsync(host, port, secureSocketOptions, CancellationToken.None);
         await client.AuthenticateAsync(senderEmail, password, CancellationToken.None);
         await client.SendAsync(message, CancellationToken.None);
