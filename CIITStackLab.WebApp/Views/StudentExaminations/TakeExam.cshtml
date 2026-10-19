@@ -571,8 +571,22 @@
         } catch (_) {}
     }
 
-    async function finishExam(message, securityTermination) {
+    async function finishExam(message, securityTermination, allowPartialSubmission = false) {
         if (finishing) return;
+
+        if (!securityTermination && !allowPartialSubmission) {
+            const unanswered = questions
+                .map((_, index) => index)
+                .filter(index => selectedOption(index) === null);
+            if (unanswered.length > 0) {
+                const firstUnanswered = unanswered[0];
+                goToQuestion(firstUnanswered);
+                showMessage('Answer all ' + questions.length + ' questions before submitting. ' + unanswered.length + ' question(s) remain unanswered.', 'error');
+                setSaveStatus(unanswered.length + ' question(s) still need an answer.', true);
+                return;
+            }
+        }
+
         finishing = true;
         [saveNextButton, skipButton, reviewButton, submitButton].forEach(button => button.disabled = true);
         saveStatus.textContent = message || 'Submitting examination…';
@@ -654,7 +668,7 @@
         const remaining = deadline - Date.now();
         if (!Number.isFinite(deadline) || remaining <= 0) {
             timer.textContent = '00:00';
-            finishExam('Time is over. Submitting examination…', false);
+            finishExam('Time is over. Submitting examination…', false, true);
             return;
         }
         const seconds = Math.ceil(remaining / 1000);
