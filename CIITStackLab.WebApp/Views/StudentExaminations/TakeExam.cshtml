@@ -1,139 +1,580 @@
 @model CIITStackLab.Application.DTOs.TopicExamSessionDto
 @{
-    Layout = "_CourseLayout";
+    Layout = null;
     ViewData["Title"] = "Topic Examination";
     var isDevelopment = ViewContext.HttpContext.RequestServices.GetRequiredService<Microsoft.AspNetCore.Hosting.IWebHostEnvironment>().IsDevelopment();
 }
-<section class="container py-4 ciit-examination-page" id="exam-app" data-attempt-id="@Model.AttemptId" data-deadline="@(Model.DeadlineAtUtc.HasValue ? DateTime.SpecifyKind(Model.DeadlineAtUtc.Value, DateTimeKind.Utc).ToString("O") : string.Empty)">
-    <div class="d-flex flex-wrap justify-content-between align-items-center gap-3 mb-4">
-        <div><span class="text-uppercase text-primary small fw-bold">Secure Examination</span><h1 class="h2 mt-2">Topic examination</h1></div>
-        <div class="border rounded p-3 text-center"><span class="small text-secondary d-block">Time remaining</span><strong id="exam-timer" class="h3 font-monospace mb-0">--:--</strong></div>
-    </div>
-    <div class="alert alert-danger fw-bold">Do not switch tabs or windows. Tab switching ends the exam immediately. Camera monitoring must remain enabled.</div>
-    <div class="row g-4">
-        <div class="col-lg-8">
-            <form id="exam-answer-form" asp-action="Submit" asp-route-attemptId="@Model.AttemptId" method="post">
-                @Html.AntiForgeryToken()
-                @for (var i = 0; i < Model.Questions.Count; i++)
-                {
-                    var q = Model.Questions[i];
-                    <article class="card shadow-sm mb-3">
-                        <div class="card-body p-4">
-                            <input type="hidden" name="answers[@i].QuestionId" value="@q.QuestionId" />
-                            <h2 class="h6"><span class="text-primary me-2">@(i + 1).</span>@q.Question</h2>
-                            @for (var j = 0; j < q.Options.Count; j++)
-                            {
-                                <label class="d-flex gap-2 align-items-start border rounded p-3 mt-2">
-                                    <input type="radio" name="answers[@i].SelectedOptionNumber" value="@(j + 1)" checked="@(q.SelectedOptionNumber == j + 1)" />
-                                    <span>@q.Options[j]</span>
-                                </label>
-                            }
-                        </div>
-                    </article>
-                }
-                <button type="submit" id="exam-submit" class="btn btn-primary btn-lg">Submit examination</button>
-            </form>
-        </div>
-        <div class="col-lg-4">
-            <div class="card shadow-sm">
-                <div class="card-body">
-                    <h2 class="h5">Camera monitoring</h2>
-                    <video id="exam-camera" autoplay muted playsinline class="w-100 rounded border" style="max-height:200px;background:#111"></video>
-                    <p id="camera-status" class="small text-secondary mt-2">Connecting camera…</p>
-                    <p id="save-status" class="small text-secondary">Answers save automatically.</p>
-                </div>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="color-scheme" content="light" />
+    <title>@ViewData["Title"] - CIIT Stack Lab</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+    <style>
+        :root {
+            --exam-ink: #14213d;
+            --exam-muted: #64748b;
+            --exam-line: rgba(148, 163, 184, .24);
+            --exam-blue: #1769ff;
+            --exam-blue-deep: #0753df;
+            --exam-surface: rgba(255, 255, 255, .78);
+            --exam-shadow: 0 22px 60px rgba(35, 71, 125, .09);
+        }
+        * { box-sizing: border-box; }
+        html { min-height: 100%; background: #edf4ff; }
+        body {
+            margin: 0; min-height: 100vh; color: var(--exam-ink);
+            font-family: "Plus Jakarta Sans", Inter, system-ui, -apple-system, "Segoe UI", sans-serif;
+            background:
+                radial-gradient(ellipse at 4% 0%, rgba(105, 168, 255, .18), transparent 34%),
+                radial-gradient(ellipse at 96% 24%, rgba(112, 224, 223, .12), transparent 31%),
+                linear-gradient(135deg, #f7faff 0%, #edf4ff 48%, #f6f9ff 100%);
+        }
+        button, input { font: inherit; }
+        button { -webkit-tap-highlight-color: transparent; }
+        .exam-shell { min-height: 100vh; padding: 26px clamp(16px, 2.4vw, 38px) 34px; }
+        .exam-header {
+            max-width: 1740px; margin: 0 auto 24px; display: flex; align-items: center;
+            justify-content: space-between; gap: 20px; padding: 0 2px 23px;
+            border-bottom: 1px solid rgba(148, 163, 184, .2);
+        }
+        .exam-brand { display: flex; align-items: center; gap: 15px; min-width: 0; }
+        .brand-mark {
+            display: grid; place-items: center; width: 46px; height: 46px; flex: 0 0 46px;
+            color: #fff; font-weight: 800; font-size: 21px; border-radius: 15px;
+            background: linear-gradient(145deg, #3485ff, #0753df);
+            box-shadow: 0 9px 22px rgba(23, 105, 255, .25);
+        }
+        .exam-title { margin: 0; font-size: clamp(19px, 2vw, 27px); font-weight: 800; letter-spacing: -.045em; }
+        .exam-subtitle { margin-top: 4px; color: var(--exam-muted); font-size: 13px; font-weight: 600; }
+        .timer-card {
+            display: flex; align-items: center; gap: 13px; padding: 13px 19px; min-width: 190px;
+            border: 1px solid rgba(248, 113, 113, .28); border-radius: 18px;
+            background: rgba(255, 245, 245, .82); color: #dc2626;
+            box-shadow: 0 10px 30px rgba(220, 38, 38, .06); backdrop-filter: blur(18px);
+        }
+        .timer-icon { font-size: 24px; }
+        .timer-label { display: block; color: #a33d46; font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: .09em; }
+        #exam-timer { display: block; font-size: 26px; line-height: 1.2; font-weight: 800; font-variant-numeric: tabular-nums; letter-spacing: .04em; }
+        .exam-grid {
+            max-width: 1740px; margin: 0 auto; display: grid;
+            grid-template-columns: minmax(0, 1.72fr) minmax(350px, .83fr);
+            gap: 20px; align-items: stretch;
+        }
+        .glass-card {
+            border: 1px solid rgba(255, 255, 255, .88); border-radius: 24px;
+            background: var(--exam-surface); box-shadow: var(--exam-shadow);
+            backdrop-filter: blur(22px); -webkit-backdrop-filter: blur(22px);
+        }
+        .question-card { min-height: 650px; display: flex; flex-direction: column; padding: clamp(22px, 2.4vw, 36px); }
+        .question-top { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 14px; }
+        .question-count {
+            padding: 9px 14px; border-radius: 11px; background: rgba(23, 105, 255, .09);
+            color: var(--exam-blue); font-size: 13px; font-weight: 800;
+        }
+        .review-toggle {
+            display: inline-flex; align-items: center; gap: 9px; padding: 9px 12px;
+            border: 1px solid transparent; border-radius: 12px; color: #50617c;
+            background: transparent; font-size: 13px; font-weight: 700; cursor: pointer;
+        }
+        .review-toggle:hover { background: rgba(245, 158, 11, .08); }
+        .review-toggle[aria-pressed="true"] { color: #a16207; background: #fff7df; border-color: #f7d36b; }
+        .review-box { width: 17px; height: 17px; border: 1.8px solid currentColor; border-radius: 5px; display: inline-grid; place-items: center; }
+        .review-toggle[aria-pressed="true"] .review-box::after { content: "✓"; font-size: 12px; font-weight: 900; }
+        .question-prompt { margin: 29px 0 25px; font-size: clamp(18px, 1.65vw, 24px); line-height: 1.65; font-weight: 700; letter-spacing: -.025em; }
+        .options { display: grid; gap: 13px; }
+        .option {
+            display: flex; align-items: center; gap: 14px; min-height: 66px; padding: 17px 19px;
+            border: 1px solid rgba(148, 163, 184, .32); border-radius: 14px;
+            background: rgba(255,255,255,.7); cursor: pointer; transition: border-color .16s ease, background .16s ease, transform .16s ease, box-shadow .16s ease;
+        }
+        .option:hover { border-color: rgba(23, 105, 255, .48); background: rgba(239, 246, 255, .85); transform: translateY(-1px); }
+        .option:has(input:checked) { border-color: #5c9cff; background: linear-gradient(100deg, rgba(219, 235, 255, .88), rgba(241, 247, 255, .96)); box-shadow: 0 0 0 3px rgba(23, 105, 255, .055); }
+        .option input { appearance: none; width: 19px; height: 19px; flex: 0 0 19px; margin: 0; border: 1.8px solid #8a9ab0; border-radius: 50%; background: #fff; display: grid; place-content: center; cursor: pointer; }
+        .option input::before { content: ""; width: 9px; height: 9px; border-radius: 50%; transform: scale(0); transition: transform .12s ease; background: var(--exam-blue); }
+        .option input:checked { border-color: var(--exam-blue); }
+        .option input:checked::before { transform: scale(1); }
+        .option-text { color: #293953; font-size: 14px; line-height: 1.55; font-weight: 600; }
+        .question-actions { display: grid; grid-template-columns: .9fr 1.12fr 1fr; gap: 12px; margin-top: auto; padding-top: 28px; }
+        .action-btn {
+            min-height: 54px; display: inline-flex; justify-content: center; align-items: center; gap: 9px;
+            padding: 12px 14px; border-radius: 13px; border: 1px solid transparent;
+            font-size: 13px; font-weight: 800; cursor: pointer; transition: transform .15s ease, box-shadow .15s ease, background .15s ease;
+        }
+        .action-btn:hover { transform: translateY(-1px); }
+        .action-btn:disabled { opacity: .55; cursor: not-allowed; transform: none; }
+        .btn-skip { color: #31435f; border-color: rgba(100, 116, 139, .35); background: rgba(255,255,255,.65); }
+        .btn-review { color: #a16207; border-color: rgba(245, 158, 11, .55); background: rgba(255, 250, 230, .82); }
+        .btn-next { color: #fff; background: linear-gradient(135deg, #2582ff, #0753df); box-shadow: 0 9px 20px rgba(23, 105, 255, .19); }
+        .btn-next:hover { box-shadow: 0 12px 25px rgba(23, 105, 255, .26); }
+        .exam-side { display: grid; grid-template-rows: auto 1fr; gap: 20px; min-width: 0; }
+        .side-card { padding: 22px; min-width: 0; }
+        .side-heading { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin: 0 0 17px; font-size: 16px; font-weight: 800; letter-spacing: -.02em; }
+        .camera-live { display: inline-flex; align-items: center; gap: 7px; color: #b91c1c; font-size: 11px; font-weight: 800; white-space: nowrap; }
+        .live-dot { width: 8px; height: 8px; border-radius: 50%; background: #ef4444; box-shadow: 0 0 0 4px rgba(239,68,68,.1); }
+        #exam-camera { display: block; width: 100%; height: clamp(155px, 17vw, 230px); object-fit: cover; border: 1px solid rgba(15,23,42,.08); border-radius: 15px; background: #101827; }
+        .camera-footer { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin-top: 13px; }
+        #camera-status { margin: 0; color: #64748b; font-size: 12px; font-weight: 600; }
+        .secure-chip { display: inline-flex; align-items: center; gap: 6px; color: #047857; background: rgba(16,185,129,.1); padding: 6px 9px; border-radius: 999px; font-size: 10px; font-weight: 800; }
+        #save-status { color: #64748b; font-size: 12px; line-height: 1.5; min-height: 18px; margin: 10px 0 0; overflow-wrap: anywhere; }
+        .palette-card { display: flex; flex-direction: column; }
+        .palette-legend { display: flex; flex-wrap: wrap; gap: 10px 13px; margin: 0 0 17px; }
+        .legend-item { display: inline-flex; align-items: center; gap: 6px; color: #64748b; font-size: 10px; font-weight: 700; }
+        .legend-dot { width: 10px; height: 10px; border-radius: 3px; background: #fff; border: 1px solid #cbd5e1; }
+        .legend-dot.current { background: #1769ff; border-color: #1769ff; }
+        .legend-dot.answered { background: #10b981; border-color: #10b981; }
+        .legend-dot.marked { background: #fbbf24; border-color: #fbbf24; }
+        .legend-dot.skipped { background: #fb7185; border-color: #fb7185; }
+        .question-palette { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 8px; }
+        .palette-btn {
+            min-height: 39px; padding: 6px 2px; border: 1px solid rgba(148, 163, 184, .35); border-radius: 10px;
+            color: #475569; background: rgba(255,255,255,.63); font-size: 12px; font-weight: 700; cursor: pointer;
+            transition: transform .14s ease, background .14s ease, border-color .14s ease, box-shadow .14s ease;
+        }
+        .palette-btn:hover { transform: translateY(-1px); border-color: #76aaff; }
+        .palette-btn.is-current { color: #fff; background: linear-gradient(135deg, #2582ff, #0753df); border-color: #1769ff; box-shadow: 0 5px 12px rgba(23,105,255,.18); }
+        .palette-btn.is-answered:not(.is-current) { color: #047857; border-color: #6ee7b7; background: #d8faeb; }
+        .palette-btn.is-marked:not(.is-current) { color: #92400e; border-color: #fcd34d; background: #fff2c5; }
+        .palette-btn.is-skipped:not(.is-current):not(.is-answered):not(.is-marked) { color: #be123c; border-color: #fda4af; background: #ffe4e9; }
+        .palette-btn.has-unsaved:not(.is-current):not(.is-answered) { border-color: #7c9cf8; background: #eef2ff; }
+        .palette-summary { display: flex; justify-content: space-between; flex-wrap: wrap; gap: 8px; margin-top: 16px; padding-top: 13px; border-top: 1px solid var(--exam-line); color: #64748b; font-size: 11px; font-weight: 700; }
+        .palette-summary strong { color: #1e293b; }
+        .exam-bottom { max-width: 1740px; margin: 19px auto 0; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px; color: #718096; font-size: 11px; }
+        .exam-bottom strong { color: #475569; }
+        .submit-final { border: 0; border-radius: 11px; color: #fff; background: #15294c; font-size: 12px; font-weight: 800; padding: 11px 16px; cursor: pointer; }
+        .submit-final:hover { background: #213d6c; }
+        .message-bar { display: none; padding: 12px 14px; margin-top: 16px; border-radius: 12px; font-size: 12px; line-height: 1.5; font-weight: 700; }
+        .message-bar.show { display: block; }
+        .message-bar.error { color: #991b1b; background: rgba(254,226,226,.88); border: 1px solid #fecaca; }
+        .message-bar.success { color: #065f46; background: rgba(209,250,229,.88); border: 1px solid #a7f3d0; }
+        @media (max-width: 1050px) {
+            .exam-grid { grid-template-columns: minmax(0, 1fr) minmax(285px, .72fr); gap: 14px; }
+            .question-card { padding: 22px; }
+            .side-card { padding: 17px; }
+            .question-palette { grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 6px; }
+            .palette-btn { min-height: 35px; }
+            .question-actions { grid-template-columns: 1fr; }
+        }
+        @media (max-width: 760px) {
+            .exam-shell { padding: 16px 12px 24px; }
+            .exam-header { align-items: flex-start; margin-bottom: 15px; padding-bottom: 16px; }
+            .brand-mark { width: 38px; height: 38px; flex-basis: 38px; border-radius: 12px; }
+            .exam-brand { gap: 10px; }
+            .exam-title { font-size: 17px; }
+            .exam-subtitle { font-size: 11px; }
+            .timer-card { min-width: 0; padding: 9px 11px; gap: 6px; border-radius: 13px; }
+            .timer-icon { display: none; }
+            .timer-label { font-size: 9px; }
+            #exam-timer { font-size: 20px; }
+            .exam-grid { grid-template-columns: minmax(0, 1fr); }
+            .question-card { min-height: unset; padding: 18px 15px; border-radius: 19px; }
+            .question-prompt { margin: 22px 0 18px; font-size: 18px; line-height: 1.6; }
+            .option { min-height: 57px; padding: 13px 12px; gap: 11px; }
+            .option-text { font-size: 13px; }
+            .question-actions { grid-template-columns: 1fr 1fr; gap: 8px; padding-top: 23px; }
+            .btn-next { grid-column: 1 / -1; grid-row: 1; }
+            .action-btn { min-height: 48px; font-size: 12px; padding: 10px 8px; }
+            .exam-side { grid-template-rows: auto auto; gap: 13px; }
+            .side-card { padding: 17px; border-radius: 19px; }
+            #exam-camera { height: 210px; }
+            .question-palette { grid-template-columns: repeat(10, minmax(0, 1fr)); gap: 5px; }
+            .palette-btn { min-height: 32px; font-size: 11px; border-radius: 8px; }
+            .palette-legend { gap: 8px 11px; }
+            .exam-bottom { align-items: stretch; flex-direction: column; }
+            .submit-final { width: 100%; }
+        }
+        @media (max-width: 420px) {
+            .exam-title { font-size: 15px; }
+            .brand-mark { width: 34px; height: 34px; flex-basis: 34px; }
+            .timer-card { padding: 8px; }
+            .question-palette { grid-template-columns: repeat(5, minmax(0, 1fr)); }
+        }
+        @media (prefers-reduced-motion: reduce) { *, *::before, *::after { transition: none !important; } }
+    </style>
+</head>
+<body>
+<section class="exam-shell" id="exam-app" data-attempt-id="@Model.AttemptId" data-deadline="@(Model.DeadlineAtUtc.HasValue ? DateTime.SpecifyKind(Model.DeadlineAtUtc.Value, DateTimeKind.Utc).ToString("O") : string.Empty)">
+    <header class="exam-header">
+        <div class="exam-brand">
+            <div class="brand-mark" aria-hidden="true">C</div>
+            <div>
+                <h1 class="exam-title">@Model.TopicTitle</h1>
+                <div class="exam-subtitle">Secure Topic Examination</div>
             </div>
         </div>
-    </div>
+        <div class="timer-card" role="timer" aria-live="off">
+            <span class="timer-icon" aria-hidden="true">◷</span>
+            <div><span class="timer-label">Time remaining</span><strong id="exam-timer">--:--</strong></div>
+        </div>
+    </header>
+
+    <form id="exam-answer-form" asp-action="Submit" asp-route-attemptId="@Model.AttemptId" method="post" novalidate>
+        @Html.AntiForgeryToken()
+        <input type="hidden" name="finalSubmission" id="final-submission-flag" value="false" />
+        <div class="exam-grid">
+            <main class="glass-card question-card">
+                <div class="question-top">
+                    <span class="question-count" id="question-count">Question 1 of @Model.Questions.Count</span>
+                    <button class="review-toggle" id="mark-review-top" type="button" aria-pressed="false">
+                        <span class="review-box" aria-hidden="true"></span><span>Mark for review</span>
+                    </button>
+                </div>
+                <div id="question-stack">
+                    @for (var i = 0; i < Model.Questions.Count; i++)
+                    {
+                        var q = Model.Questions[i];
+                        <section class="exam-question" data-index="@i" data-question-id="@q.QuestionId" style="display: @(i == 0 ? "block" : "none")">
+                            <input type="hidden" name="answers[@i].QuestionId" value="@q.QuestionId" />
+                            <h2 class="question-prompt">@q.Question</h2>
+                            <div class="options">
+                                @for (var j = 0; j < q.Options.Count; j++)
+                                {
+                                    <label class="option">
+                                        <input type="radio" name="answers[@i].SelectedOptionNumber" value="@(j + 1)" @(q.SelectedOptionNumber == j + 1 ? "checked" : null) />
+                                        <span class="option-text">@q.Options[j]</span>
+                                    </label>
+                                }
+                            </div>
+                        </section>
+                    }
+                </div>
+                <div class="message-bar" id="save-message" role="status" aria-live="polite"></div>
+                <div class="question-actions">
+                    <button type="button" class="action-btn btn-skip" id="skip-button"><span aria-hidden="true">↷</span> Skip</button>
+                    <button type="button" class="action-btn btn-review" id="mark-review-button"><span aria-hidden="true">⚑</span> Mark for Review</button>
+                    <button type="button" class="action-btn btn-next" id="save-next-button"><span>Save &amp; Next</span><span aria-hidden="true">→</span></button>
+                </div>
+            </main>
+
+            <aside class="exam-side">
+                <section class="glass-card side-card">
+                    <h2 class="side-heading"><span>Camera monitoring</span><span class="camera-live"><span class="live-dot"></span>LIVE</span></h2>
+                    <video id="exam-camera" autoplay muted playsinline aria-label="Live exam camera preview"></video>
+                    <div class="camera-footer">
+                        <p id="camera-status">Connecting camera…</p>
+                        <span class="secure-chip"><span aria-hidden="true">●</span> Secure session</span>
+                    </div>
+                    <p id="save-status">Your answers are saved only when you select Save &amp; Next.</p>
+                </section>
+
+                <section class="glass-card side-card palette-card">
+                    <h2 class="side-heading">Question palette</h2>
+                    <div class="palette-legend" aria-label="Question status legend">
+                        <span class="legend-item"><span class="legend-dot current"></span>Current</span>
+                        <span class="legend-item"><span class="legend-dot"></span>Not saved</span>
+                        <span class="legend-item"><span class="legend-dot answered"></span>Saved</span>
+                        <span class="legend-item"><span class="legend-dot marked"></span>Review</span>
+                        <span class="legend-item"><span class="legend-dot skipped"></span>Skipped</span>
+                    </div>
+                    <nav class="question-palette" id="question-palette" aria-label="Go to question">
+                        @for (var i = 0; i < Model.Questions.Count; i++)
+                        {
+                            <button type="button" class="palette-btn @(i == 0 ? "is-current" : "")" data-go-to="@i" aria-label="Go to question @(i + 1)" aria-current="@(i == 0 ? "true" : null)">@(i + 1)</button>
+                        }
+                    </nav>
+                    <div class="palette-summary">
+                        <span>Saved <strong id="saved-count">0</strong> / @Model.Questions.Count</span>
+                        <span>For review <strong id="review-count">0</strong></span>
+                        <span>Skipped <strong id="skipped-count">0</strong></span>
+                    </div>
+                </section>
+            </aside>
+        </div>
+    </form>
+    <footer class="exam-bottom">
+        <span><strong>CIIT Stack Lab</strong> · Secure exam session · Stay on this page until you submit.</span>
+        <button type="button" class="submit-final" id="submit-exam-button">Submit examination</button>
+    </footer>
 </section>
-@section Scripts {
 <script>
 (function () {
+    'use strict';
     const root = document.getElementById('exam-app');
+    const form = document.getElementById('exam-answer-form');
+    const questions = Array.from(document.querySelectorAll('.exam-question'));
+    const paletteButtons = Array.from(document.querySelectorAll('.palette-btn'));
     const attemptId = root.dataset.attemptId;
     const deadline = new Date(root.dataset.deadline).getTime();
-    const form = document.getElementById('exam-answer-form');
     const timer = document.getElementById('exam-timer');
-    const submitButton = document.getElementById('exam-submit');
-    const saveStatus = document.getElementById('save-status');
-    const video = document.getElementById('exam-camera');
+    const csrfInput = form.querySelector('input[name="__RequestVerificationToken"]');
+    const saveNextButton = document.getElementById('save-next-button');
+    const skipButton = document.getElementById('skip-button');
+    const reviewButton = document.getElementById('mark-review-button');
+    const reviewTopButton = document.getElementById('mark-review-top');
+    const submitButton = document.getElementById('submit-exam-button');
+    const camera = document.getElementById('exam-camera');
     const cameraStatus = document.getElementById('camera-status');
-    const csrf = form.querySelector('input[name="__RequestVerificationToken"]').value;
+    const saveStatus = document.getElementById('save-status');
+    const saveMessage = document.getElementById('save-message');
+    const finalFlag = document.getElementById('final-submission-flag');
     const isDevelopment = @(isDevelopment ? "true" : "false");
-    let finishing = false, terminating = false, cameraStream = null, faceDetector = null, warningCount = 0;
-    let lastSave = Promise.resolve();
+    let currentIndex = 0;
+    let finishing = false;
+    let terminating = false;
+    let cameraStream = null;
+    let faceDetector = null;
+    let warningCount = 0;
+    const saved = new Set();
+    const marked = new Set();
+    const skipped = new Set();
+
+    function showMessage(message, kind) {
+        saveMessage.textContent = message;
+        saveMessage.className = 'message-bar show ' + (kind === 'error' ? 'error' : 'success');
+    }
+
+    function selectedOption(index) {
+        const checked = questions[index].querySelector('input[type="radio"]:checked');
+        return checked ? checked.value : null;
+    }
+
+    function paintPalette() {
+        paletteButtons.forEach((button, index) => {
+            button.classList.toggle('is-current', index === currentIndex);
+            button.classList.toggle('is-answered', saved.has(index));
+            button.classList.toggle('is-marked', marked.has(index));
+            button.classList.toggle('is-skipped', skipped.has(index));
+            button.classList.toggle('has-unsaved', selectedOption(index) !== null && !saved.has(index));
+            if (index === currentIndex) button.setAttribute('aria-current', 'true');
+            else button.removeAttribute('aria-current');
+        });
+        document.getElementById('saved-count').textContent = String(saved.size);
+        document.getElementById('review-count').textContent = String(marked.size);
+        document.getElementById('skipped-count').textContent = String(skipped.size);
+        const isMarked = marked.has(currentIndex);
+        [reviewButton, reviewTopButton].forEach(button => {
+            button.setAttribute('aria-pressed', String(isMarked));
+            const text = button.querySelector('span:last-child');
+            if (button === reviewTopButton && text) text.textContent = isMarked ? 'Marked for review' : 'Mark for review';
+            if (button === reviewButton) button.innerHTML = isMarked ? '<span aria-hidden="true">⚑</span> Remove Review Mark' : '<span aria-hidden="true">⚑</span> Mark for Review';
+        });
+        document.getElementById('question-count').textContent = 'Question ' + (currentIndex + 1) + ' of ' + questions.length;
+    }
+
+    function goToQuestion(index) {
+        if (finishing || index < 0 || index >= questions.length) return;
+        questions.forEach((question, questionIndex) => {
+            question.style.display = questionIndex === index ? 'block' : 'none';
+        });
+        currentIndex = index;
+        saveMessage.className = 'message-bar';
+        skipped.delete(index);
+        paintPalette();
+    }
+
+    function nextQuestion() {
+        if (currentIndex < questions.length - 1) {
+            goToQuestion(currentIndex + 1);
+            return;
+        }
+        const nextUnanswered = questions.findIndex((_, index) => !saved.has(index) && index !== currentIndex);
+        if (nextUnanswered >= 0) goToQuestion(nextUnanswered);
+        else showMessage('You are on the last question. Review the palette or submit when ready.', 'success');
+    }
+
+    function makeQuestionPayload(index) {
+        const payload = new URLSearchParams();
+        payload.set('__RequestVerificationToken', csrfInput.value);
+        payload.set('answers[0].QuestionId', questions[index].dataset.questionId);
+        const choice = selectedOption(index);
+        if (choice !== null) payload.set('answers[0].SelectedOptionNumber', choice);
+        return payload;
+    }
+
+    async function readFailure(response) {
+        let detail = '';
+        try {
+            const body = await response.json();
+            detail = body.error || body.message || '';
+        } catch (_) {
+            try { detail = (await response.text()).trim(); } catch (_) {}
+        }
+        if (!detail) detail = 'The server rejected the request (HTTP ' + response.status + ').';
+        return detail;
+    }
+
+    async function saveCurrentAndNext() {
+        if (finishing) return;
+        if (selectedOption(currentIndex) === null) {
+            showMessage('Choose an option first, or use Skip to move on.', 'error');
+            questions[currentIndex].querySelector('input[type="radio"]')?.focus();
+            return;
+        }
+        saveNextButton.disabled = true;
+        skipButton.disabled = true;
+        saveStatus.textContent = 'Saving question ' + (currentIndex + 1) + '…';
+        try {
+            const response = await fetch(form.action, {
+                method: 'POST',
+                credentials: 'same-origin',
+                headers: { 'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8', 'Accept': 'application/json' },
+                body: makeQuestionPayload(currentIndex)
+            });
+            if (!response.ok) throw new Error(await readFailure(response));
+            const result = await response.json();
+            if (result.status && result.status !== 'InProgress') {
+                showMessage('This exam is no longer active (' + result.status + ').', 'error');
+                saveStatus.textContent = 'The server reports that this exam is no longer active.';
+                return;
+            }
+            saved.add(currentIndex);
+            skipped.delete(currentIndex);
+            saveStatus.textContent = 'Question ' + (currentIndex + 1) + ' saved successfully.';
+            showMessage('Answer saved.', 'success');
+            paintPalette();
+            nextQuestion();
+        } catch (error) {
+            saveStatus.textContent = 'Save failed. Your selected answer is still on this page.';
+            showMessage(error.message || 'Could not save this answer. Please retry.', 'error');
+        } finally {
+            saveNextButton.disabled = false;
+            skipButton.disabled = false;
+        }
+    }
+
+    function skipCurrent() {
+        if (finishing) return;
+        if (!saved.has(currentIndex)) skipped.add(currentIndex);
+        nextQuestion();
+        paintPalette();
+    }
+
+    function toggleReview() {
+        if (finishing) return;
+        if (marked.has(currentIndex)) marked.delete(currentIndex);
+        else marked.add(currentIndex);
+        paintPalette();
+    }
 
     async function postEvent(type, details) {
         const data = new URLSearchParams({ EventType: type, Details: details || '' });
-        data.append('__RequestVerificationToken', csrf);
+        data.append('__RequestVerificationToken', csrfInput.value);
         try {
             const response = await fetch('/Examinations/' + attemptId + '/SecurityEvent', {
                 method: 'POST', credentials: 'same-origin',
-                headers: { 'Content-Type': 'application/x-www-form-urlencoded' }, body: data
+                headers: { 'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8' },
+                body: data
             });
             if (type === 'SuspiciousActivity' || type === 'FaceMissing' || type === 'MultipleFaces') {
                 warningCount++;
                 if (warningCount <= 2) alert('Proctoring warning ' + warningCount + ' of 2. Further suspicious activity may end this exam.');
-                else finishExam('Exam ended after repeated suspicious activity.');
+                else finishExam('Exam ended after repeated suspicious activity.', true);
             }
-            if (!response.ok && response.status !== 400) console.warn('Security event was not accepted.');
+            if (!response.ok) console.warn('Security event was not accepted (HTTP ' + response.status + ').');
         } catch (_) {}
     }
 
-    function answerPayload() {
-        return new URLSearchParams(new FormData(form));
-    }
-
-    async function saveAnswers(finalSubmission) {
-        if (finishing && !finalSubmission) return;
-        const payload = answerPayload();
+    async function finishExam(message, securityTermination) {
+        if (finishing) return;
+        finishing = true;
+        [saveNextButton, skipButton, reviewButton, reviewTopButton, submitButton].forEach(button => button.disabled = true);
+        saveStatus.textContent = message || 'Submitting examination…';
+        finalFlag.value = 'true';
+        const payload = new URLSearchParams(new FormData(form));
+        payload.set('finalSubmission', 'true');
+        if (securityTermination) payload.set('securityTerminated', 'true');
         try {
             const response = await fetch(form.action, {
                 method: 'POST', credentials: 'same-origin',
-                headers: { 'Content-Type': 'application/x-www-form-urlencoded' }, body: payload
+                headers: { 'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8', 'Accept': 'application/json' },
+                body: payload
             });
-            if (!response.ok) throw new Error('Save failed');
+            if (!response.ok) throw new Error(await readFailure(response));
             const result = await response.json();
-            saveStatus.textContent = finalSubmission ? 'Exam submitted.' : 'Answers saved ' + new Date().toLocaleTimeString();
-            if (finalSubmission) {
-                alert('Exam submitted. Status: ' + result.status + '. Score: ' + result.score + '/50.');
-                window.location.assign('/Examinations');
-            } else if (result.status && result.status !== 'InProgress') {
-                window.location.assign('/Examinations');
-            }
-        } catch (_) {
-            saveStatus.textContent = 'Save failed. Check your connection; the server deadline still applies.';
-            if (finalSubmission) window.location.assign('/Examinations');
+            saveStatus.textContent = 'Exam submitted successfully.';
+            showMessage('Exam submitted. Result: ' + result.status + '. Score: ' + result.score + '/' + questions.length + '.', 'success');
+            alert('Exam submitted. Status: ' + result.status + '. Score: ' + result.score + '/' + questions.length + '.');
+            window.location.assign('/Examinations');
+        } catch (error) {
+            finishing = false;
+            finalFlag.value = 'false';
+            [saveNextButton, skipButton, reviewButton, reviewTopButton, submitButton].forEach(button => button.disabled = false);
+            saveStatus.textContent = 'Submission failed. Your answers remain on this page.';
+            showMessage(error.message || 'Could not submit the examination. Please retry before the deadline.', 'error');
         }
-    }
-
-    async function finishExam(message) {
-        if (finishing) return;
-        finishing = true;
-        submitButton.disabled = true;
-        saveStatus.textContent = message || 'Submitting saved answers…';
-        await lastSave;
-        await saveAnswers(true);
     }
 
     async function terminateForSecurity(type, details, message) {
         if (finishing || terminating) return;
         terminating = true;
-        submitButton.disabled = true;
-        saveStatus.textContent = message || 'Saving answers before security termination…';
-        await lastSave;
-        await saveAnswers(false);
+        saveStatus.textContent = message || 'Exam terminated for a security event.';
         await postEvent(type, details);
         finishing = true;
+        if (cameraStream) cameraStream.getTracks().forEach(track => track.stop());
         window.location.assign('/Examinations');
     }
 
-    form.addEventListener('change', () => {
-        lastSave = lastSave.then(() => saveAnswers(false));
+    async function initCamera() {
+        try {
+            if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) throw new Error('Camera API unavailable');
+            cameraStream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'user' }, audio: false });
+            camera.srcObject = cameraStream;
+            await camera.play().catch(() => {});
+            cameraStatus.textContent = 'Camera active.';
+            cameraStream.getVideoTracks().forEach(track => track.addEventListener('ended', () => {
+                terminateForSecurity('CameraLost', 'Camera track ended', 'Exam ended because the camera disconnected.');
+            }));
+            if ('FaceDetector' in window) {
+                try { faceDetector = new FaceDetector({ fastMode: true, maxDetectedFaces: 3 }); } catch (_) {}
+            }
+            if (faceDetector) {
+                window.setInterval(async () => {
+                    if (finishing || camera.readyState < 2) return;
+                    try {
+                        const faces = await faceDetector.detect(camera);
+                        if (faces.length === 0 || faces.length > 1) {
+                            await postEvent(faces.length === 0 ? 'FaceMissing' : 'MultipleFaces', faces.length === 0 ? 'No face detected' : 'Multiple faces detected');
+                        }
+                    } catch (_) {}
+                }, 8000);
+            }
+        } catch (_) {
+            cameraStatus.textContent = 'Camera unavailable. Check browser permission and reconnect.';
+            showMessage('Camera access is required to continue this secure examination.', 'error');
+            await postEvent('CameraLost', 'Camera permission or device unavailable');
+            await terminateForSecurity('CameraLost', 'Camera permission or device unavailable', 'Exam ended because camera monitoring is unavailable.');
+        }
+    }
+
+    function tick() {
+        if (finishing) return;
+        const remaining = deadline - Date.now();
+        if (!Number.isFinite(deadline) || remaining <= 0) {
+            timer.textContent = '00:00';
+            finishExam('Time is over. Submitting examination…', false);
+            return;
+        }
+        const seconds = Math.ceil(remaining / 1000);
+        timer.textContent = String(Math.floor(seconds / 60)).padStart(2, '0') + ':' + String(seconds % 60).padStart(2, '0');
+    }
+
+    form.addEventListener('change', event => {
+        if (event.target.matches('input[type="radio"]')) {
+            const question = event.target.closest('.exam-question');
+            const index = Number(question.dataset.index);
+            if (!saved.has(index)) paintPalette();
+            saveStatus.textContent = 'Answer selected. Use Save & Next to save it.';
+        }
     });
-    form.addEventListener('submit', e => {
-        e.preventDefault();
-        finishExam('Submitting examination…');
+    paletteButtons.forEach(button => button.addEventListener('click', () => goToQuestion(Number(button.dataset.goTo))));
+    saveNextButton.addEventListener('click', saveCurrentAndNext);
+    skipButton.addEventListener('click', skipCurrent);
+    reviewButton.addEventListener('click', toggleReview);
+    reviewTopButton.addEventListener('click', toggleReview);
+    submitButton.addEventListener('click', () => {
+        const unanswered = questions.filter((_, index) => !saved.has(index) && selectedOption(index) !== null).length;
+        const message = unanswered > 0
+            ? 'Submit now? ' + unanswered + ' selected answer(s) have not been saved individually. The final submission will include all choices currently on this page.'
+            : 'Submit the examination now? You cannot change answers after submission.';
+        if (window.confirm(message)) finishExam('Submitting examination…', false);
+    });
+    form.addEventListener('submit', event => {
+        event.preventDefault();
+        finishExam('Submitting examination…', false);
     });
 
     if (!isDevelopment) {
@@ -144,71 +585,33 @@
             terminateForSecurity('WindowBlur', 'Exam window lost focus', 'Exam terminated because the exam window lost focus.');
         });
     }
-    document.addEventListener('copy', e => { e.preventDefault(); postEvent('Copy', 'Copy blocked'); });
-    document.addEventListener('cut', e => { e.preventDefault(); postEvent('Cut', 'Cut blocked'); });
-    document.addEventListener('paste', e => { e.preventDefault(); postEvent('Paste', 'Paste blocked'); });
-    document.addEventListener('contextmenu', e => e.preventDefault());
-    document.addEventListener('keydown', e => {
-        const key = e.key.toLowerCase();
-        if ((e.ctrlKey || e.metaKey) && ['c', 'v', 'x'].includes(key)) {
-            e.preventDefault();
+    document.addEventListener('copy', event => { event.preventDefault(); postEvent('Copy', 'Copy blocked'); });
+    document.addEventListener('cut', event => { event.preventDefault(); postEvent('Cut', 'Cut blocked'); });
+    document.addEventListener('paste', event => { event.preventDefault(); postEvent('Paste', 'Paste blocked'); });
+    document.addEventListener('contextmenu', event => event.preventDefault());
+    document.addEventListener('keydown', event => {
+        const key = event.key.toLowerCase();
+        if ((event.ctrlKey || event.metaKey) && ['c', 'v', 'x'].includes(key)) {
+            event.preventDefault();
             postEvent(({ c: 'Copy', v: 'Paste', x: 'Cut' })[key], 'Restricted shortcut');
         }
-        if (!isDevelopment && (e.key === 'PrintScreen'
-            || ((e.ctrlKey || e.metaKey) && e.shiftKey && key === '5')
-            || ((e.ctrlKey || e.metaKey) && ['p', 's'].includes(key)))) {
-            e.preventDefault();
+        if (!isDevelopment && (event.key === 'PrintScreen'
+            || ((event.ctrlKey || event.metaKey) && event.shiftKey && key === '5')
+            || ((event.ctrlKey || event.metaKey) && ['p', 's'].includes(key)))) {
+            event.preventDefault();
             postEvent('ScreenshotShortcut', 'Restricted screenshot/print shortcut');
         }
-        if (((e.ctrlKey || e.metaKey) && e.shiftKey && key === 'r') || (e.metaKey && e.altKey && key === 'r')) {
-            if (!isDevelopment) e.preventDefault();
+        if (((event.ctrlKey || event.metaKey) && event.shiftKey && key === 'r') || (event.metaKey && event.altKey && key === 'r')) {
+            if (!isDevelopment) event.preventDefault();
             postEvent('RecordingShortcut', 'Possible screen recording shortcut');
         }
     });
 
-    async function initCamera() {
-        try {
-            cameraStream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'user' }, audio: false });
-            video.srcObject = cameraStream;
-            cameraStatus.textContent = 'Camera active.';
-            cameraStream.getVideoTracks().forEach(track => track.addEventListener('ended', () => {
-                terminateForSecurity('CameraLost', 'Camera track ended', 'Exam ended because the camera disconnected.');
-            }));
-            if ('FaceDetector' in window) {
-                try { faceDetector = new FaceDetector({ fastMode: true, maxDetectedFaces: 3 }); } catch (_) {}
-            }
-            if (faceDetector) {
-                window.setInterval(async () => {
-                    if (finishing || video.readyState < 2) return;
-                    try {
-                        const faces = await faceDetector.detect(video);
-                        if (faces.length === 0 || faces.length > 1) {
-                            await postEvent(faces.length === 0 ? 'FaceMissing' : 'MultipleFaces', faces.length === 0 ? 'No face detected' : 'Multiple faces detected');
-                        }
-                    } catch (_) {}
-                }, 8000);
-            }
-        } catch (_) {
-            cameraStatus.textContent = 'Camera unavailable. Exam is being terminated.';
-            await terminateForSecurity('CameraLost', 'Camera permission or device unavailable', 'Exam ended because camera monitoring is unavailable.');
-        }
-    }
-
-    function tick() {
-        if (finishing) return;
-        const remaining = deadline - Date.now();
-        if (remaining <= 0) {
-            timer.textContent = '00:00';
-            finishExam('Time is over. Submitting saved answers…');
-            return;
-        }
-        const seconds = Math.ceil(remaining / 1000);
-        timer.textContent = String(Math.floor(seconds / 60)).padStart(2, '0') + ':' + String(seconds % 60).padStart(2, '0');
-    }
-    window.setInterval(() => { if (!finishing) saveAnswers(false); }, 15000);
-    window.setInterval(tick, 1000);
+    paintPalette();
     tick();
+    window.setInterval(tick, 1000);
     initCamera();
 })();
 </script>
-}
+</body>
+</html>
