@@ -103,11 +103,12 @@
                         }
                         else
                         {
-                            <button type="submit"
-        form="ciit-demo-payment-form"
-        class="btn btn-primary btn-lg">
-    <i class="bi bi-bag-check me-2"></i>Enroll Now
-</button>
+                            <button type="button"
+                                class="btn btn-primary btn-lg"
+                                data-bs-toggle="modal"
+                                data-bs-target="#coursePaymentModal">
+                            <i class="bi bi-bag-check me-2"></i>Enroll Now
+                        </button>
                         }
 
                         <a asp-controller="Home"
