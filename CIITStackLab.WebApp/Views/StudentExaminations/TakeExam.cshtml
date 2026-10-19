@@ -726,18 +726,23 @@
                 const visionFiles = await visionModule.FilesetResolver.forVisionTasks(
                     'https://cdn.jsdelivr.net/npm/@@mediapipe/tasks-vision@0.10.22/wasm'
                 );
-                faceDetector = await visionModule.FaceDetector.createFromModelPath(
+                faceDetector = await visionModule.FaceDetector.createFromOptions(
                     visionFiles,
-                    'https://storage.googleapis.com/mediapipe-models/face_detector/blaze_face_short_range/float16/1/blaze_face_short_range.tflite',
                     {
+                        baseOptions: {
+                            modelAssetPath: 'https://storage.googleapis.com/mediapipe-models/face_detector/blaze_face_short_range/float16/1/blaze_face_short_range.tflite'
+                        },
                         runningMode: 'IMAGE',
                         minDetectionConfidence: 0.5
                     }
                 );
             } catch (detectorError) {
                 console.error('Face monitoring initialization failed.', detectorError);
-                cameraStatus.textContent = 'Camera active; face monitoring could not start. Check internet access and reload the exam.';
-                showMessage('Camera is active, but automatic face monitoring could not load. Check the internet connection.', 'error');
+                const detectorMessage = detectorError && detectorError.message
+                    ? detectorError.message
+                    : 'Unknown initialization error';
+                cameraStatus.textContent = 'Camera active; face detection failed to initialize.';
+                showMessage('Face monitoring failed to start: ' + detectorMessage, 'error');
                 return;
             }
 
