@@ -115,8 +115,13 @@ public sealed class StudentExaminationsController : Controller
 
     [HttpPost("{attemptId:long}/Start")]
     [ValidateAntiForgeryToken]
+    [ResponseCache(Duration = 0, Location = ResponseCacheLocation.None, NoStore = true)]
     public async Task<IActionResult> Start(long attemptId, CancellationToken cancellationToken)
     {
+        Response.Headers.CacheControl = "no-store, no-cache, max-age=0";
+        Response.Headers.Pragma = "no-cache";
+        Response.Headers.Expires = "0";
+
         var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
         if (string.IsNullOrWhiteSpace(userId)) return Unauthorized();
         var deviceToken = Request.Cookies[DeviceCookieName(attemptId)] ?? string.Empty;
