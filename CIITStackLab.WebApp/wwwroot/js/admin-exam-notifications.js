@@ -178,6 +178,12 @@
         connection.onreconnected(function () {
             document.documentElement.dataset.examNotificationsConnected = "true";
         });
+        connection.onclose(function () {
+            document.documentElement.dataset.examNotificationsConnected = "false";
+            window.setTimeout(function () {
+                startConnection(connection);
+            }, 5000);
+        });
 
         startConnection(connection);
     }
