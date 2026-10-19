@@ -88,7 +88,7 @@
                             <a asp-controller="Home"
                                asp-action="Dashboard"
                                class="ciit-learning-hub-switch"
-                               @if (hasLearningHubPurchase) { <text>data-learning-hub-transition</text> }>
+                               data-learning-hub-transition="@(hasLearningHubPurchase ? "true" : null)">
                                 <i class="bi bi-stars" aria-hidden="true"></i>
                                 <span>Switch to Learning Hub</span>
                                 <i class="bi bi-arrow-up-right" aria-hidden="true"></i>
