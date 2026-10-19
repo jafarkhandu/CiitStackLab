@@ -319,23 +319,26 @@ else if (currentContent is null && currentTopic is not null)
                             <span class="ciit-learning-resource-icon"><i class="bi bi-journal-text"></i></span>
                             <div><h3>Chapter Notes</h3><p>Notes for @(currentTopic?.Title ?? Model.Title).</p></div>
                         </div>
-                        @if (currentTopic.Chapters.Count == 0)
+                        @if (currentTopic is null || currentTopic.Chapters.Count == 0)
                         {
                             <p class="ciit-learning-category-empty">No notes or chapters have been added to this topic yet.</p>
                         }
-                        @foreach (var chapter in currentTopic.Chapters)
+                        else
                         {
-                            <article class="ciit-learning-notes-content">
-                                <h4>@FormatLearningTitle(chapter.Title)</h4>
-                                @if (!string.IsNullOrWhiteSpace(chapter.NotesHtml))
-                                {
-                                    @Html.Raw(chapter.NotesHtml)
-                                }
-                                else
-                                {
-                                    <p class="ciit-learning-category-empty">No notes have been added to this chapter yet.</p>
-                                }
-                            </article>
+                            @foreach (var chapter in currentTopic.Chapters)
+                            {
+                                <article class="ciit-learning-notes-content">
+                                    <h4>@FormatLearningTitle(chapter.Title)</h4>
+                                    @if (!string.IsNullOrWhiteSpace(chapter.NotesHtml))
+                                    {
+                                        @Html.Raw(chapter.NotesHtml)
+                                    }
+                                    else
+                                    {
+                                        <p class="ciit-learning-category-empty">No notes have been added to this chapter yet.</p>
+                                    }
+                                </article>
+                            }
                         }
                     </section>
 
@@ -623,7 +626,7 @@ else
                                     <i class="bi bi-check-lg"></i> Completed
                                 </span>
                             }
-                            else
+                            else if (currentContent is not null)
                             {
                                 <form asp-action="CompleteLesson"
                                       asp-route-id="@Model.Id"
@@ -686,7 +689,7 @@ else
                                 </ul>
                     </section>
 
-                    @if (!string.IsNullOrWhiteSpace(currentContent.VideoName))
+                    @if (currentContent is not null && !string.IsNullOrWhiteSpace(currentContent.VideoName))
                     {
                         var videoUrl = ResolveResourceUrl(currentContent.VideoName, "videos");
                         var videoPath = Uri.TryCreate(videoUrl, UriKind.Absolute, out var absoluteVideoUri)
@@ -749,7 +752,7 @@ else
                         </section>
                     }
 
-                    @if (!string.IsNullOrWhiteSpace(currentContent.Slides))
+                    @if (currentContent is not null && !string.IsNullOrWhiteSpace(currentContent.Slides))
                     {
                         <section class="ciit-learning-resource" data-learning-panel-content="content" data-learning-content-page="slides">
                             <div class="ciit-learning-resource-title">
@@ -929,7 +932,7 @@ else
                     <div class="modal-body">
                         <p>Your topic is complete. Schedule your 50-question examination. You can revise this topic while waiting for the scheduled time.</p>
                         <input type="hidden" name="CourseId" value="@Model.Id" />
-                        <input type="hidden" name="TopicId" value="@currentTopic.Id" />
+                        <input type="hidden" name="TopicId" value="@(currentTopic?.Id)" />
                         <input type="hidden" name="TimezoneOffsetMinutes" class="exam-timezone-offset" />
                         <label class="form-label" for="topicExamScheduledAt">Exam date and time</label>
                         <input class="form-control" type="datetime-local" id="topicExamScheduledAt" name="ScheduledAtLocal" required />
