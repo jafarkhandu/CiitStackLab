@@ -718,6 +718,11 @@
         }
     });
 
+    // Never resume a cached exam page from browser history; return to the exam list instead.
+    window.addEventListener('pageshow', event => {
+        if (event.persisted) window.location.replace('/Examinations');
+    });
+
     paintPalette();
     tick();
     window.setInterval(tick, 1000);
