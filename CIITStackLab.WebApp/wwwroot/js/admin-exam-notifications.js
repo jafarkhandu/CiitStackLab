@@ -142,9 +142,7 @@
             host.firstElementChild.remove();
         }
 
-        window.setTimeout(function () {
-            dismissNotification(card);
-        }, 18000);
+        // Keep action-required alerts visible until an administrator dismisses them.
     }
 
     async function startConnection(connection) {
