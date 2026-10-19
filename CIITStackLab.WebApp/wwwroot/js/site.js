@@ -128,6 +128,8 @@ document.addEventListener("DOMContentLoaded", function () {
     const processingState = document.getElementById("ciit-payment-processing-state");
     const successState = document.getElementById("ciit-payment-success-state");
     const formState = document.getElementById("ciit-payment-form-state");
+    const modalEyebrow = document.querySelector(".ciit-payment-modal-eyebrow");
+    const modalSubtitle = document.querySelector(".ciit-payment-modal-subtitle");
     const phonePeScriptUrl = "https://mercury.phonepe.com/web/bundle/checkout.js";
     let phonePeScriptPromise;
     let merchantOrderId;
@@ -136,6 +138,14 @@ document.addEventListener("DOMContentLoaded", function () {
     paymentTrigger.removeAttribute("data-bs-target");
     paymentTrigger.innerHTML = '<i class="bi bi-shield-lock-fill me-2"></i>Pay with PhonePe';
 
+    if (modalEyebrow) {
+        modalEyebrow.textContent = "Secure PhonePe checkout";
+    }
+
+    if (modalSubtitle) {
+        modalSubtitle.textContent = "Complete your payment securely. Course access is granted only after server-side verification.";
+    }
+
     if (paymentNote) {
         paymentNote.textContent = "PhonePe checkout opens securely on this page. Course access is granted only after server-side payment verification.";
     }
@@ -143,6 +153,40 @@ document.addEventListener("DOMContentLoaded", function () {
     if (paymentButton) {
         paymentButton.innerHTML = '<i class="bi bi-shield-lock-fill me-2"></i>Pay with PhonePe';
     }
+
+    const showPagePaymentMessage = (message, type = "danger") => {
+        if (!message) return;
+
+        const existing = document.getElementById("ciit-payment-page-message");
+        if (existing) {
+            existing.remove();
+        }
+
+        const container = document.createElement("div");
+        container.id = "ciit-payment-page-message";
+        container.className = "container mt-3";
+
+        const alert = document.createElement("div");
+        alert.className = `alert alert-${type} d-flex align-items-start gap-2`;
+        alert.setAttribute("role", "alert");
+        alert.setAttribute("aria-live", "polite");
+        alert.innerHTML = '<i class="bi bi-credit-card mt-1" aria-hidden="true"></i><span></span>';
+        alert.querySelector("span").textContent = message;
+
+        container.appendChild(alert);
+        const main = document.querySelector("main");
+        const courseSection = document.querySelector(".ciit-course-details-section");
+
+        if (main && courseSection) {
+            main.insertBefore(container, courseSection);
+        } else if (main) {
+            main.prepend(container);
+        }
+    };
+
+    const clearPagePaymentMessage = () => {
+        document.getElementById("ciit-payment-page-message")?.remove();
+    };
 
     const loadPhonePeCheckout = () => {
         if (window.PhonePeCheckout?.transact) {
@@ -210,6 +254,8 @@ document.addEventListener("DOMContentLoaded", function () {
     };
 
     const showProcessing = (message) => {
+        clearPagePaymentMessage();
+
         if (!processingState) return;
         const spans = processingState.querySelectorAll("span:not(.ciit-payment-spinner)");
         if (spans.length > 0 && message) {
@@ -221,6 +267,8 @@ document.addEventListener("DOMContentLoaded", function () {
     };
 
     const showFailure = (message) => {
+        showPagePaymentMessage(message || "Payment could not be completed. No course access was granted.", "danger");
+
         if (!processingState) {
             window.alert(message);
             return;
@@ -255,6 +303,8 @@ document.addEventListener("DOMContentLoaded", function () {
     };
 
     function resetPaymentForm() {
+        clearPagePaymentMessage();
+
         if (processingState) processingState.hidden = true;
         if (successState) successState.hidden = true;
         if (formState) formState.hidden = false;
@@ -310,6 +360,8 @@ document.addEventListener("DOMContentLoaded", function () {
             }
 
             if (result?.state === "COMPLETED") {
+                clearPagePaymentMessage();
+
                 const successText = successState?.querySelector(".ciit-payment-success-note");
                 if (successText) {
                     successText.textContent = "Payment verified successfully. Your course access is ready.";
@@ -334,7 +386,9 @@ document.addEventListener("DOMContentLoaded", function () {
                 return;
             }
 
-            showProcessing(result?.message || "Payment is still being verified. No course access has been granted yet.");
+            const pendingMessage = result?.message || "Payment is still being verified. No course access has been granted yet.";
+            showPagePaymentMessage(pendingMessage, "warning");
+            showProcessing(pendingMessage);
             const steps = processingState.querySelector(".ciit-payment-processing-steps");
             if (steps) {
                 steps.innerHTML = '<button type="button" class="btn btn-outline-primary btn-sm mt-3" id="ciit-payment-pending-retry">Check payment status again</button>';
@@ -345,9 +399,11 @@ document.addEventListener("DOMContentLoaded", function () {
             }
         } catch (error) {
             console.error("PhonePe payment verification error:", error);
-            showProcessing(error instanceof Error
+            const message = error instanceof Error
                 ? error.message
-                : "We could not confirm the payment yet. Your order remains pending.");
+                : "We could not confirm the payment yet. Your order remains pending.";
+            showPagePaymentMessage(message, "warning");
+            showProcessing(message);
 
             const steps = processingState?.querySelector(".ciit-payment-processing-steps");
             if (steps) {
@@ -361,6 +417,8 @@ document.addEventListener("DOMContentLoaded", function () {
     };
 
     const openPhonePeCheckout = async () => {
+        clearPagePaymentMessage();
+
         if (paymentButton) {
             paymentButton.disabled = true;
             paymentButton.innerHTML = '<span class="spinner-border spinner-border-sm me-2" aria-hidden="true"></span>Opening PhonePe...';
