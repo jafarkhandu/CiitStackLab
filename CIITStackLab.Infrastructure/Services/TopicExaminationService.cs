@@ -189,7 +189,8 @@ public sealed class TopicExaminationService : ITopicExaminationService
                 await FinalizeAsync(attempt, "TimedOut", now, cancellationToken);
                 return (false, "Time's up. The exam window has closed.", null);
             }
-            return (true, null, await BuildSessionAsync(attempt, true, true, cancellationToken));
+
+            return (false, "This exam attempt is already in progress. Reloading or reopening it is not allowed.", null);
         }
         if (attempt.Status != "Ready")
             return (false, "Open the pre-exam instructions first.", null);
@@ -220,13 +221,14 @@ public sealed class TopicExaminationService : ITopicExaminationService
             return (false, "This exam has no recorded deadline, so the server cannot safely accept answers.", await MapSummaryAsync(attempt, cancellationToken));
 
         var now = DateTime.UtcNow;
-        if (now >= attempt.DeadlineAtUtc.Value)
+        var deadlinePassed = now >= attempt.DeadlineAtUtc.Value;
+        if (!await DeviceMatchesAsync(attempt, deviceToken))
+            return (false, "Device verification failed for this exam attempt. Reopen the exam from its original device and session.", await MapSummaryAsync(attempt, cancellationToken));
+        if (deadlinePassed && !finalSubmission)
         {
             await FinalizeAsync(attempt, "TimedOut", now, cancellationToken);
             return (false, "The exam deadline has passed. This attempt has been closed.", await MapSummaryAsync(attempt, cancellationToken));
         }
-        if (!await DeviceMatchesAsync(attempt, deviceToken))
-            return (false, "Device verification failed for this exam attempt. Reopen the exam from its original device and session.", await MapSummaryAsync(attempt, cancellationToken));
 
         var questionIds = DeserializeIds(attempt.QuestionIdsJson);
         var submitted = answers ?? Array.Empty<TopicExamAnswerInput>();
@@ -240,7 +242,7 @@ public sealed class TopicExaminationService : ITopicExaminationService
             if (answer.SelectedOptionNumber.HasValue || !answerMap.ContainsKey(answer.QuestionId))
                 answerMap[answer.QuestionId] = answer.SelectedOptionNumber;
         }
-        if (finalSubmission && now < attempt.DeadlineAtUtc.Value
+        if (finalSubmission && !deadlinePassed
             && questionIds.Any(questionId => !answerMap.TryGetValue(questionId, out var selected) || !selected.HasValue))
         {
             return (false,
@@ -249,7 +251,7 @@ public sealed class TopicExaminationService : ITopicExaminationService
         }
 
         attempt.AnswersJson = JsonSerializer.Serialize(answerMap, JsonOptions);
-        if (now >= attempt.DeadlineAtUtc.Value)
+        if (deadlinePassed)
             await FinalizeAsync(attempt, "TimedOut", now, cancellationToken);
         else if (finalSubmission)
             await FinalizeAsync(attempt, "Submitted", now, cancellationToken);
@@ -267,7 +269,7 @@ public sealed class TopicExaminationService : ITopicExaminationService
         var normalized = (eventType ?? string.Empty).Trim();
         var allowed = new HashSet<string>(StringComparer.OrdinalIgnoreCase)
         {
-            "TabSwitch", "WindowBlur", "Copy", "Paste", "Cut", "ScreenshotShortcut",
+            "TabSwitch", "WindowBlur", "PageExit", "Copy", "Paste", "Cut", "ScreenshotShortcut",
             "RecordingShortcut", "CameraLost", "MultipleFaces", "FaceMissing", "SuspiciousActivity",
             "FullscreenExit", "NetworkDisconnected"
         };
@@ -282,6 +284,7 @@ public sealed class TopicExaminationService : ITopicExaminationService
 
         if (normalized.Equals("TabSwitch", StringComparison.OrdinalIgnoreCase)
             || normalized.Equals("WindowBlur", StringComparison.OrdinalIgnoreCase)
+            || normalized.Equals("PageExit", StringComparison.OrdinalIgnoreCase)
             || normalized.Equals("FullscreenExit", StringComparison.OrdinalIgnoreCase))
         {
             attempt.TerminationReason = normalized;
@@ -292,9 +295,9 @@ public sealed class TopicExaminationService : ITopicExaminationService
             || normalized.Equals("FaceMissing", StringComparison.OrdinalIgnoreCase))
         {
             attempt.WarningCount++;
-            if (attempt.WarningCount > 2)
+            if (attempt.WarningCount >= 5)
             {
-                attempt.TerminationReason = "Exceeded two proctoring warnings";
+                attempt.TerminationReason = "Exceeded five proctoring warnings";
                 await FinalizeAsync(attempt, "Terminated", DateTime.UtcNow, cancellationToken);
             }
             else
