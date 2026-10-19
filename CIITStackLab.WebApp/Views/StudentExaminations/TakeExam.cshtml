@@ -322,6 +322,11 @@
     const marked = new Set();
     const skipped = new Set();
 
+    // Answers already returned by the server are persisted; reflect them in the palette.
+    questions.forEach((question, index) => {
+        if (selectedOption(index) !== null) saved.add(index);
+    });
+
     function showMessage(message, kind) {
         saveMessage.textContent = message;
         saveMessage.className = 'message-bar show ' + (kind === 'error' ? 'error' : 'success');
