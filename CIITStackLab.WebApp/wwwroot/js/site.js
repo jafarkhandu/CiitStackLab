@@ -1,4 +1,55 @@
-document.addEventListener("DOMContentLoaded",function(){const t=document.getElementById("ciitTopicsScroll"),p=document.getElementById("topicsPrev"),n=document.getElementById("topicsNext");if(t&&p&&n){const a=350;p.addEventListener("click",function(){t.scrollBy({left:-a,behavior:"smooth"})});n.addEventListener("click",function(){t.scrollBy({left:a,behavior:"smooth"})})}const s=document.querySelectorAll(".ciit-hero-slide"),d=document.querySelectorAll(".ciit-slider-dot");if(!s.length||!d.length)return;let c=0,timer;function show(i){s.forEach(x=>x.classList.remove("active"));d.forEach(x=>x.classList.remove("active"));if(s[i]&&d[i]){s[i].classList.add("active");d[i].classList.add("active")}}function restart(){clearInterval(timer);timer=setInterval(function(){c=(c+1)%s.length;show(c)},4000)}d.forEach(function(x,i){x.addEventListener("click",function(){c=i;show(c);restart()})});show(0);restart()});
+document.addEventListener("DOMContentLoaded", function () {
+    const topicsScroll = document.getElementById("ciitTopicsScroll");
+    const topicsPrev = document.getElementById("topicsPrev");
+    const topicsNext = document.getElementById("topicsNext");
+
+    if (topicsScroll && topicsPrev && topicsNext) {
+        const amount = 350;
+        topicsPrev.addEventListener("click", function () {
+            topicsScroll.scrollBy({ left: -amount, behavior: "smooth" });
+        });
+        topicsNext.addEventListener("click", function () {
+            topicsScroll.scrollBy({ left: amount, behavior: "smooth" });
+        });
+    }
+
+    const slides = document.querySelectorAll(".ciit-hero-slide");
+    const dots = document.querySelectorAll(".ciit-slider-dot");
+
+    if (slides.length && dots.length) {
+        let current = 0;
+        let timer;
+
+        function show(index) {
+            slides.forEach((slide) => slide.classList.remove("active"));
+            dots.forEach((dot) => dot.classList.remove("active"));
+
+            if (slides[index] && dots[index]) {
+                slides[index].classList.add("active");
+                dots[index].classList.add("active");
+            }
+        }
+
+        function restart() {
+            clearInterval(timer);
+            timer = setInterval(function () {
+                current = (current + 1) % slides.length;
+                show(current);
+            }, 4000);
+        }
+
+        dots.forEach((dot, index) => {
+            dot.addEventListener("click", function () {
+                current = index;
+                show(current);
+                restart();
+            });
+        });
+
+        show(0);
+        restart();
+    }
+});
 
 document.addEventListener("DOMContentLoaded", function () {
     const hubLink = document.querySelector("[data-learning-hub-transition]");
@@ -66,49 +117,138 @@ document.addEventListener("DOMContentLoaded", function () {
 
 document.addEventListener("DOMContentLoaded", function () {
     const paymentForm = document.getElementById("ciit-demo-payment-form");
+    const paymentTrigger = document.querySelector('[data-bs-target="#coursePaymentModal"]');
 
-    if (!paymentForm) {
+    if (!paymentForm || !paymentTrigger) {
         return;
     }
 
-    const modalEyebrow = document.querySelector(".ciit-payment-modal-eyebrow");
-    const modalSubtitle = document.querySelector(".ciit-payment-modal-subtitle");
     const paymentButton = document.getElementById("ciit-demo-payment-button");
     const paymentNote = paymentForm.nextElementSibling;
-    const processingTitle = document.querySelector("#ciit-payment-processing-state > strong");
-    const processingDescription = document.querySelector("#ciit-payment-processing-state > span");
-    const processingStep = document.querySelector('[data-payment-step="process"] span');
-    const successNote = document.querySelector(".ciit-payment-success-note");
+    const phonePeScriptUrl = "https://mercury.phonepe.com/web/bundle/checkout.js";
+    let phonePeScriptPromise;
 
-    if (modalEyebrow) {
-        modalEyebrow.textContent = "Secure checkout";
-    }
+    paymentTrigger.removeAttribute("data-bs-toggle");
+    paymentTrigger.removeAttribute("data-bs-target");
+    paymentTrigger.innerHTML = '<i class="bi bi-shield-lock-fill me-2"></i>Pay with PhonePe';
 
-    if (modalSubtitle) {
-        modalSubtitle.textContent = "You will be securely redirected to PhonePe to complete your payment.";
+    if (paymentNote) {
+        paymentNote.textContent = "PhonePe checkout will open securely on this page. Course access is granted only after server-side payment verification.";
     }
 
     if (paymentButton) {
-        paymentButton.innerHTML = '<i class="bi bi-shield-lock-fill me-2"></i>Continue to PhonePe';
+        paymentButton.innerHTML = '<i class="bi bi-shield-lock-fill me-2"></i>Pay with PhonePe';
     }
 
-    if (paymentNote) {
-        paymentNote.textContent = "You will complete the payment on PhonePe. Your course is activated only after the payment is verified server-side.";
-    }
+    const loadPhonePeCheckout = () => {
+        if (window.PhonePeCheckout?.transact) {
+            return Promise.resolve();
+        }
 
-    if (processingTitle) {
-        processingTitle.textContent = "Connecting to PhonePe";
-    }
+        if (phonePeScriptPromise) {
+            return phonePeScriptPromise;
+        }
 
-    if (processingDescription) {
-        processingDescription.textContent = "Preparing your secure payment session. Please wait...";
-    }
+        phonePeScriptPromise = new Promise((resolve, reject) => {
+            const existingScript = document.querySelector(`script[src="${phonePeScriptUrl}"]`);
 
-    if (processingStep) {
-        processingStep.textContent = "Redirecting to PhonePe checkout...";
-    }
+            if (existingScript) {
+                existingScript.addEventListener("load", resolve, { once: true });
+                existingScript.addEventListener("error", reject, { once: true });
+                return;
+            }
 
-    if (successNote) {
-        successNote.textContent = "Payment verification will be completed by the server before access is granted.";
-    }
+            const script = document.createElement("script");
+            script.src = phonePeScriptUrl;
+            script.async = true;
+            script.onload = resolve;
+            script.onerror = () => reject(new Error("PhonePe Checkout could not be loaded."));
+            document.head.appendChild(script);
+        });
+
+        return phonePeScriptPromise;
+    };
+
+    const getCheckoutUrl = async () => {
+        const formData = new FormData(paymentForm);
+        const response = await fetch(paymentForm.action, {
+            method: "POST",
+            body: formData,
+            headers: {
+                Accept: "application/json"
+            },
+            credentials: "same-origin"
+        });
+
+        if (!response.ok) {
+            let message = "The payment gateway could not be reached. Please try again.";
+
+            try {
+                const error = await response.json();
+                if (error?.message) {
+                    message = error.message;
+                }
+            } catch {
+                // Keep the generic message when the response is not JSON.
+            }
+
+            throw new Error(message);
+        }
+
+        const result = await response.json();
+
+        if (!result?.checkoutUrl) {
+            throw new Error("PhonePe did not return a checkout URL.");
+        }
+
+        return result.checkoutUrl;
+    };
+
+    const openPhonePeCheckout = async () => {
+        if (paymentButton) {
+            paymentButton.disabled = true;
+            paymentButton.innerHTML = '<span class="spinner-border spinner-border-sm me-2" aria-hidden="true"></span>Opening PhonePe...';
+        }
+
+        try {
+            const checkoutUrl = await getCheckoutUrl();
+            await loadPhonePeCheckout();
+
+            if (!window.PhonePeCheckout?.transact) {
+                throw new Error("PhonePe Checkout is not available yet. Please try again.");
+            }
+
+            window.PhonePeCheckout.transact({
+                tokenUrl: checkoutUrl,
+                type: "IFRAME",
+                callback: function (response) {
+                    if (response === "CONCLUDED") {
+                        window.location.reload();
+                    }
+
+                    if (response === "USER_CANCEL") {
+                        if (paymentButton) {
+                            paymentButton.disabled = false;
+                            paymentButton.innerHTML = '<i class="bi bi-shield-lock-fill me-2"></i>Pay with PhonePe';
+                        }
+                    }
+                }
+            });
+        } catch (error) {
+            console.error("PhonePe checkout error:", error);
+            window.alert(error instanceof Error ? error.message : "Unable to start PhonePe checkout.");
+
+            if (paymentButton) {
+                paymentButton.disabled = false;
+                paymentButton.innerHTML = '<i class="bi bi-shield-lock-fill me-2"></i>Pay with PhonePe';
+            }
+        }
+    };
+
+    paymentTrigger.addEventListener("click", function (event) {
+        event.preventDefault();
+        event.stopPropagation();
+        event.stopImmediatePropagation();
+        openPhonePeCheckout();
+    }, true);
 });

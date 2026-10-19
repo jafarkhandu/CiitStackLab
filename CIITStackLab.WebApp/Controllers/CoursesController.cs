@@ -74,6 +74,9 @@ public class CoursesController : Controller
         int id,
         CancellationToken cancellationToken)
     {
+        var wantsJsonResponse = Request.Headers.Accept.Any(value =>
+            value.Contains("application/json", StringComparison.OrdinalIgnoreCase));
+
         if (id <= 0)
         {
             return NotFound();
@@ -90,6 +93,11 @@ public class CoursesController : Controller
 
         if (price <= 0m)
         {
+            if (wantsJsonResponse)
+            {
+                return Json(new { redirectUrl = Url.Action(nameof(CourseHome), "Courses") });
+            }
+
             return RedirectToAction(nameof(CourseHome));
         }
 
@@ -102,6 +110,11 @@ public class CoursesController : Controller
 
         if (await _coursePurchaseService.HasPurchasedCourseAsync(userId, id, cancellationToken))
         {
+            if (wantsJsonResponse)
+            {
+                return Json(new { redirectUrl = Url.Action(nameof(CourseHome), "Courses") });
+            }
+
             return RedirectToAction(nameof(CourseHome));
         }
 
@@ -133,6 +146,11 @@ public class CoursesController : Controller
             transaction.UpdatedAt = DateTime.UtcNow;
             await _dbContext.SaveChangesAsync(cancellationToken);
 
+            if (wantsJsonResponse)
+            {
+                return BadRequest(new { message = "Payment could not be started. Please try again." });
+            }
+
             TempData["CoursePaymentMessage"] = "Payment could not be started. Please try again.";
             return RedirectToAction(nameof(Details), new { id });
         }
@@ -150,6 +168,15 @@ public class CoursesController : Controller
             transaction.UpdatedAt = DateTime.UtcNow;
             await _dbContext.SaveChangesAsync(cancellationToken);
 
+            if (wantsJsonResponse)
+            {
+                return Json(new
+                {
+                    checkoutUrl,
+                    merchantOrderId
+                });
+            }
+
             return Redirect(checkoutUrl);
         }
         catch (Exception ex)
@@ -162,6 +189,13 @@ public class CoursesController : Controller
                 ex,
                 "PhonePe checkout could not be created for merchant order {MerchantOrderId}.",
                 merchantOrderId);
+
+            if (wantsJsonResponse)
+            {
+                return StatusCode(
+                    StatusCodes.Status502BadGateway,
+                    new { message = "The payment gateway could not be reached. Please try again." });
+            }
 
             TempData["CoursePaymentMessage"] =
                 "The payment gateway could not be reached. Please try again.";
