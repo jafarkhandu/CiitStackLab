@@ -3,7 +3,6 @@
 @{
     Layout = "_CourseLayout";
     ViewData["Title"] = "Payment History";
-    var totalAmount = Model.Sum(item => item.Amount);
 }
 
 @section Styles {
@@ -16,8 +15,11 @@
             <div class="ciit-payment-hero-copy">
                 <span class="ciit-payment-eyebrow"><i class="bi bi-shield-check"></i> ACCOUNT FINANCE</span>
                 <h1>Your payments.<br /><span>Clearly accounted for.</span></h1>
-                <p>A clear view of course purchases associated with your learning account.</p>
-                <div class="ciit-payment-hero-meta"><span><i class="bi bi-lock-fill"></i> Private to your account</span><span><i class="bi bi-clock-history"></i> Purchase timeline</span></div>
+                <p>A complete view of your payment attempts, successful purchases, and payment status.</p>
+                <div class="ciit-payment-hero-meta">
+                    <span><i class="bi bi-lock-fill"></i> Private to your account</span>
+                    <span><i class="bi bi-clock-history"></i> Complete payment timeline</span>
+                </div>
             </div>
             <div class="ciit-payment-hero-art" aria-hidden="true">
                 <div class="ciit-payment-orbit ciit-payment-orbit-one"></div>
@@ -28,54 +30,265 @@
             </div>
         </header>
 
-        <section class="ciit-payment-summary" aria-label="Purchase summary" data-payment-reveal>
-            <article class="ciit-payment-summary-card"><span class="ciit-payment-summary-icon"><i class="bi bi-receipt"></i></span><div><small>Purchase records</small><strong>@Model.Count.ToString("00")</strong><span>Recorded in your account</span></div></article>
-            <article class="ciit-payment-summary-card"><span class="ciit-payment-summary-icon ciit-payment-summary-icon-cyan"><i class="bi bi-wallet2"></i></span><div><small>Total recorded</small><strong>₹@totalAmount.ToString("N2")</strong><span>Course purchase value</span></div></article>
-            <article class="ciit-payment-summary-card"><span class="ciit-payment-summary-icon ciit-payment-summary-icon-green"><i class="bi bi-journal-check"></i></span><div><small>Record status</small><strong>@(Model.Count == 0 ? "No records" : "Up to date")</strong><span>Based on available purchase data</span></div></article>
+        <section class="ciit-payment-summary" aria-label="Payment summary" data-payment-reveal>
+            <article class="ciit-payment-summary-card">
+                <span class="ciit-payment-summary-icon"><i class="bi bi-receipt"></i></span>
+                <div><small>Payment attempts</small><strong id="paymentAttemptCount">—</strong><span>Successful, failed and pending</span></div>
+            </article>
+            <article class="ciit-payment-summary-card">
+                <span class="ciit-payment-summary-icon ciit-payment-summary-icon-cyan"><i class="bi bi-wallet2"></i></span>
+                <div><small>Successfully paid</small><strong id="paymentSuccessTotal">₹0.00</strong><span>Confirmed successful payments</span></div>
+            </article>
+            <article class="ciit-payment-summary-card">
+                <span class="ciit-payment-summary-icon ciit-payment-summary-icon-green"><i class="bi bi-journal-check"></i></span>
+                <div><small>Record status</small><strong id="paymentRecordStatus">Loading…</strong><span id="paymentRecordBreakdown">Checking payment records</span></div>
+            </article>
         </section>
 
         <section class="ciit-payment-records" data-payment-reveal>
-            <div class="ciit-payment-records-heading"><div><span>YOUR TRANSACTION LOG</span><h2>Purchase history</h2><p>Course purchases recorded for your account.</p></div><a asp-controller="Courses" asp-action="CourseHome" class="ciit-payment-back-link"><i class="bi bi-arrow-left"></i> My Courses</a></div>
-            <div class="ciit-payment-notice"><i class="bi bi-info-circle-fill"></i><p>This page shows course purchases recorded by CIIT Stack Lab's current checkout flow. Legacy ERP payment entries and verified payment-gateway transactions are not included.</p></div>
-            @if (Model.Count == 0)
-            {
-                <div class="ciit-payment-empty"><span><i class="bi bi-receipt"></i></span><h3>No purchase records yet</h3><p>Once a course purchase is recorded, its details will appear here.</p><a asp-controller="Home" asp-action="Index" asp-fragment="tutorials">Explore courses <i class="bi bi-arrow-up-right"></i></a></div>
-            }
-            else
-            {
-                <div class="ciit-payment-table-wrap"><table class="ciit-payment-table"><thead><tr><th>Course details</th><th>Purchase date</th><th>Amount</th><th>Record ID</th></tr></thead><tbody>
-                @foreach (var purchase in Model)
-                {
-                    <tr>
-                        <td><div class="ciit-payment-course"><span class="ciit-payment-course-icon"><i class="bi bi-journal-code"></i></span><span><strong>@purchase.CourseTitle</strong><small>Course purchase</small></span></div></td>
-                        <td><time datetime="@purchase.PurchasedAt.ToString("O")">@purchase.PurchasedAt.ToLocalTime().ToString("dd MMM yyyy")<small>@purchase.PurchasedAt.ToLocalTime().ToString("hh:mm tt")</small></time></td>
-                        <td><strong class="ciit-payment-amount">₹@purchase.Amount.ToString("N2")</strong></td>
-                        <td><span class="ciit-payment-record-id">#@purchase.PurchaseId</span></td>
-                    </tr>
-                }
-                </tbody></table></div>
-                <footer class="ciit-payment-table-footer"><span><i class="bi bi-check-circle"></i> @Model.Count purchase record@(Model.Count == 1 ? "" : "s")</span><strong>Total recorded <b>₹@totalAmount.ToString("N2")</b></strong></footer>
-            }
+            <div class="ciit-payment-records-heading">
+                <div><span>YOUR TRANSACTION LOG</span><h2>Payment history</h2><p>Every payment attempt recorded for your account.</p></div>
+                <a asp-controller="Courses" asp-action="CourseHome" class="ciit-payment-back-link"><i class="bi bi-arrow-left"></i> My Courses</a>
+            </div>
+
+            <div class="ciit-payment-notice">
+                <i class="bi bi-info-circle-fill"></i>
+                <p>Successful, failed, pending and other recorded payment attempts are shown here. Select a record to view its complete transaction details.</p>
+            </div>
+
+            <div id="paymentHistoryState" class="ciit-payment-state" role="status" aria-live="polite">
+                <span class="ciit-payment-state-spinner" aria-hidden="true"></span>
+                <strong>Loading payment history…</strong>
+            </div>
+
+            <div id="paymentHistoryContent" class="ciit-payment-history-content" hidden>
+                <div class="ciit-payment-table-wrap">
+                    <table class="ciit-payment-table">
+                        <thead>
+                            <tr>
+                                <th>Course details</th>
+                                <th>Payment date</th>
+                                <th>Amount</th>
+                                <th>Status</th>
+                                <th>Details</th>
+                            </tr>
+                        </thead>
+                        <tbody id="paymentHistoryBody"></tbody>
+                    </table>
+                </div>
+                <footer class="ciit-payment-table-footer">
+                    <span><i class="bi bi-check-circle"></i> <span id="paymentRecordCount">0 payment records</span></span>
+                    <strong>Successfully paid <b id="paymentFooterTotal">₹0.00</b></strong>
+                </footer>
+            </div>
         </section>
     </div>
 </section>
 
+<div id="paymentDetailsModal" class="ciit-payment-modal" hidden>
+    <div class="ciit-payment-modal-backdrop" data-payment-modal-close></div>
+    <section class="ciit-payment-modal-dialog" role="dialog" aria-modal="true" aria-labelledby="paymentDetailsTitle">
+        <button type="button" class="ciit-payment-modal-close" aria-label="Close payment details" data-payment-modal-close><i class="bi bi-x-lg"></i></button>
+        <div class="ciit-payment-modal-header">
+            <span class="ciit-payment-eyebrow"><i class="bi bi-receipt"></i> PAYMENT DETAILS</span>
+            <h2 id="paymentDetailsTitle">Payment record</h2>
+            <div id="paymentDetailsStatus" class="ciit-payment-status-badge">Loading…</div>
+        </div>
+        <div id="paymentDetailsBody" class="ciit-payment-details-grid">
+            <div class="ciit-payment-detail-loading"><span class="ciit-payment-state-spinner" aria-hidden="true"></span> Loading transaction details…</div>
+        </div>
+    </section>
+</div>
+
 @section Scripts {
     <script>
         (function () {
-            const items = document.querySelectorAll('[data-payment-reveal]');
-            if (window.matchMedia('(prefers-reduced-motion: reduce)').matches || !('IntersectionObserver' in window)) {
-                items.forEach(item => item.classList.add('is-visible'));
-                return;
-            }
-            const observer = new IntersectionObserver(entries => {
-                entries.forEach(entry => {
-                    if (!entry.isIntersecting) return;
-                    entry.target.classList.add('is-visible');
-                    observer.unobserve(entry.target);
+            const state = document.getElementById('paymentHistoryState');
+            const content = document.getElementById('paymentHistoryContent');
+            const body = document.getElementById('paymentHistoryBody');
+            const attemptCount = document.getElementById('paymentAttemptCount');
+            const successTotal = document.getElementById('paymentSuccessTotal');
+            const recordStatus = document.getElementById('paymentRecordStatus');
+            const breakdown = document.getElementById('paymentRecordBreakdown');
+            const recordCount = document.getElementById('paymentRecordCount');
+            const footerTotal = document.getElementById('paymentFooterTotal');
+            const modal = document.getElementById('paymentDetailsModal');
+            const modalTitle = document.getElementById('paymentDetailsTitle');
+            const modalStatus = document.getElementById('paymentDetailsStatus');
+            const modalBody = document.getElementById('paymentDetailsBody');
+
+            const money = value => new Intl.NumberFormat('en-IN', {
+                style: 'currency',
+                currency: 'INR',
+                minimumFractionDigits: 2
+            }).format(Number(value || 0));
+
+            const dateTime = value => {
+                if (!value) return 'Not available';
+                const date = new Date(value);
+                if (Number.isNaN(date.getTime())) return 'Not available';
+                return date.toLocaleString('en-IN', {
+                    day: '2-digit',
+                    month: 'short',
+                    year: 'numeric',
+                    hour: '2-digit',
+                    minute: '2-digit'
                 });
-            }, { threshold: 0.08 });
-            items.forEach(item => observer.observe(item));
+            };
+
+            const escapeHtml = value => String(value ?? '')
+                .replaceAll('&', '&amp;')
+                .replaceAll('<', '&lt;')
+                .replaceAll('>', '&gt;')
+                .replaceAll('"', '&quot;')
+                .replaceAll("'", '&#039;');
+
+            const statusClass = status => {
+                switch (status) {
+                    case 'SUCCESS': return 'success';
+                    case 'FAILED': return 'failed';
+                    case 'PENDING': return 'pending';
+                    default: return 'created';
+                }
+            };
+
+            const statusLabel = status => {
+                switch (status) {
+                    case 'SUCCESS': return 'Successful';
+                    case 'FAILED': return 'Failed';
+                    case 'PENDING': return 'Pending';
+                    case 'CREATED': return 'Created';
+                    default: return status || 'Unknown';
+                }
+            };
+
+            const showError = message => {
+                state.innerHTML = '<i class="bi bi-exclamation-triangle-fill"></i><strong>' + escapeHtml(message) + '</strong>';
+                state.classList.add('is-error');
+            };
+
+            const renderRecords = records => {
+                const safeRecords = Array.isArray(records) ? records : [];
+                const successful = safeRecords.filter(item => item.status === 'SUCCESS');
+                const failed = safeRecords.filter(item => item.status === 'FAILED');
+                const pending = safeRecords.filter(item => item.status === 'PENDING');
+                const paidTotal = successful.reduce((sum, item) => sum + Number(item.amount || 0), 0);
+
+                attemptCount.textContent = String(safeRecords.length).padStart(2, '0');
+                successTotal.textContent = money(paidTotal);
+                footerTotal.textContent = money(paidTotal);
+                recordCount.textContent = safeRecords.length + ' payment record' + (safeRecords.length === 1 ? '' : 's');
+                recordStatus.textContent = safeRecords.length === 0 ? 'No records' : 'Up to date';
+                breakdown.textContent = successful.length + ' successful · ' + failed.length + ' failed · ' + pending.length + ' pending';
+
+                if (safeRecords.length === 0) {
+                    body.innerHTML = '<tr><td colspan="5"><div class="ciit-payment-empty"><span><i class="bi bi-receipt"></i></span><h3>No payment records yet</h3><p>Your payment attempts will appear here after you start a checkout.</p><a href="/Home#tutorials">Explore courses <i class="bi bi-arrow-up-right"></i></a></div></td></tr>';
+                } else {
+                    body.innerHTML = safeRecords.map(record => {
+                        const cssStatus = statusClass(record.status);
+                        return '<tr>' +
+                            '<td><div class="ciit-payment-course"><span class="ciit-payment-course-icon"><i class="bi bi-journal-code"></i></span><span><strong>' + escapeHtml(record.courseTitle) + '</strong><small>Payment attempt · Order ' + escapeHtml(record.merchantOrderId) + '</small></span></div></td>' +
+                            '<td><time datetime="' + escapeHtml(record.createdAt) + '">' + escapeHtml(dateTime(record.createdAt)) + '</time></td>' +
+                            '<td><strong class="ciit-payment-amount">' + escapeHtml(money(record.amount)) + '</strong></td>' +
+                            '<td><span class="ciit-payment-status-badge ' + cssStatus + '"><i class="bi bi-circle-fill"></i> ' + escapeHtml(statusLabel(record.status)) + '</span></td>' +
+                            '<td><button type="button" class="ciit-payment-details-button" data-payment-id="' + Number(record.id) + '">View details <i class="bi bi-arrow-up-right"></i></button></td>' +
+                            '</tr>';
+                    }).join('');
+                }
+
+                state.hidden = true;
+                content.hidden = false;
+            };
+
+            const detailRow = (label, value, extraClass) => '<div class="ciit-payment-detail-item ' + (extraClass || '') + '"><span>' + escapeHtml(label) + '</span><strong>' + escapeHtml(value || 'Not available') + '</strong></div>';
+
+            const openDetails = async id => {
+                modal.hidden = false;
+                document.body.classList.add('ciit-payment-modal-open');
+                modalStatus.textContent = 'Loading…';
+                modalStatus.className = 'ciit-payment-status-badge';
+                modalTitle.textContent = 'Payment record';
+                modalBody.innerHTML = '<div class="ciit-payment-detail-loading"><span class="ciit-payment-state-spinner" aria-hidden="true"></span> Loading transaction details…</div>';
+
+                try {
+                    const response = await fetch('/Payments/Details/' + encodeURIComponent(id), {
+                        headers: { 'Accept': 'application/json' },
+                        credentials: 'same-origin'
+                    });
+
+                    if (!response.ok) throw new Error('The payment details could not be loaded.');
+                    const data = await response.json();
+                    const cssStatus = statusClass(data.status);
+
+                    modalTitle.textContent = data.courseTitle || 'Payment record';
+                    modalStatus.textContent = statusLabel(data.status);
+                    modalStatus.className = 'ciit-payment-status-badge ' + cssStatus;
+                    modalBody.innerHTML =
+                        '<div class="ciit-payment-detail-highlight ' + cssStatus + '"><span>Amount</span><strong>' + escapeHtml(money(data.amount)) + '</strong><small>' + escapeHtml(statusLabel(data.status)) + '</small></div>' +
+                        detailRow('Course', data.courseTitle) +
+                        detailRow('Payment date', dateTime(data.createdAt)) +
+                        detailRow('Last updated', dateTime(data.updatedAt)) +
+                        detailRow('Transaction ID', '#' + data.id) +
+                        detailRow('Merchant Order ID', data.merchantOrderId) +
+                        detailRow('PhonePe Order ID', data.phonePeOrderId || 'Not available') +
+                        detailRow('Payment gateway', data.gateway || 'PhonePe') +
+                        detailRow('Payment method', data.paymentMethod || 'Not recorded') +
+                        detailRow('Completed at', dateTime(data.completedAt)) +
+                        detailRow('Course access', data.status === 'SUCCESS' ? 'Granted' : 'Not granted');
+
+                    if (data.purchase) {
+                        modalBody.innerHTML += '<div class="ciit-payment-detail-purchase"><strong>Purchase recorded</strong><span>Purchase #' + data.purchase.id + ' · ' + escapeHtml(money(data.purchase.amount)) + ' · ' + escapeHtml(dateTime(data.purchase.purchasedAt)) + '</span></div>';
+                    }
+                } catch (error) {
+                    modalBody.innerHTML = '<div class="ciit-payment-detail-error"><i class="bi bi-exclamation-triangle-fill"></i><strong>' + escapeHtml(error.message || 'Unable to load payment details.') + '</strong></div>';
+                }
+            };
+
+            const closeModal = () => {
+                modal.hidden = true;
+                document.body.classList.remove('ciit-payment-modal-open');
+            };
+
+            body.addEventListener('click', event => {
+                const button = event.target.closest('[data-payment-id]');
+                if (!button) return;
+                openDetails(button.dataset.paymentId);
+            });
+
+            modal.addEventListener('click', event => {
+                if (event.target.closest('[data-payment-modal-close]')) closeModal();
+            });
+
+            document.addEventListener('keydown', event => {
+                if (event.key === 'Escape' && !modal.hidden) closeModal();
+            });
+
+            const revealItems = document.querySelectorAll('[data-payment-reveal]');
+            if (window.matchMedia('(prefers-reduced-motion: reduce)').matches || !('IntersectionObserver' in window)) {
+                revealItems.forEach(item => item.classList.add('is-visible'));
+            } else {
+                const observer = new IntersectionObserver(entries => {
+                    entries.forEach(entry => {
+                        if (!entry.isIntersecting) return;
+                        entry.target.classList.add('is-visible');
+                        observer.unobserve(entry.target);
+                    });
+                }, { threshold: 0.08 });
+                revealItems.forEach(item => observer.observe(item));
+            }
+
+            fetch('/Payments/HistoryData', {
+                headers: { 'Accept': 'application/json' },
+                credentials: 'same-origin'
+            })
+                .then(async response => {
+                    if (!response.ok) throw new Error('Payment history could not be loaded.');
+                    const contentType = response.headers.get('content-type') || '';
+                    if (!contentType.includes('application/json')) throw new Error('Your session may have expired. Please sign in again.');
+                    return response.json();
+                })
+                .then(data => renderRecords(data.records))
+                .catch(error => showError(error.message || 'Payment history could not be loaded.'));
         })();
     </script>
 }
