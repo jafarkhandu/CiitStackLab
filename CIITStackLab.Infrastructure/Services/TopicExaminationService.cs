@@ -285,7 +285,9 @@ public sealed class TopicExaminationService : ITopicExaminationService
         if (normalized.Equals("TabSwitch", StringComparison.OrdinalIgnoreCase)
             || normalized.Equals("WindowBlur", StringComparison.OrdinalIgnoreCase)
             || normalized.Equals("PageExit", StringComparison.OrdinalIgnoreCase)
-            || normalized.Equals("FullscreenExit", StringComparison.OrdinalIgnoreCase))
+            || normalized.Equals("FullscreenExit", StringComparison.OrdinalIgnoreCase)
+            || normalized.Equals("ScreenshotShortcut", StringComparison.OrdinalIgnoreCase)
+            || normalized.Equals("RecordingShortcut", StringComparison.OrdinalIgnoreCase))
         {
             attempt.TerminationReason = normalized;
             await FinalizeAsync(attempt, "Terminated", DateTime.UtcNow, cancellationToken);
