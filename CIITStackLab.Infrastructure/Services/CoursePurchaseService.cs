@@ -13,11 +13,28 @@ public sealed class CoursePurchaseService
         _dbContext = dbContext;
     }
 
-    public async Task<bool> CompleteAsync(
+    public Task<bool> CompleteAsync(
         string userId,
         int courseId,
-        decimal? purchasePrice = null,
         CancellationToken cancellationToken = default)
+    {
+        return CompleteInternalAsync(userId, courseId, null, cancellationToken);
+    }
+
+    public Task<bool> CompleteWithPriceAsync(
+        string userId,
+        int courseId,
+        decimal purchasePrice,
+        CancellationToken cancellationToken = default)
+    {
+        return CompleteInternalAsync(userId, courseId, purchasePrice, cancellationToken);
+    }
+
+    private async Task<bool> CompleteInternalAsync(
+        string userId,
+        int courseId,
+        decimal? purchasePrice,
+        CancellationToken cancellationToken)
     {
         if (string.IsNullOrWhiteSpace(userId) || courseId <= 0)
         {
