@@ -119,6 +119,83 @@ document.addEventListener("DOMContentLoaded", function () {
     const paymentForm = document.getElementById("ciit-demo-payment-form");
     const paymentTrigger = document.querySelector('[data-bs-target="#coursePaymentModal"]');
 
+    const getServerPaymentMessage = () => {
+        const icon = document.querySelector("main .container.mt-3 .alert .bi-credit-card");
+        const alert = icon?.closest(".alert");
+        if (!alert) {
+            return null;
+        }
+
+        const message = alert.querySelector("span")?.textContent?.trim();
+        const container = alert.closest(".container");
+        container?.remove();
+
+        return message || null;
+    };
+
+    const getToastType = (message) => {
+        const normalized = message.toLowerCase();
+        if (normalized.includes("successful")) return "success";
+        if (normalized.includes("still") || normalized.includes("verify") || normalized.includes("processing")) return "warning";
+        if (normalized.includes("failed") || normalized.includes("could not") || normalized.includes("no course access")) return "danger";
+        return "info";
+    };
+
+    let toastTimer;
+
+    const showPaymentToast = (message, type = "danger") => {
+        if (!message) return;
+
+        clearTimeout(toastTimer);
+        document.getElementById("ciit-payment-toast")?.remove();
+
+        const toast = document.createElement("div");
+        toast.id = "ciit-payment-toast";
+        toast.className = `ciit-payment-toast ciit-payment-toast-${type}`;
+        toast.setAttribute("role", type === "danger" ? "alert" : "status");
+        toast.setAttribute("aria-live", "polite");
+
+        const icon = type === "success"
+            ? "bi-check-circle-fill"
+            : type === "warning"
+                ? "bi-exclamation-circle-fill"
+                : type === "info"
+                    ? "bi-info-circle-fill"
+                    : "bi-x-circle-fill";
+
+        toast.innerHTML = `
+            <span class="ciit-payment-toast-icon" aria-hidden="true"><i class="bi ${icon}"></i></span>
+            <span class="ciit-payment-toast-content">
+                <strong>${type === "danger" ? "Payment Failed" : type === "success" ? "Payment Successful" : "Payment Update"}</strong>
+                <span></span>
+            </span>
+            <button type="button" class="ciit-payment-toast-close" aria-label="Close notification">&times;</button>`;
+
+        toast.querySelector(".ciit-payment-toast-content > span").textContent = message;
+        toast.querySelector(".ciit-payment-toast-close").addEventListener("click", () => {
+            toast.classList.remove("is-visible");
+            window.setTimeout(() => toast.remove(), 180);
+        });
+
+        document.body.appendChild(toast);
+        requestAnimationFrame(() => toast.classList.add("is-visible"));
+
+        toastTimer = window.setTimeout(() => {
+            toast.classList.remove("is-visible");
+            window.setTimeout(() => toast.remove(), 180);
+        }, 5000);
+    };
+
+    const clearPaymentToast = () => {
+        clearTimeout(toastTimer);
+        document.getElementById("ciit-payment-toast")?.remove();
+    };
+
+    const serverPaymentMessage = getServerPaymentMessage();
+    if (serverPaymentMessage) {
+        showPaymentToast(serverPaymentMessage, getToastType(serverPaymentMessage));
+    }
+
     if (!paymentForm || !paymentTrigger) {
         return;
     }
@@ -133,6 +210,7 @@ document.addEventListener("DOMContentLoaded", function () {
     const phonePeScriptUrl = "https://mercury.phonepe.com/web/bundle/checkout.js";
     let phonePeScriptPromise;
     let merchantOrderId;
+    let paymentOverlay;
 
     paymentTrigger.removeAttribute("data-bs-toggle");
     paymentTrigger.removeAttribute("data-bs-target");
@@ -154,38 +232,66 @@ document.addEventListener("DOMContentLoaded", function () {
         paymentButton.innerHTML = '<i class="bi bi-shield-lock-fill me-2"></i>Pay with PhonePe';
     }
 
+    const removePaymentOverlay = () => {
+        paymentOverlay?.remove();
+        paymentOverlay = null;
+    };
+
+    const showPaymentOverlay = (title, message, state = "processing", action = null) => {
+        removePaymentOverlay();
+
+        const overlay = document.createElement("div");
+        overlay.className = `ciit-payment-overlay ciit-payment-overlay-${state}`;
+        overlay.setAttribute("role", "dialog");
+        overlay.setAttribute("aria-modal", "true");
+        overlay.setAttribute("aria-live", "polite");
+
+        if (state === "success") {
+            overlay.innerHTML = `
+                <div class="ciit-payment-overlay-card">
+                    <div class="ciit-payment-success-ring" aria-hidden="true">
+                        <i class="bi bi-check-lg"></i>
+                    </div>
+                    <strong>${title}</strong>
+                    <span>${message}</span>
+                    <div class="ciit-payment-overlay-progress" aria-hidden="true"><span></span></div>
+                </div>`;
+        } else {
+            overlay.innerHTML = `
+                <div class="ciit-payment-overlay-card">
+                    <div class="ciit-payment-overlay-spinner" aria-hidden="true">
+                        <span></span>
+                        <i class="bi bi-shield-check"></i>
+                    </div>
+                    <strong>${title}</strong>
+                    <span class="ciit-payment-overlay-message"></span>
+                    <div class="ciit-payment-overlay-dots" aria-hidden="true"><span></span><span></span><span></span></div>
+                    ${action ? '<div class="ciit-payment-overlay-action"></div>' : ""}
+                </div>`;
+            overlay.querySelector(".ciit-payment-overlay-message").textContent = message;
+
+            if (action) {
+                const actionHost = overlay.querySelector(".ciit-payment-overlay-action");
+                const button = document.createElement("button");
+                button.type = "button";
+                button.className = "btn btn-outline-primary btn-sm";
+                button.textContent = action.label;
+                button.addEventListener("click", action.handler, { once: true });
+                actionHost.appendChild(button);
+            }
+        }
+
+        document.body.appendChild(overlay);
+        requestAnimationFrame(() => overlay.classList.add("is-visible"));
+        paymentOverlay = overlay;
+    };
+
     const showPagePaymentMessage = (message, type = "danger") => {
-        if (!message) return;
-
-        const existing = document.getElementById("ciit-payment-page-message");
-        if (existing) {
-            existing.remove();
-        }
-
-        const container = document.createElement("div");
-        container.id = "ciit-payment-page-message";
-        container.className = "container mt-3";
-
-        const alert = document.createElement("div");
-        alert.className = `alert alert-${type} d-flex align-items-start gap-2`;
-        alert.setAttribute("role", "alert");
-        alert.setAttribute("aria-live", "polite");
-        alert.innerHTML = '<i class="bi bi-credit-card mt-1" aria-hidden="true"></i><span></span>';
-        alert.querySelector("span").textContent = message;
-
-        container.appendChild(alert);
-        const main = document.querySelector("main");
-        const courseSection = document.querySelector(".ciit-course-details-section");
-
-        if (main && courseSection) {
-            main.insertBefore(container, courseSection);
-        } else if (main) {
-            main.prepend(container);
-        }
+        showPaymentToast(message, type);
     };
 
     const clearPagePaymentMessage = () => {
-        document.getElementById("ciit-payment-page-message")?.remove();
+        clearPaymentToast();
     };
 
     const loadPhonePeCheckout = () => {
@@ -255,54 +361,29 @@ document.addEventListener("DOMContentLoaded", function () {
 
     const showProcessing = (message) => {
         clearPagePaymentMessage();
+        showPaymentOverlay("Verifying your payment", message || "Checking the payment status securely with PhonePe...");
 
-        if (!processingState) return;
-        const spans = processingState.querySelectorAll("span:not(.ciit-payment-spinner)");
-        if (spans.length > 0 && message) {
-            spans[spans.length - 1].textContent = message;
-        }
-        processingState.hidden = false;
+        if (processingState) processingState.hidden = false;
         if (formState) formState.hidden = true;
         if (successState) successState.hidden = true;
     };
 
     const showFailure = (message) => {
+        removePaymentOverlay();
         showPagePaymentMessage(message || "Payment could not be completed. No course access was granted.", "danger");
 
-        if (!processingState) {
-            window.alert(message);
-            return;
-        }
-
-        processingState.hidden = false;
-        if (formState) formState.hidden = true;
+        if (processingState) processingState.hidden = true;
+        if (formState) formState.hidden = false;
         if (successState) successState.hidden = true;
 
-        const icon = processingState.querySelector(".ciit-payment-processing-icon");
-        const title = processingState.querySelector("strong");
-        const description = processingState.querySelector(".ciit-payment-processing-icon + strong + span");
-        const steps = processingState.querySelector(".ciit-payment-processing-steps");
-
-        if (icon) {
-            icon.innerHTML = '<i class="bi bi-x-lg ciit-payment-failure-mark" aria-hidden="true"></i>';
-        }
-        if (title) {
-            title.textContent = "Payment Failed";
-        }
-        if (description) {
-            description.textContent = message;
-        }
-        if (steps) {
-            steps.innerHTML = '<button type="button" class="btn btn-outline-primary btn-sm mt-3" id="ciit-payment-retry-button">Try payment again</button>';
-        }
-
-        const retryButton = document.getElementById("ciit-payment-retry-button");
-        if (retryButton) {
-            retryButton.addEventListener("click", resetPaymentForm, { once: true });
+        if (paymentButton) {
+            paymentButton.disabled = false;
+            paymentButton.innerHTML = '<i class="bi bi-shield-lock-fill me-2"></i>Pay with PhonePe';
         }
     };
 
     function resetPaymentForm() {
+        removePaymentOverlay();
         clearPagePaymentMessage();
 
         if (processingState) processingState.hidden = true;
@@ -362,22 +443,14 @@ document.addEventListener("DOMContentLoaded", function () {
             if (result?.state === "COMPLETED") {
                 clearPagePaymentMessage();
 
-                const successText = successState?.querySelector(".ciit-payment-success-note");
-                if (successText) {
-                    successText.textContent = "Payment verified successfully. Your course access is ready.";
-                }
+                if (processingState) processingState.hidden = true;
+                if (successState) successState.hidden = false;
 
-                const successSmall = successState?.querySelector("small");
-                if (successSmall) {
-                    successSmall.textContent = "Opening your course...";
-                }
-
-                processingState.hidden = true;
-                successState.hidden = false;
+                showPaymentOverlay("Payment verified", "Your course access is ready. Opening your learning page...", "success");
 
                 window.setTimeout(() => {
                     window.location.assign(`/Courses/Course/${result.courseId}`);
-                }, 900);
+                }, 650);
                 return;
             }
 
@@ -387,37 +460,26 @@ document.addEventListener("DOMContentLoaded", function () {
             }
 
             const pendingMessage = result?.message || "Payment is still being verified. No course access has been granted yet.";
-            showPagePaymentMessage(pendingMessage, "warning");
-            showProcessing(pendingMessage);
-            const steps = processingState.querySelector(".ciit-payment-processing-steps");
-            if (steps) {
-                steps.innerHTML = '<button type="button" class="btn btn-outline-primary btn-sm mt-3" id="ciit-payment-pending-retry">Check payment status again</button>';
-                const retry = document.getElementById("ciit-payment-pending-retry");
-                if (retry) {
-                    retry.addEventListener("click", completePhonePePayment, { once: true });
-                }
-            }
+            showPaymentOverlay("Payment still processing", pendingMessage, "processing", {
+                label: "Check payment status again",
+                handler: completePhonePePayment
+            });
         } catch (error) {
             console.error("PhonePe payment verification error:", error);
             const message = error instanceof Error
                 ? error.message
                 : "We could not confirm the payment yet. Your order remains pending.";
-            showPagePaymentMessage(message, "warning");
-            showProcessing(message);
 
-            const steps = processingState?.querySelector(".ciit-payment-processing-steps");
-            if (steps) {
-                steps.innerHTML = '<button type="button" class="btn btn-outline-primary btn-sm mt-3" id="ciit-payment-verify-retry">Retry verification</button>';
-                const retry = document.getElementById("ciit-payment-verify-retry");
-                if (retry) {
-                    retry.addEventListener("click", completePhonePePayment, { once: true });
-                }
-            }
+            showPaymentOverlay("Verification needs another check", message, "processing", {
+                label: "Retry verification",
+                handler: completePhonePePayment
+            });
         }
     };
 
     const openPhonePeCheckout = async () => {
         clearPagePaymentMessage();
+        removePaymentOverlay();
 
         if (paymentButton) {
             paymentButton.disabled = true;
