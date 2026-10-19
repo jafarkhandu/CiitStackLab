@@ -89,10 +89,30 @@ public sealed class TopicExaminationService : ITopicExaminationService
         var allQuestionIds = await GetEligibleQuestionIdsAsync(topicId, cancellationToken);
         var previouslyUsed = await GetPreviouslyUsedQuestionIdsAsync(userId, courseId, topicId, cancellationToken);
         var unseenIds = allQuestionIds.Where(id => !previouslyUsed.Contains(id)).ToList();
-        if (unseenIds.Count < QuestionCount)
-            return (false, $"Only {unseenIds.Count} unseen valid questions remain. Add at least {QuestionCount - unseenIds.Count} new questions before scheduling a re-exam.", null);
+        var usedIds = allQuestionIds.Where(previouslyUsed.Contains).ToList();
 
-        var chosenIds = unseenIds.OrderBy(_ => RandomNumberGenerator.GetInt32(int.MaxValue)).Take(QuestionCount).ToList();
+        // Re-exams should be mostly fresh. Reuse at most five previously seen questions,
+        // and only when at least 45 unseen questions are available.
+        if (unseenIds.Count < QuestionCount - 5)
+        {
+            return (false,
+                $"Only {unseenIds.Count} unseen valid questions remain. A re-exam needs at least {QuestionCount - 5} unseen questions; add more questions before trying again.",
+                null);
+        }
+
+        var shuffledUnseen = unseenIds
+            .OrderBy(_ => RandomNumberGenerator.GetInt32(int.MaxValue))
+            .ToList();
+        var unseenToUse = Math.Min(QuestionCount, shuffledUnseen.Count);
+        var repeatCount = QuestionCount - unseenToUse;
+        var repeatedToUse = usedIds
+            .OrderBy(_ => RandomNumberGenerator.GetInt32(int.MaxValue))
+            .Take(repeatCount)
+            .ToList();
+        var chosenIds = shuffledUnseen.Take(unseenToUse)
+            .Concat(repeatedToUse)
+            .OrderBy(_ => RandomNumberGenerator.GetInt32(int.MaxValue))
+            .ToList();
         var optionOrders = new Dictionary<int, List<int>>();
         foreach (var questionId in chosenIds)
             optionOrders[questionId] = new[] { 1, 2, 3, 4 }.OrderBy(_ => RandomNumberGenerator.GetInt32(int.MaxValue)).ToList();
