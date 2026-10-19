@@ -322,6 +322,141 @@
         @@media (max-width: 760px) {
             #exam-camera { width: 100%; aspect-ratio: 16 / 9; height: auto; max-height: none; }
         }
+        /* Premium glass finish: visual-only overrides; exam logic and layout flow remain unchanged. */
+        :root {
+            --exam-ink: #101d38;
+            --exam-muted: #63738f;
+            --exam-line: rgba(133, 157, 194, .24);
+            --exam-blue: #2563eb;
+            --exam-blue-deep: #1746c8;
+            --exam-surface: rgba(255, 255, 255, .58);
+            --exam-shadow: 0 24px 70px rgba(32, 63, 112, .12);
+        }
+        body {
+            background:
+                radial-gradient(ellipse at 8% 4%, rgba(111, 168, 255, .24), transparent 32%),
+                radial-gradient(ellipse at 92% 18%, rgba(103, 232, 218, .17), transparent 29%),
+                radial-gradient(ellipse at 55% 100%, rgba(166, 180, 255, .13), transparent 35%),
+                linear-gradient(135deg, #f7faff 0%, #eaf2ff 48%, #f7faff 100%);
+            background-attachment: fixed;
+        }
+        .exam-security-banner {
+            border-color: rgba(248, 113, 113, .36);
+            background: linear-gradient(110deg, rgba(255, 238, 240, .94), rgba(255, 246, 247, .88));
+            color: #a91f32;
+            box-shadow: 0 8px 26px rgba(153, 27, 27, .08), inset 0 1px 0 rgba(255,255,255,.92);
+            backdrop-filter: blur(22px) saturate(145%);
+            -webkit-backdrop-filter: blur(22px) saturate(145%);
+            letter-spacing: .01em;
+        }
+        .exam-header {
+            border-bottom-color: rgba(148, 163, 184, .18);
+        }
+        .brand-mark {
+            border: 1px solid rgba(255,255,255,.62);
+            background: linear-gradient(145deg, #5799ff 0%, #2868eb 55%, #1746c8 100%);
+            box-shadow: 0 10px 24px rgba(37, 99, 235, .24), inset 0 1px 0 rgba(255,255,255,.48);
+        }
+        .timer-card {
+            border-color: rgba(248, 113, 113, .26);
+            background: linear-gradient(145deg, rgba(255,255,255,.82), rgba(255,241,242,.74));
+            box-shadow: 0 12px 32px rgba(220, 38, 38, .07), inset 0 1px 0 rgba(255,255,255,.95);
+        }
+        .glass-card {
+            border: 1px solid rgba(255,255,255,.82);
+            background: linear-gradient(140deg, rgba(255,255,255,.68), rgba(255,255,255,.43));
+            box-shadow: 0 22px 55px rgba(41, 72, 122, .09), inset 0 1px 0 rgba(255,255,255,.96);
+            backdrop-filter: blur(28px) saturate(155%);
+            -webkit-backdrop-filter: blur(28px) saturate(155%);
+        }
+        .question-card, .side-card {
+            position: relative;
+            overflow: hidden;
+        }
+        .question-card::before, .side-card::before {
+            content: "";
+            position: absolute;
+            inset: 0 0 auto;
+            height: 1px;
+            pointer-events: none;
+            background: linear-gradient(90deg, transparent, rgba(255,255,255,.98), transparent);
+        }
+        .question-count {
+            border: 1px solid rgba(59,130,246,.12);
+            background: linear-gradient(135deg, rgba(219,234,254,.82), rgba(239,246,255,.7));
+            box-shadow: inset 0 1px 0 rgba(255,255,255,.85);
+        }
+        .option {
+            border-color: rgba(142, 161, 190, .28);
+            background: linear-gradient(120deg, rgba(255,255,255,.76), rgba(250,252,255,.58));
+            box-shadow: inset 0 1px 0 rgba(255,255,255,.86);
+        }
+        .option:hover {
+            border-color: rgba(37,99,235,.48);
+            background: linear-gradient(120deg, rgba(239,246,255,.96), rgba(255,255,255,.84));
+            box-shadow: 0 7px 18px rgba(37,99,235,.07), inset 0 1px 0 rgba(255,255,255,.96);
+        }
+        .option:has(input:checked) {
+            border-color: rgba(37,99,235,.62);
+            background: linear-gradient(110deg, rgba(219,234,254,.82), rgba(248,251,255,.94));
+            box-shadow: 0 0 0 3px rgba(37,99,235,.065), inset 0 1px 0 rgba(255,255,255,.94);
+        }
+        .action-btn {
+            box-shadow: 0 4px 12px rgba(30, 55, 95, .035), inset 0 1px 0 rgba(255,255,255,.58);
+        }
+        .btn-skip {
+            background: linear-gradient(145deg, rgba(255,255,255,.88), rgba(245,248,253,.72));
+        }
+        .btn-review {
+            background: linear-gradient(145deg, rgba(255,251,235,.92), rgba(255,247,220,.72));
+        }
+        .btn-next {
+            background: linear-gradient(115deg, #3b82f6 0%, #2563eb 48%, #1746c8 100%);
+            box-shadow: 0 10px 22px rgba(37,99,235,.22), inset 0 1px 0 rgba(255,255,255,.3);
+        }
+        .btn-next:hover {
+            box-shadow: 0 13px 27px rgba(37,99,235,.28), inset 0 1px 0 rgba(255,255,255,.36);
+        }
+        .palette-btn {
+            background: linear-gradient(145deg, rgba(255,255,255,.86), rgba(246,249,255,.68));
+            box-shadow: inset 0 1px 0 rgba(255,255,255,.88);
+        }
+        .palette-btn.is-current {
+            background: linear-gradient(135deg, #3b82f6, #1746c8);
+            box-shadow: 0 6px 15px rgba(37,99,235,.24), inset 0 1px 0 rgba(255,255,255,.28);
+        }
+        .secure-chip {
+            border: 1px solid rgba(16,185,129,.12);
+            background: linear-gradient(135deg, rgba(209,250,229,.84), rgba(236,253,245,.68));
+        }
+        #exam-camera {
+            border-color: rgba(255,255,255,.92);
+            box-shadow: 0 8px 22px rgba(15,23,42,.12), 0 0 0 1px rgba(100,116,139,.12);
+        }
+        .submit-final {
+            background: linear-gradient(135deg, #203a68, #102447);
+            box-shadow: 0 6px 16px rgba(16,36,71,.16), inset 0 1px 0 rgba(255,255,255,.12);
+        }
+        .message-bar {
+            box-shadow: 0 8px 22px rgba(30, 55, 95, .06), inset 0 1px 0 rgba(255,255,255,.7);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+        }
+        .option:focus-within, .action-btn:focus-visible, .palette-btn:focus-visible, .submit-final:focus-visible {
+            outline: 3px solid rgba(37,99,235,.36);
+            outline-offset: 2px;
+        }
+        @@media (prefers-reduced-motion: no-preference) {
+            .glass-card { animation: glass-card-enter .35s ease-out both; }
+            @@keyframes glass-card-enter {
+                from { opacity: .78; transform: translateY(5px); }
+                to { opacity: 1; transform: translateY(0); }
+            }
+        }
+        @@media (max-width: 760px) {
+            .exam-security-banner { padding: 9px 12px; border-radius: 0 0 12px 12px; font-size: 11px; }
+            .glass-card { box-shadow: 0 15px 36px rgba(41,72,122,.09), inset 0 1px 0 rgba(255,255,255,.94); }
+        }
         </style>
 </head>
 <body>
