@@ -1,4 +1,4 @@
-@model CIITStackLab.Application.DTOs.CourseDetailsDto
+﻿@model CIITStackLab.Application.DTOs.CourseDetailsDto
 
 @{
     ViewData["Title"] = Model.Title;
@@ -104,11 +104,11 @@
                         else
                         {
                             <button type="button"
-                                    class="btn btn-primary btn-lg"
-                                    data-bs-toggle="modal"
-                                    data-bs-target="#coursePaymentModal">
-                                <i class="bi bi-bag-check me-2"></i>Enroll Now
-                            </button>
+                                class="btn btn-primary btn-lg"
+                                data-bs-toggle="modal"
+                                data-bs-target="#coursePaymentModal">
+                            <i class="bi bi-bag-check me-2"></i>Enroll Now
+                        </button>
                         }
 
                         <a asp-controller="Home"
@@ -142,9 +142,9 @@
                     <div class="modal-content">
                         <div class="modal-header border-0">
                             <div>
-                                <span class="ciit-payment-modal-eyebrow">Demo checkout</span>
+                                <span class="ciit-payment-modal-eyebrow">Secure PhonePe checkout</span>
                                 <h2 class="modal-title" id="coursePaymentModalLabel">Complete your purchase</h2>
-                                <p class="ciit-payment-modal-subtitle">This is a testing flow. No real payment will be processed.</p>
+                                <p class="ciit-payment-modal-subtitle">You will be redirected to PhonePe to complete your payment.</p>
                             </div>
                             <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                         </div>
@@ -234,7 +234,7 @@
                                         </button>
                                     </form>
                                     <p class="ciit-payment-modal-note">
-                                        Demo mode: no real money is charged. The payment animation is only for testing the purchase experience.
+                                        Your course access will be enabled after PhonePe confirms your payment.
                                     </p>
                                 }
                                 else
@@ -247,7 +247,7 @@
                                         Sign in to continue
                                     </a>
                                     <p class="ciit-payment-modal-note">
-                                        Sign in to use the demo payment flow.
+                                        Sign in to continue to PhonePe checkout.
                                     </p>
                                 }
                             </div>
@@ -282,7 +282,7 @@
                                 </div>
                                 <strong>Payment Successful</strong>
                                 <span class="ciit-payment-success-course">Your access to @Model.Title is ready.</span>
-                                <span class="ciit-payment-success-note">Demo payment completed successfully.</span>
+                                <span class="ciit-payment-success-note">Payment confirmed.</span>
                                 <small>Opening your learning page...</small>
                                 <div class="ciit-payment-redirect-bar" aria-hidden="true">
                                     <span></span>
@@ -349,7 +349,7 @@
                                     <span class="ciit-roadmap-topic-icon"><i class="bi bi-journal-bookmark-fill" aria-hidden="true"></i></span>
                                     <span class="ciit-roadmap-topic-copy">
                                         <strong>@topic.Title</strong>
-                                        <small>Topic @topicNumber · Structured learning</small>
+                                        <small>Topic @topicNumber Â· Structured learning</small>
                                     </span>
                                     <span class="ciit-roadmap-lesson-count">
                                         <i class="bi bi-play-circle" aria-hidden="true"></i>
@@ -409,7 +409,7 @@
                                                                 </span>
                                                                 <div>
                                                                     <strong>Knowledge check</strong>
-                                                                    <small>@content.Questions.Count question@(content.Questions.Count == 1 ? "" : "s") · Server-graded assessment</small>
+                                                                    <small>@content.Questions.Count question@(content.Questions.Count == 1 ? "" : "s") Â· Server-graded assessment</small>
                                                                 </div>
                                                             </div>
 
@@ -454,97 +454,18 @@
     <script>
         (() => {
             const form = document.getElementById('ciit-demo-payment-form');
-            const formState = document.getElementById('ciit-payment-form-state');
-            const processingState = document.getElementById('ciit-payment-processing-state');
-            const successState = document.getElementById('ciit-payment-success-state');
-            const modal = document.getElementById('coursePaymentModal');
-            const processingSteps = processingState
-                ? Array.from(processingState.querySelectorAll('[data-payment-step]'))
-                : [];
+            const button = document.querySelector('button[form="ciit-demo-payment-form"]');
 
-            if (!form || !formState || !processingState || !successState) {
+            if (!form) {
                 return;
             }
 
-            let paymentTimers = [];
-
-            const clearPaymentTimers = () => {
-                paymentTimers.forEach(window.clearTimeout);
-                paymentTimers = [];
-            };
-
-            const resetPaymentState = () => {
-                clearPaymentTimers();
-                formState.hidden = false;
-                processingState.hidden = true;
-                successState.hidden = true;
-
-                processingSteps.forEach((step) => {
-                    step.classList.remove('is-active', 'is-complete');
-                });
-
-                const button = document.getElementById('ciit-demo-payment-button');
-                if (button) {
-                    button.disabled = false;
-                }
-            };
-
-            form.addEventListener('submit', (event) => {
-                event.preventDefault();
-
-                const button = document.getElementById('ciit-demo-payment-button');
+            form.addEventListener('submit', () => {
                 if (button) {
                     button.disabled = true;
-                    button.innerHTML = '<span class="spinner-border spinner-border-sm me-2" aria-hidden="true"></span>Processing...';
+                    button.innerHTML = '<span class="spinner-border spinner-border-sm me-2" aria-hidden="true"></span>Redirecting to PhonePe...';
                 }
-
-                formState.hidden = true;
-                processingState.hidden = false;
-
-                processingSteps.forEach((step) => {
-                    step.classList.remove('is-active', 'is-complete');
-                });
-
-                const activateStep = (index) => {
-                    if (!processingSteps[index]) {
-                        return;
-                    }
-
-                    if (index > 0) {
-                        processingSteps[index - 1].classList.remove('is-active');
-                        processingSteps[index - 1].classList.add('is-complete');
-                    }
-
-                    processingSteps[index].classList.add('is-active');
-                };
-
-                const completeStep = (index) => {
-                    if (!processingSteps[index]) {
-                        return;
-                    }
-
-                    processingSteps[index].classList.remove('is-active');
-                    processingSteps[index].classList.add('is-complete');
-                };
-
-                activateStep(0);
-
-                paymentTimers.push(window.setTimeout(() => activateStep(1), 650));
-                paymentTimers.push(window.setTimeout(() => activateStep(2), 1300));
-                paymentTimers.push(window.setTimeout(() => completeStep(2), 1900));
-                paymentTimers.push(window.setTimeout(() => {
-                    processingState.hidden = true;
-                    successState.hidden = false;
-                }, 2100));
-
-                paymentTimers.push(window.setTimeout(() => {
-                    form.submit();
-                }, 3400));
             });
-
-            if (modal) {
-                modal.addEventListener('hidden.bs.modal', resetPaymentState);
-            }
         })();
     </script>
 }

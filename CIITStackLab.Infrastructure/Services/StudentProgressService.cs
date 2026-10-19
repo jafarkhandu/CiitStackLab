@@ -39,13 +39,18 @@ public sealed class StudentProgressService : IStudentProgressService
                 on course.Id equals courseTopic.CourseId
             join topic in _dbContext.Topics.AsNoTracking()
                 on courseTopic.TopicId equals topic.Id
-            join lesson in _dbContext.Lessons.AsNoTracking()
-                on (int?)topic.Id equals lesson.TopicId
+            from lesson in _dbContext.Lessons.AsNoTracking()
             where course.Id == courseId
                   && course.Flag == 0
                   && courseTopic.Flag == 0
                   && topic.Flag == 0
                   && lesson.Flag == 0
+                  && (lesson.TopicId == topic.Id
+                      || (lesson.NoteId.HasValue
+                          && _dbContext.TrainingNotes.AsNoTracking().Any(note =>
+                              note.Id == lesson.NoteId.Value
+                              && note.TopicId == topic.Id
+                              && note.Flag == 0)))
             orderby topic.Id, lesson.Id
             select lesson.Id)
             .Distinct()
@@ -260,13 +265,18 @@ public sealed class StudentProgressService : IStudentProgressService
                 on course.Id equals courseTopic.CourseId
             join topic in _dbContext.Topics.AsNoTracking()
                 on courseTopic.TopicId equals topic.Id
-            join lesson in _dbContext.Lessons.AsNoTracking()
-                on (int?)topic.Id equals lesson.TopicId
+            from lesson in _dbContext.Lessons.AsNoTracking()
             where course.Id == courseId
                   && course.Flag == 0
                   && courseTopic.Flag == 0
                   && topic.Flag == 0
                   && lesson.Flag == 0
+                  && (lesson.TopicId == topic.Id
+                      || (lesson.NoteId.HasValue
+                          && _dbContext.TrainingNotes.AsNoTracking().Any(note =>
+                              note.Id == lesson.NoteId.Value
+                              && note.TopicId == topic.Id
+                              && note.Flag == 0)))
             select lesson.Id)
             .Distinct()
             .OrderBy(contentId => contentId)
@@ -284,13 +294,18 @@ public sealed class StudentProgressService : IStudentProgressService
                 on course.Id equals courseTopic.CourseId
             join topic in _dbContext.Topics.AsNoTracking()
                 on courseTopic.TopicId equals topic.Id
-            join lesson in _dbContext.Lessons.AsNoTracking()
-                on (int?)topic.Id equals lesson.TopicId
+            from lesson in _dbContext.Lessons.AsNoTracking()
             where course.Id == courseId
                   && course.Flag == 0
                   && courseTopic.Flag == 0
                   && topic.Flag == 0
                   && lesson.Flag == 0
+                  && (lesson.TopicId == topic.Id
+                      || (lesson.NoteId.HasValue
+                          && _dbContext.TrainingNotes.AsNoTracking().Any(note =>
+                              note.Id == lesson.NoteId.Value
+                              && note.TopicId == topic.Id
+                              && note.Flag == 0)))
                   && lesson.Id == contentId
             select lesson.Id)
             .AnyAsync(cancellationToken);

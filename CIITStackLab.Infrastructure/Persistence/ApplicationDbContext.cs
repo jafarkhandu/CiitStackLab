@@ -28,6 +28,7 @@ public class ApplicationDbContext : IdentityDbContext<ApplicationUser>
     public DbSet<StudentLessonProgress> StudentLessonProgress => Set<StudentLessonProgress>();
     public DbSet<StudentAssessmentAttempt> StudentAssessmentAttempts => Set<StudentAssessmentAttempt>();
     public DbSet<StudentCoursePurchase> StudentCoursePurchases => Set<StudentCoursePurchase>();
+    public DbSet<PaymentTransaction> PaymentTransactions => Set<PaymentTransaction>();
     public DbSet<TopicExamAttempt> TopicExamAttempts => Set<TopicExamAttempt>();
     public DbSet<TopicExamSecurityEvent> TopicExamSecurityEvents => Set<TopicExamSecurityEvent>();
 
@@ -215,41 +216,14 @@ public class ApplicationDbContext : IdentityDbContext<ApplicationUser>
         {
             entity.ToTable("tblstudent_lesson_progress", ExistingSchema);
             entity.HasKey(x => x.Id);
-
-            entity.Property(x => x.Id)
-                .HasColumnName("progress_id")
-                .ValueGeneratedOnAdd();
-
-            entity.Property(x => x.UserId)
-                .HasColumnName("user_id")
-                .HasMaxLength(450)
-                .IsRequired();
-
-            entity.Property(x => x.CourseId)
-                .HasColumnName("course_id")
-                .IsRequired();
-
-            entity.Property(x => x.ContentId)
-                .HasColumnName("content_id")
-                .IsRequired();
-
-            entity.Property(x => x.IsCompleted)
-                .HasColumnName("is_completed")
-                .HasDefaultValue(false)
-                .IsRequired();
-
-            entity.Property(x => x.LastAccessedAt)
-                .HasColumnName("last_accessed_at")
-                .HasColumnType("datetime2")
-                .IsRequired();
-
-            entity.Property(x => x.CompletedAt)
-                .HasColumnName("completed_at")
-                .HasColumnType("datetime2");
-
-            entity.HasIndex(x => new { x.UserId, x.CourseId, x.ContentId })
-                .IsUnique()
-                .HasDatabaseName("UX_tblstudent_lesson_progress_user_course_content");
+            entity.Property(x => x.Id).HasColumnName("progress_id").ValueGeneratedOnAdd();
+            entity.Property(x => x.UserId).HasColumnName("user_id").HasMaxLength(450).IsRequired();
+            entity.Property(x => x.CourseId).HasColumnName("course_id").IsRequired();
+            entity.Property(x => x.ContentId).HasColumnName("content_id").IsRequired();
+            entity.Property(x => x.IsCompleted).HasColumnName("is_completed").HasDefaultValue(false).IsRequired();
+            entity.Property(x => x.LastAccessedAt).HasColumnName("last_accessed_at").HasColumnType("datetime2").IsRequired();
+            entity.Property(x => x.CompletedAt).HasColumnName("completed_at").HasColumnType("datetime2");
+            entity.HasIndex(x => new { x.UserId, x.CourseId, x.ContentId }).IsUnique().HasDatabaseName("UX_tblstudent_lesson_progress_user_course_content");
         });
 
         modelBuilder.Entity<StudentAssessmentAttempt>(entity =>
@@ -305,16 +279,29 @@ public class ApplicationDbContext : IdentityDbContext<ApplicationUser>
             entity.Property(x => x.CourseId).HasColumnName("course_id").IsRequired();
             entity.Property(x => x.PurchasePrice).HasColumnName("purchase_price").HasPrecision(18, 2).IsRequired();
             entity.Property(x => x.PurchasedAt).HasColumnName("purchased_at").HasColumnType("datetime2").IsRequired();
-            entity.HasIndex(x => new { x.UserId, x.CourseId }).IsUnique()
-                .HasDatabaseName("UX_tblstudent_course_purchases_user_course");
-            entity.HasOne<ApplicationUser>()
-                .WithMany()
-                .HasForeignKey(x => x.UserId)
-                .OnDelete(DeleteBehavior.NoAction);
-            entity.HasOne<Course>()
-                .WithMany()
-                .HasForeignKey(x => x.CourseId)
-                .OnDelete(DeleteBehavior.NoAction);
+            entity.HasIndex(x => new { x.UserId, x.CourseId }).IsUnique().HasDatabaseName("UX_tblstudent_course_purchases_user_course");
+            entity.HasOne<ApplicationUser>().WithMany().HasForeignKey(x => x.UserId).OnDelete(DeleteBehavior.NoAction);
+            entity.HasOne<Course>().WithMany().HasForeignKey(x => x.CourseId).OnDelete(DeleteBehavior.NoAction);
+        });
+
+        modelBuilder.Entity<PaymentTransaction>(entity =>
+        {
+            entity.ToTable("tblpayment_transactions", ExistingSchema);
+            entity.HasKey(x => x.Id);
+            entity.Property(x => x.Id).HasColumnName("payment_transaction_id").ValueGeneratedOnAdd();
+            entity.Property(x => x.UserId).HasColumnName("user_id").HasMaxLength(450).IsRequired();
+            entity.Property(x => x.CourseId).HasColumnName("course_id").IsRequired();
+            entity.Property(x => x.MerchantOrderId).HasColumnName("merchant_order_id").HasMaxLength(100).IsRequired();
+            entity.Property(x => x.Amount).HasColumnName("amount").HasPrecision(18, 2).IsRequired();
+            entity.Property(x => x.Status).HasColumnName("status").HasMaxLength(32).IsRequired();
+            entity.Property(x => x.PhonePeOrderId).HasColumnName("phonepe_order_id").HasMaxLength(100);
+            entity.Property(x => x.CreatedAt).HasColumnName("created_at").HasColumnType("datetime2").IsRequired();
+            entity.Property(x => x.UpdatedAt).HasColumnName("updated_at").HasColumnType("datetime2").IsRequired();
+            entity.Property(x => x.CompletedAt).HasColumnName("completed_at").HasColumnType("datetime2");
+            entity.HasIndex(x => x.MerchantOrderId).IsUnique().HasDatabaseName("UX_tblpayment_transactions_merchant_order_id");
+            entity.HasIndex(x => new { x.UserId, x.CourseId, x.Status }).HasDatabaseName("IX_tblpayment_transactions_user_course_status");
+            entity.HasOne<ApplicationUser>().WithMany().HasForeignKey(x => x.UserId).OnDelete(DeleteBehavior.NoAction);
+            entity.HasOne<Course>().WithMany().HasForeignKey(x => x.CourseId).OnDelete(DeleteBehavior.NoAction);
         });
         modelBuilder.Entity<TopicExamAttempt>(entity =>
         {

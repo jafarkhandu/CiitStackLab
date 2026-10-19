@@ -12,14 +12,14 @@ namespace CIITStackLab.WebApp.Areas.Admin.Controllers;
 public sealed class ContentController : Controller
 {
     private readonly IAdminContentService _contentService;
-    private readonly IMuxVideoService _muxVideoService;
+    private readonly IVimeoVideoService _vimeoVideoService;
 
     public ContentController(
         IAdminContentService contentService,
-        IMuxVideoService muxVideoService)
+        IVimeoVideoService vimeoVideoService)
     {
         _contentService = contentService;
-        _muxVideoService = muxVideoService;
+        _vimeoVideoService = vimeoVideoService;
     }
 
     [HttpGet]
@@ -37,7 +37,11 @@ public sealed class ContentController : Controller
 
     [HttpPost]
     [ValidateAntiForgeryToken]
-    public async Task<IActionResult> Create(AdminContentInputDto input, IFormFile? slidesFile, string? muxUploadId, CancellationToken cancellationToken)
+    public async Task<IActionResult> Create(
+        AdminContentInputDto input,
+        IFormFile? slidesFile,
+        string? vimeoVideoUrl,
+        CancellationToken cancellationToken)
     {
         if (!ModelState.IsValid)
         {
@@ -47,7 +51,7 @@ public sealed class ContentController : Controller
 
         try
         {
-            await SaveUploadedFilesAsync(input, slidesFile, muxUploadId, cancellationToken);
+            await SaveUploadedFilesAsync(input, slidesFile, vimeoVideoUrl, cancellationToken);
         }
         catch (InvalidOperationException ex)
         {
@@ -96,7 +100,12 @@ public sealed class ContentController : Controller
 
     [HttpPost]
     [ValidateAntiForgeryToken]
-    public async Task<IActionResult> Edit(int id, AdminContentInputDto input, IFormFile? slidesFile, string? muxUploadId, CancellationToken cancellationToken)
+    public async Task<IActionResult> Edit(
+        int id,
+        AdminContentInputDto input,
+        IFormFile? slidesFile,
+        string? vimeoVideoUrl,
+        CancellationToken cancellationToken)
     {
         input.Id = id;
         if (!ModelState.IsValid)
@@ -110,12 +119,12 @@ public sealed class ContentController : Controller
 
         if (slidesFile is null || slidesFile.Length == 0)
             input.Slides = existing.Slides;
-        if (string.IsNullOrWhiteSpace(muxUploadId))
+        if (string.IsNullOrWhiteSpace(vimeoVideoUrl))
             input.VideoName = existing.VideoName;
 
         try
         {
-            await SaveUploadedFilesAsync(input, slidesFile, muxUploadId, cancellationToken);
+            await SaveUploadedFilesAsync(input, slidesFile, vimeoVideoUrl, cancellationToken);
         }
         catch (InvalidOperationException ex)
         {
@@ -145,13 +154,38 @@ public sealed class ContentController : Controller
 
     [HttpPost]
     [ValidateAntiForgeryToken]
-    public async Task<IActionResult> CreateVideoUpload(CancellationToken cancellationToken)
+    public async Task<IActionResult> CreateVideoUpload(
+        int contentId,
+        string? fileName,
+        long fileSize,
+        string? title,
+        CancellationToken cancellationToken)
     {
         try
         {
-            var corsOrigin = $"{Request.Scheme}://{Request.Host}";
-            var upload = await _muxVideoService.CreateDirectUploadAsync(corsOrigin, cancellationToken);
+            string? existingVideoUrl = null;
+
+            if (contentId > 0)
+            {
+                var existing = await _contentService.GetByIdAsync(contentId, cancellationToken);
+                if (existing is null || existing.Flag != 0)
+                    return NotFound(new { message = "The content record could not be found." });
+
+                existingVideoUrl = existing.VideoName;
+            }
+
+            var upload = await _vimeoVideoService.CreateDirectUploadAsync(
+                fileName ?? string.Empty,
+                fileSize,
+                title ?? string.Empty,
+                existingVideoUrl,
+                cancellationToken);
+
             return Json(upload);
+        }
+        catch (ArgumentException ex)
+        {
+            return BadRequest(new { message = ex.Message });
         }
         catch (InvalidOperationException ex)
         {
@@ -227,27 +261,46 @@ public sealed class ContentController : Controller
     private async Task SaveUploadedFilesAsync(
         AdminContentInputDto input,
         IFormFile? slidesFile,
-        string? muxUploadId,
+        string? vimeoVideoUrl,
         CancellationToken cancellationToken)
     {
         if (slidesFile is not null && slidesFile.Length > 0)
             input.Slides = await SaveFileAsync(slidesFile, "slides", cancellationToken);
 
-        if (!string.IsNullOrWhiteSpace(muxUploadId))
-        {
-            var muxResult = await _muxVideoService.CompleteDirectUploadAsync(
-                muxUploadId,
-                cancellationToken);
+        if (!string.IsNullOrWhiteSpace(vimeoVideoUrl))
+            input.VideoName = NormalizeVimeoPlayerUrl(vimeoVideoUrl);
+    }
 
-            input.VideoName = muxResult.PlaybackId;
+    private static string NormalizeVimeoPlayerUrl(string value)
+    {
+        if (!Uri.TryCreate(value.Trim(), UriKind.Absolute, out var uri)
+            || !string.Equals(uri.Scheme, Uri.UriSchemeHttps, StringComparison.OrdinalIgnoreCase)
+            || !string.Equals(uri.Host, "player.vimeo.com", StringComparison.OrdinalIgnoreCase))
+        {
+            throw new InvalidOperationException("Invalid Vimeo video URL returned by the upload process.");
         }
+
+        var segments = uri.AbsolutePath
+            .Split('/', StringSplitOptions.RemoveEmptyEntries);
+
+        if (segments.Length != 2
+            || !string.Equals(segments[0], "video", StringComparison.OrdinalIgnoreCase)
+            || string.IsNullOrWhiteSpace(segments[1])
+            || !segments[1].All(char.IsDigit))
+        {
+            throw new InvalidOperationException("Invalid Vimeo video URL returned by the upload process.");
+        }
+
+        return $"https://player.vimeo.com/video/{segments[1]}";
     }
 
     private async Task<string> SaveFileAsync(IFormFile file, string folder, CancellationToken cancellationToken)
     {
-        var allowed = new[] { ".pdf", ".ppt", ".pptx" };
+        var allowed = new[] { ".pdf" };
         var extension = Path.GetExtension(file.FileName).ToLowerInvariant();
-        if (!allowed.Contains(extension)) throw new InvalidOperationException($"Unsupported {folder} file type.");
+        if (!allowed.Contains(extension))
+            throw new InvalidOperationException("Unsupported slides file type. Only PDF slides are allowed.");
+
         var root = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", "uploads", folder);
         Directory.CreateDirectory(root);
         var fileName = $"{Guid.NewGuid():N}{extension}";

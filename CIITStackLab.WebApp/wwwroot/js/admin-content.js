@@ -73,11 +73,13 @@ document.addEventListener('DOMContentLoaded', () => {
 
     document.querySelectorAll('.ciit-content-form-card').forEach(form => {
         const videoInput = form.querySelector('input[name="videoFile"]');
+        const titleInput = form.querySelector('input[name="Title"]');
+        const contentIdInput = form.querySelector('input[name="Id"]');
         const submitButton = form.querySelector('button[type="submit"]');
-        const uploadIdInput = form.querySelector('.js-mux-upload-id');
+        const videoUrlInput = form.querySelector('.js-vimeo-video-url');
         const tokenInput = form.querySelector('input[name="__RequestVerificationToken"]');
 
-        if (!videoInput || !submitButton || !uploadIdInput || !tokenInput) return;
+        if (!videoInput || !titleInput || !submitButton || !videoUrlInput || !tokenInput) return;
 
         const showUploadOverlay = () => {
             const existingOverlay = document.querySelector('.ciit-upload-overlay');
@@ -93,7 +95,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     <div class="ciit-upload-spinner" aria-hidden="true"></div>
                     <div class="ciit-upload-copy">
                         <strong class="ciit-upload-title">Uploading video</strong>
-                        <span class="ciit-upload-description">Your browser is uploading the video directly to secure Mux storage. You can keep this page open.</span>
+                        <span class="ciit-upload-description">Your browser is uploading the video directly to Vimeo. Keep this page open until the upload finishes.</span>
                     </div>
                     <div class="ciit-upload-progress" aria-hidden="true">
                         <div class="ciit-upload-progress-bar"></div>
@@ -116,12 +118,14 @@ document.addEventListener('DOMContentLoaded', () => {
             if (descriptionElement) descriptionElement.textContent = description;
             if (statusElement) statusElement.textContent = status;
 
-            if (progress === null) {
-                progressBar?.classList.add('is-indeterminate');
-                progressBar?.style.removeProperty('width');
-            } else {
-                progressBar?.classList.remove('is-indeterminate');
-                if (progressBar) progressBar.style.width = `${progress}%`;
+            if (progressBar) {
+                if (progress === null) {
+                    progressBar.classList.add('is-indeterminate');
+                    progressBar.style.removeProperty('width');
+                } else {
+                    progressBar.classList.remove('is-indeterminate');
+                    progressBar.style.width = `${progress}%`;
+                }
             }
 
             overlay.classList.toggle('is-processing', processing);
@@ -140,13 +144,21 @@ document.addEventListener('DOMContentLoaded', () => {
             overlay.classList.add('is-error');
         };
 
-        const requestDirectUpload = async () => {
+        const requestDirectUpload = async file => {
+            const formData = new URLSearchParams();
+            formData.set('fileName', file.name);
+            formData.set('fileSize', String(file.size));
+            formData.set('title', titleInput.value.trim());
+            formData.set('contentId', contentIdInput?.value || '0');
+
             const response = await fetch('/Admin/Content/CreateVideoUpload', {
                 method: 'POST',
                 headers: {
                     'RequestVerificationToken': tokenInput.value,
-                    'Accept': 'application/json'
-                }
+                    'Accept': 'application/json',
+                    'Content-Type': 'application/x-www-form-urlencoded;charset=UTF-8'
+                },
+                body: formData.toString()
             });
 
             let payload = null;
@@ -156,63 +168,138 @@ document.addEventListener('DOMContentLoaded', () => {
                 // Keep the generic error below if the server did not return JSON.
             }
 
-            if (!response.ok || !payload?.uploadId || !payload?.uploadUrl) {
-                throw new Error(payload?.message || 'Unable to prepare the Mux upload.');
+            if (!response.ok || !payload?.videoId || !payload?.uploadUrl || !payload?.playerUrl) {
+                throw new Error(payload?.message || 'Unable to prepare the Vimeo upload.');
             }
 
             return payload;
         };
 
-        const uploadToMux = (uploadUrl, file, overlay) => new Promise((resolve, reject) => {
+        const getUploadOffset = async uploadUrl => {
+            const response = await fetch(uploadUrl, {
+                method: 'HEAD',
+                cache: 'no-store',
+                headers: {
+                    'Tus-Resumable': '1.0.0',
+                    'Accept': 'application/vnd.vimeo.*+json;version=3.4'
+                }
+            });
+
+            if (!response.ok) {
+                throw new Error(`Unable to resume the Vimeo upload (HTTP ${response.status}).`);
+            }
+
+            const offset = Number(response.headers.get('Upload-Offset'));
+            if (!Number.isFinite(offset) || offset < 0) {
+                throw new Error('Vimeo returned an invalid upload offset.');
+            }
+
+            return offset;
+        };
+
+        const uploadChunk = (uploadUrl, file, offset, overlay) => new Promise((resolve, reject) => {
+            const end = Math.min(offset + (128 * 1024 * 1024), file.size);
+            const chunk = file.slice(offset, end);
             const xhr = new XMLHttpRequest();
-            xhr.open('PUT', uploadUrl, true);
-            xhr.setRequestHeader('Content-Type', file.type || 'application/octet-stream');
+
+            xhr.open('PATCH', uploadUrl, true);
+            xhr.setRequestHeader('Tus-Resumable', '1.0.0');
+            xhr.setRequestHeader('Upload-Offset', String(offset));
+            xhr.setRequestHeader('Content-Type', 'application/offset+octet-stream');
 
             xhr.upload.addEventListener('progress', event => {
                 if (!event.lengthComputable) {
                     updateOverlay(
                         overlay,
                         'Uploading video',
-                        'Your browser is uploading the video directly to secure Mux storage.',
+                        'Your browser is uploading the video directly to Vimeo.',
                         'Uploading video...',
                         null);
                     return;
                 }
 
-                const percent = Math.min(100, Math.round((event.loaded / event.total) * 100));
-                const combinedProgress = Math.min(85, Math.round(percent * 0.85));
+                const uploadedBytes = offset + event.loaded;
+                const percent = Math.min(100, Math.round((uploadedBytes / file.size) * 85));
+
                 updateOverlay(
                     overlay,
                     'Uploading video',
-                    'Your browser is uploading the video directly to secure Mux storage.',
-                    `Uploading video... ${combinedProgress}%`,
-                    combinedProgress);
+                    'Your browser is uploading the video directly to Vimeo.',
+                    `Uploading video... ${percent}%`,
+                    percent);
             });
 
             xhr.addEventListener('load', () => {
-                if (xhr.status >= 200 && xhr.status < 300) {
-                    resolve();
+                if (xhr.status === 409) {
+                    reject(new Error('Vimeo upload offset conflict.'));
                     return;
                 }
 
-                reject(new Error(`Mux upload failed with HTTP ${xhr.status}.`));
+                if (xhr.status < 200 || xhr.status >= 300) {
+                    reject(new Error(`Vimeo upload failed with HTTP ${xhr.status}.`));
+                    return;
+                }
+
+                const nextOffset = Number(xhr.getResponseHeader('Upload-Offset'));
+                if (!Number.isFinite(nextOffset) || nextOffset <= offset) {
+                    reject(new Error('Vimeo returned an invalid upload offset.'));
+                    return;
+                }
+
+                resolve(nextOffset);
             });
 
-            xhr.addEventListener('error', () => reject(new Error('The connection to Mux was interrupted.')));
+            xhr.addEventListener('error', () => reject(new Error('The connection to Vimeo was interrupted.')));
             xhr.addEventListener('abort', () => reject(new Error('The video upload was cancelled.')));
-            xhr.send(file);
+            xhr.send(chunk);
         });
 
-        const waitForMuxReady = async (uploadId, overlay) => {
+        const uploadToVimeo = async (uploadUrl, file, overlay) => {
+            let offset = 0;
+            let retryCount = 0;
+
+            while (offset < file.size) {
+                try {
+                    offset = await uploadChunk(uploadUrl, file, offset, overlay);
+                    retryCount = 0;
+                } catch (error) {
+                    if (retryCount >= 2) throw error;
+
+                    retryCount++;
+                    updateOverlay(
+                        overlay,
+                        'Resuming upload',
+                        'The connection was interrupted. Checking Vimeo for the latest upload position.',
+                        `Resuming upload... attempt ${retryCount} of 2`,
+                        null,
+                        true);
+
+                    offset = await getUploadOffset(uploadUrl);
+                }
+            }
+
+            updateOverlay(
+                overlay,
+                'Upload complete',
+                'Vimeo received the complete video file. Processing will begin shortly.',
+                'Upload complete — 85%',
+                85,
+                true);
+        };
+
+        const waitForVimeoReady = async (videoId, overlay) => {
             const deadline = Date.now() + (15 * 60 * 1000);
             const processingStartedAt = Date.now();
 
             while (Date.now() < deadline) {
                 const response = await fetch(
-                    `/Admin/Mux/VideoUploadStatus?uploadId=${encodeURIComponent(uploadId)}`,
+                    `/Admin/Vimeo/VideoUploadStatus?videoId=${encodeURIComponent(videoId)}`,
                     {
                         cache: 'no-store',
-                        headers: { 'Accept': 'application/json', 'Cache-Control': 'no-cache' }
+                        headers: {
+                            'Accept': 'application/json',
+                            'Cache-Control': 'no-cache'
+                        }
                     });
 
                 let payload = null;
@@ -223,60 +310,44 @@ document.addEventListener('DOMContentLoaded', () => {
                 }
 
                 if (!response.ok) {
-                    throw new Error(payload?.message || 'Unable to check the Mux video status.');
+                    throw new Error(payload?.message || 'Unable to check the Vimeo video status.');
                 }
 
-                const muxProgress = Number.isFinite(Number(payload?.progress))
-                    ? Math.max(0, Math.min(100, Number(payload.progress)))
-                    : 0;
+                if (payload?.stage === 'error') {
+                    throw new Error(payload.message || 'Vimeo could not process the uploaded video.');
+                }
 
-                if (payload?.stage === 'ready' && payload?.playbackId) {
+                if (payload?.stage === 'ready' && payload?.playerUrl) {
                     updateOverlay(
                         overlay,
                         'Video ready',
-                        'Mux has finished processing the video. Saving the content now.',
+                        'Vimeo has finished processing the video. Saving the content now.',
                         'Video ready — 100%',
                         100,
                         true);
                     return payload;
                 }
 
-                if (payload?.stage === 'processing') {
-                    const elapsedSeconds = Math.max(0, (Date.now() - processingStartedAt) / 1000);
-                    const fallbackProgress = Math.min(99, 85 + Math.floor(elapsedSeconds / 5));
-                    const combinedProgress = muxProgress > 0
-                        ? Math.min(99, 85 + Math.round(muxProgress * 0.14))
-                        : fallbackProgress;
+                const elapsedSeconds = Math.max(0, (Date.now() - processingStartedAt) / 1000);
+                const fallbackProgress = Math.min(99, 85 + Math.floor(elapsedSeconds / 7));
 
-                    updateOverlay(
-                        overlay,
-                        'Processing video',
-                        payload.message || 'Mux is processing the video and preparing playback.',
-                        `Processing video... ${combinedProgress}%`,
-                        combinedProgress,
-                        true);
-                } else {
-                    const elapsedSeconds = Math.max(0, (Date.now() - processingStartedAt) / 1000);
-                    const combinedProgress = Math.min(99, 85 + Math.floor(elapsedSeconds / 5));
-                    updateOverlay(
-                        overlay,
-                        'Processing video',
-                        payload.message || 'Mux is preparing the video for playback.',
-                        `Processing video... ${combinedProgress}%`,
-                        combinedProgress,
-                        true);
-                }
+                updateOverlay(
+                    overlay,
+                    'Processing video',
+                    payload?.message || 'Vimeo is processing the video and preparing playback.',
+                    `Processing video... ${fallbackProgress}%`,
+                    fallbackProgress,
+                    true);
 
-                await new Promise(resolve => setTimeout(resolve, 2000));
+                await new Promise(resolve => setTimeout(resolve, 2500));
             }
 
-            throw new Error('Mux is taking longer than expected to process this video. Please try again shortly.');
+            throw new Error('Vimeo is taking longer than expected to process this video. Please try again shortly.');
         };
 
         form.addEventListener('submit', async event => {
             if (!videoInput.files || videoInput.files.length === 0) return;
-            if (uploadIdInput.value) return;
-
+            if (videoUrlInput.value) return;
             if (!form.checkValidity()) return;
 
             event.preventDefault();
@@ -290,34 +361,27 @@ document.addEventListener('DOMContentLoaded', () => {
             submitButton.innerHTML = '<span class="ciit-upload-button-spinner" aria-hidden="true"></span> Uploading...';
 
             try {
-                const upload = await requestDirectUpload();
+                const upload = await requestDirectUpload(file);
 
                 updateOverlay(
                     overlay,
                     'Uploading video',
-                    'Your browser is uploading the video directly to secure Mux storage.',
+                    'Your browser is uploading the video directly to Vimeo.',
                     'Uploading video... 0%',
                     0);
 
-                await uploadToMux(upload.uploadUrl, file, overlay);
+                await uploadToVimeo(upload.uploadUrl, file, overlay);
+                await waitForVimeoReady(upload.videoId, overlay);
 
-                uploadIdInput.value = upload.uploadId;
+                videoUrlInput.value = upload.playerUrl;
                 videoInput.disabled = true;
-
-                updateOverlay(
-                    overlay,
-                    'Processing video',
-                    'The upload is complete. The same progress bar will finish when Mux is ready.',
-                    'Processing video... 85%',
-                    85,
-                    true);
-
-                submitButton.innerHTML = '<span class="ciit-upload-button-spinner" aria-hidden="true"></span> Processing...';
-                await waitForMuxReady(upload.uploadId, overlay);
 
                 HTMLFormElement.prototype.submit.call(form);
             } catch (error) {
-                showUploadError(overlay, error instanceof Error ? error.message : 'Unable to upload the video.');
+                showUploadError(
+                    overlay,
+                    error instanceof Error ? error.message : 'Unable to upload the video.');
+
                 submitButton.disabled = false;
                 submitButton.classList.remove('is-uploading');
                 submitButton.removeAttribute('aria-busy');

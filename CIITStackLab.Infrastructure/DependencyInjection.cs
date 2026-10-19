@@ -2,6 +2,7 @@ using CIITStackLab.Application.Interfaces;
 using CIITStackLab.Infrastructure.Identity;
 using Microsoft.AspNetCore.Identity;
 using CIITStackLab.Infrastructure.Persistence;
+using CIITStackLab.Infrastructure.Payments;
 using CIITStackLab.Infrastructure.Services;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
@@ -43,6 +44,9 @@ public static class DependencyInjection
             options.SlidingExpiration = true;
         });
 
+        services.Configure<PhonePeOptions>(configuration.GetSection("PhonePe"));
+        services.AddSingleton<PhonePePaymentService>();
+
         services.AddScoped<CourseService>();
         services.AddScoped<ICourseService, DynamicCourseService>();
         services.AddScoped<IAdminDashboardService, AdminDashboardService>();
@@ -51,6 +55,7 @@ public static class DependencyInjection
         services.AddScoped<IAdminCourseTopicMappingService, AdminCourseTopicMappingService>();
         services.AddScoped<IAdminContentService, AdminContentService>();
         services.AddScoped<IMuxVideoService, MuxVideoService>();
+        services.AddScoped<IVimeoVideoService, VimeoVideoService>();
         services.AddScoped<IAdminMcqService, AdminMcqService>();
         services.AddScoped<IAdminInterviewQuestionService, AdminInterviewQuestionService>();
         services.AddScoped<IInterviewQuestionAnalyzerService, InterviewQuestionAnalyzerService>();
@@ -65,6 +70,8 @@ public static class DependencyInjection
         services.AddScoped<ITopicExaminationService, TopicExaminationService>();
         services.AddHostedService<TopicExamExpiryWorker>();
         services.AddScoped<CoursePurchaseService>();
+        services.AddScoped<IEmailService, EmailService>();
+        services.AddScoped<PaymentNotificationService>();
         services.AddScoped<IAdminStudentService, AdminStudentService>();
         services.AddScoped<IAdminSettingsService, AdminSettingsService>();
         services.AddScoped<IAdminReportsService, AdminReportsService>();
