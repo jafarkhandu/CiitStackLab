@@ -97,19 +97,19 @@ public sealed class TopicExaminationService : ITopicExaminationService
         if (topicContentIds.Count > 0 && completedContentIds.Count != topicContentIds.Count)
             return (false, "Complete all lessons in this topic before scheduling its exam.", null);
 
-        var allQuestionIds = await GetEligibleQuestionIdsAsync(topicId, cancellationToken);
-        var previouslyUsed = await GetPreviouslyUsedQuestionIdsAsync(userId, courseId, topicId, cancellationToken);
-        var unseenIds = allQuestionIds.Where(id => !previouslyUsed.Contains(id)).ToList();
-        var usedIds = allQuestionIds.Where(previouslyUsed.Contains).ToList();
-
-        // Re-exams should be mostly fresh. Reuse at most five previously seen questions,
-        // and only when at least 45 unseen questions are available.
-        if (unseenIds.Count < QuestionCount - 5)
+        var questionAvailability = await GetQuestionAvailabilityDataAsync(
+            userId,
+            courseId,
+            topicId,
+            cancellationToken);
+        if (questionAvailability.Error is not null)
         {
-            return (false,
-                $"Only {unseenIds.Count} unseen valid questions remain. A re-exam needs at least {QuestionCount - 5} unseen questions; add more questions before trying again.",
-                null);
+            return (false, questionAvailability.Error, null);
         }
+
+        var allQuestionIds = questionAvailability.EligibleIds;
+        var unseenIds = questionAvailability.UnseenIds;
+        var usedIds = questionAvailability.UsedIds;
 
         var shuffledUnseen = unseenIds
             .OrderBy(_ => RandomNumberGenerator.GetInt32(int.MaxValue))
@@ -146,6 +146,29 @@ public sealed class TopicExaminationService : ITopicExaminationService
         _db.TopicExamAttempts.Add(attempt);
         await _db.SaveChangesAsync(cancellationToken);
         return (true, null, await MapSummaryAsync(attempt, cancellationToken));
+    }
+
+    public async Task<(bool IsAvailable, int ValidQuestionCount, string? Error)> CheckQuestionAvailabilityAsync(
+        string userId,
+        int courseId,
+        int topicId,
+        CancellationToken cancellationToken = default)
+    {
+        if (string.IsNullOrWhiteSpace(userId) || courseId <= 0 || topicId <= 0)
+        {
+            return (false, 0, "Invalid exam request.");
+        }
+
+        var availability = await GetQuestionAvailabilityDataAsync(
+            userId,
+            courseId,
+            topicId,
+            cancellationToken);
+
+        return (
+            availability.Error is null,
+            availability.EligibleIds.Count,
+            availability.Error);
     }
 
     public async Task<(bool Succeeded, string? Error, TopicExamSessionDto? Session)> OpenPreExamAsync(
@@ -407,6 +430,52 @@ public sealed class TopicExaminationService : ITopicExaminationService
         };
         attempt.SubmittedAtUtc = submittedAtUtc;
         await _db.SaveChangesAsync(cancellationToken);
+    }
+
+    private async Task<(List<int> EligibleIds, List<int> UnseenIds, List<int> UsedIds, string? Error)> GetQuestionAvailabilityDataAsync(
+        string userId,
+        int courseId,
+        int topicId,
+        CancellationToken cancellationToken)
+    {
+        var eligibleIds = await GetEligibleQuestionIdsAsync(topicId, cancellationToken);
+        if (eligibleIds.Count == 0)
+        {
+            return (
+                eligibleIds,
+                new List<int>(),
+                new List<int>(),
+                "Exam questions are not available for this topic right now. Please try applying again later.");
+        }
+
+        if (eligibleIds.Count < QuestionCount)
+        {
+            return (
+                eligibleIds,
+                new List<int>(),
+                new List<int>(),
+                $"This topic currently has {eligibleIds.Count} valid exam question(s). A complete exam requires {QuestionCount} valid questions. Please try applying again later.");
+        }
+
+        var previouslyUsed = await GetPreviouslyUsedQuestionIdsAsync(
+            userId,
+            courseId,
+            topicId,
+            cancellationToken);
+        var unseenIds = eligibleIds.Where(id => !previouslyUsed.Contains(id)).ToList();
+        var usedIds = eligibleIds.Where(previouslyUsed.Contains).ToList();
+
+        // Re-exams may reuse earlier questions only when at least 45 valid unseen questions remain.
+        if (unseenIds.Count < QuestionCount - 5)
+        {
+            return (
+                eligibleIds,
+                unseenIds,
+                usedIds,
+                $"Only {unseenIds.Count} unseen valid questions remain. A re-exam needs at least {QuestionCount - 5} unseen questions. Please try applying again later.");
+        }
+
+        return (eligibleIds, unseenIds, usedIds, null);
     }
 
     private async Task<List<int>> GetEligibleQuestionIdsAsync(int topicId, CancellationToken cancellationToken)
