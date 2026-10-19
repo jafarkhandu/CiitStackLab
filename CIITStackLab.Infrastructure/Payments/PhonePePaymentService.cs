@@ -48,19 +48,31 @@ public sealed class PhonePePaymentService
             .SetRedirectUrl(redirectUrl)
             .Build();
 
-        var response = await _client.Value.Pay(request);
-
-        if (string.IsNullOrWhiteSpace(response.RedirectUrl))
+        try
         {
-            throw new InvalidOperationException(
-                "PhonePe could not create the checkout order because no redirect URL was returned.");
+            var response = await _client.Value
+                .Pay(request)
+                .WaitAsync(GetTimeout());
+
+            if (string.IsNullOrWhiteSpace(response.RedirectUrl))
+            {
+                throw new InvalidOperationException(
+                    "PhonePe could not create the checkout order because no redirect URL was returned.");
+            }
+
+            _logger.LogInformation(
+                "PhonePe checkout created for merchant order {MerchantOrderId}.",
+                merchantOrderId);
+
+            return response.RedirectUrl;
         }
-
-        _logger.LogInformation(
-            "PhonePe checkout created for merchant order {MerchantOrderId}.",
-            merchantOrderId);
-
-        return response.RedirectUrl;
+        catch (TimeoutException)
+        {
+            _logger.LogWarning(
+                "PhonePe checkout creation timed out for merchant order {MerchantOrderId}.",
+                merchantOrderId);
+            throw;
+        }
     }
 
     public async Task<string> GetOrderStateAsync(string merchantOrderId)
@@ -70,8 +82,26 @@ public sealed class PhonePePaymentService
             throw new ArgumentException("Merchant order ID is required.", nameof(merchantOrderId));
         }
 
-        var response = await _client.Value.GetOrderStatus(merchantOrderId);
-        return response.State;
+        try
+        {
+            var response = await _client.Value
+                .GetOrderStatus(merchantOrderId)
+                .WaitAsync(GetTimeout());
+
+            if (string.IsNullOrWhiteSpace(response.State))
+            {
+                throw new InvalidOperationException("PhonePe returned an empty order state.");
+            }
+
+            return response.State;
+        }
+        catch (TimeoutException)
+        {
+            _logger.LogWarning(
+                "PhonePe order status check timed out for merchant order {MerchantOrderId}.",
+                merchantOrderId);
+            throw;
+        }
     }
 
     public CallbackResponse ValidateCallback(
@@ -95,6 +125,11 @@ public sealed class PhonePePaymentService
             _options.CallbackPassword,
             authorizationHeader,
             requestBody);
+    }
+
+    private TimeSpan GetTimeout()
+    {
+        return TimeSpan.FromSeconds(Math.Clamp(_options.TimeoutSeconds, 5, 120));
     }
 
     private StandardCheckoutClient CreateClient()

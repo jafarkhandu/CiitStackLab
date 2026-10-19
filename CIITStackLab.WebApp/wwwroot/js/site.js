@@ -125,6 +125,9 @@ document.addEventListener("DOMContentLoaded", function () {
 
     const paymentButton = document.getElementById("ciit-demo-payment-button");
     const paymentNote = paymentForm.nextElementSibling;
+    const processingState = document.getElementById("ciit-payment-processing-state");
+    const successState = document.getElementById("ciit-payment-success-state");
+    const formState = document.getElementById("ciit-payment-form-state");
     const phonePeScriptUrl = "https://mercury.phonepe.com/web/bundle/checkout.js";
     let phonePeScriptPromise;
     let merchantOrderId;
@@ -134,7 +137,7 @@ document.addEventListener("DOMContentLoaded", function () {
     paymentTrigger.innerHTML = '<i class="bi bi-shield-lock-fill me-2"></i>Pay with PhonePe';
 
     if (paymentNote) {
-        paymentNote.textContent = "PhonePe checkout will open securely on this page. Course access is granted only after server-side payment verification.";
+        paymentNote.textContent = "PhonePe checkout opens securely on this page. Course access is granted only after server-side payment verification.";
     }
 
     if (paymentButton) {
@@ -206,37 +209,155 @@ document.addEventListener("DOMContentLoaded", function () {
         return result.checkoutUrl;
     };
 
-    const completePhonePePayment = () => {
-        if (!merchantOrderId) {
-            window.location.reload();
+    const showProcessing = (message) => {
+        if (!processingState) return;
+        const spans = processingState.querySelectorAll("span:not(.ciit-payment-spinner)");
+        if (spans.length > 0 && message) {
+            spans[spans.length - 1].textContent = message;
+        }
+        processingState.hidden = false;
+        if (formState) formState.hidden = true;
+        if (successState) successState.hidden = true;
+    };
+
+    const showFailure = (message) => {
+        if (!processingState) {
+            window.alert(message);
             return;
         }
 
-        const courseIdMatch = window.location.pathname.match(/\/Courses\/Details\/(\d+)/i);
-        const courseId = courseIdMatch?.[1];
-        const returnUrl = `/Courses/PhonePeReturn?merchantOrderId=${encodeURIComponent(merchantOrderId)}`;
+        processingState.hidden = false;
+        if (formState) formState.hidden = true;
+        if (successState) successState.hidden = true;
 
-        fetch(returnUrl, {
-            method: "GET",
-            credentials: "same-origin",
-            redirect: "follow"
-        })
-            .then((response) => {
-                if (!response.ok) {
-                    throw new Error("Payment verification request failed.");
+        const icon = processingState.querySelector(".ciit-payment-processing-icon");
+        const title = processingState.querySelector("strong");
+        const description = processingState.querySelector(".ciit-payment-processing-icon + strong + span");
+        const steps = processingState.querySelector(".ciit-payment-processing-steps");
+
+        if (icon) {
+            icon.innerHTML = '<i class="bi bi-x-lg ciit-payment-failure-mark" aria-hidden="true"></i>';
+        }
+        if (title) {
+            title.textContent = "Payment Failed";
+        }
+        if (description) {
+            description.textContent = message;
+        }
+        if (steps) {
+            steps.innerHTML = '<button type="button" class="btn btn-outline-primary btn-sm mt-3" id="ciit-payment-retry-button">Try payment again</button>';
+        }
+
+        const retryButton = document.getElementById("ciit-payment-retry-button");
+        if (retryButton) {
+            retryButton.addEventListener("click", resetPaymentForm, { once: true });
+        }
+    };
+
+    function resetPaymentForm() {
+        if (processingState) processingState.hidden = true;
+        if (successState) successState.hidden = true;
+        if (formState) formState.hidden = false;
+
+        if (paymentButton) {
+            paymentButton.disabled = false;
+            paymentButton.innerHTML = '<i class="bi bi-shield-lock-fill me-2"></i>Pay with PhonePe';
+        }
+
+        if (processingState) {
+            processingState.innerHTML = `
+                <div class="ciit-payment-processing-icon" aria-hidden="true">
+                    <span class="ciit-payment-spinner"></span>
+                    <i class="bi bi-credit-card-2-front"></i>
+                </div>
+                <strong>Verifying payment</strong>
+                <span>Checking the payment status securely with PhonePe...</span>
+                <div class="ciit-payment-processing-steps" aria-label="Payment processing status">
+                    <div class="ciit-payment-processing-step" data-payment-step="gateway"><i class="bi bi-check-lg" aria-hidden="true"></i><span>Connecting to payment gateway...</span></div>
+                    <div class="ciit-payment-processing-step" data-payment-step="verify"><i class="bi bi-check-lg" aria-hidden="true"></i><span>Verifying payment details...</span></div>
+                    <div class="ciit-payment-processing-step" data-payment-step="process"><i class="bi bi-check-lg" aria-hidden="true"></i><span>Confirming course access...</span></div>
+                </div>`;
+        }
+    }
+
+    const completePhonePePayment = async () => {
+        if (!merchantOrderId) {
+            showFailure("We could not identify the payment order. Please start the payment again.");
+            return;
+        }
+
+        showProcessing("Checking the payment result securely with PhonePe...");
+
+        try {
+            const returnUrl = `/Courses/PhonePeReturn?merchantOrderId=${encodeURIComponent(merchantOrderId)}`;
+            const response = await fetch(returnUrl, {
+                method: "GET",
+                credentials: "same-origin",
+                headers: {
+                    Accept: "application/json"
                 }
-
-                if (courseId) {
-                    window.location.assign(`/Courses/Course/${courseId}`);
-                    return;
-                }
-
-                window.location.reload();
-            })
-            .catch((error) => {
-                console.error("PhonePe payment verification error:", error);
-                window.location.reload();
             });
+
+            let result = null;
+            try {
+                result = await response.json();
+            } catch {
+                result = null;
+            }
+
+            if (!response.ok) {
+                throw new Error(result?.message || "Payment verification could not be completed.");
+            }
+
+            if (result?.state === "COMPLETED") {
+                const successText = successState?.querySelector(".ciit-payment-success-note");
+                if (successText) {
+                    successText.textContent = "Payment verified successfully. Your course access is ready.";
+                }
+
+                const successSmall = successState?.querySelector("small");
+                if (successSmall) {
+                    successSmall.textContent = "Opening your course...";
+                }
+
+                processingState.hidden = true;
+                successState.hidden = false;
+
+                window.setTimeout(() => {
+                    window.location.assign(`/Courses/Course/${result.courseId}`);
+                }, 900);
+                return;
+            }
+
+            if (result?.state === "FAILED") {
+                showFailure(result.message || "Payment failed. No course access was granted.");
+                return;
+            }
+
+            showProcessing(result?.message || "Payment is still being verified. No course access has been granted yet.");
+            const steps = processingState.querySelector(".ciit-payment-processing-steps");
+            if (steps) {
+                steps.innerHTML = '<button type="button" class="btn btn-outline-primary btn-sm mt-3" id="ciit-payment-pending-retry">Check payment status again</button>';
+                const retry = document.getElementById("ciit-payment-pending-retry");
+                if (retry) {
+                    retry.addEventListener("click", completePhonePePayment, { once: true });
+                }
+            }
+        } catch (error) {
+            console.error("PhonePe payment verification error:", error);
+            showProcessing(error instanceof Error
+                ? error.message
+                : "We could not confirm the payment yet. Your order remains pending.");
+
+            const steps = processingState?.querySelector(".ciit-payment-processing-steps");
+            if (steps) {
+                steps.innerHTML = '<button type="button" class="btn btn-outline-primary btn-sm mt-3" id="ciit-payment-verify-retry">Retry verification</button>';
+                const retry = document.getElementById("ciit-payment-verify-retry");
+                if (retry) {
+                    retry.addEventListener("click", completePhonePePayment, { once: true });
+                }
+            }
+        }
     };
 
     const openPhonePeCheckout = async () => {
@@ -262,21 +383,13 @@ document.addEventListener("DOMContentLoaded", function () {
                     }
 
                     if (response === "USER_CANCEL") {
-                        if (paymentButton) {
-                            paymentButton.disabled = false;
-                            paymentButton.innerHTML = '<i class="bi bi-shield-lock-fill me-2"></i>Pay with PhonePe';
-                        }
+                        resetPaymentForm();
                     }
                 }
             });
         } catch (error) {
             console.error("PhonePe checkout error:", error);
-            window.alert(error instanceof Error ? error.message : "Unable to start PhonePe checkout.");
-
-            if (paymentButton) {
-                paymentButton.disabled = false;
-                paymentButton.innerHTML = '<i class="bi bi-shield-lock-fill me-2"></i>Pay with PhonePe';
-            }
+            showFailure(error instanceof Error ? error.message : "Unable to start PhonePe checkout.");
         }
     };
 
@@ -284,6 +397,7 @@ document.addEventListener("DOMContentLoaded", function () {
         event.preventDefault();
         event.stopPropagation();
         event.stopImmediatePropagation();
+        resetPaymentForm();
         openPhonePeCheckout();
     }, true);
 });
