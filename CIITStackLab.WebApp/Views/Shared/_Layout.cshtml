@@ -10,6 +10,53 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="anonymous" />
     <link href="https://fonts.googleapis.com/css2?family=Fira+Code:wght@400;500;600&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
     <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
+    <style>
+        .ciit-access-denied-modal .modal-dialog { max-width: 480px; padding: 14px; }
+        .ciit-access-denied-modal .ciit-access-glass-card {
+            position: relative; isolation: isolate; overflow: hidden; border-radius: 28px;
+            border: 1px solid rgba(255,255,255,.78);
+            background: linear-gradient(145deg, rgba(255,255,255,.86), rgba(242,247,255,.72));
+            box-shadow: 0 32px 90px rgba(24,48,91,.22), inset 0 1px 0 rgba(255,255,255,.95);
+            backdrop-filter: blur(32px) saturate(165%); -webkit-backdrop-filter: blur(32px) saturate(165%);
+        }
+        .ciit-access-denied-modal .ciit-access-glow { pointer-events:none; }
+        .ciit-access-denied-modal .ciit-access-glass-glow { position:absolute; z-index:-1; width:220px; height:220px; border-radius:50%; filter:blur(2px); pointer-events:none; }
+        .ciit-access-denied-modal .ciit-access-glass-glow-one { top:-130px; right:-55px; background:radial-gradient(circle,rgba(100,149,255,.27),transparent 70%); }
+        .ciit-access-denied-modal .ciit-access-glass-glow-two { bottom:-150px; left:-90px; background:radial-gradient(circle,rgba(116,226,218,.23),transparent 70%); }
+        .ciit-access-denied-modal .ciit-access-glass-header { position:relative; display:flex; flex-direction:column; align-items:center; text-align:center; padding:34px 30px 12px; border:0; }
+        .ciit-access-denied-modal .ciit-access-close { position:absolute; top:20px; right:20px; opacity:.55; }
+        .ciit-access-denied-modal .ciit-access-icon-wrap { display:grid; place-items:center; width:78px; height:78px; margin:0 0 20px; border-radius:25px; border:1px solid rgba(255,255,255,.92); background:linear-gradient(145deg,rgba(255,255,255,.96),rgba(255,232,235,.72)); box-shadow:0 12px 30px rgba(180,48,69,.12),inset 0 1px 0 white; }
+        .ciit-access-denied-modal .ciit-access-icon-ring { display:grid; place-items:center; width:52px; height:52px; border-radius:18px; color:#c72c4a; background:linear-gradient(145deg,#fff0f2,#ffe1e7); box-shadow:inset 0 1px 0 rgba(255,255,255,.95); font-size:24px; }
+        .ciit-access-denied-modal .ciit-access-eyebrow { display:flex; align-items:center; gap:8px; color:#71809a; font-size:10px; font-weight:800; letter-spacing:.16em; }
+        .ciit-access-denied-modal .ciit-access-eyebrow-dot { width:5px; height:5px; border-radius:50%; background:#ed6b7d; box-shadow:0 0 0 4px rgba(237,107,125,.12); }
+        .ciit-access-denied-modal .ciit-access-title { margin-top:12px; color:#172744; font-size:27px; font-weight:800; letter-spacing:-.045em; }
+        .ciit-access-denied-modal .ciit-access-title span { color:#376de0; }
+        .ciit-access-denied-modal .ciit-access-subtitle { margin:9px 0 0; color:#71809a; font-size:13px; line-height:1.6; }
+        .ciit-access-denied-modal .ciit-access-glass-body { padding:12px 30px 24px; }
+        .ciit-access-denied-modal .ciit-access-glass-body > p { margin:0 0 20px; color:#53627b; text-align:center; font-size:14px; line-height:1.7; }
+        .ciit-access-denied-modal .ciit-access-requirement { display:flex; align-items:center; gap:12px; padding:15px; border:1px solid rgba(135,157,195,.2); border-radius:17px; background:linear-gradient(120deg,rgba(255,255,255,.75),rgba(244,248,255,.57)); box-shadow:inset 0 1px 0 rgba(255,255,255,.9); }
+        .ciit-access-denied-modal .ciit-access-requirement-icon { display:grid; place-items:center; flex:0 0 40px; height:40px; border-radius:13px; color:#2863d8; background:linear-gradient(145deg,#e9f1ff,#dce8ff); font-size:18px; }
+        .ciit-access-denied-modal .ciit-access-requirement > span:nth-child(2) { display:flex; flex:1; flex-direction:column; gap:3px; }
+        .ciit-access-denied-modal .ciit-access-requirement strong { color:#243651; font-size:13px; font-weight:800; }
+        .ciit-access-denied-modal .ciit-access-requirement small { color:#75839b; font-size:11px; line-height:1.5; }
+        .ciit-access-denied-modal .ciit-access-requirement-arrow { color:#7890b6; }
+        .ciit-access-denied-modal .ciit-access-glass-footer { display:flex; gap:10px; padding:0 30px 30px; border:0; }
+        .ciit-access-denied-modal .ciit-access-secondary-btn, .ciit-access-denied-modal .ciit-access-primary-btn { display:inline-flex; min-height:46px; align-items:center; justify-content:center; gap:8px; padding:0 17px; border-radius:14px; font-size:12px; font-weight:800; text-decoration:none; transition:transform .18s ease,box-shadow .18s ease,background .18s ease; }
+        .ciit-access-denied-modal .ciit-access-secondary-btn { border:1px solid rgba(135,157,195,.25); color:#65748d; background:rgba(255,255,255,.52); }
+        .ciit-access-denied-modal .ciit-access-primary-btn { flex:1; border:1px solid rgba(255,255,255,.25); color:white; background:linear-gradient(115deg,#4a83f3,#2457d6); box-shadow:0 9px 20px rgba(37,99,235,.23),inset 0 1px 0 rgba(255,255,255,.3); }
+        .ciit-access-denied-modal .ciit-access-secondary-btn:hover, .ciit-access-denied-modal .ciit-access-primary-btn:hover { transform:translateY(-1px); }
+        .ciit-access-denied-modal .ciit-access-primary-btn:hover { color:white; box-shadow:0 12px 25px rgba(37,99,235,.3),inset 0 1px 0 rgba(255,255,255,.35); }
+        .modal-backdrop.show { opacity:.48; backdrop-filter:blur(5px); -webkit-backdrop-filter:blur(5px); }
+        @@media(max-width:480px) {
+            .ciit-access-denied-modal .ciit-access-glass-header { padding:30px 22px 12px; }
+            .ciit-access-denied-modal .ciit-access-glass-body { padding:12px 22px 22px; }
+            .ciit-access-denied-modal .ciit-access-glass-footer { padding:0 22px 24px; flex-direction:column-reverse; }
+            .ciit-access-denied-modal .ciit-access-secondary-btn, .ciit-access-denied-modal .ciit-access-primary-btn { width:100%; }
+        }
+        @@media(prefers-reduced-motion:reduce) {
+            .ciit-access-denied-modal .ciit-access-secondary-btn, .ciit-access-denied-modal .ciit-access-primary-btn { transition:none; }
+        }
+    </style>
     @await RenderSectionAsync("Styles", required: false)
 </head>
 <body>
@@ -112,25 +159,35 @@
 
         @if (TempData["LearningHubAccessDenied"] is string learningHubAccessDenied)
         {
-            <div class="modal fade" id="learningHubAccessDeniedModal" tabindex="-1"
-                 aria-labelledby="learningHubAccessDeniedTitle" aria-hidden="true">
+            <div class="modal fade ciit-access-denied-modal" id="learningHubAccessDeniedModal" tabindex="-1"
+                 aria-labelledby="learningHubAccessDeniedTitle" aria-describedby="learningHubAccessDeniedDescription"
+                 aria-hidden="true">
                 <div class="modal-dialog modal-dialog-centered">
-                    <div class="modal-content border-0 shadow-lg" style="border-radius: 20px; overflow: hidden;">
-                        <div class="modal-header border-0 pb-0">
-                            <div class="d-flex align-items-center gap-3">
-                                <span class="d-inline-flex align-items-center justify-content-center bg-danger-subtle text-danger rounded-circle"
-                                      style="width: 46px; height: 46px; font-size: 1.25rem;">
-                                    <i class="bi bi-shield-lock-fill" aria-hidden="true"></i>
-                                </span>
-                                <h2 class="modal-title fs-5 fw-bold" id="learningHubAccessDeniedTitle">Access denied</h2>
+                    <div class="modal-content ciit-access-glass-card">
+                        <div class="ciit-access-glass-glow ciit-access-glass-glow-one"></div>
+                        <div class="ciit-access-glass-glow ciit-access-glass-glow-two"></div>
+                        <div class="modal-header ciit-access-glass-header">
+                            <button type="button" class="btn-close ciit-access-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                            <div class="ciit-access-icon-wrap" aria-hidden="true">
+                                <span class="ciit-access-icon-ring"><i class="bi bi-shield-lock-fill"></i></span>
                             </div>
-                            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                            <span class="ciit-access-eyebrow">CIIT STACK LAB <span class="ciit-access-eyebrow-dot"></span> ACCESS CONTROL</span>
+                            <h2 class="modal-title ciit-access-title" id="learningHubAccessDeniedTitle">Learning Hub <span>locked</span></h2>
+                            <p class="ciit-access-subtitle">One step left before your learning journey begins.</p>
                         </div>
-                        <div class="modal-body pt-3 pb-4">
-                            <p class="mb-0 text-secondary">@learningHubAccessDenied</p>
+                        <div class="modal-body ciit-access-glass-body">
+                            <p id="learningHubAccessDeniedDescription">@learningHubAccessDenied</p>
+                            <div class="ciit-access-requirement">
+                                <span class="ciit-access-requirement-icon"><i class="bi bi-bag-check-fill"></i></span>
+                                <span><strong>Purchase a course</strong><small>Unlock your personal Learning Hub after your first course purchase.</small></span>
+                                <i class="bi bi-arrow-right ciit-access-requirement-arrow" aria-hidden="true"></i>
+                            </div>
                         </div>
-                        <div class="modal-footer border-0 pt-0">
-                            <button type="button" class="btn btn-primary px-4" data-bs-dismiss="modal">Okay</button>
+                        <div class="modal-footer ciit-access-glass-footer">
+                            <button type="button" class="ciit-access-secondary-btn" data-bs-dismiss="modal">Maybe later</button>
+                            <a class="ciit-access-primary-btn" asp-controller="Home" asp-action="Index" asp-fragment="tutorials">
+                                Explore courses <i class="bi bi-arrow-up-right" aria-hidden="true"></i>
+                            </a>
                         </div>
                     </div>
                 </div>
