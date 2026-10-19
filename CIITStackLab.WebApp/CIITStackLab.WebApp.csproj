@@ -8,6 +8,7 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <PackageReference Include="System.Security.Cryptography.Pkcs" Version="10.0.13" />
     <ProjectReference Include="..\CIITStackLab.Application\CIITStackLab.Application.csproj" />
     <ProjectReference Include="..\CIITStackLab.Infrastructure\CIITStackLab.Infrastructure.csproj" />
   </ItemGroup>
