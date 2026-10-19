@@ -1,6 +1,7 @@
 using CIITStackLab.Infrastructure;
 using CIITStackLab.Infrastructure.Identity;
 using CIITStackLab.Infrastructure.Persistence;
+using CIITStackLab.WebApp.Hubs;
 using Microsoft.AspNetCore.StaticFiles;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -63,5 +64,7 @@ app.MapControllerRoute(
 app.MapControllerRoute(
     name: "default",
     pattern: "{controller=Home}/{action=Index}/{id?}");
+
+app.MapHub<ExamApplicationNotificationHub>("/hubs/exam-application-notifications");
 
 app.Run();
