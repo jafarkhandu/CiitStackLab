@@ -148,7 +148,9 @@
     async function startConnection(connection) {
         try {
             await connection.start();
+            document.documentElement.dataset.examNotificationsConnected = "true";
         } catch (error) {
+            document.documentElement.dataset.examNotificationsConnected = "false";
             console.warn("Live examination notifications could not connect. Retrying shortly.", error);
             window.setTimeout(function () {
                 startConnection(connection);
@@ -177,9 +179,7 @@
             document.documentElement.dataset.examNotificationsConnected = "true";
         });
 
-        startConnection(connection).then(function () {
-            document.documentElement.dataset.examNotificationsConnected = "true";
-        });
+        startConnection(connection);
     }
 
     if (document.readyState === "loading") {
