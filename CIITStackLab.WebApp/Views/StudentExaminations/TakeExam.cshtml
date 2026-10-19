@@ -241,33 +241,54 @@
             .exam-bottom { margin-top: 8px; font-size: 9px; }
             .submit-final { padding: 8px 12px; border-radius: 9px; font-size: 10px; }
         }
-        /* Balanced desktop sizing: readable cards without forcing page scrolling. */
+        /* Match the marked desktop proportions: broad question card, compact camera card,
+           and a tall question-palette card filling the right column. */
         @@media (min-width: 761px) {
-            .exam-shell { padding-top: 14px; padding-bottom: 12px; }
-            .exam-header, .exam-grid, .exam-bottom { max-width: 1500px; }
-            .exam-grid { grid-template-columns: minmax(0, 1.65fr) minmax(370px, .9fr); }
-            .question-card { padding: 22px 24px; }
+            .exam-shell { min-height: 100vh; padding: 12px clamp(14px, 1.6vw, 24px) 10px; }
+            .exam-header, .exam-grid, .exam-bottom { max-width: 1740px; }
+            .exam-header { margin-bottom: 12px; padding-bottom: 12px; }
+            .exam-grid {
+                grid-template-columns: minmax(0, 2fr) minmax(320px, 1fr);
+                align-items: stretch;
+                gap: 14px;
+            }
+            .question-card {
+                min-height: 0;
+                height: min(70vh, 680px);
+                padding: 20px 24px;
+            }
             .question-prompt { font-size: clamp(18px, 1.4vw, 22px); line-height: 1.5; margin: 18px 0 17px; }
             .option { min-height: 50px; padding: 11px 15px; }
             .option-text { font-size: 13px; }
             .question-actions { margin-top: 18px; }
             .action-btn { min-height: 42px; font-size: 12px; }
-            .side-card { padding: 16px; }
+            .exam-side {
+                min-height: min(70vh, 680px);
+                height: min(70vh, 680px);
+                grid-template-rows: minmax(0, .9fr) minmax(0, 1.1fr);
+                align-content: stretch;
+                gap: 12px;
+            }
+            .side-card { min-height: 0; padding: 16px; overflow: hidden; }
+            .side-heading { margin-bottom: 9px; }
             #exam-camera { height: clamp(145px, 15vw, 180px); max-height: 180px; }
+            .palette-card { min-height: 0; overflow: auto; }
             .palette-btn { min-height: 31px; }
             .exam-bottom { margin-top: 10px; }
         }
         @@media (min-width: 761px) and (max-height: 800px) {
             .exam-header { margin-bottom: 10px; padding-bottom: 10px; }
-            .question-card { padding: 16px 20px; }
+            .question-card { height: min(70vh, 640px); padding: 16px 20px; }
             .question-prompt { margin: 12px 0; line-height: 1.4; }
             .option { min-height: 43px; padding: 8px 12px; }
             .question-actions { margin-top: 12px; }
-            #exam-camera { height: 125px; max-height: 125px; }
+            .exam-side { height: min(70vh, 640px); min-height: min(70vh, 640px); }
+            #exam-camera { height: clamp(125px, 15vw, 165px); max-height: 165px; }
             .side-card { padding: 12px; }
         }
         @@media (min-width: 761px) and (max-width: 1050px) {
-            .exam-grid { grid-template-columns: minmax(0, 1.5fr) minmax(315px, .9fr); }
+            .exam-grid { grid-template-columns: minmax(0, 1.5fr) minmax(300px, .9fr); }
+            .exam-side { grid-template-rows: minmax(0, .9fr) minmax(0, 1.1fr); }
             .side-card { padding: 11px; }
             #exam-camera { height: 120px; max-height: 120px; }
         }
