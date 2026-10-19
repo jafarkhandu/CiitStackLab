@@ -85,6 +85,18 @@
                 + (payload.courseTitle ? " (" + payload.courseTitle + ")." : ".")
         );
 
+        const questionCount = Number.isFinite(Number(payload.validQuestionCount))
+            ? Number(payload.validQuestionCount)
+            : 0;
+        const requiredQuestionCount = Number.isFinite(Number(payload.requiredQuestionCount))
+            ? Number(payload.requiredQuestionCount)
+            : 50;
+        const count = createElement(
+            "div",
+            "ciit-exam-notification-count",
+            questionCount + " / " + requiredQuestionCount + " valid questions"
+        );
+
         const reason = createElement(
             "p",
             "ciit-exam-notification-reason",
@@ -108,6 +120,7 @@
         copy.appendChild(kicker);
         copy.appendChild(title);
         copy.appendChild(detail);
+        copy.appendChild(count);
         copy.appendChild(reason);
         copy.appendChild(footer);
 
