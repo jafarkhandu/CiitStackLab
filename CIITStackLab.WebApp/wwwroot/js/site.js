@@ -127,6 +127,7 @@ document.addEventListener("DOMContentLoaded", function () {
     const paymentNote = paymentForm.nextElementSibling;
     const phonePeScriptUrl = "https://mercury.phonepe.com/web/bundle/checkout.js";
     let phonePeScriptPromise;
+    let merchantOrderId;
 
     paymentTrigger.removeAttribute("data-bs-toggle");
     paymentTrigger.removeAttribute("data-bs-target");
@@ -196,12 +197,46 @@ document.addEventListener("DOMContentLoaded", function () {
         }
 
         const result = await response.json();
+        merchantOrderId = result?.merchantOrderId;
 
-        if (!result?.checkoutUrl) {
-            throw new Error("PhonePe did not return a checkout URL.");
+        if (!result?.checkoutUrl || !merchantOrderId) {
+            throw new Error("PhonePe did not return the required checkout details.");
         }
 
         return result.checkoutUrl;
+    };
+
+    const completePhonePePayment = () => {
+        if (!merchantOrderId) {
+            window.location.reload();
+            return;
+        }
+
+        const courseIdMatch = window.location.pathname.match(/\/Courses\/Details\/(\d+)/i);
+        const courseId = courseIdMatch?.[1];
+        const returnUrl = `/Courses/PhonePeReturn?merchantOrderId=${encodeURIComponent(merchantOrderId)}`;
+
+        fetch(returnUrl, {
+            method: "GET",
+            credentials: "same-origin",
+            redirect: "follow"
+        })
+            .then((response) => {
+                if (!response.ok) {
+                    throw new Error("Payment verification request failed.");
+                }
+
+                if (courseId) {
+                    window.location.assign(`/Courses/Course/${courseId}`);
+                    return;
+                }
+
+                window.location.reload();
+            })
+            .catch((error) => {
+                console.error("PhonePe payment verification error:", error);
+                window.location.reload();
+            });
     };
 
     const openPhonePeCheckout = async () => {
@@ -223,7 +258,7 @@ document.addEventListener("DOMContentLoaded", function () {
                 type: "IFRAME",
                 callback: function (response) {
                     if (response === "CONCLUDED") {
-                        window.location.reload();
+                        completePhonePePayment();
                     }
 
                     if (response === "USER_CANCEL") {
