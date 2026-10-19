@@ -958,7 +958,7 @@ public class CoursesController : Controller
             cancellationToken);
         if (hasExistingExam)
         {
-            TempData["LearningProgressMessage"] =
+            TempData["ExamMessage"] =
                 "An examination record already exists for this topic. Open it to continue or review your result.";
             return RedirectToAction("Index", "StudentExaminations");
         }
