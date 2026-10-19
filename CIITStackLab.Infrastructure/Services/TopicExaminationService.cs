@@ -180,7 +180,14 @@ public sealed class TopicExaminationService : ITopicExaminationService
         var attempt = await FindOwnedAttemptAsync(userId, attemptId, cancellationToken);
         if (attempt is null) return (false, "Exam not found.", null);
         if (attempt.Status != "InProgress")
-            return (false, $"This exam attempt is closed (status: {attempt.Status}). A closed attempt cannot accept more answers.", await MapSummaryAsync(attempt, cancellationToken));
+        {
+            var terminationDetail = string.IsNullOrWhiteSpace(attempt.TerminationReason)
+                ? string.Empty
+                : $" Termination reason: {attempt.TerminationReason}.";
+            return (false,
+                $"This exam attempt is closed (status: {attempt.Status}).{terminationDetail} A closed attempt cannot accept more answers.",
+                await MapSummaryAsync(attempt, cancellationToken));
+        }
         if (attempt.DeadlineAtUtc is null)
             return (false, "This exam has no recorded deadline, so the server cannot safely accept answers.", await MapSummaryAsync(attempt, cancellationToken));
 
