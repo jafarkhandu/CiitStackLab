@@ -174,7 +174,8 @@ public sealed class TopicExaminationService : ITopicExaminationService
     }
 
     public async Task<(bool Succeeded, string? Error, TopicExamSummaryDto? Result)> SaveAnswersAsync(
-        string userId, long attemptId, IReadOnlyList<TopicExamAnswerInput> answers, string deviceToken, CancellationToken cancellationToken = default)
+        string userId, long attemptId, IReadOnlyList<TopicExamAnswerInput> answers, string deviceToken,
+        CancellationToken cancellationToken = default, bool finalSubmission = false)
     {
         var attempt = await FindOwnedAttemptAsync(userId, attemptId, cancellationToken);
         if (attempt is null) return (false, "Exam not found.", null);
@@ -196,6 +197,8 @@ public sealed class TopicExaminationService : ITopicExaminationService
         attempt.AnswersJson = JsonSerializer.Serialize(answerMap, JsonOptions);
         if (now >= attempt.DeadlineAtUtc.Value)
             await FinalizeAsync(attempt, "TimedOut", now, cancellationToken);
+        else if (finalSubmission)
+            await FinalizeAsync(attempt, "Submitted", now, cancellationToken);
         else
             await _db.SaveChangesAsync(cancellationToken);
         return (true, null, await MapSummaryAsync(attempt, cancellationToken));
