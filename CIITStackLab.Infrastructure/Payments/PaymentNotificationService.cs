@@ -86,11 +86,13 @@ public sealed class PaymentNotificationService
 
         message.Body = body.ToMessageBody();
 
+        // Payment failure notifications are a durable side effect. Do not cancel SMTP delivery
+        // merely because the browser verification request was closed or timed out.
         using var client = new SmtpClient();
-        await client.ConnectAsync(host, port, secureSocketOptions, cancellationToken);
-        await client.AuthenticateAsync(senderEmail, password, cancellationToken);
-        await client.SendAsync(message, cancellationToken);
-        await client.DisconnectAsync(true, cancellationToken);
+        await client.ConnectAsync(host, port, secureSocketOptions, CancellationToken.None);
+        await client.AuthenticateAsync(senderEmail, password, CancellationToken.None);
+        await client.SendAsync(message, CancellationToken.None);
+        await client.DisconnectAsync(true, CancellationToken.None);
     }
 
     private string GetRequiredSetting(string key)
