@@ -947,17 +947,6 @@ public class CoursesController : Controller
         if (!topicBelongsToCourse)
             return NotFound();
 
-        var allowedTopicId = await _topicExaminationService.GetCurrentTopicIdAsync(
-            userId,
-            id,
-            cancellationToken);
-        if (allowedTopicId.HasValue && allowedTopicId.Value != topicId)
-        {
-            TempData["LearningProgressMessage"] =
-                "Complete the current topic examination before applying for a different topic.";
-            return RedirectToAction(nameof(Learn), new { id, topicId = allowedTopicId.Value });
-        }
-
         var hasExistingExam = await _dbContext.TopicExamAttempts.AsNoTracking().AnyAsync(
             attempt => attempt.UserId == userId
                 && attempt.CourseId == id
@@ -972,6 +961,17 @@ public class CoursesController : Controller
             TempData["LearningProgressMessage"] =
                 "An examination record already exists for this topic. Open it to continue or review your result.";
             return RedirectToAction("Index", "StudentExaminations");
+        }
+
+        var allowedTopicId = await _topicExaminationService.GetCurrentTopicIdAsync(
+            userId,
+            id,
+            cancellationToken);
+        if (allowedTopicId.HasValue && allowedTopicId.Value != topicId)
+        {
+            TempData["LearningProgressMessage"] =
+                "Complete the current topic examination before applying for a different topic.";
+            return RedirectToAction(nameof(Learn), new { id, topicId = allowedTopicId.Value });
         }
 
         var topicNoteIds = await _dbContext.TrainingNotes.AsNoTracking()
