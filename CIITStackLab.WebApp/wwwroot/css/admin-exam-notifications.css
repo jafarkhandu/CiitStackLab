@@ -104,6 +104,21 @@
     font-size: 11px;
     line-height: 1.5;
 }
+.ciit-exam-notification-count {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    margin-top: 9px;
+    padding: 5px 8px;
+    border: 1px solid rgba(163, 190, 231, .55);
+    border-radius: 999px;
+    color: #315d9e;
+    background: rgba(226, 238, 255, .74);
+    font-size: 10px;
+    font-weight: 850;
+    letter-spacing: .015em;
+}
+
 
 .ciit-exam-notification-footer {
     display: flex;
