@@ -128,6 +128,10 @@ document.addEventListener("DOMContentLoaded", function () {
     const phonePeScriptUrl = "https://mercury.phonepe.com/web/bundle/checkout.js";
     let phonePeScriptPromise;
 
+    paymentTrigger.removeAttribute("data-bs-toggle");
+    paymentTrigger.removeAttribute("data-bs-target");
+    paymentTrigger.innerHTML = '<i class="bi bi-shield-lock-fill me-2"></i>Pay with PhonePe';
+
     if (paymentNote) {
         paymentNote.textContent = "PhonePe checkout will open securely on this page. Course access is granted only after server-side payment verification.";
     }
