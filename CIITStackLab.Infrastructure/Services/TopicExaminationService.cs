@@ -240,6 +240,14 @@ public sealed class TopicExaminationService : ITopicExaminationService
             if (answer.SelectedOptionNumber.HasValue || !answerMap.ContainsKey(answer.QuestionId))
                 answerMap[answer.QuestionId] = answer.SelectedOptionNumber;
         }
+        if (finalSubmission && now < attempt.DeadlineAtUtc.Value
+            && questionIds.Any(questionId => !answerMap.TryGetValue(questionId, out var selected) || !selected.HasValue))
+        {
+            return (false,
+                "Answer every question before submitting the examination. If time runs out, the exam will submit automatically with the answers received so far.",
+                await MapSummaryAsync(attempt, cancellationToken));
+        }
+
         attempt.AnswersJson = JsonSerializer.Serialize(answerMap, JsonOptions);
         if (now >= attempt.DeadlineAtUtc.Value)
             await FinalizeAsync(attempt, "TimedOut", now, cancellationToken);
