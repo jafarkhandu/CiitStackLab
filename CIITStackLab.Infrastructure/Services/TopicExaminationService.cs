@@ -107,7 +107,6 @@ public sealed class TopicExaminationService : ITopicExaminationService
             return (false, questionAvailability.Error, null);
         }
 
-        var allQuestionIds = questionAvailability.EligibleIds;
         var unseenIds = questionAvailability.UnseenIds;
         var usedIds = questionAvailability.UsedIds;
 
