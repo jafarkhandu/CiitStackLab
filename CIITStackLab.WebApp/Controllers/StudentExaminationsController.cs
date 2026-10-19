@@ -80,6 +80,7 @@ public sealed class StudentExaminationsController : Controller
             Response.Cookies.Append(DeviceCookieName(attemptId), deviceToken, new CookieOptions
             {
                 HttpOnly = true, Secure = Request.IsHttps, SameSite = SameSiteMode.Strict,
+                Path = "/",
                 IsEssential = true, Expires = DateTimeOffset.UtcNow.AddHours(3)
             });
         }
