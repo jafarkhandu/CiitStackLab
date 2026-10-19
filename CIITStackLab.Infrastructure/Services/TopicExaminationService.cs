@@ -113,6 +113,14 @@ public sealed class TopicExaminationService : ITopicExaminationService
             .Concat(repeatedToUse)
             .OrderBy(_ => RandomNumberGenerator.GetInt32(int.MaxValue))
             .ToList();
+
+        if (chosenIds.Count < QuestionCount)
+        {
+            return (false,
+                $"This topic currently has only {chosenIds.Count} eligible questions available across fresh and previous attempts. Add more valid questions before scheduling the re-exam.",
+                null);
+        }
+
         var optionOrders = new Dictionary<int, List<int>>();
         foreach (var questionId in chosenIds)
             optionOrders[questionId] = new[] { 1, 2, 3, 4 }.OrderBy(_ => RandomNumberGenerator.GetInt32(int.MaxValue)).ToList();
