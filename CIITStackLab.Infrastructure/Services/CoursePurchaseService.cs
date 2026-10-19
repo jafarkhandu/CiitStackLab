@@ -16,6 +16,7 @@ public sealed class CoursePurchaseService
     public async Task<bool> CompleteAsync(
         string userId,
         int courseId,
+        decimal? purchasePrice = null,
         CancellationToken cancellationToken = default)
     {
         if (string.IsNullOrWhiteSpace(userId) || courseId <= 0)
@@ -41,9 +42,9 @@ public sealed class CoursePurchaseService
             return false;
         }
 
-        var price = await GetCoursePriceAsync(courseId, cancellationToken);
+        var currentCoursePrice = await GetCoursePriceAsync(courseId, cancellationToken);
 
-        if (price <= 0m)
+        if (currentCoursePrice <= 0m)
         {
             return true;
         }
@@ -59,11 +60,17 @@ public sealed class CoursePurchaseService
             return true;
         }
 
+        var finalPurchasePrice = purchasePrice ?? currentCoursePrice;
+        if (finalPurchasePrice <= 0m)
+        {
+            return false;
+        }
+
         var purchase = new StudentCoursePurchase
         {
             UserId = userId,
             CourseId = courseId,
-            PurchasePrice = price,
+            PurchasePrice = finalPurchasePrice,
             PurchasedAt = DateTime.UtcNow
         };
 
