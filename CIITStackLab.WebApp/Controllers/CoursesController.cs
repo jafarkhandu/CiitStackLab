@@ -947,6 +947,17 @@ public class CoursesController : Controller
         if (!topicBelongsToCourse)
             return NotFound();
 
+        var allowedTopicId = await _topicExaminationService.GetCurrentTopicIdAsync(
+            userId,
+            id,
+            cancellationToken);
+        if (allowedTopicId.HasValue && allowedTopicId.Value != topicId)
+        {
+            TempData["LearningProgressMessage"] =
+                "Complete the current topic examination before applying for a different topic.";
+            return RedirectToAction(nameof(Learn), new { id, topicId = allowedTopicId.Value });
+        }
+
         var topicNoteIds = await _dbContext.TrainingNotes.AsNoTracking()
             .Where(x => x.TopicId == topicId && x.Flag == 0)
             .Select(x => x.Id).ToListAsync(cancellationToken);
