@@ -445,9 +445,9 @@
             goToQuestion(currentIndex + 1);
             return;
         }
+
         const nextUnanswered = questions.findIndex((_, index) => !saved.has(index) && index !== currentIndex);
-        if (nextUnanswered >= 0) goToQuestion(nextUnanswered);
-        else showMessage('You are on the last question. Review the palette or submit when ready.', 'success');
+        goToQuestion(nextUnanswered >= 0 ? nextUnanswered : 0);
     }
 
     function makeQuestionPayload(index) {
