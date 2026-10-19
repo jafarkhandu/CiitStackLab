@@ -1054,23 +1054,38 @@ public class CoursesController : Controller
             return;
         }
 
-        await _examApplicationHub.Clients
-            .Group(ExamApplicationNotificationHub.AdminGroup)
-            .SendAsync(
-                "ExamQuestionsUnavailable",
-                new
-                {
-                    courseId,
-                    courseTitle = context.CourseTitle,
-                    topicId,
-                    topicTitle = context.TopicTitle,
-                    studentName = User.Identity?.Name ?? userId,
-                    validQuestionCount,
-                    requiredQuestionCount = 50,
-                    reason,
-                    occurredAtUtc = DateTime.UtcNow
-                },
-                cancellationToken);
+        try
+        {
+            await _examApplicationHub.Clients
+                .Group(ExamApplicationNotificationHub.AdminGroup)
+                .SendAsync(
+                    "ExamQuestionsUnavailable",
+                    new
+                    {
+                        courseId,
+                        courseTitle = context.CourseTitle,
+                        topicId,
+                        topicTitle = context.TopicTitle,
+                        studentName = User.Identity?.Name ?? userId,
+                        validQuestionCount,
+                        requiredQuestionCount = 50,
+                        reason,
+                        occurredAtUtc = DateTime.UtcNow
+                    },
+                    cancellationToken);
+        }
+        catch (OperationCanceledException)
+        {
+            throw;
+        }
+        catch (Exception exception)
+        {
+            _logger.LogWarning(
+                exception,
+                "Unable to deliver the live exam-question alert for course {CourseId}, topic {TopicId}.",
+                courseId,
+                topicId);
+        }
     }
 
     [HttpPost("Courses/Learn/{id:int}/Assessment/{contentId:int}")]
