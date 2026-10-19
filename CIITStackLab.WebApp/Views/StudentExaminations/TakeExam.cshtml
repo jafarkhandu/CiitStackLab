@@ -25,6 +25,8 @@
             --exam-shadow: 0 22px 60px rgba(35, 71, 125, .09);
         }
         * { box-sizing: border-box; }
+        html, body, #exam-app { -webkit-user-select: none; user-select: none; }
+        img, video { -webkit-user-drag: none; user-drag: none; }
         html { min-height: 100%; background: #edf4ff; }
         body {
             margin: 0; min-height: 100vh; color: var(--exam-ink);
@@ -433,6 +435,10 @@
     let cameraStream = null;
     let faceDetector = null;
     let warningCount = 0;
+    let faceMissingActive = false;
+    let multipleFacesActive = false;
+    let lastFaceCenter = null;
+    let lastMovementWarningAt = 0;
     const saved = new Set();
     const marked = new Set();
     const skipped = new Set();
@@ -595,21 +601,36 @@
         nextQuestion();
     }
 
-    async function postEvent(type, details) {
+    async function postEvent(type, details, keepalive = false) {
         const data = new URLSearchParams({ EventType: type, Details: details || '' });
         data.append('__RequestVerificationToken', csrfInput.value);
         try {
             const response = await fetch('/Examinations/' + attemptId + '/SecurityEvent', {
-                method: 'POST', credentials: 'same-origin',
+                method: 'POST',
+                credentials: 'same-origin',
+                keepalive,
                 headers: { 'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8' },
                 body: data
             });
-            if (type === 'SuspiciousActivity' || type === 'FaceMissing' || type === 'MultipleFaces') {
-                warningCount++;
-                if (warningCount <= 2) alert('Proctoring warning ' + warningCount + ' of 2. Further suspicious activity may end this exam.');
-                else finishExam('Exam ended after repeated suspicious activity.', true);
+
+            if (!response.ok) {
+                console.warn('Security event was not accepted (HTTP ' + response.status + ').');
+                return;
             }
-            if (!response.ok) console.warn('Security event was not accepted (HTTP ' + response.status + ').');
+
+            if (['SuspiciousActivity', 'FaceMissing', 'MultipleFaces'].includes(type)) {
+                warningCount++;
+                if (warningCount < 5) {
+                    showMessage('Proctoring warning ' + warningCount + ' of 5. Correct your behaviour to avoid termination.', 'error');
+                    setSaveStatus('Proctoring warning ' + warningCount + ' of 5.', true);
+                } else {
+                    finishing = true;
+                    if (cameraStream) cameraStream.getTracks().forEach(track => track.stop());
+                    window.location.replace('/Examinations');
+                }
+            } else if (type === 'ScreenshotShortcut' || type === 'RecordingShortcut') {
+                showMessage('Warning: screenshot/recording shortcuts are restricted during the exam. The attempt remains active.', 'error');
+            }
         } catch (_) {}
     }
 
@@ -688,14 +709,54 @@
                 try { faceDetector = new FaceDetector({ fastMode: true, maxDetectedFaces: 3 }); } catch (_) {}
             }
             if (faceDetector) {
+                let detectorBusy = false;
                 window.setInterval(async () => {
-                    if (finishing || camera.readyState < 2) return;
+                    if (finishing || detectorBusy || camera.readyState < 2) return;
+                    detectorBusy = true;
                     try {
                         const faces = await faceDetector.detect(camera);
-                        if (faces.length === 0 || faces.length > 1) {
-                            await postEvent(faces.length === 0 ? 'FaceMissing' : 'MultipleFaces', faces.length === 0 ? 'No face detected' : 'Multiple faces detected');
+                        if (faces.length === 0) {
+                            lastFaceCenter = null;
+                            multipleFacesActive = false;
+                            if (!faceMissingActive) {
+                                faceMissingActive = true;
+                                await postEvent('FaceMissing', 'No face detected in the camera frame');
+                            }
+                            return;
                         }
-                    } catch (_) {}
+
+                        faceMissingActive = false;
+                        if (faces.length > 1) {
+                            lastFaceCenter = null;
+                            if (!multipleFacesActive) {
+                                multipleFacesActive = true;
+                                await postEvent('MultipleFaces', 'Multiple faces detected in the camera frame');
+                            }
+                            return;
+                        }
+
+                        multipleFacesActive = false;
+                        const box = faces[0].boundingBox;
+                        if (box && camera.videoWidth > 0 && camera.videoHeight > 0) {
+                            const center = {
+                                x: (box.x + box.width / 2) / camera.videoWidth,
+                                y: (box.y + box.height / 2) / camera.videoHeight
+                            };
+                            const now = Date.now();
+                            if (lastFaceCenter) {
+                                const movement = Math.hypot(center.x - lastFaceCenter.x, center.y - lastFaceCenter.y);
+                                if (movement > 0.22 && now - lastMovementWarningAt > 15000) {
+                                    lastMovementWarningAt = now;
+                                    await postEvent('SuspiciousActivity', 'Large face-position change; possible repeated looking away');
+                                }
+                            }
+                            lastFaceCenter = center;
+                        }
+                    } catch (_) {
+                        // FaceDetector is experimental and not available in every browser.
+                    } finally {
+                        detectorBusy = false;
+                    }
                 }, 8000);
             }
         } catch (_) {
@@ -744,32 +805,39 @@
         finishExam('Submitting examination…', false);
     });
 
-    if (!isDevelopment) {
-        document.addEventListener('visibilitychange', () => {
-            if (document.hidden) terminateForSecurity('TabSwitch', 'Exam tab became hidden', 'Exam terminated because the exam tab was left.');
-        });
-        window.addEventListener('blur', () => {
-            terminateForSecurity('WindowBlur', 'Exam window lost focus', 'Exam terminated because the exam window lost focus.');
-        });
-    }
+    document.addEventListener('visibilitychange', () => {
+        if (document.hidden) {
+            terminateForSecurity('TabSwitch', 'Exam tab became hidden', 'Exam terminated because the exam tab was left.');
+        }
+    });
+    window.addEventListener('blur', () => {
+        terminateForSecurity('WindowBlur', 'Exam window lost focus', 'Exam terminated because the exam window lost focus.');
+    });
+    window.addEventListener('pagehide', () => {
+        if (!finishing && !terminating) {
+            postEvent('PageExit', 'Exam page was left, refreshed, or navigated away from', true);
+        }
+    });
     document.addEventListener('copy', event => { event.preventDefault(); postEvent('Copy', 'Copy blocked'); });
     document.addEventListener('cut', event => { event.preventDefault(); postEvent('Cut', 'Cut blocked'); });
     document.addEventListener('paste', event => { event.preventDefault(); postEvent('Paste', 'Paste blocked'); });
     document.addEventListener('contextmenu', event => event.preventDefault());
+    document.addEventListener('dragstart', event => event.preventDefault());
     document.addEventListener('keydown', event => {
         const key = event.key.toLowerCase();
         if ((event.ctrlKey || event.metaKey) && ['c', 'v', 'x'].includes(key)) {
             event.preventDefault();
             postEvent(({ c: 'Copy', v: 'Paste', x: 'Cut' })[key], 'Restricted shortcut');
         }
-        if (!isDevelopment && (event.key === 'PrintScreen'
+        if (event.key === 'PrintScreen'
+            || ((event.metaKey && event.shiftKey && ['3', '4', '5'].includes(key))
             || ((event.ctrlKey || event.metaKey) && event.shiftKey && key === '5')
             || ((event.ctrlKey || event.metaKey) && ['p', 's'].includes(key)))) {
             event.preventDefault();
-            postEvent('ScreenshotShortcut', 'Restricted screenshot/print shortcut');
+            postEvent('ScreenshotShortcut', 'Possible screenshot or print shortcut');
         }
         if (((event.ctrlKey || event.metaKey) && event.shiftKey && key === 'r') || (event.metaKey && event.altKey && key === 'r')) {
-            if (!isDevelopment) event.preventDefault();
+            event.preventDefault();
             postEvent('RecordingShortcut', 'Possible screen recording shortcut');
         }
     });
