@@ -1,3 +1,4 @@
+using System.Collections.Concurrent;
 using MailKit.Net.Smtp;
 using MailKit.Security;
 using Microsoft.Extensions.Configuration;
@@ -8,6 +9,8 @@ namespace CIITStackLab.Infrastructure.Payments;
 
 public sealed class PaymentNotificationService
 {
+    private static readonly ConcurrentDictionary<string, byte> SentFailureNotifications = new();
+
     private readonly IConfiguration _configuration;
     private readonly ILogger<PaymentNotificationService> _logger;
 
@@ -19,6 +22,12 @@ public sealed class PaymentNotificationService
 
     public async Task SendPaymentFailureEmailAsync(string toEmail, string userName, string courseTitle, decimal amount, string merchantOrderId, CancellationToken cancellationToken = default)
     {
+        if (SentFailureNotifications.ContainsKey(merchantOrderId))
+        {
+            _logger.LogDebug("Payment failure email already sent for order {MerchantOrderId}; skipping duplicate notification.", merchantOrderId);
+            return;
+        }
+
         if (string.IsNullOrWhiteSpace(toEmail))
             throw new InvalidOperationException("The student does not have a registered email address.");
 
@@ -92,6 +101,7 @@ public sealed class PaymentNotificationService
                 await client.AuthenticateAsync(senderEmail, password, CancellationToken.None);
                 await client.SendAsync(message, CancellationToken.None);
                 await client.DisconnectAsync(true, CancellationToken.None);
+                SentFailureNotifications.TryAdd(merchantOrderId, 0);
                 _logger.LogInformation("Payment failure email sent successfully for order {MerchantOrderId}.", merchantOrderId);
                 return;
             }
