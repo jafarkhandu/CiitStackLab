@@ -13,10 +13,28 @@ public sealed class CoursePurchaseService
         _dbContext = dbContext;
     }
 
-    public async Task<bool> CompleteAsync(
+    public Task<bool> CompleteAsync(
         string userId,
         int courseId,
         CancellationToken cancellationToken = default)
+    {
+        return CompleteInternalAsync(userId, courseId, null, cancellationToken);
+    }
+
+    public Task<bool> CompleteWithPriceAsync(
+        string userId,
+        int courseId,
+        decimal purchasePrice,
+        CancellationToken cancellationToken = default)
+    {
+        return CompleteInternalAsync(userId, courseId, purchasePrice, cancellationToken);
+    }
+
+    private async Task<bool> CompleteInternalAsync(
+        string userId,
+        int courseId,
+        decimal? purchasePrice,
+        CancellationToken cancellationToken)
     {
         if (string.IsNullOrWhiteSpace(userId) || courseId <= 0)
         {
@@ -41,9 +59,9 @@ public sealed class CoursePurchaseService
             return false;
         }
 
-        var price = await GetCoursePriceAsync(courseId, cancellationToken);
+        var currentCoursePrice = await GetCoursePriceAsync(courseId, cancellationToken);
 
-        if (price <= 0m)
+        if (currentCoursePrice <= 0m)
         {
             return true;
         }
@@ -59,11 +77,17 @@ public sealed class CoursePurchaseService
             return true;
         }
 
+        var finalPurchasePrice = purchasePrice ?? currentCoursePrice;
+        if (finalPurchasePrice <= 0m)
+        {
+            return false;
+        }
+
         var purchase = new StudentCoursePurchase
         {
             UserId = userId,
             CourseId = courseId,
-            PurchasePrice = price,
+            PurchasePrice = finalPurchasePrice,
             PurchasedAt = DateTime.UtcNow
         };
 

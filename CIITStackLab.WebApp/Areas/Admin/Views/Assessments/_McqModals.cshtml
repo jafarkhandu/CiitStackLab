@@ -214,3 +214,35 @@ Long questions and answers can contain multiple lines inside the same Excel cell
         </div>
     </div>
 </div>
+
+<script>
+    (function () {
+        const modal = document.getElementById("addMcqModal");
+        if (!modal) {
+            return;
+        }
+
+        modal.addEventListener("hidden.bs.modal", function () {
+            const form = modal.querySelector("form");
+            if (!form) {
+                return;
+            }
+
+            form.querySelectorAll("input:not([type='hidden']), textarea").forEach(function (field) {
+                field.value = "";
+            });
+
+            form.querySelectorAll("select").forEach(function (select) {
+                select.selectedIndex = 0;
+            });
+
+            form.querySelectorAll(".text-danger").forEach(function (element) {
+                element.textContent = "";
+            });
+
+            modal.querySelectorAll(".ciit-mcq-import-alert.is-error").forEach(function (element) {
+                element.remove();
+            });
+        });
+    })();
+</script>

@@ -40,3 +40,30 @@ public sealed class RegisterViewModel
     [Display(Name = "Confirm password")]
     public string ConfirmPassword { get; set; } = string.Empty;
 }
+
+public sealed class ForgotPasswordViewModel
+{
+    [Required, EmailAddress, StringLength(256)]
+    [Display(Name = "Email")]
+    public string Email { get; set; } = string.Empty;
+}
+
+public sealed class VerifyPasswordResetOtpViewModel
+{
+    [Required, StringLength(6, MinimumLength = 6)]
+    [Display(Name = "OTP")]
+    public string Otp { get; set; } = string.Empty;
+}
+
+public sealed class ResetPasswordViewModel
+{
+    [Required, StringLength(100, MinimumLength = 8)]
+    [DataType(DataType.Password)]
+    [Display(Name = "New password")]
+    public string Password { get; set; } = string.Empty;
+
+    [Required, Compare(nameof(Password))]
+    [DataType(DataType.Password)]
+    [Display(Name = "Confirm password")]
+    public string ConfirmPassword { get; set; } = string.Empty;
+}
