@@ -149,6 +149,13 @@
         .exam-bottom strong { color: #475569; }
         .submit-final { border: 0; border-radius: 11px; color: #fff; background: #15294c; font-size: 12px; font-weight: 800; padding: 11px 16px; cursor: pointer; }
         .submit-final:hover { background: #213d6c; }
+        .exam-security-banner {
+            position: sticky; top: 0; z-index: 1000; width: 100%;
+            padding: 10px 16px; margin: 0 0 10px; border: 1px solid #fca5a5;
+            border-radius: 12px; color: #991b1b; background: rgba(254, 226, 226, .97);
+            box-shadow: 0 5px 18px rgba(127, 29, 29, .12); text-align: center;
+            font-size: 12px; line-height: 1.5; font-weight: 800;
+        }
         .message-bar { display: none; padding: 12px 14px; margin-top: 16px; border-radius: 12px; font-size: 12px; line-height: 1.5; font-weight: 700; }
         .message-bar.show { display: block; }
         .message-bar.error { color: #991b1b; background: rgba(254,226,226,.88); border: 1px solid #fecaca; }
@@ -318,6 +325,7 @@
         </style>
 </head>
 <body>
+<div class="exam-security-banner" role="alert" aria-live="assertive">SECURITY ALERT: Screenshots, screen recording, switching tabs, or leaving fullscreen may terminate your exam. Keep this exam open until you submit.</div>
 <section class="exam-shell" id="exam-app" data-attempt-id="@Model.AttemptId" data-deadline="@(Model.DeadlineAtUtc.HasValue ? DateTime.SpecifyKind(Model.DeadlineAtUtc.Value, DateTimeKind.Utc).ToString("O") : string.Empty)">
     <header class="exam-header">
         <div class="exam-brand">
@@ -618,6 +626,14 @@
                 return;
             }
 
+            if (type === 'ScreenshotShortcut' || type === 'RecordingShortcut') {
+                finishing = true;
+                saveStatus.textContent = 'Exam terminated because a screenshot or recording shortcut was detected.';
+                if (cameraStream) cameraStream.getTracks().forEach(track => track.stop());
+                window.location.replace('/Examinations');
+                return;
+            }
+
             if (['SuspiciousActivity', 'FaceMissing', 'MultipleFaces'].includes(type)) {
                 warningCount++;
                 if (warningCount < 5) {
@@ -868,9 +884,8 @@
             || ((event.ctrlKey || event.metaKey) && event.shiftKey && key === '5');
 
         if (screenshotShortcut) {
-            // Browsers cannot reliably block OS-level screenshots. Log the attempt,
-            // but do not prevent the shortcut or terminate the exam.
-            postEvent('ScreenshotShortcut', 'Possible screenshot shortcut');
+            event.preventDefault();
+            postEvent('ScreenshotShortcut', 'Possible screenshot shortcut detected');
         }
 
         if ((event.ctrlKey || event.metaKey) && ['p', 's'].includes(key)) {
@@ -878,7 +893,7 @@
         }
         if (((event.ctrlKey || event.metaKey) && event.shiftKey && key === 'r') || (event.metaKey && event.altKey && key === 'r')) {
             event.preventDefault();
-            postEvent('RecordingShortcut', 'Possible screen recording shortcut');
+            postEvent('RecordingShortcut', 'Possible screen recording shortcut detected');
         }
     });
 
