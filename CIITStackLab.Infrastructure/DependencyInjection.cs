@@ -68,6 +68,7 @@ public static class DependencyInjection
         services.AddScoped<ICourseAssessmentService, CourseAssessmentService>();
         services.AddScoped<CoursePurchaseService>();
         services.AddScoped<IEmailService, EmailService>();
+        services.AddScoped<PaymentNotificationService>();
         services.AddScoped<IAdminStudentService, AdminStudentService>();
         services.AddScoped<IAdminSettingsService, AdminSettingsService>();
         services.AddScoped<IAdminReportsService, AdminReportsService>();
