@@ -27,37 +27,37 @@
                     <div class="ciit-auth-alert mb-3" role="alert">@passwordResetSuccess</div>
                 }
 
-            <form asp-action="Login" method="post">
-                <input asp-for="ReturnUrl" type="hidden" />
-                <div asp-validation-summary="ModelOnly" class="ciit-auth-error mb-3" role="alert"></div>
-
-                <div class="mb-3">
-                    <label asp-for="UserName" class="form-label fw-semibold"></label>
-                    <input asp-for="UserName" class="form-control" autocomplete="username" autofocus />
-                    <span asp-validation-for="UserName" class="text-danger small"></span>
-                </div>
-
-                <div class="mb-3">
-                    <label asp-for="Password" class="form-label fw-semibold"></label>
-                    <div class="ciit-password-field">
-                        <input asp-for="Password" class="form-control" autocomplete="current-password" />
-                        <button type="button" class="ciit-password-toggle" aria-label="Show password" aria-pressed="false" data-password-toggle>
-                            <i class="bi bi-eye" aria-hidden="true"></i>
-                        </button>
+                <form asp-action="Login" method="post">
+                    <input asp-for="ReturnUrl" type="hidden" />
+                    <div asp-validation-summary="ModelOnly" class="ciit-auth-error mb-3" role="alert"></div>
+    
+                    <div class="mb-3">
+                        <label asp-for="UserName" class="form-label fw-semibold"></label>
+                        <input asp-for="UserName" class="form-control" autocomplete="username" autofocus />
+                        <span asp-validation-for="UserName" class="text-danger small"></span>
                     </div>
-                    <span asp-validation-for="Password" class="text-danger small"></span>
-                </div>
-
-                <div class="d-flex justify-content-between align-items-center mb-4">
-                    <div class="form-check mb-0">
-                        <input asp-for="RememberMe" class="form-check-input" />
-                        <label asp-for="RememberMe" class="form-check-label">Remember me</label>
+    
+                    <div class="mb-3">
+                        <label asp-for="Password" class="form-label fw-semibold"></label>
+                        <div class="ciit-password-field">
+                            <input asp-for="Password" class="form-control" autocomplete="current-password" />
+                            <button type="button" class="ciit-password-toggle" aria-label="Show password" aria-pressed="false" data-password-toggle>
+                                <i class="bi bi-eye" aria-hidden="true"></i>
+                            </button>
+                        </div>
+                        <span asp-validation-for="Password" class="text-danger small"></span>
                     </div>
-                    <a asp-action="ForgotPassword" class="ciit-auth-link small">Forgot password?</a>
-                </div>
-
-                <button type="submit" class="btn btn-primary w-100 fw-bold">Sign In</button>
-            </form>
+    
+                    <div class="d-flex justify-content-between align-items-center mb-4">
+                        <div class="form-check mb-0">
+                            <input asp-for="RememberMe" class="form-check-input" />
+                            <label asp-for="RememberMe" class="form-check-label">Remember me</label>
+                        </div>
+                        <a asp-action="ForgotPassword" class="ciit-auth-link small">Forgot password?</a>
+                    </div>
+    
+                    <button type="submit" class="btn btn-primary w-100 fw-bold">Sign In</button>
+                </form>
 
                 <div class="ciit-auth-divider"><span>New to CIIT Stack Lab?</span></div>
 
