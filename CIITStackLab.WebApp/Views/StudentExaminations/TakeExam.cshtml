@@ -151,7 +151,7 @@
         .message-bar.show { display: block; }
         .message-bar.error { color: #991b1b; background: rgba(254,226,226,.88); border: 1px solid #fecaca; }
         .message-bar.success { color: #065f46; background: rgba(209,250,229,.88); border: 1px solid #a7f3d0; }
-        @media (max-width: 1050px) {
+        @@media (max-width: 1050px) {
             .exam-grid { grid-template-columns: minmax(0, 1fr) minmax(285px, .72fr); gap: 14px; }
             .question-card { padding: 22px; }
             .side-card { padding: 17px; }
@@ -159,7 +159,7 @@
             .palette-btn { min-height: 35px; }
             .question-actions { grid-template-columns: 1fr; }
         }
-        @media (max-width: 760px) {
+        @@media (max-width: 760px) {
             .exam-shell { padding: 16px 12px 24px; }
             .exam-header { align-items: flex-start; margin-bottom: 15px; padding-bottom: 16px; }
             .brand-mark { width: 38px; height: 38px; flex-basis: 38px; border-radius: 12px; }
@@ -187,13 +187,13 @@
             .exam-bottom { align-items: stretch; flex-direction: column; }
             .submit-final { width: 100%; }
         }
-        @media (max-width: 420px) {
+        @@media (max-width: 420px) {
             .exam-title { font-size: 15px; }
             .brand-mark { width: 34px; height: 34px; flex-basis: 34px; }
             .timer-card { padding: 8px; }
             .question-palette { grid-template-columns: repeat(5, minmax(0, 1fr)); }
         }
-        @media (prefers-reduced-motion: reduce) { *, *::before, *::after { transition: none !important; } }
+        @@media (prefers-reduced-motion: reduce) { *, *::before, *::after { transition: none !important; } }
     </style>
 </head>
 <body>
