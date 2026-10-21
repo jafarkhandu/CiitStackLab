@@ -952,22 +952,6 @@ public class CoursesController : Controller
         if (!topicBelongsToCourse)
             return NotFound();
 
-        var hasExistingExam = await _dbContext.TopicExamAttempts.AsNoTracking().AnyAsync(
-            attempt => attempt.UserId == userId
-                && attempt.CourseId == id
-                && attempt.TopicId == topicId
-                && (attempt.Status == "Scheduled"
-                    || attempt.Status == "Ready"
-                    || attempt.Status == "InProgress"
-                    || attempt.Status == "Passed"),
-            cancellationToken);
-        if (hasExistingExam)
-        {
-            TempData["ExamMessage"] =
-                "An examination record already exists for this topic. Open it to continue or review your result.";
-            return RedirectToAction("Index", "StudentExaminations");
-        }
-
         var questionAvailability = await _topicExaminationService.CheckQuestionAvailabilityAsync(
             userId,
             id,
@@ -988,6 +972,22 @@ public class CoursesController : Controller
                 cancellationToken);
 
             return RedirectToAction(nameof(Learn), new { id, topicId });
+        }
+
+        var hasExistingExam = await _dbContext.TopicExamAttempts.AsNoTracking().AnyAsync(
+            attempt => attempt.UserId == userId
+                && attempt.CourseId == id
+                && attempt.TopicId == topicId
+                && (attempt.Status == "Scheduled"
+                    || attempt.Status == "Ready"
+                    || attempt.Status == "InProgress"
+                    || attempt.Status == "Passed"),
+            cancellationToken);
+        if (hasExistingExam)
+        {
+            TempData["ExamMessage"] =
+                "An examination record already exists for this topic. Open it to continue or review your result.";
+            return RedirectToAction("Index", "StudentExaminations");
         }
 
         var allowedTopicId = await _topicExaminationService.GetCurrentTopicIdAsync(
