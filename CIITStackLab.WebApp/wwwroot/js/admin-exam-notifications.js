@@ -157,6 +157,17 @@
             formatDate(notification.occurredAtUtc)
         ));
 
+        if (!isRead && notification.notificationId) {
+            const markRead = createElement(
+                "button",
+                "ciit-admin-notification-mark-read",
+                "Mark as read"
+            );
+            markRead.type = "button";
+            markRead.dataset.notificationMarkRead = String(notification.notificationId);
+            actions.appendChild(markRead);
+        }
+
         const action = createElement("a", "ciit-admin-notification-action");
         action.href = "/Admin/Examination";
         action.appendChild(document.createTextNode("Open question bank "));
@@ -229,6 +240,16 @@
             }
 
             renderNotifications(result.notifications);
+
+            const pendingDelivery = result.notifications.filter(
+                item => !item.isDelivered && !item.isRead
+            );
+            pendingDelivery.forEach(showToast);
+            if (connection && connection.state === window.signalR?.HubConnectionState.Connected) {
+                for (const item of pendingDelivery) {
+                    await acknowledgeNotification(item.notificationId);
+                }
+            }
         } catch (error) {
             console.warn("Unable to refresh saved exam notifications.", error);
             if (elements.summary) {
@@ -399,6 +420,50 @@
         await refreshNotifications();
     }
 
+    async function markNotificationRead(notificationId, button) {
+        if (!notificationId || !elements.antiForgeryToken) {
+            console.error("The exam notification anti-forgery token is missing.");
+            return;
+        }
+
+        if (button) {
+            button.disabled = true;
+        }
+
+        const body = new URLSearchParams();
+        body.set("__RequestVerificationToken", elements.antiForgeryToken);
+
+        try {
+            const response = await fetch(
+                "/Admin/ExamApplicationNotifications/" + encodeURIComponent(notificationId) + "/MarkRead",
+                {
+                    method: "POST",
+                    credentials: "same-origin",
+                    cache: "no-store",
+                    headers: {
+                        "Content-Type": "application/x-www-form-urlencoded;charset=UTF-8",
+                        "Accept": "application/json"
+                    },
+                    body
+                }
+            );
+
+            if (!response.ok) {
+                throw new Error("Could not mark the exam notification as read.");
+            }
+
+            // The Pending endpoint returns unread records only, so this item disappears from the inbox.
+            await refreshNotifications();
+        } catch (error) {
+            console.error("Unable to mark this exam notification as read.", error);
+            await refreshNotifications();
+        } finally {
+            if (button && button.isConnected) {
+                button.disabled = false;
+            }
+        }
+    }
+
     async function markAllRead() {
         if (!elements.markRead || elements.markRead.disabled) {
             return;
@@ -529,6 +594,20 @@
         });
 
         elements.markRead?.addEventListener("click", markAllRead);
+        elements.list?.addEventListener("click", function (event) {
+            const target = event.target;
+            if (!(target instanceof Element)) {
+                return;
+            }
+
+            const button = target.closest("[data-notification-mark-read]");
+            if (!button) {
+                return;
+            }
+
+            event.preventDefault();
+            markNotificationRead(button.dataset.notificationMarkRead, button);
+        });
 
         document.addEventListener("click", function (event) {
             if (!elements.panel || elements.panel.hidden) {
