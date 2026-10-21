@@ -29,7 +29,7 @@ public class CoursesController : Controller
         if (editId.HasValue)
         {
             var course = activeCourses.FirstOrDefault(x => x.Id == editId.Value);
-            if (course is not null) editCourse = new AdminCourseFormModel { Id = course.Id, CourseName = course.Title, ImagePath = course.ImagePath };
+            if (course is not null) editCourse = new AdminCourseFormModel { Id = course.Id, CourseName = course.Title, ImagePath = course.ImagePath, DiscountMode = course.DiscountMode, DiscountValue = course.DiscountValue };
         }
 
         return View(new AdminCourseIndexViewModel { ActiveCourses = activeCourses, ArchivedCourses = archivedCourses, EditCourse = editCourse });
@@ -53,6 +53,15 @@ public class CoursesController : Controller
             return Fail("Percentage discount must be between 0 and 100.", model.Id);
         if (model.DiscountMode == "direct" && model.DiscountValue < 0m)
             return Fail("Discounted price cannot be negative.", model.Id);
+
+        if (model.DiscountMode == "direct" && model.DiscountValue.HasValue)
+        {
+            var course = (await _courseService.GetActiveAsync(cancellationToken))
+                .FirstOrDefault(item => item.Id == model.Id);
+            if (course is not null && model.DiscountValue.Value > course.TotalPrice)
+                return Fail("Discounted price cannot exceed the original course price.", model.Id);
+        }
+
         if (model.DiscountMode is null) model.DiscountValue = null;
 
         if (await _courseService.CourseNameExistsAsync(model.CourseName, model.Id == 0 ? null : model.Id, cancellationToken))
