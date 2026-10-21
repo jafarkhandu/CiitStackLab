@@ -113,22 +113,28 @@ public sealed class DynamicCourseService : ICourseService
 
         var contentRows = topicIds.Count == 0
             ? []
-            : await _dbContext.Lessons
-                .AsNoTracking()
-                .Where(x => x.TopicId.HasValue
-                            && topicIds.Contains(x.TopicId.Value)
-                            && x.Flag == 0)
-                .OrderBy(x => x.TopicId)
-                .ThenBy(x => x.Id)
-                .Select(x => new
+            : await (
+                from lesson in _dbContext.Lessons.AsNoTracking()
+                join note in _dbContext.TrainingNotes.AsNoTracking()
+                    on lesson.NoteId equals (int?)note.Id into noteJoin
+                from note in noteJoin.DefaultIfEmpty()
+                where lesson.Flag == 0
+                    && ((lesson.TopicId.HasValue && topicIds.Contains(lesson.TopicId.Value))
+                        || (lesson.NoteId.HasValue
+                            && note != null
+                            && note.Flag == 0
+                            && topicIds.Contains(note.TopicId)))
+                orderby (lesson.TopicId ?? (int?)note.TopicId), lesson.Id
+                select new
                 {
-                    x.Id,
-                    x.TopicId,
-                    x.NoteId,
-                    x.Title,
-                    x.Slides,
-                    x.VideoName
+                    lesson.Id,
+                    TopicId = lesson.TopicId ?? (int?)note.TopicId,
+                    lesson.NoteId,
+                    lesson.Title,
+                    lesson.Slides,
+                    lesson.VideoName
                 })
+                .Distinct()
                 .ToListAsync(cancellationToken);
 
         var chapterRows = topicIds.Count == 0
