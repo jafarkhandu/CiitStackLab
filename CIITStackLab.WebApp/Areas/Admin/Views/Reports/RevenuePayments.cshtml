@@ -7,7 +7,7 @@
 
 <style>
     .ciit-payment-ledger-table {
-        border: 1px solid #1f2937;
+        border: 2px solid #334155;
         border-collapse: separate;
         border-spacing: 0;
         overflow: hidden;
@@ -16,8 +16,13 @@
 
     .ciit-payment-ledger-table th,
     .ciit-payment-ledger-table td {
-        border-right: 1px solid #c7ccd4;
-        border-bottom: 1px solid #c7ccd4;
+        border-right: 1px solid #94a3b8;
+        border-bottom: 1px solid #94a3b8;
+    }
+
+    .ciit-payment-ledger-table th {
+        border-bottom: 2px solid #64748b;
+        background: #f8fafc;
     }
 
     .ciit-payment-ledger-table th:last-child,
@@ -33,6 +38,10 @@
         vertical-align: middle;
     }
 
+    .ciit-payment-ledger-table .ciit-payment-main-row:hover > td {
+        background: #f8fafc;
+    }
+
     .ciit-payment-ledger-table .ciit-payment-detail-row[hidden] {
         display: none;
     }
@@ -45,7 +54,7 @@
 
     .ciit-payment-detail-panel {
         padding: 18px 22px;
-        border-top: 1px solid #111827;
+        border-top: 2px solid #64748b;
         background: #f8fafc;
     }
 
