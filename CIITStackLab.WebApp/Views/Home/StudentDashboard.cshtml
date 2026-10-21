@@ -22,6 +22,12 @@
             height: calc(100vh - 76px);
             z-index: 1020;
         }
+
+        /* A fixed grid item leaves the first grid column available to the main content. */
+        body:has(.ciit-student-dashboard) .ciit-course-environment-main {
+            grid-column: 2;
+            min-width: 0;
+        }
     </style>
 }
 
