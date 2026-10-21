@@ -51,6 +51,7 @@ public class ApplicationDbContext : IdentityDbContext<ApplicationUser>
             entity.HasKey(x => x.Id);
             entity.Property(x => x.Id).HasColumnName("course_id");
             entity.Property(x => x.Title).HasColumnName("course_name").HasMaxLength(100).IsRequired();
+            entity.Property(x => x.ImagePath).HasColumnName("course_image_path").HasMaxLength(500);
             entity.Property(x => x.FeesAmount).HasColumnName("fees_amount");
             entity.Property(x => x.FeesChangeDate).HasColumnName("fees_change_date");
             entity.Property(x => x.InstallmentPercentage).HasColumnName("installment_percentage");
