@@ -46,22 +46,21 @@ public sealed class AdminDashboardService : IAdminDashboardService
 
         if (!string.IsNullOrWhiteSpace(studentRoleId))
         {
-            var studentQuery =
-                from userRole in _dbContext.UserRoles.AsNoTracking()
-                join user in _dbContext.Users.AsNoTracking()
-                    on userRole.UserId equals user.Id
-                where userRole.RoleId == studentRoleId
-                      && user.IsActive
-                select user;
+            // Use an EXISTS-style query instead of joining, grouping, and selecting
+            // the first entity from each group. The previous GroupBy/First projection
+            // could not be translated reliably by EF Core and caused the
+            // EmptyProjectionMember KeyNotFoundException on the dashboard.
+            var studentQuery = _dbContext.Users
+                .AsNoTracking()
+                .Where(user => user.IsActive
+                    && _dbContext.UserRoles.Any(userRole =>
+                        userRole.UserId == user.Id
+                        && userRole.RoleId == studentRoleId));
 
             studentCount = await studentQuery
-                .Select(x => x.Id)
-                .Distinct()
                 .CountAsync(cancellationToken);
 
             students = await studentQuery
-                .GroupBy(x => x.Id)
-                .Select(x => x.First())
                 .OrderBy(x => x.UserName)
                 .Select(x => new AdminDashboardStudentDto
                 {
