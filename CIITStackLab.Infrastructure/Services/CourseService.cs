@@ -185,16 +185,62 @@ public sealed class CourseService
                 .Distinct()
                 .ToListAsync(cancellationToken));
 
+        var chapterRows = topicIds.Count == 0
+            ? new List<(int TopicId, string Title)>()
+            : await _dbContext.TrainingNotes
+                .AsNoTracking()
+                .Where(note => topicIds.Contains(note.TopicId) && note.Flag == 0)
+                .OrderBy(note => note.TopicId)
+                .ThenBy(note => note.SortOrder)
+                .ThenBy(note => note.Id)
+                .Select(note => new ValueTuple<int, string>(note.TopicId, note.Title))
+                .ToListAsync(cancellationToken);
+
         var contentIds = rows
             .Where(x => x.ContentId.HasValue)
             .Select(x => x.ContentId!.Value)
             .Distinct()
             .ToList();
-        var noteIds = rows
-            .Where(x => x.NoteId.HasValue)
-            .Select(x => x.NoteId!.Value)
-            .Distinct()
-            .ToList();
+        var noteIds = chapterRows.Select(note => note.Item1).Distinct().ToList();
+        var chapterIds = topicIds.Count == 0
+            ? new List<int>()
+            : await _dbContext.TrainingNotes.AsNoTracking()
+                .Where(note => topicIds.Contains(note.TopicId) && note.Flag == 0)
+                .Select(note => note.Id)
+                .ToListAsync(cancellationToken);
+
+        var topicIdByContentId = rows
+            .Where(row => row.ContentId.HasValue)
+            .GroupBy(row => row.ContentId!.Value)
+            .ToDictionary(group => group.Key, group => group.First().TopicId);
+        var topicIdByChapterId = topicIds.Count == 0
+            ? new Dictionary<int, int>()
+            : await _dbContext.TrainingNotes.AsNoTracking()
+                .Where(note => topicIds.Contains(note.TopicId) && note.Flag == 0)
+                .ToDictionaryAsync(note => note.Id, note => note.TopicId, cancellationToken);
+
+        var interviewRows = await _dbContext.ContentInterviewQuestions.AsNoTracking()
+            .Where(question => question.Flag == 0
+                && ((question.TopicId.HasValue && topicIds.Contains(question.TopicId.Value))
+                    || (question.ContentId.HasValue && contentIds.Contains(question.ContentId.Value))
+                    || (question.NoteId.HasValue && chapterIds.Contains(question.NoteId.Value))))
+            .Select(question => new { question.Id, question.TopicId, question.ContentId, question.NoteId })
+            .ToListAsync(cancellationToken);
+
+        var practiceRows = await _dbContext.ContentProgramQuestions.AsNoTracking()
+            .Where(question => question.Flag == 0
+                && ((question.ContentId.HasValue && contentIds.Contains(question.ContentId.Value))
+                    || (question.NoteId.HasValue && chapterIds.Contains(question.NoteId.Value))))
+            .Select(question => new { question.Id, question.ContentId, question.NoteId })
+            .ToListAsync(cancellationToken);
+
+        int CountTopicAssessments(int topicId, IEnumerable<dynamic> assessmentRows)
+        {
+            return assessmentRows.Count(question =>
+                (question.TopicId != null && (int)question.TopicId == topicId)
+                || (question.ContentId != null && topicIdByContentId.TryGetValue((int)question.ContentId, out var contentTopicId) && contentTopicId == topicId)
+                || (question.NoteId != null && topicIdByChapterId.TryGetValue((int)question.NoteId, out var chapterTopicId) && chapterTopicId == topicId));
+        }
 
         var questions = await _dbContext.ContentQuestions
             .AsNoTracking()
@@ -302,6 +348,21 @@ public sealed class CourseService
                 Price = group.Key.TopicPrice,
                 DurationMinutes = group.Key.TopicDurationMinutes,
                 HasNotes = topicsWithNotes.Contains(group.Key.TopicId),
+                ChapterTitles = chapterRows
+                    .Where(chapter => chapter.TopicId == group.Key.TopicId)
+                    .Select(chapter => chapter.Title)
+                    .ToList(),
+                McqCount = questions.Count(question =>
+                    (question.TopicId == group.Key.TopicId)
+                    || (question.ContentId.HasValue && topicIdByContentId.TryGetValue(question.ContentId.Value, out var contentTopicId) && contentTopicId == group.Key.TopicId)
+                    || (question.NoteId.HasValue && topicIdByChapterId.TryGetValue(question.NoteId.Value, out var chapterTopicId) && chapterTopicId == group.Key.TopicId)),
+                InterviewQuestionCount = interviewRows.Count(question =>
+                    (question.TopicId == group.Key.TopicId)
+                    || (question.ContentId.HasValue && topicIdByContentId.TryGetValue(question.ContentId.Value, out var contentTopicId) && contentTopicId == group.Key.TopicId)
+                    || (question.NoteId.HasValue && topicIdByChapterId.TryGetValue(question.NoteId.Value, out var chapterTopicId) && chapterTopicId == group.Key.TopicId)),
+                PracticeProgramCount = practiceRows.Count(question =>
+                    (question.ContentId.HasValue && topicIdByContentId.TryGetValue(question.ContentId.Value, out var contentTopicId) && contentTopicId == group.Key.TopicId)
+                    || (question.NoteId.HasValue && topicIdByChapterId.TryGetValue(question.NoteId.Value, out var chapterTopicId) && chapterTopicId == group.Key.TopicId)),
                 Contents = group
                     .Where(x => x.ContentId.HasValue)
                     .Select(x => new CourseContentDto
