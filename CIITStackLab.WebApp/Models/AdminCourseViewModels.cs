@@ -20,4 +20,8 @@ public sealed class AdminCourseFormModel
     public string? ImagePath { get; set; }
 
     public IFormFile? ImageFile { get; set; }
+
+    public string? DiscountMode { get; set; }
+
+    public decimal? DiscountValue { get; set; }
 }
