@@ -449,10 +449,7 @@
     letter-spacing: -.025em;
 }
 
-.ciit-course-global-nav {
-    gap: 6px;
-    margin-top: 15px;
-}
+
 
 .ciit-course-global-nav a,
 .ciit-course-coming-soon-link {
@@ -785,9 +782,7 @@
     box-shadow: inset 3px 0 0 #2672ff, 0 5px 16px rgba(35, 96, 190, .07);
 }
 
-.ciit-course-global-nav a.active i {
-    color: #1769ff;
-}
+
 
 @media (max-width: 767.98px) {
     .ciit-course-environment-header {
@@ -1474,7 +1469,7 @@
 }
 .ciit-learning-topic:hover,.ciit-learning-topic.is-active-topic {border-color:rgba(183,210,255,.9);box-shadow:0 13px 30px rgba(34,89,169,.075),inset 0 1px 0 #fff}
 .ciit-learning-topic-heading {min-height:75px;padding:13px 12px;gap:10px;background:rgba(255,255,255,.18)}
-.ciit-learning-topic-heading:after {content:"\f282";font-family:"bootstrap-icons";font-size:.78rem;line-height:1;display:inline-flex;align-items:center;justify-content:center;flex:0 0 20px;width:20px;height:20px;border:1px solid rgba(145,166,200,.24);border-radius:7px;background:rgba(255,255,255,.68);margin-left:auto;color:#6480aa;transition:transform .22s ease,background .22s ease,color .22s ease}
+
 .ciit-learning-topic[open]>.ciit-learning-topic-heading:after {transform:rotate(180deg);background:rgba(219,235,255,.85);color:#1769ff}
 .ciit-learning-topic-heading-text strong {color:#243958;font-size:.81rem;font-weight:800;line-height:1.35}
 .ciit-learning-topic-heading-text>span {margin-top:4px;color:#8393ad;font-size:.7rem}
@@ -2156,9 +2151,7 @@
     background: transparent;
     box-shadow: none;
 }
-.ciit-learning-all-assessments .ciit-learning-assessment-section .ciit-learning-resource-title {
-    margin-bottom: 16px;
-}
+
 
 
 /* Improve readability of the chapter resource count. */
