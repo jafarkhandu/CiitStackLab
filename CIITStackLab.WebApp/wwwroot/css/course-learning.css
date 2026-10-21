@@ -2640,3 +2640,33 @@ details[open] > summary .ciit-learning-disclosure-icon {
         height: 38px;
     }
 }
+
+
+/* Missing exam-question warning uses the red glass alert treatment. */
+.ciit-exam-availability-alert {
+    border-color: rgba(242, 151, 169, .6);
+    color: #6f2031;
+    background:
+        radial-gradient(circle at 100% 0, rgba(255, 92, 124, .18), transparent 48%),
+        linear-gradient(125deg, rgba(255, 255, 255, .94), rgba(255, 235, 239, .9));
+    box-shadow: 0 14px 35px rgba(156, 31, 60, .1), inset 0 1px 0 #fff;
+}
+
+.ciit-exam-availability-alert::after {
+    background: radial-gradient(circle, rgba(246, 72, 108, .16), transparent 70%);
+}
+
+.ciit-exam-availability-alert-icon {
+    border-color: rgba(255, 255, 255, .96);
+    color: #c92d4c;
+    background: linear-gradient(145deg, #fff5f6, #ffdfe5);
+    box-shadow: 0 7px 17px rgba(197, 39, 71, .13), inset 0 1px 0 #fff;
+}
+
+.ciit-exam-availability-alert strong {
+    color: #a5223d;
+}
+
+.ciit-exam-availability-alert p {
+    color: #853248;
+}
