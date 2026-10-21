@@ -31,6 +31,7 @@ public class ApplicationDbContext : IdentityDbContext<ApplicationUser>
     public DbSet<PaymentTransaction> PaymentTransactions => Set<PaymentTransaction>();
     public DbSet<TopicExamAttempt> TopicExamAttempts => Set<TopicExamAttempt>();
     public DbSet<TopicExamSecurityEvent> TopicExamSecurityEvents => Set<TopicExamSecurityEvent>();
+    public DbSet<ExamApplicationNotification> ExamApplicationNotifications => Set<ExamApplicationNotification>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -347,6 +348,75 @@ public class ApplicationDbContext : IdentityDbContext<ApplicationUser>
             entity.Property(x => x.OccurredAtUtc).HasColumnName("occurred_at_utc").HasColumnType("datetime2").IsRequired();
             entity.HasIndex(x => new { x.ExamAttemptId, x.OccurredAtUtc })
                 .HasDatabaseName("IX_topic_exam_events_attempt_date");
+        });
+
+        modelBuilder.Entity<ExamApplicationNotification>(entity =>
+        {
+            entity.ToTable("tbl_exam_application_notifications", ExistingSchema);
+            entity.HasKey(x => x.Id);
+            entity.Property(x => x.Id)
+                .HasColumnName("notification_id")
+                .ValueGeneratedOnAdd();
+            entity.Property(x => x.DedupeKey)
+                .HasColumnName("dedupe_key")
+                .HasMaxLength(64)
+                .IsFixedLength()
+                .IsRequired();
+            entity.Property(x => x.AdminUserId)
+                .HasColumnName("admin_user_id")
+                .HasMaxLength(450)
+                .IsRequired();
+            entity.Property(x => x.StudentUserId)
+                .HasColumnName("student_user_id")
+                .HasMaxLength(450)
+                .IsRequired();
+            entity.Property(x => x.StudentName)
+                .HasColumnName("student_name")
+                .HasMaxLength(256)
+                .IsRequired();
+            entity.Property(x => x.CourseId).HasColumnName("course_id").IsRequired();
+            entity.Property(x => x.CourseTitle)
+                .HasColumnName("course_title")
+                .HasMaxLength(200)
+                .IsRequired();
+            entity.Property(x => x.TopicId).HasColumnName("topic_id").IsRequired();
+            entity.Property(x => x.TopicTitle)
+                .HasColumnName("topic_title")
+                .HasMaxLength(200)
+                .IsRequired();
+            entity.Property(x => x.ValidQuestionCount).HasColumnName("valid_question_count").IsRequired();
+            entity.Property(x => x.RequiredQuestionCount)
+                .HasColumnName("required_question_count")
+                .HasDefaultValue(50)
+                .IsRequired();
+            entity.Property(x => x.Reason)
+                .HasColumnName("reason")
+                .HasMaxLength(1000)
+                .IsRequired();
+            entity.Property(x => x.NotificationDay)
+                .HasColumnName("notification_day")
+                .HasColumnType("date")
+                .IsRequired();
+            entity.Property(x => x.CreatedAtUtc)
+                .HasColumnName("created_at_utc")
+                .HasColumnType("datetime2")
+                .IsRequired();
+            entity.Property(x => x.IsDelivered)
+                .HasColumnName("is_delivered")
+                .HasDefaultValue(false)
+                .IsRequired();
+            entity.Property(x => x.IsRead)
+                .HasColumnName("is_read")
+                .HasDefaultValue(false)
+                .IsRequired();
+
+            entity.HasIndex(x => x.DedupeKey)
+                .IsUnique()
+                .HasDatabaseName("UX_exam_app_notification_dedupe_key");
+            entity.HasIndex(x => new { x.AdminUserId, x.IsRead, x.CreatedAtUtc })
+                .HasDatabaseName("IX_exam_app_notification_admin_read_created");
+            entity.HasIndex(x => new { x.AdminUserId, x.IsDelivered })
+                .HasDatabaseName("IX_exam_app_notification_admin_delivered");
         });
 
         modelBuilder.Entity<TrainingNote>(entity =>
