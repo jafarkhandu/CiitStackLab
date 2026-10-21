@@ -4,6 +4,11 @@
     ViewData["Title"] = Model.Title;
     var totalTopicDurationMinutes = Model.Topics.Sum(topic => topic.DurationMinutes ?? 0);
     var totalDurationHours = totalTopicDurationMinutes / 60m;
+    var originalCoursePrice = Model.Topics.Sum(topic => Math.Max(0m, topic.Price));
+    var displayedSavings = Math.Max(0m, originalCoursePrice - Model.TotalPrice);
+    var displayedDiscountPercentage = originalCoursePrice > 0m && displayedSavings > 0m
+        ? Math.Round(displayedSavings / originalCoursePrice * 100m, 2)
+        : (decimal?)null;
 }
 
 @section Styles {
@@ -78,15 +83,15 @@
                         else
                         {
                             <strong>₹@Model.TotalPrice.ToString("N2")</strong>
-                            @if (Model.DiscountAmount > 0m)
+                            @if (displayedSavings > 0m)
                             {
                                 <div class="ciit-course-discount-pricing">
-                                    <del class="text-secondary small">₹@Model.OriginalPrice.ToString("N2")</del>
-                                    @if (Model.DiscountPercentage.HasValue)
+                                    <del class="text-secondary small">₹@originalCoursePrice.ToString("N2")</del>
+                                    @if (displayedDiscountPercentage.HasValue)
                                     {
-                                        <span class="badge text-bg-success">@Model.DiscountPercentage.Value.ToString("0.##")% OFF</span>
+                                        <span class="badge text-bg-success">@displayedDiscountPercentage.Value.ToString("0.##")% OFF</span>
                                     }
-                                    <small class="d-block text-success">You save ₹@Model.DiscountAmount.ToString("N2") on this course</small>
+                                    <small class="d-block text-success">You save ₹@displayedSavings.ToString("N2") on this course</small>
                                 </div>
                             }
                             else
