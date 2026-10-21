@@ -4,6 +4,7 @@ public sealed class AdminCourseDto
 {
     public int Id { get; init; }
     public string Title { get; init; } = string.Empty;
+    public string? ImagePath { get; init; }
 
     // Legacy ERP fee fields remain available for compatibility but are not shown or edited in Admin UI.
     public double? FeesAmount { get; init; }
