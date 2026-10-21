@@ -20,6 +20,9 @@ public sealed class StudentLearningDashboardViewModel
     public IReadOnlyList<StudentLearningActivityViewModel> RecentActivity { get; init; }
         = Array.Empty<StudentLearningActivityViewModel>();
 
+    public IReadOnlyList<StudentLearningActivityViewModel> CompletedActivities { get; init; }
+        = Array.Empty<StudentLearningActivityViewModel>();
+
     public string? MostRecentCourseTitle { get; init; }
 
     public DateTime? MostRecentActivityAt { get; init; }
