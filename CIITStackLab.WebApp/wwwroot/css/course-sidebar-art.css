@@ -127,3 +127,53 @@
         animation: none !important;
     }
 }
+
+/* Keep the student sidebar fixed to the viewport with no internal scrollbar. */
+.ciit-course-global-sidebar {
+    box-sizing: border-box;
+    overflow: hidden;
+    scrollbar-width: none;
+}
+
+.ciit-course-global-sidebar::-webkit-scrollbar {
+    display: none;
+}
+
+/* Make the learning artwork feel alive without distracting from navigation. */
+.ciit-course-sidebar-art::before {
+    position: absolute;
+    top: 10px;
+    left: 18%;
+    width: 92px;
+    height: 92px;
+    border-radius: 50%;
+    background: rgba(120, 180, 255, .18);
+    filter: blur(18px);
+    content: "";
+    animation: ciit-sidebar-art-glow 4.2s ease-in-out infinite;
+}
+
+.ciit-course-sidebar-art-copy {
+    animation: ciit-sidebar-art-copy 3.6s ease-in-out infinite;
+}
+
+.ciit-course-sidebar-art-visual {
+    filter: drop-shadow(0 8px 10px rgba(44, 99, 173, .10));
+}
+
+@keyframes ciit-sidebar-art-glow {
+    0%, 100% { transform: scale(.88); opacity: .55; }
+    50% { transform: scale(1.08); opacity: .9; }
+}
+
+@keyframes ciit-sidebar-art-copy {
+    0%, 100% { transform: translateY(0); opacity: .82; }
+    50% { transform: translateY(-3px); opacity: 1; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .ciit-course-sidebar-art::before,
+    .ciit-course-sidebar-art-copy {
+        animation: none !important;
+    }
+}
