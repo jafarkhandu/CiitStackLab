@@ -86,7 +86,7 @@
                 @for (var chapterIndex = 0; chapterIndex < topic.Chapters.Count; chapterIndex++)
                 {
                     var chapter = topic.Chapters[chapterIndex];
-                    var chapterResourceCount = (string.IsNullOrWhiteSpace(chapter.NotesHtml) ? 0 : 1)
+                    var chapterResourceCount = (chapter.HasNotes ? 1 : 0)
                         + chapter.Contents.Count + chapter.Questions.Count
                         + chapter.InterviewQuestions.Count + chapter.PracticeQuestions.Count;
                     var chapterIsCurrent = currentContentId.HasValue && chapter.Contents.Any(content => content.Id == currentContentId.Value);
