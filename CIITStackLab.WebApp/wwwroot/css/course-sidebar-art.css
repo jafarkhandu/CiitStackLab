@@ -102,10 +102,14 @@
 
 .ciit-course-global-sidebar > .ciit-course-switcher,
 .ciit-course-global-sidebar > .ciit-course-global-sidebar-heading,
-.ciit-course-global-sidebar > .ciit-course-global-nav,
-.ciit-course-global-sidebar > .ciit-course-sidebar-art {
+.ciit-course-global-sidebar > .ciit-course-global-nav {
     position: relative;
     z-index: 2;
+}
+
+.ciit-course-global-sidebar > .ciit-course-sidebar-art {
+    position: absolute;
+    z-index: 3;
 }
 
 .ciit-course-global-sidebar > .ciit-course-global-nav {
