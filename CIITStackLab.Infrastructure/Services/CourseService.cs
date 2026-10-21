@@ -226,7 +226,7 @@ public sealed class CourseService
                 .ToDictionaryAsync(note => note.Id, note => note.TopicId, cancellationToken);
 
         var interviewRows = await _dbContext.ContentInterviewQuestions.AsNoTracking()
-            .Where(question => question.Flag == 0
+            .Where(question => (question.Flag == 0 || question.Flag == null)
                 && ((question.TopicId.HasValue && topicIds.Contains(question.TopicId.Value))
                     || (question.ContentId.HasValue && contentIds.Contains(question.ContentId.Value))
                     || (question.NoteId.HasValue && chapterIds.Contains(question.NoteId.Value))))
@@ -234,7 +234,7 @@ public sealed class CourseService
             .ToListAsync(cancellationToken);
 
         var practiceRows = await _dbContext.ContentProgramQuestions.AsNoTracking()
-            .Where(question => question.Flag == 0
+            .Where(question => (question.Flag == 0 || question.Flag == null)
                 && ((question.ContentId.HasValue && contentIds.Contains(question.ContentId.Value))
                     || (question.NoteId.HasValue && chapterIds.Contains(question.NoteId.Value))))
             .Select(question => new { question.Id, question.ContentId, question.NoteId })
@@ -243,7 +243,7 @@ public sealed class CourseService
         var questions = await _dbContext.ContentQuestions
             .AsNoTracking()
             .Where(question =>
-                question.Flag == 0
+                (question.Flag == 0 || question.Flag == null)
                 && ((question.ContentId.HasValue
                      && contentIds.Contains(question.ContentId.Value))
                     || (question.TopicId.HasValue
