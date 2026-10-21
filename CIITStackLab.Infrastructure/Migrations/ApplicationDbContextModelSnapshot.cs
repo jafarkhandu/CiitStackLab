@@ -303,6 +303,15 @@ namespace CIITStackLab.Infrastructure.Migrations
                         .HasColumnType("nvarchar(500)")
                         .HasColumnName("course_image_path");
 
+                    b.Property<string>("DiscountMode")
+                        .HasMaxLength(20)
+                        .HasColumnType("nvarchar(20)")
+                        .HasColumnName("discount_mode");
+
+                    b.Property<decimal?>("DiscountValue")
+                        .HasColumnType("decimal(10,2)")
+                        .HasColumnName("discount_value");
+
                     b.Property<double?>("InstallmentPercentage")
                         .HasColumnType("float")
                         .HasColumnName("installment_percentage");

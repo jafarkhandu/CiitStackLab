@@ -78,7 +78,21 @@
                         else
                         {
                             <strong>₹@Model.TotalPrice.ToString("N2")</strong>
-                            <small>Topic prices combined</small>
+                            @if (Model.DiscountAmount > 0m)
+                            {
+                                <div class="ciit-course-discount-pricing">
+                                    <span class="ciit-course-original-price">₹@Model.OriginalPrice.ToString("N2")</span>
+                                    @if (Model.DiscountPercentage.HasValue)
+                                    {
+                                        <span class="ciit-course-discount-badge">@Model.DiscountPercentage.Value.ToString("0.##")% OFF</span>
+                                    }
+                                    <small class="ciit-course-savings">You save ₹@Model.DiscountAmount.ToString("N2") on this course</small>
+                                </div>
+                            }
+                            else
+                            {
+                                <small>Topic prices combined</small>
+                            }
                         }
                     </div>
 

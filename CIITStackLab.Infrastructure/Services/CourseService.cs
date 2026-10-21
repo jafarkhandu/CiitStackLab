@@ -326,13 +326,36 @@ public sealed class CourseService
             Title = course.Title,
             ShortDescription = presentation.ShortDescription,
             Description = presentation.Description,
-            ImageUrl = presentation.ImageUrl,
+            ImageUrl = course.ImagePath ?? presentation.ImageUrl,
             Category = presentation.Category,
             Level = presentation.Level,
             DurationHours = topics.Sum(topic => topic.DurationMinutes ?? 0) / 60m,
-            TotalPrice = topics.Sum(topic => Math.Max(0m, topic.Price)),
+            OriginalPrice = topics.Sum(topic => Math.Max(0m, topic.Price)),
+            TotalPrice = CalculateDiscountedPrice(topics.Sum(topic => Math.Max(0m, topic.Price)), course.DiscountMode, course.DiscountValue),
+            DiscountAmount = Math.Max(0m, topics.Sum(topic => Math.Max(0m, topic.Price)) - CalculateDiscountedPrice(topics.Sum(topic => Math.Max(0m, topic.Price)), course.DiscountMode, course.DiscountValue)),
+            DiscountPercentage = GetDiscountPercentage(topics.Sum(topic => Math.Max(0m, topic.Price)), course.DiscountMode, course.DiscountValue),
             Topics = topics
         };
+    }
+
+    private static decimal CalculateDiscountedPrice(decimal originalPrice, string? discountMode, decimal? discountValue)
+    {
+        if (originalPrice <= 0m || !discountValue.HasValue || discountValue.Value < 0m)
+            return Math.Max(0m, originalPrice);
+        var discounted = discountMode switch
+        {
+            "percentage" when discountValue.Value <= 100m => originalPrice * (1m - discountValue.Value / 100m),
+            "direct" when discountValue.Value <= originalPrice => discountValue.Value,
+            _ => originalPrice
+        };
+        return Math.Round(Math.Clamp(discounted, 0m, originalPrice), 2, MidpointRounding.AwayFromZero);
+    }
+
+    private static decimal? GetDiscountPercentage(decimal originalPrice, string? discountMode, decimal? discountValue)
+    {
+        if (originalPrice <= 0m || !discountValue.HasValue) return null;
+        var discounted = CalculateDiscountedPrice(originalPrice, discountMode, discountValue);
+        return discounted < originalPrice ? Math.Round((originalPrice - discounted) / originalPrice * 100m, 2) : null;
     }
 
     private async Task<IReadOnlyDictionary<int, decimal>> GetDurationHoursByCourseIdsAsync(
