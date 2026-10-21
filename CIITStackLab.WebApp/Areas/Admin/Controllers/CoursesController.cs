@@ -44,6 +44,17 @@ public class CoursesController : Controller
         if (!ModelState.IsValid)
             return Fail("Please check the course details.", model.Id);
 
+        model.DiscountMode = string.IsNullOrWhiteSpace(model.DiscountMode) ? null : model.DiscountMode.Trim().ToLowerInvariant();
+        if (model.DiscountMode is not null and not "percentage" and not "direct")
+            return Fail("Choose a valid discount type.", model.Id);
+        if (model.DiscountMode is not null && !model.DiscountValue.HasValue)
+            return Fail("Enter a discount value.", model.Id);
+        if (model.DiscountMode == "percentage" && (model.DiscountValue < 0m || model.DiscountValue > 100m))
+            return Fail("Percentage discount must be between 0 and 100.", model.Id);
+        if (model.DiscountMode == "direct" && model.DiscountValue < 0m)
+            return Fail("Discounted price cannot be negative.", model.Id);
+        if (model.DiscountMode is null) model.DiscountValue = null;
+
         if (await _courseService.CourseNameExistsAsync(model.CourseName, model.Id == 0 ? null : model.Id, cancellationToken))
             return Fail("A course with this name already exists.", model.Id);
 
@@ -58,7 +69,7 @@ public class CoursesController : Controller
 
         if (model.Id == 0)
         {
-            var created = await _courseService.CreateAsync(model.CourseName, uploadedImagePath, cancellationToken);
+            var created = await _courseService.CreateAsync(model.CourseName, uploadedImagePath, model.DiscountMode, model.DiscountValue, cancellationToken);
             if (!created.Succeeded)
             {
                 DeleteCourseImage(uploadedImagePath);
@@ -69,7 +80,7 @@ public class CoursesController : Controller
 
         var oldImagePath = (await _courseService.GetActiveAsync(cancellationToken))
             .FirstOrDefault(x => x.Id == model.Id)?.ImagePath;
-        var updated = await _courseService.UpdateAsync(model.Id, model.CourseName, uploadedImagePath, cancellationToken);
+        var updated = await _courseService.UpdateAsync(model.Id, model.CourseName, uploadedImagePath, model.DiscountMode, model.DiscountValue, cancellationToken);
         if (!updated.Succeeded)
         {
             DeleteCourseImage(uploadedImagePath);

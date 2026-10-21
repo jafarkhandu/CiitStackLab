@@ -183,6 +183,12 @@ public sealed class CoursePurchaseService
             return 0m;
         }
 
+        var courseDiscount = await _dbContext.Courses.AsNoTracking()
+            .Where(course => course.Id == courseId && course.Flag == 0)
+            .Select(course => new { course.DiscountMode, course.DiscountValue })
+            .SingleOrDefaultAsync(cancellationToken);
+        if (courseDiscount is null) return 0m;
+
         var activeTopicPrices = await (
             from course in _dbContext.Courses.AsNoTracking()
             join courseTopic in _dbContext.CourseModules.AsNoTracking()
@@ -201,7 +207,16 @@ public sealed class CoursePurchaseService
             .Distinct()
             .ToListAsync(cancellationToken);
 
-        return activeTopicPrices.Sum(row => Math.Max(0m, row.Price));
+        var originalPrice = activeTopicPrices.Sum(row => Math.Max(0m, row.Price));
+        if (originalPrice <= 0m || !courseDiscount.DiscountValue.HasValue) return originalPrice;
+        var value = courseDiscount.DiscountValue.Value;
+        var discountedPrice = courseDiscount.DiscountMode switch
+        {
+            "percentage" when value >= 0m && value <= 100m => originalPrice * (1m - value / 100m),
+            "direct" when value >= 0m && value <= originalPrice => value,
+            _ => originalPrice
+        };
+        return Math.Round(Math.Clamp(discountedPrice, 0m, originalPrice), 2, MidpointRounding.AwayFromZero);
     }
 
     public async Task<bool> HasPurchasedCourseAsync(
