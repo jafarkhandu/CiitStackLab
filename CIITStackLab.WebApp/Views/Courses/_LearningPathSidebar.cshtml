@@ -74,15 +74,6 @@
                         <span>@topic.Chapters.Count chapter@(topic.Chapters.Count == 1 ? "" : "s")</span>
                     </div>
                 </summary>
-                @if (User.IsInRole("Student") && learningProgress is not null && topicContents.Count > 0)
-                {
-                    <div class="ciit-learning-topic-progress">
-                        <div class="ciit-learning-topic-progress-labels"><span>Topic progress</span><strong>@completedCount / @topicContents.Count</strong></div>
-                        <div class="ciit-learning-topic-progress-track" role="progressbar" aria-label="@topic.Title completion" aria-valuenow="@progress" aria-valuemin="0" aria-valuemax="100">
-                            <span style="width: @progress%"></span>
-                        </div>
-                    </div>
-                }
                 @for (var chapterIndex = 0; chapterIndex < topic.Chapters.Count; chapterIndex++)
                 {
                     var chapter = topic.Chapters[chapterIndex];
