@@ -187,21 +187,27 @@ public sealed class CourseService
 
         var chapterRows = topicIds.Count == 0
             ? new List<(int TopicId, string Title)>()
-            : await _dbContext.TrainingNotes
+            : (await _dbContext.TrainingNotes
                 .AsNoTracking()
                 .Where(note => topicIds.Contains(note.TopicId) && note.Flag == 0)
                 .OrderBy(note => note.TopicId)
                 .ThenBy(note => note.SortOrder)
                 .ThenBy(note => note.Id)
-                .Select(note => new ValueTuple<int, string>(note.TopicId, note.Title))
-                .ToListAsync(cancellationToken);
+                .Select(note => new { note.TopicId, note.Title })
+                .ToListAsync(cancellationToken))
+                .Select(note => (note.TopicId, note.Title))
+                .ToList();
 
         var contentIds = rows
             .Where(x => x.ContentId.HasValue)
             .Select(x => x.ContentId!.Value)
             .Distinct()
             .ToList();
-        var noteIds = chapterRows.Select(note => note.Item1).Distinct().ToList();
+        var noteIds = rows
+            .Where(x => x.NoteId.HasValue)
+            .Select(x => x.NoteId!.Value)
+            .Distinct()
+            .ToList();
         var chapterIds = topicIds.Count == 0
             ? new List<int>()
             : await _dbContext.TrainingNotes.AsNoTracking()
@@ -233,14 +239,6 @@ public sealed class CourseService
                     || (question.NoteId.HasValue && chapterIds.Contains(question.NoteId.Value))))
             .Select(question => new { question.Id, question.ContentId, question.NoteId })
             .ToListAsync(cancellationToken);
-
-        int CountTopicAssessments(int topicId, IEnumerable<dynamic> assessmentRows)
-        {
-            return assessmentRows.Count(question =>
-                (question.TopicId != null && (int)question.TopicId == topicId)
-                || (question.ContentId != null && topicIdByContentId.TryGetValue((int)question.ContentId, out var contentTopicId) && contentTopicId == topicId)
-                || (question.NoteId != null && topicIdByChapterId.TryGetValue((int)question.NoteId, out var chapterTopicId) && chapterTopicId == topicId));
-        }
 
         var questions = await _dbContext.ContentQuestions
             .AsNoTracking()
