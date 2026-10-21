@@ -1,0 +1,129 @@
+/* Student sidebar learning artwork. Navigation and routes are unchanged. */
+.ciit-course-global-sidebar {
+    position: sticky;
+    isolation: isolate;
+}
+
+.ciit-course-sidebar-art {
+    position: absolute;
+    right: 0;
+    bottom: 0;
+    left: 0;
+    z-index: 0;
+    height: 176px;
+    overflow: hidden;
+    pointer-events: none;
+    background:
+        radial-gradient(circle at 12% 82%, rgba(125, 179, 255, .20), transparent 38%),
+        linear-gradient(180deg, rgba(237, 245, 255, 0) 0%, rgba(225, 238, 255, .42) 55%, rgba(211, 229, 255, .78) 100%);
+    border-radius: 42% 42% 0 0 / 24% 24% 0 0;
+}
+
+.ciit-course-sidebar-art-copy {
+    position: absolute;
+    top: -1px;
+    right: 0;
+    left: 0;
+    z-index: 2;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    color: #7290b8;
+    font-size: .54rem;
+    font-weight: 850;
+    letter-spacing: .20em;
+    line-height: 1.45;
+    text-align: center;
+}
+
+.ciit-course-sidebar-art-copy span {
+    display: block;
+}
+
+.ciit-course-sidebar-art-copy span:nth-child(2) {
+    margin-left: .42em;
+}
+
+.ciit-course-sidebar-art-copy span:nth-child(3) {
+    margin-left: .9em;
+}
+
+.ciit-course-sidebar-art-copy::after {
+    width: 4px;
+    height: 4px;
+    margin: 5px 0 0 64px;
+    border-radius: 50%;
+    background: #65a9ff;
+    box-shadow: 9px 7px 0 rgba(101, 169, 255, .45);
+    content: "";
+    animation: ciit-sidebar-art-dots 2.8s ease-in-out infinite;
+}
+
+.ciit-course-sidebar-art-visual {
+    position: absolute;
+    right: 0;
+    bottom: -1px;
+    left: 0;
+    width: 100%;
+    height: 154px;
+    animation: ciit-sidebar-art-float 4.8s ease-in-out infinite;
+    transform-origin: 50% 100%;
+}
+
+.ciit-course-sidebar-art-visual .ciit-art-leaf {
+    transform-origin: 50% 100%;
+    animation: ciit-sidebar-art-leaf 3.2s ease-in-out infinite;
+}
+
+.ciit-course-sidebar-art-visual .ciit-art-laptop {
+    transform-origin: 50% 70%;
+    animation: ciit-sidebar-art-laptop 4.2s ease-in-out infinite;
+}
+
+@keyframes ciit-sidebar-art-float {
+    0%, 100% { transform: translateY(2px); }
+    50% { transform: translateY(-3px); }
+}
+
+@keyframes ciit-sidebar-art-leaf {
+    0%, 100% { transform: rotate(-1deg); }
+    50% { transform: rotate(5deg); }
+}
+
+@keyframes ciit-sidebar-art-laptop {
+    0%, 100% { transform: rotate(0deg); }
+    50% { transform: rotate(-1.5deg); }
+}
+
+@keyframes ciit-sidebar-art-dots {
+    0%, 100% { transform: translateY(0); opacity: .72; }
+    50% { transform: translateY(-5px); opacity: 1; }
+}
+
+.ciit-course-global-sidebar > .ciit-course-switcher,
+.ciit-course-global-sidebar > .ciit-course-global-sidebar-heading,
+.ciit-course-global-sidebar > .ciit-course-global-nav,
+.ciit-course-global-sidebar > .ciit-course-sidebar-art {
+    position: relative;
+    z-index: 2;
+}
+
+.ciit-course-global-sidebar > .ciit-course-global-nav {
+    margin-bottom: 150px;
+}
+
+@media (max-width: 1199.98px) {
+    .ciit-course-sidebar-art,
+    .ciit-course-global-sidebar > .ciit-course-global-nav {
+        margin-bottom: 0;
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .ciit-course-sidebar-art-visual,
+    .ciit-course-sidebar-art-visual .ciit-art-leaf,
+    .ciit-course-sidebar-art-visual .ciit-art-laptop,
+    .ciit-course-sidebar-art-copy::after {
+        animation: none !important;
+    }
+}
