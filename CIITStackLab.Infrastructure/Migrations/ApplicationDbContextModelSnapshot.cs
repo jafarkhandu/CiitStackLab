@@ -802,6 +802,32 @@ namespace CIITStackLab.Infrastructure.Migrations
                     b.ToTable("tblstudent_topic_exam_security_events", "erpsystem");
                 });
 
+            modelBuilder.Entity("CIITStackLab.Domain.Entities.ExamApplicationNotification", b =>
+                {
+                    b.Property<long>("Id").ValueGeneratedOnAdd().HasColumnType("bigint").HasColumnName("notification_id");
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<long>("Id"));
+                    b.Property<string>("DedupeKey").IsRequired().IsFixedLength().HasMaxLength(64).HasColumnType("char(64)").HasColumnName("dedupe_key");
+                    b.Property<string>("AdminUserId").IsRequired().HasMaxLength(450).HasColumnType("nvarchar(450)").HasColumnName("admin_user_id");
+                    b.Property<string>("StudentUserId").IsRequired().HasMaxLength(450).HasColumnType("nvarchar(450)").HasColumnName("student_user_id");
+                    b.Property<string>("StudentName").IsRequired().HasMaxLength(256).HasColumnType("nvarchar(256)").HasColumnName("student_name");
+                    b.Property<int>("CourseId").HasColumnType("int").HasColumnName("course_id");
+                    b.Property<string>("CourseTitle").IsRequired().HasMaxLength(200).HasColumnType("nvarchar(200)").HasColumnName("course_title");
+                    b.Property<int>("TopicId").HasColumnType("int").HasColumnName("topic_id");
+                    b.Property<string>("TopicTitle").IsRequired().HasMaxLength(200).HasColumnType("nvarchar(200)").HasColumnName("topic_title");
+                    b.Property<int>("ValidQuestionCount").HasColumnType("int").HasColumnName("valid_question_count");
+                    b.Property<int>("RequiredQuestionCount").ValueGeneratedOnAdd().HasColumnType("int").HasDefaultValue(50).HasColumnName("required_question_count");
+                    b.Property<string>("Reason").IsRequired().HasMaxLength(1000).HasColumnType("nvarchar(1000)").HasColumnName("reason");
+                    b.Property<DateTime>("NotificationDay").HasColumnType("date").HasColumnName("notification_day");
+                    b.Property<DateTime>("CreatedAtUtc").HasColumnType("datetime2").HasColumnName("created_at_utc");
+                    b.Property<bool>("IsDelivered").ValueGeneratedOnAdd().HasColumnType("bit").HasDefaultValue(false).HasColumnName("is_delivered");
+                    b.Property<bool>("IsRead").ValueGeneratedOnAdd().HasColumnType("bit").HasDefaultValue(false).HasColumnName("is_read");
+                    b.HasKey("Id");
+                    b.HasIndex("DedupeKey").IsUnique().HasDatabaseName("UX_exam_app_notification_dedupe_key");
+                    b.HasIndex("AdminUserId", "IsRead", "CreatedAtUtc").HasDatabaseName("IX_exam_app_notification_admin_read_created");
+                    b.HasIndex("AdminUserId", "IsDelivered").HasDatabaseName("IX_exam_app_notification_admin_delivered");
+                    b.ToTable("tbl_exam_application_notifications", "erpsystem");
+                });
+
             modelBuilder.Entity("CIITStackLab.Domain.Entities.TrainingNote", b =>
                 {
                     b.Property<int>("Id")

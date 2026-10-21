@@ -21,6 +21,14 @@
         ? chapters[currentIndex + 1]
         : null;
 
+    var progressUserId = User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value
+        ?? "guest";
+    var progressUserKey = Convert.ToHexString(
+        System.Security.Cryptography.SHA256.HashData(
+            System.Text.Encoding.UTF8.GetBytes(progressUserId)))
+        .ToLowerInvariant();
+    var notesProgressKey = $"ciit-notes-progress:{progressUserKey}:{Model.TopicId}:{Model.CurrentChapter?.Id ?? 0}";
+
     Layout = string.IsNullOrWhiteSpace(courseId)
         ? "_Layout"
         : "_CourseLayout";
@@ -68,8 +76,36 @@
                     <h2>@Model.CurrentChapter?.Title</h2>
                 </div>
 
-                <div class="ciit-notes-reader-content">
-                    @Html.Raw(Model.CurrentChapter?.HtmlContent)
+                <div class="ciit-notes-page-reader"
+                     data-progress-key="@notesProgressKey">
+                    <div class="ciit-notes-page-controls" hidden>
+                        <button type="button"
+                                class="ciit-notes-page-button"
+                                data-page-previous
+                                disabled>
+                            <i class="bi bi-chevron-left"></i>
+                            Previous
+                        </button>
+                        <span class="ciit-notes-page-status" aria-live="polite"></span>
+                        <div class="ciit-notes-page-actions">
+                            <button type="button"
+                                    class="ciit-notes-page-button ciit-notes-page-button-primary"
+                                    data-page-mark-read>
+                                Mark as Read
+                            </button>
+                            <button type="button"
+                                    class="ciit-notes-page-button"
+                                    data-page-next
+                                    disabled>
+                                Next
+                                <i class="bi bi-chevron-right"></i>
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="ciit-notes-reader-content">
+                        @Html.Raw(Model.CurrentChapter?.HtmlContent)
+                    </div>
                 </div>
 
                 @if (Model.CurrentChapter?.Media.Count > 0)
@@ -158,3 +194,7 @@
         </main>
     </div>
 </section>
+
+@section Scripts {
+    <script src="~/js/notes-page-reader.js" asp-append-version="true"></script>
+}

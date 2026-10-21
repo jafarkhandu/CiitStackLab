@@ -9,8 +9,7 @@ using CIITStackLab.WebApp.Models;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.AspNetCore.SignalR;
-using CIITStackLab.WebApp.Hubs;
+using CIITStackLab.WebApp.Services;
 
 namespace CIITStackLab.WebApp.Controllers;
 
@@ -27,7 +26,7 @@ public class CoursesController : Controller
     private readonly PhonePePaymentService _phonePePaymentService;
     private readonly PaymentNotificationService _paymentNotificationService;
     private readonly ILogger<CoursesController> _logger;
-    private readonly IHubContext<ExamApplicationNotificationHub> _examApplicationHub;
+    private readonly ExamApplicationNotificationService _examApplicationNotificationService;
 
     public CoursesController(
         ICourseService courseService,
@@ -41,7 +40,7 @@ public class CoursesController : Controller
         PhonePePaymentService phonePePaymentService,
         PaymentNotificationService paymentNotificationService,
         ILogger<CoursesController> logger,
-        IHubContext<ExamApplicationNotificationHub> examApplicationHub)
+        ExamApplicationNotificationService examApplicationNotificationService)
     {
         _courseService = courseService;
         _studentProgressService = studentProgressService;
@@ -54,7 +53,7 @@ public class CoursesController : Controller
         _phonePePaymentService = phonePePaymentService;
         _paymentNotificationService = paymentNotificationService;
         _logger = logger;
-        _examApplicationHub = examApplicationHub;
+        _examApplicationNotificationService = examApplicationNotificationService;
     }
 
     [HttpGet]
@@ -594,9 +593,11 @@ public class CoursesController : Controller
             return NotFound();
         }
 
-        var publishedCourse = await _courseService.GetByIdAsync(id, cancellationToken);
+        var publishedCourseExists = await _dbContext.Courses
+            .AsNoTracking()
+            .AnyAsync(course => course.Id == id && course.Flag == 0, cancellationToken);
 
-        if (publishedCourse is null)
+        if (!publishedCourseExists)
         {
             return NotFound();
         }
@@ -650,7 +651,70 @@ public class CoursesController : Controller
             }
         }
 
-        var course = await _courseService.GetLearningAsync(id, contentId, cancellationToken);
+        // Resolve the selected topic's lesson before loading its full learning DTO.
+        // This prevents loading every chapter, note and assessment twice on topic changes.
+        if (topicId.HasValue && !contentId.HasValue)
+        {
+            var topicExistsInCourse = await (
+                from courseModule in _dbContext.CourseModules.AsNoTracking()
+                join topic in _dbContext.Topics.AsNoTracking()
+                    on courseModule.TopicId equals topic.Id
+                where courseModule.CourseId == id
+                    && courseModule.TopicId == topicId.Value
+                    && courseModule.Flag == 0
+                    && topic.Flag == 0
+                select topic.Id)
+                .AnyAsync(cancellationToken);
+
+            if (!topicExistsInCourse)
+            {
+                return NotFound();
+            }
+
+            var directTopicContentIds = await _dbContext.Lessons
+                .AsNoTracking()
+                .Where(lesson => lesson.TopicId == topicId.Value && lesson.Flag == 0)
+                .OrderBy(lesson => lesson.Id)
+                .Select(lesson => lesson.Id)
+                .ToListAsync(cancellationToken);
+
+            var chapterContentIds = await (
+                from lesson in _dbContext.Lessons.AsNoTracking()
+                join note in _dbContext.TrainingNotes.AsNoTracking()
+                    on lesson.NoteId equals (int?)note.Id
+                where lesson.Flag == 0
+                    && note.TopicId == topicId.Value
+                    && note.Flag == 0
+                orderby note.SortOrder, note.Id, lesson.Id
+                select lesson.Id)
+                .Distinct()
+                .ToListAsync(cancellationToken);
+
+            var topicContentIds = directTopicContentIds
+                .Concat(chapterContentIds)
+                .Distinct()
+                .ToList();
+
+            if (topicContentIds.Count > 0)
+            {
+                contentId = topicContentIds[0];
+
+                if (!string.IsNullOrWhiteSpace(studentUserId))
+                {
+                    var resumeContentId = await _studentProgressService.GetResumeContentIdAsync(
+                        studentUserId,
+                        id,
+                        cancellationToken);
+
+                    if (resumeContentId.HasValue && topicContentIds.Contains(resumeContentId.Value))
+                    {
+                        contentId = resumeContentId.Value;
+                    }
+                }
+            }
+        }
+
+        var course = await _courseService.GetLearningAsync(id, contentId, cancellationToken, topicId);
 
         if (course is null)
         {
@@ -691,42 +755,6 @@ public class CoursesController : Controller
             if (selectedTopic is null)
             {
                 return NotFound();
-            }
-
-            var topicContents = selectedTopic.Contents
-                .Concat(selectedTopic.Chapters.SelectMany(chapter => chapter.Contents))
-                .DistinctBy(content => content.Id)
-                .ToList();
-
-            if (!contentId.HasValue && topicContents.Count > 0)
-            {
-                var selectedContentId = topicContents[0].Id;
-
-                if (!string.IsNullOrWhiteSpace(studentUserId))
-                {
-                    var resumeContentId = await _studentProgressService.GetResumeContentIdAsync(
-                        studentUserId,
-                        id,
-                        cancellationToken);
-
-                    if (resumeContentId.HasValue
-                        && topicContents.Any(content => content.Id == resumeContentId.Value))
-                    {
-                        selectedContentId = resumeContentId.Value;
-                    }
-                }
-
-                course = await _courseService.GetLearningAsync(id, selectedContentId, cancellationToken);
-                if (course is null)
-                {
-                    return NotFound();
-                }
-
-                selectedTopic = course.Topics.FirstOrDefault(topic => topic.Id == topicId.Value);
-                if (selectedTopic is null)
-                {
-                    return NotFound();
-                }
             }
 
             course.CurrentTopicId = selectedTopic.Id;
@@ -952,6 +980,28 @@ public class CoursesController : Controller
         if (!topicBelongsToCourse)
             return NotFound();
 
+        var questionAvailability = await _topicExaminationService.CheckQuestionAvailabilityAsync(
+            userId,
+            id,
+            topicId,
+            cancellationToken);
+        if (!questionAvailability.IsAvailable)
+        {
+            var examAvailabilityMessage = questionAvailability.Error
+                ?? "Exam questions are not available for this topic right now. Please try applying again later.";
+            TempData["ExamError"] = examAvailabilityMessage;
+
+            await NotifyExamQuestionsUnavailableAsync(
+                userId,
+                id,
+                topicId,
+                questionAvailability.ValidQuestionCount,
+                examAvailabilityMessage,
+                cancellationToken);
+
+            return RedirectToAction(nameof(Learn), new { id, topicId });
+        }
+
         var hasExistingExam = await _dbContext.TopicExamAttempts.AsNoTracking().AnyAsync(
             attempt => attempt.UserId == userId
                 && attempt.CourseId == id
@@ -979,28 +1029,6 @@ public class CoursesController : Controller
             return RedirectToAction(nameof(Learn), new { id, topicId = allowedTopicId.Value });
         }
 
-        var questionAvailability = await _topicExaminationService.CheckQuestionAvailabilityAsync(
-            userId,
-            id,
-            topicId,
-            cancellationToken);
-        if (!questionAvailability.IsAvailable)
-        {
-            var examAvailabilityMessage = questionAvailability.Error
-                ?? "Exam questions are not available for this topic right now. Please try applying again later.";
-            TempData["ExamError"] = examAvailabilityMessage;
-
-            await NotifyExamQuestionsUnavailableAsync(
-                userId,
-                id,
-                topicId,
-                questionAvailability.ValidQuestionCount,
-                examAvailabilityMessage,
-                cancellationToken);
-
-            return RedirectToAction(nameof(Learn), new { id, topicId });
-        }
-
         var topicNoteIds = await _dbContext.TrainingNotes.AsNoTracking()
             .Where(x => x.TopicId == topicId && x.Flag == 0)
             .Select(x => x.Id).ToListAsync(cancellationToken);
@@ -1023,7 +1051,7 @@ public class CoursesController : Controller
         return RedirectToAction(nameof(Learn), new { id, topicId });
     }
 
-    private async Task NotifyExamQuestionsUnavailableAsync(
+    private Task NotifyExamQuestionsUnavailableAsync(
         string userId,
         int courseId,
         int topicId,
@@ -1031,61 +1059,14 @@ public class CoursesController : Controller
         string reason,
         CancellationToken cancellationToken)
     {
-        var context = await (
-            from courseModule in _dbContext.CourseModules.AsNoTracking()
-            join course in _dbContext.Courses.AsNoTracking()
-                on courseModule.CourseId equals course.Id
-            join topic in _dbContext.Topics.AsNoTracking()
-                on courseModule.TopicId equals topic.Id
-            where courseModule.CourseId == courseId
-                && courseModule.TopicId == topicId
-                && courseModule.Flag == 0
-                && course.Flag == 0
-                && topic.Flag == 0
-            select new
-            {
-                CourseTitle = course.Title,
-                TopicTitle = topic.Title
-            })
-            .FirstOrDefaultAsync(cancellationToken);
-
-        if (context is null)
-        {
-            return;
-        }
-
-        try
-        {
-            await _examApplicationHub.Clients
-                .Group(ExamApplicationNotificationHub.AdminGroup)
-                .SendAsync(
-                    "ExamQuestionsUnavailable",
-                    new
-                    {
-                        courseId,
-                        courseTitle = context.CourseTitle,
-                        topicId,
-                        topicTitle = context.TopicTitle,
-                        studentName = User.Identity?.Name ?? userId,
-                        validQuestionCount,
-                        requiredQuestionCount = 50,
-                        reason,
-                        occurredAtUtc = DateTime.UtcNow
-                    },
-                    cancellationToken);
-        }
-        catch (OperationCanceledException)
-        {
-            throw;
-        }
-        catch (Exception exception)
-        {
-            _logger.LogWarning(
-                exception,
-                "Unable to deliver the live exam-question alert for course {CourseId}, topic {TopicId}.",
-                courseId,
-                topicId);
-        }
+        return _examApplicationNotificationService.CreateMissingQuestionsNotificationsAsync(
+            userId,
+            User.Identity?.Name ?? userId,
+            courseId,
+            topicId,
+            validQuestionCount,
+            reason,
+            cancellationToken);
     }
 
     [HttpPost("Courses/Learn/{id:int}/Assessment/{contentId:int}")]

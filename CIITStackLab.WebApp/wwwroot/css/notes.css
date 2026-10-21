@@ -428,3 +428,115 @@
 .ciit-notes-reader-pager a:hover{transform:translateY(-2px)}
 @keyframes ciit-notes-reader-enter{from{opacity:0;transform:translateY(18px);filter:blur(3px)}to{opacity:1;transform:translateY(0);filter:blur(0)}}
 @media(prefers-reduced-motion:reduce){.ciit-notes-reader-card{animation:none!important}.ciit-notes-reader-pager a{transition:none!important}}
+
+
+/* Adaptive pages are only shown when the chapter content exceeds one reading page. */
+.ciit-notes-page-controls {
+    display: grid;
+    grid-template-columns: auto minmax(90px, 1fr) auto;
+    align-items: center;
+    gap: 12px;
+    padding: 14px clamp(22px, 3vw, 38px);
+    border-bottom: 1px solid rgba(220, 229, 242, .8);
+    background: rgba(255, 255, 255, .42);
+}
+
+.ciit-notes-page-controls[hidden] {
+    display: none !important;
+}
+
+.ciit-notes-page-status {
+    color: #64748b;
+    font-size: 12px;
+    font-weight: 800;
+    text-align: center;
+    white-space: nowrap;
+}
+
+.ciit-notes-page-actions {
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 8px;
+}
+
+.ciit-notes-page-button {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 7px;
+    min-height: 36px;
+    padding: 8px 12px;
+    border: 1px solid rgba(205, 218, 237, .95);
+    border-radius: 10px;
+    background: rgba(255, 255, 255, .78);
+    color: #34445d;
+    font-size: 12px;
+    font-weight: 800;
+    line-height: 1.2;
+    cursor: pointer;
+    transition: background-color .15s ease, border-color .15s ease, color .15s ease;
+}
+
+.ciit-notes-page-button:hover:not(:disabled) {
+    border-color: #a9c6ff;
+    background: #f5f8ff;
+    color: #1769ff;
+}
+
+.ciit-notes-page-button:disabled {
+    opacity: .45;
+    cursor: not-allowed;
+}
+
+.ciit-notes-page-button-primary {
+    border-color: rgba(23, 105, 255, .2);
+    background: #1769ff;
+    color: #fff;
+}
+
+.ciit-notes-page-button-primary:hover:not(:disabled) {
+    border-color: #0d56df;
+    background: #0d56df;
+    color: #fff;
+}
+
+.ciit-notes-page-button-primary.is-read {
+    border-color: rgba(16, 145, 83, .2);
+    background: #eaf8f0;
+    color: #117443;
+}
+
+.ciit-notes-page {
+    min-width: 0;
+}
+
+.ciit-notes-page[hidden] {
+    display: none !important;
+}
+
+@media (max-width: 700px) {
+    .ciit-notes-page-controls {
+        grid-template-columns: 1fr auto;
+        gap: 10px;
+    }
+
+    .ciit-notes-page-status {
+        grid-column: 1 / -1;
+        grid-row: 1;
+    }
+
+    .ciit-notes-page-actions {
+        justify-content: flex-end;
+    }
+
+    .ciit-notes-page-button {
+        padding: 8px 10px;
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .ciit-notes-page-button {
+        transition: none;
+    }
+}

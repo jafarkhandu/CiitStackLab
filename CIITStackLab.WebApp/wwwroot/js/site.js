@@ -1,6 +1,29 @@
 document.addEventListener("DOMContentLoaded",function(){const t=document.getElementById("ciitTopicsScroll"),p=document.getElementById("topicsPrev"),n=document.getElementById("topicsNext");if(t&&p&&n){const a=350;p.addEventListener("click",function(){t.scrollBy({left:-a,behavior:"smooth"})});n.addEventListener("click",function(){t.scrollBy({left:a,behavior:"smooth"})})}const s=document.querySelectorAll(".ciit-hero-slide"),d=document.querySelectorAll(".ciit-slider-dot");if(!s.length||!d.length)return;let c=0,timer;function show(i){s.forEach(x=>x.classList.remove("active"));d.forEach(x=>x.classList.remove("active"));if(s[i]&&d[i]){s[i].classList.add("active");d[i].classList.add("active")}}function restart(){clearInterval(timer);timer=setInterval(function(){c=(c+1)%s.length;show(c)},4000)}d.forEach(function(x,i){x.addEventListener("click",function(){c=i;show(c);restart()})});show(0);restart()});
 
-document.addEventListener("DOMContentLoaded",function(){if(!document.body.classList.contains("ciit-course-environment-body")){return}const t=document.querySelector('.ciit-learning-video-frame iframe[src], a[href*="/uploads/videos/"], .ciit-notes-reader-media a, .ciit-mux-watch-player');if(!t){return}const e=document.createElement("script");e.src="/js/mux-video-player.js?v=3";e.async=true;e.dataset.ciitMuxPlayer="true";document.body.appendChild(e)});
+document.addEventListener("DOMContentLoaded", function () {
+    if (!document.body.classList.contains("ciit-course-environment-body")) {
+        return;
+    }
+
+    // The Learn page loads the player when the Content tab is opened below.
+    // Do not parse sidebar video links and download the Mux bundle on every Notes/Assessment visit.
+    if (document.querySelector(".ciit-learning-page")) {
+        return;
+    }
+
+    const hasVideoResource = document.querySelector(
+        '.ciit-learning-video-frame iframe[src], a[href*="/uploads/videos/"], .ciit-notes-reader-media a, .ciit-mux-watch-player'
+    );
+    if (!hasVideoResource || document.querySelector("script[data-ciit-mux-player]")) {
+        return;
+    }
+
+    const playerScript = document.createElement("script");
+    playerScript.src = "/js/mux-video-player.js?v=3";
+    playerScript.async = true;
+    playerScript.dataset.ciitMuxPlayer = "true";
+    document.body.appendChild(playerScript);
+});
 document.addEventListener("DOMContentLoaded", function () {
     const hubLink = document.querySelector("[data-learning-hub-transition]");
     const transition = document.getElementById("ciitHubTransition");
@@ -523,7 +546,7 @@ document.addEventListener("DOMContentLoaded", function () {
             saveLearningState();
         });
 
-        function buildPager(container, pageCount, label, onChange) {
+        function buildPager(container, pageCount, label, onChange, options) {
             if (pageCount <= 1) return null;
 
             const pager = document.createElement("nav");
@@ -550,6 +573,19 @@ document.addEventListener("DOMContentLoaded", function () {
             });
 
             pager.append(previous, numbers, next);
+
+            let markRead = null;
+            if (options && options.markRead) {
+                markRead = document.createElement("button");
+                markRead.type = "button";
+                markRead.className = "ciit-learning-subpage-mark-read";
+                markRead.textContent = "Mark as Read";
+                markRead.addEventListener("click", function () {
+                    options.onMarkRead();
+                });
+                pager.appendChild(markRead);
+            }
+
             const sectionHeading = container.querySelector(":scope > h5, :scope > h4, :scope > h3");
             if (sectionHeading) {
                 container.insertBefore(pager, sectionHeading.nextSibling);
@@ -575,6 +611,13 @@ document.addEventListener("DOMContentLoaded", function () {
 
                 previous.disabled = activeIndex === 0;
                 next.disabled = activeIndex === pageCount - 1;
+
+                if (markRead && options && typeof options.getLastReadIndex === "function") {
+                    const lastReadIndex = options.getLastReadIndex();
+                    const isRead = activeIndex <= lastReadIndex;
+                    markRead.textContent = isRead ? "Read" : "Mark as Read";
+                    markRead.classList.toggle("is-read", isRead);
+                }
             };
 
             return pager;
@@ -605,9 +648,27 @@ document.addEventListener("DOMContentLoaded", function () {
                 Array.from(parent.classList).sort().join("."),
                 label
             ].join(":");
+            const readProgressKey = "ciit-learning-read:" + window.location.pathname + ":" + pageStateKey;
+            const supportsReadProgress = Boolean(options && options.markRead);
+            function getLastReadIndex() {
+                if (!supportsReadProgress) return -1;
+                try {
+                    const storedIndex = Number(window.localStorage.getItem(readProgressKey));
+                    return Number.isInteger(storedIndex) && storedIndex >= 0
+                        ? storedIndex
+                        : -1;
+                } catch (error) {
+                    return -1;
+                }
+            }
+
             let activeIndex = Number.isInteger(savedLearningState.pages?.[pageStateKey])
                 ? savedLearningState.pages[pageStateKey]
                 : 0;
+            const lastReadIndex = getLastReadIndex();
+            if (supportsReadProgress && lastReadIndex >= 0) {
+                activeIndex = Math.min(lastReadIndex + 1, pages.length - 1);
+            }
             activeIndex = Math.max(0, Math.min(activeIndex, pages.length - 1));
 
             function showPage(nextIndex) {
@@ -629,7 +690,31 @@ document.addEventListener("DOMContentLoaded", function () {
                 }
             }
 
-            const pager = buildPager(parent, pages.length, label, showPage);
+            const pagerOptions = supportsReadProgress
+                ? {
+                    markRead: true,
+                    getLastReadIndex: getLastReadIndex,
+                    onMarkRead: function () {
+                        const currentReadIndex = activeIndex;
+                        try {
+                            const latestReadIndex = getLastReadIndex();
+                            window.localStorage.setItem(
+                                readProgressKey,
+                                String(Math.max(latestReadIndex, currentReadIndex))
+                            );
+                        } catch (error) {
+                            // Continue navigation even if browser storage is unavailable.
+                        }
+
+                        if (activeIndex < pages.length - 1) {
+                            showPage(activeIndex + 1);
+                        } else {
+                            showPage(activeIndex);
+                        }
+                    }
+                }
+                : null;
+            const pager = buildPager(parent, pages.length, label, showPage, pagerOptions);
             if (!pager) return;
             parent.dataset.ciitPaginated = "true";
             showPage(activeIndex);
@@ -781,7 +866,8 @@ document.addEventListener("DOMContentLoaded", function () {
                 contentContainer,
                 contentBlocks,
                 20,
-                "Notes pages"
+                "Notes pages",
+                { markRead: true }
             );
         });
 

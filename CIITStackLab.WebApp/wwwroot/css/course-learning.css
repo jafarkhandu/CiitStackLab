@@ -2640,3 +2640,70 @@ details[open] > summary .ciit-learning-disclosure-icon {
         height: 38px;
     }
 }
+
+
+/* Missing exam-question warning uses the red glass alert treatment. */
+.ciit-exam-availability-alert {
+    border-color: rgba(242, 151, 169, .6);
+    color: #6f2031;
+    background:
+        radial-gradient(circle at 100% 0, rgba(255, 92, 124, .18), transparent 48%),
+        linear-gradient(125deg, rgba(255, 255, 255, .94), rgba(255, 235, 239, .9));
+    box-shadow: 0 14px 35px rgba(156, 31, 60, .1), inset 0 1px 0 #fff;
+}
+
+.ciit-exam-availability-alert::after {
+    background: radial-gradient(circle, rgba(246, 72, 108, .16), transparent 70%);
+}
+
+.ciit-exam-availability-alert-icon {
+    border-color: rgba(255, 255, 255, .96);
+    color: #c92d4c;
+    background: linear-gradient(145deg, #fff5f6, #ffdfe5);
+    box-shadow: 0 7px 17px rgba(197, 39, 71, .13), inset 0 1px 0 #fff;
+}
+
+.ciit-exam-availability-alert strong {
+    color: #a5223d;
+}
+
+.ciit-exam-availability-alert p {
+    color: #853248;
+}
+
+
+/* Read-progress action for the existing long-notes pagination. */
+.ciit-learning-notes-panel .ciit-learning-subpage-mark-read {
+    flex: 0 0 auto;
+    min-height: 34px;
+    margin: 6px 10px 6px 0;
+    padding: 7px 13px;
+    border: 1px solid rgba(23, 105, 255, .24);
+    border-radius: 10px;
+    background: #1769ff;
+    color: #fff;
+    font-size: .78rem;
+    font-weight: 800;
+    white-space: nowrap;
+    cursor: pointer;
+    transition: background-color .15s ease, border-color .15s ease;
+}
+
+.ciit-learning-notes-panel .ciit-learning-subpage-mark-read:hover {
+    border-color: #0d56df;
+    background: #0d56df;
+}
+
+.ciit-learning-notes-panel .ciit-learning-subpage-mark-read.is-read {
+    border-color: rgba(16, 145, 83, .22);
+    background: #eaf8f0;
+    color: #117443;
+}
+
+@media (max-width: 767.98px) {
+    .ciit-learning-notes-panel .ciit-learning-subpage-mark-read {
+        margin: 6px;
+        padding: 7px 9px;
+        font-size: .72rem;
+    }
+}

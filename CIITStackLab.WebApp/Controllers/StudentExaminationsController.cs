@@ -5,8 +5,7 @@ using CIITStackLab.Infrastructure.Persistence;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.AspNetCore.SignalR;
-using CIITStackLab.WebApp.Hubs;
+using CIITStackLab.WebApp.Services;
 
 namespace CIITStackLab.WebApp.Controllers;
 
@@ -16,19 +15,16 @@ public sealed class StudentExaminationsController : Controller
 {
     private readonly ITopicExaminationService _exams;
     private readonly ApplicationDbContext _db;
-    private readonly IHubContext<ExamApplicationNotificationHub> _examApplicationHub;
-    private readonly ILogger<StudentExaminationsController> _logger;
+    private readonly ExamApplicationNotificationService _examApplicationNotificationService;
 
     public StudentExaminationsController(
         ITopicExaminationService exams,
         ApplicationDbContext db,
-        IHubContext<ExamApplicationNotificationHub> examApplicationHub,
-        ILogger<StudentExaminationsController> logger)
+        ExamApplicationNotificationService examApplicationNotificationService)
     {
         _exams = exams;
         _db = db;
-        _examApplicationHub = examApplicationHub;
-        _logger = logger;
+        _examApplicationNotificationService = examApplicationNotificationService;
     }
 
     [HttpGet("")]
@@ -142,61 +138,14 @@ public sealed class StudentExaminationsController : Controller
             return;
         }
 
-        var details = await (
-            from courseModule in _db.CourseModules.AsNoTracking()
-            join course in _db.Courses.AsNoTracking()
-                on courseModule.CourseId equals course.Id
-            join topic in _db.Topics.AsNoTracking()
-                on courseModule.TopicId equals topic.Id
-            where courseModule.CourseId == courseId
-                && courseModule.TopicId == topicId
-                && courseModule.Flag == 0
-                && course.Flag == 0
-                && topic.Flag == 0
-            select new
-            {
-                CourseTitle = course.Title,
-                TopicTitle = topic.Title
-            })
-            .FirstOrDefaultAsync(cancellationToken);
-
-        if (details is null)
-        {
-            return;
-        }
-
-        try
-        {
-            await _examApplicationHub.Clients
-                .Group(ExamApplicationNotificationHub.AdminGroup)
-                .SendAsync(
-                    "ExamQuestionsUnavailable",
-                    new
-                    {
-                        courseId,
-                        courseTitle = details.CourseTitle,
-                        topicId,
-                        topicTitle = details.TopicTitle,
-                        studentName = User.Identity?.Name ?? userId,
-                        validQuestionCount = availability.ValidQuestionCount,
-                        requiredQuestionCount = 50,
-                        reason = error,
-                        occurredAtUtc = DateTime.UtcNow
-                    },
-                    cancellationToken);
-        }
-        catch (OperationCanceledException)
-        {
-            throw;
-        }
-        catch (Exception exception)
-        {
-            _logger.LogWarning(
-                exception,
-                "Unable to deliver the live exam-question alert for course {CourseId}, topic {TopicId}.",
-                courseId,
-                topicId);
-        }
+        await _examApplicationNotificationService.CreateMissingQuestionsNotificationsAsync(
+            userId,
+            User.Identity?.Name ?? userId,
+            courseId,
+            topicId,
+            availability.ValidQuestionCount,
+            error,
+            cancellationToken);
     }
 
     [HttpGet("{attemptId:long}/Instructions")]
