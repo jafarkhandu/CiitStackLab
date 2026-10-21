@@ -44,7 +44,8 @@ public sealed class ExamApplicationNotificationHub : Hub
                 .AsNoTracking()
                 .Where(notification =>
                     notification.AdminUserId == adminUserId
-                    && !notification.IsDelivered)
+                    && !notification.IsDelivered
+                    && !notification.IsRead)
                 .OrderBy(notification => notification.CreatedAtUtc)
                 .Take(100)
                 .ToListAsync(Context.ConnectionAborted);
