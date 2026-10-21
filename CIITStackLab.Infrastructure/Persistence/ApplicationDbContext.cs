@@ -359,6 +359,7 @@ public class ApplicationDbContext : IdentityDbContext<ApplicationUser>
                 .ValueGeneratedOnAdd();
             entity.Property(x => x.DedupeKey)
                 .HasColumnName("dedupe_key")
+                .HasColumnType("char(64)")
                 .HasMaxLength(64)
                 .IsFixedLength()
                 .IsRequired();
