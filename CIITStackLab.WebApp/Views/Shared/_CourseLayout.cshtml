@@ -89,13 +89,57 @@
             z-index: 2;
         }
 
+        .ciit-sidebar-with-art::after {
+            content: "";
+            position: absolute;
+            inset: 0;
+            z-index: 1;
+            pointer-events: none;
+            background: rgba(2, 14, 35, .38);
+        }
+
+        .ciit-sidebar-with-art .ciit-course-global-sidebar-heading span {
+            color: rgba(255, 255, 255, .72);
+        }
+
+        .ciit-sidebar-with-art .ciit-course-global-sidebar-heading strong {
+            color: #ffffff;
+        }
+
+        .ciit-sidebar-with-art .ciit-course-global-nav a {
+            color: rgba(255, 255, 255, .9);
+            background: rgba(3, 16, 40, .72);
+            border: 1px solid rgba(255, 255, 255, .16);
+            box-shadow: 0 5px 16px rgba(0, 0, 0, .16);
+        }
+
+        .ciit-sidebar-with-art .ciit-course-global-nav a i {
+            color: rgba(255, 255, 255, .86);
+        }
+
+        .ciit-sidebar-with-art .ciit-course-global-nav a:hover {
+            color: #ffffff;
+            background: rgba(5, 27, 62, .88);
+        }
+
+        .ciit-sidebar-with-art .ciit-course-global-nav a.active {
+            color: #ffffff;
+            background: rgba(8, 35, 76, .92);
+            border-color: rgba(126, 178, 255, .72);
+            box-shadow: 0 7px 18px rgba(0, 0, 0, .22);
+        }
+
+        .ciit-sidebar-with-art .ciit-course-global-nav a.active i {
+            color: #ffffff;
+        }
+
         .ciit-course-sidebar-art {
             position: absolute;
             top: 0;
             right: 0;
             bottom: 0;
             left: 0;
-            z-index: 1;
+            z-index: 0;
             pointer-events: none;
             background-image: url('/images/ciit-learning-sidebar-photo.png');
             background-position: center top;
@@ -210,7 +254,7 @@
         }
         else
         {
-            <aside class="ciit-course-global-sidebar" aria-label="Course sections">
+            <aside class="ciit-course-global-sidebar ciit-sidebar-with-art" aria-label="Course sections">
                 @if (!string.IsNullOrWhiteSpace(courseId))
                 {
                     <details class="ciit-course-switcher">
