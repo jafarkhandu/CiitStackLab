@@ -87,8 +87,8 @@
                 {
                     var chapter = topic.Chapters[chapterIndex];
                     var chapterResourceCount = (chapter.HasNotes ? 1 : 0)
-                        + chapter.Contents.Count + chapter.Questions.Count
-                        + chapter.InterviewQuestions.Count + chapter.PracticeQuestions.Count;
+                        + chapter.Contents.Count + chapter.QuestionCount
+                        + chapter.InterviewQuestionCount + chapter.PracticeQuestionCount;
                     var chapterIsCurrent = currentContentId.HasValue && chapter.Contents.Any(content => content.Id == currentContentId.Value);
                     <details class="ciit-learning-chapter" open="@(chapterIsCurrent ? "open" : null)">
                         <summary class="ciit-learning-chapter-summary">
@@ -140,9 +140,9 @@
                                 </div>
                             </details>
                             <div class="ciit-learning-assessment-links">
-                                <a class="ciit-learning-category-link" href="#chapter-mcqs-@chapter.Id" data-learning-panel="assessment"><span class="ciit-learning-category-icon"><i class="bi bi-ui-radios-grid"></i></span><span class="ciit-learning-category-copy"><strong>MCQs</strong><small>@chapter.Questions.Count questions</small><span class="ciit-learning-category-count">@chapter.Questions.Count</span></span><i class="bi bi-arrow-right ciit-learning-category-arrow"></i></a>
-                                <a class="ciit-learning-category-link" href="#chapter-interview-@chapter.Id" data-learning-panel="assessment"><span class="ciit-learning-category-icon"><i class="bi bi-chat-square-text"></i></span><span class="ciit-learning-category-copy"><strong>Interview Questions</strong><small>@chapter.InterviewQuestions.Count questions</small><span class="ciit-learning-category-count">@chapter.InterviewQuestions.Count</span></span><i class="bi bi-arrow-right ciit-learning-category-arrow"></i></a>
-                                <a class="ciit-learning-category-link" href="#chapter-practice-@chapter.Id" data-learning-panel="assessment"><span class="ciit-learning-category-icon"><i class="bi bi-code-square"></i></span><span class="ciit-learning-category-copy"><strong>Practice Programs</strong><small>@chapter.PracticeQuestions.Count questions</small><span class="ciit-learning-category-count">@chapter.PracticeQuestions.Count</span></span><i class="bi bi-arrow-right ciit-learning-category-arrow"></i></a>
+                                <a class="ciit-learning-category-link" href="#chapter-mcqs-@chapter.Id" data-learning-panel="assessment"><span class="ciit-learning-category-icon"><i class="bi bi-ui-radios-grid"></i></span><span class="ciit-learning-category-copy"><strong>MCQs</strong><small>@chapter.QuestionCount questions</small><span class="ciit-learning-category-count">@chapter.QuestionCount</span></span><i class="bi bi-arrow-right ciit-learning-category-arrow"></i></a>
+                                <a class="ciit-learning-category-link" href="#chapter-interview-@chapter.Id" data-learning-panel="assessment"><span class="ciit-learning-category-icon"><i class="bi bi-chat-square-text"></i></span><span class="ciit-learning-category-copy"><strong>Interview Questions</strong><small>@chapter.InterviewQuestionCount questions</small><span class="ciit-learning-category-count">@chapter.InterviewQuestionCount</span></span><i class="bi bi-arrow-right ciit-learning-category-arrow"></i></a>
+                                <a class="ciit-learning-category-link" href="#chapter-practice-@chapter.Id" data-learning-panel="assessment"><span class="ciit-learning-category-icon"><i class="bi bi-code-square"></i></span><span class="ciit-learning-category-copy"><strong>Practice Programs</strong><small>@chapter.PracticeQuestionCount questions</small><span class="ciit-learning-category-count">@chapter.PracticeQuestionCount</span></span><i class="bi bi-arrow-right ciit-learning-category-arrow"></i></a>
                             </div>
                         </div>
                     </details>
@@ -169,9 +169,9 @@
                                         {
                                             <a href="@ResolveResourceUrl(content.Slides, "slides")" target="_blank" rel="noopener noreferrer" aria-label="Open slides for @content.Title" title="Open slides"><i class="bi bi-file-earmark-slides"></i></a>
                                         }
-                                        @if (content.Questions.Count > 0)
+                                        @if (content.QuestionCount > 0)
                                         {
-                                            <span title="Assessment questions"><i class="bi bi-patch-question"></i> @content.Questions.Count</span>
+                                            <span title="Assessment questions"><i class="bi bi-patch-question"></i> @content.QuestionCount</span>
                                         }
                                     </div>
                                 </div>
