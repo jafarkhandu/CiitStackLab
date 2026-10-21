@@ -19,65 +19,78 @@
         alert.dataset.ciitAlertDismissing = "true";
         alert.setAttribute("aria-hidden", "true");
 
+        // Always schedule final removal. Visual animation is best-effort and must never
+        // leave an alert stuck if the browser cancels or rejects a Web Animation.
+        const fallbackRemoval = window.setTimeout(function () {
+            removeAlert(alert);
+        }, DISMISS_ANIMATION_MS + 100);
+
         const reduceMotion = window.matchMedia
             && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
 
-        if (reduceMotion || typeof alert.animate !== "function") {
-            if (!reduceMotion) {
-                alert.classList.add("ciit-alert-auto-dismiss", "is-dismissing");
-            }
-            window.setTimeout(function () {
-                removeAlert(alert);
-            }, reduceMotion ? 0 : DISMISS_ANIMATION_MS);
+        if (reduceMotion) {
+            window.clearTimeout(fallbackRemoval);
+            removeAlert(alert);
             return;
         }
 
-        const computed = window.getComputedStyle(alert);
-        const height = Math.ceil(alert.getBoundingClientRect().height);
+        try {
+            const computed = window.getComputedStyle(alert);
+            const height = Math.ceil(alert.getBoundingClientRect().height);
 
-        alert.classList.add("ciit-alert-auto-dismiss");
-        alert.style.overflow = "hidden";
+            alert.classList.add("ciit-alert-auto-dismiss");
+            alert.style.overflow = "hidden";
 
-        const animation = alert.animate(
-            [
-                {
-                    opacity: Number(computed.opacity) || 1,
-                    transform: "translateY(0) scale(1)",
-                    height: height + "px",
-                    maxHeight: height + "px",
-                    marginTop: computed.marginTop,
-                    marginBottom: computed.marginBottom,
-                    paddingTop: computed.paddingTop,
-                    paddingBottom: computed.paddingBottom,
-                    borderTopWidth: computed.borderTopWidth,
-                    borderBottomWidth: computed.borderBottomWidth
-                },
-                {
-                    opacity: 0,
-                    transform: "translateY(-7px) scale(.99)",
-                    height: "0px",
-                    maxHeight: "0px",
-                    marginTop: "0px",
-                    marginBottom: "0px",
-                    paddingTop: "0px",
-                    paddingBottom: "0px",
-                    borderTopWidth: "0px",
-                    borderBottomWidth: "0px"
-                }
-            ],
-            {
-                duration: DISMISS_ANIMATION_MS,
-                easing: "cubic-bezier(.2, .8, .2, 1)",
-                fill: "forwards"
+            if (typeof alert.animate === "function") {
+                const animation = alert.animate(
+                    [
+                        {
+                            opacity: Number(computed.opacity) || 1,
+                            transform: "translateY(0) scale(1)",
+                            height: height + "px",
+                            maxHeight: height + "px",
+                            marginTop: computed.marginTop,
+                            marginBottom: computed.marginBottom,
+                            paddingTop: computed.paddingTop,
+                            paddingBottom: computed.paddingBottom,
+                            borderTopWidth: computed.borderTopWidth,
+                            borderBottomWidth: computed.borderBottomWidth
+                        },
+                        {
+                            opacity: 0,
+                            transform: "translateY(-7px) scale(.99)",
+                            height: "0px",
+                            maxHeight: "0px",
+                            marginTop: "0px",
+                            marginBottom: "0px",
+                            paddingTop: "0px",
+                            paddingBottom: "0px",
+                            borderTopWidth: "0px",
+                            borderBottomWidth: "0px"
+                        }
+                    ],
+                    {
+                        duration: DISMISS_ANIMATION_MS,
+                        easing: "cubic-bezier(.2, .8, .2, 1)",
+                        fill: "forwards"
+                    }
+                );
+
+                animation.onfinish = function () {
+                    window.clearTimeout(fallbackRemoval);
+                    removeAlert(alert);
+                };
+                animation.oncancel = function () {
+                    window.clearTimeout(fallbackRemoval);
+                    removeAlert(alert);
+                };
+            } else {
+                alert.classList.add("is-dismissing");
             }
-        );
-
-        animation.onfinish = function () {
-            removeAlert(alert);
-        };
-        animation.oncancel = function () {
-            removeAlert(alert);
-        };
+        } catch (error) {
+            // Fallback timer above guarantees removal even if the animation API fails.
+            alert.classList.add("is-dismissing");
+        }
     }
 
     function initializeAlert(alert) {
