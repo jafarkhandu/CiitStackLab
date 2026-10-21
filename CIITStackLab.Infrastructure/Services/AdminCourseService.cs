@@ -21,6 +21,7 @@ public sealed class AdminCourseService : IAdminCourseService
             {
                 Id = x.Id,
                 Title = x.Title,
+                ImagePath = x.ImagePath,
                 FeesAmount = x.FeesAmount,
                 FeesChangeDate = x.FeesChangeDate,
                 InstallmentPercentage = x.InstallmentPercentage,
@@ -58,6 +59,7 @@ public sealed class AdminCourseService : IAdminCourseService
             {
                 Id = course.Id,
                 Title = course.Title,
+                ImagePath = course.ImagePath,
                 FeesAmount = course.FeesAmount,
                 FeesChangeDate = course.FeesChangeDate,
                 InstallmentPercentage = course.InstallmentPercentage,
@@ -83,9 +85,9 @@ public sealed class AdminCourseService : IAdminCourseService
         return query.AnyAsync(cancellationToken);
     }
 
-    public async Task<(bool Succeeded, string? Error, AdminCourseDto? Course)> CreateAsync(string courseName, CancellationToken cancellationToken = default)
+    public async Task<(bool Succeeded, string? Error, AdminCourseDto? Course)> CreateAsync(string courseName, string? imagePath, CancellationToken cancellationToken = default)
     {
-        var course = new Domain.Entities.Course { Title = courseName, Flag = 0, CreatedAt = DateTime.Now };
+        var course = new Domain.Entities.Course { Title = courseName, ImagePath = imagePath, Flag = 0, CreatedAt = DateTime.Now };
         _dbContext.Courses.Add(course);
 
         try { await _dbContext.SaveChangesAsync(cancellationToken); }
@@ -95,15 +97,17 @@ public sealed class AdminCourseService : IAdminCourseService
             return (false, "The course could not be created. The name may already exist.", null);
         }
 
-        return (true, null, new AdminCourseDto { Id = course.Id, Title = course.Title, TotalPrice = 0m, TopicCount = 0, CreatedAt = course.CreatedAt });
+        return (true, null, new AdminCourseDto { Id = course.Id, Title = course.Title, ImagePath = course.ImagePath, TotalPrice = 0m, TopicCount = 0, CreatedAt = course.CreatedAt });
     }
 
-    public async Task<(bool Succeeded, string? Error)> UpdateAsync(int id, string courseName, CancellationToken cancellationToken = default)
+    public async Task<(bool Succeeded, string? Error)> UpdateAsync(int id, string courseName, string? imagePath, CancellationToken cancellationToken = default)
     {
         var course = await _dbContext.Courses.SingleOrDefaultAsync(x => x.Id == id && x.Flag == 0, cancellationToken);
         if (course is null) return (false, "The selected course was not found.");
 
         course.Title = courseName;
+        if (!string.IsNullOrWhiteSpace(imagePath))
+            course.ImagePath = imagePath;
         course.UpdatedAt = DateTime.Now;
 
         try { await _dbContext.SaveChangesAsync(cancellationToken); }

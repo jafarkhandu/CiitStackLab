@@ -3,6 +3,9 @@ document.addEventListener("DOMContentLoaded", function () {
         form = document.getElementById("courseForm"),
         idInput = document.getElementById("courseId"),
         nameInput = document.getElementById("courseName"),
+        imageInput = document.getElementById("courseImage"),
+        imagePreview = document.getElementById("courseImagePreview"),
+        imagePreviewWrap = document.getElementById("courseImagePreviewWrap"),
         title = document.getElementById("courseModalLabel"),
         description = document.getElementById("courseModalDescription"),
         submit = document.getElementById("courseSubmitBtn"),
@@ -16,6 +19,8 @@ document.addEventListener("DOMContentLoaded", function () {
     function resetForm() {
         form?.reset();
         if (idInput) idInput.value = "0";
+        if (imagePreview) imagePreview.removeAttribute("src");
+        if (imagePreviewWrap) imagePreviewWrap.hidden = true;
     }
 
     function fillEdit() {
@@ -24,6 +29,10 @@ document.addEventListener("DOMContentLoaded", function () {
 
         idInput.value = course.id;
         nameInput.value = course.courseName || "";
+        if (course.imagePath && imagePreview && imagePreviewWrap) {
+            imagePreview.src = course.imagePath;
+            imagePreviewWrap.hidden = false;
+        }
         title.textContent = "Edit Course";
         description.textContent = "Update the selected active course.";
         submit.querySelector("span").textContent = "Update Course";
@@ -45,6 +54,22 @@ document.addEventListener("DOMContentLoaded", function () {
 
         if (window.ciitEditCourse)
             bootstrap.Modal.getOrCreateInstance(modalElement).show();
+    }
+
+    if (imageInput && imagePreview && imagePreviewWrap) {
+        imageInput.addEventListener("change", function () {
+            const file = imageInput.files?.[0];
+            if (!file) return;
+            if (!["image/jpeg", "image/png", "image/webp"].includes(file.type) || file.size > 5 * 1024 * 1024) {
+                imageInput.value = "";
+                imagePreview.removeAttribute("src");
+                imagePreviewWrap.hidden = true;
+                window.alert("Choose a JPG, PNG, or WebP image smaller than 5 MB.");
+                return;
+            }
+            imagePreview.src = URL.createObjectURL(file);
+            imagePreviewWrap.hidden = false;
+        });
     }
 
     if (search) {

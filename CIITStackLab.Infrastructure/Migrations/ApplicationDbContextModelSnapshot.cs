@@ -371,6 +371,11 @@ namespace CIITStackLab.Infrastructure.Migrations
                         .HasColumnType("datetime2")
                         .HasColumnName("RestoredAt");
 
+                    b.Property<string>("ImagePath")
+                        .HasMaxLength(500)
+                        .HasColumnType("nvarchar(500)")
+                        .HasColumnName("course_image_path");
+
                     b.Property<string>("Title")
                         .IsRequired()
                         .HasMaxLength(100)
