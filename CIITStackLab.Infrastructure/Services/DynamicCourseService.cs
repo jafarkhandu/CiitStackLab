@@ -73,7 +73,8 @@ public sealed class DynamicCourseService : ICourseService
     public async Task<CourseLearningDto?> GetLearningAsync(
         int id,
         int? contentId = null,
-        CancellationToken cancellationToken = default)
+        CancellationToken cancellationToken = default,
+        int? topicId = null)
     {
         var course = await _inner.GetByIdAsync(id, cancellationToken);
         if (course is null)
@@ -137,6 +138,15 @@ public sealed class DynamicCourseService : ICourseService
                 .Distinct()
                 .ToListAsync(cancellationToken);
 
+        var currentContentRow = contentId.HasValue
+            ? contentRows.FirstOrDefault(content => content.Id == contentId.Value)
+            : null;
+        var selectedTopicId = topicId
+            ?? currentContentRow?.TopicId
+            ?? topicData.FirstOrDefault()?.TopicId;
+
+        // Keep only note metadata for all chapters; loading every chapter's rich HTML on
+        // every refresh can dominate response time for courses with large notes.
         var chapterRows = topicIds.Count == 0
             ? []
             : await _dbContext.TrainingNotes
@@ -151,10 +161,21 @@ public sealed class DynamicCourseService : ICourseService
                     note.TopicId,
                     note.ChapterId,
                     note.Title,
-                    note.HtmlContent,
+                    HasNotes = note.HtmlContent != null && note.HtmlContent.Trim() != "",
                     note.SortOrder
                 })
                 .ToListAsync(cancellationToken);
+
+        var selectedChapterId = currentContentRow?.NoteId
+            ?? chapterRows.FirstOrDefault(chapter => chapter.TopicId == selectedTopicId)?.Id;
+
+        var selectedChapterHtml = selectedChapterId.HasValue
+            ? await _dbContext.TrainingNotes
+                .AsNoTracking()
+                .Where(note => note.Id == selectedChapterId.Value && note.Flag == 0)
+                .Select(note => note.HtmlContent)
+                .FirstOrDefaultAsync(cancellationToken)
+            : null;
 
         var contentIds = contentRows.Select(x => x.Id).Distinct().ToList();
         var noteIds = chapterRows.Select(x => x.Id).Distinct().ToList();
@@ -318,7 +339,8 @@ public sealed class DynamicCourseService : ICourseService
                         ChapterId = chapter.ChapterId,
                         Title = chapter.Title ?? string.Empty,
                         SortOrder = chapter.SortOrder,
-                        NotesHtml = chapter.HtmlContent ?? string.Empty,
+                        HasNotes = chapter.HasNotes,
+                        NotesHtml = chapter.Id == selectedChapterId ? selectedChapterHtml ?? string.Empty : string.Empty,
                         Questions = questions
                             .Where(question => question.NoteId == chapter.Id
                                 || (question.ContentId.HasValue
