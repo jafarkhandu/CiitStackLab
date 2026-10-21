@@ -179,8 +179,70 @@ public sealed class DynamicCourseService : ICourseService
 
         var contentIds = contentRows.Select(x => x.Id).Distinct().ToList();
         var noteIds = chapterRows.Select(x => x.Id).Distinct().ToList();
+        var selectedTopicContentIds = selectedTopicId.HasValue
+            ? contentRows.Where(content => content.TopicId == selectedTopicId.Value)
+                .Select(content => content.Id).Distinct().ToList()
+            : new List<int>();
+        var selectedTopicNoteIds = selectedTopicId.HasValue
+            ? chapterRows.Where(chapter => chapter.TopicId == selectedTopicId.Value)
+                .Select(chapter => chapter.Id).Distinct().ToList()
+            : new List<int>();
 
-        var interviewQuestions = await _dbContext.ContentInterviewQuestions
+        // Fetch only lightweight question references for every topic. Full question text,
+        // options, answers and practice descriptions are returned only for the open topic.
+        var questionReferenceRows = await _dbContext.ContentQuestions
+            .AsNoTracking()
+            .Where(question => question.Flag == 0
+                && ((question.ContentId.HasValue && contentIds.Contains(question.ContentId.Value))
+                    || (question.TopicId.HasValue && topicIds.Contains(question.TopicId.Value))
+                    || (question.NoteId.HasValue && noteIds.Contains(question.NoteId.Value))))
+            .OrderBy(question => question.Id)
+            .Select(question => new
+            {
+                question.Id,
+                question.NoteId,
+                question.ContentId,
+                question.TopicId,
+                IsSelectedTopic = (question.ContentId.HasValue && selectedTopicContentIds.Contains(question.ContentId.Value))
+                    || (question.NoteId.HasValue && selectedTopicNoteIds.Contains(question.NoteId.Value))
+                    || (selectedTopicId.HasValue && question.TopicId == selectedTopicId.Value),
+                Question = ((question.ContentId.HasValue && selectedTopicContentIds.Contains(question.ContentId.Value))
+                    || (question.NoteId.HasValue && selectedTopicNoteIds.Contains(question.NoteId.Value))
+                    || (selectedTopicId.HasValue && question.TopicId == selectedTopicId.Value))
+                    ? question.Question
+                    : null,
+                Option1 = ((question.ContentId.HasValue && selectedTopicContentIds.Contains(question.ContentId.Value))
+                    || (question.NoteId.HasValue && selectedTopicNoteIds.Contains(question.NoteId.Value))
+                    || (selectedTopicId.HasValue && question.TopicId == selectedTopicId.Value))
+                    ? question.Option1
+                    : null,
+                Option2 = ((question.ContentId.HasValue && selectedTopicContentIds.Contains(question.ContentId.Value))
+                    || (question.NoteId.HasValue && selectedTopicNoteIds.Contains(question.NoteId.Value))
+                    || (selectedTopicId.HasValue && question.TopicId == selectedTopicId.Value))
+                    ? question.Option2
+                    : null,
+                Option3 = ((question.ContentId.HasValue && selectedTopicContentIds.Contains(question.ContentId.Value))
+                    || (question.NoteId.HasValue && selectedTopicNoteIds.Contains(question.NoteId.Value))
+                    || (selectedTopicId.HasValue && question.TopicId == selectedTopicId.Value))
+                    ? question.Option3
+                    : null,
+                Option4 = ((question.ContentId.HasValue && selectedTopicContentIds.Contains(question.ContentId.Value))
+                    || (question.NoteId.HasValue && selectedTopicNoteIds.Contains(question.NoteId.Value))
+                    || (selectedTopicId.HasValue && question.TopicId == selectedTopicId.Value))
+                    ? question.Option4
+                    : null
+            })
+            .ToListAsync(cancellationToken);
+
+        var questionReferences = questionReferenceRows
+            .Select(question => new QuestionReference(question.Id, question.NoteId, question.ContentId, question.TopicId))
+            .ToList();
+
+        var selectedQuestionRows = questionReferenceRows
+            .Where(question => question.IsSelectedTopic)
+            .ToList();
+
+        var interviewQuestionReferenceRows = await _dbContext.ContentInterviewQuestions
             .AsNoTracking()
             .Where(question => question.Flag == 0
                 && ((question.NoteId.HasValue && noteIds.Contains(question.NoteId.Value))
@@ -193,12 +255,31 @@ public sealed class DynamicCourseService : ICourseService
                 question.NoteId,
                 question.ContentId,
                 question.TopicId,
-                Question = question.Question ?? string.Empty,
-                Answer = question.Answer ?? string.Empty
+                IsSelectedTopic = (question.NoteId.HasValue && selectedTopicNoteIds.Contains(question.NoteId.Value))
+                    || (question.ContentId.HasValue && selectedTopicContentIds.Contains(question.ContentId.Value))
+                    || (selectedTopicId.HasValue && question.TopicId == selectedTopicId.Value),
+                Question = ((question.NoteId.HasValue && selectedTopicNoteIds.Contains(question.NoteId.Value))
+                    || (question.ContentId.HasValue && selectedTopicContentIds.Contains(question.ContentId.Value))
+                    || (selectedTopicId.HasValue && question.TopicId == selectedTopicId.Value))
+                    ? question.Question ?? string.Empty
+                    : string.Empty,
+                Answer = ((question.NoteId.HasValue && selectedTopicNoteIds.Contains(question.NoteId.Value))
+                    || (question.ContentId.HasValue && selectedTopicContentIds.Contains(question.ContentId.Value))
+                    || (selectedTopicId.HasValue && question.TopicId == selectedTopicId.Value))
+                    ? question.Answer ?? string.Empty
+                    : string.Empty
             })
             .ToListAsync(cancellationToken);
 
-        var practiceQuestions = await _dbContext.ContentProgramQuestions
+        var interviewQuestionReferences = interviewQuestionReferenceRows
+            .Select(question => new QuestionReference(question.Id, question.NoteId, question.ContentId, question.TopicId))
+            .ToList();
+
+        var interviewQuestions = interviewQuestionReferenceRows
+            .Where(question => question.IsSelectedTopic)
+            .ToList();
+
+        var practiceQuestionReferenceRows = await _dbContext.ContentProgramQuestions
             .AsNoTracking()
             .Where(question => question.Flag == 0
                 && ((question.NoteId.HasValue && noteIds.Contains(question.NoteId.Value))
@@ -209,45 +290,103 @@ public sealed class DynamicCourseService : ICourseService
                 question.Id,
                 question.NoteId,
                 question.ContentId,
-                question.QuestionTitle,
-                question.QuestionDescription
+                IsSelectedTopic = (question.NoteId.HasValue && selectedTopicNoteIds.Contains(question.NoteId.Value))
+                    || (question.ContentId.HasValue && selectedTopicContentIds.Contains(question.ContentId.Value)),
+                QuestionTitle = ((question.NoteId.HasValue && selectedTopicNoteIds.Contains(question.NoteId.Value))
+                    || (question.ContentId.HasValue && selectedTopicContentIds.Contains(question.ContentId.Value))
+                    ? question.QuestionTitle
+                    : string.Empty),
+                QuestionDescription = ((question.NoteId.HasValue && selectedTopicNoteIds.Contains(question.NoteId.Value))
+                    || (question.ContentId.HasValue && selectedTopicContentIds.Contains(question.ContentId.Value))
+                    ? question.QuestionDescription
+                    : string.Empty)
             })
             .ToListAsync(cancellationToken);
 
-        var questions = await _dbContext.ContentQuestions
-            .AsNoTracking()
-            .Where(question =>
-                question.Flag == 0
-                && ((question.ContentId.HasValue
-                     && contentIds.Contains(question.ContentId.Value))
-                    || (question.TopicId.HasValue
-                        && topicIds.Contains(question.TopicId.Value))
-                    || (question.NoteId.HasValue
-                        && noteIds.Contains(question.NoteId.Value))))
-            .OrderBy(question => question.Id)
-            .ToListAsync(cancellationToken);
+        var practiceQuestionReferences = practiceQuestionReferenceRows
+            .Select(question => new QuestionReference(question.Id, question.NoteId, question.ContentId, null))
+            .ToList();
 
-        var questionsByContentId = questions
+        var practiceQuestions = practiceQuestionReferenceRows
+            .Where(question => question.IsSelectedTopic)
+            .ToList();
+
+        var questionsByContentId = selectedQuestionRows
             .Where(question => question.ContentId.HasValue)
             .GroupBy(question => question.ContentId!.Value)
             .ToDictionary(
                 group => group.Key,
-                group => (IReadOnlyList<ContentQuestionDto>)group.Select(MapLearningQuestion).ToList());
+                group => (IReadOnlyList<ContentQuestionDto>)group.Select(question => MapLearningQuestion(
+                    new QuestionReference(question.Id, question.NoteId, question.ContentId, question.TopicId),
+                    question.Question, question.Option1, question.Option2, question.Option3, question.Option4)).ToList());
 
-        var questionsByTopicId = questions
+        var questionsByTopicId = selectedQuestionRows
             .Where(question => question.TopicId.HasValue)
             .GroupBy(question => question.TopicId!.Value)
             .ToDictionary(
                 group => group.Key,
-                group => (IReadOnlyList<ContentQuestionDto>)group.Select(MapLearningQuestion).ToList());
+                group => (IReadOnlyList<ContentQuestionDto>)group.Select(question => MapLearningQuestion(
+                    new QuestionReference(question.Id, question.NoteId, question.ContentId, question.TopicId),
+                    question.Question, question.Option1, question.Option2, question.Option3, question.Option4)).ToList());
 
-        var questionsByNoteId = questions
+        var questionsByNoteId = selectedQuestionRows
             .Where(question => question.NoteId.HasValue)
             .GroupBy(question => question.NoteId!.Value)
             .ToDictionary(
                 group => group.Key,
-                group => (IReadOnlyList<ContentQuestionDto>)group.Select(MapLearningQuestion).ToList());
+                group => (IReadOnlyList<ContentQuestionDto>)group.Select(question => MapLearningQuestion(
+                    new QuestionReference(question.Id, question.NoteId, question.ContentId, question.TopicId),
+                    question.Question, question.Option1, question.Option2, question.Option3, question.Option4)).ToList());
 
+        var questionReferencesByContentId = questionReferences
+            .Where(question => question.ContentId.HasValue)
+            .GroupBy(question => question.ContentId!.Value)
+            .ToDictionary(group => group.Key, group => group.ToList());
+
+        var questionReferencesByTopicId = questionReferences
+            .Where(question => question.TopicId.HasValue)
+            .GroupBy(question => question.TopicId!.Value)
+            .ToDictionary(group => group.Key, group => group.ToList());
+
+        var questionReferencesByNoteId = questionReferences
+            .Where(question => question.NoteId.HasValue)
+            .GroupBy(question => question.NoteId!.Value)
+            .ToDictionary(group => group.Key, group => group.ToList());
+
+        var interviewReferencesByContentId = interviewQuestionReferences
+            .Where(question => question.ContentId.HasValue)
+            .GroupBy(question => question.ContentId!.Value)
+            .ToDictionary(group => group.Key, group => group.ToList());
+
+        var interviewReferencesByTopicId = interviewQuestionReferences
+            .Where(question => question.TopicId.HasValue)
+            .GroupBy(question => question.TopicId!.Value)
+            .ToDictionary(group => group.Key, group => group.ToList());
+
+        var interviewReferencesByNoteId = interviewQuestionReferences
+            .Where(question => question.NoteId.HasValue)
+            .GroupBy(question => question.NoteId!.Value)
+            .ToDictionary(group => group.Key, group => group.ToList());
+
+        var practiceReferencesByContentId = practiceQuestionReferences
+            .Where(question => question.ContentId.HasValue)
+            .GroupBy(question => question.ContentId!.Value)
+            .ToDictionary(group => group.Key, group => group.ToList());
+
+        var practiceReferencesByNoteId = practiceQuestionReferences
+            .Where(question => question.NoteId.HasValue)
+            .GroupBy(question => question.NoteId!.Value)
+            .ToDictionary(group => group.Key, group => group.ToList());
+
+        ContentQuestionDto MapLearningQuestion(QuestionReference questionReferenceRow, string? question, string? option1, string? option2, string? option3, string? option4)
+        {
+            return new ContentQuestionDto
+            {
+                Id = questionReferenceRow.Id,
+                Question = question ?? string.Empty,
+                Options = new[] { option1, option2, option3, option4 }
+            };
+        }
         var firstContentIdByTopicId = contentRows
             .Where(content => content.TopicId.HasValue)
             .GroupBy(content => content.TopicId!.Value)
@@ -310,6 +449,75 @@ public sealed class DynamicCourseService : ICourseService
             .Where(question => question.ContentId.HasValue)
             .GroupBy(question => question.ContentId!.Value)
             .ToDictionary(group => group.Key, group => group.ToList());
+
+        int CountQuestionReferencesForContent(
+            int contentId,
+            int? contentTopicId,
+            int? noteId,
+            Dictionary<int, List<QuestionReference>> byContentId,
+            Dictionary<int, List<QuestionReference>> byTopicId,
+            Dictionary<int, List<QuestionReference>> byNoteId)
+        {
+            var ids = new HashSet<int>();
+
+            if (byContentId.TryGetValue(contentId, out var directQuestions))
+            {
+                ids.UnionWith(directQuestions.Select(question => question.Id));
+            }
+
+            if (contentTopicId.HasValue
+                && firstContentIdByTopicId.TryGetValue(contentTopicId.Value, out var firstTopicContentId)
+                && firstTopicContentId == contentId
+                && byTopicId.TryGetValue(contentTopicId.Value, out var topicQuestions))
+            {
+                ids.UnionWith(topicQuestions.Select(question => question.Id));
+            }
+
+            if (noteId.HasValue
+                && firstContentIdByNoteId.TryGetValue(noteId.Value, out var firstNoteContentId)
+                && firstNoteContentId == contentId
+                && byNoteId.TryGetValue(noteId.Value, out var noteQuestions))
+            {
+                ids.UnionWith(noteQuestions.Select(question => question.Id));
+            }
+
+            return ids.Count;
+        }
+
+        int CountQuestionReferencesForChapter(
+            int chapterId,
+            int chapterTopicId,
+            Dictionary<int, List<QuestionReference>> byNoteId,
+            Dictionary<int, List<QuestionReference>> byContentId,
+            Dictionary<int, List<QuestionReference>> byTopicId)
+        {
+            var ids = new HashSet<int>();
+
+            if (byNoteId.TryGetValue(chapterId, out var noteQuestions))
+            {
+                ids.UnionWith(noteQuestions.Select(question => question.Id));
+            }
+
+            if (contentRowsByNoteId.TryGetValue(chapterId, out var noteContents))
+            {
+                foreach (var content in noteContents)
+                {
+                    if (byContentId.TryGetValue(content.Id, out var contentQuestions))
+                    {
+                        ids.UnionWith(contentQuestions.Select(question => question.Id));
+                    }
+                }
+            }
+
+            if (firstChapterIdByTopicId.TryGetValue(chapterTopicId, out var firstChapterId)
+                && firstChapterId == chapterId
+                && byTopicId.TryGetValue(chapterTopicId, out var topicQuestions))
+            {
+                ids.UnionWith(topicQuestions.Select(question => question.Id));
+            }
+
+            return ids.Count;
+        }
 
         IReadOnlyList<ContentQuestionDto> GetQuestionsForContent(int contentId, int? topicId, int? noteId)
         {
@@ -488,15 +696,7 @@ public sealed class DynamicCourseService : ICourseService
             return mappedQuestions.Values.OrderBy(question => question.Id).ToList();
         }
 
-        ContentQuestionDto MapLearningQuestion(ContentQuestion question)
-        {
-            return new ContentQuestionDto
-            {
-                Id = question.Id,
-                Question = question.Question ?? string.Empty,
-                Options = new[] { question.Option1, question.Option2, question.Option3, question.Option4 }
-            };
-        }
+
 
         var topics = topicData
             .Select(topic =>
@@ -590,4 +790,10 @@ public sealed class DynamicCourseService : ICourseService
             CurrentContent = currentContent
         };
     }
+
+    private sealed record QuestionReference(
+        int Id,
+        int? NoteId,
+        int? ContentId,
+        int? TopicId);
 }
