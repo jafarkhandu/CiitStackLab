@@ -76,9 +76,31 @@ public class HomeController : Controller
             })
             .ToList();
 
+        var courseStats = courses
+            .Select(course =>
+            {
+                var courseProgress = progressRecords
+                    .Where(progress => progress.CourseId == course.Id)
+                    .ToList();
+
+                return new StudentLearningCourseStatViewModel
+                {
+                    CourseId = course.Id,
+                    CourseTitle = course.Title,
+                    DurationHours = course.DurationHours,
+                    CompletedLessons = courseProgress.Count(progress => progress.IsCompleted),
+                    TrackedLessons = courseProgress.Count,
+                    LastActivityAt = courseProgress.Count > 0
+                        ? courseProgress.Max(progress => progress.LastAccessedAt)
+                        : null
+                };
+            })
+            .ToList();
+
         var model = new StudentLearningDashboardViewModel
         {
             Courses = courses,
+            CourseStats = courseStats,
             CompletedLessons = progressRecords.Count(progress => progress.IsCompleted),
             TrackedLessons = progressRecords.Count,
             RecentActivity = recentActivity,
