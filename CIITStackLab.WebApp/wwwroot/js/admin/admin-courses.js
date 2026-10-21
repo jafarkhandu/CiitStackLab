@@ -6,6 +6,12 @@ document.addEventListener("DOMContentLoaded", function () {
         imageInput = document.getElementById("courseImage"),
         imagePreview = document.getElementById("courseImagePreview"),
         imagePreviewWrap = document.getElementById("courseImagePreviewWrap"),
+        discountModeInput = document.getElementById("discountMode"),
+        discountValueInput = document.getElementById("discountValue"),
+        discountValueField = document.getElementById("discountValueField"),
+        discountValueLabel = document.getElementById("discountValueLabel"),
+        discountValueHelp = document.getElementById("discountValueHelp"),
+        discountPreview = document.getElementById("discountPreview"),
         title = document.getElementById("courseModalLabel"),
         description = document.getElementById("courseModalDescription"),
         submit = document.getElementById("courseSubmitBtn"),
@@ -21,6 +27,9 @@ document.addEventListener("DOMContentLoaded", function () {
         if (idInput) idInput.value = "0";
         if (imagePreview) imagePreview.removeAttribute("src");
         if (imagePreviewWrap) imagePreviewWrap.hidden = true;
+        if (discountModeInput) discountModeInput.value = "";
+        if (discountValueInput) discountValueInput.value = "";
+        updateDiscountUi();
     }
 
     function fillEdit() {
@@ -29,6 +38,9 @@ document.addEventListener("DOMContentLoaded", function () {
 
         idInput.value = course.id;
         nameInput.value = course.courseName || "";
+        if (discountModeInput) discountModeInput.value = course.discountMode || "";
+        if (discountValueInput) discountValueInput.value = course.discountValue ?? "";
+        updateDiscountUi();
         if (course.imagePath && imagePreview && imagePreviewWrap) {
             imagePreview.src = course.imagePath;
             imagePreviewWrap.hidden = false;
@@ -55,6 +67,37 @@ document.addEventListener("DOMContentLoaded", function () {
         if (window.ciitEditCourse)
             bootstrap.Modal.getOrCreateInstance(modalElement).show();
     }
+
+    function updateDiscountUi() {
+        if (!discountModeInput || !discountValueInput || !discountValueField) return;
+        const mode = discountModeInput.value;
+        discountValueField.hidden = !mode;
+        discountValueInput.disabled = !mode;
+        discountValueInput.required = !!mode;
+        discountValueInput.max = mode === "percentage" ? "100" : "";
+        discountValueInput.placeholder = mode === "percentage" ? "e.g. 20" : "e.g. 1499";
+        if (discountValueLabel) discountValueLabel.textContent = mode === "percentage" ? "Discount percentage (%)" : "Discounted price (₹)";
+        if (discountValueHelp) discountValueHelp.textContent = mode === "percentage" ? "Enter 0–100%. Calculated from the current course price." : "Enter the final price students should pay. It cannot exceed the original price.";
+        if (!discountPreview) return;
+        const selected = Number(discountValueInput.value);
+        const activeRow = rows.find(row => row.dataset.courseName === (nameInput?.value || "").trim().toLowerCase());
+        const original = Number(activeRow?.dataset.coursePrice || 0);
+        if (!mode || !discountValueInput.value || !Number.isFinite(selected) || selected < 0) discountPreview.textContent = "";
+        else if (mode === "percentage" && selected > 100) discountPreview.textContent = "Percentage must be between 0 and 100.";
+        else if (mode === "direct" && selected > original && original > 0) discountPreview.textContent = "Discounted price cannot exceed ₹" + original.toLocaleString("en-IN", { maximumFractionDigits: 2 });
+        else if (original <= 0) discountPreview.textContent = "Discount will apply once the course has active topic prices.";
+        else {
+            const finalPrice = mode === "percentage" ? original * (1 - selected / 100) : selected;
+            discountPreview.textContent = "Student pays ₹" + finalPrice.toLocaleString("en-IN", { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + " · saves ₹" + (original - finalPrice).toLocaleString("en-IN", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+        }
+    }
+
+    discountModeInput?.addEventListener("change", function () {
+        if (discountValueInput) discountValueInput.value = "";
+        updateDiscountUi();
+    });
+    discountValueInput?.addEventListener("input", updateDiscountUi);
+    nameInput?.addEventListener("input", updateDiscountUi);
 
     if (imageInput && imagePreview && imagePreviewWrap) {
         imageInput.addEventListener("change", function () {
