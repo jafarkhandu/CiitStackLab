@@ -368,11 +368,27 @@
                                     <span class="ciit-roadmap-topic-icon"><i class="bi bi-journal-bookmark-fill" aria-hidden="true"></i></span>
                                     <span class="ciit-roadmap-topic-copy">
                                         <strong>@topic.Title</strong>
-                                        <small>Topic @topicNumber Â· Structured learning</small>
+                                        <small>
+                                            @topic.ChapterCount note@(topic.ChapterCount == 1 ? "" : "s")
+                                            <span aria-hidden="true">·</span>
+                                            @topic.Contents.Count content item@(topic.Contents.Count == 1 ? "" : "s")
+                                            <span aria-hidden="true">·</span>
+                                            @topic.Contents.Count(content => content.Questions.Count > 0) assessment@(topic.Contents.Count(content => content.Questions.Count > 0) == 1 ? "" : "s")
+                                        </small>
                                     </span>
-                                    <span class="ciit-roadmap-lesson-count">
-                                        <i class="bi bi-play-circle" aria-hidden="true"></i>
-                                        @topic.Contents.Count lesson@(topic.Contents.Count == 1 ? "" : "s")
+                                    <span class="ciit-roadmap-badges" aria-label="Topic resource counts">
+                                        <span class="ciit-roadmap-badge ciit-roadmap-badge-notes">
+                                            <i class="bi bi-journal-text" aria-hidden="true"></i>
+                                            @topic.ChapterCount Notes
+                                        </span>
+                                        <span class="ciit-roadmap-badge ciit-roadmap-badge-content">
+                                            <i class="bi bi-play-circle" aria-hidden="true"></i>
+                                            @topic.Contents.Count Content
+                                        </span>
+                                        <span class="ciit-roadmap-badge ciit-roadmap-badge-assessment">
+                                            <i class="bi bi-patch-check" aria-hidden="true"></i>
+                                            @topic.Contents.Count(content => content.Questions.Count > 0) Assessment
+                                        </span>
                                     </span>
                                 </button>
                             </h3>
@@ -382,69 +398,25 @@
                                  aria-labelledby="@headingId"
                                  data-bs-parent="#courseTopicsAccordion">
                                 <div class="accordion-body">
-                                    @if (topic.Contents.Count == 0)
+                                    @if (topic.Contents.Count == 0 && topic.ChapterCount == 0)
                                     {
-                                        <p class="text-secondary mb-0">No active content is available for this topic yet.</p>
+                                        <p class="text-secondary mb-0">Learning resources will be available here soon.</p>
                                     }
                                     else
                                     {
-                                        <div class="list-group list-group-flush">
-                                            @foreach (var content in topic.Contents)
-                                            {
-                                                <article class="ciit-content-item">
-                                                    <div class="d-flex justify-content-between align-items-start gap-3">
-                                                        <div>
-                                                            <div class="fw-semibold ciit-roadmap-content-title">@content.Title</div>
-                                                        </div>
-
-                                                        <div class="ciit-roadmap-badges" aria-label="Available learning resources">
-                                                            @if (topic.HasNotes)
-                                                            {
-                                                                <span class="ciit-roadmap-badge ciit-roadmap-badge-notes">
-                                                                    <i class="bi bi-journal-text" aria-hidden="true"></i>
-                                                                    Notes
-                                                                </span>
-                                                            }
-                                                            <span class="ciit-roadmap-badge ciit-roadmap-badge-content">
-                                                                <i class="bi bi-play-circle" aria-hidden="true"></i>
-                                                                Content
-                                                            </span>
-                                                            @if (content.Questions.Count > 0)
-                                                            {
-                                                                <span class="ciit-roadmap-badge ciit-roadmap-badge-assessment">
-                                                                    <i class="bi bi-patch-check" aria-hidden="true"></i>
-                                                                    Assessment
-                                                                </span>
-                                                            }
-                                                        </div>
-                                                    </div>
-
-                                                    @if (content.Questions.Count > 0)
-                                                    {
-                                                        <div class="ciit-assessment-launch">
-                                                            <div class="ciit-assessment-launch-copy">
-                                                                <span class="ciit-assessment-launch-icon">
-                                                                    <i class="bi bi-patch-check"></i>
-                                                                </span>
-                                                                <div>
-                                                                    <strong>Knowledge check</strong>
-                                                                    <small>@content.Questions.Count question@(content.Questions.Count == 1 ? "" : "s") Â· Server-graded assessment</small>
-                                                                </div>
-                                                            </div>
-
-                                                            <a asp-controller="Courses"
-                                                               asp-action="Learn"
-                                                               asp-route-id="@Model.Id"
-                                                               asp-route-contentId="@content.Id"
-                                                               asp-fragment="lesson-assessment"
-                                                               class="btn btn-outline-primary ciit-assessment-launch-button">
-                                                                Practice assessment
-                                                                <i class="bi bi-arrow-up-right ms-1"></i>
-                                                            </a>
-                                                        </div>
-                                                    }
-                                                </article>
-                                            }
+                                        <div class="ciit-roadmap-badges" aria-label="Available learning resources">
+                                            <span class="ciit-roadmap-badge ciit-roadmap-badge-notes">
+                                                <i class="bi bi-journal-text" aria-hidden="true"></i>
+                                                @topic.ChapterCount Notes
+                                            </span>
+                                            <span class="ciit-roadmap-badge ciit-roadmap-badge-content">
+                                                <i class="bi bi-play-circle" aria-hidden="true"></i>
+                                                @topic.Contents.Count Content
+                                            </span>
+                                            <span class="ciit-roadmap-badge ciit-roadmap-badge-assessment">
+                                                <i class="bi bi-patch-check" aria-hidden="true"></i>
+                                                @topic.Contents.Count(content => content.Questions.Count > 0) Assessment
+                                            </span>
                                         </div>
                                     }
                                 </div>
