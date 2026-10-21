@@ -14,15 +14,13 @@
     <link rel="stylesheet" href="~/css/student-learning-dashboard-modals.css" asp-append-version="true" />
     <style>
         /* Keep the Learning Hub sidebar fixed while the dashboard content scrolls. */
-        @media (min-width: 1200px) {
-            body:has(.ciit-student-dashboard) .ciit-course-global-sidebar {
-                position: fixed;
-                top: 76px;
-                left: 0;
-                width: 248px;
-                height: calc(100vh - 76px);
-                z-index: 1020;
-            }
+        body:has(.ciit-student-dashboard) .ciit-course-global-sidebar {
+            position: fixed;
+            top: 76px;
+            left: 0;
+            width: 248px;
+            height: calc(100vh - 76px);
+            z-index: 1020;
         }
     </style>
 }
@@ -198,7 +196,7 @@
     <script>
         (function () {
             const items = document.querySelectorAll('[data-dashboard-reveal]');
-            const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+            const reduceMotion = window.matchMedia('(prefers-reduced-motion, reduce)').matches;
             if (reduceMotion || !('IntersectionObserver' in window)) {
                 items.forEach(item => item.classList.add('is-visible'));
             } else {
