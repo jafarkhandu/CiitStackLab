@@ -2,6 +2,7 @@ using CIITStackLab.Infrastructure;
 using CIITStackLab.Infrastructure.Identity;
 using CIITStackLab.Infrastructure.Persistence;
 using CIITStackLab.WebApp.Hubs;
+using CIITStackLab.WebApp.Services;
 using Microsoft.AspNetCore.StaticFiles;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -16,6 +17,7 @@ if (builder.Environment.IsDevelopment())
 
 builder.Services.AddControllersWithViews();
 builder.Services.AddSignalR();
+builder.Services.AddScoped<ExamApplicationNotificationService>();
 builder.Services.AddInfrastructure(builder.Configuration);
 builder.Services.AddDistributedMemoryCache();
 builder.Services.AddSession(options =>
