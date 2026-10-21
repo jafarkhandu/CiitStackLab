@@ -11,7 +11,12 @@
         }
 
         alert.dataset.ciitAlertDismissing = "true";
-        alert.classList.add("ciit-alert-auto-dismiss", "is-dismissing");
+        alert.style.maxHeight = Math.ceil(alert.getBoundingClientRect().height) + "px";
+        void alert.offsetHeight;
+
+        window.requestAnimationFrame(function () {
+            alert.classList.add("is-dismissing");
+        });
 
         window.setTimeout(function () {
             if (alert.isConnected) {
@@ -29,6 +34,7 @@
 
         alert.dataset.ciitAutoDismissInitialized = "true";
         alert.classList.add("ciit-alert-auto-dismiss");
+        alert.style.maxHeight = Math.ceil(alert.getBoundingClientRect().height) + "px";
 
         window.setTimeout(function () {
             dismissAlert(alert);
