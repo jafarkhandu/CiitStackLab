@@ -5,24 +5,79 @@
     const DISMISS_ANIMATION_MS = 360;
     const selector = ".alert, .ciit-exam-availability-alert";
 
+    function removeAlert(alert) {
+        if (alert && alert.isConnected) {
+            alert.remove();
+        }
+    }
+
     function dismissAlert(alert) {
         if (!alert || !alert.isConnected || alert.dataset.ciitAlertDismissing === "true") {
             return;
         }
 
         alert.dataset.ciitAlertDismissing = "true";
-        alert.style.maxHeight = Math.ceil(alert.getBoundingClientRect().height) + "px";
-        void alert.offsetHeight;
+        alert.setAttribute("aria-hidden", "true");
 
-        window.requestAnimationFrame(function () {
-            alert.classList.add("is-dismissing");
-        });
+        const reduceMotion = window.matchMedia
+            && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
 
-        window.setTimeout(function () {
-            if (alert.isConnected) {
-                alert.remove();
+        if (reduceMotion || typeof alert.animate !== "function") {
+            if (!reduceMotion) {
+                alert.classList.add("ciit-alert-auto-dismiss", "is-dismissing");
             }
-        }, DISMISS_ANIMATION_MS);
+            window.setTimeout(function () {
+                removeAlert(alert);
+            }, reduceMotion ? 0 : DISMISS_ANIMATION_MS);
+            return;
+        }
+
+        const computed = window.getComputedStyle(alert);
+        const height = Math.ceil(alert.getBoundingClientRect().height);
+
+        alert.classList.add("ciit-alert-auto-dismiss");
+        alert.style.overflow = "hidden";
+
+        const animation = alert.animate(
+            [
+                {
+                    opacity: Number(computed.opacity) || 1,
+                    transform: "translateY(0) scale(1)",
+                    height: height + "px",
+                    maxHeight: height + "px",
+                    marginTop: computed.marginTop,
+                    marginBottom: computed.marginBottom,
+                    paddingTop: computed.paddingTop,
+                    paddingBottom: computed.paddingBottom,
+                    borderTopWidth: computed.borderTopWidth,
+                    borderBottomWidth: computed.borderBottomWidth
+                },
+                {
+                    opacity: 0,
+                    transform: "translateY(-7px) scale(.99)",
+                    height: "0px",
+                    maxHeight: "0px",
+                    marginTop: "0px",
+                    marginBottom: "0px",
+                    paddingTop: "0px",
+                    paddingBottom: "0px",
+                    borderTopWidth: "0px",
+                    borderBottomWidth: "0px"
+                }
+            ],
+            {
+                duration: DISMISS_ANIMATION_MS,
+                easing: "cubic-bezier(.2, .8, .2, 1)",
+                fill: "forwards"
+            }
+        );
+
+        animation.onfinish = function () {
+            removeAlert(alert);
+        };
+        animation.oncancel = function () {
+            removeAlert(alert);
+        };
     }
 
     function initializeAlert(alert) {
@@ -33,9 +88,6 @@
         }
 
         alert.dataset.ciitAutoDismissInitialized = "true";
-        alert.classList.add("ciit-alert-auto-dismiss");
-        alert.style.maxHeight = Math.ceil(alert.getBoundingClientRect().height) + "px";
-
         window.setTimeout(function () {
             dismissAlert(alert);
         }, DISMISS_AFTER_MS);
@@ -46,7 +98,7 @@
     }
 
     function observeNewAlerts() {
-        if (!("MutationObserver" in window) || !document.body) {
+        if (!(window.MutationObserver) || !document.body) {
             return;
         }
 
@@ -57,11 +109,11 @@
                         return;
                     }
 
-                    if (node.matches?.(selector)) {
+                    if (node.matches(selector)) {
                         initializeAlert(node);
                     }
 
-                    node.querySelectorAll?.(selector).forEach(initializeAlert);
+                    node.querySelectorAll(selector).forEach(initializeAlert);
                 });
             });
         });
