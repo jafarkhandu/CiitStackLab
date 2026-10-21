@@ -12,7 +12,9 @@
     const previousButton = reader.querySelector('[data-page-previous]');
     const nextButton = reader.querySelector('[data-page-next]');
     const markReadButton = reader.querySelector('[data-page-mark-read]');
-    const originalNodes = Array.from(content.childNodes);
+    const originalNodes = Array.from(content.childNodes).filter(node =>
+        node.nodeType !== Node.COMMENT_NODE &&
+        !(node.nodeType === Node.TEXT_NODE && !node.textContent.trim()));
     const pageHeight = () => Math.max(420, Math.floor(window.innerHeight * 0.68));
 
     let pages = [];
