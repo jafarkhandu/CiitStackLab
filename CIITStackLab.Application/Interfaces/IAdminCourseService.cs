@@ -7,8 +7,8 @@ public interface IAdminCourseService
     Task<IReadOnlyList<AdminCourseDto>> GetActiveAsync(CancellationToken cancellationToken = default);
     Task<IReadOnlyList<AdminArchivedCourseDto>> GetArchivedAsync(CancellationToken cancellationToken = default);
     Task<bool> CourseNameExistsAsync(string courseName, int? excludedCourseId = null, CancellationToken cancellationToken = default);
-    Task<(bool Succeeded, string? Error, AdminCourseDto? Course)> CreateAsync(string courseName, CancellationToken cancellationToken = default);
-    Task<(bool Succeeded, string? Error)> UpdateAsync(int id, string courseName, CancellationToken cancellationToken = default);
+    Task<(bool Succeeded, string? Error, AdminCourseDto? Course)> CreateAsync(string courseName, string? imagePath, CancellationToken cancellationToken = default);
+    Task<(bool Succeeded, string? Error)> UpdateAsync(int id, string courseName, string? imagePath, CancellationToken cancellationToken = default);
     Task<(bool Succeeded, string? Error)> DeleteAsync(int id, CancellationToken cancellationToken = default);
     Task<(bool Succeeded, string? Error)> RestoreAsync(int id, CancellationToken cancellationToken = default);
 }
