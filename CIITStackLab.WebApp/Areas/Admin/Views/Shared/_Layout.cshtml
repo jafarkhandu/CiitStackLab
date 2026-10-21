@@ -20,6 +20,7 @@
     <link rel="stylesheet" href="~/css/admin-reports.css" />
     <link rel="stylesheet" href="~/css/admin-report-sections.css" />
     <link rel="stylesheet" href="~/css/admin-exam-notifications.css" asp-append-version="true" />
+    <link rel="stylesheet" href="~/css/global-alerts.css" asp-append-version="true" />
     @await RenderSectionAsync("Styles", required: false)
 </head>
 <body class="ciit-admin-body">
@@ -54,6 +55,43 @@
             <header class="ciit-admin-topbar">
                 <button type="button" class="ciit-admin-menu-toggle" id="ciitAdminMenuToggle" aria-label="Toggle admin menu" aria-controls="ciitAdminSidebar" aria-expanded="false"><i class="bi bi-list"></i></button>
                 <div class="ciit-admin-topbar-context"><span class="ciit-admin-topbar-kicker">ADMIN CONSOLE</span><strong>@ViewData["Title"]</strong></div>
+                <div class="ciit-admin-notifications">
+                    <button type="button"
+                            class="ciit-admin-notification-bell"
+                            id="ciitExamNotificationButton"
+                            aria-label="Exam notifications"
+                            aria-controls="ciitExamNotificationPanel"
+                            aria-expanded="false">
+                        <i class="bi bi-bell-fill" aria-hidden="true"></i>
+                        <span class="ciit-admin-notification-badge" id="ciitExamNotificationBadge" hidden>0</span>
+                    </button>
+                    <section class="ciit-admin-notification-panel"
+                             id="ciitExamNotificationPanel"
+                             aria-label="Exam question notifications"
+                             hidden>
+                        <header class="ciit-admin-notification-panel-header">
+                            <div>
+                                <span class="ciit-admin-notification-eyebrow">LIVE EXAM MONITOR</span>
+                                <strong>Question bank alerts</strong>
+                                <small id="ciitExamNotificationSummary">Checking pending notifications…</small>
+                            </div>
+                            <button type="button" id="ciitExamNotificationClose" aria-label="Close notifications">
+                                <i class="bi bi-x-lg" aria-hidden="true"></i>
+                            </button>
+                        </header>
+                        <div class="ciit-admin-notification-list" id="ciitExamNotificationList" aria-live="polite">
+                            <div class="ciit-admin-notification-empty">
+                                <span><i class="bi bi-hourglass-split" aria-hidden="true"></i></span>
+                                <strong>Loading exam alerts</strong>
+                                <small>Your saved notifications will appear here.</small>
+                            </div>
+                        </div>
+                        <footer class="ciit-admin-notification-panel-footer">
+                            <span>Alerts are saved until read.</span>
+                            <button type="button" id="ciitExamNotificationMarkRead">Mark all read</button>
+                        </footer>
+                    </section>
+                </div>
                 <div class="ciit-admin-user">
                     <div class="ciit-admin-user-avatar"><i class="bi bi-person-fill"></i></div>
                     <div class="ciit-admin-user-copy"><strong>@User.Identity?.Name</strong><span>Administrator</span></div>
@@ -72,6 +110,10 @@
     <script src="~/js/admin-settings.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/&#64;microsoft/signalr&#64;8.0.7/dist/browser/signalr.min.js"></script>
     <script src="~/js/admin-exam-notifications.js" asp-append-version="true"></script>
+    <script src="~/js/global-alerts.js" asp-append-version="true"></script>
+    <form id="ciitExamNotificationAntiforgeryForm" method="post" hidden>
+        @Html.AntiForgeryToken()
+    </form>
     @await RenderSectionAsync("Scripts", required: false)
 </body>
 </html>
