@@ -11,6 +11,7 @@
     let toastStack = null;
     let connection = null;
     let refreshInProgress = false;
+    let refreshRequested = false;
 
     const elements = {};
 
@@ -218,7 +219,12 @@
     }
 
     async function refreshNotifications() {
-        if (!elements.list || refreshInProgress) {
+        if (!elements.list) {
+            return;
+        }
+
+        if (refreshInProgress) {
+            refreshRequested = true;
             return;
         }
 
@@ -263,6 +269,10 @@
             }
         } finally {
             refreshInProgress = false;
+            if (refreshRequested) {
+                refreshRequested = false;
+                await refreshNotifications();
+            }
         }
     }
 
