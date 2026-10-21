@@ -504,7 +504,7 @@ public sealed class DynamicCourseService : ICourseService
             int chapterTopicId,
             Dictionary<int, List<QuestionReference>> byNoteId,
             Dictionary<int, List<QuestionReference>> byContentId,
-            Dictionary<int, List<QuestionReference>> byTopicId)
+            Dictionary<int, List<QuestionReference>>? byTopicId)
         {
             var ids = new HashSet<int>();
 
@@ -524,7 +524,8 @@ public sealed class DynamicCourseService : ICourseService
                 }
             }
 
-            if (firstChapterIdByTopicId.TryGetValue(chapterTopicId, out var firstChapterId)
+            if (byTopicId is not null
+                && firstChapterIdByTopicId.TryGetValue(chapterTopicId, out var firstChapterId)
                 && firstChapterId == chapterId
                 && byTopicId.TryGetValue(chapterTopicId, out var topicQuestions))
             {
@@ -738,6 +739,13 @@ public sealed class DynamicCourseService : ICourseService
                             Title = content.Title ?? string.Empty,
                             Slides = content.Slides,
                             VideoName = content.VideoName,
+                            QuestionCount = CountQuestionReferencesForContent(
+                                content.Id,
+                                content.TopicId,
+                                content.NoteId,
+                                questionReferencesByContentId,
+                                questionReferencesByTopicId,
+                                questionReferencesByNoteId),
                             Questions = GetQuestionsForContent(content.Id, content.TopicId, content.NoteId)
                         })
                         .ToList(),
@@ -749,6 +757,24 @@ public sealed class DynamicCourseService : ICourseService
                             Title = chapter.Title ?? string.Empty,
                             SortOrder = chapter.SortOrder,
                             HasNotes = chapter.HasNotes,
+                            QuestionCount = CountQuestionReferencesForChapter(
+                                chapter.Id,
+                                topic.TopicId,
+                                questionReferencesByNoteId,
+                                questionReferencesByContentId,
+                                questionReferencesByTopicId),
+                            InterviewQuestionCount = CountQuestionReferencesForChapter(
+                                chapter.Id,
+                                topic.TopicId,
+                                interviewReferencesByNoteId,
+                                interviewReferencesByContentId,
+                                interviewReferencesByTopicId),
+                            PracticeQuestionCount = CountQuestionReferencesForChapter(
+                                chapter.Id,
+                                topic.TopicId,
+                                practiceReferencesByNoteId,
+                                practiceReferencesByContentId,
+                                null),
                             NotesHtml = loadAllTopicDetails
                                 ? chapter.HtmlContent ?? string.Empty
                                 : chapter.Id == selectedChapterId
@@ -766,6 +792,13 @@ public sealed class DynamicCourseService : ICourseService
                                         Title = content.Title ?? string.Empty,
                                         Slides = content.Slides,
                                         VideoName = content.VideoName,
+                                        QuestionCount = CountQuestionReferencesForContent(
+                                            content.Id,
+                                            content.TopicId,
+                                            content.NoteId,
+                                            questionReferencesByContentId,
+                                            questionReferencesByTopicId,
+                                            questionReferencesByNoteId),
                                         Questions = GetQuestionsForContent(content.Id, content.TopicId, content.NoteId)
                                     })
                                     .ToList()
