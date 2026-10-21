@@ -196,7 +196,7 @@
     <script>
         (function () {
             const items = document.querySelectorAll('[data-dashboard-reveal]');
-            const reduceMotion = window.matchMedia('(prefers-reduced-motion, reduce)').matches;
+            const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
             if (reduceMotion || !('IntersectionObserver' in window)) {
                 items.forEach(item => item.classList.add('is-visible'));
             } else {
