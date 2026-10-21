@@ -671,12 +671,29 @@ public class CoursesController : Controller
                 return NotFound();
             }
 
-            var topicContentIds = await _dbContext.Lessons
+            var directTopicContentIds = await _dbContext.Lessons
                 .AsNoTracking()
                 .Where(lesson => lesson.TopicId == topicId.Value && lesson.Flag == 0)
                 .OrderBy(lesson => lesson.Id)
                 .Select(lesson => lesson.Id)
                 .ToListAsync(cancellationToken);
+
+            var chapterContentIds = await (
+                from lesson in _dbContext.Lessons.AsNoTracking()
+                join note in _dbContext.TrainingNotes.AsNoTracking()
+                    on lesson.NoteId equals (int?)note.Id
+                where lesson.Flag == 0
+                    && note.TopicId == topicId.Value
+                    && note.Flag == 0
+                orderby note.SortOrder, note.Id, lesson.Id
+                select lesson.Id)
+                .Distinct()
+                .ToListAsync(cancellationToken);
+
+            var topicContentIds = directTopicContentIds
+                .Concat(chapterContentIds)
+                .Distinct()
+                .ToList();
 
             if (topicContentIds.Count > 0)
             {
