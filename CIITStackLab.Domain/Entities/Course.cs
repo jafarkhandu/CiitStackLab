@@ -6,6 +6,8 @@ public class Course
 
     public string Title { get; set; } = string.Empty;
 
+    public string? ImagePath { get; set; }
+
     public double? FeesAmount { get; set; }
 
     public DateTime? FeesChangeDate { get; set; }
