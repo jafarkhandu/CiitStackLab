@@ -268,3 +268,416 @@
         animation: none;
     }
 }
+
+
+/* Persistent notification bell and offline-backed inbox. */
+.ciit-admin-topbar {
+    overflow: visible;
+}
+
+.ciit-admin-notifications {
+    position: relative;
+    display: flex;
+    align-items: center;
+    flex: 0 0 auto;
+    margin-left: auto;
+}
+
+.ciit-admin-notification-bell {
+    position: relative;
+    display: grid;
+    width: 44px;
+    height: 44px;
+    place-items: center;
+    border: 1px solid rgba(190, 208, 237, .72);
+    border-radius: 15px;
+    color: #456182;
+    background: linear-gradient(145deg, rgba(255,255,255,.96), rgba(236,244,255,.82));
+    box-shadow: 0 7px 18px rgba(27,66,126,.08), inset 0 1px 0 #fff;
+    transition: transform .18s ease, border-color .18s ease, box-shadow .18s ease, color .18s ease;
+}
+
+.ciit-admin-notification-bell i {
+    font-size: 17px;
+}
+
+.ciit-admin-notification-bell:hover,
+.ciit-admin-notification-bell[aria-expanded="true"] {
+    color: #2867e8;
+    border-color: rgba(84, 143, 239, .55);
+    box-shadow: 0 10px 24px rgba(36,100,213,.14), inset 0 1px 0 #fff;
+    transform: translateY(-1px);
+}
+
+.ciit-admin-notification-bell.has-unread i {
+    color: #2167e8;
+    filter: drop-shadow(0 0 5px rgba(37,99,235,.25));
+    animation: ciit-exam-bell-pulse 2.5s ease-in-out infinite;
+}
+
+.ciit-admin-notification-badge {
+    position: absolute;
+    top: -5px;
+    right: -5px;
+    display: grid;
+    min-width: 20px;
+    height: 20px;
+    padding: 0 5px;
+    place-items: center;
+    border: 2px solid #fff;
+    border-radius: 999px;
+    color: #fff;
+    background: linear-gradient(145deg, #fb526b, #d92348);
+    box-shadow: 0 4px 12px rgba(220,35,72,.28);
+    font-size: 9px;
+    font-weight: 900;
+    line-height: 1;
+}
+
+.ciit-admin-notification-badge[hidden],
+.ciit-admin-notification-panel[hidden] {
+    display: none !important;
+}
+
+.ciit-admin-notification-panel {
+    position: absolute;
+    z-index: 1600;
+    top: calc(100% + 14px);
+    right: -66px;
+    display: flex;
+    width: min(440px, calc(100vw - 28px));
+    max-height: min(660px, calc(100vh - 105px));
+    flex-direction: column;
+    overflow: hidden;
+    border: 1px solid rgba(255,255,255,.86);
+    border-radius: 24px;
+    color: #1d3455;
+    background:
+        radial-gradient(circle at 100% 0, rgba(84,140,255,.18), transparent 44%),
+        linear-gradient(145deg, rgba(255,255,255,.97), rgba(239,246,255,.94));
+    box-shadow: 0 28px 80px rgba(14,35,73,.23), inset 0 1px 0 rgba(255,255,255,.98);
+    backdrop-filter: blur(30px) saturate(160%);
+    -webkit-backdrop-filter: blur(30px) saturate(160%);
+    transform-origin: top right;
+    animation: ciit-exam-inbox-open .2s cubic-bezier(.2,.8,.2,1) both;
+}
+
+.ciit-admin-notification-panel::before {
+    position: absolute;
+    top: 0;
+    right: 24px;
+    left: 24px;
+    height: 3px;
+    border-radius: 0 0 6px 6px;
+    background: linear-gradient(90deg,#2f78f5,#64c8ef);
+    content: "";
+}
+
+.ciit-admin-notification-panel-header {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 14px;
+    padding: 24px 22px 17px;
+    border-bottom: 1px solid rgba(177,198,230,.38);
+}
+
+.ciit-admin-notification-panel-header > div {
+    display: flex;
+    min-width: 0;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.ciit-admin-notification-eyebrow {
+    color: #8093af;
+    font-size: 9px;
+    font-weight: 900;
+    letter-spacing: .16em;
+}
+
+.ciit-admin-notification-panel-header strong {
+    color: #1a3153;
+    font-size: 17px;
+    font-weight: 900;
+    letter-spacing: -.035em;
+}
+
+.ciit-admin-notification-panel-header small {
+    color: #6b7e98;
+    font-size: 11px;
+}
+
+.ciit-admin-notification-panel-header button {
+    display: grid;
+    width: 31px;
+    height: 31px;
+    flex: 0 0 31px;
+    place-items: center;
+    border: 1px solid rgba(157,179,212,.3);
+    border-radius: 10px;
+    color: #6e829d;
+    background: rgba(255,255,255,.62);
+}
+
+.ciit-admin-notification-panel-header button:hover {
+    color: #1d3d69;
+    background: #fff;
+}
+
+.ciit-admin-notification-list {
+    display: flex;
+    min-height: 150px;
+    flex: 1 1 auto;
+    flex-direction: column;
+    gap: 10px;
+    overflow: auto;
+    padding: 14px;
+    overscroll-behavior: contain;
+}
+
+.ciit-admin-notification-item {
+    position: relative;
+    display: grid;
+    grid-template-columns: 39px minmax(0,1fr);
+    gap: 12px;
+    padding: 13px;
+    border: 1px solid rgba(181,201,232,.58);
+    border-radius: 17px;
+    background: linear-gradient(140deg,rgba(255,255,255,.9),rgba(246,250,255,.78));
+    box-shadow: 0 5px 15px rgba(26,67,126,.045), inset 0 1px 0 #fff;
+}
+
+.ciit-admin-notification-item.is-unread {
+    border-color: rgba(81,143,241,.48);
+    background:
+        radial-gradient(circle at 100% 0, rgba(75,139,246,.1), transparent 48%),
+        linear-gradient(140deg,rgba(255,255,255,.97),rgba(238,246,255,.88));
+    box-shadow: 0 7px 20px rgba(37,99,235,.08), inset 0 1px 0 #fff;
+}
+
+.ciit-admin-notification-item-icon {
+    display: grid;
+    width: 39px;
+    height: 39px;
+    place-items: center;
+    border: 1px solid rgba(255,255,255,.96);
+    border-radius: 13px;
+    color: #d83956;
+    background: linear-gradient(145deg,#fff3f4,#ffe3e8);
+    box-shadow: 0 7px 16px rgba(209,52,80,.09), inset 0 1px 0 #fff;
+    font-size: 16px;
+}
+
+.ciit-admin-notification-item-copy {
+    min-width: 0;
+}
+
+.ciit-admin-notification-item-top {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 8px;
+}
+
+.ciit-admin-notification-item-title {
+    color: #203958;
+    font-size: 12px;
+    font-weight: 900;
+    line-height: 1.45;
+}
+
+.ciit-admin-notification-item-status {
+    flex: 0 0 auto;
+    margin-top: 2px;
+    color: #2369dc;
+    font-size: 8px;
+    font-weight: 900;
+    letter-spacing: .08em;
+    text-transform: uppercase;
+}
+
+.ciit-admin-notification-item-body {
+    margin: 5px 0 0;
+    color: #536985;
+    font-size: 10px;
+    line-height: 1.55;
+    overflow-wrap: anywhere;
+}
+
+.ciit-admin-notification-question-count {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    margin-top: 8px;
+    padding: 5px 8px;
+    border: 1px solid rgba(240,165,177,.45);
+    border-radius: 999px;
+    color: #b22d48;
+    background: rgba(255,238,241,.72);
+    font-size: 9px;
+    font-weight: 900;
+}
+
+.ciit-admin-notification-reason {
+    margin-top: 9px;
+    padding: 8px 9px;
+    border: 1px solid rgba(191,207,231,.55);
+    border-radius: 11px;
+    color: #586d88;
+    background: rgba(255,255,255,.57);
+    font-size: 10px;
+    line-height: 1.5;
+    overflow-wrap: anywhere;
+}
+
+.ciit-admin-notification-item-actions {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-top: 10px;
+}
+
+.ciit-admin-notification-date {
+    color: #8796aa;
+    font-size: 9px;
+}
+
+.ciit-admin-notification-action {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 7px 9px;
+    border: 1px solid rgba(255,255,255,.45);
+    border-radius: 10px;
+    color: #fff;
+    background: linear-gradient(120deg,#397ff3,#245bd8);
+    box-shadow: 0 5px 13px rgba(37,99,235,.17);
+    font-size: 9px;
+    font-weight: 900;
+    text-decoration: none;
+    transition: transform .16s ease, box-shadow .16s ease;
+}
+
+.ciit-admin-notification-action:hover {
+    color: #fff;
+    transform: translateY(-1px);
+    box-shadow: 0 8px 18px rgba(37,99,235,.24);
+}
+
+.ciit-admin-notification-empty {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex: 1 0 140px;
+    flex-direction: column;
+    gap: 6px;
+    padding: 24px 16px;
+    text-align: center;
+}
+
+.ciit-admin-notification-empty > span {
+    display: grid;
+    width: 43px;
+    height: 43px;
+    margin-bottom: 3px;
+    place-items: center;
+    border: 1px solid rgba(255,255,255,.96);
+    border-radius: 15px;
+    color: #3474e9;
+    background: linear-gradient(145deg,#f8fbff,#e3edff);
+    box-shadow: 0 8px 20px rgba(35,98,207,.11), inset 0 1px 0 #fff;
+    font-size: 18px;
+}
+
+.ciit-admin-notification-empty strong {
+    color: #314c70;
+    font-size: 12px;
+    font-weight: 900;
+}
+
+.ciit-admin-notification-empty small {
+    max-width: 245px;
+    color: #8292a8;
+    font-size: 10px;
+    line-height: 1.6;
+}
+
+.ciit-admin-notification-panel-footer {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    padding: 13px 19px;
+    border-top: 1px solid rgba(177,198,230,.4);
+    background: rgba(249,252,255,.65);
+}
+
+.ciit-admin-notification-panel-footer span {
+    color: #7a8ba2;
+    font-size: 9px;
+}
+
+.ciit-admin-notification-panel-footer button {
+    padding: 7px 9px;
+    border: 1px solid rgba(132,165,219,.4);
+    border-radius: 9px;
+    color: #2e65bd;
+    background: rgba(255,255,255,.66);
+    font-size: 9px;
+    font-weight: 850;
+}
+
+.ciit-admin-notification-panel-footer button:hover:not(:disabled) {
+    background: #fff;
+    border-color: rgba(55,117,224,.6);
+}
+
+.ciit-admin-notification-panel-footer button:disabled {
+    opacity: .45;
+    cursor: not-allowed;
+}
+
+@keyframes ciit-exam-bell-pulse {
+    0%, 100% { transform: scale(1); }
+    45% { transform: scale(1.08); }
+}
+
+@keyframes ciit-exam-inbox-open {
+    from { opacity: 0; transform: translateY(-6px) scale(.99); }
+    to { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+@media (max-width: 720px) {
+    .ciit-admin-notifications {
+        margin-left: auto;
+    }
+
+    .ciit-admin-notification-panel {
+        right: -52px;
+        width: min(420px, calc(100vw - 20px));
+        max-height: calc(100vh - 90px);
+    }
+
+    .ciit-admin-topbar {
+        gap: 12px;
+        padding-right: 14px;
+        padding-left: 14px;
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .ciit-admin-notification-bell.has-unread i {
+        animation: none;
+    }
+
+    .ciit-admin-notification-panel {
+        animation: none;
+    }
+
+    .ciit-admin-notification-action {
+        transition: none;
+    }
+}
