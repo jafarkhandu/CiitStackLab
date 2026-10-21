@@ -11,6 +11,9 @@ public sealed class CourseDetailsDto
     public string Level { get; init; } = string.Empty;
     public decimal DurationHours { get; init; }
     public decimal TotalPrice { get; set; }
+    public decimal OriginalPrice { get; set; }
+    public decimal DiscountAmount { get; set; }
+    public decimal? DiscountPercentage { get; set; }
     public bool IsStudent { get; set; }
     public bool HasAccess { get; set; }
     public IReadOnlyList<CourseTopicDto> Topics { get; init; } = Array.Empty<CourseTopicDto>();
@@ -25,6 +28,10 @@ public sealed class CourseTopicDto
     public bool HasNotes { get; init; }
     public int ChapterCount { get; init; }
     public IReadOnlyList<CourseContentDto> Contents { get; init; } = Array.Empty<CourseContentDto>();
+    public IReadOnlyList<string> ChapterTitles { get; init; } = Array.Empty<string>();
+    public int McqCount { get; init; }
+    public int InterviewQuestionCount { get; init; }
+    public int PracticeProgramCount { get; init; }
 }
 
 public sealed class CourseContentDto
@@ -34,6 +41,8 @@ public sealed class CourseContentDto
     public string? Slides { get; init; }
     public string? VideoName { get; init; }
     public IReadOnlyList<ContentQuestionDto> Questions { get; init; } = Array.Empty<ContentQuestionDto>();
+    public bool HasVideo => !string.IsNullOrWhiteSpace(VideoName);
+    public bool HasSlides => !string.IsNullOrWhiteSpace(Slides);
 }
 
 public sealed class ContentQuestionDto

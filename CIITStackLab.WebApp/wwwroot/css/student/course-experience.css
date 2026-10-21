@@ -804,10 +804,7 @@
     font-weight: 800;
 }
 
-.ciit-course-curriculum-list {
-    display: grid;
-    gap: 10px;
-}
+
 
 .ciit-curriculum-accordion {
     overflow: hidden;
@@ -870,9 +867,7 @@
     transition: transform .25s ease;
 }
 
-.ciit-curriculum-accordion.is-expanded .ciit-curriculum-topic-toggle-end i {
-    transform: rotate(180deg);
-}
+
 
 .ciit-curriculum-topic-panel-inner {
     padding: 0 18px 15px;

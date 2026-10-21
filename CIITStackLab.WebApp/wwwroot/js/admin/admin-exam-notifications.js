@@ -8,6 +8,7 @@
     const toastDismissMs = 5000;
     const toastAnimationMs = 280;
     const renderedToastIds = new Set();
+    const toastSessionKey = "ciitExamNotificationToastsSeen";
     let toastStack = null;
     let connection = null;
     let refreshInProgress = false;
@@ -247,13 +248,16 @@
 
             renderNotifications(result.notifications);
 
-            const pendingDelivery = result.notifications.filter(
-                item => !item.isDelivered && !item.isRead
-            );
-            pendingDelivery.forEach(showToast);
+            // Show each unread notification once per browser tab, including alerts
+            // that were persisted while offline or whose previous toast was missed.
+            const unreadNotifications = result.notifications.filter(item => !item.isRead);
+            unreadNotifications.forEach(showToast);
+
             if (connection && connection.state === window.signalR?.HubConnectionState.Connected) {
-                for (const item of pendingDelivery) {
-                    await acknowledgeNotification(item.notificationId);
+                for (const item of unreadNotifications) {
+                    if (!item.isDelivered) {
+                        await acknowledgeNotification(item.notificationId);
+                    }
                 }
             }
         } catch (error) {
@@ -282,11 +286,27 @@
         }
 
         const id = String(payload.notificationId || "");
-        if (id && renderedToastIds.has(id)) {
-            return;
-        }
         if (id) {
+            let seenIds = [];
+            try {
+                seenIds = JSON.parse(window.sessionStorage.getItem(toastSessionKey) || "[]");
+            } catch {
+                seenIds = [];
+            }
+
+            if (renderedToastIds.has(id) || seenIds.includes(id)) {
+                renderedToastIds.add(id);
+                return;
+            }
+
             renderedToastIds.add(id);
+            seenIds.push(id);
+            try {
+                // sessionStorage survives navigation between admin pages, but resets for a new tab session.
+                window.sessionStorage.setItem(toastSessionKey, JSON.stringify(seenIds.slice(-200)));
+            } catch {
+                // In-memory deduplication still prevents duplicate toasts on this page.
+            }
         }
 
         if (!toastStack || !document.body.contains(toastStack)) {

@@ -69,11 +69,11 @@
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" />
     <link href="https://fonts.googleapis.com/css2?family=Fira+Code:wght@400;500;600;700;800&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
-    <link rel="stylesheet" href="~/css/site.css" />
-    <link rel="stylesheet" href="~/css/course-environment.css" asp-append-version="true" />
-    <link rel="stylesheet" href="~/css/course-switcher.css" asp-append-version="true" />
+    <link rel="stylesheet" href="~/css/global/site.css" />
+    <link rel="stylesheet" href="~/css/student/course-environment.css" asp-append-version="true" />
+    <link rel="stylesheet" href="~/css/student/course-switcher.css" asp-append-version="true" />
     @await RenderSectionAsync("Styles", required: false)
-    <link rel="stylesheet" href="~/css/course-learning-enhancements.css" asp-append-version="true" />
+    <link rel="stylesheet" href="~/css/student/course-learning-enhancements.css" asp-append-version="true" />
 </head>
 <body class="ciit-course-environment-body @(currentController.Equals("Courses", StringComparison.OrdinalIgnoreCase) && currentAction.Equals("Learn", StringComparison.OrdinalIgnoreCase) ? "ciit-learning-mode" : "")">
     <header class="ciit-course-environment-header">
@@ -246,16 +246,13 @@
         <div class="container-fluid px-3 px-lg-4">
             <div class="d-flex flex-column flex-sm-row justify-content-between align-items-center gap-2">
                 <span>&copy; @DateTime.Now.Year - CIIT Stack Lab</span>
-                @if (!(currentController.Equals("Courses", StringComparison.OrdinalIgnoreCase) && currentAction.Equals("Learn", StringComparison.OrdinalIgnoreCase)))
-                    {
-                        <a asp-controller="Home" asp-action="Index">Exit Course</a>
-                    }
+
             </div>
         </div>
     </footer>
 
     <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
-    <script src="~/js/site.js"></script>
+    <script src="~/js/global/site.js"></script>
     @if (!string.IsNullOrWhiteSpace(courseId))
     {
         <script>

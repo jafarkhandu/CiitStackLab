@@ -180,26 +180,71 @@ public sealed class CourseService
             ? new HashSet<int>()
             : new HashSet<int>(await _dbContext.TrainingNotes
                 .AsNoTracking()
-                .Where(note => topicIds.Contains(note.TopicId) && note.Flag == 0)
+                .Where(note => topicIds.Contains(note.TopicId) && (note.Flag == 0 || note.Flag == null))
                 .Select(note => note.TopicId)
                 .Distinct()
                 .ToListAsync(cancellationToken));
+
+        var chapterRows = topicIds.Count == 0
+            ? new List<(int TopicId, string Title)>()
+            : (await _dbContext.TrainingNotes
+                .AsNoTracking()
+                .Where(note => topicIds.Contains(note.TopicId) && (note.Flag == 0 || note.Flag == null))
+                .OrderBy(note => note.TopicId)
+                .ThenBy(note => note.SortOrder)
+                .ThenBy(note => note.Id)
+                .Select(note => new { note.TopicId, note.Title })
+                .ToListAsync(cancellationToken))
+                .Select(note => (note.TopicId, note.Title))
+                .ToList();
 
         var contentIds = rows
             .Where(x => x.ContentId.HasValue)
             .Select(x => x.ContentId!.Value)
             .Distinct()
             .ToList();
+        var chapterIds = topicIds.Count == 0
+            ? new List<int>()
+            : await _dbContext.TrainingNotes.AsNoTracking()
+                .Where(note => topicIds.Contains(note.TopicId) && (note.Flag == 0 || note.Flag == null))
+                .Select(note => note.Id)
+                .ToListAsync(cancellationToken);
         var noteIds = rows
             .Where(x => x.NoteId.HasValue)
             .Select(x => x.NoteId!.Value)
+            .Concat(chapterIds)
             .Distinct()
             .ToList();
+
+        var topicIdByContentId = rows
+            .Where(row => row.ContentId.HasValue)
+            .GroupBy(row => row.ContentId!.Value)
+            .ToDictionary(group => group.Key, group => group.First().TopicId);
+        var topicIdByChapterId = topicIds.Count == 0
+            ? new Dictionary<int, int>()
+            : await _dbContext.TrainingNotes.AsNoTracking()
+                .Where(note => topicIds.Contains(note.TopicId) && (note.Flag == 0 || note.Flag == null))
+                .ToDictionaryAsync(note => note.Id, note => note.TopicId, cancellationToken);
+
+        var interviewRows = await _dbContext.ContentInterviewQuestions.AsNoTracking()
+            .Where(question => (question.Flag == 0 || question.Flag == null)
+                && ((question.TopicId.HasValue && topicIds.Contains(question.TopicId.Value))
+                    || (question.ContentId.HasValue && contentIds.Contains(question.ContentId.Value))
+                    || (question.NoteId.HasValue && chapterIds.Contains(question.NoteId.Value))))
+            .Select(question => new { question.Id, question.TopicId, question.ContentId, question.NoteId })
+            .ToListAsync(cancellationToken);
+
+        var practiceRows = await _dbContext.ContentProgramQuestions.AsNoTracking()
+            .Where(question => (question.Flag == 0 || question.Flag == null)
+                && ((question.ContentId.HasValue && contentIds.Contains(question.ContentId.Value))
+                    || (question.NoteId.HasValue && chapterIds.Contains(question.NoteId.Value))))
+            .Select(question => new { question.Id, question.ContentId, question.NoteId })
+            .ToListAsync(cancellationToken);
 
         var questions = await _dbContext.ContentQuestions
             .AsNoTracking()
             .Where(question =>
-                question.Flag == 0
+                (question.Flag == 0 || question.Flag == null)
                 && ((question.ContentId.HasValue
                      && contentIds.Contains(question.ContentId.Value))
                     || (question.TopicId.HasValue
@@ -302,6 +347,21 @@ public sealed class CourseService
                 Price = group.Key.TopicPrice,
                 DurationMinutes = group.Key.TopicDurationMinutes,
                 HasNotes = topicsWithNotes.Contains(group.Key.TopicId),
+                ChapterTitles = chapterRows
+                    .Where(chapter => chapter.TopicId == group.Key.TopicId)
+                    .Select(chapter => chapter.Title)
+                    .ToList(),
+                McqCount = questions.Count(question =>
+                    (question.TopicId == group.Key.TopicId)
+                    || (question.ContentId.HasValue && topicIdByContentId.TryGetValue(question.ContentId.Value, out var contentTopicId) && contentTopicId == group.Key.TopicId)
+                    || (question.NoteId.HasValue && topicIdByChapterId.TryGetValue(question.NoteId.Value, out var chapterTopicId) && chapterTopicId == group.Key.TopicId)),
+                InterviewQuestionCount = interviewRows.Count(question =>
+                    (question.TopicId == group.Key.TopicId)
+                    || (question.ContentId.HasValue && topicIdByContentId.TryGetValue(question.ContentId.Value, out var contentTopicId) && contentTopicId == group.Key.TopicId)
+                    || (question.NoteId.HasValue && topicIdByChapterId.TryGetValue(question.NoteId.Value, out var chapterTopicId) && chapterTopicId == group.Key.TopicId)),
+                PracticeProgramCount = practiceRows.Count(question =>
+                    (question.ContentId.HasValue && topicIdByContentId.TryGetValue(question.ContentId.Value, out var contentTopicId) && contentTopicId == group.Key.TopicId)
+                    || (question.NoteId.HasValue && topicIdByChapterId.TryGetValue(question.NoteId.Value, out var chapterTopicId) && chapterTopicId == group.Key.TopicId)),
                 Contents = group
                     .Where(x => x.ContentId.HasValue)
                     .Select(x => new CourseContentDto
@@ -326,13 +386,36 @@ public sealed class CourseService
             Title = course.Title,
             ShortDescription = presentation.ShortDescription,
             Description = presentation.Description,
-            ImageUrl = presentation.ImageUrl,
+            ImageUrl = course.ImagePath ?? presentation.ImageUrl,
             Category = presentation.Category,
             Level = presentation.Level,
             DurationHours = topics.Sum(topic => topic.DurationMinutes ?? 0) / 60m,
-            TotalPrice = topics.Sum(topic => Math.Max(0m, topic.Price)),
+            OriginalPrice = topics.Sum(topic => Math.Max(0m, topic.Price)),
+            TotalPrice = CalculateDiscountedPrice(topics.Sum(topic => Math.Max(0m, topic.Price)), course.DiscountMode, course.DiscountValue),
+            DiscountAmount = Math.Max(0m, topics.Sum(topic => Math.Max(0m, topic.Price)) - CalculateDiscountedPrice(topics.Sum(topic => Math.Max(0m, topic.Price)), course.DiscountMode, course.DiscountValue)),
+            DiscountPercentage = GetDiscountPercentage(topics.Sum(topic => Math.Max(0m, topic.Price)), course.DiscountMode, course.DiscountValue),
             Topics = topics
         };
+    }
+
+    private static decimal CalculateDiscountedPrice(decimal originalPrice, string? discountMode, decimal? discountValue)
+    {
+        if (originalPrice <= 0m || !discountValue.HasValue || discountValue.Value < 0m)
+            return Math.Max(0m, originalPrice);
+        var discounted = discountMode switch
+        {
+            "percentage" when discountValue.Value <= 100m => originalPrice * (1m - discountValue.Value / 100m),
+            "direct" when discountValue.Value <= originalPrice => discountValue.Value,
+            _ => originalPrice
+        };
+        return Math.Round(Math.Clamp(discounted, 0m, originalPrice), 2, MidpointRounding.AwayFromZero);
+    }
+
+    private static decimal? GetDiscountPercentage(decimal originalPrice, string? discountMode, decimal? discountValue)
+    {
+        if (originalPrice <= 0m || !discountValue.HasValue) return null;
+        var discounted = CalculateDiscountedPrice(originalPrice, discountMode, discountValue);
+        return discounted < originalPrice ? Math.Round((originalPrice - discounted) / originalPrice * 100m, 2) : null;
     }
 
     private async Task<IReadOnlyDictionary<int, decimal>> GetDurationHoursByCourseIdsAsync(

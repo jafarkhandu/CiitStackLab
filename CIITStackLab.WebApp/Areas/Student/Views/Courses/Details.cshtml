@@ -4,10 +4,15 @@
     ViewData["Title"] = Model.Title;
     var totalTopicDurationMinutes = Model.Topics.Sum(topic => topic.DurationMinutes ?? 0);
     var totalDurationHours = totalTopicDurationMinutes / 60m;
+    var originalCoursePrice = Model.Topics.Sum(topic => Math.Max(0m, topic.Price));
+    var displayedSavings = Math.Max(0m, originalCoursePrice - Model.TotalPrice);
+    var displayedDiscountPercentage = originalCoursePrice > 0m && displayedSavings > 0m
+        ? Math.Round(displayedSavings / originalCoursePrice * 100m, 2)
+        : (decimal?)null;
 }
 
 @section Styles {
-    <link rel="stylesheet" href="~/css/course-payment-modal.css" />
+    <link rel="stylesheet" href="~/css/student/course-payment-modal.css" />
 }
 
 <section class="ciit-course-details-section ciit-student-course-details">
@@ -77,8 +82,22 @@
                         }
                         else
                         {
-                            <strong>â‚¹@Model.TotalPrice.ToString("N2")</strong>
-                            <small>Topic prices combined</small>
+                            <strong>₹@Model.TotalPrice.ToString("N2")</strong>
+                            @if (displayedSavings > 0m)
+                            {
+                                <div class="ciit-course-discount-pricing">
+                                    <del class="text-secondary small">₹@originalCoursePrice.ToString("N2")</del>
+                                    @if (displayedDiscountPercentage.HasValue)
+                                    {
+                                        <span class="badge text-bg-success">@displayedDiscountPercentage.Value.ToString("0.##")% OFF</span>
+                                    }
+                                    <small class="d-block text-success">You save ₹@displayedSavings.ToString("N2") on this course</small>
+                                </div>
+                            }
+                            else
+                            {
+                                <small>Topic prices combined</small>
+                            }
                         }
                     </div>
 
@@ -104,11 +123,11 @@
                         else
                         {
                             <button type="button"
-                                    class="btn btn-primary btn-lg"
-                                    data-bs-toggle="modal"
-                                    data-bs-target="#coursePaymentModal">
-                                <i class="bi bi-bag-check me-2"></i>Enroll Now
-                            </button>
+                                class="btn btn-primary btn-lg"
+                                data-bs-toggle="modal"
+                                data-bs-target="#coursePaymentModal">
+                            <i class="bi bi-bag-check me-2"></i>Enroll Now
+                        </button>
                         }
 
                         <a asp-controller="Home"
@@ -144,7 +163,7 @@
                             <div>
                                 <span class="ciit-payment-modal-eyebrow">Secure PhonePe checkout</span>
                                 <h2 class="modal-title" id="coursePaymentModalLabel">Complete your purchase</h2>
-                                <p class="ciit-payment-modal-subtitle">You will be redirected to PhonePe to complete your payment securely.</p>
+                                <p class="ciit-payment-modal-subtitle">You will be redirected to PhonePe to complete your payment.</p>
                             </div>
                             <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                         </div>
@@ -168,11 +187,11 @@
                                 <div class="ciit-payment-order-box">
                                     <div>
                                         <span>Course price</span>
-                                        <strong>â‚¹@Model.TotalPrice.ToString("N2")</strong>
+                                        <strong>₹@Model.TotalPrice.ToString("N2")</strong>
                                     </div>
                                     <div class="ciit-payment-order-total">
                                         <span>Total payable</span>
-                                        <strong>â‚¹@Model.TotalPrice.ToString("N2")</strong>
+                                        <strong>₹@Model.TotalPrice.ToString("N2")</strong>
                                     </div>
                                 </div>
 
@@ -230,11 +249,11 @@
                                                 id="ciit-demo-payment-button"
                                                 class="btn btn-primary btn-lg w-100 ciit-payment-pay-button">
                                             <i class="bi bi-lock-fill me-2"></i>
-                                            Pay â‚¹@Model.TotalPrice.ToString("N2") (Demo)
+                                            Pay ₹@Model.TotalPrice.ToString("N2") (Demo)
                                         </button>
                                     </form>
                                     <p class="ciit-payment-modal-note">
-                                        Your course access will be enabled only after PhonePe confirms successful payment.
+                                        Your course access will be enabled after PhonePe confirms your payment.
                                     </p>
                                 }
                                 else
@@ -257,8 +276,8 @@
                                     <span class="ciit-payment-spinner"></span>
                                     <i class="bi bi-credit-card-2-front"></i>
                                 </div>
-                                <strong>Redirecting to PhonePe</strong>
-                                <span>Connecting to the secure PhonePe checkout. Please wait...</span>
+                                <strong>Processing demo payment</strong>
+                                <span>Simulating a secure payment flow. Please wait...</span>
 
                                 <div class="ciit-payment-processing-steps" aria-label="Payment processing status">
                                     <div class="ciit-payment-processing-step" data-payment-step="gateway">
@@ -271,7 +290,7 @@
                                     </div>
                                     <div class="ciit-payment-processing-step" data-payment-step="process">
                                         <i class="bi bi-check-lg" aria-hidden="true"></i>
-                                        <span>Opening PhonePe checkout...</span>
+                                        <span>Processing your demo payment...</span>
                                     </div>
                                 </div>
                             </div>
@@ -282,7 +301,7 @@
                                 </div>
                                 <strong>Payment Successful</strong>
                                 <span class="ciit-payment-success-course">Your access to @Model.Title is ready.</span>
-                                <span class="ciit-payment-success-note">PhonePe payment confirmation is required before course access is granted.</span>
+                                <span class="ciit-payment-success-note">Payment confirmed.</span>
                                 <small>Opening your learning page...</small>
                                 <div class="ciit-payment-redirect-bar" aria-hidden="true">
                                     <span></span>
@@ -349,11 +368,27 @@
                                     <span class="ciit-roadmap-topic-icon"><i class="bi bi-journal-bookmark-fill" aria-hidden="true"></i></span>
                                     <span class="ciit-roadmap-topic-copy">
                                         <strong>@topic.Title</strong>
-                                        <small>Topic @topicNumber Â· Structured learning</small>
+                                        <small>
+                                            @topic.ChapterCount note@(topic.ChapterCount == 1 ? "" : "s")
+                                            <span aria-hidden="true">·</span>
+                                            @topic.Contents.Count content item@(topic.Contents.Count == 1 ? "" : "s")
+                                            <span aria-hidden="true">·</span>
+                                            @(topic.McqCount + topic.InterviewQuestionCount + topic.PracticeProgramCount) assessment resources
+                                        </small>
                                     </span>
-                                    <span class="ciit-roadmap-lesson-count">
-                                        <i class="bi bi-play-circle" aria-hidden="true"></i>
-                                        @topic.Contents.Count lesson@(topic.Contents.Count == 1 ? "" : "s")
+                                    <span class="ciit-roadmap-badges" aria-label="Topic resource counts">
+                                        <span class="ciit-roadmap-badge ciit-roadmap-badge-notes">
+                                            <i class="bi bi-journal-text" aria-hidden="true"></i>
+                                            @topic.ChapterCount Notes
+                                        </span>
+                                        <span class="ciit-roadmap-badge ciit-roadmap-badge-content">
+                                            <i class="bi bi-play-circle" aria-hidden="true"></i>
+                                            @topic.Contents.Count Content
+                                        </span>
+                                        <span class="ciit-roadmap-badge ciit-roadmap-badge-assessment">
+                                            <i class="bi bi-patch-check" aria-hidden="true"></i>
+                                            @(topic.McqCount + topic.InterviewQuestionCount + topic.PracticeProgramCount) Assessments
+                                        </span>
                                     </span>
                                 </button>
                             </h3>
@@ -363,70 +398,91 @@
                                  aria-labelledby="@headingId"
                                  data-bs-parent="#courseTopicsAccordion">
                                 <div class="accordion-body">
-                                    @if (topic.Contents.Count == 0)
+                                    @if (topic.ChapterTitles.Count > 0)
                                     {
-                                        <p class="text-secondary mb-0">No active content is available for this topic yet.</p>
+                                        <section class="mb-3" aria-label="Notes chapters">
+                                            <div class="fw-semibold small mb-2">Notes chapters</div>
+                                            <div class="ciit-roadmap-badges">
+                                                @foreach (var chapterTitle in topic.ChapterTitles)
+                                                {
+                                                    <span class="ciit-roadmap-badge ciit-roadmap-badge-notes">
+                                                        <i class="bi bi-journal-text" aria-hidden="true"></i>
+                                                        @chapterTitle
+                                                    </span>
+                                                }
+                                            </div>
+                                        </section>
                                     }
-                                    else
-                                    {
-                                        <div class="list-group list-group-flush">
-                                            @foreach (var content in topic.Contents)
-                                            {
-                                                <article class="ciit-content-item">
-                                                    <div class="d-flex justify-content-between align-items-start gap-3">
-                                                        <div>
-                                                            <div class="fw-semibold ciit-roadmap-content-title">@content.Title</div>
-                                                        </div>
 
-                                                        <div class="ciit-roadmap-badges" aria-label="Available learning resources">
-                                                            @if (topic.HasNotes)
+                                    @if (topic.Contents.Count > 0)
+                                    {
+                                        <section class="mb-3" aria-label="Learning content">
+                                            <div class="fw-semibold small mb-2">Content</div>
+                                            <div class="d-flex flex-column gap-2">
+                                                @foreach (var contentItem in topic.Contents)
+                                                {
+                                                    <div class="ciit-content-item">
+                                                        <div class="fw-semibold ciit-roadmap-content-title mb-2">@contentItem.Title</div>
+                                                        <div class="ciit-roadmap-badges">
+                                                            @if (contentItem.HasVideo)
                                                             {
-                                                                <span class="ciit-roadmap-badge ciit-roadmap-badge-notes">
-                                                                    <i class="bi bi-journal-text" aria-hidden="true"></i>
-                                                                    Notes
+                                                                <span class="ciit-roadmap-badge ciit-roadmap-badge-content">
+                                                                    <i class="bi bi-camera-video" aria-hidden="true"></i>
+                                                                    Video
                                                                 </span>
                                                             }
-                                                            <span class="ciit-roadmap-badge ciit-roadmap-badge-content">
-                                                                <i class="bi bi-play-circle" aria-hidden="true"></i>
-                                                                Content
-                                                            </span>
-                                                            @if (content.Questions.Count > 0)
+                                                            @if (contentItem.HasSlides)
                                                             {
-                                                                <span class="ciit-roadmap-badge ciit-roadmap-badge-assessment">
-                                                                    <i class="bi bi-patch-check" aria-hidden="true"></i>
-                                                                    Assessment
+                                                                <span class="ciit-roadmap-badge ciit-roadmap-badge-content">
+                                                                    <i class="bi bi-file-earmark-slides" aria-hidden="true"></i>
+                                                                    Slides
                                                                 </span>
+                                                            }
+                                                            @if (!contentItem.HasVideo && !contentItem.HasSlides)
+                                                            {
+                                                                <span class="ciit-roadmap-badge ciit-roadmap-badge-content">Content item</span>
                                                             }
                                                         </div>
                                                     </div>
+                                                }
+                                            </div>
+                                        </section>
+                                    }
 
-                                                    @if (content.Questions.Count > 0)
-                                                    {
-                                                        <div class="ciit-assessment-launch">
-                                                            <div class="ciit-assessment-launch-copy">
-                                                                <span class="ciit-assessment-launch-icon">
-                                                                    <i class="bi bi-patch-check"></i>
-                                                                </span>
-                                                                <div>
-                                                                    <strong>Knowledge check</strong>
-                                                                    <small>@content.Questions.Count question@(content.Questions.Count == 1 ? "" : "s") Â· Server-graded assessment</small>
-                                                                </div>
-                                                            </div>
+                                    @if (topic.McqCount > 0 || topic.InterviewQuestionCount > 0 || topic.PracticeProgramCount > 0)
+                                    {
+                                        <section aria-label="Assessments">
+                                            <div class="fw-semibold small mb-2">Assessments</div>
+                                            <div class="ciit-roadmap-badges">
+                                                @if (topic.McqCount > 0)
+                                                {
+                                                    <span class="ciit-roadmap-badge ciit-roadmap-badge-assessment">
+                                                        <i class="bi bi-patch-check" aria-hidden="true"></i>
+                                                        @topic.McqCount MCQs
+                                                    </span>
+                                                }
+                                                @if (topic.InterviewQuestionCount > 0)
+                                                {
+                                                    <span class="ciit-roadmap-badge ciit-roadmap-badge-assessment">
+                                                        <i class="bi bi-chat-square-text" aria-hidden="true"></i>
+                                                        @topic.InterviewQuestionCount Interview questions
+                                                    </span>
+                                                }
+                                                @if (topic.PracticeProgramCount > 0)
+                                                {
+                                                    <span class="ciit-roadmap-badge ciit-roadmap-badge-assessment">
+                                                        <i class="bi bi-code-square" aria-hidden="true"></i>
+                                                        @topic.PracticeProgramCount Practice programs
+                                                    </span>
+                                                }
+                                            </div>
+                                        </section>
+                                    }
 
-                                                            <a asp-controller="Courses"
-                                                               asp-action="Learn"
-                                                               asp-route-id="@Model.Id"
-                                                               asp-route-contentId="@content.Id"
-                                                               asp-fragment="lesson-assessment"
-                                                               class="btn btn-outline-primary ciit-assessment-launch-button">
-                                                                Practice assessment
-                                                                <i class="bi bi-arrow-up-right ms-1"></i>
-                                                            </a>
-                                                        </div>
-                                                    }
-                                                </article>
-                                            }
-                                        </div>
+                                    @if (topic.ChapterTitles.Count == 0 && topic.Contents.Count == 0
+                                        && topic.McqCount == 0 && topic.InterviewQuestionCount == 0 && topic.PracticeProgramCount == 0)
+                                    {
+                                        <p class="text-secondary mb-0">Learning resources will be available here soon.</p>
                                     }
                                 </div>
                             </div>
@@ -454,15 +510,17 @@
     <script>
         (() => {
             const form = document.getElementById('ciit-demo-payment-form');
-            const button = document.getElementById('ciit-demo-payment-button');
+            const button = document.querySelector('button[form="ciit-demo-payment-form"]');
 
-            if (!form || !button) {
+            if (!form) {
                 return;
             }
 
             form.addEventListener('submit', () => {
-                button.disabled = true;
-                button.innerHTML = '<span class="spinner-border spinner-border-sm me-2" aria-hidden="true"></span>Redirecting to PhonePe...';
+                if (button) {
+                    button.disabled = true;
+                    button.innerHTML = '<span class="spinner-border spinner-border-sm me-2" aria-hidden="true"></span>Redirecting to PhonePe...';
+                }
             });
         })();
     </script>

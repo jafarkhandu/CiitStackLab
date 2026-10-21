@@ -1458,9 +1458,7 @@
 }
 
 @media (max-width: 440px) {
-    .ciit-mcq-import-modal-preview .ciit-mcq-import-stats {
-        grid-template-columns: minmax(0, 1fr);
-    }
+    
 
     .ciit-mcq-import-modal-preview .ciit-mcq-import-question-list {
         max-height: 38vh;

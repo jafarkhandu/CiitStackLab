@@ -12,96 +12,66 @@ namespace CIITStackLab.Infrastructure.Migrations
     {
         protected override void Up(MigrationBuilder migrationBuilder)
         {
-            migrationBuilder.CreateTable(
-                name: "tbl_exam_application_notifications",
-                schema: "erpsystem",
-                columns: table => new
-                {
-                    notification_id = table.Column<long>(type: "bigint")
-                        .Annotation("SqlServer:Identity", "1, 1"),
-                    dedupe_key = table.Column<string>(
-                        type: "char(64)",
-                        fixedLength: true,
-                        maxLength: 64,
-                        nullable: false),
-                    admin_user_id = table.Column<string>(
-                        type: "nvarchar(450)",
-                        maxLength: 450,
-                        nullable: false),
-                    student_user_id = table.Column<string>(
-                        type: "nvarchar(450)",
-                        maxLength: 450,
-                        nullable: false),
-                    student_name = table.Column<string>(
-                        type: "nvarchar(256)",
-                        maxLength: 256,
-                        nullable: false),
-                    course_id = table.Column<int>(type: "int", nullable: false),
-                    course_title = table.Column<string>(
-                        type: "nvarchar(200)",
-                        maxLength: 200,
-                        nullable: false),
-                    topic_id = table.Column<int>(type: "int", nullable: false),
-                    topic_title = table.Column<string>(
-                        type: "nvarchar(200)",
-                        maxLength: 200,
-                        nullable: false),
-                    valid_question_count = table.Column<int>(type: "int", nullable: false),
-                    required_question_count = table.Column<int>(
-                        type: "int",
-                        nullable: false,
-                        defaultValue: 50),
-                    reason = table.Column<string>(
-                        type: "nvarchar(1000)",
-                        maxLength: 1000,
-                        nullable: false),
-                    notification_day = table.Column<DateTime>(
-                        type: "date",
-                        nullable: false),
-                    created_at_utc = table.Column<DateTime>(
-                        type: "datetime2",
-                        nullable: false),
-                    is_delivered = table.Column<bool>(
-                        type: "bit",
-                        nullable: false,
-                        defaultValue: false),
-                    is_read = table.Column<bool>(
-                        type: "bit",
-                        nullable: false,
-                        defaultValue: false)
-                },
-                constraints: table =>
-                {
-                    table.PrimaryKey(
-                        "PK_tbl_exam_application_notifications",
-                        x => x.notification_id);
-                });
+            // This table may already have been created by the deployment SQL script.
+            // Make the migration safe for databases where the table exists already.
+            migrationBuilder.Sql("""
+                IF OBJECT_ID(N'[erpsystem].[tbl_exam_application_notifications]', N'U') IS NULL
+                BEGIN
+                    CREATE TABLE [erpsystem].[tbl_exam_application_notifications]
+                    (
+                        [notification_id] BIGINT IDENTITY(1,1) NOT NULL,
+                        [dedupe_key] CHAR(64) NOT NULL,
+                        [admin_user_id] NVARCHAR(450) NOT NULL,
+                        [student_user_id] NVARCHAR(450) NOT NULL,
+                        [student_name] NVARCHAR(256) NOT NULL,
+                        [course_id] INT NOT NULL,
+                        [course_title] NVARCHAR(200) NOT NULL,
+                        [topic_id] INT NOT NULL,
+                        [topic_title] NVARCHAR(200) NOT NULL,
+                        [valid_question_count] INT NOT NULL,
+                        [required_question_count] INT NOT NULL CONSTRAINT [DF_exam_app_required_question_count] DEFAULT (50),
+                        [reason] NVARCHAR(1000) NOT NULL,
+                        [notification_day] DATE NOT NULL,
+                        [created_at_utc] DATETIME2 NOT NULL,
+                        [is_delivered] BIT NOT NULL CONSTRAINT [DF_exam_app_is_delivered] DEFAULT (0),
+                        [is_read] BIT NOT NULL CONSTRAINT [DF_exam_app_is_read] DEFAULT (0),
+                        CONSTRAINT [PK_tbl_exam_application_notifications]
+                            PRIMARY KEY ([notification_id])
+                    );
+                END;
 
-            migrationBuilder.CreateIndex(
-                name: "UX_exam_app_notification_dedupe_key",
-                schema: "erpsystem",
-                table: "tbl_exam_application_notifications",
-                column: "dedupe_key",
-                unique: true);
+                IF OBJECT_ID(N'[erpsystem].[tbl_exam_application_notifications]', N'U') IS NOT NULL
+                BEGIN
+                    IF NOT EXISTS (
+                        SELECT 1 FROM sys.indexes
+                        WHERE [name] = N'UX_exam_app_notification_dedupe_key'
+                          AND [object_id] = OBJECT_ID(N'[erpsystem].[tbl_exam_application_notifications]'))
+                        CREATE UNIQUE INDEX [UX_exam_app_notification_dedupe_key]
+                            ON [erpsystem].[tbl_exam_application_notifications] ([dedupe_key]);
 
-            migrationBuilder.CreateIndex(
-                name: "IX_exam_app_notification_admin_read_created",
-                schema: "erpsystem",
-                table: "tbl_exam_application_notifications",
-                columns: new[] { "admin_user_id", "is_read", "created_at_utc" });
+                    IF NOT EXISTS (
+                        SELECT 1 FROM sys.indexes
+                        WHERE [name] = N'IX_exam_app_notification_admin_read_created'
+                          AND [object_id] = OBJECT_ID(N'[erpsystem].[tbl_exam_application_notifications]'))
+                        CREATE INDEX [IX_exam_app_notification_admin_read_created]
+                            ON [erpsystem].[tbl_exam_application_notifications]
+                                ([admin_user_id], [is_read], [created_at_utc]);
 
-            migrationBuilder.CreateIndex(
-                name: "IX_exam_app_notification_admin_delivered",
-                schema: "erpsystem",
-                table: "tbl_exam_application_notifications",
-                columns: new[] { "admin_user_id", "is_delivered" });
+                    IF NOT EXISTS (
+                        SELECT 1 FROM sys.indexes
+                        WHERE [name] = N'IX_exam_app_notification_admin_delivered'
+                          AND [object_id] = OBJECT_ID(N'[erpsystem].[tbl_exam_application_notifications]'))
+                        CREATE INDEX [IX_exam_app_notification_admin_delivered]
+                            ON [erpsystem].[tbl_exam_application_notifications]
+                                ([admin_user_id], [is_delivered]);
+                END;
+                """);
         }
 
         protected override void Down(MigrationBuilder migrationBuilder)
         {
-            migrationBuilder.DropTable(
-                name: "tbl_exam_application_notifications",
-                schema: "erpsystem");
+            // Intentionally preserve this table and its data. It may have existed
+            // before EF recorded this migration in __EFMigrationsHistory.
         }
     }
 }

@@ -9,18 +9,18 @@
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="anonymous" />
     <link href="https://fonts.googleapis.com/css2?family=Fira+Code:wght@400;500;600;700;800&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
-    <link rel="stylesheet" href="~/css/admin-dashboard.css" />
-    <link rel="stylesheet" href="~/css/admin-courses.css" />
-    <link rel="stylesheet" href="~/css/admin-mapping.css" />
-    <link rel="stylesheet" href="~/css/admin-students.css" />
-    <link rel="stylesheet" href="~/css/admin-settings.css" />
-    <link rel="stylesheet" href="~/css/admin-sidebar.css" />
-    <link rel="stylesheet" href="~/css/admin-notes.css" />
-    <link rel="stylesheet" href="~/css/admin-assessments.css" />
-    <link rel="stylesheet" href="~/css/admin-reports.css" />
-    <link rel="stylesheet" href="~/css/admin-report-sections.css" />
-    <link rel="stylesheet" href="~/css/admin-exam-notifications.css" asp-append-version="true" />
-    <link rel="stylesheet" href="~/css/global-alerts.css" asp-append-version="true" />
+    <link rel="stylesheet" href="~/css/admin/admin-dashboard.css" />
+    <link rel="stylesheet" href="~/css/admin/admin-courses.css" />
+    <link rel="stylesheet" href="~/css/admin/admin-mapping.css" />
+    <link rel="stylesheet" href="~/css/admin/admin-students.css" />
+    <link rel="stylesheet" href="~/css/admin/admin-settings.css" />
+    <link rel="stylesheet" href="~/css/admin/admin-sidebar.css" />
+    <link rel="stylesheet" href="~/css/admin/admin-notes.css" />
+    <link rel="stylesheet" href="~/css/admin/admin-assessments.css" />
+    <link rel="stylesheet" href="~/css/admin/admin-reports.css" />
+    <link rel="stylesheet" href="~/css/admin/admin-report-sections.css" />
+    <link rel="stylesheet" href="~/css/admin/admin-exam-notifications.css" asp-append-version="true" />
+    <link rel="stylesheet" href="~/css/global/global-alerts.css" asp-append-version="true" />
     @await RenderSectionAsync("Styles", required: false)
 </head>
 <body class="ciit-admin-body">
@@ -103,14 +103,14 @@
     </div>
     <div class="ciit-admin-overlay" id="ciitAdminOverlay"></div>
     <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
-    <script src="~/js/admin-dashboard.js"></script>
-    <script src="~/js/admin-courses.js"></script>
-    <script src="~/js/admin-mapping.js"></script>
-    <script src="~/js/admin-students.js"></script>
-    <script src="~/js/admin-settings.js"></script>
+    <script src="~/js/admin/admin-dashboard.js"></script>
+    <script src="~/js/admin/admin-courses.js"></script>
+    <script src="~/js/admin/admin-mapping.js"></script>
+    <script src="~/js/admin/admin-students.js"></script>
+    <script src="~/js/admin/admin-settings.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/&#64;microsoft/signalr&#64;8.0.7/dist/browser/signalr.min.js"></script>
-    <script src="~/js/admin-exam-notifications.js" asp-append-version="true"></script>
-    <script src="~/js/global-alerts.js" asp-append-version="true"></script>
+    <script src="~/js/admin/admin-exam-notifications.js" asp-append-version="true"></script>
+    <script src="~/js/global/global-alerts.js" asp-append-version="true"></script>
     <form id="ciitExamNotificationAntiforgeryForm" method="post" hidden>
         @Html.AntiForgeryToken()
     </form>
