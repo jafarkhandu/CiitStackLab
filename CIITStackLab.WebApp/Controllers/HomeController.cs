@@ -76,6 +76,19 @@ public class HomeController : Controller
             })
             .ToList();
 
+        var completedActivities = progressRecords
+            .Where(progress => progress.IsCompleted)
+            .Select(progress => new StudentLearningActivityViewModel
+            {
+                CourseTitle = courseTitles.TryGetValue(progress.CourseId, out var title)
+                    ? title
+                    : "Course",
+                ContentId = progress.ContentId,
+                IsCompleted = true,
+                LastAccessedAt = progress.LastAccessedAt
+            })
+            .ToList();
+
         var courseStats = courses
             .Select(course =>
             {
@@ -104,6 +117,7 @@ public class HomeController : Controller
             CompletedLessons = progressRecords.Count(progress => progress.IsCompleted),
             TrackedLessons = progressRecords.Count,
             RecentActivity = recentActivity,
+            CompletedActivities = completedActivities,
             MostRecentCourseTitle = progressRecords.Count > 0
                 && courseTitles.TryGetValue(progressRecords[0].CourseId, out var recentTitle)
                     ? recentTitle
