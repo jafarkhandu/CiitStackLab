@@ -75,6 +75,7 @@ public static class DependencyInjection
         services.AddScoped<IAdminStudentService, AdminStudentService>();
         services.AddScoped<IAdminSettingsService, AdminSettingsService>();
         services.AddScoped<IAdminReportsService, AdminReportsService>();
+        services.AddScoped<IPhonePeAdminReportsService, PhonePeAdminReportsService>();
 
         return services;
     }
