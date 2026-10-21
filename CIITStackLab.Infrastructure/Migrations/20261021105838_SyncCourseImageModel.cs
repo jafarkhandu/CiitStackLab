@@ -1,4 +1,3 @@
-﻿using System;
 using Microsoft.EntityFrameworkCore.Migrations;
 
 #nullable disable
@@ -11,66 +10,65 @@ namespace CIITStackLab.Infrastructure.Migrations
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
         {
-            migrationBuilder.CreateTable(
-                name: "tblpayment_transactions",
-                schema: "erpsystem",
-                columns: table => new
-                {
-                    payment_transaction_id = table.Column<int>(type: "int", nullable: false)
-                        .Annotation("SqlServer:Identity", "1, 1"),
-                    user_id = table.Column<string>(type: "nvarchar(450)", maxLength: 450, nullable: false),
-                    course_id = table.Column<int>(type: "int", nullable: false),
-                    merchant_order_id = table.Column<string>(type: "nvarchar(100)", maxLength: 100, nullable: false),
-                    amount = table.Column<decimal>(type: "decimal(18,2)", precision: 18, scale: 2, nullable: false),
-                    status = table.Column<string>(type: "nvarchar(32)", maxLength: 32, nullable: false),
-                    phonepe_order_id = table.Column<string>(type: "nvarchar(100)", maxLength: 100, nullable: true),
-                    created_at = table.Column<DateTime>(type: "datetime2", nullable: false),
-                    updated_at = table.Column<DateTime>(type: "datetime2", nullable: false),
-                    completed_at = table.Column<DateTime>(type: "datetime2", nullable: true)
-                },
-                constraints: table =>
-                {
-                    table.PrimaryKey("PK_tblpayment_transactions", x => x.payment_transaction_id);
-                    table.ForeignKey(
-                        name: "FK_tblpayment_transactions_AspNetUsers_user_id",
-                        column: x => x.user_id,
-                        principalSchema: "erpsystem",
-                        principalTable: "AspNetUsers",
-                        principalColumn: "Id");
-                    table.ForeignKey(
-                        name: "FK_tblpayment_transactions_tbltraining_courses_course_id",
-                        column: x => x.course_id,
-                        principalSchema: "erpsystem",
-                        principalTable: "tbltraining_courses",
-                        principalColumn: "course_id");
-                });
+            // Some environments already have this table from an earlier deployment.
+            // Create it only when absent; never replace or drop existing payment data.
+            migrationBuilder.Sql("""
+                IF OBJECT_ID(N'[erpsystem].[tblpayment_transactions]', N'U') IS NULL
+                BEGIN
+                    CREATE TABLE [erpsystem].[tblpayment_transactions]
+                    (
+                        [payment_transaction_id] INT IDENTITY(1,1) NOT NULL,
+                        [user_id] NVARCHAR(450) NOT NULL,
+                        [course_id] INT NOT NULL,
+                        [merchant_order_id] NVARCHAR(100) NOT NULL,
+                        [amount] DECIMAL(18,2) NOT NULL,
+                        [status] NVARCHAR(32) NOT NULL,
+                        [phonepe_order_id] NVARCHAR(100) NULL,
+                        [created_at] DATETIME2 NOT NULL,
+                        [updated_at] DATETIME2 NOT NULL,
+                        [completed_at] DATETIME2 NULL,
+                        CONSTRAINT [PK_tblpayment_transactions]
+                            PRIMARY KEY ([payment_transaction_id]),
+                        CONSTRAINT [FK_tblpayment_transactions_AspNetUsers_user_id]
+                            FOREIGN KEY ([user_id])
+                            REFERENCES [erpsystem].[AspNetUsers] ([Id]),
+                        CONSTRAINT [FK_tblpayment_transactions_tbltraining_courses_course_id]
+                            FOREIGN KEY ([course_id])
+                            REFERENCES [erpsystem].[tbltraining_courses] ([course_id])
+                    );
+                END;
 
-            migrationBuilder.CreateIndex(
-                name: "IX_tblpayment_transactions_course_id",
-                schema: "erpsystem",
-                table: "tblpayment_transactions",
-                column: "course_id");
+                IF OBJECT_ID(N'[erpsystem].[tblpayment_transactions]', N'U') IS NOT NULL
+                BEGIN
+                    IF NOT EXISTS (
+                        SELECT 1 FROM sys.indexes
+                        WHERE [name] = N'IX_tblpayment_transactions_course_id'
+                          AND [object_id] = OBJECT_ID(N'[erpsystem].[tblpayment_transactions]'))
+                        CREATE INDEX [IX_tblpayment_transactions_course_id]
+                            ON [erpsystem].[tblpayment_transactions] ([course_id]);
 
-            migrationBuilder.CreateIndex(
-                name: "IX_tblpayment_transactions_user_course_status",
-                schema: "erpsystem",
-                table: "tblpayment_transactions",
-                columns: new[] { "user_id", "course_id", "status" });
+                    IF NOT EXISTS (
+                        SELECT 1 FROM sys.indexes
+                        WHERE [name] = N'IX_tblpayment_transactions_user_course_status'
+                          AND [object_id] = OBJECT_ID(N'[erpsystem].[tblpayment_transactions]'))
+                        CREATE INDEX [IX_tblpayment_transactions_user_course_status]
+                            ON [erpsystem].[tblpayment_transactions] ([user_id], [course_id], [status]);
 
-            migrationBuilder.CreateIndex(
-                name: "UX_tblpayment_transactions_merchant_order_id",
-                schema: "erpsystem",
-                table: "tblpayment_transactions",
-                column: "merchant_order_id",
-                unique: true);
+                    IF NOT EXISTS (
+                        SELECT 1 FROM sys.indexes
+                        WHERE [name] = N'UX_tblpayment_transactions_merchant_order_id'
+                          AND [object_id] = OBJECT_ID(N'[erpsystem].[tblpayment_transactions]'))
+                        CREATE UNIQUE INDEX [UX_tblpayment_transactions_merchant_order_id]
+                            ON [erpsystem].[tblpayment_transactions] ([merchant_order_id]);
+                END;
+                """);
         }
 
         /// <inheritdoc />
         protected override void Down(MigrationBuilder migrationBuilder)
         {
-            migrationBuilder.DropTable(
-                name: "tblpayment_transactions",
-                schema: "erpsystem");
+            // Intentionally do not drop this table: it may pre-date this migration
+            // and can contain payment records that must be preserved.
         }
     }
 }
