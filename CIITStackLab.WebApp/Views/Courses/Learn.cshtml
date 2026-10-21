@@ -214,6 +214,48 @@
     </div>
 }
 
+<script>
+    (function () {
+        var warning = document.querySelector(".ciit-exam-availability-alert");
+        if (!warning || warning.dataset.ciitAutoDismissInitialized === "true") {
+            return;
+        }
+
+        // Give this server-rendered warning its own reliable timer; this is independent
+        // of any other site scripts and avoids reappearing during the same page load.
+        warning.dataset.ciitAutoDismissInitialized = "true";
+        window.setTimeout(function () {
+            if (!warning.isConnected) {
+                return;
+            }
+
+            var height = Math.ceil(warning.getBoundingClientRect().height);
+            warning.style.overflow = "hidden";
+            warning.style.maxHeight = height + "px";
+            warning.style.transition = "opacity .36s ease, transform .36s ease, max-height .36s ease, margin .36s ease, padding .36s ease, border-width .36s ease";
+            void warning.offsetHeight;
+
+            window.requestAnimationFrame(function () {
+                warning.style.opacity = "0";
+                warning.style.transform = "translateY(-7px) scale(.99)";
+                warning.style.maxHeight = "0";
+                warning.style.marginTop = "0";
+                warning.style.marginBottom = "0";
+                warning.style.paddingTop = "0";
+                warning.style.paddingBottom = "0";
+                warning.style.borderWidth = "0";
+            });
+
+            // Hard removal fallback so CSS transitions cannot leave a permanent warning.
+            window.setTimeout(function () {
+                if (warning.isConnected) {
+                    warning.remove();
+                }
+            }, 420);
+        }, 5000);
+    })();
+</script>
+
 @if (currentContent is null && currentTopic is null)
 {
     <main class="ciit-learning-empty container py-5">
