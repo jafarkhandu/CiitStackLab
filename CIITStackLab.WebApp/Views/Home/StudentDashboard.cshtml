@@ -11,6 +11,7 @@
 
 @section Styles {
     <link rel="stylesheet" href="~/css/student-learning-dashboard.css" asp-append-version="true" />
+    <link rel="stylesheet" href="~/css/student-learning-dashboard-modals.css" asp-append-version="true" />
 }
 
 <section class="ciit-student-dashboard">
@@ -38,10 +39,26 @@
         </header>
 
         <section class="ciit-dashboard-metrics" aria-label="Learning statistics" data-dashboard-reveal>
-            <article class="ciit-dashboard-metric ciit-dashboard-metric-blue"><span class="ciit-dashboard-metric-icon"><i class="bi bi-collection-play"></i></span><div><small>My courses</small><strong>@Model.Courses.Count.ToString("00")</strong><span>Courses with access</span></div><i class="bi bi-arrow-up-right ciit-dashboard-metric-watermark"></i></article>
-            <article class="ciit-dashboard-metric ciit-dashboard-metric-cyan"><span class="ciit-dashboard-metric-icon"><i class="bi bi-check2-circle"></i></span><div><small>Lessons completed</small><strong>@Model.CompletedLessons</strong><span>Tracked as complete</span></div><i class="bi bi-check2-circle ciit-dashboard-metric-watermark"></i></article>
-            <article class="ciit-dashboard-metric ciit-dashboard-metric-violet"><span class="ciit-dashboard-metric-icon"><i class="bi bi-graph-up-arrow"></i></span><div><small>Overall progress</small><strong>@Model.ProgressPercent<em>%</em></strong><span>@Model.TrackedLessons tracked lessons</span></div><i class="bi bi-bar-chart-line ciit-dashboard-metric-watermark"></i></article>
-            <article class="ciit-dashboard-metric ciit-dashboard-metric-green"><span class="ciit-dashboard-metric-icon"><i class="bi bi-clock-history"></i></span><div><small>Course duration</small><strong>@totalLearningHours.ToString("0.##")<em> hrs</em></strong><span>Combined available duration</span></div><i class="bi bi-hourglass-split ciit-dashboard-metric-watermark"></i></article>
+            <article class="ciit-dashboard-metric ciit-dashboard-metric-blue ciit-dashboard-metric-clickable" data-learning-modal-trigger="courses" role="button" tabindex="0" aria-controls="student-dashboard-courses-modal" aria-label="View my courses">
+                <span class="ciit-dashboard-metric-icon"><i class="bi bi-collection-play"></i></span>
+                <div><small>My courses</small><strong>@Model.Courses.Count.ToString("00")</strong><span>Courses with access</span></div>
+                <i class="bi bi-arrow-up-right ciit-dashboard-metric-watermark"></i>
+            </article>
+            <article class="ciit-dashboard-metric ciit-dashboard-metric-cyan ciit-dashboard-metric-clickable" data-learning-modal-trigger="completed" role="button" tabindex="0" aria-controls="student-dashboard-completed-modal" aria-label="View completed lessons">
+                <span class="ciit-dashboard-metric-icon"><i class="bi bi-check2-circle"></i></span>
+                <div><small>Lessons completed</small><strong>@Model.CompletedLessons</strong><span>Tracked as complete</span></div>
+                <i class="bi bi-check2-circle ciit-dashboard-metric-watermark"></i>
+            </article>
+            <article class="ciit-dashboard-metric ciit-dashboard-metric-violet ciit-dashboard-metric-clickable" data-learning-modal-trigger="progress" role="button" tabindex="0" aria-controls="student-dashboard-progress-modal" aria-label="View course progress">
+                <span class="ciit-dashboard-metric-icon"><i class="bi bi-graph-up-arrow"></i></span>
+                <div><small>Overall progress</small><strong>@Model.ProgressPercent<em>%</em></strong><span>@Model.TrackedLessons tracked lessons</span></div>
+                <i class="bi bi-bar-chart-line ciit-dashboard-metric-watermark"></i>
+            </article>
+            <article class="ciit-dashboard-metric ciit-dashboard-metric-green ciit-dashboard-metric-clickable" data-learning-modal-trigger="duration" role="button" tabindex="0" aria-controls="student-dashboard-duration-modal" aria-label="View course duration">
+                <span class="ciit-dashboard-metric-icon"><i class="bi bi-clock-history"></i></span>
+                <div><small>Course duration</small><strong>@totalLearningHours.ToString("0.##")<em> hrs</em></strong><span>Combined available duration</span></div>
+                <i class="bi bi-hourglass-split ciit-dashboard-metric-watermark"></i>
+            </article>
         </section>
 
         <section class="ciit-dashboard-main-grid">
@@ -78,6 +95,92 @@
     </div>
 </section>
 
+<div class="ciit-learning-modal-backdrop" data-learning-modal-backdrop hidden>
+    <div class="ciit-learning-modal" role="dialog" aria-modal="true" aria-labelledby="student-dashboard-modal-title">
+        <header class="ciit-learning-modal-header">
+            <div>
+                <span id="student-dashboard-modal-eyebrow">LEARNING HUB</span>
+                <h2 id="student-dashboard-modal-title">Details</h2>
+                <p id="student-dashboard-modal-subtitle"></p>
+            </div>
+            <button type="button" class="ciit-learning-modal-close" data-learning-modal-close aria-label="Close details">
+                <i class="bi bi-x-lg" aria-hidden="true"></i>
+            </button>
+        </header>
+        <div class="ciit-learning-modal-body" data-learning-modal-body></div>
+    </div>
+</div>
+
+<template id="student-dashboard-courses-template">
+    <div class="ciit-learning-modal-list">
+        @foreach (var course in Model.CourseStats)
+        {
+            var lastActivity = course.LastActivityAt.HasValue
+                ? course.LastActivityAt.Value.ToLocalTime().ToString("dd MMM yyyy, hh:mm tt")
+                : "No lesson activity yet";
+            <article class="ciit-learning-detail-card">
+                <div class="ciit-learning-detail-icon"><i class="bi bi-journal-code"></i></div>
+                <div class="ciit-learning-detail-main">
+                    <strong>@course.CourseTitle</strong>
+                    <span>@course.DurationHours.ToString("0.##") hrs · @course.CompletedLessons completed · @course.TrackedLessons tracked</span>
+                    <small>Last activity: @lastActivity</small>
+                </div>
+                <a asp-controller="Courses" asp-action="Course" asp-route-id="@course.CourseId" class="ciit-learning-detail-action">Continue <i class="bi bi-arrow-up-right"></i></a>
+            </article>
+        }
+    </div>
+</template>
+
+<template id="student-dashboard-completed-template">
+    @if (Model.CompletedActivities.Count == 0)
+    {
+        <div class="ciit-learning-empty-state"><i class="bi bi-check2-circle"></i><strong>No completed lessons yet</strong><p>Complete your first lesson and it will appear here.</p></div>
+    }
+    else
+    {
+        <div class="ciit-learning-modal-list">
+            @foreach (var activity in Model.CompletedActivities)
+            {
+                <article class="ciit-learning-detail-card">
+                    <div class="ciit-learning-detail-icon is-complete"><i class="bi bi-check2"></i></div>
+                    <div class="ciit-learning-detail-main">
+                        <strong>@activity.CourseTitle</strong>
+                        <span>Lesson @activity.ContentId · Completed</span>
+                        <small>@activity.LastAccessedAt.ToLocalTime().ToString("dd MMM yyyy, hh:mm tt")</small>
+                    </div>
+                </article>
+            }
+        </div>
+    }
+</template>
+
+<template id="student-dashboard-progress-template">
+    <div class="ciit-learning-modal-list">
+        @foreach (var course in Model.CourseStats)
+        {
+            <article class="ciit-learning-progress-card">
+                <div class="ciit-learning-progress-heading"><strong>@course.CourseTitle</strong><span>@course.ProgressPercent%</span></div>
+                <div class="ciit-learning-progress-track"><span style="width:@course.ProgressPercent%"></span></div>
+                <div class="ciit-learning-progress-meta"><span>@course.CompletedLessons of @course.TrackedLessons tracked lessons completed</span><span>@course.DurationHours.ToString("0.##") hrs</span></div>
+            </article>
+        }
+    </div>
+</template>
+
+<template id="student-dashboard-duration-template">
+    <div class="ciit-learning-modal-list">
+        @foreach (var course in Model.CourseStats)
+        {
+            <article class="ciit-learning-detail-card">
+                <div class="ciit-learning-detail-icon is-duration"><i class="bi bi-clock-history"></i></div>
+                <div class="ciit-learning-detail-main"><strong>@course.CourseTitle</strong><span>Available course duration</span></div>
+                <strong class="ciit-learning-duration-value">@course.DurationHours.ToString("0.##") hrs</strong>
+            </article>
+        }
+        <div class="ciit-learning-total-card"><span>Total available duration</span><strong>@totalLearningHours.ToString("0.##") hrs</strong></div>
+    </div>
+</template>
+
 @section Scripts {
     <script>
         (function () {
@@ -85,16 +188,97 @@
             const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
             if (reduceMotion || !('IntersectionObserver' in window)) {
                 items.forEach(item => item.classList.add('is-visible'));
-                return;
+            } else {
+                const observer = new IntersectionObserver(entries => {
+                    entries.forEach(entry => {
+                        if (!entry.isIntersecting) return;
+                        entry.target.classList.add('is-visible');
+                        observer.unobserve(entry.target);
+                    });
+                }, { threshold: 0.08 });
+                items.forEach(item => observer.observe(item));
             }
-            const observer = new IntersectionObserver(entries => {
-                entries.forEach(entry => {
-                    if (!entry.isIntersecting) return;
-                    entry.target.classList.add('is-visible');
-                    observer.unobserve(entry.target);
+
+            const backdrop = document.querySelector('[data-learning-modal-backdrop]');
+            const modalBody = document.querySelector('[data-learning-modal-body]');
+            const modalTitle = document.getElementById('student-dashboard-modal-title');
+            const modalSubtitle = document.getElementById('student-dashboard-modal-subtitle');
+            const modalEyebrow = document.getElementById('student-dashboard-modal-eyebrow');
+            const closeButton = document.querySelector('[data-learning-modal-close]');
+            let lastFocusedElement = null;
+
+            const modalContent = {
+                courses: {
+                    title: 'My courses',
+                    eyebrow: 'YOUR LEARNING',
+                    subtitle: 'Courses currently available to your learning account.',
+                    template: 'student-dashboard-courses-template'
+                },
+                completed: {
+                    title: 'Lessons completed',
+                    eyebrow: 'YOUR PROGRESS',
+                    subtitle: 'Every lesson currently marked complete in your learning progress.',
+                    template: 'student-dashboard-completed-template'
+                },
+                progress: {
+                    title: 'Overall progress',
+                    eyebrow: 'COURSE MOMENTUM',
+                    subtitle: 'Tracked lesson progress for each course. Untracked lessons are not treated as incomplete.',
+                    template: 'student-dashboard-progress-template'
+                },
+                duration: {
+                    title: 'Course duration',
+                    eyebrow: 'LEARNING TIME',
+                    subtitle: 'Available duration across your accessible courses.',
+                    template: 'student-dashboard-duration-template'
+                }
+            };
+
+            function openModal(type, trigger) {
+                const config = modalContent[type];
+                const template = document.getElementById(config.template);
+                if (!config || !template) return;
+
+                lastFocusedElement = trigger || document.activeElement;
+                modalEyebrow.textContent = config.eyebrow;
+                modalTitle.textContent = config.title;
+                modalSubtitle.textContent = config.subtitle;
+                modalBody.replaceChildren(template.content.cloneNode(true));
+                backdrop.hidden = false;
+                document.body.classList.add('ciit-learning-modal-open');
+                requestAnimationFrame(() => backdrop.classList.add('is-open'));
+                closeButton.focus();
+            }
+
+            function closeModal() {
+                backdrop.classList.remove('is-open');
+                document.body.classList.remove('ciit-learning-modal-open');
+                window.setTimeout(() => {
+                    backdrop.hidden = true;
+                    modalBody.replaceChildren();
+                    if (lastFocusedElement && typeof lastFocusedElement.focus === 'function') {
+                        lastFocusedElement.focus();
+                    }
+                }, 180);
+            }
+
+            document.querySelectorAll('[data-learning-modal-trigger]').forEach(trigger => {
+                trigger.addEventListener('click', () => openModal(trigger.dataset.learningModalTrigger, trigger));
+                trigger.addEventListener('keydown', event => {
+                    if (event.key === 'Enter' || event.key === ' ') {
+                        event.preventDefault();
+                        openModal(trigger.dataset.learningModalTrigger, trigger);
+                    }
                 });
-            }, { threshold: 0.08 });
-            items.forEach(item => observer.observe(item));
+            });
+
+            closeButton.addEventListener('click', closeModal);
+            backdrop.addEventListener('click', event => {
+                if (event.target === backdrop) closeModal();
+            });
+            document.addEventListener('keydown', event => {
+                if (event.key === 'Escape' && !backdrop.hidden) closeModal();
+            });
         })();
     </script>
 }

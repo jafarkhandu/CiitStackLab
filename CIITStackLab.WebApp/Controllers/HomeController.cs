@@ -76,12 +76,48 @@ public class HomeController : Controller
             })
             .ToList();
 
+        var completedActivities = progressRecords
+            .Where(progress => progress.IsCompleted)
+            .Select(progress => new StudentLearningActivityViewModel
+            {
+                CourseTitle = courseTitles.TryGetValue(progress.CourseId, out var title)
+                    ? title
+                    : "Course",
+                ContentId = progress.ContentId,
+                IsCompleted = true,
+                LastAccessedAt = progress.LastAccessedAt
+            })
+            .ToList();
+
+        var courseStats = courses
+            .Select(course =>
+            {
+                var courseProgress = progressRecords
+                    .Where(progress => progress.CourseId == course.Id)
+                    .ToList();
+
+                return new StudentLearningCourseStatViewModel
+                {
+                    CourseId = course.Id,
+                    CourseTitle = course.Title,
+                    DurationHours = course.DurationHours,
+                    CompletedLessons = courseProgress.Count(progress => progress.IsCompleted),
+                    TrackedLessons = courseProgress.Count,
+                    LastActivityAt = courseProgress.Count > 0
+                        ? courseProgress.Max(progress => progress.LastAccessedAt)
+                        : null
+                };
+            })
+            .ToList();
+
         var model = new StudentLearningDashboardViewModel
         {
             Courses = courses,
+            CourseStats = courseStats,
             CompletedLessons = progressRecords.Count(progress => progress.IsCompleted),
             TrackedLessons = progressRecords.Count,
             RecentActivity = recentActivity,
+            CompletedActivities = completedActivities,
             MostRecentCourseTitle = progressRecords.Count > 0
                 && courseTitles.TryGetValue(progressRecords[0].CourseId, out var recentTitle)
                     ? recentTitle

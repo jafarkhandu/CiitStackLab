@@ -10,10 +10,14 @@ public class ReportsController : Controller
 {
     private const int MaxReportDays = 90;
     private readonly IAdminReportsService _reportsService;
+    private readonly IPhonePeAdminReportsService _phonePeReportsService;
 
-    public ReportsController(IAdminReportsService reportsService)
+    public ReportsController(
+        IAdminReportsService reportsService,
+        IPhonePeAdminReportsService phonePeReportsService)
     {
         _reportsService = reportsService;
+        _phonePeReportsService = phonePeReportsService;
     }
 
     [HttpGet]
@@ -50,7 +54,7 @@ public class ReportsController : Controller
     public async Task<IActionResult> RevenuePayments(DateTime? startDate, DateTime? endDate, CancellationToken cancellationToken)
     {
         var (start, end) = ResolveDateRange(startDate, endDate);
-        var model = await _reportsService.GetRevenueReportsAsync(start, end, cancellationToken);
+        var model = await _phonePeReportsService.GetRevenueReportsAsync(start, end, cancellationToken);
         return View(model);
     }
 

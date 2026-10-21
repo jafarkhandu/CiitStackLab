@@ -1,51 +1,303 @@
-@model CIITStackLab.Application.DTOs.AdminRevenueReportPageDto
+@model CIITStackLab.Application.DTOs.PhonePeAdminRevenueReportPageDto
 
 @{
     ViewData["Title"] = "Revenue & Payments";
     ViewData["ReportSection"] = "Revenue";
 }
 
+<style>
+    .ciit-payment-ledger-table {
+        border: 2px solid #334155;
+        border-collapse: separate;
+        border-spacing: 0;
+        overflow: hidden;
+        border-radius: 10px;
+    }
+
+    .ciit-payment-ledger-table th,
+    .ciit-payment-ledger-table td {
+        border-right: 1px solid #94a3b8;
+        border-bottom: 1px solid #94a3b8;
+    }
+
+    .ciit-payment-ledger-table th {
+        border-bottom: 2px solid #64748b;
+        background: #f8fafc;
+    }
+
+    .ciit-payment-ledger-table th:last-child,
+    .ciit-payment-ledger-table td:last-child {
+        border-right: 0;
+    }
+
+    .ciit-payment-ledger-table tbody tr:last-child td {
+        border-bottom: 0;
+    }
+
+    .ciit-payment-ledger-table .ciit-payment-main-row > td {
+        vertical-align: middle;
+    }
+
+    .ciit-payment-ledger-table .ciit-payment-main-row:hover > td {
+        background: #f8fafc;
+    }
+
+    .ciit-payment-ledger-table .ciit-payment-detail-row[hidden] {
+        display: none;
+    }
+
+    .ciit-payment-ledger-table .ciit-payment-detail-row > td {
+        padding: 0;
+        background: #f8fafc;
+        border-right: 0;
+    }
+
+    .ciit-payment-detail-panel {
+        padding: 18px 22px;
+        border-top: 2px solid #64748b;
+        background: #f8fafc;
+    }
+
+    .ciit-payment-detail-grid {
+        display: grid;
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        gap: 12px 24px;
+    }
+
+    .ciit-payment-detail-item {
+        min-width: 0;
+    }
+
+    .ciit-payment-detail-label {
+        display: block;
+        margin-bottom: 3px;
+        font-size: 11px;
+        font-weight: 700;
+        letter-spacing: .06em;
+        text-transform: uppercase;
+        color: #64748b;
+    }
+
+    .ciit-payment-detail-value {
+        display: block;
+        color: #172033;
+        font-weight: 600;
+        overflow-wrap: anywhere;
+        word-break: break-word;
+    }
+
+    .ciit-payment-view-button {
+        border: 0;
+        background: transparent;
+        color: #1d4ed8;
+        font: inherit;
+        font-weight: 600;
+        cursor: pointer;
+        padding: 4px 0;
+    }
+
+    .ciit-payment-view-button:hover,
+    .ciit-payment-view-button:focus-visible {
+        color: #1e3a8a;
+        text-decoration: underline;
+    }
+
+    .ciit-payment-view-button .ciit-payment-view-icon {
+        display: inline-block;
+        margin-right: 5px;
+        transition: transform .15s ease;
+    }
+
+    .ciit-payment-view-button[aria-expanded="true"] .ciit-payment-view-icon {
+        transform: rotate(90deg);
+    }
+
+    @@media (max-width: 900px) {
+        .ciit-payment-detail-grid {
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+        }
+    }
+
+    @@media (max-width: 640px) {
+        .ciit-payment-detail-grid {
+            grid-template-columns: 1fr;
+        }
+
+        .ciit-payment-detail-panel {
+            padding: 15px;
+        }
+    }
+</style>
+
 <section class="ciit-admin-reports">
     <header class="ciit-admin-reports-page-header">
-        <div><span class="ciit-admin-eyebrow">FINANCIAL ANALYTICS</span><h1>Revenue &amp; Payments</h1><p>Review recorded payments, paid amounts and pending amounts from the existing ERP payment data.</p></div>
-        <div class="ciit-admin-report-page-stat"><strong>₹@Model.TotalPaid.ToString("N0")</strong><span>Paid in selected period</span></div>
+        <div>
+            <span class="ciit-admin-eyebrow">FINANCIAL ANALYTICS</span>
+            <h1>Revenue &amp; Payments</h1>
+            <p>Live PhonePe transaction reporting from the payment system, including successful, failed and pending attempts.</p>
+        </div>
+        <div class="ciit-admin-report-page-stat">
+            <strong>₹@Model.SuccessfulRevenue.ToString("N0")</strong>
+            <span>Successful revenue in selected period</span>
+        </div>
     </header>
 
     <partial name="_ReportSectionNav" />
 
     <form method="get" class="ciit-admin-report-filter-bar">
-        <div class="ciit-admin-report-date-field"><label for="startDate">From</label><input id="startDate" name="startDate" type="date" value="@Model.StartDate.ToString("yyyy-MM-dd")" /></div>
-        <div class="ciit-admin-report-date-field"><label for="endDate">To</label><input id="endDate" name="endDate" type="date" value="@Model.EndDate.ToString("yyyy-MM-dd")" /></div>
-        <button type="submit" class="ciit-admin-report-filter-button"><i class="bi bi-filter"></i> Update</button>
+        <div class="ciit-admin-report-date-field">
+            <label for="startDate">From</label>
+            <input id="startDate" name="startDate" type="date" value="@Model.StartDate.ToString("yyyy-MM-dd")" />
+        </div>
+        <div class="ciit-admin-report-date-field">
+            <label for="endDate">To</label>
+            <input id="endDate" name="endDate" type="date" value="@Model.EndDate.ToString("yyyy-MM-dd")" />
+        </div>
+        <button type="submit" class="ciit-admin-report-filter-button">
+            <i class="bi bi-filter"></i> Update
+        </button>
     </form>
 
     <section class="ciit-admin-report-stat-grid">
-        <article class="ciit-admin-report-stat-card"><span>Paid amount</span><strong>₹@Model.TotalPaid.ToString("N0")</strong><small>@Model.PaidPaymentCount paid payments</small></article>
-        <article class="ciit-admin-report-stat-card"><span>Recorded amount</span><strong>₹@Model.TotalRecorded.ToString("N0")</strong><small>@Model.PaymentCount total records</small></article>
-        <article class="ciit-admin-report-stat-card"><span>Pending amount</span><strong>₹@Model.PendingAmount.ToString("N0")</strong><small>@Model.PendingPaymentCount pending records</small></article>
+        <article class="ciit-admin-report-stat-card">
+            <span>Successful revenue</span>
+            <strong>₹@Model.SuccessfulRevenue.ToString("N0")</strong>
+            <small>@Model.SuccessfulPaymentCount completed payments</small>
+        </article>
+        <article class="ciit-admin-report-stat-card">
+            <span>Payment attempts</span>
+            <strong>@Model.PaymentCount</strong>
+            <small>₹@Model.AttemptedAmount.ToString("N0") attempted amount</small>
+        </article>
+        <article class="ciit-admin-report-stat-card">
+            <span>Failed payments</span>
+            <strong>@Model.FailedPaymentCount</strong>
+            <small>₹@Model.FailedAmount.ToString("N0") failed amount</small>
+        </article>
+        <article class="ciit-admin-report-stat-card">
+            <span>Pending payments</span>
+            <strong>@Model.PendingPaymentCount</strong>
+            <small>₹@Model.PendingAmount.ToString("N0") pending amount</small>
+        </article>
     </section>
 
     <section class="ciit-admin-report-panel ciit-admin-report-table-panel">
-        <div class="ciit-admin-report-panel-header"><div><span class="ciit-admin-panel-kicker">PAYMENT LEDGER</span><h2>Recent payments</h2><p>Recorded payments from @Model.StartDate.ToString("dd MMM yyyy") to @Model.EndDate.ToString("dd MMM yyyy").</p></div><span class="ciit-admin-report-panel-badge">@Model.RecentPayments.Count shown</span></div>
+        <div class="ciit-admin-report-panel-header">
+            <div>
+                <span class="ciit-admin-panel-kicker">PHONEPE PAYMENT LEDGER</span>
+                <h2>Recent transactions</h2>
+                <p>All payment attempts created from @Model.StartDate.ToString("dd MMM yyyy") to @Model.EndDate.ToString("dd MMM yyyy").</p>
+            </div>
+            <span class="ciit-admin-report-panel-badge">@Model.RecentPayments.Count shown</span>
+        </div>
+
         <div class="ciit-admin-report-table-wrap">
-            <table class="ciit-admin-report-table">
-                <thead><tr><th>PAYMENT</th><th>REGISTRATION</th><th>AMOUNT</th><th>MODE</th><th>DATE</th><th>STATUS</th></tr></thead>
+            <table class="ciit-admin-report-table ciit-payment-ledger-table">
+                <thead>
+                    <tr>
+                        <th>PAYMENT</th>
+                        <th>STUDENT</th>
+                        <th>COURSE</th>
+                        <th>AMOUNT</th>
+                        <th>DATE</th>
+                        <th>STATUS</th>
+                        <th>DETAILS</th>
+                    </tr>
+                </thead>
                 <tbody>
                 @if (Model.RecentPayments.Count == 0)
                 {
-                    <tr><td colspan="6"><div class="ciit-admin-report-empty"><i class="bi bi-wallet2"></i><strong>No payments found</strong><span>Try a wider reporting period.</span></div></td></tr>
+                    <tr>
+                        <td colspan="7">
+                            <div class="ciit-admin-report-empty">
+                                <i class="bi bi-wallet2"></i>
+                                <strong>No PhonePe transactions found</strong>
+                                <span>Try a wider reporting period.</span>
+                            </div>
+                        </td>
+                    </tr>
                 }
                 else
                 {
                     foreach (var payment in Model.RecentPayments)
                     {
-                        <tr>
-                            <td><strong>#@payment.PaymentId</strong><small class="ciit-report-muted">@payment.Description</small></td>
-                            <td>#@payment.RegistrationId</td>
+                        var detailId = $"payment-details-{payment.PaymentId}";
+                        <tr class="ciit-payment-main-row">
+                            <td>
+                                <strong>#@payment.PaymentId</strong>
+                                <small class="ciit-report-muted">@payment.MerchantOrderId</small>
+                            </td>
+                            <td>
+                                <strong>@payment.StudentName</strong>
+                                <small class="ciit-report-muted">@payment.StudentEmail</small>
+                            </td>
+                            <td>
+                                <strong>@payment.CourseTitle</strong>
+                                <small class="ciit-report-muted">Course #@payment.CourseId</small>
+                            </td>
                             <td><strong>₹@payment.Amount.ToString("N2")</strong></td>
-                            <td>@payment.PaymentMode</td>
-                            <td>@payment.PaymentDate.ToString("dd MMM yyyy")</td>
-                            <td><span class="ciit-admin-status-pill @(payment.IsPaid ? "" : "inactive")">@(payment.IsPaid ? "Paid" : "Pending")</span></td>
+                            <td>
+                                @payment.CreatedAt.ToString("dd MMM yyyy")
+                                <small class="ciit-report-muted">@payment.CreatedAt.ToString("hh:mm tt")</small>
+                            </td>
+                            <td>
+                                <span class="ciit-admin-status-pill @(payment.Status == "Completed" ? "" : "inactive")">
+                                    @payment.Status
+                                </span>
+                            </td>
+                            <td>
+                                <button type="button"
+                                        class="ciit-payment-view-button"
+                                        aria-expanded="false"
+                                        aria-controls="@detailId"
+                                        data-payment-details="@detailId">
+                                    <span class="ciit-payment-view-icon">›</span>View
+                                </button>
+                            </td>
+                        </tr>
+                        <tr id="@detailId" class="ciit-payment-detail-row" hidden>
+                            <td colspan="7">
+                                <div class="ciit-payment-detail-panel">
+                                    <div class="ciit-payment-detail-grid">
+                                        <div class="ciit-payment-detail-item">
+                                            <span class="ciit-payment-detail-label">Transaction ID</span>
+                                            <span class="ciit-payment-detail-value">#@payment.PaymentId</span>
+                                        </div>
+                                        <div class="ciit-payment-detail-item">
+                                            <span class="ciit-payment-detail-label">Merchant Order</span>
+                                            <span class="ciit-payment-detail-value">@payment.MerchantOrderId</span>
+                                        </div>
+                                        <div class="ciit-payment-detail-item">
+                                            <span class="ciit-payment-detail-label">PhonePe Order</span>
+                                            <span class="ciit-payment-detail-value">@(string.IsNullOrWhiteSpace(payment.PhonePeOrderId) ? "Not available" : payment.PhonePeOrderId)</span>
+                                        </div>
+                                        <div class="ciit-payment-detail-item">
+                                            <span class="ciit-payment-detail-label">Created</span>
+                                            <span class="ciit-payment-detail-value">@payment.CreatedAt.ToString("dd MMM yyyy, hh:mm tt")</span>
+                                        </div>
+                                        <div class="ciit-payment-detail-item">
+                                            <span class="ciit-payment-detail-label">Updated</span>
+                                            <span class="ciit-payment-detail-value">@payment.UpdatedAt.ToString("dd MMM yyyy, hh:mm tt")</span>
+                                        </div>
+                                        <div class="ciit-payment-detail-item">
+                                            <span class="ciit-payment-detail-label">Completed</span>
+                                            <span class="ciit-payment-detail-value">@(payment.CompletedAt?.ToString("dd MMM yyyy, hh:mm tt") ?? "Not completed")</span>
+                                        </div>
+                                        <div class="ciit-payment-detail-item">
+                                            <span class="ciit-payment-detail-label">Gateway</span>
+                                            <span class="ciit-payment-detail-value">PhonePe</span>
+                                        </div>
+                                        <div class="ciit-payment-detail-item">
+                                            <span class="ciit-payment-detail-label">Course access</span>
+                                            <span class="ciit-payment-detail-value">@(payment.CourseAccessGranted ? "Granted" : "Not granted")</span>
+                                        </div>
+                                        <div class="ciit-payment-detail-item">
+                                            <span class="ciit-payment-detail-label">Payment method</span>
+                                            <span class="ciit-payment-detail-value">Not recorded by current transaction data</span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </td>
                         </tr>
                     }
                 }
@@ -54,3 +306,19 @@
         </div>
     </section>
 </section>
+
+<script>
+    document.querySelectorAll('[data-payment-details]').forEach(function (button) {
+        button.addEventListener('click', function () {
+            var detailId = button.getAttribute('data-payment-details');
+            var detailRow = document.getElementById(detailId);
+            if (!detailRow) {
+                return;
+            }
+
+            var isExpanded = button.getAttribute('aria-expanded') === 'true';
+            button.setAttribute('aria-expanded', String(!isExpanded));
+            detailRow.hidden = isExpanded;
+        });
+    });
+</script>

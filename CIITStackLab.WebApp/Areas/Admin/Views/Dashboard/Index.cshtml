@@ -4,6 +4,202 @@
     ViewData["Title"] = "Dashboard";
 }
 
+<style>
+    .ciit-admin-stat-card[data-dashboard-modal] {
+        cursor: pointer;
+        transition: transform .18s ease, box-shadow .18s ease;
+    }
+
+    .ciit-admin-stat-card[data-dashboard-modal]:hover,
+    .ciit-admin-stat-card[data-dashboard-modal]:focus-visible {
+        transform: translateY(-2px);
+        box-shadow: 0 14px 32px rgba(15, 23, 42, .10);
+        outline: none;
+    }
+
+    .ciit-dashboard-modal[hidden] {
+        display: none;
+    }
+
+    .ciit-dashboard-modal {
+        position: fixed;
+        inset: 0;
+        z-index: 2000;
+        display: grid;
+        place-items: center;
+        padding: 24px;
+    }
+
+    .ciit-dashboard-modal-backdrop {
+        position: absolute;
+        inset: 0;
+        background: rgba(15, 23, 42, .48);
+        backdrop-filter: blur(7px);
+        -webkit-backdrop-filter: blur(7px);
+    }
+
+    .ciit-dashboard-modal-dialog {
+        position: relative;
+        z-index: 1;
+        width: min(900px, 100%);
+        max-height: min(720px, calc(100vh - 48px));
+        display: flex;
+        flex-direction: column;
+        overflow: hidden;
+        background: #fff;
+        border: 1px solid #dbe3ef;
+        border-radius: 20px;
+        box-shadow: 0 30px 80px rgba(15, 23, 42, .22);
+    }
+
+    .ciit-dashboard-modal-header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 16px;
+        padding: 22px 24px;
+        border-bottom: 1px solid #e5eaf2;
+        flex: 0 0 auto;
+    }
+
+    .ciit-dashboard-modal-header h2 {
+        margin: 2px 0 4px;
+        color: #172033;
+        font-size: 24px;
+    }
+
+    .ciit-dashboard-modal-header p {
+        margin: 0;
+        color: #718096;
+        font-size: 13px;
+    }
+
+    .ciit-dashboard-modal-close {
+        width: 38px;
+        height: 38px;
+        display: inline-grid;
+        place-items: center;
+        flex: 0 0 auto;
+        border: 1px solid #d8e0ec;
+        border-radius: 50%;
+        background: #fff;
+        color: #475569;
+        font-size: 22px;
+        line-height: 1;
+        cursor: pointer;
+    }
+
+    .ciit-dashboard-modal-close:hover,
+    .ciit-dashboard-modal-close:focus-visible {
+        background: #f1f5f9;
+        color: #172033;
+        outline: none;
+    }
+
+    .ciit-dashboard-modal-body {
+        min-height: 0;
+        overflow-y: auto;
+        padding: 8px 24px 24px;
+    }
+
+    .ciit-dashboard-modal-list {
+        display: grid;
+    }
+
+    .ciit-dashboard-modal-item {
+        display: grid;
+        grid-template-columns: 54px minmax(0, 1fr) auto;
+        align-items: center;
+        gap: 16px;
+        padding: 16px 4px;
+        border-bottom: 1px solid #e5eaf2;
+    }
+
+    .ciit-dashboard-modal-item:last-child {
+        border-bottom: 0;
+    }
+
+    .ciit-dashboard-modal-number {
+        width: 44px;
+        height: 44px;
+        display: grid;
+        place-items: center;
+        border-radius: 12px;
+        background: #eef4ff;
+        color: #2563eb;
+        font-weight: 700;
+        font-size: 13px;
+    }
+
+    .ciit-dashboard-modal-item strong {
+        display: block;
+        color: #172033;
+        font-size: 14px;
+        overflow-wrap: anywhere;
+    }
+
+    .ciit-dashboard-modal-item span {
+        display: block;
+        margin-top: 4px;
+        color: #718096;
+        font-size: 12px;
+        overflow-wrap: anywhere;
+    }
+
+    .ciit-dashboard-modal-meta {
+        text-align: right;
+        color: #64748b;
+        font-size: 12px;
+    }
+
+    .ciit-dashboard-modal-empty {
+        padding: 56px 20px;
+        text-align: center;
+        color: #718096;
+    }
+
+    .ciit-dashboard-modal-empty i {
+        display: block;
+        margin-bottom: 10px;
+        font-size: 28px;
+        color: #94a3b8;
+    }
+
+    .ciit-dashboard-modal-empty strong {
+        color: #172033;
+    }
+
+    body.ciit-dashboard-modal-open {
+        overflow: hidden;
+    }
+
+    @@media (max-width: 640px) {
+        .ciit-dashboard-modal {
+            padding: 12px;
+        }
+
+        .ciit-dashboard-modal-dialog {
+            max-height: calc(100vh - 24px);
+            border-radius: 16px;
+        }
+
+        .ciit-dashboard-modal-header,
+        .ciit-dashboard-modal-body {
+            padding-left: 16px;
+            padding-right: 16px;
+        }
+
+        .ciit-dashboard-modal-item {
+            grid-template-columns: 44px minmax(0, 1fr);
+        }
+
+        .ciit-dashboard-modal-meta {
+            grid-column: 2;
+            text-align: left;
+        }
+    }
+</style>
+
 <section class="ciit-admin-dashboard">
     <div class="ciit-admin-page-header">
         <div>
@@ -17,7 +213,7 @@
     </div>
 
     <div class="ciit-admin-stat-grid">
-        <article class="ciit-admin-stat-card">
+        <article class="ciit-admin-stat-card" tabindex="0" role="button" data-dashboard-modal="courses" aria-label="View active courses">
             <div class="ciit-admin-stat-icon"><i class="bi bi-journal-code"></i></div>
             <div class="ciit-admin-stat-copy">
                 <span>Active Courses</span>
@@ -25,7 +221,7 @@
             </div>
         </article>
 
-        <article class="ciit-admin-stat-card">
+        <article class="ciit-admin-stat-card" tabindex="0" role="button" data-dashboard-modal="topics" aria-label="View active topics">
             <div class="ciit-admin-stat-icon"><i class="bi bi-diagram-3"></i></div>
             <div class="ciit-admin-stat-copy">
                 <span>Active Topics</span>
@@ -33,7 +229,7 @@
             </div>
         </article>
 
-        <article class="ciit-admin-stat-card">
+        <article class="ciit-admin-stat-card" tabindex="0" role="button" data-dashboard-modal="content" aria-label="View learning content">
             <div class="ciit-admin-stat-icon"><i class="bi bi-file-earmark-text"></i></div>
             <div class="ciit-admin-stat-copy">
                 <span>Learning Content</span>
@@ -41,7 +237,7 @@
             </div>
         </article>
 
-        <article class="ciit-admin-stat-card">
+        <article class="ciit-admin-stat-card" tabindex="0" role="button" data-dashboard-modal="mcqs" aria-label="View active MCQs">
             <div class="ciit-admin-stat-icon"><i class="bi bi-ui-checks"></i></div>
             <div class="ciit-admin-stat-copy">
                 <span>Active MCQs</span>
@@ -49,7 +245,7 @@
             </div>
         </article>
 
-        <article class="ciit-admin-stat-card">
+        <article class="ciit-admin-stat-card" tabindex="0" role="button" data-dashboard-modal="students" aria-label="View students">
             <div class="ciit-admin-stat-icon"><i class="bi bi-people"></i></div>
             <div class="ciit-admin-stat-copy">
                 <span>Students</span>
@@ -134,3 +330,171 @@
         </aside>
     </div>
 </section>
+
+<div class="ciit-dashboard-modal" id="ciitDashboardModal" hidden role="dialog" aria-modal="true" aria-labelledby="ciitDashboardModalTitle">
+    <div class="ciit-dashboard-modal-backdrop" data-dashboard-modal-close></div>
+    <div class="ciit-dashboard-modal-dialog">
+        <div class="ciit-dashboard-modal-header">
+            <div>
+                <span class="ciit-admin-eyebrow" id="ciitDashboardModalKicker">Dashboard data</span>
+                <h2 id="ciitDashboardModalTitle">Details</h2>
+                <p id="ciitDashboardModalSummary"></p>
+            </div>
+            <button type="button" class="ciit-dashboard-modal-close" aria-label="Close" data-dashboard-modal-close>&times;</button>
+        </div>
+        <div class="ciit-dashboard-modal-body" id="ciitDashboardModalBody"></div>
+    </div>
+</div>
+
+<script>
+    (function () {
+        var modal = document.getElementById('ciitDashboardModal');
+        var body = document.getElementById('ciitDashboardModalBody');
+        var title = document.getElementById('ciitDashboardModalTitle');
+        var summary = document.getElementById('ciitDashboardModalSummary');
+        var cards = document.querySelectorAll('[data-dashboard-modal]');
+        var closeButtons = document.querySelectorAll('[data-dashboard-modal-close]');
+
+        if (!modal || !body || !title || !summary) {
+            return;
+        }
+
+        var data = {
+            courses: {
+                title: 'Active Courses',
+                summary: '@Model.ActiveCourses.Count active courses',
+                items: [
+                    @foreach (var item in Model.ActiveCourses)
+                    {
+                        <text>{ id: '@item.Id', name: @Html.Raw(System.Text.Json.JsonSerializer.Serialize(item.Title)), meta: @Html.Raw(System.Text.Json.JsonSerializer.Serialize(item.UpdatedAt.HasValue ? $"Updated {item.UpdatedAt.Value:dd MMM yyyy}" : "Updated date not available")) },</text>
+                    }
+                ]
+            },
+            topics: {
+                title: 'Active Topics',
+                summary: '@Model.ActiveTopics.Count active topics',
+                items: [
+                    @foreach (var item in Model.ActiveTopics)
+                    {
+                        <text>{ id: '@item.Id', name: @Html.Raw(System.Text.Json.JsonSerializer.Serialize(item.Title)), meta: @Html.Raw(System.Text.Json.JsonSerializer.Serialize(item.UpdatedAt.HasValue ? $"Updated {item.UpdatedAt.Value:dd MMM yyyy}" : "Updated date not available")) },</text>
+                    }
+                ]
+            },
+            content: {
+                title: 'Learning Content',
+                summary: '@Model.LearningContent.Count active content items',
+                items: [
+                    @foreach (var item in Model.LearningContent)
+                    {
+                        <text>{ id: '@item.Id', name: @Html.Raw(System.Text.Json.JsonSerializer.Serialize(item.Title)), meta: @Html.Raw(System.Text.Json.JsonSerializer.Serialize(string.IsNullOrWhiteSpace(item.TopicTitle) ? "Topic not assigned" : $"Topic: {item.TopicTitle}")) },</text>
+                    }
+                ]
+            },
+            mcqs: {
+                title: 'Active MCQs',
+                summary: '@Model.ActiveMcqs.Count active MCQs',
+                items: [
+                    @foreach (var item in Model.ActiveMcqs)
+                    {
+                        <text>{ id: '@item.Id', name: @Html.Raw(System.Text.Json.JsonSerializer.Serialize(string.IsNullOrWhiteSpace(item.Question) ? "Question text not available" : item.Question)), meta: @Html.Raw(System.Text.Json.JsonSerializer.Serialize(item.ContentId.HasValue ? $"Content #{item.ContentId}" : item.TopicId.HasValue ? $"Topic #{item.TopicId}" : "No linked content or topic")) },</text>
+                    }
+                ]
+            },
+            students: {
+                title: 'Students',
+                summary: '@Model.Students.Count active student accounts',
+                items: [
+                    @foreach (var item in Model.Students)
+                    {
+                        <text>{ id: @Html.Raw(System.Text.Json.JsonSerializer.Serialize(item.Id)), name: @Html.Raw(System.Text.Json.JsonSerializer.Serialize(string.IsNullOrWhiteSpace(item.UserName) ? "Username not available" : item.UserName)), meta: @Html.Raw(System.Text.Json.JsonSerializer.Serialize(string.IsNullOrWhiteSpace(item.Email) ? "Email not available" : item.Email)) },</text>
+                    }
+                ]
+            }
+        };
+
+        function render(type) {
+            var selected = data[type];
+            if (!selected) {
+                return;
+            }
+
+            title.textContent = selected.title;
+            summary.textContent = selected.summary;
+            body.innerHTML = '';
+
+            if (!selected.items.length) {
+                body.innerHTML = '<div class="ciit-dashboard-modal-empty"><i class="bi bi-inbox"></i><strong>No records found</strong><span>No active records are available in the database.</span></div>';
+                return;
+            }
+
+            var list = document.createElement('div');
+            list.className = 'ciit-dashboard-modal-list';
+
+            selected.items.forEach(function (item) {
+                var row = document.createElement('div');
+                row.className = 'ciit-dashboard-modal-item';
+
+                var number = document.createElement('div');
+                number.className = 'ciit-dashboard-modal-number';
+                number.textContent = item.id;
+
+                var copy = document.createElement('div');
+                var name = document.createElement('strong');
+                name.textContent = item.name;
+                var meta = document.createElement('span');
+                meta.textContent = item.meta;
+                copy.appendChild(name);
+                copy.appendChild(meta);
+
+                var right = document.createElement('div');
+                right.className = 'ciit-dashboard-modal-meta';
+                right.textContent = type === 'students' ? 'Student account' : type === 'mcqs' ? 'MCQ' : 'Active';
+
+                row.appendChild(number);
+                row.appendChild(copy);
+                row.appendChild(right);
+                list.appendChild(row);
+            });
+
+            body.appendChild(list);
+        }
+
+        function open(type) {
+            render(type);
+            modal.hidden = false;
+            document.body.classList.add('ciit-dashboard-modal-open');
+            var closeButton = modal.querySelector('.ciit-dashboard-modal-close');
+            if (closeButton) {
+                closeButton.focus();
+            }
+        }
+
+        function close() {
+            modal.hidden = true;
+            document.body.classList.remove('ciit-dashboard-modal-open');
+        }
+
+        cards.forEach(function (card) {
+            card.addEventListener('click', function () {
+                open(card.getAttribute('data-dashboard-modal'));
+            });
+
+            card.addEventListener('keydown', function (event) {
+                if (event.key === 'Enter' || event.key === ' ') {
+                    event.preventDefault();
+                    open(card.getAttribute('data-dashboard-modal'));
+                }
+            });
+        });
+
+        closeButtons.forEach(function (button) {
+            button.addEventListener('click', close);
+        });
+
+        document.addEventListener('keydown', function (event) {
+            if (event.key === 'Escape' && !modal.hidden) {
+                close();
+            }
+        });
+    })();
+</script>

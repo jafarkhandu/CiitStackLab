@@ -6,6 +6,9 @@ public sealed class StudentLearningDashboardViewModel
 {
     public IReadOnlyList<CourseDto> Courses { get; init; } = Array.Empty<CourseDto>();
 
+    public IReadOnlyList<StudentLearningCourseStatViewModel> CourseStats { get; init; }
+        = Array.Empty<StudentLearningCourseStatViewModel>();
+
     public int CompletedLessons { get; init; }
 
     public int TrackedLessons { get; init; }
@@ -17,9 +20,31 @@ public sealed class StudentLearningDashboardViewModel
     public IReadOnlyList<StudentLearningActivityViewModel> RecentActivity { get; init; }
         = Array.Empty<StudentLearningActivityViewModel>();
 
+    public IReadOnlyList<StudentLearningActivityViewModel> CompletedActivities { get; init; }
+        = Array.Empty<StudentLearningActivityViewModel>();
+
     public string? MostRecentCourseTitle { get; init; }
 
     public DateTime? MostRecentActivityAt { get; init; }
+}
+
+public sealed class StudentLearningCourseStatViewModel
+{
+    public int CourseId { get; init; }
+
+    public string CourseTitle { get; init; } = string.Empty;
+
+    public decimal DurationHours { get; init; }
+
+    public int CompletedLessons { get; init; }
+
+    public int TrackedLessons { get; init; }
+
+    public int ProgressPercent => TrackedLessons == 0
+        ? 0
+        : (int)Math.Round(CompletedLessons * 100d / TrackedLessons);
+
+    public DateTime? LastActivityAt { get; init; }
 }
 
 public sealed class StudentLearningActivityViewModel
