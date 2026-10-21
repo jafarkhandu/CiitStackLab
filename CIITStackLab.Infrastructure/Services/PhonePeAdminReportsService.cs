@@ -88,7 +88,8 @@ public sealed class PhonePeAdminReportsService : IPhonePeAdminReportsService
                     CreatedAt = transaction.CreatedAt,
                     UpdatedAt = transaction.UpdatedAt,
                     CompletedAt = transaction.CompletedAt,
-                    CourseAccessGranted = purchasedCourses.Contains($"{transaction.UserId}|{transaction.CourseId}")
+                    CourseAccessGranted = IsCompleted(transaction.Status)
+                        && purchasedCourses.Contains($"{transaction.UserId}|{transaction.CourseId}")
                 };
             })
             .ToList();
