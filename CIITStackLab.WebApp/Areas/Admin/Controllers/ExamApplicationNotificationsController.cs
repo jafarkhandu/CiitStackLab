@@ -28,9 +28,11 @@ public sealed class ExamApplicationNotificationsController : Controller
             return Unauthorized();
         }
 
+        // Read notifications are cleared from the inbox view but retained in storage
+        // so the unique daily deduplication key continues to prevent repeated alerts.
         var notifications = await _db.ExamApplicationNotifications
             .AsNoTracking()
-            .Where(notification => notification.AdminUserId == adminUserId)
+            .Where(notification => notification.AdminUserId == adminUserId && !notification.IsRead)
             .OrderByDescending(notification => notification.CreatedAtUtc)
             .Take(100)
             .Select(notification => new
@@ -55,8 +57,37 @@ public sealed class ExamApplicationNotificationsController : Controller
         {
             success = true,
             notifications,
-            unreadCount = notifications.Count(notification => !notification.isRead)
+            unreadCount = notifications.Count
         });
+    }
+
+    [HttpPost("{notificationId:long}/MarkRead")]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> MarkRead(long notificationId, CancellationToken cancellationToken)
+    {
+        var adminUserId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+        if (string.IsNullOrWhiteSpace(adminUserId))
+        {
+            return Unauthorized();
+        }
+
+        var notification = await _db.ExamApplicationNotifications
+            .SingleOrDefaultAsync(
+                item => item.Id == notificationId && item.AdminUserId == adminUserId,
+                cancellationToken);
+
+        if (notification is null)
+        {
+            return NotFound();
+        }
+
+        if (!notification.IsRead)
+        {
+            notification.IsRead = true;
+            await _db.SaveChangesAsync(cancellationToken);
+        }
+
+        return Json(new { success = true, notificationId });
     }
 
     [HttpPost("MarkAllRead")]
