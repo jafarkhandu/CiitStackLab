@@ -681,3 +681,13 @@
         transition: none;
     }
 }
+
+.ciit-admin-notifications + .ciit-admin-user {
+    margin-left: 0;
+}
+
+@media (max-width: 720px) {
+    .ciit-admin-notifications + .ciit-admin-user {
+        margin-left: 0;
+    }
+}
