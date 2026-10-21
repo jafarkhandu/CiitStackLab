@@ -968,17 +968,6 @@ public class CoursesController : Controller
             return RedirectToAction("Index", "StudentExaminations");
         }
 
-        var allowedTopicId = await _topicExaminationService.GetCurrentTopicIdAsync(
-            userId,
-            id,
-            cancellationToken);
-        if (allowedTopicId.HasValue && allowedTopicId.Value != topicId)
-        {
-            TempData["LearningProgressMessage"] =
-                "Complete the current topic examination before applying for a different topic.";
-            return RedirectToAction(nameof(Learn), new { id, topicId = allowedTopicId.Value });
-        }
-
         var questionAvailability = await _topicExaminationService.CheckQuestionAvailabilityAsync(
             userId,
             id,
@@ -999,6 +988,17 @@ public class CoursesController : Controller
                 cancellationToken);
 
             return RedirectToAction(nameof(Learn), new { id, topicId });
+        }
+
+        var allowedTopicId = await _topicExaminationService.GetCurrentTopicIdAsync(
+            userId,
+            id,
+            cancellationToken);
+        if (allowedTopicId.HasValue && allowedTopicId.Value != topicId)
+        {
+            TempData["LearningProgressMessage"] =
+                "Complete the current topic examination before applying for a different topic.";
+            return RedirectToAction(nameof(Learn), new { id, topicId = allowedTopicId.Value });
         }
 
         var topicNoteIds = await _dbContext.TrainingNotes.AsNoTracking()
