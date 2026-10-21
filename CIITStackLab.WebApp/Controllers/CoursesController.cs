@@ -593,9 +593,11 @@ public class CoursesController : Controller
             return NotFound();
         }
 
-        var publishedCourse = await _courseService.GetByIdAsync(id, cancellationToken);
+        var publishedCourseExists = await _dbContext.Courses
+            .AsNoTracking()
+            .AnyAsync(course => course.Id == id && course.Flag == 0, cancellationToken);
 
-        if (publishedCourse is null)
+        if (!publishedCourseExists)
         {
             return NotFound();
         }
@@ -649,6 +651,52 @@ public class CoursesController : Controller
             }
         }
 
+        // Resolve the selected topic's lesson before loading its full learning DTO.
+        // This prevents loading every chapter, note and assessment twice on topic changes.
+        if (topicId.HasValue && !contentId.HasValue)
+        {
+            var topicExistsInCourse = await (
+                from courseModule in _dbContext.CourseModules.AsNoTracking()
+                join topic in _dbContext.Topics.AsNoTracking()
+                    on courseModule.TopicId equals topic.Id
+                where courseModule.CourseId == id
+                    && courseModule.TopicId == topicId.Value
+                    && courseModule.Flag == 0
+                    && topic.Flag == 0
+                select topic.Id)
+                .AnyAsync(cancellationToken);
+
+            if (!topicExistsInCourse)
+            {
+                return NotFound();
+            }
+
+            var topicContentIds = await _dbContext.Lessons
+                .AsNoTracking()
+                .Where(lesson => lesson.TopicId == topicId.Value && lesson.Flag == 0)
+                .OrderBy(lesson => lesson.Id)
+                .Select(lesson => lesson.Id)
+                .ToListAsync(cancellationToken);
+
+            if (topicContentIds.Count > 0)
+            {
+                contentId = topicContentIds[0];
+
+                if (!string.IsNullOrWhiteSpace(studentUserId))
+                {
+                    var resumeContentId = await _studentProgressService.GetResumeContentIdAsync(
+                        studentUserId,
+                        id,
+                        cancellationToken);
+
+                    if (resumeContentId.HasValue && topicContentIds.Contains(resumeContentId.Value))
+                    {
+                        contentId = resumeContentId.Value;
+                    }
+                }
+            }
+        }
+
         var course = await _courseService.GetLearningAsync(id, contentId, cancellationToken);
 
         if (course is null)
@@ -690,42 +738,6 @@ public class CoursesController : Controller
             if (selectedTopic is null)
             {
                 return NotFound();
-            }
-
-            var topicContents = selectedTopic.Contents
-                .Concat(selectedTopic.Chapters.SelectMany(chapter => chapter.Contents))
-                .DistinctBy(content => content.Id)
-                .ToList();
-
-            if (!contentId.HasValue && topicContents.Count > 0)
-            {
-                var selectedContentId = topicContents[0].Id;
-
-                if (!string.IsNullOrWhiteSpace(studentUserId))
-                {
-                    var resumeContentId = await _studentProgressService.GetResumeContentIdAsync(
-                        studentUserId,
-                        id,
-                        cancellationToken);
-
-                    if (resumeContentId.HasValue
-                        && topicContents.Any(content => content.Id == resumeContentId.Value))
-                    {
-                        selectedContentId = resumeContentId.Value;
-                    }
-                }
-
-                course = await _courseService.GetLearningAsync(id, selectedContentId, cancellationToken);
-                if (course is null)
-                {
-                    return NotFound();
-                }
-
-                selectedTopic = course.Topics.FirstOrDefault(topic => topic.Id == topicId.Value);
-                if (selectedTopic is null)
-                {
-                    return NotFound();
-                }
             }
 
             course.CurrentTopicId = selectedTopic.Id;
