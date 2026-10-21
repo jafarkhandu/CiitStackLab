@@ -11,6 +11,9 @@ public sealed class CourseDetailsDto
     public string Level { get; init; } = string.Empty;
     public decimal DurationHours { get; init; }
     public decimal TotalPrice { get; set; }
+    public decimal OriginalPrice { get; set; }
+    public decimal DiscountAmount { get; set; }
+    public decimal? DiscountPercentage { get; set; }
     public bool IsStudent { get; set; }
     public bool HasAccess { get; set; }
     public IReadOnlyList<CourseTopicDto> Topics { get; init; } = Array.Empty<CourseTopicDto>();

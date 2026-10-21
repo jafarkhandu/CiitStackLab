@@ -5,12 +5,11 @@ public sealed class AdminCourseDto
     public int Id { get; init; }
     public string Title { get; init; } = string.Empty;
     public string? ImagePath { get; init; }
-
-    // Legacy ERP fee fields remain available for compatibility but are not shown or edited in Admin UI.
+    public string? DiscountMode { get; init; }
+    public decimal? DiscountValue { get; init; }
     public double? FeesAmount { get; init; }
     public DateTime? FeesChangeDate { get; init; }
     public double? InstallmentPercentage { get; init; }
-
     public decimal TotalPrice { get; init; }
     public int TopicCount { get; init; }
     public DateTime? CreatedAt { get; init; }
