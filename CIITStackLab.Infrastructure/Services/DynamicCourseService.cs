@@ -145,6 +145,8 @@ public sealed class DynamicCourseService : ICourseService
             ?? currentContentRow?.TopicId
             ?? topicData.FirstOrDefault()?.TopicId;
 
+        var loadAllTopicDetails = !topicId.HasValue && !contentId.HasValue;
+
         // Keep only note metadata for all chapters; loading every chapter's rich HTML on
         // every refresh can dominate response time for courses with large notes.
         var chapterRows = topicIds.Count == 0
@@ -161,6 +163,7 @@ public sealed class DynamicCourseService : ICourseService
                     note.TopicId,
                     note.ChapterId,
                     note.Title,
+                    HtmlContent = loadAllTopicDetails ? note.HtmlContent : null,
                     HasNotes = note.HtmlContent != null && note.HtmlContent.Trim() != "",
                     note.SortOrder
                 })
@@ -169,7 +172,7 @@ public sealed class DynamicCourseService : ICourseService
         var selectedChapterId = currentContentRow?.NoteId
             ?? chapterRows.FirstOrDefault(chapter => chapter.TopicId == selectedTopicId)?.Id;
 
-        var selectedChapterHtml = selectedChapterId.HasValue
+        var selectedChapterHtml = !loadAllTopicDetails && selectedChapterId.HasValue
             ? await _dbContext.TrainingNotes
                 .AsNoTracking()
                 .Where(note => note.Id == selectedChapterId.Value && note.Flag == 0)
@@ -203,32 +206,38 @@ public sealed class DynamicCourseService : ICourseService
                 question.NoteId,
                 question.ContentId,
                 question.TopicId,
-                IsSelectedTopic = (question.ContentId.HasValue && selectedTopicContentIds.Contains(question.ContentId.Value))
+                IsSelectedTopic = loadAllTopicDetails
+                    || (question.ContentId.HasValue && selectedTopicContentIds.Contains(question.ContentId.Value))
                     || (question.NoteId.HasValue && selectedTopicNoteIds.Contains(question.NoteId.Value))
                     || (selectedTopicId.HasValue && question.TopicId == selectedTopicId.Value),
-                Question = ((question.ContentId.HasValue && selectedTopicContentIds.Contains(question.ContentId.Value))
-                    || (question.NoteId.HasValue && selectedTopicNoteIds.Contains(question.NoteId.Value))
-                    || (selectedTopicId.HasValue && question.TopicId == selectedTopicId.Value))
+                Question = (loadAllTopicDetails
+                    || ((question.ContentId.HasValue && selectedTopicContentIds.Contains(question.ContentId.Value))
+                        || (question.NoteId.HasValue && selectedTopicNoteIds.Contains(question.NoteId.Value))
+                        || (selectedTopicId.HasValue && question.TopicId == selectedTopicId.Value)))
                     ? question.Question
                     : null,
-                Option1 = ((question.ContentId.HasValue && selectedTopicContentIds.Contains(question.ContentId.Value))
-                    || (question.NoteId.HasValue && selectedTopicNoteIds.Contains(question.NoteId.Value))
-                    || (selectedTopicId.HasValue && question.TopicId == selectedTopicId.Value))
+                Option1 = (loadAllTopicDetails
+                    || ((question.ContentId.HasValue && selectedTopicContentIds.Contains(question.ContentId.Value))
+                        || (question.NoteId.HasValue && selectedTopicNoteIds.Contains(question.NoteId.Value))
+                        || (selectedTopicId.HasValue && question.TopicId == selectedTopicId.Value)))
                     ? question.Option1
                     : null,
-                Option2 = ((question.ContentId.HasValue && selectedTopicContentIds.Contains(question.ContentId.Value))
-                    || (question.NoteId.HasValue && selectedTopicNoteIds.Contains(question.NoteId.Value))
-                    || (selectedTopicId.HasValue && question.TopicId == selectedTopicId.Value))
+                Option2 = (loadAllTopicDetails
+                    || ((question.ContentId.HasValue && selectedTopicContentIds.Contains(question.ContentId.Value))
+                        || (question.NoteId.HasValue && selectedTopicNoteIds.Contains(question.NoteId.Value))
+                        || (selectedTopicId.HasValue && question.TopicId == selectedTopicId.Value)))
                     ? question.Option2
                     : null,
-                Option3 = ((question.ContentId.HasValue && selectedTopicContentIds.Contains(question.ContentId.Value))
-                    || (question.NoteId.HasValue && selectedTopicNoteIds.Contains(question.NoteId.Value))
-                    || (selectedTopicId.HasValue && question.TopicId == selectedTopicId.Value))
+                Option3 = (loadAllTopicDetails
+                    || ((question.ContentId.HasValue && selectedTopicContentIds.Contains(question.ContentId.Value))
+                        || (question.NoteId.HasValue && selectedTopicNoteIds.Contains(question.NoteId.Value))
+                        || (selectedTopicId.HasValue && question.TopicId == selectedTopicId.Value)))
                     ? question.Option3
                     : null,
-                Option4 = ((question.ContentId.HasValue && selectedTopicContentIds.Contains(question.ContentId.Value))
-                    || (question.NoteId.HasValue && selectedTopicNoteIds.Contains(question.NoteId.Value))
-                    || (selectedTopicId.HasValue && question.TopicId == selectedTopicId.Value))
+                Option4 = (loadAllTopicDetails
+                    || ((question.ContentId.HasValue && selectedTopicContentIds.Contains(question.ContentId.Value))
+                        || (question.NoteId.HasValue && selectedTopicNoteIds.Contains(question.NoteId.Value))
+                        || (selectedTopicId.HasValue && question.TopicId == selectedTopicId.Value)))
                     ? question.Option4
                     : null
             })
@@ -255,17 +264,20 @@ public sealed class DynamicCourseService : ICourseService
                 question.NoteId,
                 question.ContentId,
                 question.TopicId,
-                IsSelectedTopic = (question.NoteId.HasValue && selectedTopicNoteIds.Contains(question.NoteId.Value))
+                IsSelectedTopic = loadAllTopicDetails
+                    || (question.NoteId.HasValue && selectedTopicNoteIds.Contains(question.NoteId.Value))
                     || (question.ContentId.HasValue && selectedTopicContentIds.Contains(question.ContentId.Value))
                     || (selectedTopicId.HasValue && question.TopicId == selectedTopicId.Value),
-                Question = ((question.NoteId.HasValue && selectedTopicNoteIds.Contains(question.NoteId.Value))
-                    || (question.ContentId.HasValue && selectedTopicContentIds.Contains(question.ContentId.Value))
-                    || (selectedTopicId.HasValue && question.TopicId == selectedTopicId.Value))
+                Question = (loadAllTopicDetails
+                    || ((question.NoteId.HasValue && selectedTopicNoteIds.Contains(question.NoteId.Value))
+                        || (question.ContentId.HasValue && selectedTopicContentIds.Contains(question.ContentId.Value))
+                        || (selectedTopicId.HasValue && question.TopicId == selectedTopicId.Value)))
                     ? question.Question ?? string.Empty
                     : string.Empty,
-                Answer = ((question.NoteId.HasValue && selectedTopicNoteIds.Contains(question.NoteId.Value))
-                    || (question.ContentId.HasValue && selectedTopicContentIds.Contains(question.ContentId.Value))
-                    || (selectedTopicId.HasValue && question.TopicId == selectedTopicId.Value))
+                Answer = (loadAllTopicDetails
+                    || ((question.NoteId.HasValue && selectedTopicNoteIds.Contains(question.NoteId.Value))
+                        || (question.ContentId.HasValue && selectedTopicContentIds.Contains(question.ContentId.Value))
+                        || (selectedTopicId.HasValue && question.TopicId == selectedTopicId.Value)))
                     ? question.Answer ?? string.Empty
                     : string.Empty
             })
@@ -290,13 +302,16 @@ public sealed class DynamicCourseService : ICourseService
                 question.Id,
                 question.NoteId,
                 question.ContentId,
-                IsSelectedTopic = (question.NoteId.HasValue && selectedTopicNoteIds.Contains(question.NoteId.Value))
+                IsSelectedTopic = loadAllTopicDetails
+                    || (question.NoteId.HasValue && selectedTopicNoteIds.Contains(question.NoteId.Value))
                     || (question.ContentId.HasValue && selectedTopicContentIds.Contains(question.ContentId.Value)),
-                QuestionTitle = ((question.NoteId.HasValue && selectedTopicNoteIds.Contains(question.NoteId.Value))
+                QuestionTitle = (loadAllTopicDetails
+                    || (question.NoteId.HasValue && selectedTopicNoteIds.Contains(question.NoteId.Value))
                     || (question.ContentId.HasValue && selectedTopicContentIds.Contains(question.ContentId.Value))
                     ? question.QuestionTitle
                     : string.Empty),
-                QuestionDescription = ((question.NoteId.HasValue && selectedTopicNoteIds.Contains(question.NoteId.Value))
+                QuestionDescription = (loadAllTopicDetails
+                    || (question.NoteId.HasValue && selectedTopicNoteIds.Contains(question.NoteId.Value))
                     || (question.ContentId.HasValue && selectedTopicContentIds.Contains(question.ContentId.Value))
                     ? question.QuestionDescription
                     : string.Empty)
@@ -734,9 +749,11 @@ public sealed class DynamicCourseService : ICourseService
                             Title = chapter.Title ?? string.Empty,
                             SortOrder = chapter.SortOrder,
                             HasNotes = chapter.HasNotes,
-                            NotesHtml = chapter.Id == selectedChapterId
-                                ? selectedChapterHtml ?? string.Empty
-                                : string.Empty,
+                            NotesHtml = loadAllTopicDetails
+                                ? chapter.HtmlContent ?? string.Empty
+                                : chapter.Id == selectedChapterId
+                                    ? selectedChapterHtml ?? string.Empty
+                                    : string.Empty,
                             Questions = GetQuestionsForChapter(chapter.Id, topic.TopicId),
                             InterviewQuestions = GetInterviewQuestionsForChapter(chapter.Id, topic.TopicId),
                             PracticeQuestions = GetPracticeQuestionsForChapter(chapter.Id),
