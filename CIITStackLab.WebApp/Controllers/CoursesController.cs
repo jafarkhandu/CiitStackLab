@@ -714,7 +714,7 @@ public class CoursesController : Controller
             }
         }
 
-        var course = await _courseService.GetLearningAsync(id, contentId, cancellationToken);
+        var course = await _courseService.GetLearningAsync(id, contentId, cancellationToken, topicId);
 
         if (course is null)
         {
