@@ -1,4 +1,4 @@
-@model CIITStackLab.Application.DTOs.AdminRevenueReportPageDto
+@model CIITStackLab.Application.DTOs.PhonePeAdminRevenueReportPageDto
 
 @{
     ViewData["Title"] = "Revenue & Payments";
@@ -7,45 +7,135 @@
 
 <section class="ciit-admin-reports">
     <header class="ciit-admin-reports-page-header">
-        <div><span class="ciit-admin-eyebrow">FINANCIAL ANALYTICS</span><h1>Revenue &amp; Payments</h1><p>Review recorded payments, paid amounts and pending amounts from the existing ERP payment data.</p></div>
-        <div class="ciit-admin-report-page-stat"><strong>₹@Model.TotalPaid.ToString("N0")</strong><span>Paid in selected period</span></div>
+        <div>
+            <span class="ciit-admin-eyebrow">FINANCIAL ANALYTICS</span>
+            <h1>Revenue &amp; Payments</h1>
+            <p>Live PhonePe transaction reporting from the payment system, including successful, failed and pending attempts.</p>
+        </div>
+        <div class="ciit-admin-report-page-stat">
+            <strong>₹@Model.SuccessfulRevenue.ToString("N0")</strong>
+            <span>Successful revenue in selected period</span>
+        </div>
     </header>
 
     <partial name="_ReportSectionNav" />
 
     <form method="get" class="ciit-admin-report-filter-bar">
-        <div class="ciit-admin-report-date-field"><label for="startDate">From</label><input id="startDate" name="startDate" type="date" value="@Model.StartDate.ToString("yyyy-MM-dd")" /></div>
-        <div class="ciit-admin-report-date-field"><label for="endDate">To</label><input id="endDate" name="endDate" type="date" value="@Model.EndDate.ToString("yyyy-MM-dd")" /></div>
-        <button type="submit" class="ciit-admin-report-filter-button"><i class="bi bi-filter"></i> Update</button>
+        <div class="ciit-admin-report-date-field">
+            <label for="startDate">From</label>
+            <input id="startDate" name="startDate" type="date" value="@Model.StartDate.ToString("yyyy-MM-dd")" />
+        </div>
+        <div class="ciit-admin-report-date-field">
+            <label for="endDate">To</label>
+            <input id="endDate" name="endDate" type="date" value="@Model.EndDate.ToString("yyyy-MM-dd")" />
+        </div>
+        <button type="submit" class="ciit-admin-report-filter-button">
+            <i class="bi bi-filter"></i> Update
+        </button>
     </form>
 
     <section class="ciit-admin-report-stat-grid">
-        <article class="ciit-admin-report-stat-card"><span>Paid amount</span><strong>₹@Model.TotalPaid.ToString("N0")</strong><small>@Model.PaidPaymentCount paid payments</small></article>
-        <article class="ciit-admin-report-stat-card"><span>Recorded amount</span><strong>₹@Model.TotalRecorded.ToString("N0")</strong><small>@Model.PaymentCount total records</small></article>
-        <article class="ciit-admin-report-stat-card"><span>Pending amount</span><strong>₹@Model.PendingAmount.ToString("N0")</strong><small>@Model.PendingPaymentCount pending records</small></article>
+        <article class="ciit-admin-report-stat-card">
+            <span>Successful revenue</span>
+            <strong>₹@Model.SuccessfulRevenue.ToString("N0")</strong>
+            <small>@Model.SuccessfulPaymentCount completed payments</small>
+        </article>
+        <article class="ciit-admin-report-stat-card">
+            <span>Payment attempts</span>
+            <strong>@Model.PaymentCount</strong>
+            <small>₹@Model.AttemptedAmount.ToString("N0") attempted amount</small>
+        </article>
+        <article class="ciit-admin-report-stat-card">
+            <span>Failed payments</span>
+            <strong>@Model.FailedPaymentCount</strong>
+            <small>₹@Model.FailedAmount.ToString("N0") failed amount</small>
+        </article>
+        <article class="ciit-admin-report-stat-card">
+            <span>Pending payments</span>
+            <strong>@Model.PendingPaymentCount</strong>
+            <small>₹@Model.PendingAmount.ToString("N0") pending amount</small>
+        </article>
     </section>
 
     <section class="ciit-admin-report-panel ciit-admin-report-table-panel">
-        <div class="ciit-admin-report-panel-header"><div><span class="ciit-admin-panel-kicker">PAYMENT LEDGER</span><h2>Recent payments</h2><p>Recorded payments from @Model.StartDate.ToString("dd MMM yyyy") to @Model.EndDate.ToString("dd MMM yyyy").</p></div><span class="ciit-admin-report-panel-badge">@Model.RecentPayments.Count shown</span></div>
+        <div class="ciit-admin-report-panel-header">
+            <div>
+                <span class="ciit-admin-panel-kicker">PHONEPE PAYMENT LEDGER</span>
+                <h2>Recent transactions</h2>
+                <p>All payment attempts created from @Model.StartDate.ToString("dd MMM yyyy") to @Model.EndDate.ToString("dd MMM yyyy").</p>
+            </div>
+            <span class="ciit-admin-report-panel-badge">@Model.RecentPayments.Count shown</span>
+        </div>
+
         <div class="ciit-admin-report-table-wrap">
             <table class="ciit-admin-report-table">
-                <thead><tr><th>PAYMENT</th><th>REGISTRATION</th><th>AMOUNT</th><th>MODE</th><th>DATE</th><th>STATUS</th></tr></thead>
+                <thead>
+                    <tr>
+                        <th>PAYMENT</th>
+                        <th>STUDENT</th>
+                        <th>COURSE</th>
+                        <th>AMOUNT</th>
+                        <th>DATE</th>
+                        <th>STATUS</th>
+                        <th>DETAILS</th>
+                    </tr>
+                </thead>
                 <tbody>
                 @if (Model.RecentPayments.Count == 0)
                 {
-                    <tr><td colspan="6"><div class="ciit-admin-report-empty"><i class="bi bi-wallet2"></i><strong>No payments found</strong><span>Try a wider reporting period.</span></div></td></tr>
+                    <tr>
+                        <td colspan="7">
+                            <div class="ciit-admin-report-empty">
+                                <i class="bi bi-wallet2"></i>
+                                <strong>No PhonePe transactions found</strong>
+                                <span>Try a wider reporting period.</span>
+                            </div>
+                        </td>
+                    </tr>
                 }
                 else
                 {
                     foreach (var payment in Model.RecentPayments)
                     {
                         <tr>
-                            <td><strong>#@payment.PaymentId</strong><small class="ciit-report-muted">@payment.Description</small></td>
-                            <td>#@payment.RegistrationId</td>
+                            <td>
+                                <strong>#@payment.PaymentId</strong>
+                                <small class="ciit-report-muted">@payment.MerchantOrderId</small>
+                            </td>
+                            <td>
+                                <strong>@payment.StudentName</strong>
+                                <small class="ciit-report-muted">@payment.StudentEmail</small>
+                            </td>
+                            <td>
+                                <strong>@payment.CourseTitle</strong>
+                                <small class="ciit-report-muted">Course #@payment.CourseId</small>
+                            </td>
                             <td><strong>₹@payment.Amount.ToString("N2")</strong></td>
-                            <td>@payment.PaymentMode</td>
-                            <td>@payment.PaymentDate.ToString("dd MMM yyyy")</td>
-                            <td><span class="ciit-admin-status-pill @(payment.IsPaid ? "" : "inactive")">@(payment.IsPaid ? "Paid" : "Pending")</span></td>
+                            <td>
+                                @payment.CreatedAt.ToString("dd MMM yyyy")
+                                <small class="ciit-report-muted">@payment.CreatedAt.ToString("hh:mm tt")</small>
+                            </td>
+                            <td>
+                                <span class="ciit-admin-status-pill @(payment.Status == "Completed" ? "" : "inactive")">
+                                    @payment.Status
+                                </span>
+                            </td>
+                            <td>
+                                <details>
+                                    <summary>View</summary>
+                                    <div style="min-width:260px;padding:12px 0;line-height:1.7;">
+                                        <div><strong>Transaction ID:</strong> #@payment.PaymentId</div>
+                                        <div><strong>Merchant Order:</strong> @payment.MerchantOrderId</div>
+                                        <div><strong>PhonePe Order:</strong> @(string.IsNullOrWhiteSpace(payment.PhonePeOrderId) ? "Not available" : payment.PhonePeOrderId)</div>
+                                        <div><strong>Created:</strong> @payment.CreatedAt.ToString("dd MMM yyyy, hh:mm tt")</div>
+                                        <div><strong>Updated:</strong> @payment.UpdatedAt.ToString("dd MMM yyyy, hh:mm tt")</div>
+                                        <div><strong>Completed:</strong> @(payment.CompletedAt?.ToString("dd MMM yyyy, hh:mm tt") ?? "Not completed")</div>
+                                        <div><strong>Gateway:</strong> PhonePe</div>
+                                        <div><strong>Course access:</strong> @(payment.CourseAccessGranted ? "Granted" : "Not granted")</div>
+                                        <div><strong>Payment method:</strong> Not recorded by current transaction data</div>
+                                    </div>
+                                </details>
+                            </td>
                         </tr>
                     }
                 }
