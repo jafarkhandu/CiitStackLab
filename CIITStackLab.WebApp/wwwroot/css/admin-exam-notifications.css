@@ -691,3 +691,26 @@
         margin-left: 0;
     }
 }
+
+.ciit-admin-notification-mark-read {
+    padding: 6px 8px;
+    border: 1px solid rgba(132,165,219,.42);
+    border-radius: 9px;
+    color: #3a659f;
+    background: rgba(255,255,255,.68);
+    font-size: 9px;
+    font-weight: 850;
+    white-space: nowrap;
+    transition: background .16s ease, border-color .16s ease, color .16s ease;
+}
+
+.ciit-admin-notification-mark-read:hover:not(:disabled) {
+    border-color: rgba(55,117,224,.58);
+    color: #235cc0;
+    background: #fff;
+}
+
+.ciit-admin-notification-mark-read:disabled {
+    opacity: .55;
+    cursor: wait;
+}
