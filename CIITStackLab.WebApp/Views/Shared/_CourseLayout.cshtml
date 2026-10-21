@@ -97,10 +97,10 @@
             z-index: 1;
             height: 330px;
             pointer-events: none;
-            background-image: linear-gradient(180deg, rgba(251, 252, 255, 1) 0%, rgba(251, 252, 255, .78) 14%, rgba(251, 252, 255, 0) 42%), url('/images/ciit-learning-sidebar-art.svg');
+            background-image: linear-gradient(180deg, rgba(251, 252, 255, 1) 0%, rgba(251, 252, 255, .78) 14%, rgba(251, 252, 255, 0) 42%), url('/images/ciit-learning-sidebar-art-v2.svg');
             background-position: center bottom;
             background-repeat: no-repeat;
-            background-size: 100% 100%, 100% auto;
+            background-size: 100% 100%, 100% 100%;
             opacity: .98;
             animation: ciit-sidebar-art-float 7s ease-in-out infinite;
             transform-origin: center bottom;
@@ -210,81 +210,80 @@
         else
         {
             <aside class="ciit-course-global-sidebar" aria-label="Course sections">
+                @if (!string.IsNullOrWhiteSpace(courseId))
+                {
+                    <details class="ciit-course-switcher">
+                        <summary>
+                            <span>COURSE</span>
+                            <strong>@(string.IsNullOrWhiteSpace(courseTitle) ? "Learning" : courseTitle)</strong>
+                            <i class="bi bi-chevron-down" aria-hidden="true"></i>
+                        </summary>
+                        <div class="ciit-course-switcher-menu">
+                            @foreach (var course in purchasedCourses)
+                            {
+                                <a class="@(course.Id.ToString() == courseId ? "active" : "")"
+                                   asp-controller="Courses"
+                                   asp-action="CourseEnvironment"
+                                   asp-route-id="@course.Id">
+                                    <span>@course.Title</span>
+                                    @if (course.Id.ToString() == courseId)
+                                    {
+                                        <i class="bi bi-check2" aria-hidden="true"></i>
+                                    }
+                                </a>
+                            }
+                        </div>
+                    </details>
+                }
+                else
+                {
+                    <div class="ciit-course-global-sidebar-heading">
+                        <span>COURSE HOME</span>
+                        <strong>My Courses</strong>
+                    </div>
+                }
+
+                <nav class="ciit-course-global-nav">
+                    <a class="@(currentController.Equals("Home", StringComparison.OrdinalIgnoreCase) && currentAction.Equals("Dashboard", StringComparison.OrdinalIgnoreCase) ? "active" : "")"
+                       asp-controller="Home" asp-action="Dashboard">
+                        <i class="bi bi-grid-1x2"></i><span>Dashboard</span>
+                    </a>
+                    <a class="@(currentController.Equals("Courses", StringComparison.OrdinalIgnoreCase) && currentAction.Equals("CourseHome", StringComparison.OrdinalIgnoreCase) ? "active" : "")"
+                       asp-controller="Courses" asp-action="CourseHome">
+                        <i class="bi bi-collection-play"></i><span>My Courses</span>
+                    </a>
+                    @if (!string.IsNullOrWhiteSpace(courseId) && !isCourseHome)
+                    {
+                        <a class="@(currentController.Equals("Courses", StringComparison.OrdinalIgnoreCase) && currentAction.Equals("Learn", StringComparison.OrdinalIgnoreCase) ? "active" : "")"
+                           asp-controller="Courses" asp-action="Learn" asp-route-id="@courseId">
+                            <i class="bi bi-journal-bookmark"></i><span>Learning Path</span>
+                        </a>
+                    }
                     @if (!string.IsNullOrWhiteSpace(courseId))
                     {
-                        <details class="ciit-course-switcher">
-                            <summary>
-                                <span>COURSE</span>
-                                <strong>@(string.IsNullOrWhiteSpace(courseTitle) ? "Learning" : courseTitle)</strong>
-                                <i class="bi bi-chevron-down" aria-hidden="true"></i>
-                            </summary>
-                            <div class="ciit-course-switcher-menu">
-                                @foreach (var course in purchasedCourses)
-                                {
-                                    <a class="@(course.Id.ToString() == courseId ? "active" : "")"
-                                       asp-controller="Courses"
-                                       asp-action="CourseEnvironment"
-                                       asp-route-id="@course.Id">
-                                        <span>@course.Title</span>
-                                        @if (course.Id.ToString() == courseId)
-                                        {
-                                            <i class="bi bi-check2" aria-hidden="true"></i>
-                                        }
-                                    </a>
-                                }
-                            </div>
-                        </details>
+                        <a class="@(currentAction.Equals("CourseEnvironment", StringComparison.OrdinalIgnoreCase) ? "active" : "")"
+                           asp-controller="Courses" asp-action="CourseEnvironment" asp-route-id="@courseId">
+                            <i class="bi bi-house"></i><span>Course Home</span>
+                        </a>
                     }
-                    else
+                    <a class="@(currentAction.Equals("PaymentHistory", StringComparison.OrdinalIgnoreCase) ? "active" : "")"
+                       asp-controller="Courses" asp-action="PaymentHistory">
+                        <i class="bi bi-receipt"></i><span>Payment History</span>
+                    </a>
+                    @if (User.IsInRole("Student"))
                     {
-                        <div class="ciit-course-global-sidebar-heading">
-                            <span>COURSE HOME</span>
-                            <strong>My Courses</strong>
-                        </div>
+                        <a class="@(currentController.Equals("StudentExaminations", StringComparison.OrdinalIgnoreCase) ? "active" : "")"
+                           asp-controller="StudentExaminations" asp-action="Index">
+                            <i class="bi bi-shield-check"></i><span>Examinations</span>
+                        </a>
                     }
-        
-                    <nav class="ciit-course-global-nav">
-                        <a class="@(currentController.Equals("Home", StringComparison.OrdinalIgnoreCase) && currentAction.Equals("Dashboard", StringComparison.OrdinalIgnoreCase) ? "active" : "")"
-                           asp-controller="Home" asp-action="Dashboard">
-                            <i class="bi bi-grid-1x2"></i><span>Dashboard</span>
-                        </a>
-                        <a class="@(currentController.Equals("Courses", StringComparison.OrdinalIgnoreCase) && currentAction.Equals("CourseHome", StringComparison.OrdinalIgnoreCase) ? "active" : "")"
-                           asp-controller="Courses" asp-action="CourseHome">
-                            <i class="bi bi-collection-play"></i><span>My Courses</span>
-                        </a>
-                        @if (!string.IsNullOrWhiteSpace(courseId) && !isCourseHome)
-                        {
-                            <a class="@(currentController.Equals("Courses", StringComparison.OrdinalIgnoreCase) && currentAction.Equals("Learn", StringComparison.OrdinalIgnoreCase) ? "active" : "")"
-                               asp-controller="Courses" asp-action="Learn" asp-route-id="@courseId">
-                                <i class="bi bi-journal-bookmark"></i><span>Learning Path</span>
-                            </a>
-                        }
-                        @if (!string.IsNullOrWhiteSpace(courseId))
-                        {
-                            <a class="@(currentAction.Equals("CourseEnvironment", StringComparison.OrdinalIgnoreCase) ? "active" : "")"
-                               asp-controller="Courses" asp-action="CourseEnvironment" asp-route-id="@courseId">
-                                <i class="bi bi-house"></i><span>Course Home</span>
-                            </a>
-                        }
-                        <a class="@(currentAction.Equals("PaymentHistory", StringComparison.OrdinalIgnoreCase) ? "active" : "")"
-                           asp-controller="Courses" asp-action="PaymentHistory">
-                            <i class="bi bi-receipt"></i><span>Payment History</span>
-                        </a>
-                        @if (User.IsInRole("Student"))
-                        {
-                            <a class="@(currentController.Equals("StudentExaminations", StringComparison.OrdinalIgnoreCase) ? "active" : "")"
-                               asp-controller="StudentExaminations" asp-action="Index">
-                                <i class="bi bi-shield-check"></i><span>Examinations</span>
-                            </a>
-                        }
-                        <a class="@(currentController.Equals("Account", StringComparison.OrdinalIgnoreCase) && currentAction.Equals("Profile", StringComparison.OrdinalIgnoreCase) ? "active" : "")"
-                           asp-controller="Account" asp-action="Profile">
-                            <i class="bi bi-person-circle"></i><span>My Profile</span>
-                        </a>
-                    </nav>
+                    <a class="@(currentController.Equals("Account", StringComparison.OrdinalIgnoreCase) && currentAction.Equals("Profile", StringComparison.OrdinalIgnoreCase) ? "active" : "")"
+                       asp-controller="Account" asp-action="Profile">
+                        <i class="bi bi-person-circle"></i><span>My Profile</span>
+                    </a>
+                </nav>
 
-                    <div class="ciit-course-sidebar-art" aria-hidden="true"></div>
-        
+                <div class="ciit-course-sidebar-art" aria-hidden="true"></div>
             </aside>
         }
 
@@ -298,9 +297,9 @@
             <div class="d-flex flex-column flex-sm-row justify-content-between align-items-center gap-2">
                 <span>&copy; @DateTime.Now.Year - CIIT Stack Lab</span>
                 @if (!(currentController.Equals("Courses", StringComparison.OrdinalIgnoreCase) && currentAction.Equals("Learn", StringComparison.OrdinalIgnoreCase)))
-                    {
-                        <a asp-controller="Home" asp-action="Index">Exit Course</a>
-                    }
+                {
+                    <a asp-controller="Home" asp-action="Index">Exit Course</a>
+                }
             </div>
         </div>
     </footer>
