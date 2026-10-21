@@ -373,7 +373,7 @@
                                             <span aria-hidden="true">·</span>
                                             @topic.Contents.Count content item@(topic.Contents.Count == 1 ? "" : "s")
                                             <span aria-hidden="true">·</span>
-                                            @topic.Contents.Count(content => content.Questions.Count > 0) assessment@(topic.Contents.Count(content => content.Questions.Count > 0) == 1 ? "" : "s")
+                                            @(topic.McqCount + topic.InterviewQuestionCount + topic.PracticeProgramCount) assessment resources
                                         </small>
                                     </span>
                                     <span class="ciit-roadmap-badges" aria-label="Topic resource counts">
@@ -387,7 +387,7 @@
                                         </span>
                                         <span class="ciit-roadmap-badge ciit-roadmap-badge-assessment">
                                             <i class="bi bi-patch-check" aria-hidden="true"></i>
-                                            @topic.Contents.Count(content => content.Questions.Count > 0) Assessment
+                                            @(topic.McqCount + topic.InterviewQuestionCount + topic.PracticeProgramCount) Assessments
                                         </span>
                                     </span>
                                 </button>
