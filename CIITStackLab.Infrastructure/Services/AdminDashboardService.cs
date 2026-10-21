@@ -42,26 +42,40 @@ public sealed class AdminDashboardService : IAdminDashboardService
             .SingleOrDefaultAsync(cancellationToken);
 
         var studentCount = 0;
+        var students = new List<AdminDashboardStudentDto>();
 
         if (!string.IsNullOrWhiteSpace(studentRoleId))
         {
-            studentCount = await (
+            var studentQuery =
                 from userRole in _dbContext.UserRoles.AsNoTracking()
                 join user in _dbContext.Users.AsNoTracking()
                     on userRole.UserId equals user.Id
                 where userRole.RoleId == studentRoleId
                       && user.IsActive
-                select user.Id)
+                select user;
+
+            studentCount = await studentQuery
+                .Select(x => x.Id)
                 .Distinct()
                 .CountAsync(cancellationToken);
+
+            students = await studentQuery
+                .GroupBy(x => x.Id)
+                .Select(x => x.First())
+                .OrderBy(x => x.UserName)
+                .Select(x => new AdminDashboardStudentDto
+                {
+                    Id = x.Id,
+                    UserName = x.UserName ?? string.Empty,
+                    Email = x.Email ?? string.Empty
+                })
+                .ToListAsync(cancellationToken);
         }
 
-        var recentCourses = await _dbContext.Courses
+        var activeCourses = await _dbContext.Courses
             .AsNoTracking()
             .Where(x => x.Flag == 0)
-            .OrderByDescending(x => x.UpdatedAt ?? x.CreatedAt)
-            .ThenByDescending(x => x.Id)
-            .Take(5)
+            .OrderBy(x => x.Title)
             .Select(x => new AdminDashboardCourseDto
             {
                 Id = x.Id,
@@ -70,6 +84,51 @@ public sealed class AdminDashboardService : IAdminDashboardService
             })
             .ToListAsync(cancellationToken);
 
+        var activeTopics = await _dbContext.Topics
+            .AsNoTracking()
+            .Where(x => x.Flag == 0)
+            .OrderBy(x => x.Title)
+            .Select(x => new AdminDashboardTopicDto
+            {
+                Id = x.Id,
+                Title = x.Title,
+                UpdatedAt = x.UpdatedAt ?? x.CreatedAt
+            })
+            .ToListAsync(cancellationToken);
+
+        var learningContent = await _dbContext.Lessons
+            .AsNoTracking()
+            .Where(x => x.Flag == 0)
+            .OrderBy(x => x.Title)
+            .Select(x => new AdminDashboardContentDto
+            {
+                Id = x.Id,
+                Title = x.Title,
+                TopicId = x.TopicId,
+                TopicTitle = x.Topic != null ? x.Topic.Title : string.Empty,
+                UpdatedAt = x.UpdatedAt ?? x.CreatedAt
+            })
+            .ToListAsync(cancellationToken);
+
+        var activeMcqs = await _dbContext.ContentQuestions
+            .AsNoTracking()
+            .Where(x => x.Flag == 0)
+            .OrderBy(x => x.Id)
+            .Select(x => new AdminDashboardMcqDto
+            {
+                Id = x.Id,
+                Question = x.Question ?? string.Empty,
+                ContentId = x.ContentId,
+                TopicId = x.TopicId
+            })
+            .ToListAsync(cancellationToken);
+
+        var recentCourses = activeCourses
+            .OrderByDescending(x => x.UpdatedAt)
+            .ThenByDescending(x => x.Id)
+            .Take(5)
+            .ToList();
+
         return new AdminDashboardDto
         {
             CourseCount = courseCount,
@@ -77,7 +136,12 @@ public sealed class AdminDashboardService : IAdminDashboardService
             ContentCount = contentCount,
             McqCount = mcqCount,
             StudentCount = studentCount,
-            RecentCourses = recentCourses
+            RecentCourses = recentCourses,
+            ActiveCourses = activeCourses,
+            ActiveTopics = activeTopics,
+            LearningContent = learningContent,
+            ActiveMcqs = activeMcqs,
+            Students = students
         };
     }
 }
