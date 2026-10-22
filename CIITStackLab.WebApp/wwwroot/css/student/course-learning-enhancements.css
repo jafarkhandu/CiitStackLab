@@ -2362,3 +2362,54 @@
         line-height: 1.85;
     }
 }
+
+
+/* Compact notes typography so more material fits on each reading page. */
+.ciit-learning-mode .ciit-learning-main-card .ciit-learning-notes-content {
+    padding: 16px 22px;
+    font-size: 0.92rem;
+    line-height: 1.55;
+}
+
+.ciit-learning-mode .ciit-learning-main-card .ciit-learning-notes-content h1,
+.ciit-learning-mode .ciit-learning-main-card .ciit-learning-notes-content h2,
+.ciit-learning-mode .ciit-learning-main-card .ciit-learning-notes-content h3,
+.ciit-learning-mode .ciit-learning-main-card .ciit-learning-notes-content h4,
+.ciit-learning-mode .ciit-learning-main-card .ciit-learning-notes-content h5,
+.ciit-learning-mode .ciit-learning-main-card .ciit-learning-notes-content h6 {
+    margin-top: 0.8em;
+    margin-bottom: 0.35em;
+    line-height: 1.25;
+}
+
+.ciit-learning-mode .ciit-learning-main-card .ciit-learning-notes-content p,
+.ciit-learning-mode .ciit-learning-main-card .ciit-learning-notes-content ul,
+.ciit-learning-mode .ciit-learning-main-card .ciit-learning-notes-content ol,
+.ciit-learning-mode .ciit-learning-main-card .ciit-learning-notes-content blockquote,
+.ciit-learning-mode .ciit-learning-main-card .ciit-learning-notes-content pre {
+    margin-top: 0.35em;
+    margin-bottom: 0.55em;
+}
+
+.ciit-learning-mode .ciit-learning-main-card .ciit-learning-notes-content li {
+    margin-bottom: 0.15em;
+}
+
+.ciit-learning-mode .ciit-learning-main-card .ciit-learning-notes-content pre {
+    padding: 12px 16px;
+    line-height: 1.4;
+    white-space: pre-wrap;
+    overflow-wrap: anywhere;
+}
+
+.ciit-learning-mode .ciit-learning-main-card .ciit-learning-notes-content table {
+    font-size: 0.9em;
+}
+
+@media (max-width: 767.98px) {
+    .ciit-learning-mode .ciit-learning-main-card .ciit-learning-notes-content {
+        padding: 14px 12px;
+        font-size: 0.9rem;
+        line-height: 1.5;
+    }
+}
