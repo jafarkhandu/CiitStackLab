@@ -76,6 +76,33 @@ public sealed class TopicExaminationService : ITopicExaminationService
         if (await HasPassedTopicAsync(userId, courseId, topicId, cancellationToken))
             return (false, "You have already passed this topic's examination.", null);
 
+        var previousAttemptCount = await _db.TopicExamAttempts.CountAsync(x =>
+            x.UserId == userId && x.CourseId == courseId && x.TopicId == topicId,
+            cancellationToken);
+        var nextAttemptNumber = previousAttemptCount + 1;
+        CIITStackLab.Domain.Entities.PaymentTransaction? retakePayment = null;
+        if (nextAttemptNumber > 2)
+        {
+            retakePayment = await _db.PaymentTransactions.SingleOrDefaultAsync(payment =>
+                payment.UserId == userId
+                && payment.CourseId == courseId
+                && payment.PaymentPurpose == "ExamRetake"
+                && payment.ExamTopicId == topicId
+                && payment.ExamAttemptNumber == nextAttemptNumber
+                && payment.Status == "Completed"
+                && payment.ExamAttemptId == null,
+                cancellationToken);
+
+            if (retakePayment is null)
+            {
+                var baseFee = (nextAttemptNumber - 2) * 100m;
+                var totalFee = baseFee + Math.Round(baseFee * 0.18m, 2, MidpointRounding.AwayFromZero);
+                return (false,
+                    $"Attempt #{nextAttemptNumber} requires payment of ₹{totalFee:0.00} including 18% GST before it can start.",
+                    null);
+            }
+        }
+
         var activeAttempt = await _db.TopicExamAttempts.AnyAsync(x =>
             x.UserId == userId && x.CourseId == courseId && x.TopicId == topicId
             && (x.Status == "Scheduled" || x.Status == "Ready" || x.Status == "InProgress"), cancellationToken);
@@ -144,6 +171,14 @@ public sealed class TopicExaminationService : ITopicExaminationService
         };
         _db.TopicExamAttempts.Add(attempt);
         await _db.SaveChangesAsync(cancellationToken);
+
+        if (retakePayment is not null)
+        {
+            retakePayment.ExamAttemptId = attempt.Id;
+            retakePayment.UpdatedAt = DateTime.UtcNow;
+            await _db.SaveChangesAsync(cancellationToken);
+        }
+
         return (true, null, await MapSummaryAsync(attempt, cancellationToken));
     }
 
