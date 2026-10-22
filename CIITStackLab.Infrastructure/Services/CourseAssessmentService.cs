@@ -304,6 +304,64 @@ public sealed class CourseAssessmentService : ICourseAssessmentService
         return MapResult(attempt, questions);
     }
 
+    public async Task<AssessmentAttemptResultDto?> GetExistingTopicAttemptAsync(
+        string userId,
+        int courseId,
+        int topicId,
+        CancellationToken cancellationToken = default)
+    {
+        if (string.IsNullOrWhiteSpace(userId) || courseId <= 0 || topicId <= 0)
+        {
+            return null;
+        }
+
+        var topicBelongsToCourse = await IsActiveCourseTopicAsync(
+            courseId,
+            topicId,
+            cancellationToken);
+
+        if (!topicBelongsToCourse)
+        {
+            return null;
+        }
+
+        var topicNoteIds = await _dbContext.TrainingNotes
+            .AsNoTracking()
+            .Where(note => note.TopicId == topicId && note.Flag == 0)
+            .Select(note => note.Id)
+            .ToListAsync(cancellationToken);
+
+        var topicLessonIds = await _dbContext.Lessons
+            .AsNoTracking()
+            .Where(lesson => lesson.TopicId == topicId && lesson.Flag == 0)
+            .Select(lesson => lesson.Id)
+            .ToListAsync(cancellationToken);
+
+        var activeQuestionIds = (await _dbContext.ContentQuestions
+            .AsNoTracking()
+            .Where(question =>
+                question.Flag == 0
+                && (question.TopicId == topicId
+                    || (question.NoteId.HasValue && topicNoteIds.Contains(question.NoteId.Value))
+                    || (question.ContentId.HasValue && topicLessonIds.Contains(question.ContentId.Value))))
+            .OrderBy(question => question.Id)
+            .Select(question => question.Id)
+            .ToListAsync(cancellationToken))
+            .ToHashSet();
+
+        if (activeQuestionIds.Count == 0)
+        {
+            return null;
+        }
+
+        return await GetExistingAttemptResultAsync(
+            userId,
+            courseId,
+            null,
+            activeQuestionIds,
+            cancellationToken);
+    }
+
     private async Task<AssessmentAttemptResultDto?> GetExistingAttemptResultAsync(
         string userId,
         int courseId,
