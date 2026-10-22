@@ -17,4 +17,10 @@ public interface ICourseAssessmentService
         int courseId,
         int attemptId,
         CancellationToken cancellationToken = default);
+
+    Task<AssessmentAttemptResultDto?> GetExistingTopicAttemptAsync(
+        string userId,
+        int courseId,
+        int topicId,
+        CancellationToken cancellationToken = default);
 }
