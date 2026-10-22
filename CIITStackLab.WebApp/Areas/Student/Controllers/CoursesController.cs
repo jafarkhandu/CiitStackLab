@@ -1012,26 +1012,28 @@ public class CoursesController : Controller
             return RedirectToAction(nameof(Details), new { id });
         }
 
-        var chapterRows = await (
-            from note in _dbContext.TrainingNotes.AsNoTracking()
-            join module in _dbContext.CourseModules.AsNoTracking()
-                on note.TopicId equals module.TopicId
-            where module.CourseId == id
-                && module.TopicId == topicId
-                && module.Flag == 0
-                && note.TopicId == topicId
-                && note.Flag == 0
-            orderby note.SortOrder, note.Id
-            select new { note.Id, note.SortOrder })
-            .Distinct()
-            .ToListAsync(cancellationToken);
+        // Use the same chapter sequence as the learning page so the completion
+        // endpoint and the UI cannot disagree about which chapter comes next.
+        var learningCourse = await _courseService.GetLearningAsync(
+            id, null, cancellationToken, topicId, chapterId);
+        var learningTopic = learningCourse?.Topics.FirstOrDefault(topic => topic.Id == topicId);
+        if (learningTopic is null)
+            return NotFound();
 
-        var currentIndex = chapterRows.FindIndex(chapter => chapter.Id == chapterId);
+        var orderedChapters = learningTopic.Chapters
+            .OrderBy(chapter => chapter.SortOrder)
+            .ThenBy(chapter => chapter.Id)
+            .ToList();
+        var currentIndex = orderedChapters.FindIndex(chapter => chapter.Id == chapterId);
         if (currentIndex < 0)
             return NotFound();
 
-        if (currentIndex >= chapterRows.Count - 1)
+        if (currentIndex >= orderedChapters.Count - 1)
+        {
+            TempData["LearningProgressMessage"] =
+                "This is the final chapter. Use Apply for Examination to continue.";
             return RedirectToAction(nameof(Learn), new { id, topicId, chapterId });
+        }
 
         var allowedTopicId = await _topicExaminationService.GetCurrentTopicIdAsync(
             userId, id, cancellationToken);
@@ -1042,11 +1044,10 @@ public class CoursesController : Controller
             return RedirectToAction(nameof(Learn), new { id, topicId = allowedTopicId.Value });
         }
 
-        var contentIds = await _dbContext.Lessons.AsNoTracking()
-            .Where(lesson => lesson.Flag == 0 && lesson.NoteId == chapterId)
-            .Select(lesson => lesson.Id)
+        var contentIds = orderedChapters[currentIndex].Contents
+            .Select(content => content.Id)
             .Distinct()
-            .ToListAsync(cancellationToken);
+            .ToList();
 
         foreach (var contentId in contentIds)
         {
@@ -1060,7 +1061,7 @@ public class CoursesController : Controller
             }
         }
 
-        var nextChapterId = chapterRows[currentIndex + 1].Id;
+        var nextChapterId = orderedChapters[currentIndex + 1].Id;
         TempData["LearningProgressMessage"] = "Chapter completed. Continue with the next chapter.";
         return RedirectToAction(nameof(Learn), new { id, topicId, chapterId = nextChapterId });
     }
