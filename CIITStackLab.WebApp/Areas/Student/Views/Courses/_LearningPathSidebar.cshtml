@@ -81,7 +81,9 @@
                         + chapter.Contents.Count + chapter.QuestionCount
                         + chapter.InterviewQuestionCount + chapter.PracticeQuestionCount;
                     var chapterIsCurrent = currentContentId.HasValue && chapter.Contents.Any(content => content.Id == currentContentId.Value);
-                    <details class="ciit-learning-chapter" open="@(chapterIsCurrent ? "open" : null)">
+                    <details class="ciit-learning-chapter"
+                             data-chapter-url="@Url.Action("Learn", "Courses", new { id = Model.Id, topicId = topic.Id, chapterId = chapter.Id })"
+                             open="@(chapterIsCurrent || Model.CurrentChapterId == chapter.Id ? "open" : null)">
                         <summary class="ciit-learning-chapter-summary">
                             <span class="ciit-learning-chapter-number">@((chapterIndex + 1).ToString("00"))</span>
                             <span class="ciit-learning-chapter-title"><strong>@FormatLearningTitle(chapter.Title)</strong><small>@chapterResourceCount resource@(chapterResourceCount == 1 ? "" : "s")</small></span>

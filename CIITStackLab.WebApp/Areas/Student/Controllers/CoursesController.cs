@@ -584,11 +584,13 @@ public class CoursesController : Controller
         int id,
         int? contentId,
         int? topicId,
+        int? chapterId,
         CancellationToken cancellationToken)
     {
         if (id <= 0
             || (contentId.HasValue && contentId.Value <= 0)
-            || (topicId.HasValue && topicId.Value <= 0))
+            || (topicId.HasValue && topicId.Value <= 0)
+            || (chapterId.HasValue && chapterId.Value <= 0))
         {
             return NotFound();
         }
@@ -636,7 +638,36 @@ public class CoursesController : Controller
             return RedirectToAction(nameof(Details), new { id });
         }
 
-        if (!string.IsNullOrWhiteSpace(studentUserId)
+        if (chapterId.HasValue)
+        {
+            var chapterTopicId = await (
+                from note in _dbContext.TrainingNotes.AsNoTracking()
+                join courseModule in _dbContext.CourseModules.AsNoTracking()
+                    on note.TopicId equals courseModule.TopicId
+                where note.Id == chapterId.Value
+                    && note.Flag == 0
+                    && courseModule.CourseId == id
+                    && courseModule.Flag == 0
+                select (int?)note.TopicId)
+                .FirstOrDefaultAsync(cancellationToken);
+
+            if (!chapterTopicId.HasValue
+                || (topicId.HasValue && topicId.Value != chapterTopicId.Value))
+            {
+                return NotFound();
+            }
+
+            topicId = chapterTopicId.Value;
+            contentId = await _dbContext.Lessons
+                .AsNoTracking()
+                .Where(lesson => lesson.NoteId == chapterId.Value && lesson.Flag == 0)
+                .OrderBy(lesson => lesson.Id)
+                .Select(lesson => (int?)lesson.Id)
+                .FirstOrDefaultAsync(cancellationToken);
+        }
+
+        if (!chapterId.HasValue
+            && !string.IsNullOrWhiteSpace(studentUserId)
             && !contentId.HasValue
             && !topicId.HasValue)
         {
@@ -653,7 +684,7 @@ public class CoursesController : Controller
 
         // Resolve the selected topic's lesson before loading its full learning DTO.
         // This prevents loading every chapter, note and assessment twice on topic changes.
-        if (topicId.HasValue && !contentId.HasValue)
+        if (topicId.HasValue && !contentId.HasValue && !chapterId.HasValue)
         {
             var topicExistsInCourse = await (
                 from courseModule in _dbContext.CourseModules.AsNoTracking()
@@ -714,7 +745,7 @@ public class CoursesController : Controller
             }
         }
 
-        var course = await _courseService.GetLearningAsync(id, contentId, cancellationToken, topicId);
+        var course = await _courseService.GetLearningAsync(id, contentId, cancellationToken, topicId, chapterId);
 
         if (course is null)
         {
@@ -758,6 +789,11 @@ public class CoursesController : Controller
             }
 
             course.CurrentTopicId = selectedTopic.Id;
+        }
+
+        if (chapterId.HasValue)
+        {
+            course.CurrentChapterId = chapterId.Value;
         }
 
         if (!string.IsNullOrWhiteSpace(studentUserId))

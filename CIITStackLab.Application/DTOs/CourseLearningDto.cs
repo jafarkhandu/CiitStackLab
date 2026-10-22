@@ -15,6 +15,7 @@ public sealed class CourseLearningDto
     public int ContentCount { get; init; }
     public IReadOnlyList<CourseLearningTopicDto> Topics { get; init; } = Array.Empty<CourseLearningTopicDto>();
     public int? CurrentContentId { get; init; }
+    public int? CurrentChapterId { get; set; }
     public int? CurrentTopicId { get; set; }
     public CourseLearningContentDto? CurrentContent { get; init; }
     public CourseLearningProgressDto? Progress { get; set; }

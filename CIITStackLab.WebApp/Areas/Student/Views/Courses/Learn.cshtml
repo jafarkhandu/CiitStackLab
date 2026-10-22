@@ -52,22 +52,34 @@
         ? 0
         : (int)Math.Round(courseCompletedTopics * 100d / courseTotalTopics, MidpointRounding.AwayFromZero);
     var orderedChapters = Model.Topics.SelectMany(topic => topic.Chapters).ToList();
-    var currentChapter = currentContent?.NoteId is int currentNoteId
-        ? orderedChapters.FirstOrDefault(chapter => chapter.Id == currentNoteId)
-        : currentTopic?.Chapters.FirstOrDefault();
-    var currentChapterIndex = currentContent?.NoteId.HasValue == true
-        ? orderedChapters.FindIndex(chapter => chapter.Id == currentContent.NoteId.Value)
-        : currentChapter is not null
-            ? orderedChapters.FindIndex(chapter => chapter.Id == currentChapter.Id)
-            : 0;
+    var currentChapter = Model.CurrentChapterId.HasValue
+        ? orderedChapters.FirstOrDefault(chapter => chapter.Id == Model.CurrentChapterId.Value)
+        : currentContent?.NoteId is int currentNoteId
+            ? orderedChapters.FirstOrDefault(chapter => chapter.Id == currentNoteId)
+            : currentTopic?.Chapters.FirstOrDefault();
+    IEnumerable<CIITStackLab.Application.DTOs.CourseLearningChapterDto> displayedChapters =
+        currentTopic?.Chapters ?? Array.Empty<CIITStackLab.Application.DTOs.CourseLearningChapterDto>();
+    if (Model.CurrentChapterId.HasValue && currentChapter is not null)
+    {
+        displayedChapters = new[] { currentChapter };
+    }
+    var currentChapterIndex = currentChapter is not null
+        ? orderedChapters.FindIndex(chapter => chapter.Id == currentChapter.Id)
+        : 0;
     if (currentChapterIndex < 0) currentChapterIndex = 0;
     var topicAssessmentQuestions = currentTopic is null
         ? new List<CIITStackLab.Application.DTOs.ContentQuestionDto>()
-        : currentTopic.Contents
-            .SelectMany(content => content.Questions)
-            .Concat(currentTopic.Chapters.SelectMany(chapter => chapter.Questions))
-            .DistinctBy(question => question.Id)
-            .ToList();
+        : Model.CurrentChapterId.HasValue && currentChapter is not null
+            ? currentChapter.Contents
+                .SelectMany(content => content.Questions)
+                .Concat(currentChapter.Questions)
+                .DistinctBy(question => question.Id)
+                .ToList()
+            : currentTopic.Contents
+                .SelectMany(content => content.Questions)
+                .Concat(currentTopic.Chapters.SelectMany(chapter => chapter.Questions))
+                .DistinctBy(question => question.Id)
+                .ToList();
     var previousItem = currentIndex > 0 ? orderedContents[currentIndex - 1] : null;
     var nextItem = currentIndex < orderedContents.Count - 1
         ? orderedContents.ElementAtOrDefault(currentIndex + 1)
@@ -178,6 +190,24 @@
 
 @section Scripts {
     <script>
+        document.querySelectorAll('.ciit-learning-chapter[data-chapter-url]').forEach(function (chapter) {
+            const summary = chapter.querySelector(':scope > .ciit-learning-chapter-summary');
+            const chapterUrl = chapter.dataset.chapterUrl;
+
+            if (!summary || !chapterUrl) {
+                return;
+            }
+
+            summary.addEventListener('click', function (event) {
+                if (event.target.closest('.ciit-learning-disclosure-icon')) {
+                    return;
+                }
+
+                event.preventDefault();
+                window.location.assign(chapterUrl);
+            });
+        });
+
         document.querySelectorAll('.ciit-learning-topic').forEach(function (topic) {
             const heading = topic.querySelector(':scope > .ciit-learning-topic-heading');
             const firstContentUrl = topic.dataset.topicFirstContentUrl;
@@ -373,6 +403,20 @@ else if (currentContent is null && currentTopic is not null)
                         {
                             <p class="ciit-learning-category-empty">No notes or chapters have been added to this topic yet.</p>
                         }
+                        else if (Model.CurrentChapterId.HasValue && currentChapter is not null)
+                        {
+                            <article class="ciit-learning-notes-content">
+                                <h4>@FormatLearningTitle(currentChapter.Title)</h4>
+                                @if (!string.IsNullOrWhiteSpace(currentChapter.NotesHtml))
+                                {
+                                    @Html.Raw(currentChapter.NotesHtml)
+                                }
+                                else
+                                {
+                                    <p class="ciit-learning-category-empty">No notes have been added to this chapter yet.</p>
+                                }
+                            </article>
+                        }
                         else
                         {
                             @foreach (var chapter in currentTopic.Chapters)
@@ -427,11 +471,13 @@ else if (currentContent is null && currentTopic is not null)
                             <span class="ciit-learning-resource-icon"><i class="bi bi-patch-check"></i></span>
                             <div><h3>Chapter Assessments</h3><p>MCQs, interview questions and practice programs for this topic.</p></div>
                         </div>
-                        @foreach (var chapter in currentTopic.Chapters)
+                        @foreach (var chapter in displayedChapters)
                         {
                             <section class="ciit-learning-chapter-assessment" id="chapter-assessment-@chapter.Id">
                                 <h4>@FormatLearningTitle(chapter.Title)</h4>
-                                @if (chapter.Id == currentTopic.Chapters.First().Id)
+                                @if (Model.CurrentChapterId.HasValue
+                                    ? chapter.Id == Model.CurrentChapterId.Value
+                                    : chapter.Id == currentTopic.Chapters.First().Id)
                                 {
                                     <section class="ciit-learning-assessment-subsection" id="chapter-mcqs-@chapter.Id">
                                         <h5>MCQs</h5>

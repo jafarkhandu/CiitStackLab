@@ -74,7 +74,8 @@ public sealed class DynamicCourseService : ICourseService
         int id,
         int? contentId = null,
         CancellationToken cancellationToken = default,
-        int? topicId = null)
+        int? topicId = null,
+        int? chapterId = null)
     {
         var course = await _inner.GetByIdAsync(id, cancellationToken);
         if (course is null)
@@ -169,7 +170,8 @@ public sealed class DynamicCourseService : ICourseService
                 })
                 .ToListAsync(cancellationToken);
 
-        var selectedChapterId = currentContentRow?.NoteId
+        var selectedChapterId = chapterId
+            ?? currentContentRow?.NoteId
             ?? chapterRows.FirstOrDefault(chapter => chapter.TopicId == selectedTopicId)?.Id;
 
         var selectedChapterHtml = !loadAllTopicDetails && selectedChapterId.HasValue
@@ -815,7 +817,9 @@ public sealed class DynamicCourseService : ICourseService
 
         var currentContent = contentId.HasValue
             ? allContents.FirstOrDefault(content => content.Id == contentId.Value)
-            : allContents.FirstOrDefault();
+            : chapterId.HasValue
+                ? null
+                : allContents.FirstOrDefault();
 
         if (contentId.HasValue && currentContent is null)
         {
@@ -837,6 +841,7 @@ public sealed class DynamicCourseService : ICourseService
             ContentCount = allContents.Count,
             Topics = topics,
             CurrentContentId = currentContent?.Id,
+            CurrentChapterId = chapterId,
             CurrentContent = currentContent
         };
     }
