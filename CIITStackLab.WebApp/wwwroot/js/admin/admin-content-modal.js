@@ -35,9 +35,19 @@
             try {
                 const parsed = new URL(url, window.location.origin);
                 if (parsed.origin !== window.location.origin) return false;
-                return parsed.pathname === '/Admin/Content/Create'
-                    || parsed.pathname === '/Admin/Content/Edit'
-                    || parsed.pathname === '/Admin/Content/Details';
+
+                const segments = parsed.pathname.split('/').filter(Boolean);
+                if (segments.length < 3) return false;
+                if (segments[0].toLowerCase() !== 'Admin'.toLowerCase()) return false;
+                if (segments[1].toLowerCase() !== 'Content'.toLowerCase()) return false;
+
+                const action = segments[2].toLowerCase();
+                if (action === 'create') return segments.length === 3;
+                if (action === 'edit' || action === 'details') {
+                    return segments.length === 4 && /^\d+$/.test(segments[3]);
+                }
+
+                return false;
             } catch {
                 return false;
             }
@@ -45,9 +55,10 @@
 
         const getModalTitle = url => {
             const parsed = new URL(url, window.location.origin);
-            if (parsed.pathname.endsWith('/Create')) return 'Add Content';
-            if (parsed.pathname.endsWith('/Edit')) return 'Edit Content';
-            if (parsed.pathname.endsWith('/Details')) return 'Content Details';
+            const action = parsed.pathname.split('/').filter(Boolean).at(2)?.toLowerCase();
+            if (action === 'create') return 'Add Content';
+            if (action === 'edit') return 'Edit Content';
+            if (action === 'details') return 'Content Details';
             return 'Content';
         };
 
@@ -98,6 +109,14 @@
 
         window.addEventListener('message', event => {
             if (event.origin !== window.location.origin) return;
+
+            if (event.data?.type === 'ciit-content-modal-navigate') {
+                if (typeof event.data.url === 'string' && isContentModalUrl(event.data.url)) {
+                    openModal(event.data.url);
+                }
+                return;
+            }
+
             if (event.data?.type !== 'ciit-content-saved') return;
 
             closeModal();
