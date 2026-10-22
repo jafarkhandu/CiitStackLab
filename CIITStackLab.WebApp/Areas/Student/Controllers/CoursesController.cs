@@ -1079,11 +1079,23 @@ public class CoursesController : Controller
             return RedirectToAction(nameof(Learn), new { id, topicId = allowedTopicId.Value });
         }
 
-                var contentIds = orderedChapters[currentIndex].Contents
+        var contentIds = orderedChapters[currentIndex].Contents
             .Select(content => content.Id)
             .Distinct()
             .ToList();
 
+        // Include lesson rows linked directly to the chapter, while retaining
+        // DTO content IDs so existing chapter navigation keeps working.
+        var linkedContentIds = await _dbContext.Lessons
+            .AsNoTracking()
+            .Where(lesson => lesson.Flag == 0 && lesson.NoteId == chapterId)
+            .Select(lesson => lesson.Id)
+            .ToListAsync(cancellationToken);
+
+        contentIds = contentIds
+            .Concat(linkedContentIds)
+            .Distinct()
+            .ToList();
         foreach (var contentId in contentIds)
         {
             var marked = await _studentProgressService.MarkCompletedAsync(
