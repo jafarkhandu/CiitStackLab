@@ -146,15 +146,19 @@ public sealed class CourseAssessmentService : ICourseAssessmentService
             .Select(question => question.Id)
             .ToHashSet();
 
-        if (await HasExistingAttemptAsync(
-                userId,
-                courseId,
-                contentId,
-                activeQuestionIds,
-                cancellationToken))
+        var existingAttemptResult = await GetExistingAttemptResultAsync(
+            userId,
+            courseId,
+            contentId,
+            activeQuestionIds,
+            cancellationToken);
+
+        if (existingAttemptResult is not null)
         {
-            return AssessmentSubmissionOutcomeDto.Failure(
-                "This assessment has already been submitted. The displayed result is final.");
+            // A previous submission is final. Return its stored result instead of
+            // treating a second click/retry as a failed request. This also lets the
+            // inline UI render an already-completed assessment after a page reload.
+            return AssessmentSubmissionOutcomeDto.Success(existingAttemptResult);
         }
 
         if (answers is null || answers.Count != questions.Count)
@@ -300,7 +304,7 @@ public sealed class CourseAssessmentService : ICourseAssessmentService
         return MapResult(attempt, questions);
     }
 
-    private async Task<bool> HasExistingAttemptAsync(
+    private async Task<AssessmentAttemptResultDto?> GetExistingAttemptResultAsync(
         string userId,
         int courseId,
         int? contentId,
@@ -309,13 +313,15 @@ public sealed class CourseAssessmentService : ICourseAssessmentService
     {
         if (contentId.HasValue)
         {
-            return await _dbContext.StudentAssessmentAttempts
+            var attempt = await _dbContext.StudentAssessmentAttempts
                 .AsNoTracking()
-                .AnyAsync(
-                    attempt => attempt.UserId == userId
-                        && attempt.CourseId == courseId
-                        && attempt.ContentId == contentId.Value,
+                .SingleOrDefaultAsync(
+                    row => row.UserId == userId
+                        && row.CourseId == courseId
+                        && row.ContentId == contentId.Value,
                     cancellationToken);
+
+            return DeserializeAttemptResult(attempt);
         }
 
         var topicAttempts = await _dbContext.StudentAssessmentAttempts
@@ -323,39 +329,55 @@ public sealed class CourseAssessmentService : ICourseAssessmentService
             .Where(attempt => attempt.UserId == userId
                 && attempt.CourseId == courseId
                 && attempt.ContentId == null)
-            .Select(attempt => attempt.AnswersJson)
+            .OrderByDescending(attempt => attempt.SubmittedAt)
             .ToListAsync(cancellationToken);
 
-        foreach (var answersJson in topicAttempts)
+        foreach (var attempt in topicAttempts)
         {
-            try
+            var result = DeserializeAttemptResult(attempt);
+            if (result is null || result.Questions.Count != activeQuestionIds.Count)
             {
-                var previousQuestions = JsonSerializer.Deserialize<List<AssessmentQuestionResultDto>>(
-                    answersJson,
-                    JsonOptions);
-
-                if (previousQuestions is null
-                    || previousQuestions.Count != activeQuestionIds.Count)
-                {
-                    continue;
-                }
-
-                var previousQuestionIds = previousQuestions
-                    .Select(question => question.QuestionId)
-                    .ToHashSet();
-
-                if (previousQuestionIds.SetEquals(activeQuestionIds))
-                {
-                    return true;
-                }
+                continue;
             }
-            catch (JsonException)
+
+            var previousQuestionIds = result.Questions
+                .Select(question => question.QuestionId)
+                .ToHashSet();
+
+            if (previousQuestionIds.SetEquals(activeQuestionIds))
             {
-                // Ignore an invalid historical attempt and allow the active assessment to proceed.
+                return result;
             }
         }
 
-        return false;
+        return null;
+    }
+
+    private static AssessmentAttemptResultDto? DeserializeAttemptResult(
+        StudentAssessmentAttempt? attempt)
+    {
+        if (attempt is null)
+        {
+            return null;
+        }
+
+        try
+        {
+            var questions = JsonSerializer.Deserialize<List<AssessmentQuestionResultDto>>(
+                attempt.AnswersJson,
+                JsonOptions);
+
+            if (questions is null || questions.Count != attempt.TotalQuestions)
+            {
+                return null;
+            }
+
+            return MapResult(attempt, questions);
+        }
+        catch (JsonException)
+        {
+            return null;
+        }
     }
 
     private async Task<bool> IsActiveCourseLessonAsync(
