@@ -1,0 +1,223 @@
+/* Content page focused redesign. Loaded after admin-content.css so existing upload/detail styles remain intact. */
+.ciit-content-overview {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 14px;
+    margin: 0 0 18px;
+}
+
+.ciit-content-overview-card {
+    min-height: 86px;
+    padding: 16px 18px;
+}
+
+.ciit-content-tree-card {
+    border-radius: 14px;
+}
+
+.ciit-content-tree {
+    padding: 8px 14px 16px;
+}
+
+.ciit-tree-node > summary {
+    min-height: 58px;
+    padding: 10px 12px;
+    border: 1px solid transparent;
+}
+
+.ciit-tree-node > summary:hover {
+    background: #f8fafc;
+    border-color: #edf0f3;
+}
+
+.ciit-tree-course > summary {
+    min-height: 64px;
+    margin: 2px 0;
+}
+
+.ciit-tree-course > summary .ciit-tree-label strong {
+    font-size: 15px;
+}
+
+.ciit-tree-children {
+    margin-left: 25px;
+    padding-left: 17px;
+}
+
+.ciit-tree-course > .ciit-tree-children {
+    margin-left: 19px;
+}
+
+.ciit-tree-content-list {
+    margin: 3px 0 12px 45px;
+    padding: 0 12px 2px 16px;
+}
+
+.ciit-content-item {
+    min-height: 58px;
+    grid-template-columns: minmax(220px, 1fr) auto auto;
+    padding: 10px 12px;
+}
+
+.ciit-content-item-meta {
+    min-width: 145px;
+}
+
+.ciit-content-search {
+    max-width: 620px;
+}
+
+.ciit-content-form-page {
+    max-width: 1180px;
+}
+
+.ciit-content-form-card {
+    padding: 0;
+    overflow: hidden;
+}
+
+.ciit-content-form-section {
+    padding: 28px 30px;
+}
+
+.ciit-content-form-section + .ciit-content-form-section {
+    border-top: 1px solid #edf0f3;
+}
+
+.ciit-content-form-section-heading {
+    display: flex;
+    align-items: flex-start;
+    gap: 13px;
+    margin-bottom: 22px;
+}
+
+.ciit-content-form-section-icon {
+    width: 42px;
+    height: 42px;
+    display: grid;
+    place-items: center;
+    flex: 0 0 42px;
+    border-radius: 11px;
+    background: #eef2ff;
+    color: #3b4acb;
+}
+
+.ciit-content-form-section-icon.is-media {
+    background: #eff6ff;
+    color: #2563eb;
+}
+
+.ciit-content-form-section-heading h2 {
+    margin: 0;
+    font-size: 20px;
+    color: #111827;
+}
+
+.ciit-content-form-section-heading p {
+    margin: 4px 0 0;
+    color: #6b7280;
+    font-size: 13px;
+}
+
+.ciit-content-form-grid {
+    gap: 18px;
+}
+
+.ciit-content-field {
+    gap: 8px;
+}
+
+.ciit-content-field label {
+    color: #374151;
+}
+
+.ciit-content-field .form-control,
+.ciit-content-field .form-select {
+    min-height: 46px;
+    background: #fff;
+}
+
+.ciit-content-field input[type="file"] {
+    padding: 9px 10px;
+    cursor: pointer;
+}
+
+.ciit-content-field input[type="file"]::file-selector-button {
+    margin-right: 10px;
+    border: 0;
+    border-radius: 7px;
+    padding: 7px 11px;
+    background: #eef2ff;
+    color: #3345a8;
+    font-weight: 700;
+    cursor: pointer;
+}
+
+.ciit-content-form-footer {
+    margin-top: 0;
+    padding: 18px 30px;
+    background: #fafbfc;
+}
+
+.ciit-content-form-footer .ciit-content-primary-btn,
+.ciit-content-form-footer .ciit-content-secondary-btn {
+    min-height: 42px;
+}
+
+@media (max-width: 900px) {
+    .ciit-content-overview {
+        grid-template-columns: 1fr;
+    }
+
+    .ciit-content-form-section {
+        padding: 24px 20px;
+    }
+
+    .ciit-content-form-footer {
+        padding: 16px 20px;
+    }
+
+    .ciit-content-item {
+        grid-template-columns: 1fr auto;
+    }
+
+    .ciit-content-item-meta {
+        grid-column: 1 / -1;
+        grid-row: 2;
+        justify-items: start;
+        min-width: 0;
+        padding-left: 46px;
+    }
+
+    .ciit-content-media-badges {
+        justify-content: flex-start;
+    }
+
+    .ciit-content-actions {
+        grid-column: 2;
+        grid-row: 1;
+    }
+}
+
+@media (max-width: 640px) {
+    .ciit-content-tree {
+        padding: 6px 8px 12px;
+    }
+
+    .ciit-tree-children {
+        margin-left: 13px;
+        padding-left: 11px;
+    }
+
+    .ciit-tree-content-list {
+        margin-left: 13px;
+        padding-left: 9px;
+    }
+
+    .ciit-content-form-section {
+        padding: 20px 16px;
+    }
+
+    .ciit-content-form-footer {
+        padding: 14px 16px;
+    }
+}
