@@ -441,11 +441,19 @@ else if (currentContent is null && currentTopic is not null)
                              data-learning-content-page="overview">
                         <div class="ciit-learning-resource-title">
                             <span class="ciit-learning-resource-icon"><i class="bi bi-lightbulb"></i></span>
-                            <div><h3>Topic content</h3><p>Learning material linked to this topic.</p></div>
+                            <div>
+                                <h3>@(Model.CurrentChapterId.HasValue ? "Chapter content" : "Topic content")</h3>
+                                <p>@(Model.CurrentChapterId.HasValue ? "Learning material linked to this chapter." : "Learning material linked to this topic.")</p>
+                            </div>
                         </div>
-                        @if (currentTopic.Contents.Count > 0)
+                        @{
+                            var displayedContent = Model.CurrentChapterId.HasValue && currentChapter is not null
+                                ? currentChapter.Contents
+                                : currentTopic.Contents;
+                        }
+                        @if (displayedContent.Count > 0)
                         {
-                            @foreach (var content in currentTopic.Contents)
+                            @foreach (var content in displayedContent)
                             {
                                 <article class="ciit-learning-assessment-question">
                                     <strong>@content.Title</strong>
