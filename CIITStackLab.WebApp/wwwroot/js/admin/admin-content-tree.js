@@ -40,19 +40,15 @@ document.addEventListener('DOMContentLoaded', () => {
 
         nodes.forEach(node => {
             const directMatch = nodeMatches(node, term);
-            const childMatch = Array.from(node.querySelectorAll('[data-content-item]')).some(item => !item.hidden);
-            const descendantNodeMatch = Array.from(node.children)
-                .filter(child => child.matches?.('[data-tree-node]'))
-                .some(child => !child.hidden);
+            const descendantContentMatch = Array.from(node.querySelectorAll('[data-content-item]'))
+                .some(item => !item.hidden);
+            const visible = directMatch || descendantContentMatch;
 
-            const visible = directMatch || childMatch || descendantNodeMatch;
             node.hidden = !visible;
 
-            if (visible && node.parentElement?.closest('[data-tree-node]')) {
-                node.parentElement.closest('[data-tree-node]').hidden = false;
+            if (visible && (directMatch || descendantContentMatch)) {
+                node.open = true;
             }
-
-            if (directMatch || childMatch) node.open = true;
         });
 
         if (visibleCount) visibleCount.textContent = matchedCount;
