@@ -30,6 +30,7 @@
         : currentItem?.Content;
     var learningProgress = Model.Progress;
     var completedContentIds = learningProgress?.CompletedContentIds?.ToHashSet() ?? new HashSet<int>();
+    // Calculate each topic's completion state once for consistent display.
     var courseTopicProgress = Model.Topics.Select(topic =>
     {
         var topicContentIds = topic.Contents
@@ -37,15 +38,19 @@
             .Select(content => content.Id)
             .Distinct()
             .ToList();
+        var hasResources = topicContentIds.Count > 0;
 
         return new
         {
             TopicId = topic.Id,
-            HasResources = topicContentIds.Count > 0,
-            IsCompleted = topicContentIds.Count > 0
-                && topicContentIds.All(completedContentIds.Contains)
+            HasResources = hasResources,
+            IsCompleted = hasResources && topicContentIds.All(completedContentIds.Contains)
         };
     }).ToList();
+    var currentTopicProgress = currentTopic is null
+        ? null
+        : courseTopicProgress.FirstOrDefault(progress => progress.TopicId == currentTopic.Id);
+    var isCurrentTopicCompleted = currentTopicProgress?.IsCompleted == true;
     var courseTotalTopics = Model.Topics.Count;
     var courseCompletedTopics = courseTopicProgress.Count(topic => topic.IsCompleted);
     var courseProgressPercentage = courseTotalTopics == 0
@@ -85,104 +90,7 @@
         ? orderedContents.ElementAtOrDefault(currentIndex + 1)
         : null;
 
-    string FormatLearningTitle(string? value)
-    {
-        if (string.IsNullOrWhiteSpace(value))
-        {
-            return string.Empty;
-        }
 
-        var title = value.Trim();
-        title = System.Text.RegularExpressions.Regex.Replace(title, @"(?<=[a-z0-9])(?=[A-Z])", " ");
-        title = System.Text.RegularExpressions.Regex.Replace(title, @"(?<=[A-Z])(?=[A-Z][a-z])", " ");
-        title = System.Text.RegularExpressions.Regex.Replace(title, @"(?<=\d)(?=[A-Z])", " ");
-        title = System.Text.RegularExpressions.Regex.Replace(title, @"(?<=\d)(?=[a-z])", " ");
-        title = System.Text.RegularExpressions.Regex.Replace(title, @"(?i)andthe", "and the");
-        title = System.Text.RegularExpressions.Regex.Replace(title, @"\s{2,}", " ");
-        return title;
-    }
-
-    string? ResolveMuxPlaybackId(string? value)
-    {
-        if (string.IsNullOrWhiteSpace(value))
-        {
-            return null;
-        }
-
-        var candidate = value.Trim();
-        if (Uri.TryCreate(candidate, UriKind.Absolute, out var uri))
-        {
-            var path = uri.AbsolutePath.Trim('/');
-            if (uri.Host.Equals("player.mux.com", StringComparison.OrdinalIgnoreCase))
-            {
-                candidate = path.Split('/', StringSplitOptions.RemoveEmptyEntries).LastOrDefault() ?? string.Empty;
-            }
-            else if (uri.Host.Equals("stream.mux.com", StringComparison.OrdinalIgnoreCase))
-            {
-                candidate = path.Split('/', StringSplitOptions.RemoveEmptyEntries).FirstOrDefault() ?? string.Empty;
-                candidate = System.IO.Path.GetFileNameWithoutExtension(candidate);
-            }
-            else if (path.StartsWith("uploads/videos/", StringComparison.OrdinalIgnoreCase))
-            {
-                candidate = path["uploads/videos/".Length..];
-            }
-            else
-            {
-                return null;
-            }
-        }
-        else
-        {
-            candidate = candidate.TrimStart('/');
-            if (candidate.StartsWith("uploads/videos/", StringComparison.OrdinalIgnoreCase))
-            {
-                candidate = candidate["uploads/videos/".Length..];
-            }
-            else if (candidate.Contains('/') || candidate.Contains('.'))
-            {
-                return null;
-            }
-        }
-
-        return System.Text.RegularExpressions.Regex.IsMatch(candidate, @"^[A-Za-z0-9_-]{20,100}$")
-            ? candidate
-            : null;
-    }
-
-    string ResolveResourceUrl(string? value, string folder)
-    {
-        if (string.IsNullOrWhiteSpace(value))
-        {
-            return string.Empty;
-        }
-
-        var resource = value.Trim().Replace('\\', '/');
-
-        if (Uri.TryCreate(resource, UriKind.Absolute, out var absoluteUri)
-            && (absoluteUri.Scheme == Uri.UriSchemeHttp
-                || absoluteUri.Scheme == Uri.UriSchemeHttps))
-        {
-            return resource;
-        }
-
-        if (resource.StartsWith("~/", StringComparison.Ordinal))
-        {
-            return resource[1..];
-        }
-
-        if (resource.StartsWith("/", StringComparison.Ordinal))
-        {
-            return resource;
-        }
-
-        if (resource.StartsWith("uploads/", StringComparison.OrdinalIgnoreCase))
-        {
-            return "/" + resource;
-        }
-
-        return $"/uploads/{folder}/{Uri.EscapeDataString(System.IO.Path.GetFileName(resource))}";
-    }
-}
 
 @section Styles {
     <link rel="stylesheet" href="~/css/student/course-learning.css" asp-append-version="true" />
@@ -363,21 +271,21 @@ else if (currentContent is null && currentTopic is not null)
                             <span class="ciit-learning-eyebrow">
                                 TOPIC @(Math.Max(0, Model.Topics.ToList().FindIndex(topic => topic.Id == currentTopic.Id)) + 1) OF @Math.Max(Model.Topics.Count, 1)
                             </span>
-                            <h2 class="ciit-learning-chapter-title">@FormatLearningTitle(currentTopic.Title)</h2>
+                            <h2 class="ciit-learning-chapter-title">@CIITStackLab.WebApp.Helpers.LearningPagePresentation.FormatLearningTitle(currentTopic.Title)</h2>
                         </div>
                     </div>
 
                     <div class="ciit-learning-lesson-status">
                         <div class="ciit-learning-lesson-status-copy">
-                            <span class="ciit-learning-lesson-status-icon @(learningProgress is not null && currentTopic.Contents.Concat(currentTopic.Chapters.SelectMany(chapter => chapter.Contents)).DistinctBy(content => content.Id).Any() && currentTopic.Contents.Concat(currentTopic.Chapters.SelectMany(chapter => chapter.Contents)).DistinctBy(content => content.Id).All(content => learningProgress.CompletedContentIds.Contains(content.Id)) ? "is-completed" : "")">
-                                <i class="bi @(learningProgress is not null && currentTopic.Contents.Concat(currentTopic.Chapters.SelectMany(chapter => chapter.Contents)).DistinctBy(content => content.Id).Any() && currentTopic.Contents.Concat(currentTopic.Chapters.SelectMany(chapter => chapter.Contents)).DistinctBy(content => content.Id).All(content => learningProgress.CompletedContentIds.Contains(content.Id)) ? "bi-check2-circle" : "bi-journal-bookmark")"></i>
+                            <span class="ciit-learning-lesson-status-icon @(isCurrentTopicCompleted ? "is-completed" : "")">
+                                <i class="bi @(isCurrentTopicCompleted ? "bi-check2-circle" : "bi-journal-bookmark")"></i>
                             </span>
                             <div>
-                                <strong>@(learningProgress is not null && currentTopic.Contents.Concat(currentTopic.Chapters.SelectMany(chapter => chapter.Contents)).DistinctBy(content => content.Id).Any() && currentTopic.Contents.Concat(currentTopic.Chapters.SelectMany(chapter => chapter.Contents)).DistinctBy(content => content.Id).All(content => learningProgress.CompletedContentIds.Contains(content.Id)) ? "Topic completed" : "Topic learning material")</strong>
+                                <strong>@(isCurrentTopicCompleted ? "Topic completed" : "Topic learning material")</strong>
                                 <small>@(currentTopic.Contents.Count > 0 ? "Review the notes, lesson content and assessments for this topic." : "Review the notes and assessments available for this topic.")</small>
                             </div>
                         </div>
-                        @if (learningProgress is not null && currentTopic.Contents.Concat(currentTopic.Chapters.SelectMany(chapter => chapter.Contents)).DistinctBy(content => content.Id).Any() && currentTopic.Contents.Concat(currentTopic.Chapters.SelectMany(chapter => chapter.Contents)).DistinctBy(content => content.Id).All(content => learningProgress.CompletedContentIds.Contains(content.Id)))
+                        @if (isCurrentTopicCompleted)
                         {
                             <span class="ciit-learning-completed-pill"><i class="bi bi-check-lg"></i> Completed</span>
                         }
@@ -491,7 +399,7 @@ else if (currentContent is null && currentTopic is not null)
                         @foreach (var chapter in displayedChapters)
                         {
                             <section class="ciit-learning-chapter-assessment" id="chapter-assessment-@chapter.Id">
-                                <h4>@FormatLearningTitle(chapter.Title)</h4>
+                                <h4>@CIITStackLab.WebApp.Helpers.LearningPagePresentation.FormatLearningTitle(chapter.Title)</h4>
                                 @if (Model.CurrentChapterId.HasValue
                                     ? chapter.Id == Model.CurrentChapterId.Value
                                     : chapter.Id == currentTopic.Chapters.First().Id)
@@ -687,7 +595,7 @@ else
                             <span class="ciit-learning-eyebrow">
                                 TOPIC @(Math.Max(0, Model.Topics.ToList().FindIndex(topic => topic.Id == currentTopic?.Id)) + 1) OF @Math.Max(Model.Topics.Count, 1)
                             </span>
-                            <h2 class="ciit-learning-chapter-title">@FormatLearningTitle(currentChapter?.Title ?? currentTopic?.Title ?? currentContent?.Title)</h2>
+                            <h2 class="ciit-learning-chapter-title">@CIITStackLab.WebApp.Helpers.LearningPagePresentation.FormatLearningTitle(currentChapter?.Title ?? currentTopic?.Title ?? currentContent?.Title)</h2>
                         </div>
 
                         <div class="ciit-learning-lesson-actions">
@@ -816,7 +724,7 @@ else
 
                     @if (currentContent is not null && !string.IsNullOrWhiteSpace(currentContent.VideoName))
                     {
-                        var videoUrl = ResolveResourceUrl(currentContent.VideoName, "videos");
+                        var videoUrl = CIITStackLab.WebApp.Helpers.LearningPagePresentation.ResolveResourceUrl(currentContent.VideoName, "videos");
                         var videoPath = Uri.TryCreate(videoUrl, UriKind.Absolute, out var absoluteVideoUri)
                             ? absoluteVideoUri.AbsolutePath
                             : videoUrl;
@@ -824,7 +732,7 @@ else
                         var isDirectVideoFile = videoExtension.Equals(".mp4", StringComparison.OrdinalIgnoreCase)
                             || videoExtension.Equals(".webm", StringComparison.OrdinalIgnoreCase)
                             || videoExtension.Equals(".mov", StringComparison.OrdinalIgnoreCase);
-                        var muxPlaybackId = ResolveMuxPlaybackId(currentContent.VideoName);
+                        var muxPlaybackId = CIITStackLab.WebApp.Helpers.LearningPagePresentation.ResolveMuxPlaybackId(currentContent.VideoName);
 
                         <section class="ciit-learning-resource ciit-learning-video-section" data-learning-panel-content="content" data-learning-content-combined="video">
                             <div class="ciit-learning-resource-title">
@@ -888,7 +796,7 @@ else
                                 </div>
                             </div>
 
-                            <a href="@ResolveResourceUrl(currentContent.Slides, "slides")"
+                            <a href="@CIITStackLab.WebApp.Helpers.LearningPagePresentation.ResolveResourceUrl(currentContent.Slides, "slides")"
                                target="_blank"
                                rel="noopener noreferrer"
                                class="ciit-learning-open-resource">
@@ -913,7 +821,7 @@ else
                         {
                                 var assessmentChapter = currentChapter;
                                 <section class="ciit-learning-chapter-assessment" id="chapter-assessment-@assessmentChapter.Id">
-                                    <h4>@FormatLearningTitle(assessmentChapter.Title)</h4>
+                                    <h4>@CIITStackLab.WebApp.Helpers.LearningPagePresentation.FormatLearningTitle(assessmentChapter.Title)</h4>
 
 
                                     <section id="chapter-mcqs-@assessmentChapter.Id" class="ciit-learning-assessment-subsection">
