@@ -49,9 +49,11 @@
 .ciit-course-switcher-menu {
     display: grid;
     gap: 4px;
-    max-height: 220px;
+    /* Show at most three course options before the list becomes scrollable. */
+    max-height: 126px;
     margin-top: 4px;
     overflow-y: auto;
+    overscroll-behavior: contain;
     padding-right: 2px;
 }
 
