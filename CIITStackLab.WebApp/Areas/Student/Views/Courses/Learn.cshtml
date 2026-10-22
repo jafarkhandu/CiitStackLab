@@ -390,16 +390,28 @@ else if (currentContent is null && currentTopic is not null)
 
                             @if (overviewChapter is not null && !isFinalChapter)
                             {
-                                <form asp-controller="Courses" asp-action="CompleteChapter"
-                                      asp-route-id="@Model.Id" asp-route-topicId="@currentTopic.Id"
-                                      asp-route-chapterId="@overviewChapter.Id" method="post" class="mt-3">
-                                    @Html.AntiForgeryToken()
-                                    <button type="submit" class="ciit-topic-completion-button">
-                                        <i class="bi bi-check2-circle" aria-hidden="true"></i>
-                                        <span>Complete Chapter</span>
-                                        <i class="bi bi-arrow-right ms-auto" aria-hidden="true"></i>
-                                    </button>
-                                </form>
+                                var overviewContentIds = overviewChapter.Contents.Select(content => content.Id).Distinct().ToList();
+                                var isOverviewChapterCompleted = overviewContentIds.Count > 0
+                                    && overviewContentIds.All(completedContentIds.Contains);
+                                @if (isOverviewChapterCompleted)
+                                {
+                                    <span class="ciit-chapter-completed-badge mt-3" role="status">
+                                        <i class="bi bi-check-circle-fill" aria-hidden="true"></i> Completed
+                                    </span>
+                                }
+                                else
+                                {
+                                    <form asp-controller="Courses" asp-action="CompleteChapter"
+                                          asp-route-id="@Model.Id" asp-route-topicId="@currentTopic.Id"
+                                          asp-route-chapterId="@overviewChapter.Id" method="post" class="mt-3">
+                                        @Html.AntiForgeryToken()
+                                        <button type="submit" class="ciit-topic-completion-button">
+                                            <i class="bi bi-check2-circle" aria-hidden="true"></i>
+                                            <span>Complete Chapter</span>
+                                            <i class="bi bi-arrow-right ms-auto" aria-hidden="true"></i>
+                                        </button>
+                                    </form>
+                                }
                             }
                             else
                             {
@@ -735,18 +747,30 @@ else
                             }
                             else if (currentChapter is not null)
                             {
-                                <form asp-controller="Courses"
-                                      asp-action="CompleteChapter"
-                                      asp-route-id="@Model.Id"
-                                      asp-route-topicId="@currentTopic.Id"
-                                      asp-route-chapterId="@currentChapter.Id"
-                                      method="post"
-                                      class="ciit-learning-completion-form">
-                                    @Html.AntiForgeryToken()
-                                    <button type="submit" class="btn btn-primary">
-                                        <i class="bi bi-check2-circle me-2"></i>Complete Chapter
-                                    </button>
-                                </form>
+                                var chapterContentIds = currentChapter.Contents.Select(content => content.Id).Distinct().ToList();
+                                var isChapterCompleted = chapterContentIds.Count > 0
+                                    && chapterContentIds.All(completedContentIds.Contains);
+                                @if (isChapterCompleted)
+                                {
+                                    <span class="ciit-chapter-completed-badge" role="status">
+                                        <i class="bi bi-check-circle-fill" aria-hidden="true"></i> Completed
+                                    </span>
+                                }
+                                else
+                                {
+                                    <form asp-controller="Courses"
+                                          asp-action="CompleteChapter"
+                                          asp-route-id="@Model.Id"
+                                          asp-route-topicId="@currentTopic.Id"
+                                          asp-route-chapterId="@currentChapter.Id"
+                                          method="post"
+                                          class="ciit-learning-completion-form">
+                                        @Html.AntiForgeryToken()
+                                        <button type="submit" class="btn btn-primary">
+                                            <i class="bi bi-check2-circle me-2"></i>Complete Chapter
+                                        </button>
+                                    </form>
+                                }
                             }
                         </div>
 

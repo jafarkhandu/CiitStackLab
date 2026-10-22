@@ -987,7 +987,7 @@ public class CoursesController : Controller
         return RedirectToAction(nameof(Learn), new { id, contentId });
     }
 
-    [HttpPost("Courses/Learn/{id:int}/CompleteChapter/{topicId:int}/{chapterId:int}")]
+    [HttpPost("Courses/Learn/{id:int}/CompleteChapter/{topicId:int}/{chapterId:int}", Name = "CompleteCourseChapter")]
     [Authorize(Roles = "Student")]
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> CompleteChapter(
