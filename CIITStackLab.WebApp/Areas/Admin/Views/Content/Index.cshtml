@@ -4,58 +4,220 @@
     ViewData["Title"] = "Content";
     var message = TempData["AdminContentMessage"] as string;
     var messageType = TempData["AdminContentMessageType"] as string;
+    var activeContentCount = Model.ActiveContents.Select(x => x.Id).Distinct().Count();
+    var courseCount = Model.ActiveContents.Select(x => x.CourseId).Distinct().Count();
+    var topicCount = Model.ActiveContents.Select(x => x.TopicId).Distinct().Count();
 }
 
-@section Styles { <link rel="stylesheet" href="~/css/admin-content.css" asp-append-version="true" /> }
+@section Styles { <link rel="stylesheet" href="~/css/admin/admin-content.css" asp-append-version="true" /> }
 
 <section class="ciit-content-page">
     <div class="ciit-content-header">
-        <div><span class="ciit-content-eyebrow">Learning</span><h1>Content</h1><p>Manage learning content attached to existing course topics.</p></div>
-        <a asp-area="Admin" asp-controller="Content" asp-action="Create" class="ciit-content-primary-btn"><i class="bi bi-plus-lg"></i><span>Add Content</span></a>
+        <div>
+            <span class="ciit-content-eyebrow">Learning</span>
+            <h1>Content</h1>
+            <p>Manage videos and slides through the course learning hierarchy.</p>
+        </div>
+        <a asp-area="Admin" asp-controller="Content" asp-action="Create" class="ciit-content-primary-btn">
+            <i class="bi bi-plus-lg"></i><span>Add Content</span>
+        </a>
     </div>
 
     @if (!string.IsNullOrWhiteSpace(message))
     {
-        <div class="ciit-content-alert @(messageType == "success" ? "is-success" : "is-error")" role="alert"><i class="bi @(messageType == "success" ? "bi-check-circle-fill" : "bi-exclamation-circle-fill")"></i><span>@message</span></div>
+        <div class="ciit-content-alert @(messageType == "success" ? "is-success" : "is-error")" role="alert">
+            <i class="bi @(messageType == "success" ? "bi-check-circle-fill" : "bi-exclamation-circle-fill")"></i>
+            <span>@message</span>
+        </div>
     }
 
-    <div class="ciit-content-toolbar"><div class="ciit-content-search"><i class="bi bi-search"></i><input id="contentSearch" type="search" placeholder="Search content, topic or course..." autocomplete="off" /></div><div class="ciit-content-count"><strong id="contentVisibleCount">@Model.ActiveContents.Count</strong> active</div></div>
-
-    <section class="ciit-content-card">
-        <div class="ciit-content-table-wrap">
-            <table class="ciit-content-table">
-                <thead><tr><th>Content</th><th>Course</th><th>Topic</th><th>Notes Chapter</th><th>Media</th><th>Updated</th><th>Actions</th></tr></thead>
-                <tbody id="contentRows">
-                @foreach (var content in Model.ActiveContents)
-                {
-                    <tr data-content-row data-search="@($"{content.Title} {content.CourseTitle} {content.TopicTitle}")">
-                        <td><div class="ciit-content-name"><div class="ciit-content-icon"><i class="bi bi-file-earmark-text"></i></div><div><strong>@content.Title</strong><span>#@content.Id</span></div></div></td>
-                        <td>@content.CourseTitle</td><td><span class="ciit-content-topic">@content.TopicTitle</span></td><td>@(string.IsNullOrWhiteSpace(content.NoteTitle) ? "—" : $"Chapter: {content.NoteTitle}")</td>
-                        <td><div class="ciit-content-media">@if (!string.IsNullOrWhiteSpace(content.Slides)) { <span title="Slides"><i class="bi bi-file-slides"></i></span> } @if (!string.IsNullOrWhiteSpace(content.VideoName)) { <span title="Video"><i class="bi bi-play-circle"></i></span> } @if (string.IsNullOrWhiteSpace(content.Slides) && string.IsNullOrWhiteSpace(content.VideoName)) { <span class="is-muted">None</span> }</div></td>
-                        <td>@((content.UpdatedAt ?? content.CreatedAt)?.ToString("dd MMM yyyy") ?? "—")</td>
-                        <td><div class="ciit-content-actions"><a asp-area="Admin" asp-controller="Content" asp-action="Details" asp-route-id="@content.Id" title="Details"><i class="bi bi-eye"></i></a><a asp-area="Admin" asp-controller="Content" asp-action="Edit" asp-route-id="@content.Id" title="Edit"><i class="bi bi-pencil-square"></i></a><form asp-area="Admin" asp-controller="Content" asp-action="Delete" method="post" class="js-content-delete-form" data-content-name="@content.Title">@Html.AntiForgeryToken()<input type="hidden" name="id" value="@content.Id" /><button type="submit" title="Archive"><i class="bi bi-archive"></i></button></form></div></td>
-                    </tr>
-                }
-                </tbody>
-            </table>
-            <div id="contentSearchEmpty" class="ciit-content-empty" hidden><i class="bi bi-search"></i><h3>No matching content</h3><p>Try another course, topic or content name.</p></div>
-            @if (Model.ActiveContents.Count == 0) { <div class="ciit-content-empty is-visible"><i class="bi bi-file-earmark-text"></i><h3>No active content</h3><p>Add content to an existing mapped course topic.</p></div> }
+    <div class="ciit-content-overview">
+        <div class="ciit-content-overview-card">
+            <div class="ciit-content-overview-icon"><i class="bi bi-collection-play"></i></div>
+            <div><span>Active content</span><strong>@activeContentCount</strong></div>
         </div>
+        <div class="ciit-content-overview-card">
+            <div class="ciit-content-overview-icon is-course"><i class="bi bi-mortarboard"></i></div>
+            <div><span>Courses</span><strong>@courseCount</strong></div>
+        </div>
+        <div class="ciit-content-overview-card">
+            <div class="ciit-content-overview-icon is-topic"><i class="bi bi-diagram-3"></i></div>
+            <div><span>Topics</span><strong>@topicCount</strong></div>
+        </div>
+    </div>
+
+    <div class="ciit-content-toolbar">
+        <div class="ciit-content-search">
+            <i class="bi bi-search"></i>
+            <input id="contentSearch" type="search" placeholder="Search course, topic, chapter or content..." autocomplete="off" aria-label="Search content" />
+        </div>
+        <div class="ciit-content-count"><strong id="contentVisibleCount">@activeContentCount</strong> active</div>
+    </div>
+
+    <section class="ciit-content-tree-card" aria-label="Content hierarchy">
+        @if (activeContentCount == 0)
+        {
+            <div class="ciit-content-empty is-visible">
+                <i class="bi bi-file-earmark-text"></i>
+                <h3>No active content</h3>
+                <p>Add content to an existing mapped course topic.</p>
+            </div>
+        }
+        else
+        {
+            <div id="contentTree" class="ciit-content-tree">
+                @foreach (var courseGroup in Model.ActiveContents
+                    .GroupBy(x => new { x.CourseId, x.CourseTitle })
+                    .OrderBy(x => x.Key.CourseTitle))
+                {
+                    var courseContents = courseGroup.ToList();
+                    var courseSearch = string.Join(" ", courseGroup.Select(x => x.CourseTitle).Distinct());
+                    <details class="ciit-tree-node ciit-tree-course" data-tree-node data-search="@courseSearch" open>
+                        <summary>
+                            <span class="ciit-tree-summary-main">
+                                <span class="ciit-tree-chevron"><i class="bi bi-chevron-right"></i></span>
+                                <span class="ciit-tree-icon"><i class="bi bi-mortarboard"></i></span>
+                                <span class="ciit-tree-label"><strong>@courseGroup.Key.CourseTitle</strong><small>@courseContents.Select(x => x.Id).Distinct().Count() content items</small></span>
+                            </span>
+                            <span class="ciit-tree-count">@courseContents.Select(x => x.Id).Distinct().Count()</span>
+                        </summary>
+
+                        <div class="ciit-tree-children">
+                            @foreach (var topicGroup in courseGroup
+                                .GroupBy(x => new { x.TopicId, x.TopicTitle })
+                                .OrderBy(x => x.Key.TopicTitle))
+                            {
+                                var topicContents = topicGroup.ToList();
+                                <details class="ciit-tree-node ciit-tree-topic" data-tree-node data-search="@topicGroup.Key.TopicTitle">
+                                    <summary>
+                                        <span class="ciit-tree-summary-main">
+                                            <span class="ciit-tree-chevron"><i class="bi bi-chevron-right"></i></span>
+                                            <span class="ciit-tree-icon is-topic"><i class="bi bi-diagram-3"></i></span>
+                                            <span class="ciit-tree-label"><strong>@topicGroup.Key.TopicTitle</strong><small>@topicContents.Select(x => x.Id).Distinct().Count() content items</small></span>
+                                        </span>
+                                        <span class="ciit-tree-count">@topicContents.Select(x => x.Id).Distinct().Count()</span>
+                                    </summary>
+
+                                    <div class="ciit-tree-children">
+                                        @foreach (var chapterGroup in topicGroup
+                                            .GroupBy(x => new { x.NoteId, x.NoteTitle, x.NoteChapterId })
+                                            .OrderBy(x => x.Key.NoteTitle))
+                                        {
+                                            var chapterContents = chapterGroup.ToList();
+                                            var chapterTitle = string.IsNullOrWhiteSpace(chapterGroup.Key.NoteTitle) ? "General content" : chapterGroup.Key.NoteTitle;
+                                            <details class="ciit-tree-node ciit-tree-chapter" data-tree-node data-search="@chapterTitle">
+                                                <summary>
+                                                    <span class="ciit-tree-summary-main">
+                                                        <span class="ciit-tree-chevron"><i class="bi bi-chevron-right"></i></span>
+                                                        <span class="ciit-tree-icon is-chapter"><i class="bi bi-journal-text"></i></span>
+                                                        <span class="ciit-tree-label"><strong>@chapterTitle</strong><small>@chapterContents.Select(x => x.Id).Distinct().Count() content items</small></span>
+                                                    </span>
+                                                    <span class="ciit-tree-count">@chapterContents.Select(x => x.Id).Distinct().Count()</span>
+                                                </summary>
+
+                                                <div class="ciit-tree-content-list">
+                                                    @foreach (var contentGroup in chapterGroup.GroupBy(x => x.Id).OrderBy(x => x.First().Title))
+                                                    {
+                                                        var content = contentGroup.First();
+                                                        var hasVideo = contentGroup.Any(x => !string.IsNullOrWhiteSpace(x.VideoName));
+                                                        var hasSlides = contentGroup.Any(x => !string.IsNullOrWhiteSpace(x.Slides));
+                                                        var updatedAt = contentGroup.Max(x => x.UpdatedAt ?? x.CreatedAt);
+                                                        var contentSearch = $"{content.Title} {courseGroup.Key.CourseTitle} {topicGroup.Key.TopicTitle} {chapterTitle}";
+
+                                                        <article class="ciit-content-item" data-content-item data-search="@contentSearch">
+                                                            <div class="ciit-content-item-main">
+                                                                <div class="ciit-content-icon"><i class="bi bi-file-earmark-text"></i></div>
+                                                                <div class="ciit-content-item-copy">
+                                                                    <strong>@content.Title</strong>
+                                                                    <span>#@content.Id</span>
+                                                                </div>
+                                                            </div>
+                                                            <div class="ciit-content-item-meta">
+                                                                <div class="ciit-content-media-badges">
+                                                                    @if (hasVideo)
+                                                                    {
+                                                                        <span class="ciit-media-badge is-video"><i class="bi bi-play-circle"></i> Video</span>
+                                                                    }
+                                                                    @if (hasSlides)
+                                                                    {
+                                                                        <span class="ciit-media-badge is-slides"><i class="bi bi-file-slides"></i> Slides</span>
+                                                                    }
+                                                                    @if (!hasVideo && !hasSlides)
+                                                                    {
+                                                                        <span class="ciit-media-badge is-empty">No media</span>
+                                                                    }
+                                                                </div>
+                                                                <span class="ciit-content-updated">Updated @((updatedAt)?.ToString("dd MMM yyyy") ?? "—")</span>
+                                                            </div>
+                                                            <div class="ciit-content-actions">
+                                                                <a asp-area="Admin" asp-controller="Content" asp-action="Details" asp-route-id="@content.Id" title="View details" aria-label="View @content.Title">
+                                                                    <i class="bi bi-eye"></i>
+                                                                </a>
+                                                                <a asp-area="Admin" asp-controller="Content" asp-action="Edit" asp-route-id="@content.Id" title="Edit content" aria-label="Edit @content.Title">
+                                                                    <i class="bi bi-pencil-square"></i>
+                                                                </a>
+                                                                <form asp-area="Admin" asp-controller="Content" asp-action="Delete" method="post" class="js-content-delete-form" data-content-name="@content.Title">
+                                                                    @Html.AntiForgeryToken()
+                                                                    <input type="hidden" name="id" value="@content.Id" />
+                                                                    <button type="submit" title="Archive content" aria-label="Archive @content.Title"><i class="bi bi-archive"></i></button>
+                                                                </form>
+                                                            </div>
+                                                        </article>
+                                                    }
+                                                </div>
+                                            </details>
+                                        }
+                                    </div>
+                                </details>
+                            }
+                        </div>
+                    </details>
+                }
+            </div>
+            <div id="contentSearchEmpty" class="ciit-content-empty" hidden>
+                <i class="bi bi-search"></i>
+                <h3>No matching content</h3>
+                <p>Try another course, topic, chapter or content name.</p>
+            </div>
+        }
     </section>
 
     <section class="ciit-content-archive">
-        <div class="ciit-content-archive-header"><div><span class="ciit-content-eyebrow">Recovery</span><h2>Archived content</h2><p>Soft-deleted content remains available for restoration.</p></div><span class="ciit-content-archive-count">@Model.ArchivedContents.Count</span></div>
-        @if (Model.ArchivedContents.Count == 0) { <div class="ciit-content-empty is-visible"><i class="bi bi-archive"></i><h3>Archive is empty</h3><p>Deleted content will appear here.</p></div> }
+        <div class="ciit-content-archive-header">
+            <div>
+                <span class="ciit-content-eyebrow">Recovery</span>
+                <h2>Archived content</h2>
+                <p>Soft-deleted content remains available for restoration.</p>
+            </div>
+            <span class="ciit-content-archive-count">@Model.ArchivedContents.Count</span>
+        </div>
+        @if (Model.ArchivedContents.Count == 0)
+        {
+            <div class="ciit-content-empty is-visible"><i class="bi bi-archive"></i><h3>Archive is empty</h3><p>Deleted content will appear here.</p></div>
+        }
         else
         {
             <div class="ciit-content-archive-list">
-            @foreach (var content in Model.ArchivedContents)
-            {
-                <div class="ciit-content-archive-row"><div class="ciit-content-name"><div class="ciit-content-icon is-muted"><i class="bi bi-archive"></i></div><div><strong>@content.Title</strong><span>@content.CourseTitle / @content.TopicTitle</span></div></div><form asp-area="Admin" asp-controller="Content" asp-action="Restore" method="post">@Html.AntiForgeryToken()<input type="hidden" name="id" value="@content.Id" /><button type="submit" class="ciit-content-restore"><i class="bi bi-arrow-counterclockwise"></i> Restore</button></form></div>
-            }
+                @foreach (var content in Model.ArchivedContents)
+                {
+                    <div class="ciit-content-archive-row">
+                        <div class="ciit-content-name">
+                            <div class="ciit-content-icon is-muted"><i class="bi bi-archive"></i></div>
+                            <div><strong>@content.Title</strong><span>@content.CourseTitle / @content.TopicTitle</span></div>
+                        </div>
+                        <form asp-area="Admin" asp-controller="Content" asp-action="Restore" method="post">
+                            @Html.AntiForgeryToken()
+                            <input type="hidden" name="id" value="@content.Id" />
+                            <button type="submit" class="ciit-content-restore"><i class="bi bi-arrow-counterclockwise"></i> Restore</button>
+                        </form>
+                    </div>
+                }
             </div>
         }
     </section>
 </section>
 
-@section Scripts { <script src="~/js/admin-content.js" asp-append-version="true"></script> }
+@section Scripts {
+    <script src="~/js/admin-content.js" asp-append-version="true"></script>
+    <script src="~/js/admin/admin-content-tree.js" asp-append-version="true"></script>
+}
