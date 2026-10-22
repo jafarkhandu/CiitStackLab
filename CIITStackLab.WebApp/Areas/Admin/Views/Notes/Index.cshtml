@@ -69,7 +69,6 @@
                 <tbody>
                     @foreach (var group in topicGroups)
                     {
-                        var topicKey = $"notes-topic-{group.Key.TopicId}";
                         var topicSearch = string.Join(
                             " ",
                             group.Select(note => $"{note.TopicTitle} {note.ChapterId} {note.Title}"));
@@ -83,8 +82,7 @@
                                         class="ciit-notes-topic-toggle"
                                         data-notes-topic-toggle
                                         data-topic-id="@group.Key.TopicId"
-                                        aria-expanded="false"
-                                        aria-controls="@topicKey">
+                                        aria-expanded="false">
                                     <span class="ciit-notes-topic-chevron" aria-hidden="true">
                                         <i class="bi bi-chevron-right"></i>
                                     </span>
@@ -107,7 +105,6 @@
                                 data-chapter-row
                                 data-topic-id="@group.Key.TopicId"
                                 data-search="@($"{note.TopicTitle} {note.ChapterId} {note.Title}")"
-                                id="@topicKey"
                                 hidden>
                                 <td>
                                     <div class="ciit-notes-chapter-label">
