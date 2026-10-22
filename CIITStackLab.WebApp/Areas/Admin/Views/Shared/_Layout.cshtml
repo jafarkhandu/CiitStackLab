@@ -21,6 +21,15 @@
     <link rel="stylesheet" href="~/css/admin/admin-report-sections.css" />
     <link rel="stylesheet" href="~/css/admin/admin-exam-notifications.css" asp-append-version="true" />
     <link rel="stylesheet" href="~/css/global/global-alerts.css" asp-append-version="true" />
+    @if (string.Equals(ViewContext.RouteData.Values["controller"]?.ToString(), "Assessments", StringComparison.OrdinalIgnoreCase))
+    {
+        <link rel="stylesheet" href="~/css/admin/admin-assessment-detail.css" asp-append-version="true" />
+        <link rel="stylesheet" href="~/css/admin/admin-mcqs.css" asp-append-version="true" />
+        <link rel="stylesheet" href="~/css/admin/admin-mcq-import.css" asp-append-version="true" />
+        <link rel="stylesheet" href="~/css/admin/admin-interview-import.css" asp-append-version="true" />
+        <link rel="stylesheet" href="~/css/admin/admin-practice.css" asp-append-version="true" />
+        <link rel="stylesheet" href="~/css/admin/admin-practice-import.css" asp-append-version="true" />
+    }
     @await RenderSectionAsync("Styles", required: false)
 </head>
 <body class="ciit-admin-body">
