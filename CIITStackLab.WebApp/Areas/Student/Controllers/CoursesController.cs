@@ -268,10 +268,16 @@ public class CoursesController : Controller
             });
         }
 
-        TempData["CoursePaymentMessage"] = message;
+        if (string.Equals(transaction.PaymentPurpose, "ExamRetake", StringComparison.Ordinal))
+        {
+            TempData[completed ? "ExamMessage" : "ExamError"] = message;
+            if (completed)
+                return RedirectToAction("Index", "StudentExaminations");
 
-        if (completed && string.Equals(transaction.PaymentPurpose, "ExamRetake", StringComparison.Ordinal))
             return RedirectToAction("Index", "StudentExaminations");
+        }
+
+        TempData["CoursePaymentMessage"] = message;
 
         if (completed)
             return RedirectToAction(nameof(CourseEnvironment), new { id = transaction.CourseId });
