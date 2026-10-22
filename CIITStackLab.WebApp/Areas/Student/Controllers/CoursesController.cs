@@ -1079,22 +1079,10 @@ public class CoursesController : Controller
             return RedirectToAction(nameof(Learn), new { id, topicId = allowedTopicId.Value });
         }
 
-        // Persist progress for the lesson rows linked to this chapter in the database.
-        // The badge reads completion from these same Lesson.NoteId relationships.
-        var contentIds = await _dbContext.Lessons
-            .AsNoTracking()
-            .Where(lesson => lesson.Flag == 0 && lesson.NoteId == chapterId)
-            .OrderBy(lesson => lesson.Id)
-            .Select(lesson => lesson.Id)
+                var contentIds = orderedChapters[currentIndex].Contents
+            .Select(content => content.Id)
             .Distinct()
-            .ToListAsync(cancellationToken);
-
-        if (contentIds.Count == 0)
-        {
-            TempData["LearningProgressMessage"] =
-                "No learning content is linked to this chapter, so it could not be marked complete.";
-            return RedirectToAction(nameof(Learn), new { id, topicId, chapterId });
-        }
+            .ToList();
 
         foreach (var contentId in contentIds)
         {
