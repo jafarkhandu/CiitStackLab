@@ -84,9 +84,9 @@
     </div>
 </section>
 
-@if (!isModal)
-{
-    @section Scripts {
+@section Scripts {
+    @if (!isModal)
+    {
         <script src="~/js/admin/admin-content-modal.js" asp-append-version="true"></script>
     }
 }
