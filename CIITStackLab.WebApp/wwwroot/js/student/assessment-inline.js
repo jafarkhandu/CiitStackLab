@@ -116,6 +116,27 @@
         return null;
     }
 
+    function getExistingResultEndpoint(form) {
+        const action = form.action || "";
+        let actionUrl;
+
+        try {
+            actionUrl = new URL(action, window.location.origin);
+        } catch {
+            return null;
+        }
+
+        const topicId = actionUrl.searchParams.get("topicId");
+        const match = window.location.pathname.match(/\/Courses\/Learn\/(\d+)/i);
+        const courseId = match?.[1];
+
+        if (!courseId || !topicId) {
+            return null;
+        }
+
+        return `/Courses/Learn/${encodeURIComponent(courseId)}/TopicAssessmentResult/${encodeURIComponent(topicId)}`;
+    }
+
     function showError(form, message) {
         let error = form.parentElement.querySelector(":scope > .ciit-assessment-error");
         if (!error) {
@@ -142,6 +163,23 @@
 
     function getSubmitButton(form) {
         return form.querySelector(".ciit-assessment-submit-row button[type='submit']");
+    }
+
+    function getQuestionId(questionElement) {
+        const input = questionElement.querySelector("input[name$='.QuestionId']");
+        const questionId = input ? Number(input.value) : Number.MAX_SAFE_INTEGER;
+        return Number.isFinite(questionId) ? questionId : Number.MAX_SAFE_INTEGER;
+    }
+
+    function normalizeQuestionOrder(form) {
+        if (form.dataset.ciitPaginated === "true") {
+            return;
+        }
+
+        const questions = Array.from(form.querySelectorAll(":scope > .ciit-learning-question"));
+        questions
+            .sort((left, right) => getQuestionId(left) - getQuestionId(right))
+            .forEach((question) => form.appendChild(question));
     }
 
     function markQuestion(questionElement, questionResult) {
@@ -203,9 +241,14 @@
     }
 
     function renderResult(form, result) {
+        if (!result || !Array.isArray(result.questions)) {
+            throw new Error("The assessment result is incomplete. Please reload the lesson.");
+        }
+
         ensureStyles();
         form.classList.add("ciit-assessment-inline-results");
         form.dataset.ciitAssessmentSubmitted = "true";
+        form.dataset.ciitAssessmentSubmitting = "false";
         form.setAttribute("aria-label", "Assessment results");
 
         const resultsByQuestion = new Map(
@@ -221,8 +264,13 @@
             }
         });
 
-        const submitRow = form.querySelector(".ciit-assessment-submit-row");
-        submitRow?.remove();
+        form.querySelectorAll("input[type='radio']").forEach((input) => {
+            input.disabled = true;
+            input.required = false;
+        });
+
+        form.querySelector(".ciit-assessment-submit-row")?.remove();
+        form.querySelector(".ciit-assessment-inline-summary")?.remove();
 
         const summary = document.createElement("div");
         summary.className = "ciit-assessment-inline-summary";
@@ -242,7 +290,11 @@
 
         const score = document.createElement("div");
         score.className = "ciit-assessment-inline-score";
-        score.innerHTML = `Score: ${result.score} / ${result.totalQuestions} <span>(${result.percentage}%)</span>`;
+        score.textContent = `Score: ${result.score} / ${result.totalQuestions}`;
+
+        const percentage = document.createElement("span");
+        percentage.textContent = ` (${result.percentage}%)`;
+        score.appendChild(percentage);
 
         summary.append(copy, score);
         form.appendChild(summary);
@@ -262,6 +314,9 @@
             submitButton.innerHTML = '<i class="bi bi-hourglass-split me-2"></i>Submitting…';
         }
 
+        const controller = new AbortController();
+        const timeoutId = window.setTimeout(() => controller.abort(), 30000);
+
         try {
             const response = await fetch(endpoint, {
                 method: "POST",
@@ -269,7 +324,8 @@
                 credentials: "same-origin",
                 headers: {
                     Accept: "application/json"
-                }
+                },
+                signal: controller.signal
             });
 
             let payload = null;
@@ -290,7 +346,54 @@
                 submitButton.disabled = false;
                 submitButton.innerHTML = '<i class="bi bi-send-check me-2"></i>Submit assessment';
             }
-            showError(form, error instanceof Error ? error.message : "The assessment could not be submitted. Please try again.");
+
+            const message = error?.name === "AbortError"
+                ? "The assessment submission timed out. Please check your connection and try again."
+                : error instanceof Error
+                    ? error.message
+                    : "The assessment could not be submitted. Please try again.";
+            showError(form, message);
+        } finally {
+            window.clearTimeout(timeoutId);
+        }
+    }
+
+    async function restoreExistingResult(form) {
+        if (form.dataset.ciitAssessmentSubmitted === "true") {
+            return;
+        }
+
+        const endpoint = getExistingResultEndpoint(form);
+        if (!endpoint) {
+            return;
+        }
+
+        const controller = new AbortController();
+        const timeoutId = window.setTimeout(() => controller.abort(), 10000);
+
+        try {
+            const response = await fetch(endpoint, {
+                method: "GET",
+                credentials: "same-origin",
+                headers: {
+                    Accept: "application/json"
+                },
+                signal: controller.signal
+            });
+
+            if (!response.ok) {
+                return;
+            }
+
+            const payload = await response.json();
+            if (payload?.result) {
+                renderResult(form, payload.result);
+            }
+        } catch {
+            // Result restoration is best-effort; the assessment remains usable
+            // when no previous submission exists or the lookup is temporarily unavailable.
+        } finally {
+            window.clearTimeout(timeoutId);
         }
     }
 
@@ -300,6 +403,8 @@
         }
 
         form.dataset.ciitAssessmentInlineInitialized = "true";
+        normalizeQuestionOrder(form);
+
         form.addEventListener("submit", function (event) {
             if (form.dataset.ciitAssessmentSubmitted === "true") {
                 event.preventDefault();
@@ -318,6 +423,8 @@
             event.preventDefault();
             submitAssessment(form, getSubmitButton(form));
         });
+
+        void restoreExistingResult(form);
     }
 
     function initialize() {
