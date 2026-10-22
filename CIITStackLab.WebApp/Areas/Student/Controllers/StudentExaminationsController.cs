@@ -165,6 +165,27 @@ public sealed class StudentExaminationsController : Controller
             return RedirectToAction(nameof(Index));
         }
 
+        var activeAttemptExists = await _db.TopicExamAttempts.AnyAsync(attempt =>
+            attempt.UserId == userId && attempt.CourseId == courseId && attempt.TopicId == topicId
+            && (attempt.Status == "Scheduled" || attempt.Status == "Ready" || attempt.Status == "InProgress"),
+            cancellationToken);
+        if (activeAttemptExists)
+        {
+            TempData["ExamError"] = "An exam is already scheduled or active for this topic.";
+            return RedirectToAction(nameof(Index));
+        }
+
+        var questionAvailability = await _exams.CheckQuestionAvailabilityAsync(
+            userId, courseId, topicId, cancellationToken);
+        if (!questionAvailability.IsAvailable)
+        {
+            TempData["ExamError"] = questionAvailability.Error
+                ?? "Exam questions are not available for this topic right now.";
+            await NotifyIfQuestionBankUnavailableAsync(
+                userId, courseId, topicId, questionAvailability.Error, cancellationToken);
+            return RedirectToAction(nameof(Index));
+        }
+
         var attemptNumber = await _db.TopicExamAttempts.CountAsync(attempt =>
             attempt.UserId == userId && attempt.CourseId == courseId && attempt.TopicId == topicId,
             cancellationToken) + 1;
