@@ -8,6 +8,7 @@
         const style = document.createElement("style");
         style.id = styleId;
         style.textContent = `
+            .ciit-assessment-inline-results .ciit-learning-options input[type='radio'] { opacity:0 !important; }
             .ciit-assessment-inline-results .ciit-learning-options label.ciit-inline-correct { border-color:#2f9e62 !important; background:#eefaf2 !important; box-shadow:inset 0 0 0 1px rgba(47,158,98,.08); }
             .ciit-assessment-inline-results .ciit-learning-options label.ciit-inline-wrong { border-color:#d9535f !important; background:#fff0f1 !important; box-shadow:inset 0 0 0 1px rgba(217,83,95,.08); }
             .ciit-assessment-inline-results .ciit-learning-options label.ciit-inline-correct .ciit-learning-option-letter { background:#d8f5e2 !important; color:#247548 !important; }
