@@ -987,6 +987,84 @@ public class CoursesController : Controller
         return RedirectToAction(nameof(Learn), new { id, contentId });
     }
 
+    [HttpPost("Courses/Learn/{id:int}/CompleteChapter/{topicId:int}/{chapterId:int}")]
+    [Authorize(Roles = "Student")]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> CompleteChapter(
+        int id,
+        int topicId,
+        int chapterId,
+        CancellationToken cancellationToken)
+    {
+        if (id <= 0 || topicId <= 0 || chapterId <= 0)
+            return NotFound();
+
+        var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+        if (string.IsNullOrWhiteSpace(userId))
+            return Unauthorized();
+
+        var hasDemoAccess = TempData.Peek($"DemoPayment:{id}") is not null;
+        var hasCourseAccess = hasDemoAccess
+            || await _coursePurchaseService.CanAccessCourseAsync(userId, id, cancellationToken);
+        if (!hasCourseAccess)
+        {
+            TempData["CoursePaymentMessage"] = "Payment is required before chapter progress can be updated.";
+            return RedirectToAction(nameof(Details), new { id });
+        }
+
+        var chapterRows = await (
+            from note in _dbContext.TrainingNotes.AsNoTracking()
+            join module in _dbContext.CourseModules.AsNoTracking()
+                on note.TopicId equals module.TopicId
+            where module.CourseId == id
+                && module.TopicId == topicId
+                && module.Flag == 0
+                && note.TopicId == topicId
+                && note.Flag == 0
+            orderby note.SortOrder, note.Id
+            select new { note.Id, note.SortOrder })
+            .Distinct()
+            .ToListAsync(cancellationToken);
+
+        var currentIndex = chapterRows.FindIndex(chapter => chapter.Id == chapterId);
+        if (currentIndex < 0)
+            return NotFound();
+
+        if (currentIndex >= chapterRows.Count - 1)
+            return RedirectToAction(nameof(Learn), new { id, topicId, chapterId });
+
+        var allowedTopicId = await _topicExaminationService.GetCurrentTopicIdAsync(
+            userId, id, cancellationToken);
+        if (allowedTopicId.HasValue && allowedTopicId.Value != topicId)
+        {
+            TempData["LearningProgressMessage"] =
+                "Complete the current topic examination before continuing to another topic.";
+            return RedirectToAction(nameof(Learn), new { id, topicId = allowedTopicId.Value });
+        }
+
+        var contentIds = await _dbContext.Lessons.AsNoTracking()
+            .Where(lesson => lesson.Flag == 0 && lesson.NoteId == chapterId)
+            .Select(lesson => lesson.Id)
+            .Distinct()
+            .ToListAsync(cancellationToken);
+
+        foreach (var contentId in contentIds)
+        {
+            var marked = await _studentProgressService.MarkCompletedAsync(
+                userId, id, contentId, cancellationToken);
+            if (!marked)
+            {
+                TempData["LearningProgressMessage"] =
+                    "Chapter completion could not be saved. Please refresh and try again.";
+                return RedirectToAction(nameof(Learn), new { id, topicId, chapterId });
+            }
+        }
+
+        var nextChapterId = chapterRows[currentIndex + 1].Id;
+        TempData["LearningProgressMessage"] = "Chapter completed. Continue with the next chapter.";
+        return RedirectToAction(nameof(Learn), new { id, topicId, chapterId = nextChapterId });
+    }
+
     [HttpPost("Courses/Learn/{id:int}/CompleteTopic/{topicId:int}")]
     [Authorize(Roles = "Student")]
     [ValidateAntiForgeryToken]
