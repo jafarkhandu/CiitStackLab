@@ -403,36 +403,14 @@ else if (currentContent is null && currentTopic is not null)
                         {
                             <p class="ciit-learning-category-empty">No notes or chapters have been added to this topic yet.</p>
                         }
-                        else if (Model.CurrentChapterId.HasValue && currentChapter is not null)
+                        else if (currentChapter is not null)
                         {
                             <article class="ciit-learning-notes-content">
-                                <h4>@FormatLearningTitle(currentChapter.Title)</h4>
                                 @if (!string.IsNullOrWhiteSpace(currentChapter.NotesHtml))
                                 {
                                     @Html.Raw(currentChapter.NotesHtml)
                                 }
-                                else
-                                {
-                                    <p class="ciit-learning-category-empty">No notes have been added to this chapter yet.</p>
-                                }
                             </article>
-                        }
-                        else
-                        {
-                            @foreach (var chapter in currentTopic.Chapters)
-                            {
-                                <article class="ciit-learning-notes-content">
-                                    <h4>@FormatLearningTitle(chapter.Title)</h4>
-                                    @if (!string.IsNullOrWhiteSpace(chapter.NotesHtml))
-                                    {
-                                        @Html.Raw(chapter.NotesHtml)
-                                    }
-                                    else
-                                    {
-                                        <p class="ciit-learning-category-empty">No notes have been added to this chapter yet.</p>
-                                    }
-                                </article>
-                            }
                         }
                     </section>
 

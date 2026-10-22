@@ -2104,8 +2104,15 @@
 .ciit-learning-all-assessments .ciit-learning-subpage-pager {
     margin: 12px 0;
 }
+.ciit-learning-main-card .ciit-learning-notes-panel {
+    min-height: 70vh;
+}
 .ciit-learning-main-card .ciit-learning-notes-content {
-    line-height: 1.85;
+    width: 100%;
+    min-height: 62vh;
+    padding: clamp(20px, 2.8vw, 40px);
+    font-size: 1.02rem;
+    line-height: 1.9;
 }
 .ciit-learning-main-card .ciit-learning-notes-content > * {
     max-width: 100%;
