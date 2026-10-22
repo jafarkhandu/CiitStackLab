@@ -5,6 +5,10 @@
 
     var message = TempData["AdminNotesMessage"] as string;
     var type = TempData["AdminNotesMessageType"] as string;
+    var topicGroups = Model
+        .GroupBy(note => new { note.TopicId, note.TopicTitle })
+        .OrderBy(group => group.Key.TopicTitle)
+        .ToList();
 }
 
 <section class="ciit-notes-page">
@@ -12,7 +16,7 @@
         <div>
             <span class="ciit-notes-eyebrow">Learning</span>
             <h1>Notes Chapters</h1>
-            <p>Manage independent Notes chapters for each topic.</p>
+            <p>Manage Notes chapters by topic from one organized view.</p>
         </div>
 
         <a asp-area="Admin"
@@ -39,12 +43,13 @@
 
                 <input id="notesSearch"
                        type="search"
-                       placeholder="Search topic, chapter or title..." />
+                       placeholder="Search topic, chapter or title..."
+                       aria-label="Search Notes" />
             </div>
 
             <span id="notesVisibleCount"
                   class="ciit-notes-count">
-                @Model.Count chapters
+                @topicGroups.Count topics · @Model.Count chapters
             </span>
         </div>
 
@@ -52,80 +57,112 @@
             <table class="ciit-notes-table">
                 <thead>
                     <tr>
-                        <th>Topic</th>
+                        <th>Topic / Chapter</th>
                         <th>Chapter ID</th>
                         <th>Title</th>
                         <th>Order</th>
                         <th>Updated</th>
-                        <th></th>
+                        <th>Actions</th>
                     </tr>
                 </thead>
 
                 <tbody>
-                    @foreach (var note in Model)
+                    @foreach (var group in topicGroups)
                     {
-                        <tr data-note-row
-                            data-search="@($"{note.TopicTitle} {note.ChapterId} {note.Title}")">
+                        var topicSearch = string.Join(
+                            " ",
+                            group.Select(note => $"{note.TopicTitle} {note.ChapterId} {note.Title}"));
 
-                            <td>
-                                <span class="ciit-notes-topic">
-                                    @note.TopicTitle
-                                </span>
-
-                                <small class="d-block text-secondary">
-                                    #@note.TopicId
-                                </small>
-                            </td>
-
-                            <td>
-                                <code>@note.ChapterId</code>
-                            </td>
-
-                            <td>
-                                <div class="ciit-notes-name">
-                                    <span class="ciit-notes-icon">
-                                        <i class="bi bi-journal-text"></i>
+                        <tr class="ciit-notes-topic-row"
+                            data-topic-row
+                            data-topic-id="@group.Key.TopicId"
+                            data-search="@topicSearch">
+                            <td colspan="6">
+                                <button type="button"
+                                        class="ciit-notes-topic-toggle"
+                                        data-notes-topic-toggle
+                                        data-topic-id="@group.Key.TopicId"
+                                        aria-expanded="false">
+                                    <span class="ciit-notes-topic-chevron" aria-hidden="true">
+                                        <i class="bi bi-chevron-right"></i>
                                     </span>
 
-                                    <div>
-                                        <strong>@note.Title</strong>
-                                    </div>
-                                </div>
-                            </td>
+                                    <span class="ciit-notes-topic-main">
+                                        <strong>@group.Key.TopicTitle</strong>
+                                        <small>Topic #@group.Key.TopicId</small>
+                                    </span>
 
-                            <td>@note.SortOrder</td>
-
-                            <td>
-                                @((note.UpdatedAt ?? note.CreatedAt)?.ToString("dd MMM yyyy") ?? "—")
-                            </td>
-
-                            <td class="text-nowrap">
-                                <a asp-area="Admin"
-                                   asp-controller="Notes"
-                                   asp-action="Edit"
-                                   asp-route-id="@note.Id"
-                                   class="ciit-notes-edit-btn">
-                                    <i class="bi bi-pencil-square"></i>
-                                    Edit
-                                </a>
-
-                                <form asp-area="Admin"
-                                      asp-controller="Notes"
-                                      asp-action="Delete"
-                                      asp-route-id="@note.Id"
-                                      method="post"
-                                      class="d-inline"
-                                      onsubmit="return confirm('Delete this Notes chapter?');">
-
-                                    @Html.AntiForgeryToken()
-
-                                    <button class="ciit-notes-delete-btn"
-                                            type="submit">
-                                        <i class="bi bi-trash3"></i>
-                                    </button>
-                                </form>
+                                    <span class="ciit-notes-topic-count">
+                                        @group.Count() @(group.Count() == 1 ? "chapter" : "chapters")
+                                    </span>
+                                </button>
                             </td>
                         </tr>
+
+                        @foreach (var note in group.OrderBy(note => note.SortOrder).ThenBy(note => note.Id))
+                        {
+                            <tr class="ciit-notes-chapter-row"
+                                data-chapter-row
+                                data-topic-id="@group.Key.TopicId"
+                                data-search="@($"{note.TopicTitle} {note.ChapterId} {note.Title}")"
+                                hidden>
+                                <td>
+                                    <div class="ciit-notes-chapter-label">
+                                        <span class="ciit-notes-chapter-branch" aria-hidden="true"></span>
+                                        <span class="ciit-notes-chapter-index">
+                                            <i class="bi bi-journal-text"></i>
+                                        </span>
+                                        <span>Chapter</span>
+                                    </div>
+                                </td>
+
+                                <td>
+                                    <code>@note.ChapterId</code>
+                                </td>
+
+                                <td>
+                                    <div class="ciit-notes-name">
+                                        <div>
+                                            <strong>@note.Title</strong>
+                                        </div>
+                                    </div>
+                                </td>
+
+                                <td>@note.SortOrder</td>
+
+                                <td>
+                                    @((note.UpdatedAt ?? note.CreatedAt)?.ToString("dd MMM yyyy") ?? "—")
+                                </td>
+
+                                <td class="text-nowrap">
+                                    <a asp-area="Admin"
+                                       asp-controller="Notes"
+                                       asp-action="Edit"
+                                       asp-route-id="@note.Id"
+                                       class="ciit-notes-edit-btn">
+                                        <i class="bi bi-pencil-square"></i>
+                                        Edit
+                                    </a>
+
+                                    <form asp-area="Admin"
+                                          asp-controller="Notes"
+                                          asp-action="Delete"
+                                          asp-route-id="@note.Id"
+                                          method="post"
+                                          class="d-inline"
+                                          onsubmit="return confirm('Delete this Notes chapter?');">
+
+                                        @Html.AntiForgeryToken()
+
+                                        <button class="ciit-notes-delete-btn"
+                                                type="submit"
+                                                aria-label="Delete @note.Title">
+                                            <i class="bi bi-trash3"></i>
+                                        </button>
+                                    </form>
+                                </td>
+                            </tr>
+                        }
                     }
                 </tbody>
             </table>
@@ -135,7 +172,8 @@
              class="ciit-notes-empty"
              hidden>
             <i class="bi bi-search"></i>
-            <h3>No matching chapters</h3>
+            <h3>No matching topics or chapters</h3>
+            <p>Try a different topic, chapter ID, or title.</p>
         </div>
 
         @if (Model.Count == 0)
@@ -155,33 +193,110 @@
     <script>
         (() => {
             const searchInput = document.getElementById("notesSearch");
-            const rows = [...document.querySelectorAll("[data-note-row]")];
+            const topicRows = [...document.querySelectorAll("[data-topic-row]")];
+            const chapterRows = [...document.querySelectorAll("[data-chapter-row]")];
             const count = document.getElementById("notesVisibleCount");
             const empty = document.getElementById("notesSearchEmpty");
+            const expandedTopics = new Set();
+
+            const chaptersFor = topicId =>
+                chapterRows.filter(row => row.dataset.topicId === topicId);
+
+            const setExpanded = (topicId, expanded) => {
+                const topicRow = topicRows.find(row => row.dataset.topicId === topicId);
+                const toggle = topicRow?.querySelector("[data-notes-topic-toggle]");
+
+                if (!toggle) {
+                    return;
+                }
+
+                toggle.setAttribute("aria-expanded", expanded ? "true" : "false");
+                topicRow.classList.toggle("is-expanded", expanded);
+
+                chaptersFor(topicId).forEach(row => {
+                    row.hidden = !expanded;
+                });
+
+                if (expanded) {
+                    expandedTopics.add(topicId);
+                } else {
+                    expandedTopics.delete(topicId);
+                }
+            };
+
+            topicRows.forEach(row => {
+                const toggle = row.querySelector("[data-notes-topic-toggle]");
+
+                toggle?.addEventListener("click", () => {
+                    const topicId = row.dataset.topicId;
+                    const expanded = toggle.getAttribute("aria-expanded") === "true";
+                    setExpanded(topicId, !expanded);
+                });
+            });
 
             searchInput?.addEventListener("input", () => {
                 const query = searchInput.value.trim().toLowerCase();
-                let visibleCount = 0;
+                let visibleTopics = 0;
+                let visibleChapters = 0;
 
-                rows.forEach(row => {
-                    const matches =
-                        !query ||
-                        (row.dataset.search || "").toLowerCase().includes(query);
+                topicRows.forEach(topicRow => {
+                    const topicId = topicRow.dataset.topicId;
+                    const topicMatches = (topicRow.dataset.search || "")
+                        .toLowerCase()
+                        .includes(query);
+                    const topicChapters = chaptersFor(topicId);
+                    const matchingChapters = topicChapters.filter(row =>
+                        (row.dataset.search || "").toLowerCase().includes(query));
+                    const topicVisible = !query || topicMatches || matchingChapters.length > 0;
 
-                    row.hidden = !matches;
+                    topicRow.hidden = !topicVisible;
 
-                    if (matches) {
-                        visibleCount++;
+                    if (!topicVisible) {
+                        return;
                     }
+
+                    visibleTopics++;
+
+                    if (!query) {
+                        topicChapters.forEach(row => {
+                            row.hidden = !expandedTopics.has(topicId);
+                        });
+
+                        if (expandedTopics.has(topicId)) {
+                            visibleChapters += topicChapters.length;
+                        }
+
+                        return;
+                    }
+
+                    const shouldShowAll = topicMatches;
+                    topicChapters.forEach(row => {
+                        const show = shouldShowAll ||
+                            (row.dataset.search || "").toLowerCase().includes(query);
+
+                        row.hidden = !show;
+
+                        if (show) {
+                            visibleChapters++;
+                        }
+                    });
+
+                    setExpanded(topicId, true);
                 });
 
                 if (count) {
-                    count.textContent =
-                        visibleCount + " chapter" + (visibleCount === 1 ? "" : "s");
+                    if (!query) {
+                        const totalChapters = chapterRows.length;
+                        count.textContent =
+                            `${topicRows.length} topic${topicRows.length === 1 ? "" : "s"} · ${totalChapters} chapter${totalChapters === 1 ? "" : "s"}`;
+                    } else {
+                        count.textContent =
+                            `${visibleTopics} topic${visibleTopics === 1 ? "" : "s"} · ${visibleChapters} chapter${visibleChapters === 1 ? "" : "s"}`;
+                    }
                 }
 
                 if (empty) {
-                    empty.hidden = visibleCount !== 0;
+                    empty.hidden = visibleTopics !== 0;
                 }
             });
         })();
