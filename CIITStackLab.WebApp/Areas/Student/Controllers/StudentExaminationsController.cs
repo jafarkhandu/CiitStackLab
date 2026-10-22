@@ -170,8 +170,8 @@ public sealed class StudentExaminationsController : Controller
             cancellationToken) + 1;
         if (attemptNumber <= 2)
         {
-            TempData["ExamMessage"] = "Your next two attempts are free. You can start the examination directly.";
-            return RedirectToAction(nameof(ReExam), new { courseId, topicId });
+            TempData["ExamMessage"] = "Your next two attempts are free. Open the latest failed attempt and choose Start re-exam.";
+            return RedirectToAction(nameof(Index));
         }
 
         var existingUnusedPayment = await _db.PaymentTransactions.AnyAsync(payment =>
