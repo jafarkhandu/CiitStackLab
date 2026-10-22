@@ -1,6 +1,7 @@
 using System.Security.Claims;
 using CIITStackLab.Application.DTOs;
 using CIITStackLab.Application.Interfaces;
+using CIITStackLab.Domain.Entities;
 using CIITStackLab.Infrastructure.Persistence;
 using CIITStackLab.Infrastructure.Payments;
 using CIITStackLab.Infrastructure.Services;
