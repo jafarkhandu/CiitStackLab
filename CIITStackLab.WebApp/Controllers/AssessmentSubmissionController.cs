@@ -21,6 +21,44 @@ public sealed class AssessmentSubmissionController : Controller
         _coursePurchaseService = coursePurchaseService;
     }
 
+    [HttpGet("Courses/Learn/{id:int}/TopicAssessmentResult/{topicId:int}")]
+    public async Task<IActionResult> GetTopicAssessmentResult(
+        int id,
+        int topicId,
+        CancellationToken cancellationToken)
+    {
+        if (id <= 0 || topicId <= 0)
+        {
+            return NotFound();
+        }
+
+        var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+        if (string.IsNullOrWhiteSpace(userId))
+        {
+            return Unauthorized();
+        }
+
+        var hasDemoAccess = TempData.Peek($"DemoPayment:{id}") is not null;
+        var hasCourseAccess = hasDemoAccess
+            || await _coursePurchaseService.CanAccessCourseAsync(userId, id, cancellationToken);
+
+        if (!hasCourseAccess)
+        {
+            return StatusCode(StatusCodes.Status403Forbidden, new
+            {
+                message = "Payment is required before an assessment result can be viewed."
+            });
+        }
+
+        var result = await _courseAssessmentService.GetExistingTopicAttemptAsync(
+            userId,
+            id,
+            topicId,
+            cancellationToken);
+
+        return Json(new { result });
+    }
+
     [HttpPost("Courses/Learn/{id:int}/AssessmentInline/{contentId:int}")]
     [ValidateAntiForgeryToken]
     public Task<IActionResult> SubmitContentAssessment(
