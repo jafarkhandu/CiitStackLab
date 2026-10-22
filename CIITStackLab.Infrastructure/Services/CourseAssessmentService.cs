@@ -142,6 +142,21 @@ public sealed class CourseAssessmentService : ICourseAssessmentService
                 "There are no active assessment questions for this lesson or chapter.");
         }
 
+        var activeQuestionIds = questions
+            .Select(question => question.Id)
+            .ToHashSet();
+
+        if (await HasExistingAttemptAsync(
+                userId,
+                courseId,
+                contentId,
+                activeQuestionIds,
+                cancellationToken))
+        {
+            return AssessmentSubmissionOutcomeDto.Failure(
+                "This assessment has already been submitted. The displayed result is final.");
+        }
+
         if (answers is null || answers.Count != questions.Count)
         {
             return AssessmentSubmissionOutcomeDto.Failure(
@@ -160,10 +175,6 @@ public sealed class CourseAssessmentService : ICourseAssessmentService
                     "The assessment contains duplicate or invalid question identifiers.");
             }
         }
-
-        var activeQuestionIds = questions
-            .Select(question => question.Id)
-            .ToHashSet();
 
         if (!answersByQuestionId.Keys.ToHashSet().SetEquals(activeQuestionIds))
         {
@@ -287,6 +298,64 @@ public sealed class CourseAssessmentService : ICourseAssessmentService
         }
 
         return MapResult(attempt, questions);
+    }
+
+    private async Task<bool> HasExistingAttemptAsync(
+        string userId,
+        int courseId,
+        int? contentId,
+        IReadOnlySet<int> activeQuestionIds,
+        CancellationToken cancellationToken)
+    {
+        if (contentId.HasValue)
+        {
+            return await _dbContext.StudentAssessmentAttempts
+                .AsNoTracking()
+                .AnyAsync(
+                    attempt => attempt.UserId == userId
+                        && attempt.CourseId == courseId
+                        && attempt.ContentId == contentId.Value,
+                    cancellationToken);
+        }
+
+        var topicAttempts = await _dbContext.StudentAssessmentAttempts
+            .AsNoTracking()
+            .Where(attempt => attempt.UserId == userId
+                && attempt.CourseId == courseId
+                && attempt.ContentId == null)
+            .Select(attempt => attempt.AnswersJson)
+            .ToListAsync(cancellationToken);
+
+        foreach (var answersJson in topicAttempts)
+        {
+            try
+            {
+                var previousQuestions = JsonSerializer.Deserialize<List<AssessmentQuestionResultDto>>(
+                    answersJson,
+                    JsonOptions);
+
+                if (previousQuestions is null
+                    || previousQuestions.Count != activeQuestionIds.Count)
+                {
+                    continue;
+                }
+
+                var previousQuestionIds = previousQuestions
+                    .Select(question => question.QuestionId)
+                    .ToHashSet();
+
+                if (previousQuestionIds.SetEquals(activeQuestionIds))
+                {
+                    return true;
+                }
+            }
+            catch (JsonException)
+            {
+                // Ignore an invalid historical attempt and allow the active assessment to proceed.
+            }
+        }
+
+        return false;
     }
 
     private async Task<bool> IsActiveCourseLessonAsync(
