@@ -69,11 +69,11 @@
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" />
     <link href="https://fonts.googleapis.com/css2?family=Fira+Code:wght@400;500;600;700;800&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
-    <link rel="stylesheet" href="~/css/site.css" />
-    <link rel="stylesheet" href="~/css/course-environment.css" asp-append-version="true" />
-    <link rel="stylesheet" href="~/css/course-switcher.css" asp-append-version="true" />
+    <link rel="stylesheet" href="~/css/global/site.css" />
+    <link rel="stylesheet" href="~/css/student/course-environment.css" asp-append-version="true" />
+    <link rel="stylesheet" href="~/css/student/course-switcher.css" asp-append-version="true" />
     @await RenderSectionAsync("Styles", required: false)
-    <link rel="stylesheet" href="~/css/course-learning-enhancements.css" asp-append-version="true" />
+    <link rel="stylesheet" href="~/css/student/course-learning-enhancements.css" asp-append-version="true" />
     <link rel="stylesheet" href="~/css/course-sidebar-art.css" asp-append-version="true" />
 </head>
 <body class="ciit-course-environment-body @(currentController.Equals("Courses", StringComparison.OrdinalIgnoreCase) && currentAction.Equals("Learn", StringComparison.OrdinalIgnoreCase) ? "ciit-learning-mode" : "")">
@@ -245,19 +245,16 @@
                             <ellipse cx="120" cy="142" rx="94" ry="18" fill="rgba(126,171,232,.18)" />
                             <circle cx="205" cy="73" r="22" fill="rgba(255,255,255,.26)" />
                             <circle cx="225" cy="96" r="8" fill="rgba(255,255,255,.38)" />
-
                             <g class="ciit-art-leaf">
                                 <path d="M44 116 C28 107, 27 96, 29 88 C40 90, 49 98, 44 116Z" fill="#58a95d" />
                                 <path d="M44 115 C51 100, 60 98, 66 101 C64 111, 56 117, 44 115Z" fill="#3e944c" />
                                 <path d="M45 118 C47 104, 46 96, 42 87" fill="none" stroke="#3f8c51" stroke-width="3" stroke-linecap="round" />
                             </g>
-
                             <g>
                                 <rect x="17" y="136" width="72" height="7" rx="3.5" fill="#e9a35d" />
                                 <rect x="12" y="129" width="66" height="7" rx="3.5" fill="#d97f53" />
                                 <rect x="22" y="143" width="62" height="7" rx="3.5" fill="#c98a4b" />
                             </g>
-
                             <g>
                                 <circle cx="105" cy="64" r="20" fill="#d58d68" />
                                 <path d="M84 62 C86 43, 97 36, 111 40 C123 43, 128 52, 126 66 C119 55, 106 51, 91 56Z" fill="#1d2d45" />
@@ -267,7 +264,6 @@
                                 <path d="M78 105 L67 119 L81 128" fill="none" stroke="#d58d68" stroke-width="8" stroke-linecap="round" />
                                 <path d="M130 105 L143 117" fill="none" stroke="#d58d68" stroke-width="8" stroke-linecap="round" />
                             </g>
-
                             <g class="ciit-art-laptop">
                                 <path d="M119 101 L166 83 L190 99 L143 117Z" fill="#172b48" stroke="#fff" stroke-width="2" />
                                 <path d="M143 117 L190 99 L181 115 L135 133Z" fill="#7d94b1" />
@@ -288,16 +284,13 @@
         <div class="container-fluid px-3 px-lg-4">
             <div class="d-flex flex-column flex-sm-row justify-content-between align-items-center gap-2">
                 <span>&copy; @DateTime.Now.Year - CIIT Stack Lab</span>
-                @if (!(currentController.Equals("Courses", StringComparison.OrdinalIgnoreCase) && currentAction.Equals("Learn", StringComparison.OrdinalIgnoreCase)))
-                    {
-                        <a asp-controller="Home" asp-action="Index">Exit Course</a>
-                    }
+
             </div>
         </div>
     </footer>
 
     <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
-    <script src="~/js/site.js"></script>
+    <script src="~/js/global/site.js"></script>
     @if (!string.IsNullOrWhiteSpace(courseId))
     {
         <script>

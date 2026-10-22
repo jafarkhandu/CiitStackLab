@@ -50,17 +50,17 @@
                 <tbody>
                 @foreach (var course in Model.ActiveCourses)
                 {
-                    <tr data-course-row data-course-name="@course.Title.ToLowerInvariant()">
+                    <tr data-course-row data-course-name="@course.Title.ToLowerInvariant()" data-course-price="@course.TotalPrice.ToString(System.Globalization.CultureInfo.InvariantCulture)">
                         <td class="course-id-cell">#@course.Id</td>
                         <td>
                             <div class="course-name-cell">
-                                <div class="course-name-icon"><i class="bi bi-journal-code"></i></div>
+                                <div class="course-name-icon">@if (!string.IsNullOrWhiteSpace(course.ImagePath)) { <img src="@course.ImagePath" alt="@course.Title course image" style="width:100%;height:100%;object-fit:cover;border-radius:inherit;" /> } else { <i class="bi bi-journal-code"></i> }</div>
                                 <div><strong>@course.Title</strong><span>Active course</span></div>
                             </div>
                         </td>
                         <td class="course-value">@course.TopicCount</td>
                         <td class="course-value">₹@course.TotalPrice.ToString("N2")</td>
-                        <td class="course-value">—</td>
+                        <td class="course-value">@if (course.DiscountMode == "percentage" && course.DiscountValue.HasValue) { <span>@course.DiscountValue.Value.ToString("0.##")% off</span> } else if (course.DiscountMode == "direct" && course.DiscountValue.HasValue) { <span>₹@course.DiscountValue.Value.ToString("N2")</span> } else { <span>—</span> }</td>
                         <td>
                             <div class="course-row-actions">
                                 <a asp-area="Admin" asp-controller="Courses" asp-action="Index" asp-route-editId="@course.Id" class="ciit-course-icon-btn" title="Edit">
@@ -135,7 +135,7 @@
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
 
-            <form asp-area="Admin" asp-controller="Courses" asp-action="Save" method="post" id="courseForm">
+            <form asp-area="Admin" asp-controller="Courses" asp-action="Save" method="post" enctype="multipart/form-data" id="courseForm">
                 @Html.AntiForgeryToken()
                 <input type="hidden" id="courseId" name="Id" value="0" />
 
@@ -146,9 +146,27 @@
                     </div>
 
                     <div class="ciit-course-form-field mt-3">
-                        <label for="discountPrice">Discount price</label>
-                        <input id="discountPrice" name="DiscountPrice" class="form-control" type="number" min="0" step="0.01" placeholder="e.g. 4999.00" />
-                        <small class="text-muted">UI only for now; backend saving will be connected separately.</small>
+                        <label for="courseImage">Course image</label>
+                        <input id="courseImage" name="ImageFile" class="form-control" type="file" accept=".jpg,.jpeg,.png,.webp,image/jpeg,image/png,image/webp" />
+                        <small class="text-muted">JPG, PNG, or WebP; maximum 5 MB. Leave empty while editing to keep the current image.</small>
+                        <div id="courseImagePreviewWrap" class="mt-2" hidden>
+                            <img id="courseImagePreview" alt="Course image preview" style="display:block;max-width:100%;max-height:180px;border-radius:10px;object-fit:contain;" />
+                        </div>
+                    </div>
+
+                    <div class="ciit-course-form-field mt-3">
+                        <label for="discountMode">Discount type</label>
+                        <select id="discountMode" name="DiscountMode" class="form-select">
+                            <option value="">No discount</option>
+                            <option value="percentage">Percentage discount (%)</option>
+                            <option value="direct">Set discounted price (₹)</option>
+                        </select>
+                    </div>
+                    <div class="ciit-course-form-field mt-3" id="discountValueField" hidden>
+                        <label for="discountValue" id="discountValueLabel">Discount value</label>
+                        <input id="discountValue" name="DiscountValue" class="form-control" type="number" min="0" step="0.01" placeholder="e.g. 20" />
+                        <small id="discountValueHelp" class="text-muted">Choose a discount type to enter its value.</small>
+                        <div class="mt-2" id="discountPreview" aria-live="polite"></div>
                     </div>
 
                     <div class="ciit-course-form-hint">
@@ -176,7 +194,10 @@
     <script>
         window.ciitEditCourse = {
             id: @edit.Id,
-            courseName: @Html.Raw(System.Text.Json.JsonSerializer.Serialize(edit.CourseName))
+            courseName: @Html.Raw(System.Text.Json.JsonSerializer.Serialize(edit.CourseName)),
+            imagePath: @Html.Raw(System.Text.Json.JsonSerializer.Serialize(edit.ImagePath)),
+            discountMode: @Html.Raw(System.Text.Json.JsonSerializer.Serialize(edit.DiscountMode)),
+            discountValue: @Html.Raw(System.Text.Json.JsonSerializer.Serialize(edit.DiscountValue))
         };
     </script>
 }

@@ -10,8 +10,9 @@
 }
 
 @section Styles {
-    <link rel="stylesheet" href="~/css/student-learning-dashboard.css" asp-append-version="true" />
-    <link rel="stylesheet" href="~/css/student-learning-dashboard-modals.css" asp-append-version="true" />
+    <link rel="stylesheet" href="~/css/student/student-learning-dashboard.css" asp-append-version="true" />
+    <link rel="stylesheet" href="~/css/student/student-learning-dashboard-modals.css" asp-append-version="true" />
+
     <style>
         /* Keep the Learning Hub sidebar fixed while the dashboard content scrolls. */
         body:has(.ciit-student-dashboard) .ciit-course-global-sidebar {
@@ -23,7 +24,7 @@
             z-index: 1020;
         }
 
-        /* A fixed grid item leaves the first grid column available to the main content. */
+        /* Keep dashboard content in the second grid column. */
         body:has(.ciit-student-dashboard) .ciit-course-environment-main {
             grid-column: 2;
             min-width: 0;

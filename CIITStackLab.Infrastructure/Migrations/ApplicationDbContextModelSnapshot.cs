@@ -17,7 +17,7 @@ namespace CIITStackLab.Infrastructure.Migrations
         {
 #pragma warning disable 612, 618
             modelBuilder
-                .HasAnnotation("ProductVersion", "10.0.0")
+                .HasAnnotation("ProductVersion", "10.0.13")
                 .HasAnnotation("Relational:MaxIdentifierLength", 128);
 
             SqlServerModelBuilderExtensions.UseIdentityColumns(modelBuilder);
@@ -191,71 +191,6 @@ namespace CIITStackLab.Infrastructure.Migrations
                     b.ToTable("tblcontent_program_questions", "erpsystem");
                 });
 
-            modelBuilder.Entity("CIITStackLab.Domain.Entities.TopicExamQuestion", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("int")
-                        .HasColumnName("exam_question_id");
-
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
-
-                    b.Property<int>("CorrectOptionNumber")
-                        .HasColumnType("int")
-                        .HasColumnName("correct_option_number");
-
-                    b.Property<DateTime>("CreatedAtUtc")
-                        .HasColumnType("datetime2")
-                        .HasColumnName("created_at_utc");
-
-                    b.Property<int>("Flag")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("int")
-                        .HasDefaultValue(0)
-                        .HasColumnName("flag");
-
-                    b.Property<string>("Option1")
-                        .IsRequired()
-                        .HasMaxLength(1000)
-                        .HasColumnType("nvarchar(1000)")
-                        .HasColumnName("option1");
-
-                    b.Property<string>("Option2")
-                        .IsRequired()
-                        .HasMaxLength(1000)
-                        .HasColumnType("nvarchar(1000)")
-                        .HasColumnName("option2");
-
-                    b.Property<string>("Option3")
-                        .IsRequired()
-                        .HasMaxLength(1000)
-                        .HasColumnType("nvarchar(1000)")
-                        .HasColumnName("option3");
-
-                    b.Property<string>("Option4")
-                        .IsRequired()
-                        .HasMaxLength(1000)
-                        .HasColumnType("nvarchar(1000)")
-                        .HasColumnName("option4");
-
-                    b.Property<string>("Question")
-                        .IsRequired()
-                        .HasMaxLength(2000)
-                        .HasColumnType("nvarchar(2000)")
-                        .HasColumnName("question");
-
-                    b.Property<int>("TopicId")
-                        .HasColumnType("int")
-                        .HasColumnName("topic_id");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("TopicId")
-                        .HasDatabaseName("IX_topic_exam_questions_topic_id");
-
-                    b.ToTable("tblstudent_topic_exam_questions", "erpsystem");
-                });
-
             modelBuilder.Entity("CIITStackLab.Domain.Entities.ContentQuestion", b =>
                 {
                     b.Property<int>("Id")
@@ -363,6 +298,20 @@ namespace CIITStackLab.Infrastructure.Migrations
                         .HasColumnType("int")
                         .HasColumnName("flag");
 
+                    b.Property<string>("ImagePath")
+                        .HasMaxLength(500)
+                        .HasColumnType("nvarchar(500)")
+                        .HasColumnName("course_image_path");
+
+                    b.Property<string>("DiscountMode")
+                        .HasMaxLength(20)
+                        .HasColumnType("nvarchar(20)")
+                        .HasColumnName("discount_mode");
+
+                    b.Property<decimal?>("DiscountValue")
+                        .HasColumnType("decimal(10,2)")
+                        .HasColumnName("discount_value");
+
                     b.Property<double?>("InstallmentPercentage")
                         .HasColumnType("float")
                         .HasColumnName("installment_percentage");
@@ -432,6 +381,111 @@ namespace CIITStackLab.Infrastructure.Migrations
                     b.ToTable("tbltraining_course_topics", "erpsystem");
                 });
 
+            modelBuilder.Entity("CIITStackLab.Domain.Entities.ExamApplicationNotification", b =>
+                {
+                    b.Property<long>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("bigint")
+                        .HasColumnName("notification_id");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<long>("Id"));
+
+                    b.Property<string>("AdminUserId")
+                        .IsRequired()
+                        .HasMaxLength(450)
+                        .HasColumnType("nvarchar(450)")
+                        .HasColumnName("admin_user_id");
+
+                    b.Property<int>("CourseId")
+                        .HasColumnType("int")
+                        .HasColumnName("course_id");
+
+                    b.Property<string>("CourseTitle")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("nvarchar(200)")
+                        .HasColumnName("course_title");
+
+                    b.Property<DateTime>("CreatedAtUtc")
+                        .HasColumnType("datetime2")
+                        .HasColumnName("created_at_utc");
+
+                    b.Property<string>("DedupeKey")
+                        .IsRequired()
+                        .HasMaxLength(64)
+                        .HasColumnType("char(64)")
+                        .HasColumnName("dedupe_key")
+                        .IsFixedLength();
+
+                    b.Property<bool>("IsDelivered")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("bit")
+                        .HasDefaultValue(false)
+                        .HasColumnName("is_delivered");
+
+                    b.Property<bool>("IsRead")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("bit")
+                        .HasDefaultValue(false)
+                        .HasColumnName("is_read");
+
+                    b.Property<DateTime>("NotificationDay")
+                        .HasColumnType("date")
+                        .HasColumnName("notification_day");
+
+                    b.Property<string>("Reason")
+                        .IsRequired()
+                        .HasMaxLength(1000)
+                        .HasColumnType("nvarchar(1000)")
+                        .HasColumnName("reason");
+
+                    b.Property<int>("RequiredQuestionCount")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int")
+                        .HasDefaultValue(50)
+                        .HasColumnName("required_question_count");
+
+                    b.Property<string>("StudentName")
+                        .IsRequired()
+                        .HasMaxLength(256)
+                        .HasColumnType("nvarchar(256)")
+                        .HasColumnName("student_name");
+
+                    b.Property<string>("StudentUserId")
+                        .IsRequired()
+                        .HasMaxLength(450)
+                        .HasColumnType("nvarchar(450)")
+                        .HasColumnName("student_user_id");
+
+                    b.Property<int>("TopicId")
+                        .HasColumnType("int")
+                        .HasColumnName("topic_id");
+
+                    b.Property<string>("TopicTitle")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("nvarchar(200)")
+                        .HasColumnName("topic_title");
+
+                    b.Property<int>("ValidQuestionCount")
+                        .HasColumnType("int")
+                        .HasColumnName("valid_question_count");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("DedupeKey")
+                        .IsUnique()
+                        .HasDatabaseName("UX_exam_app_notification_dedupe_key");
+
+                    b.HasIndex("AdminUserId", "IsDelivered")
+                        .HasDatabaseName("IX_exam_app_notification_admin_delivered");
+
+                    b.HasIndex("AdminUserId", "IsRead", "CreatedAtUtc")
+                        .HasDatabaseName("IX_exam_app_notification_admin_read_created");
+
+                    b.ToTable("tbl_exam_application_notifications", "erpsystem");
+                });
+
             modelBuilder.Entity("CIITStackLab.Domain.Entities.Lesson", b =>
                 {
                     b.Property<int>("Id")
@@ -491,6 +545,73 @@ namespace CIITStackLab.Infrastructure.Migrations
                     b.HasIndex("TopicId");
 
                     b.ToTable("tbltraining_topic_contents", "erpsystem");
+                });
+
+            modelBuilder.Entity("CIITStackLab.Domain.Entities.PaymentTransaction", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int")
+                        .HasColumnName("payment_transaction_id");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<decimal>("Amount")
+                        .HasPrecision(18, 2)
+                        .HasColumnType("decimal(18,2)")
+                        .HasColumnName("amount");
+
+                    b.Property<DateTime?>("CompletedAt")
+                        .HasColumnType("datetime2")
+                        .HasColumnName("completed_at");
+
+                    b.Property<int>("CourseId")
+                        .HasColumnType("int")
+                        .HasColumnName("course_id");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("datetime2")
+                        .HasColumnName("created_at");
+
+                    b.Property<string>("MerchantOrderId")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)")
+                        .HasColumnName("merchant_order_id");
+
+                    b.Property<string>("PhonePeOrderId")
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)")
+                        .HasColumnName("phonepe_order_id");
+
+                    b.Property<string>("Status")
+                        .IsRequired()
+                        .HasMaxLength(32)
+                        .HasColumnType("nvarchar(32)")
+                        .HasColumnName("status");
+
+                    b.Property<DateTime>("UpdatedAt")
+                        .HasColumnType("datetime2")
+                        .HasColumnName("updated_at");
+
+                    b.Property<string>("UserId")
+                        .IsRequired()
+                        .HasMaxLength(450)
+                        .HasColumnType("nvarchar(450)")
+                        .HasColumnName("user_id");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("CourseId");
+
+                    b.HasIndex("MerchantOrderId")
+                        .IsUnique()
+                        .HasDatabaseName("UX_tblpayment_transactions_merchant_order_id");
+
+                    b.HasIndex("UserId", "CourseId", "Status")
+                        .HasDatabaseName("IX_tblpayment_transactions_user_course_status");
+
+                    b.ToTable("tblpayment_transactions", "erpsystem");
                 });
 
             modelBuilder.Entity("CIITStackLab.Domain.Entities.StudentAssessmentAttempt", b =>
@@ -761,71 +882,221 @@ namespace CIITStackLab.Infrastructure.Migrations
 
             modelBuilder.Entity("CIITStackLab.Domain.Entities.TopicExamAttempt", b =>
                 {
-                    b.Property<long>("Id").ValueGeneratedOnAdd().HasColumnType("bigint").HasColumnName("exam_attempt_id");
+                    b.Property<long>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("bigint")
+                        .HasColumnName("exam_attempt_id");
+
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<long>("Id"));
-                    b.Property<string>("UserId").IsRequired().HasMaxLength(450).HasColumnType("nvarchar(450)").HasColumnName("user_id");
-                    b.Property<int>("CourseId").HasColumnType("int").HasColumnName("course_id");
-                    b.Property<int>("TopicId").HasColumnType("int").HasColumnName("topic_id");
-                    b.Property<DateTime>("ScheduledAtUtc").HasColumnType("datetime2").HasColumnName("scheduled_at_utc");
-                    b.Property<DateTime?>("StartedAtUtc").HasColumnType("datetime2").HasColumnName("started_at_utc");
-                    b.Property<DateTime?>("SubmittedAtUtc").HasColumnType("datetime2").HasColumnName("submitted_at_utc");
-                    b.Property<DateTime?>("DeadlineAtUtc").HasColumnType("datetime2").HasColumnName("deadline_at_utc");
-                    b.Property<DateTime?>("VerificationStartedAtUtc").HasColumnType("datetime2").HasColumnName("verification_started_at_utc");
-                    b.Property<string>("Status").IsRequired().HasMaxLength(30).HasColumnType("nvarchar(30)").HasColumnName("status");
-                    b.Property<string>("QuestionIdsJson").IsRequired().HasColumnType("nvarchar(max)").HasColumnName("question_ids_json");
-                    b.Property<string>("OptionOrderJson").IsRequired().HasColumnType("nvarchar(max)").HasColumnName("option_order_json");
-                    b.Property<string>("AnswersJson").IsRequired().HasColumnType("nvarchar(max)").HasColumnName("answers_json");
-                    b.Property<string>("DeviceTokenHash").HasMaxLength(128).HasColumnType("nvarchar(128)").HasColumnName("device_token_hash");
-                    b.Property<int>("WarningCount").ValueGeneratedOnAdd().HasColumnType("int").HasDefaultValue(0).HasColumnName("warning_count");
-                    b.Property<int>("Score").ValueGeneratedOnAdd().HasColumnType("int").HasDefaultValue(0).HasColumnName("score");
-                    b.Property<int>("TotalQuestions").ValueGeneratedOnAdd().HasColumnType("int").HasDefaultValue(0).HasColumnName("total_questions");
-                    b.Property<bool>("Passed").ValueGeneratedOnAdd().HasColumnType("bit").HasDefaultValue(false).HasColumnName("passed");
-                    b.Property<string>("TerminationReason").HasMaxLength(200).HasColumnType("nvarchar(200)").HasColumnName("termination_reason");
-                    b.Property<DateTime>("CreatedAtUtc").HasColumnType("datetime2").HasColumnName("created_at_utc");
+
+                    b.Property<string>("AnswersJson")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)")
+                        .HasColumnName("answers_json");
+
+                    b.Property<int>("CourseId")
+                        .HasColumnType("int")
+                        .HasColumnName("course_id");
+
+                    b.Property<DateTime>("CreatedAtUtc")
+                        .HasColumnType("datetime2")
+                        .HasColumnName("created_at_utc");
+
+                    b.Property<DateTime?>("DeadlineAtUtc")
+                        .HasColumnType("datetime2")
+                        .HasColumnName("deadline_at_utc");
+
+                    b.Property<string>("DeviceTokenHash")
+                        .HasMaxLength(128)
+                        .HasColumnType("nvarchar(128)")
+                        .HasColumnName("device_token_hash");
+
+                    b.Property<string>("OptionOrderJson")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)")
+                        .HasColumnName("option_order_json");
+
+                    b.Property<bool>("Passed")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("bit")
+                        .HasDefaultValue(false)
+                        .HasColumnName("passed");
+
+                    b.Property<string>("QuestionIdsJson")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)")
+                        .HasColumnName("question_ids_json");
+
+                    b.Property<DateTime>("ScheduledAtUtc")
+                        .HasColumnType("datetime2")
+                        .HasColumnName("scheduled_at_utc");
+
+                    b.Property<int>("Score")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int")
+                        .HasDefaultValue(0)
+                        .HasColumnName("score");
+
+                    b.Property<DateTime?>("StartedAtUtc")
+                        .HasColumnType("datetime2")
+                        .HasColumnName("started_at_utc");
+
+                    b.Property<string>("Status")
+                        .IsRequired()
+                        .HasMaxLength(30)
+                        .HasColumnType("nvarchar(30)")
+                        .HasColumnName("status");
+
+                    b.Property<DateTime?>("SubmittedAtUtc")
+                        .HasColumnType("datetime2")
+                        .HasColumnName("submitted_at_utc");
+
+                    b.Property<string>("TerminationReason")
+                        .HasMaxLength(200)
+                        .HasColumnType("nvarchar(200)")
+                        .HasColumnName("termination_reason");
+
+                    b.Property<int>("TopicId")
+                        .HasColumnType("int")
+                        .HasColumnName("topic_id");
+
+                    b.Property<int>("TotalQuestions")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int")
+                        .HasDefaultValue(0)
+                        .HasColumnName("total_questions");
+
+                    b.Property<string>("UserId")
+                        .IsRequired()
+                        .HasMaxLength(450)
+                        .HasColumnType("nvarchar(450)")
+                        .HasColumnName("user_id");
+
+                    b.Property<DateTime?>("VerificationStartedAtUtc")
+                        .HasColumnType("datetime2")
+                        .HasColumnName("verification_started_at_utc");
+
+                    b.Property<int>("WarningCount")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int")
+                        .HasDefaultValue(0)
+                        .HasColumnName("warning_count");
+
                     b.HasKey("Id");
-                    b.HasIndex("UserId", "CourseId", "TopicId", "CreatedAtUtc").HasDatabaseName("IX_topic_exam_user_course_topic");
-                    b.HasIndex("UserId", "CourseId", "TopicId", "Status").HasDatabaseName("IX_topic_exam_user_topic_status");
-                    b.HasIndex("UserId", "CourseId", "TopicId").IsUnique().HasFilter("[status] <> 'Passed' AND [status] <> 'Failed' AND [status] <> 'Terminated' AND [status] <> 'TimedOut'").HasDatabaseName("UX_topic_exam_one_active_attempt");
+
+                    b.HasIndex("UserId", "CourseId", "TopicId")
+                        .IsUnique()
+                        .HasDatabaseName("UX_topic_exam_one_active_attempt")
+                        .HasFilter("[status] <> 'Passed' AND [status] <> 'Failed' AND [status] <> 'Terminated' AND [status] <> 'TimedOut'");
+
+                    b.HasIndex("UserId", "CourseId", "TopicId", "CreatedAtUtc")
+                        .HasDatabaseName("IX_topic_exam_user_course_topic");
+
+                    b.HasIndex("UserId", "CourseId", "TopicId", "Status")
+                        .HasDatabaseName("IX_topic_exam_user_topic_status");
+
                     b.ToTable("tblstudent_topic_exam_attempts", "erpsystem");
+                });
+
+            modelBuilder.Entity("CIITStackLab.Domain.Entities.TopicExamQuestion", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int")
+                        .HasColumnName("exam_question_id");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<int>("CorrectOptionNumber")
+                        .HasColumnType("int")
+                        .HasColumnName("correct_option_number");
+
+                    b.Property<DateTime>("CreatedAtUtc")
+                        .HasColumnType("datetime2")
+                        .HasColumnName("created_at_utc");
+
+                    b.Property<int>("Flag")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int")
+                        .HasDefaultValue(0)
+                        .HasColumnName("flag");
+
+                    b.Property<string>("Option1")
+                        .IsRequired()
+                        .HasMaxLength(1000)
+                        .HasColumnType("nvarchar(1000)")
+                        .HasColumnName("option1");
+
+                    b.Property<string>("Option2")
+                        .IsRequired()
+                        .HasMaxLength(1000)
+                        .HasColumnType("nvarchar(1000)")
+                        .HasColumnName("option2");
+
+                    b.Property<string>("Option3")
+                        .IsRequired()
+                        .HasMaxLength(1000)
+                        .HasColumnType("nvarchar(1000)")
+                        .HasColumnName("option3");
+
+                    b.Property<string>("Option4")
+                        .IsRequired()
+                        .HasMaxLength(1000)
+                        .HasColumnType("nvarchar(1000)")
+                        .HasColumnName("option4");
+
+                    b.Property<string>("Question")
+                        .IsRequired()
+                        .HasMaxLength(2000)
+                        .HasColumnType("nvarchar(2000)")
+                        .HasColumnName("question");
+
+                    b.Property<int>("TopicId")
+                        .HasColumnType("int")
+                        .HasColumnName("topic_id");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("TopicId")
+                        .HasDatabaseName("IX_topic_exam_questions_topic_id");
+
+                    b.ToTable("tblstudent_topic_exam_questions", "erpsystem");
                 });
 
             modelBuilder.Entity("CIITStackLab.Domain.Entities.TopicExamSecurityEvent", b =>
                 {
-                    b.Property<long>("Id").ValueGeneratedOnAdd().HasColumnType("bigint").HasColumnName("event_id");
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<long>("Id"));
-                    b.Property<long>("ExamAttemptId").HasColumnType("bigint").HasColumnName("exam_attempt_id");
-                    b.Property<string>("EventType").IsRequired().HasMaxLength(80).HasColumnType("nvarchar(80)").HasColumnName("event_type");
-                    b.Property<string>("Details").HasMaxLength(1000).HasColumnType("nvarchar(1000)").HasColumnName("details");
-                    b.Property<DateTime>("OccurredAtUtc").HasColumnType("datetime2").HasColumnName("occurred_at_utc");
-                    b.HasKey("Id");
-                    b.HasIndex("ExamAttemptId", "OccurredAtUtc").HasDatabaseName("IX_topic_exam_events_attempt_date");
-                    b.ToTable("tblstudent_topic_exam_security_events", "erpsystem");
-                });
+                    b.Property<long>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("bigint")
+                        .HasColumnName("event_id");
 
-            modelBuilder.Entity("CIITStackLab.Domain.Entities.ExamApplicationNotification", b =>
-                {
-                    b.Property<long>("Id").ValueGeneratedOnAdd().HasColumnType("bigint").HasColumnName("notification_id");
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<long>("Id"));
-                    b.Property<string>("DedupeKey").IsRequired().IsFixedLength().HasMaxLength(64).HasColumnType("char(64)").HasColumnName("dedupe_key");
-                    b.Property<string>("AdminUserId").IsRequired().HasMaxLength(450).HasColumnType("nvarchar(450)").HasColumnName("admin_user_id");
-                    b.Property<string>("StudentUserId").IsRequired().HasMaxLength(450).HasColumnType("nvarchar(450)").HasColumnName("student_user_id");
-                    b.Property<string>("StudentName").IsRequired().HasMaxLength(256).HasColumnType("nvarchar(256)").HasColumnName("student_name");
-                    b.Property<int>("CourseId").HasColumnType("int").HasColumnName("course_id");
-                    b.Property<string>("CourseTitle").IsRequired().HasMaxLength(200).HasColumnType("nvarchar(200)").HasColumnName("course_title");
-                    b.Property<int>("TopicId").HasColumnType("int").HasColumnName("topic_id");
-                    b.Property<string>("TopicTitle").IsRequired().HasMaxLength(200).HasColumnType("nvarchar(200)").HasColumnName("topic_title");
-                    b.Property<int>("ValidQuestionCount").HasColumnType("int").HasColumnName("valid_question_count");
-                    b.Property<int>("RequiredQuestionCount").ValueGeneratedOnAdd().HasColumnType("int").HasDefaultValue(50).HasColumnName("required_question_count");
-                    b.Property<string>("Reason").IsRequired().HasMaxLength(1000).HasColumnType("nvarchar(1000)").HasColumnName("reason");
-                    b.Property<DateTime>("NotificationDay").HasColumnType("date").HasColumnName("notification_day");
-                    b.Property<DateTime>("CreatedAtUtc").HasColumnType("datetime2").HasColumnName("created_at_utc");
-                    b.Property<bool>("IsDelivered").ValueGeneratedOnAdd().HasColumnType("bit").HasDefaultValue(false).HasColumnName("is_delivered");
-                    b.Property<bool>("IsRead").ValueGeneratedOnAdd().HasColumnType("bit").HasDefaultValue(false).HasColumnName("is_read");
+
+                    b.Property<string>("Details")
+                        .HasMaxLength(1000)
+                        .HasColumnType("nvarchar(1000)")
+                        .HasColumnName("details");
+
+                    b.Property<string>("EventType")
+                        .IsRequired()
+                        .HasMaxLength(80)
+                        .HasColumnType("nvarchar(80)")
+                        .HasColumnName("event_type");
+
+                    b.Property<long>("ExamAttemptId")
+                        .HasColumnType("bigint")
+                        .HasColumnName("exam_attempt_id");
+
+                    b.Property<DateTime>("OccurredAtUtc")
+                        .HasColumnType("datetime2")
+                        .HasColumnName("occurred_at_utc");
+
                     b.HasKey("Id");
-                    b.HasIndex("DedupeKey").IsUnique().HasDatabaseName("UX_exam_app_notification_dedupe_key");
-                    b.HasIndex("AdminUserId", "IsRead", "CreatedAtUtc").HasDatabaseName("IX_exam_app_notification_admin_read_created");
-                    b.HasIndex("AdminUserId", "IsDelivered").HasDatabaseName("IX_exam_app_notification_admin_delivered");
-                    b.ToTable("tbl_exam_application_notifications", "erpsystem");
+
+                    b.HasIndex("ExamAttemptId", "OccurredAtUtc")
+                        .HasDatabaseName("IX_topic_exam_events_attempt_date");
+
+                    b.ToTable("tblstudent_topic_exam_security_events", "erpsystem");
                 });
 
             modelBuilder.Entity("CIITStackLab.Domain.Entities.TrainingNote", b =>
@@ -1197,6 +1468,21 @@ namespace CIITStackLab.Infrastructure.Migrations
                     b.Navigation("Note");
 
                     b.Navigation("Topic");
+                });
+
+            modelBuilder.Entity("CIITStackLab.Domain.Entities.PaymentTransaction", b =>
+                {
+                    b.HasOne("CIITStackLab.Domain.Entities.Course", null)
+                        .WithMany()
+                        .HasForeignKey("CourseId")
+                        .OnDelete(DeleteBehavior.NoAction)
+                        .IsRequired();
+
+                    b.HasOne("CIITStackLab.Infrastructure.Identity.ApplicationUser", null)
+                        .WithMany()
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.NoAction)
+                        .IsRequired();
                 });
 
             modelBuilder.Entity("CIITStackLab.Domain.Entities.StudentCoursePurchase", b =>

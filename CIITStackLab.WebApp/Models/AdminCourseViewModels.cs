@@ -16,4 +16,12 @@ public sealed class AdminCourseFormModel
     [Required(ErrorMessage = "Course name is required.")]
     [StringLength(100, ErrorMessage = "Course name cannot exceed 100 characters.")]
     public string CourseName { get; set; } = string.Empty;
+
+    public string? ImagePath { get; set; }
+
+    public IFormFile? ImageFile { get; set; }
+
+    public string? DiscountMode { get; set; }
+
+    public decimal? DiscountValue { get; set; }
 }

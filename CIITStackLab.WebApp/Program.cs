@@ -16,6 +16,11 @@ if (builder.Environment.IsDevelopment())
 }
 
 builder.Services.AddControllersWithViews();
+builder.Services.Configure<Microsoft.AspNetCore.Mvc.Razor.RazorViewEngineOptions>(options =>
+{
+    options.ViewLocationFormats.Insert(0, "/Areas/Student/Views/{1}/{0}.cshtml");
+    options.ViewLocationFormats.Insert(1, "/Areas/Student/Views/Shared/{0}.cshtml");
+});
 builder.Services.AddSignalR();
 builder.Services.AddScoped<ExamApplicationNotificationService>();
 builder.Services.AddInfrastructure(builder.Configuration);

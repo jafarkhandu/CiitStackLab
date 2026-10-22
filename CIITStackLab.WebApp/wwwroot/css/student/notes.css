@@ -87,118 +87,6 @@
     margin: 0 auto;
 }
 
-.ciit-notes-reader-sidebar {
-    align-self: start;
-    position: sticky;
-    top: 88px;
-    overflow: hidden;
-    height: max-content;
-    border: 1px solid #e0e7f0;
-    border-radius: 16px;
-    background: #fff;
-    box-shadow: 0 8px 26px rgba(20, 42, 76, .05);
-}
-
-.ciit-notes-reader-sidebar-head {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: 12px;
-    padding: 16px 17px;
-    border-bottom: 1px solid #e7ecf3;
-}
-
-.ciit-notes-reader-sidebar-head div {
-    display: grid;
-    gap: 4px;
-}
-
-.ciit-notes-reader-sidebar-head span {
-    color: #7b8aa2;
-    font-size: 11px;
-    font-weight: 800;
-    letter-spacing: .08em;
-    text-transform: uppercase;
-}
-
-.ciit-notes-reader-sidebar-head strong {
-    color: #182946;
-    font-size: 14px;
-}
-
-.ciit-notes-reader-sidebar-head > i {
-    color: #1769ff;
-    font-size: 18px;
-}
-
-.ciit-notes-reader-list {
-    display: grid;
-    gap: 4px;
-    padding: 9px;
-}
-
-.ciit-notes-reader-list a {
-    display: grid;
-    grid-template-columns: 28px minmax(0, 1fr) 12px;
-    align-items: center;
-    gap: 10px;
-    padding: 11px 10px;
-    border-radius: 11px;
-    color: #52627a;
-    text-decoration: none;
-    transition: background-color .15s ease, color .15s ease;
-}
-
-.ciit-notes-reader-list a:hover {
-    background: #f5f8fd;
-    color: #1769ff;
-}
-
-.ciit-notes-reader-list a.is-active {
-    background: #edf4ff;
-    color: #1769ff;
-}
-
-.ciit-notes-reader-list-number {
-    display: grid;
-    place-items: center;
-    width: 28px;
-    height: 28px;
-    border-radius: 8px;
-    background: #f4f6fa;
-    color: #71809a;
-    font: 700 11px 'Fira Code', monospace;
-}
-
-.ciit-notes-reader-list a.is-active .ciit-notes-reader-list-number {
-    background: #1769ff;
-    color: #fff;
-}
-
-.ciit-notes-reader-list-copy {
-    display: grid;
-    min-width: 0;
-    gap: 3px;
-}
-
-.ciit-notes-reader-list-copy strong {
-    overflow: hidden;
-    color: inherit;
-    font-size: 13px;
-    line-height: 1.35;
-    text-overflow: ellipsis;
-}
-
-.ciit-notes-reader-list-copy small {
-    color: #91a0b7;
-    font-size: 11px;
-}
-
-.ciit-notes-reader-list > a > i {
-    color: #9aa8bc;
-    font-size: 11px;
-}
-
 .ciit-notes-reader-main {
     min-width: 0;
 }
@@ -376,19 +264,6 @@
     .ciit-notes-reader-shell {
         grid-template-columns: 1fr;
     }
-
-    .ciit-notes-reader-sidebar {
-        position: static;
-    }
-
-    .ciit-notes-reader-list {
-        display: flex;
-        overflow-x: auto;
-    }
-
-    .ciit-notes-reader-list a {
-        min-width: 240px;
-    }
 }
 
 @media (max-width: 650px) {
@@ -419,7 +294,6 @@
 /* Full-width glass notes reader; duplicate Chapter Library removed from markup. */
 .ciit-notes-reader{padding:28px clamp(18px,3vw,42px) 48px;background:radial-gradient(ellipse at 85% 5%,rgba(87,145,255,.12),transparent 35%),linear-gradient(145deg,rgba(239,246,255,.7),rgba(248,251,255,.84))}
 .ciit-notes-reader-shell{display:block;width:100%;max-width:1440px}
-.ciit-notes-reader-sidebar{display:none!important}
 .ciit-notes-reader-main{width:100%;min-width:0}
 .ciit-notes-reader-card{overflow:hidden;border:1px solid rgba(255,255,255,.92);border-radius:24px;background:linear-gradient(145deg,rgba(255,255,255,.8),rgba(247,250,255,.58));box-shadow:0 22px 58px rgba(34,67,122,.08),inset 0 1px 0 rgba(255,255,255,.96);backdrop-filter:blur(30px) saturate(160%);animation:ciit-notes-reader-enter .62s cubic-bezier(.2,.7,.25,1) both}
 .ciit-notes-reader-title{background:rgba(255,255,255,.32)}
@@ -428,7 +302,6 @@
 .ciit-notes-reader-pager a:hover{transform:translateY(-2px)}
 @keyframes ciit-notes-reader-enter{from{opacity:0;transform:translateY(18px);filter:blur(3px)}to{opacity:1;transform:translateY(0);filter:blur(0)}}
 @media(prefers-reduced-motion:reduce){.ciit-notes-reader-card{animation:none!important}.ciit-notes-reader-pager a{transition:none!important}}
-
 
 /* Adaptive pages are only shown when the chapter content exceeds one reading page. */
 .ciit-notes-page-controls {
