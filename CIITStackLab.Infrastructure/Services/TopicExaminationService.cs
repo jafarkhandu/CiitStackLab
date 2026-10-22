@@ -169,14 +169,23 @@ public sealed class TopicExaminationService : ITopicExaminationService
             OptionOrderJson = JsonSerializer.Serialize(optionOrders, JsonOptions),
             AnswersJson = "{}", TotalQuestions = QuestionCount, CreatedAtUtc = now
         };
-        _db.TopicExamAttempts.Add(attempt);
-        await _db.SaveChangesAsync(cancellationToken);
-
-        if (retakePayment is not null)
+        if (retakePayment is null)
         {
+            _db.TopicExamAttempts.Add(attempt);
+            await _db.SaveChangesAsync(cancellationToken);
+        }
+        else
+        {
+            // Create the paid attempt and consume its payment atomically so a
+            // database failure cannot leave a paid attempt partially linked.
+            await using var transaction = await _db.Database.BeginTransactionAsync(cancellationToken);
+            _db.TopicExamAttempts.Add(attempt);
+            await _db.SaveChangesAsync(cancellationToken);
+
             retakePayment.ExamAttemptId = attempt.Id;
             retakePayment.UpdatedAt = DateTime.UtcNow;
             await _db.SaveChangesAsync(cancellationToken);
+            await transaction.CommitAsync(cancellationToken);
         }
 
         return (true, null, await MapSummaryAsync(attempt, cancellationToken));
