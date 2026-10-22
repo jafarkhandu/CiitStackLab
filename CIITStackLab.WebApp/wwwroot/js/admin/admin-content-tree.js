@@ -9,11 +9,30 @@ document.addEventListener('DOMContentLoaded', () => {
     const nodes = Array.from(tree.querySelectorAll('[data-tree-node]'));
     const contentItems = Array.from(tree.querySelectorAll('[data-content-item]'));
 
-    const nodeMatches = (node, term) => (node.dataset.search || '').toLowerCase().includes(term);
+    const closeSiblingNodes = (node) => {
+        const parent = node.parentElement;
+        if (!parent) return;
+
+        Array.from(parent.children).forEach(child => {
+            if (child !== node && child.matches('details[data-tree-node]')) {
+                child.open = false;
+            }
+        });
+    };
+
+    nodes.forEach(node => {
+        node.addEventListener('toggle', () => {
+            if (node.open && !tree.classList.contains('is-searching')) {
+                closeSiblingNodes(node);
+            }
+        });
+    });
+
+    const nodeMatches = (node, term) =>
+        (node.dataset.search || '').toLowerCase().includes(term);
 
     const updateSearch = () => {
         const term = search.value.trim().toLowerCase();
-        let matchedCount = 0;
 
         if (!term) {
             contentItems.forEach(item => {
@@ -22,32 +41,52 @@ document.addEventListener('DOMContentLoaded', () => {
 
             nodes.forEach(node => {
                 node.hidden = false;
+                node.open = false;
             });
 
             if (visibleCount) visibleCount.textContent = contentItems.length;
             if (empty) empty.hidden = contentItems.length !== 0;
-            tree.closest('.ciit-content-tree-card')?.classList.remove('is-searching');
+            tree.classList.remove('is-searching');
             return;
         }
 
-        tree.closest('.ciit-content-tree-card')?.classList.add('is-searching');
+        tree.classList.add('is-searching');
+
+        let matchedCount = 0;
+        const contentMatches = new Map();
 
         contentItems.forEach(item => {
             const match = (item.dataset.search || '').toLowerCase().includes(term);
+            contentMatches.set(item, match);
             item.hidden = !match;
             if (match) matchedCount++;
         });
 
-        nodes.forEach(node => {
+        // Work from the deepest level upward so a matching child keeps every
+        // parent in the visible search path.
+        [...nodes].reverse().forEach(node => {
             const directMatch = nodeMatches(node, term);
-            const descendantContentMatch = Array.from(node.querySelectorAll('[data-content-item]'))
-                .some(item => !item.hidden);
-            const visible = directMatch || descendantContentMatch;
+            const descendantMatch = Array.from(node.querySelectorAll('[data-content-item]'))
+                .some(item => contentMatches.get(item) === true);
+            const childNodeMatch = Array.from(node.children)
+                .some(child => child.matches('details[data-tree-node]') && !child.hidden);
 
+            const visible = directMatch || descendantMatch || childNodeMatch;
             node.hidden = !visible;
 
-            if (visible && (directMatch || descendantContentMatch)) {
+            if (visible) {
                 node.open = true;
+            }
+        });
+
+        // If a parent itself matches, keep its complete branch visible.
+        nodes.forEach(node => {
+            if (nodeMatches(node, term)) {
+                node.hidden = false;
+                node.open = true;
+                node.querySelectorAll('[data-tree-node], [data-content-item]').forEach(child => {
+                    child.hidden = false;
+                });
             }
         });
 
