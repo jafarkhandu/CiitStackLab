@@ -1,16 +1,31 @@
 @model CIITStackLab.Application.DTOs.AdminContentInputDto
 
-@{ ViewData["Title"] = "Add Content"; }
+@{
+    ViewData["Title"] = "Add Content";
+    var isModal = string.Equals(Request.Query["modal"], "true", StringComparison.OrdinalIgnoreCase)
+        || string.Equals(Request.Form["modal"], "true", StringComparison.OrdinalIgnoreCase);
+    if (isModal)
+    {
+        Layout = "~/Areas/Admin/Views/Shared/_ContentModalLayout.cshtml";
+    }
+}
 
 @section Styles {
-    <link rel="stylesheet" href="~/css/admin-content.css" asp-append-version="true" />
-    <link rel="stylesheet" href="~/css/admin/admin-content-redesign.css" asp-append-version="true" />
+    @if (!isModal)
+    {
+        <link rel="stylesheet" href="~/css/admin/admin-content.css" asp-append-version="true" />
+        <link rel="stylesheet" href="~/css/admin/admin-content-redesign.css" asp-append-version="true" />
+    }
+    <link rel="stylesheet" href="~/css/admin/admin-content-modal.css" asp-append-version="true" />
 }
 
 <section class="ciit-content-form-page">
     <div class="ciit-content-form-header">
         <div>
-            <a asp-action="Index" class="ciit-content-back"><i class="bi bi-arrow-left"></i> Back to Content</a>
+            @if (!isModal)
+            {
+                <a asp-action="Index" class="ciit-content-back"><i class="bi bi-arrow-left"></i> Back to Content</a>
+            }
             <span class="ciit-content-eyebrow">Learning content</span>
             <h1>Add Content</h1>
             <p>Create one learning resource and place it inside the correct course topic and chapter.</p>
@@ -19,6 +34,7 @@
 
     <form asp-action="Create" method="post" enctype="multipart/form-data" class="ciit-content-form-card">
         @Html.AntiForgeryToken()
+        <input type="hidden" name="modal" value="@(isModal ? "true" : "false")" />
         <input type="hidden" name="vimeoVideoUrl" class="js-vimeo-video-url" />
 
         <div asp-validation-summary="ModelOnly" class="ciit-content-validation"></div>
@@ -83,10 +99,16 @@
         </div>
 
         <div class="ciit-content-form-footer">
-            <a asp-action="Index" class="ciit-content-secondary-btn">Cancel</a>
+            @if (!isModal)
+            {
+                <a asp-action="Index" class="ciit-content-secondary-btn">Cancel</a>
+            }
             <button type="submit" class="ciit-content-primary-btn"><i class="bi bi-check2-circle"></i> Create Content</button>
         </div>
     </form>
 </section>
 
-@section Scripts { <partial name="_ValidationScriptsPartial" /><script src="~/js/admin-content.js" asp-append-version="true"></script> }
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+    <script src="~/js/admin/admin-content.js" asp-append-version="true"></script>
+}
