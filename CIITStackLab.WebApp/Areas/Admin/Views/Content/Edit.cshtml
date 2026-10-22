@@ -2,8 +2,8 @@
 
 @{
     ViewData["Title"] = "Edit Content";
-    var isModal = string.Equals(Request.Query["modal"], "true", StringComparison.OrdinalIgnoreCase)
-        || (Request.HasFormContentType && string.Equals(Request.Form["modal"], "true", StringComparison.OrdinalIgnoreCase));
+    var isModal = string.Equals(Context.Request.Query["modal"], "true", StringComparison.OrdinalIgnoreCase)
+        || (Context.Request.HasFormContentType && string.Equals(Context.Request.Form["modal"], "true", StringComparison.OrdinalIgnoreCase));
     if (isModal)
     {
         Layout = "~/Areas/Admin/Views/Shared/_ContentModalLayout.cshtml";
