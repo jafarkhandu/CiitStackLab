@@ -29,7 +29,7 @@ public sealed class ContentController : Controller
     }
 
     [HttpGet]
-    public async Task<IActionResult> Create(CancellationToken cancellationToken)
+    public async Task<IActionResult> Create(bool modal = false, CancellationToken cancellationToken = default)
     {
         await LoadTopicsAsync(cancellationToken);
         return View(new AdminContentInputDto());
@@ -41,7 +41,8 @@ public sealed class ContentController : Controller
         AdminContentInputDto input,
         IFormFile? slidesFile,
         string? vimeoVideoUrl,
-        CancellationToken cancellationToken)
+        bool modal = false,
+        CancellationToken cancellationToken = default)
     {
         if (!ModelState.IsValid)
         {
@@ -74,13 +75,16 @@ public sealed class ContentController : Controller
             return View(input);
         }
 
+        if (modal)
+            return ModalSaved();
+
         TempData["AdminContentMessage"] = "Content created successfully.";
         TempData["AdminContentMessageType"] = "success";
         return RedirectToAction(nameof(Index));
     }
 
     [HttpGet]
-    public async Task<IActionResult> Edit(int id, CancellationToken cancellationToken)
+    public async Task<IActionResult> Edit(int id, bool modal = false, CancellationToken cancellationToken = default)
     {
         var content = await _contentService.GetByIdAsync(id, cancellationToken);
         if (content is null || content.Flag != 0) return NotFound();
@@ -105,7 +109,8 @@ public sealed class ContentController : Controller
         AdminContentInputDto input,
         IFormFile? slidesFile,
         string? vimeoVideoUrl,
-        CancellationToken cancellationToken)
+        bool modal = false,
+        CancellationToken cancellationToken = default)
     {
         input.Id = id;
         if (!ModelState.IsValid)
@@ -146,6 +151,9 @@ public sealed class ContentController : Controller
             await LoadFormDataAsync(input.TopicId, cancellationToken);
             return View(input);
         }
+
+        if (modal)
+            return ModalSaved();
 
         TempData["AdminContentMessage"] = "Content updated successfully.";
         TempData["AdminContentMessageType"] = "success";
@@ -194,7 +202,7 @@ public sealed class ContentController : Controller
     }
 
     [HttpGet]
-    public async Task<IActionResult> Details(int id, CancellationToken cancellationToken)
+    public async Task<IActionResult> Details(int id, bool modal = false, CancellationToken cancellationToken = default)
     {
         var content = await _contentService.GetByIdAsync(id, cancellationToken);
         return content is null ? NotFound() : View(content);
@@ -239,6 +247,12 @@ public sealed class ContentController : Controller
     {
         if (topicId <= 0) return BadRequest();
         return Json(await _contentService.GetNotesForTopicAsync(topicId, cancellationToken));
+    }
+
+    private ContentResult ModalSaved()
+    {
+        const string script = "<!doctype html><html><head><meta charset=\"utf-8\"></head><body><script>window.parent.postMessage({ type: 'ciit-content-saved' }, window.location.origin);</script></body></html>";
+        return Content(script, "text/html");
     }
 
     private async Task LoadTopicsAsync(CancellationToken cancellationToken)
