@@ -865,7 +865,7 @@ document.addEventListener("DOMContentLoaded", function () {
             paginateItems(
                 contentContainer,
                 contentBlocks,
-                20,
+                40,
                 "Notes pages",
                 { markRead: true }
             );
