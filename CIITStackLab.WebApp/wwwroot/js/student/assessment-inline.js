@@ -14,7 +14,7 @@
             .ciit-assessment-inline-results .ciit-learning-options label.ciit-inline-correct .ciit-learning-option-letter { background:#d8f5e2 !important; color:#247548 !important; }
             .ciit-assessment-inline-results .ciit-learning-options label.ciit-inline-wrong .ciit-learning-option-letter { background:#ffe1e3 !important; color:#ae343d !important; }
             .ciit-inline-option-status { display:inline-flex; align-items:center; gap:6px; margin-left:auto; font-size:.82rem; font-weight:700; white-space:nowrap; }
-            .ciit-inline-question-status { display:inline-flex; align-items:center; margin-left:10px; font-size:.78rem; font-weight:700; }
+            .ciit-inline-question-status { display:inline-flex; align-items:center; width:auto !important; height:auto !important; min-width:0 !important; padding:0 !important; border:0 !important; border-radius:0 !important; background:transparent !important; box-shadow:none !important; margin-left:10px; font-size:.78rem; font-weight:700; }
             .ciit-inline-question-status.is-correct,.ciit-assessment-inline-results .ciit-learning-options label.ciit-inline-correct .ciit-inline-option-status { color:#247548; }
             .ciit-inline-question-status.is-wrong,.ciit-assessment-inline-results .ciit-learning-options label.ciit-inline-wrong .ciit-inline-option-status { color:#ae343d; }
             .ciit-assessment-inline-summary { display:flex; align-items:center; justify-content:space-between; gap:16px; margin-top:22px; padding:18px 20px; border:1px solid #dbe5f2; border-radius:16px; background:linear-gradient(135deg,#f8fbff,#fff); }
@@ -66,8 +66,6 @@
 
     function getSubmitButton(form) { return form.querySelector(".ciit-assessment-submit-row button[type='submit']"); }
 
-    // QuestionId is outside .ciit-learning-question. Pagination moves question elements,
-    // so resolve the hidden QuestionId through the stable answers[index] radio name.
     function getQuestionId(questionElement) {
         const radio = questionElement.querySelector("input[type='radio'][name$='.SelectedOptionNumber']");
         const match = radio?.name?.match(/^answers\[(\d+)\]\.SelectedOptionNumber$/);
