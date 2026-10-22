@@ -83,3 +83,10 @@
         </div>
     </div>
 </section>
+
+@if (!isModal)
+{
+    @section Scripts {
+        <script src="~/js/admin/admin-content-modal.js" asp-append-version="true"></script>
+    }
+}
