@@ -24,5 +24,25 @@ public sealed class AssessmentInlineFormTagHelper : TagHelper
         script.Attributes["src"] = "/js/student/assessment-inline.js?v=2";
         script.Attributes["defer"] = "defer";
         output.PostElement.AppendHtml(script);
+
+        var orderingScript = new TagBuilder("script");
+        orderingScript.InnerHtml.AppendHtml(@"
+(function () {
+    const form = document.currentScript?.previousElementSibling?.previousElementSibling;
+    if (!form || !form.matches('form[data-ciit-assessment-inline]')) {
+        return;
+    }
+
+    const questions = Array.from(form.querySelectorAll(':scope > .ciit-learning-question'));
+    questions
+        .sort((left, right) => {
+            const leftId = Number(left.querySelector(""input[name$='.QuestionId']"")?.value);
+            const rightId = Number(right.querySelector(""input[name$='.QuestionId']"")?.value);
+            return (Number.isFinite(leftId) ? leftId : Number.MAX_SAFE_INTEGER)
+                - (Number.isFinite(rightId) ? rightId : Number.MAX_SAFE_INTEGER);
+        })
+        .forEach(question => form.appendChild(question));
+})();");
+        output.PostElement.AppendHtml(orderingScript);
     }
 }
