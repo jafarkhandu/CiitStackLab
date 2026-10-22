@@ -18,6 +18,20 @@
         @RenderBody()
     </main>
     <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        (() => {
+            document.addEventListener('click', event => {
+                const link = event.target.closest('a.js-content-modal-link[href]');
+                if (!link) return;
+
+                event.preventDefault();
+                window.parent.postMessage({
+                    type: 'ciit-content-modal-navigate',
+                    url: link.href
+                }, window.location.origin);
+            });
+        })();
+    </script>
     @await RenderSectionAsync("Scripts", required: false)
 </body>
 </html>
