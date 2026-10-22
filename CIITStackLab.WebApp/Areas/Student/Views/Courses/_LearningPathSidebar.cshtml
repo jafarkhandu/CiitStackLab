@@ -7,9 +7,6 @@
     var completedContentIds = learningProgress?.CompletedContentIds?.ToHashSet() ?? new HashSet<int>();
     var topics = Model.Topics.ToList();
     var allowedTopicId = ViewBag.AllowedTopicId as int?;
-    var allowedTopicPosition = allowedTopicId.HasValue
-        ? topics.FindIndex(topic => topic.Id == allowedTopicId.Value)
-        : -1;
 
 }
 
