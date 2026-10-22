@@ -92,6 +92,7 @@ public sealed class DynamicCourseService : ICourseService
                   && topic.Flag == 0
             select new
             {
+                CourseTopicId = courseTopic.Id,
                 TopicId = topic.Id,
                 TopicTitle = topic.Title,
                 TopicPrice = topic.Price,
@@ -102,13 +103,14 @@ public sealed class DynamicCourseService : ICourseService
         var topicData = topicRows
             .GroupBy(x => new
             {
+                x.CourseTopicId,
                 x.TopicId,
                 x.TopicTitle,
                 x.TopicPrice,
                 x.TopicDurationMinutes
             })
             .Select(group => group.Key)
-            .OrderBy(x => x.TopicId)
+            .OrderBy(x => x.CourseTopicId)
             .ToList();
 
         var topicIds = topicData.Select(x => x.TopicId).ToList();
