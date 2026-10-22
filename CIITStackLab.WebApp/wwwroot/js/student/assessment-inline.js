@@ -126,15 +126,22 @@
             return null;
         }
 
-        const topicId = actionUrl.searchParams.get("topicId");
-        const match = window.location.pathname.match(/\/Courses\/Learn\/(\d+)/i);
-        const courseId = match?.[1];
+        const topicMatch = actionUrl.pathname.match(/\/TopicAssessment\/(\d+)\/?$/i);
+        const contentMatch = actionUrl.pathname.match(/\/Assessment\/(\d+)\/?$/i);
+        const topicId = topicMatch?.[1];
+        const contentId = contentMatch?.[1];
+        const courseMatch = window.location.pathname.match(/\/Courses\/Learn\/(\d+)/i);
+        const courseId = courseMatch?.[1];
 
-        if (!courseId || !topicId) {
+        if (!courseId || (!topicId && !contentId)) {
             return null;
         }
 
-        return `/Courses/Learn/${encodeURIComponent(courseId)}/TopicAssessmentResult/${encodeURIComponent(topicId)}`;
+        if (topicId) {
+            return `/Courses/Learn/${encodeURIComponent(courseId)}/TopicAssessmentResult/${encodeURIComponent(topicId)}`;
+        }
+
+        return null;
     }
 
     function showError(form, message) {
@@ -189,14 +196,19 @@
         }
 
         const questionId = Number(questionIdInput.value);
-        if (questionId !== questionResult.questionId) {
+        const resultQuestionId = Number(questionResult.questionId);
+        if (!Number.isFinite(resultQuestionId) || questionId !== resultQuestionId) {
             return;
         }
 
+        const correctOptionNumber = Number(questionResult.correctOptionNumber);
+        const selectedOptionNumber = questionResult.selectedOptionNumber == null
+            ? null
+            : Number(questionResult.selectedOptionNumber);
+
         const title = questionElement.querySelector(".ciit-learning-question-title");
         if (title) {
-            const oldStatus = title.querySelector(".ciit-inline-question-status");
-            oldStatus?.remove();
+            title.querySelector(".ciit-inline-question-status")?.remove();
 
             const status = document.createElement("span");
             status.className = `ciit-inline-question-status ${questionResult.isCorrect ? "is-correct" : "is-wrong"}`;
@@ -214,8 +226,8 @@
             }
 
             const optionNumber = Number(input.value);
-            const isCorrectOption = optionNumber === questionResult.correctOptionNumber;
-            const isSelectedOption = questionResult.selectedOptionNumber === optionNumber;
+            const isCorrectOption = optionNumber === correctOptionNumber;
+            const isSelectedOption = selectedOptionNumber !== null && optionNumber === selectedOptionNumber;
 
             input.checked = isSelectedOption;
             input.disabled = true;
@@ -225,11 +237,13 @@
 
             if (isCorrectOption) {
                 label.classList.add("ciit-inline-correct");
-            } else if (isSelectedOption) {
+            }
+
+            if (isSelectedOption && !isCorrectOption) {
                 label.classList.add("ciit-inline-wrong");
             }
 
-            if (isCorrectOption || isSelectedOption) {
+            if (isCorrectOption || (isSelectedOption && !isCorrectOption)) {
                 const status = document.createElement("span");
                 status.className = "ciit-inline-option-status";
                 status.innerHTML = isCorrectOption
@@ -252,7 +266,7 @@
         form.setAttribute("aria-label", "Assessment results");
 
         const resultsByQuestion = new Map(
-            result.questions.map((question) => [question.questionId, question])
+            result.questions.map((question) => [Number(question.questionId), question])
         );
 
         form.querySelectorAll(".ciit-learning-question").forEach((questionElement) => {
