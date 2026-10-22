@@ -34,7 +34,7 @@
             var progress = topicContents.Count == 0 ? 0 :
                 (int)Math.Round(completedCount * 100d / topicContents.Count, MidpointRounding.AwayFromZero);
             var isCurrentTopic = currentTopic?.Id == topic.Id;
-            var isLocked = User.IsInRole("Student") && allowedTopicPosition >= 0 && topicIndex > allowedTopicPosition;
+            var isLocked = User.IsInRole("Student") && allowedTopicId.HasValue && topic.Id != allowedTopicId.Value;
             var chapterContentIds = topic.Chapters.SelectMany(chapter => chapter.Contents).Select(content => content.Id).ToHashSet();
             var additionalContents = topic.Contents.Where(content => !chapterContentIds.Contains(content.Id)).ToList();
 
