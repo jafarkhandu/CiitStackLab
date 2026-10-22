@@ -390,9 +390,7 @@ else if (currentContent is null && currentTopic is not null)
 
                             @if (overviewChapter is not null && !isFinalChapter)
                             {
-                                var overviewContentIds = overviewChapter.Contents.Select(content => content.Id).Distinct().ToList();
-                                var isOverviewChapterCompleted = overviewContentIds.Count > 0
-                                    && overviewContentIds.All(completedContentIds.Contains);
+                                var isOverviewChapterCompleted = overviewChapter.IsCompleted;
                                 @if (isOverviewChapterCompleted)
                                 {
                                     <span class="ciit-chapter-completed-badge mt-3" role="status">
@@ -747,9 +745,7 @@ else
                             }
                             else if (currentChapter is not null)
                             {
-                                var chapterContentIds = currentChapter.Contents.Select(content => content.Id).Distinct().ToList();
-                                var isChapterCompleted = chapterContentIds.Count > 0
-                                    && chapterContentIds.All(completedContentIds.Contains);
+                                var isChapterCompleted = currentChapter.IsCompleted;
                                 @if (isChapterCompleted)
                                 {
                                     <span class="ciit-chapter-completed-badge" role="status">

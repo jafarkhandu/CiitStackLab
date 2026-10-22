@@ -812,6 +812,41 @@ public class CoursesController : Controller
                 id,
                 cancellationToken);
 
+            // Recompute completion from persisted lesson progress via each lesson's NoteId.
+            var chapterIds = course.Topics
+                .SelectMany(topic => topic.Chapters)
+                .Select(chapter => chapter.Id)
+                .Distinct()
+                .ToList();
+
+            if (chapterIds.Count > 0)
+            {
+                var lessonIdsByChapter = await _dbContext.Lessons
+                    .AsNoTracking()
+                    .Where(lesson => lesson.Flag == 0
+                        && lesson.NoteId.HasValue
+                        && chapterIds.Contains(lesson.NoteId.Value))
+                    .GroupBy(lesson => lesson.NoteId!.Value)
+                    .Select(group => new
+                    {
+                        ChapterId = group.Key,
+                        ContentIds = group.Select(lesson => lesson.Id).Distinct().ToList()
+                    })
+                    .ToListAsync(cancellationToken);
+
+                var completedContentIds = course.Progress.CompletedContentIds.ToHashSet();
+                var completedChapterIds = lessonIdsByChapter
+                    .Where(group => group.ContentIds.Count > 0
+                        && group.ContentIds.All(completedContentIds.Contains))
+                    .Select(group => group.ChapterId)
+                    .ToHashSet();
+
+                foreach (var chapter in course.Topics.SelectMany(topic => topic.Chapters))
+                {
+                    chapter.IsCompleted = completedChapterIds.Contains(chapter.Id);
+                }
+            }
+
             var examTopicId = course.CurrentTopicId ?? topicId;
             if (examTopicId.HasValue)
             {

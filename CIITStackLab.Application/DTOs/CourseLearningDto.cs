@@ -38,6 +38,7 @@ public sealed class CourseLearningChapterDto
     public string Title { get; init; } = string.Empty;
     public int SortOrder { get; init; }
     public bool HasNotes { get; init; }
+    public bool IsCompleted { get; set; }
     public int QuestionCount { get; init; }
     public int InterviewQuestionCount { get; init; }
     public int PracticeQuestionCount { get; init; }
