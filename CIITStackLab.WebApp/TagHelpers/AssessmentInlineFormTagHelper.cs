@@ -21,7 +21,7 @@ public sealed class AssessmentInlineFormTagHelper : TagHelper
         output.Attributes.SetAttribute("data-ciit-assessment-inline", "true");
 
         var script = new TagBuilder("script");
-        script.Attributes["src"] = "/js/student/assessment-inline.js?v=2";
+        script.Attributes["src"] = "/js/student/assessment-inline.js?v=3";
         script.Attributes["defer"] = "defer";
         output.PostElement.AppendHtml(script);
 
