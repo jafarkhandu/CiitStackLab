@@ -1,4 +1,23 @@
 document.addEventListener('DOMContentLoaded', () => {
+    const loadContentModalAssets = () => {
+        if (!document.querySelector('link[data-ciit-content-modal-css]')) {
+            const stylesheet = document.createElement('link');
+            stylesheet.rel = 'stylesheet';
+            stylesheet.href = '/css/admin/admin-content-modal.css?v=1';
+            stylesheet.dataset.ciitContentModalCss = 'true';
+            document.head.appendChild(stylesheet);
+        }
+
+        if (!document.querySelector('script[data-ciit-content-modal-js]')) {
+            const script = document.createElement('script');
+            script.src = '/js/admin/admin-content-modal.js?v=1';
+            script.dataset.ciitContentModalJs = 'true';
+            document.body.appendChild(script);
+        }
+    };
+
+    loadContentModalAssets();
+
     const search = document.getElementById('contentSearch');
     const tree = document.getElementById('contentTree');
     const empty = document.getElementById('contentSearchEmpty');
@@ -9,7 +28,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const nodes = Array.from(tree.querySelectorAll('[data-tree-node]'));
     const contentItems = Array.from(tree.querySelectorAll('[data-content-item]'));
 
-    const closeSiblingNodes = (node) => {
+    const closeSiblingNodes = node => {
         const parent = node.parentElement;
         if (!parent) return;
 
@@ -62,8 +81,6 @@ document.addEventListener('DOMContentLoaded', () => {
             if (match) matchedCount++;
         });
 
-        // Work from the deepest level upward so a matching child keeps every
-        // parent in the visible search path.
         [...nodes].reverse().forEach(node => {
             const directMatch = nodeMatches(node, term);
             const descendantMatch = Array.from(node.querySelectorAll('[data-content-item]'))
@@ -79,7 +96,6 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         });
 
-        // If a parent itself matches, keep its complete branch visible.
         nodes.forEach(node => {
             if (nodeMatches(node, term)) {
                 node.hidden = false;
