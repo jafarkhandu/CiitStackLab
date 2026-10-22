@@ -29,7 +29,9 @@
             <h1>@Model.Title</h1>
             <p>@Model.CourseTitle / @Model.TopicTitle</p>
         </div>
-        <a asp-action="Edit" asp-route-id="@Model.Id" asp-route-modal="@(isModal ? "true" : null)" class="ciit-content-primary-btn"><i class="bi bi-pencil-square"></i> Edit</a>
+        <a asp-action="Edit" asp-route-id="@Model.Id" asp-route-modal="true" class="ciit-content-primary-btn js-content-modal-link">
+            <i class="bi bi-pencil-square"></i> Edit
+        </a>
     </div>
 
     <div class="ciit-content-detail-grid">
