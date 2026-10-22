@@ -3,7 +3,7 @@
 @{
     ViewData["Title"] = "Add Content";
     var isModal = string.Equals(Request.Query["modal"], "true", StringComparison.OrdinalIgnoreCase)
-        || string.Equals(Request.Form["modal"], "true", StringComparison.OrdinalIgnoreCase);
+        || (Request.HasFormContentType && string.Equals(Request.Form["modal"], "true", StringComparison.OrdinalIgnoreCase));
     if (isModal)
     {
         Layout = "~/Areas/Admin/Views/Shared/_ContentModalLayout.cshtml";
