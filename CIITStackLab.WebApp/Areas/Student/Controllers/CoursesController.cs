@@ -803,12 +803,7 @@ public class CoursesController : Controller
 
             if (allowedTopicId.HasValue && requestedTopicId.HasValue)
             {
-                var allowedTopicPosition = course.Topics.ToList()
-                    .FindIndex(topic => topic.Id == allowedTopicId.Value);
-                var requestedTopicPosition = course.Topics.ToList()
-                    .FindIndex(topic => topic.Id == requestedTopicId.Value);
-
-                if (allowedTopicPosition >= 0 && requestedTopicPosition > allowedTopicPosition)
+                if (requestedTopicId.Value != allowedTopicId.Value)
                 {
                     TempData["LearningProgressMessage"] = "This topic is locked until you pass the current topic examination.";
                     return RedirectToAction(nameof(Learn), new { id, topicId = allowedTopicId.Value });
