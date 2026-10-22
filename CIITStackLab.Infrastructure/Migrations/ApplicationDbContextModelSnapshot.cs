@@ -569,6 +569,26 @@ namespace CIITStackLab.Infrastructure.Migrations
                         .HasColumnType("int")
                         .HasColumnName("course_id");
 
+                    b.Property<long?>("ExamAttemptId")
+                        .HasColumnType("bigint")
+                        .HasColumnName("exam_attempt_id");
+
+                    b.Property<int?>("ExamAttemptNumber")
+                        .HasColumnType("int")
+                        .HasColumnName("exam_attempt_number");
+
+                    b.Property<int?>("ExamTopicId")
+                        .HasColumnType("int")
+                        .HasColumnName("exam_topic_id");
+
+                    b.Property<string>("PaymentPurpose")
+                        .IsRequired()
+                        .ValueGeneratedOnAdd()
+                        .HasMaxLength(32)
+                        .HasColumnType("nvarchar(32)")
+                        .HasDefaultValue("Course")
+                        .HasColumnName("payment_purpose");
+
                     b.Property<DateTime>("CreatedAt")
                         .HasColumnType("datetime2")
                         .HasColumnName("created_at");
