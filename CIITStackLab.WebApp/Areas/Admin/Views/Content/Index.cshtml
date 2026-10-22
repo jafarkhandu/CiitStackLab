@@ -9,7 +9,10 @@
     var topicCount = Model.ActiveContents.Select(x => x.TopicId).Distinct().Count();
 }
 
-@section Styles { <link rel="stylesheet" href="~/css/admin/admin-content.css" asp-append-version="true" /> }
+@section Styles {
+    <link rel="stylesheet" href="~/css/admin/admin-content.css" asp-append-version="true" />
+    <link rel="stylesheet" href="~/css/admin/admin-content-redesign.css" asp-append-version="true" />
+}
 
 <section class="ciit-content-page">
     <div class="ciit-content-header">
@@ -72,7 +75,7 @@
                 {
                     var courseContents = courseGroup.ToList();
                     var courseSearch = string.Join(" ", courseGroup.Select(x => x.CourseTitle).Distinct());
-                    <details class="ciit-tree-node ciit-tree-course" data-tree-node data-search="@courseSearch" open>
+                    <details class="ciit-tree-node ciit-tree-course" data-tree-node data-tree-level="course" data-search="@courseSearch">
                         <summary>
                             <span class="ciit-tree-summary-main">
                                 <span class="ciit-tree-chevron"><i class="bi bi-chevron-right"></i></span>
@@ -88,7 +91,7 @@
                                 .OrderBy(x => x.Key.TopicTitle))
                             {
                                 var topicContents = topicGroup.ToList();
-                                <details class="ciit-tree-node ciit-tree-topic" data-tree-node data-search="@topicGroup.Key.TopicTitle">
+                                <details class="ciit-tree-node ciit-tree-topic" data-tree-node data-tree-level="topic" data-search="@topicGroup.Key.TopicTitle">
                                     <summary>
                                         <span class="ciit-tree-summary-main">
                                             <span class="ciit-tree-chevron"><i class="bi bi-chevron-right"></i></span>
@@ -105,7 +108,7 @@
                                         {
                                             var chapterContents = chapterGroup.ToList();
                                             var chapterTitle = string.IsNullOrWhiteSpace(chapterGroup.Key.NoteTitle) ? "General content" : chapterGroup.Key.NoteTitle;
-                                            <details class="ciit-tree-node ciit-tree-chapter" data-tree-node data-search="@chapterTitle">
+                                            <details class="ciit-tree-node ciit-tree-chapter" data-tree-node data-tree-level="chapter" data-search="@chapterTitle">
                                                 <summary>
                                                     <span class="ciit-tree-summary-main">
                                                         <span class="ciit-tree-chevron"><i class="bi bi-chevron-right"></i></span>
