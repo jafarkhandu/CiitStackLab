@@ -149,6 +149,13 @@ public sealed class PhonePePaymentService
             Encoding.UTF8.GetBytes(razorpaySignature));
     }
 
+    // Legacy callback endpoint compatibility. Razorpay uses the signed Checkout response
+    // through /Payments/Razorpay/Verify instead of the old PhonePe callback contract.
+    public LegacyCallbackValidationResult ValidateCallback(string authorization, string requestBody)
+    {
+        return new LegacyCallbackValidationResult(null);
+    }
+
     private RazorpayOptions RequireOptions()
     {
         var keySecret = string.IsNullOrWhiteSpace(_options.KeySecret)
@@ -178,6 +185,10 @@ public sealed class PhonePePaymentService
         return new AuthenticationHeaderValue("Basic", token);
     }
 }
+
+public sealed record LegacyCallbackValidationResult(LegacyCallbackPayload? Payload);
+
+public sealed record LegacyCallbackPayload(string OrderId, string State);
 
 public sealed record RazorpayOrderDetails(
     string Id,
