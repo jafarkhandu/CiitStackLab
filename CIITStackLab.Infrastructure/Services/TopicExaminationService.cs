@@ -29,18 +29,32 @@ public sealed class TopicExaminationService : ITopicExaminationService
     public async Task<IReadOnlyList<TopicExamSummaryDto>> GetStudentExamsAsync(string userId, CancellationToken cancellationToken = default)
     {
         if (string.IsNullOrWhiteSpace(userId)) return Array.Empty<TopicExamSummaryDto>();
-        return await _db.TopicExamAttempts.AsNoTracking()
-            .Where(x => x.UserId == userId)
-            .Join(_db.Topics.AsNoTracking(), x => x.TopicId, t => t.Id,
-                (x, t) => new TopicExamSummaryDto
-                {
-                    AttemptId = x.Id, CourseId = x.CourseId, TopicId = x.TopicId, TopicTitle = t.Title,
-                    ScheduledAtUtc = x.ScheduledAtUtc, StartedAtUtc = x.StartedAtUtc,
-                    DeadlineAtUtc = x.DeadlineAtUtc, SubmittedAtUtc = x.SubmittedAtUtc,
-                    Status = x.Status, Score = x.Score, TotalQuestions = x.TotalQuestions,
-                    Passed = x.Passed, WarningCount = x.WarningCount, TerminationReason = x.TerminationReason
-                })
-            .OrderByDescending(x => x.ScheduledAtUtc).ToListAsync(cancellationToken);
+
+        var attempts = await _db.TopicExamAttempts.AsNoTracking()
+            .Where(attempt => attempt.UserId == userId)
+            .Join(_db.Topics.AsNoTracking(), attempt => attempt.TopicId, topic => topic.Id,
+                (attempt, topic) => new { Attempt = attempt, TopicTitle = topic.Title })
+            .OrderByDescending(item => item.Attempt.ScheduledAtUtc)
+            .ToListAsync(cancellationToken);
+
+        return attempts.Select(item => new TopicExamSummaryDto
+        {
+            AttemptId = item.Attempt.Id,
+            CourseId = item.Attempt.CourseId,
+            TopicId = item.Attempt.TopicId,
+            TopicTitle = item.TopicTitle,
+            ScheduledAtUtc = item.Attempt.ScheduledAtUtc,
+            StartedAtUtc = item.Attempt.StartedAtUtc,
+            DeadlineAtUtc = item.Attempt.DeadlineAtUtc,
+            SubmittedAtUtc = item.Attempt.SubmittedAtUtc,
+            Status = item.Attempt.Status,
+            Score = item.Attempt.Score,
+            TotalQuestions = item.Attempt.TotalQuestions,
+            AnsweredQuestionsCount = GetAnsweredQuestionsCount(item.Attempt.AnswersJson),
+            Passed = item.Attempt.Passed,
+            WarningCount = item.Attempt.WarningCount,
+            TerminationReason = item.Attempt.TerminationReason
+        }).ToList();
     }
 
     public async Task<(bool Succeeded, string? Error, TopicExamSummaryDto? Exam)> ScheduleAsync(
@@ -711,9 +725,24 @@ public sealed class TopicExaminationService : ITopicExaminationService
             TopicTitle = title, ScheduledAtUtc = attempt.ScheduledAtUtc,
             StartedAtUtc = attempt.StartedAtUtc, DeadlineAtUtc = attempt.DeadlineAtUtc,
             SubmittedAtUtc = attempt.SubmittedAtUtc, Status = attempt.Status, Score = attempt.Score,
-            TotalQuestions = attempt.TotalQuestions, Passed = attempt.Passed,
-            WarningCount = attempt.WarningCount, TerminationReason = attempt.TerminationReason
+            TotalQuestions = attempt.TotalQuestions,
+            AnsweredQuestionsCount = GetAnsweredQuestionsCount(attempt.AnswersJson),
+            Passed = attempt.Passed, WarningCount = attempt.WarningCount,
+            TerminationReason = attempt.TerminationReason
         };
+    }
+
+    private static int GetAnsweredQuestionsCount(string? answersJson)
+    {
+        try
+        {
+            var answers = JsonSerializer.Deserialize<Dictionary<int, int?>>(answersJson ?? "{}", JsonOptions);
+            return answers?.Count(pair => pair.Value.HasValue) ?? 0;
+        }
+        catch (JsonException)
+        {
+            return 0;
+        }
     }
 
     private static IReadOnlyList<string> GetShuffledOptions(TopicExamQuestion question, string orderJson)
