@@ -530,13 +530,20 @@ public sealed class StudentExaminationsController : Controller
             TempData["ExamError"] = result.Error;
             return RedirectToAction(nameof(Index));
         }
-        await SendExamLifecycleEmailSafelyAsync(
-            userId,
-            result.Session.CourseId,
-            result.Session.TopicId,
-            result.Session.AttemptId,
-            "Started",
-            cancellationToken);
+        var startedAttempt = await _db.TopicExamAttempts.AsNoTracking()
+            .Where(attempt => attempt.Id == result.Session.AttemptId && attempt.UserId == userId)
+            .Select(attempt => new { attempt.CourseId, attempt.TopicId })
+            .FirstOrDefaultAsync(cancellationToken);
+        if (startedAttempt is not null)
+        {
+            await SendExamLifecycleEmailSafelyAsync(
+                userId,
+                startedAttempt.CourseId,
+                startedAttempt.TopicId,
+                result.Session.AttemptId,
+                "Started",
+                cancellationToken);
+        }
         return View("TakeExam", result.Session);
     }
 
