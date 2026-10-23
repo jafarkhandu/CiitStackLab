@@ -250,7 +250,7 @@ public sealed class TopicExaminationService : ITopicExaminationService
                 }
                 catch
                 {
-                    await transaction.RollbackAsync(cancellationToken);
+                    await transaction.RollbackAsync(CancellationToken.None);
 
                     // Restore tracked state before the execution strategy retries.
                     _db.Entry(attempt).State = EntityState.Detached;
