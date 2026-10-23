@@ -4,6 +4,19 @@
     ViewData["Title"] = "Examinations";
     var options = ViewBag.AvailableTopics as IReadOnlyList<CIITStackLab.WebApp.Controllers.StudentExaminationsController.ExamTopicOption>
         ?? Array.Empty<CIITStackLab.WebApp.Controllers.StudentExaminationsController.ExamTopicOption>();
+    var pendingExams = Model
+        .GroupBy(item => new { item.CourseId, item.TopicId })
+        .Select(group =>
+        {
+            var ordered = group.OrderByDescending(item => item.AttemptId).ToList();
+            return new
+            {
+                Latest = ordered[0],
+                AttemptCount = group.Count()
+            };
+        })
+        .Where(item => item.Latest.Status is "Failed" or "Terminated" or "TimedOut")
+        .ToList();
 }
 @section Styles {
 <style>
@@ -41,29 +54,68 @@
 .ciit-exam-action{display:inline-flex;align-items:center;justify-content:center;min-height:38px;padding:9px 13px;border:1px solid #cfe0ff;border-radius:11px;background:linear-gradient(135deg,#fff,#edf4ff);color:#2167ed;font-size:.78rem;font-weight:820;text-decoration:none;white-space:nowrap}.ciit-exam-action:hover{border-color:#8fb7ff;background:#eaf2ff;color:#1354d7}.ciit-exam-action.disabled{opacity:.45;pointer-events:none}
 .ciit-exam-empty{padding:54px 20px;text-align:center}.ciit-exam-empty-icon{display:grid;place-items:center;width:58px;height:58px;margin:0 auto 16px;border:1px solid #dce9ff;border-radius:19px;background:linear-gradient(145deg,#fff,#eaf3ff);color:#3679ef;font-size:1.35rem;box-shadow:0 10px 25px rgba(45,101,184,.1)}
 .ciit-exam-empty h3{margin:0 0 7px;color:#294365;font-size:1rem;font-weight:820}.ciit-exam-empty p{margin:0;color:#8494aa;font-size:.87rem}.ciit-exam-flash{margin-top:18px;border-radius:14px}
-@@media(max-width:767.98px){.ciit-exam-hero{padding:24px 21px;border-radius:20px}.ciit-exam-panel-head{padding:20px;align-items:flex-start}.ciit-exam-table-wrap{padding:8px 12px 14px}.ciit-exam-table{min-width:760px}.ciit-examination-page{padding-top:20px}}
-@@media(prefers-reduced-motion:reduce){.ciit-exam-table tbody tr{transition:none}}
+.ciit-exam-table{table-layout:fixed;border-spacing:0 12px}.ciit-exam-table thead th:nth-child(1){width:23%}.ciit-exam-table thead th:nth-child(2){width:23%}.ciit-exam-table thead th:nth-child(3){width:29%}.ciit-exam-table thead th:nth-child(4){width:25%;text-align:right}
+.ciit-exam-table tbody tr{background:linear-gradient(112deg,#fff 0%,#f8fbff 62%,#f0f6ff 100%);filter:drop-shadow(0 5px 10px rgba(35,74,132,.055))}.ciit-exam-table tbody tr:hover{background:linear-gradient(112deg,#fff 0%,#f7faff 55%,#eaf3ff 100%);filter:drop-shadow(0 10px 16px rgba(39,91,170,.11))}
+.ciit-exam-table tbody td{padding:19px 15px;border-top:1px solid #d9e7fa;border-bottom:1px solid #d9e7fa}.ciit-exam-table tbody td:first-child{padding-left:19px;border-left:1px solid #d9e7fa;border-radius:17px 0 0 17px;box-shadow:inset 3px 0 0 #8db8ff}.ciit-exam-table tbody td:last-child{padding-right:18px;border-right:1px solid #d9e7fa;border-radius:0 17px 17px 0}
+.ciit-exam-topic{color:#203a60;font-size:.94rem;line-height:1.45;font-weight:850}.ciit-exam-sub{margin-top:6px;font-size:.75rem;line-height:1.45}.ciit-exam-table td .badge{display:inline-flex;align-items:center;margin-top:7px;padding:5px 9px;font-size:.68rem;font-weight:800;letter-spacing:.01em}.ciit-exam-status{padding:7px 11px;font-size:.72rem;letter-spacing:.01em}.ciit-exam-result-detail{display:block;margin-top:7px;color:#536d91;font-size:.75rem;line-height:1.45}.ciit-exam-result-detail strong{color:#263f63}.ciit-exam-table td time{display:inline-block;color:#536d91;font-size:.83rem;line-height:1.55;font-variant-numeric:tabular-nums}.ciit-exam-action{min-height:40px;padding:10px 14px;border-radius:12px;font-size:.76rem;line-height:1.35;white-space:normal;text-align:center}.ciit-exam-action:focus-visible{outline:3px solid rgba(37,99,235,.3);outline-offset:3px}
+.ciit-exam-table tbody tr:has(.ciit-exam-status[data-status="Passed"]) td:first-child{box-shadow:inset 3px 0 0 #5bc99a}.ciit-exam-table tbody tr:has(.ciit-exam-status[data-status="Failed"]) td:first-child,.ciit-exam-table tbody tr:has(.ciit-exam-status[data-status="Terminated"]) td:first-child,.ciit-exam-table tbody tr:has(.ciit-exam-status[data-status="TimedOut"]) td:first-child{box-shadow:inset 3px 0 0 #f19a9a}
+.ciit-exam-payment-overlay{position:fixed;inset:0;z-index:2000;display:grid;place-items:center;padding:20px;background:rgba(15,35,64,.42);backdrop-filter:blur(8px);opacity:0;visibility:hidden;transition:opacity .2s ease,visibility .2s ease}.ciit-exam-payment-overlay.is-visible{opacity:1;visibility:visible}.ciit-exam-payment-card{width:min(100%,430px);padding:30px 26px;border:1px solid rgba(255,255,255,.95);border-radius:24px;background:linear-gradient(145deg,#fff,#f3f8ff);box-shadow:0 24px 70px rgba(25,58,105,.25);text-align:center}.ciit-exam-payment-icon{display:grid;place-items:center;width:62px;height:62px;margin:0 auto 16px;border-radius:20px;background:#eaf3ff;color:#2467e9;font-size:1.45rem}.ciit-exam-payment-card.success .ciit-exam-payment-icon{background:#eafaf2;color:#168154}.ciit-exam-payment-card.failed .ciit-exam-payment-icon{background:#fff0f0;color:#c34c4c}.ciit-exam-payment-card strong{display:block;color:#203a60;font-size:1.12rem;font-weight:850}.ciit-exam-payment-card p{margin:8px 0 0;color:#71839e;font-size:.84rem;line-height:1.6}.ciit-exam-payment-spinner{width:28px;height:28px;border:3px solid #cfe0ff;border-top-color:#2467e9;border-radius:50%;animation:exam-payment-spin .8s linear infinite}.ciit-exam-payment-progress{height:5px;margin:20px 0 0;overflow:hidden;border-radius:999px;background:#e4edf9}.ciit-exam-payment-progress span{display:block;width:0;height:100%;border-radius:inherit;background:#3d7ff0;animation:exam-payment-progress 3s linear forwards}.ciit-exam-payment-close{margin-top:18px;min-width:100px}
+@@keyframes exam-payment-spin{to{transform:rotate(360deg)}}@@keyframes exam-payment-progress{from{width:0}to{width:100%}}
+@@media(max-width:767.98px){.ciit-exam-hero{padding:24px 21px;border-radius:20px}.ciit-exam-panel-head{padding:20px;align-items:flex-start}.ciit-exam-table-wrap{padding:8px 12px 14px}.ciit-exam-table{min-width:760px}.ciit-examination-page{padding-top:20px}.ciit-exam-table tbody td{padding:16px 12px}.ciit-exam-table tbody td:first-child{padding-left:15px}.ciit-exam-table tbody td:last-child{padding-right:13px}}
+@@media(prefers-reduced-motion:reduce){.ciit-exam-table tbody tr{animation:none;transition:none}.ciit-exam-action,.ciit-exam-payment-spinner,.ciit-exam-payment-progress span{transition:none;animation:none}}
 </style>
 }
 <section class="container ciit-examination-page">
     <header class="ciit-exam-hero">
         <span class="ciit-exam-kicker">Student workspace</span>
         <h1>Your examinations</h1>
-        <p>Track your scheduled exams and attempts. Examination results are available separately after submission.</p>
+        <p>Track every exam attempt. You get two free attempts; later paid re-exams are opened only after verified payment.</p>
     </header>
     @if (TempData["ExamMessage"] is string message) { <div class="alert alert-success ciit-exam-flash" role="status">@message</div> }
     @if (TempData["ExamError"] is string error) { <div class="alert alert-warning ciit-exam-flash" role="alert">@error</div> }
+
+    @if (pendingExams.Count > 0)
+    {
+        <section class="ciit-exam-panel" aria-labelledby="pending-exam-heading">
+            <div class="ciit-exam-panel-head">
+                <div><h2 id="pending-exam-heading">Pending Exam</h2><p>Your latest failed attempt is ready for the next step.</p></div>
+                <span class="ciit-exam-count">!</span>
+            </div>
+            <div class="ciit-exam-table-wrap">
+                @foreach (var pending in pendingExams)
+                {
+                    var exam = pending.Latest;
+                    var nextAttemptNumber = pending.AttemptCount + 1;
+                    var paymentKey = $"{exam.CourseId}:{exam.TopicId}:{nextAttemptNumber}";
+                    var paidKeys = ViewBag.UnusedPaidRetakeKeys as IReadOnlyList<string> ?? Array.Empty<string>();
+                    var pendingKeys = ViewBag.PendingRetakeKeys as IReadOnlyList<string> ?? Array.Empty<string>();
+                    var hasPaidRetake = paidKeys.Contains(paymentKey);
+                    var hasPendingPayment = pendingKeys.Contains(paymentKey);
+                    var paymentRequired = nextAttemptNumber > 2;
+                    var feeBase = Math.Max(1, nextAttemptNumber - 2) * 100m;
+                    var fee = feeBase + Math.Round(feeBase * 0.18m, 2, MidpointRounding.AwayFromZero);
+                    <div class="d-flex flex-wrap align-items-center justify-content-between gap-3 p-3 mb-2 rounded-4 border border-danger-subtle bg-white bg-opacity-75">
+                        <div><strong class="ciit-exam-topic">@exam.TopicTitle</strong><div class="ciit-exam-sub">Attempt #@nextAttemptNumber required</div>@if (paymentRequired){<div class="fw-bold text-danger">Exam fee: ₹@fee.ToString("0.00")</div>}else{<div class="small text-success fw-semibold">Free attempt remaining</div>}</div>
+                        @if (hasPendingPayment){<span class="badge rounded-pill text-bg-warning">Payment pending</span>}
+                        else if (paymentRequired && !hasPaidRetake)
+                        {
+                            <form asp-controller="StudentExaminations" asp-action="PayForReExam" method="post" class="d-inline js-exam-payment-form">@Html.AntiForgeryToken()<input type="hidden" name="courseId" value="@exam.CourseId" /><input type="hidden" name="topicId" value="@exam.TopicId" /><button type="submit" class="ciit-exam-action">Pay ₹@fee.ToString("0.00") and re-exam</button></form>
+                        }
+                        else
+                        {
+                            <form asp-controller="StudentExaminations" asp-action="ReExam" method="post" class="d-inline">@Html.AntiForgeryToken()<input type="hidden" name="courseId" value="@exam.CourseId" /><input type="hidden" name="topicId" value="@exam.TopicId" /><button type="submit" class="ciit-exam-action">Start re-exam</button></form>
+                        }
+                    </div>
+                }
+            </div>
+        </section>
+    }
+
     <section class="ciit-exam-panel" aria-labelledby="exam-records-heading">
-        <div class="ciit-exam-panel-head">
-            <div><h2 id="exam-records-heading">Exam records</h2><p>Current and previous examination sessions</p></div>
-            <span class="ciit-exam-count">@Model.Count</span>
-        </div>
+        <div class="ciit-exam-panel-head"><div><h2 id="exam-records-heading">Exam Attempts</h2><p>Current and previous examination sessions</p></div><span class="ciit-exam-count">@Model.Count</span></div>
         @if (Model.Count == 0)
         {
-            <div class="ciit-exam-empty">
-                <span class="ciit-exam-empty-icon" aria-hidden="true"><i class="bi bi-calendar2-check"></i></span>
-                <h3>No exam records yet</h3><p>Complete a topic in your learning area to apply for its examination.</p>
-            </div>
+            <div class="ciit-exam-empty"><span class="ciit-exam-empty-icon" aria-hidden="true"><i class="bi bi-calendar2-check"></i></span><h3>No exam records yet</h3><p>Complete a topic in your learning area to apply for its examination.</p></div>
         }
         else
         {
@@ -74,52 +126,40 @@
                     @foreach (var row in Model.Select((item, rowIndex) => new { Exam = item, RowIndex = rowIndex }))
                     {
                         var exam = row.Exam;
+                        var topicAttempts = Model.Where(item => item.CourseId == exam.CourseId && item.TopicId == exam.TopicId).OrderBy(item => item.AttemptId).ToList();
+                        var attemptNumber = topicAttempts.FindIndex(item => item.AttemptId == exam.AttemptId) + 1;
+                        var isLatestAttempt = topicAttempts.All(item => item.AttemptId <= exam.AttemptId);
+                        var nextAttemptNumber = topicAttempts.Count + 1;
+                        var paidKeys = ViewBag.UnusedPaidRetakeKeys as IReadOnlyList<string> ?? Array.Empty<string>();
+                        var pendingKeys = ViewBag.PendingRetakeKeys as IReadOnlyList<string> ?? Array.Empty<string>();
+                        var paymentKey = $"{exam.CourseId}:{exam.TopicId}:{nextAttemptNumber}";
+                        var hasPaidRetake = paidKeys.Contains(paymentKey);
+                        var hasPendingPayment = pendingKeys.Contains(paymentKey);
+                        var nextAttemptIsPaid = nextAttemptNumber > 2;
+                        var retakeFeeBase = Math.Max(1, nextAttemptNumber - 2) * 100m;
+                        var retakeFee = retakeFeeBase + Math.Round(retakeFeeBase * 0.18m, 2, MidpointRounding.AwayFromZero);
                         <tr style="--row-index: @row.RowIndex">
-                            <td><span class="ciit-exam-topic">@exam.TopicTitle</span><span class="ciit-exam-sub">Attempt #@exam.AttemptId</span></td>
+                            <td><span class="ciit-exam-topic">@exam.TopicTitle</span><span class="ciit-exam-sub">Attempt #@attemptNumber</span>@if(attemptNumber > 1){<span class="badge rounded-pill text-bg-info ms-1">Re-exam</span>@if(attemptNumber > 2){<span class="ciit-exam-sub">Fee: ₹@retakeFee.ToString("0.00")</span>}}</td>
                             <td><time class="exam-local-time" datetime="@DateTime.SpecifyKind(exam.ScheduledAtUtc, DateTimeKind.Utc).ToString("O")">@exam.ScheduledAtUtc.ToString("yyyy-MM-dd HH:mm") UTC</time></td>
-                            <td><span class="ciit-exam-status" data-status="@exam.Status">@(exam.Status == "TimedOut" ? "Time’s up" : exam.Status)</span></td>
+                            <td><span class="ciit-exam-status" data-status="@exam.Status">@(exam.Status == "TimedOut" ? "Time’s up" : exam.Status)</span>@if(exam.Status is "Passed" or "Failed" or "Terminated" or "TimedOut" or "Submitted"){<span class="ciit-exam-result-detail"><strong>Score:</strong> @exam.Score/@exam.TotalQuestions</span><span class="ciit-exam-result-detail"><strong>Answered:</strong> @exam.AnsweredQuestionsCount/@exam.TotalQuestions questions</span>@if(exam.Status == "Passed"){<span class="ciit-exam-result-detail">Passing score achieved</span>}else if(exam.Status == "Failed"){<span class="ciit-exam-result-detail">Passing score: 35/@exam.TotalQuestions</span>}else if(!string.IsNullOrWhiteSpace(exam.TerminationReason)){<span class="ciit-exam-result-detail">Reason: @exam.TerminationReason</span>}}</td>
                             <td class="text-end">
                                 @if (exam.Status is "Scheduled" or "Ready")
                                 {
-                                    var openAtUtc = exam.ScheduledAtUtc.AddMinutes(-30);
-                                    var examEndUtc = exam.ScheduledAtUtc.AddMinutes(60);
-                                    var canOpen = DateTime.UtcNow >= openAtUtc && DateTime.UtcNow < examEndUtc;
-                                    <a class="ciit-exam-action exam-open-button @(canOpen ? "" : "disabled")" href="@(canOpen ? Url.Action("Instructions", "StudentExaminations", new { attemptId = exam.AttemptId }) : "#")" data-open-at="@DateTime.SpecifyKind(openAtUtc, DateTimeKind.Utc).ToString("O")" data-exam-end="@DateTime.SpecifyKind(examEndUtc, DateTimeKind.Utc).ToString("O")" data-target-url="@Url.Action("Instructions", "StudentExaminations", new { attemptId = exam.AttemptId })" aria-disabled="@(!canOpen ? "true" : "false")" tabindex="@(!canOpen ? "-1" : "0")">@(DateTime.UtcNow >= examEndUtc ? "Time's up" : "Instructions / Start")</a>
-                                    <span class="ciit-exam-sub exam-open-countdown" data-open-at="@DateTime.SpecifyKind(openAtUtc, DateTimeKind.Utc).ToString("O")" data-exam-end="@DateTime.SpecifyKind(examEndUtc, DateTimeKind.Utc).ToString("O")"></span>
+                                    var openAtUtc = exam.ScheduledAtUtc.AddMinutes(-30); var examEndUtc = exam.ScheduledAtUtc.AddMinutes(60); var canOpen = DateTime.UtcNow >= openAtUtc && DateTime.UtcNow < examEndUtc;
+                                    <a class="ciit-exam-action exam-open-button @(canOpen ? "" : "disabled")" href="@(canOpen ? Url.Action("Instructions", "StudentExaminations", new { attemptId = exam.AttemptId }) : "#")" data-open-at="@DateTime.SpecifyKind(openAtUtc, DateTimeKind.Utc).ToString("O")" data-exam-end="@DateTime.SpecifyKind(examEndUtc, DateTimeKind.Utc).ToString("O")" data-target-url="@Url.Action("Instructions", "StudentExaminations", new { attemptId = exam.AttemptId })" aria-disabled="@(!canOpen ? "true" : "false")" tabindex="@(!canOpen ? "-1" : "0")">@(DateTime.UtcNow >= examEndUtc ? "Time's up" : "Instructions / Start")</a><span class="ciit-exam-sub exam-open-countdown" data-open-at="@DateTime.SpecifyKind(openAtUtc, DateTimeKind.Utc).ToString("O")" data-exam-end="@DateTime.SpecifyKind(examEndUtc, DateTimeKind.Utc).ToString("O")"></span>
                                 }
                                 else if (exam.Status == "InProgress") { <a class="ciit-exam-action" asp-action="Instructions" asp-route-attemptId="@exam.AttemptId">Resume exam</a> }
                                 else if (exam.Status is "Terminated" or "Failed" or "TimedOut")
                                 {
-                                    var topicAttempts = Model.Where(item => item.CourseId == exam.CourseId && item.TopicId == exam.TopicId).ToList();
-                                    var isLatestAttempt = topicAttempts.All(item => item.AttemptId == exam.AttemptId
-                                        || item.ScheduledAtUtc < exam.ScheduledAtUtc
-                                        || (item.ScheduledAtUtc == exam.ScheduledAtUtc && item.AttemptId < exam.AttemptId));
-                                    var nextAttemptNumber = topicAttempts.Count + 1;
-                                    var paidKeys = ViewBag.UnusedPaidRetakeKeys as IReadOnlyList<string> ?? Array.Empty<string>();
-                                    var paymentKey = $"{exam.CourseId}:{exam.TopicId}:{nextAttemptNumber}";
-                                    var hasPaidRetake = paidKeys.Contains(paymentKey);
-                                    if (isLatestAttempt)
+                                    if (isLatestAttempt && hasPendingPayment){<span class="badge rounded-pill text-bg-warning">Payment pending</span>}
+                                    else if (isLatestAttempt)
                                     {
-                                        <form asp-controller="StudentExaminations" asp-action="@(nextAttemptNumber > 2 && !hasPaidRetake ? "PayForReExam" : "ReExam")" method="post" class="d-inline">
-                                            @Html.AntiForgeryToken()
-                                            <input type="hidden" name="courseId" value="@exam.CourseId" />
-                                            <input type="hidden" name="topicId" value="@exam.TopicId" />
-                                            @if (nextAttemptNumber > 2 && !hasPaidRetake)
-                                            {
-                                                var baseFee = (nextAttemptNumber - 2) * 100m;
-                                                var gst = Math.Round(baseFee * 0.18m, 2, MidpointRounding.AwayFromZero);
-                                                <button type="submit" class="ciit-exam-action">Pay ₹@((baseFee + gst).ToString("0.00")) and re-exam</button>
-                                            }
-                                            else
-                                            {
-                                                <button type="submit" class="ciit-exam-action">Start re-exam</button>
-                                            }
+                                        <form asp-controller="StudentExaminations" asp-action="@(nextAttemptIsPaid && !hasPaidRetake ? "PayForReExam" : "ReExam")" method="post" class="d-inline @(nextAttemptIsPaid && !hasPaidRetake ? "js-exam-payment-form" : "")">
+                                            @Html.AntiForgeryToken()<input type="hidden" name="courseId" value="@exam.CourseId" /><input type="hidden" name="topicId" value="@exam.TopicId" />
+                                            @if(nextAttemptIsPaid && !hasPaidRetake){<button type="submit" class="ciit-exam-action">Pay ₹@retakeFee.ToString("0.00") and re-exam</button>}else{<button type="submit" class="ciit-exam-action">Start re-exam</button>}
                                         </form>
                                     }
-                                    else
-                                    {
-                                        <span class="ciit-exam-sub">Previous attempt</span>
-                                    }
+                                    else { <span class="ciit-exam-sub">Previous attempt</span> }
                                 }
                                 else { <span class="ciit-exam-sub">Closed</span> }
                             </td>
@@ -131,47 +171,25 @@
         }
     </section>
 </section>
+
+<div id="examPaymentOverlay" class="ciit-exam-payment-overlay" hidden aria-live="polite">
+    <div id="examPaymentCard" class="ciit-exam-payment-card"><div id="examPaymentIcon" class="ciit-exam-payment-icon"><span class="ciit-exam-payment-spinner"></span></div><strong id="examPaymentTitle">Preparing secure payment</strong><p id="examPaymentMessage">Connecting to Razorpay securely…</p><div id="examPaymentProgress" class="ciit-exam-payment-progress" aria-hidden="true"><span></span></div><button id="examPaymentClose" type="button" class="btn btn-outline-primary ciit-exam-payment-close" hidden>Close</button></div>
+</div>
+
 @section Scripts {
 <script>
-    document.querySelectorAll('.exam-local-time').forEach(function (element) {
-        const date = new Date(element.dateTime);
-        if (!Number.isNaN(date.getTime())) element.textContent = date.toLocaleString();
-    });
-    function updateExamOpenButtons() {
-        document.querySelectorAll('.exam-open-button').forEach(function (button) {
-            const now = Date.now();
-            const openAt = new Date(button.dataset.openAt).getTime();
-            const examEnd = new Date(button.dataset.examEnd).getTime();
-            const remaining = openAt - now;
-            const label = button.parentElement.querySelector('.exam-open-countdown');
-            if (Number.isFinite(examEnd) && now >= examEnd) {
-                button.href = '#';
-                button.classList.add('disabled');
-                button.setAttribute('aria-disabled', 'true');
-                button.tabIndex = -1;
-                button.textContent = "Time's up";
-                if (label) label.textContent = 'Scheduled exam window has ended';
-            } else if (remaining <= 0) {
-                button.href = button.dataset.targetUrl;
-                button.classList.remove('disabled');
-                button.setAttribute('aria-disabled', 'false');
-                button.tabIndex = 0;
-                if (label) label.textContent = 'Instructions available now';
-            } else {
-                const seconds = Math.ceil(remaining / 1000);
-                const hours = Math.floor(seconds / 3600);
-                const minutes = Math.floor((seconds % 3600) / 60);
-                const secs = seconds % 60;
-                if (label) label.textContent = 'Instructions open in ' + [hours, minutes, secs].map(x => String(x).padStart(2, '0')).join(':');
-            }
-        });
-    }
-    document.querySelectorAll('.exam-open-button').forEach(function (button) {
-        button.addEventListener('click', function (event) {
-            if (button.getAttribute('aria-disabled') === 'true') event.preventDefault();
-        });
-    });
-    updateExamOpenButtons();
-    window.setInterval(updateExamOpenButtons, 1000);
+(function () {
+    const overlay = document.getElementById('examPaymentOverlay'); const card = document.getElementById('examPaymentCard'); const icon = document.getElementById('examPaymentIcon'); const title = document.getElementById('examPaymentTitle'); const message = document.getElementById('examPaymentMessage'); const progress = document.getElementById('examPaymentProgress'); const closeButton = document.getElementById('examPaymentClose'); let activeOverlayTimer = null;
+    const showOverlay = (state, heading, copy, duration) => { window.clearTimeout(activeOverlayTimer); overlay.hidden = false; card.className = 'ciit-exam-payment-card ' + state; title.textContent = heading; message.textContent = copy; closeButton.hidden = state !== 'failed'; icon.innerHTML = state === 'success' ? '<i class="bi bi-check-lg"></i>' : state === 'failed' ? '<i class="bi bi-x-lg"></i>' : '<span class="ciit-exam-payment-spinner"></span>'; progress.hidden = state === 'failed'; progress.querySelector('span').style.animation = 'none'; void progress.offsetWidth; if (state !== 'failed') progress.querySelector('span').style.animation = 'exam-payment-progress ' + (duration || 3000) + 'ms linear forwards'; requestAnimationFrame(() => overlay.classList.add('is-visible')); };
+    const hideOverlay = () => { window.clearTimeout(activeOverlayTimer); overlay.classList.remove('is-visible'); window.setTimeout(() => { overlay.hidden = true; }, 220); }; closeButton.addEventListener('click', hideOverlay);
+    const loadRazorpay = () => new Promise((resolve, reject) => { if (window.Razorpay) return resolve(); const existing = document.querySelector('script[src="https://checkout.razorpay.com/v1/checkout.js"]'); if (existing){existing.addEventListener('load',resolve,{once:true});existing.addEventListener('error',reject,{once:true});return;} const script=document.createElement('script');script.src='https://checkout.razorpay.com/v1/checkout.js';script.async=true;script.onload=resolve;script.onerror=()=>reject(new Error('Razorpay Checkout could not be loaded.'));document.head.appendChild(script); });
+    const postJson = async (url, body, token) => { const response = await fetch(url,{method:'POST',credentials:'same-origin',headers:{'Content-Type':'application/json','Accept':'application/json','RequestVerificationToken':token || ''},body:JSON.stringify(body)}); const result=await response.json().catch(()=>({})); if(!response.ok) throw new Error(result.message || 'The payment request could not be completed.'); return result; };
+    const verifyPayment = async (merchantOrderId, response, token) => { showOverlay('processing','Verifying payment','Checking your payment securely with Razorpay…',3000); try { const result=await postJson('/Payments/Razorpay/Verify',{merchantOrderId,razorpayOrderId:response.razorpay_order_id,razorpayPaymentId:response.razorpay_payment_id,razorpaySignature:response.razorpay_signature},token); if(!result.success) throw new Error(result.message || 'Payment verification failed.'); showOverlay('success','Payment Successful','Your re-exam payment is confirmed. Opening examinations…',1800); activeOverlayTimer=window.setTimeout(()=>window.location.assign(result.redirectUrl || '/Examinations'),1800); } catch(error){ showOverlay('failed','Payment Verification Failed',error.message || 'We could not confirm the payment yet. No re-exam was unlocked.'); } };
+    const startPayment = async form => { const button=form.querySelector('button[type="submit"]'); const token=form.querySelector('input[name="__RequestVerificationToken"]')?.value || ''; if(button){button.disabled=true;button.innerHTML='<span class="spinner-border spinner-border-sm me-2" aria-hidden="true"></span>Preparing payment…';} try { const response=await fetch(form.action,{method:'POST',body:new FormData(form),credentials:'same-origin',headers:{'Accept':'application/json'}}); const result=await response.json().catch(()=>({})); if(!response.ok || !result.success) throw new Error(result.message || 'The payment order could not be created.'); if(result.alreadyPaid){window.location.reload();return;} const checkoutUrl=new URL(result.checkoutUrl,window.location.origin); const razorpayOrderId=checkoutUrl.searchParams.get('razorpayOrderId'); const keyId=checkoutUrl.searchParams.get('keyId'); const amount=Number(checkoutUrl.searchParams.get('amount')); const merchantOrderId=result.merchantOrderId || checkoutUrl.searchParams.get('merchantOrderId'); if(!razorpayOrderId || !keyId || !merchantOrderId || !Number.isSafeInteger(amount) || amount<=0) throw new Error('Razorpay order details are incomplete.'); await loadRazorpay(); const checkout=new Razorpay({key:keyId,amount,currency:'INR',order_id:razorpayOrderId,name:'CIIT Stack Lab',description:'Examination re-attempt payment',handler:response=>verifyPayment(merchantOrderId,response,token),modal:{ondismiss:function(){if(button){button.disabled=false;button.textContent='Pay and re-exam';}}}}); checkout.on('payment.failed',async response=>{const failure=response?.error || {};try{await postJson('/Payments/Razorpay/Fail',{merchantOrderId,code:failure.code,reason:failure.reason || failure.description},token);}catch(error){console.error('Could not record Razorpay failure:',error);}showOverlay('failed','Payment Failed',failure.description || 'The payment could not be completed. No re-exam was unlocked.');if(button){button.disabled=false;button.textContent='Pay and re-exam';}}); checkout.open(); } catch(error){ showOverlay('failed','Payment Could Not Start',error.message || 'Razorpay could not start the payment.'); if(button){button.disabled=false;button.textContent='Pay and re-exam';} } };
+    document.querySelectorAll('.js-exam-payment-form').forEach(form=>form.addEventListener('submit',event=>{event.preventDefault();startPayment(form);}));
+    document.querySelectorAll('.ciit-exam-flash').forEach(alert=>window.setTimeout(()=>{if(!alert.isConnected)return;alert.style.transition='opacity .25s ease, transform .25s ease';alert.style.opacity='0';alert.style.transform='translateY(-5px)';window.setTimeout(()=>alert.remove(),280);},5000));
+    document.querySelectorAll('.exam-local-time').forEach(element=>{const date=new Date(element.dateTime);if(!Number.isNaN(date.getTime()))element.textContent=date.toLocaleString();});
+    function updateExamOpenButtons(){document.querySelectorAll('.exam-open-button').forEach(button=>{const now=Date.now();const openAt=new Date(button.dataset.openAt).getTime();const examEnd=new Date(button.dataset.examEnd).getTime();const remaining=openAt-now;const label=button.parentElement.querySelector('.exam-open-countdown');if(Number.isFinite(examEnd)&&now>=examEnd){button.href='#';button.classList.add('disabled');button.setAttribute('aria-disabled','true');button.tabIndex=-1;button.textContent="Time's up";if(label)label.textContent='Scheduled exam window has ended';}else if(remaining<=0){button.href=button.dataset.targetUrl;button.classList.remove('disabled');button.setAttribute('aria-disabled','false');button.tabIndex=0;if(label)label.textContent='Instructions available now';}else{const seconds=Math.ceil(remaining/1000);const hours=Math.floor(seconds/3600);const minutes=Math.floor((seconds%3600)/60);const secs=seconds%60;if(label)label.textContent='Instructions open in '+[hours,minutes,secs].map(x=>String(x).padStart(2,'0')).join(':');}});} document.querySelectorAll('.exam-open-button').forEach(button=>button.addEventListener('click',event=>{if(button.getAttribute('aria-disabled')==='true')event.preventDefault();})); updateExamOpenButtons();window.setInterval(updateExamOpenButtons,1000);
+})();
 </script>
 }
