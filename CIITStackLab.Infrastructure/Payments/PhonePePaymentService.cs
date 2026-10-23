@@ -7,7 +7,7 @@ using Microsoft.Extensions.Options;
 
 namespace CIITStackLab.Infrastructure.Payments;
 
-// Kept as a compatibility type for the existing controllers during the gateway migration.
+// Compatibility type retained for existing controller constructor signatures during migration.
 // The implementation is Razorpay-only; no PhonePe SDK or API is used.
 public sealed class PhonePePaymentService
 {
@@ -91,8 +91,6 @@ public sealed class PhonePePaymentService
 
     public async Task<string> GetOrderStateAsync(string merchantOrderId)
     {
-        // Legacy controller compatibility. New Razorpay flow verifies the order/payment
-        // using the returned Razorpay order ID and signature before fulfilment.
         if (string.IsNullOrWhiteSpace(merchantOrderId))
             throw new ArgumentException("Merchant order ID is required.", nameof(merchantOrderId));
 
@@ -152,11 +150,19 @@ public sealed class PhonePePaymentService
 
     private RazorpayOptions RequireOptions()
     {
-        if (string.IsNullOrWhiteSpace(_options.KeyId)
-            || string.IsNullOrWhiteSpace(_options.KeySecret))
+        var keySecret = string.IsNullOrWhiteSpace(_options.KeySecret)
+            ? Environment.GetEnvironmentVariable("Razorpay__KeySecret")
+            : _options.KeySecret;
+
+        if (string.IsNullOrWhiteSpace(_options.KeyId) || string.IsNullOrWhiteSpace(keySecret))
         {
             throw new InvalidOperationException(
-                "Razorpay credentials are not configured. Configure Razorpay:KeyId and Razorpay:KeySecret.");
+                "Razorpay credentials are not configured. Configure Razorpay:KeyId and Razorpay:KeySecret or Razorpay__KeySecret.");
+        }
+
+        if (!string.Equals(_options.KeySecret, keySecret, StringComparison.Ordinal))
+        {
+            _options.KeySecret = keySecret;
         }
 
         return _options;
