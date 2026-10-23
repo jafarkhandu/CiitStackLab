@@ -62,35 +62,39 @@ public sealed class RazorpayCheckoutController : Controller
         return View();
     }
 
-    [HttpGet("Payments/Razorpay/Success")]
-    public async Task<IActionResult> PaymentSuccess(
-        string merchantOrderId,
+    [HttpPost("Payments/Razorpay/Fail")]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> Fail(
+        [FromBody] RazorpayFailureRequest request,
         CancellationToken cancellationToken)
     {
         var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
-        if (string.IsNullOrWhiteSpace(userId)) return Challenge();
-        if (string.IsNullOrWhiteSpace(merchantOrderId)) return BadRequest();
+        if (string.IsNullOrWhiteSpace(userId)) return Unauthorized();
+        if (request is null || string.IsNullOrWhiteSpace(request.MerchantOrderId))
+            return BadRequest(new { message = "Payment order details are incomplete." });
 
-        var transaction = await _db.PaymentTransactions
-            .AsNoTracking()
-            .FirstOrDefaultAsync(
-                item => item.MerchantOrderId == merchantOrderId && item.UserId == userId,
-                cancellationToken);
+        var transaction = await _db.PaymentTransactions.FirstOrDefaultAsync(
+            item => item.MerchantOrderId == request.MerchantOrderId && item.UserId == userId,
+            cancellationToken);
+        if (transaction is null)
+            return NotFound(new { message = "The payment order could not be found." });
 
-        if (transaction is null
-            || !string.Equals(transaction.Status, "Completed", StringComparison.OrdinalIgnoreCase))
+        if (string.Equals(transaction.Status, "Completed", StringComparison.OrdinalIgnoreCase))
         {
-            return BadRequest("The payment has not been confirmed.");
+            return Json(new { success = true, status = "Completed" });
         }
 
-        if (string.Equals(transaction.PaymentPurpose, "ExamRetake", StringComparison.Ordinal))
-        {
-            return Redirect(GetSuccessUrl(transaction));
-        }
+        transaction.Status = "Failed";
+        transaction.UpdatedAt = DateTime.UtcNow;
+        await _db.SaveChangesAsync(cancellationToken);
 
-        ViewData["CourseId"] = transaction.CourseId;
-        ViewData["CourseUrl"] = GetSuccessUrl(transaction);
-        return View();
+        _logger.LogInformation(
+            "Razorpay payment marked failed for merchant order {MerchantOrderId}. Code: {Code}, Reason: {Reason}.",
+            transaction.MerchantOrderId,
+            request.Code,
+            request.Reason);
+
+        return Json(new { success = true, status = "Failed" });
     }
 
     [HttpPost("Payments/Razorpay/Verify")]
@@ -201,13 +205,7 @@ public sealed class RazorpayCheckoutController : Controller
 
     private string GetPostPaymentUrl(PaymentTransaction transaction)
     {
-        if (string.Equals(transaction.PaymentPurpose, "ExamRetake", StringComparison.Ordinal))
-            return GetSuccessUrl(transaction);
-
-        return Url.Action(nameof(PaymentSuccess), "RazorpayCheckout", new
-        {
-            merchantOrderId = transaction.MerchantOrderId
-        }) ?? GetSuccessUrl(transaction);
+        return GetSuccessUrl(transaction);
     }
 
     private string GetSuccessUrl(PaymentTransaction transaction)
@@ -231,4 +229,11 @@ public sealed class RazorpayVerificationRequest
     public string RazorpayOrderId { get; init; } = string.Empty;
     public string RazorpayPaymentId { get; init; } = string.Empty;
     public string RazorpaySignature { get; init; } = string.Empty;
+}
+
+public sealed class RazorpayFailureRequest
+{
+    public string MerchantOrderId { get; init; } = string.Empty;
+    public string? Code { get; init; }
+    public string? Reason { get; init; }
 }
