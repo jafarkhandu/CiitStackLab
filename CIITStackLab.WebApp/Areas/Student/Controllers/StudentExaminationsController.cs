@@ -73,7 +73,22 @@ public sealed class StudentExaminationsController : Controller
             try
             {
                 var gatewayState = await _phonePePaymentService.GetOrderStateAsync(payment.MerchantOrderId);
-                await ProcessPhonePeStateAsync(payment, gatewayState, cancellationToken);
+                if (string.Equals(gatewayState, "COMPLETED", StringComparison.OrdinalIgnoreCase))
+                {
+                    payment.Status = "Completed";
+                    payment.CompletedAt ??= DateTime.UtcNow;
+                }
+                else if (string.Equals(gatewayState, "FAILED", StringComparison.OrdinalIgnoreCase))
+                {
+                    payment.Status = "Failed";
+                }
+                else
+                {
+                    payment.Status = "Pending";
+                }
+
+                payment.UpdatedAt = DateTime.UtcNow;
+                await _db.SaveChangesAsync(cancellationToken);
             }
             catch (Exception ex)
             {
