@@ -138,6 +138,61 @@
         if (examApplicationModal && window.bootstrap) {
             window.bootstrap.Modal.getOrCreateInstance(examApplicationModal).show();
         }
+
+        document.querySelectorAll('.ciit-exam-retake-payment-form').forEach(function (form) {
+            form.addEventListener('submit', function () {
+                try {
+                    sessionStorage.setItem('ciitExamPaymentReturnUrl', window.location.href);
+                } catch (error) {
+                    // Browser storage may be unavailable; payment itself must still proceed.
+                }
+            });
+        });
+
+        window.addEventListener('pageshow', function (event) {
+            const paymentReturnUrl = (() => {
+                try {
+                    return sessionStorage.getItem('ciitExamPaymentReturnUrl');
+                } catch (error) {
+                    return null;
+                }
+            })();
+            const navigation = performance.getEntriesByType('navigation')[0];
+            const isBackNavigation = event.persisted
+                || (navigation && navigation.type === 'back_forward');
+
+            if (!isBackNavigation || !paymentReturnUrl || paymentReturnUrl !== window.location.href) {
+                return;
+            }
+
+            const shouldExitPayment = window.confirm(
+                'Do you want to leave the payment page and return to your learning portal?'
+            );
+
+            if (shouldExitPayment) {
+                try {
+                    sessionStorage.removeItem('ciitExamPaymentReturnUrl');
+                } catch (error) {
+                    // Continue navigation even if browser storage is unavailable.
+                }
+
+                const url = new URL(window.location.href);
+                url.searchParams.set('reopenExamModal', 'true');
+                window.location.assign(url.toString());
+            } else {
+                window.history.forward();
+            }
+        });
+
+        document.querySelectorAll('.ciit-exam-modal-alert').forEach(function (alert) {
+            window.setTimeout(function () {
+                if (!alert.isConnected) return;
+                alert.style.transition = 'opacity .25s ease, transform .25s ease';
+                alert.style.opacity = '0';
+                alert.style.transform = 'translateY(-5px)';
+                window.setTimeout(function () { alert.remove(); }, 280);
+            }, 5000);
+        });
     </script>
 }
 
@@ -953,32 +1008,120 @@ else
 }
 @if (User.IsInRole("Student") && ViewBag.ShowExamApplicationModal == true && currentTopic is not null)
 {
-    <div class="modal fade" id="topicExamApplicationModal" tabindex="-1" aria-labelledby="topicExamApplicationTitle" aria-hidden="true" data-bs-backdrop="static" data-bs-keyboard="false">
+    var modalAttemptNumber = ViewBag.ExamAttemptNumber is int attemptNumber ? attemptNumber : 1;
+    var modalRequiresPayment = ViewBag.ExamRequiresPayment is bool requiresPayment && requiresPayment;
+    var modalHasEverPassed = ViewBag.ExamHasEverPassed is bool hasPassed && hasPassed;
+    var modalHasUnusedPaidRetake = ViewBag.ExamHasUnusedPaidRetake is bool hasUnusedPaidRetake && hasUnusedPaidRetake;
+    var modalHasPendingPayment = ViewBag.ExamHasPendingRetakePayment is bool hasPendingPayment && hasPendingPayment;
+    var pendingRetakeOrderId = ViewBag.PendingRetakePaymentOrderId as string;
+    var modalHasActiveAttempt = ViewBag.ExamHasActiveAttempt is bool hasActiveAttempt && hasActiveAttempt;
+    var modalFee = ViewBag.ExamRetakeFee is decimal fee ? fee : 118m;
+    var previousStatus = ViewBag.PreviousExamStatus as string;
+    var previousScore = ViewBag.PreviousExamScore as int?;
+    var previousTotal = ViewBag.PreviousExamTotalQuestions as int?;
+
+    <div class="modal fade" id="topicExamApplicationModal" data-pending-payment="@(modalHasPendingPayment ? "true" : "false")" tabindex="-1" aria-labelledby="topicExamApplicationTitle" aria-hidden="true" data-bs-backdrop="static" data-bs-keyboard="false">
         <div class="modal-dialog modal-dialog-centered">
             <div class="modal-content">
                 <div class="modal-header">
                     <div>
-                        <span class="text-uppercase text-primary small fw-bold">Topic completed</span>
-                        <h2 class="modal-title fs-5 mt-1" id="topicExamApplicationTitle">Apply for @(currentTopic?.Title ?? "this topic") examination</h2>
+                        <span class="text-uppercase text-primary small fw-bold">Exam application</span>
+                        <h2 class="modal-title fs-5 mt-1" id="topicExamApplicationTitle">Apply for @(currentTopic.Title) examination</h2>
                     </div>
                 </div>
-                <form asp-controller="StudentExaminations" asp-action="Schedule" method="post">
-                    @Html.AntiForgeryToken()
-                    <div class="modal-body">
-                        <p>Your topic is complete. Schedule your 50-question examination. You can revise this topic while waiting for the scheduled time.</p>
-                        <input type="hidden" name="CourseId" value="@Model.Id" />
-                        <input type="hidden" name="TopicId" value="@(currentTopic?.Id)" />
-                        <input type="hidden" name="TimezoneOffsetMinutes" class="exam-timezone-offset" />
-                        <label class="form-label" for="topicExamScheduledAt">Exam date and time</label>
-                        <input class="form-control" type="datetime-local" id="topicExamScheduledAt" name="ScheduledAtLocal" required />
-                        <div class="form-text">The exam instructions button opens 30 minutes before your scheduled time. The exam itself starts only at the scheduled time.</div>
-                    </div>
-                    <div class="modal-footer">
-                        <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Later</button>
-                        <button type="submit" class="btn btn-primary" formaction="/Examinations/StartNow" formnovalidate>Start now <i class="bi bi-arrow-right ms-1" aria-hidden="true"></i></button>
-                        <button type="submit" class="btn btn-outline-primary">Schedule examination</button>
-                    </div>
-                </form>
+                <div class="modal-body">
+                    @if (previousStatus is not null)
+                    {
+                        <div class="rounded-3 border p-3 mb-3">
+                            <strong>Previous attempt #@(modalAttemptNumber - 1) result</strong>
+                            <div class="mt-1">
+                                @previousStatus
+                                @if (previousScore.HasValue && previousTotal.HasValue)
+                                {
+                                    <span> · Score: @previousScore/@previousTotal</span>
+                                }
+                            </div>
+                        </div>
+                    }
+                    @if (TempData["ExamError"] is string modalExamError)
+                    {
+                        <div class="alert alert-danger ciit-exam-modal-alert" role="alert" aria-live="assertive">@modalExamError</div>
+                    }
+                    @if (TempData["ExamMessage"] is string modalExamMessage)
+                    {
+                        <div class="alert alert-success ciit-exam-modal-alert" role="status" aria-live="polite">@modalExamMessage</div>
+                    }
+                    @if (modalHasActiveAttempt)
+                    {
+                        <div class="alert alert-info ciit-exam-modal-alert" role="status">An exam is already scheduled or active for this topic. Open Exam Attempts to continue it.</div>
+                    }
+                    else if (modalHasEverPassed)
+                    {
+                        <p>You have already passed this topic. You can pay for another attempt if you want to improve your score.</p>
+                    }
+                    else
+                    {
+                        <p>Your topic is complete. You can schedule your examination or start now.</p>
+                    }
+                    @if (modalAttemptNumber == 2 && !modalHasEverPassed)
+                    {
+                        <p class="text-danger fw-semibold mb-3">This is your last free attempt.</p>
+                    }
+                    @if (!modalHasActiveAttempt && modalRequiresPayment)
+                    {
+                        <div class="rounded-3 border border-danger-subtle bg-danger-subtle p-3 mb-3">
+                            <div class="small text-danger-emphasis">Exam fee for attempt #@modalAttemptNumber</div>
+                            <div class="fs-4 fw-bold text-danger">₹@modalFee.ToString("0.00")</div>
+                            @if (modalHasUnusedPaidRetake)
+                            {
+                                <div class="small text-success fw-semibold">Payment confirmed. You can now schedule or start this attempt.</div>
+                            }
+                            else if (modalHasPendingPayment)
+                            {
+                                <div class="small text-danger-emphasis">A payment order is already pending. Verify its latest status before creating another order.</div>
+                                @if (!string.IsNullOrWhiteSpace(pendingRetakeOrderId))
+                                {
+                                    <a class="btn btn-outline-primary w-100 mt-3"
+                                       asp-controller="Courses"
+                                       asp-action="PhonePeReturn"
+                                       asp-route-merchantOrderId="@pendingRetakeOrderId">
+                                        Verify existing payment
+                                    </a>
+                                }
+                            }
+                            else
+                            {
+                                <div class="small text-danger-emphasis">Payment is required before this re-exam can be scheduled or started.</div>
+                            }
+                        </div>
+                    }
+                    @if (!modalHasActiveAttempt && (!modalRequiresPayment || modalHasUnusedPaidRetake))
+                    {
+                        <form asp-controller="StudentExaminations" asp-action="Schedule" method="post">
+                            @Html.AntiForgeryToken()
+                            <input type="hidden" name="CourseId" value="@Model.Id" />
+                            <input type="hidden" name="TopicId" value="@currentTopic.Id" />
+                            <input type="hidden" name="TimezoneOffsetMinutes" class="exam-timezone-offset" />
+                            <label class="form-label" for="topicExamScheduledAt">Exam date and time</label>
+                            <input class="form-control" type="datetime-local" id="topicExamScheduledAt" name="ScheduledAtLocal" required />
+                            <div class="form-text">Instructions open 30 minutes before the scheduled time. The exam starts at the scheduled time.</div>
+                            <div class="modal-footer px-0 pb-0">
+                                <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Later</button>
+                                <button type="submit" class="btn btn-primary" formaction="/Examinations/StartNow" formnovalidate>Start now <i class="bi bi-arrow-right ms-1" aria-hidden="true"></i></button>
+                                <button type="submit" class="btn btn-outline-primary">Schedule examination</button>
+                            </div>
+                        </form>
+                    }
+                    @if (!modalHasActiveAttempt && modalRequiresPayment && !modalHasUnusedPaidRetake && !modalHasPendingPayment)
+                    {
+                        <form asp-controller="StudentExaminations" asp-action="PayForReExam" method="post" class="ciit-exam-retake-payment-form">
+                            @Html.AntiForgeryToken()
+                            <input type="hidden" name="courseId" value="@Model.Id" />
+                            <input type="hidden" name="topicId" value="@currentTopic.Id" />
+                            <button type="submit" class="btn btn-danger w-100">Pay ₹@modalFee.ToString("0.00") and continue with Razorpay</button>
+                        </form>
+                    }
+                </div>
             </div>
         </div>
     </div>
