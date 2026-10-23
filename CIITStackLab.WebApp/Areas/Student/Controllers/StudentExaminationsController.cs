@@ -214,8 +214,7 @@ public sealed class StudentExaminationsController : Controller
                 var priorLatest = await _db.TopicExamAttempts.AsNoTracking()
                     .Where(attempt => attempt.UserId == userId && attempt.CourseId == courseId
                         && attempt.TopicId == previousTopicId)
-                    .OrderByDescending(attempt => attempt.ScheduledAtUtc)
-                    .ThenByDescending(attempt => attempt.Id)
+                    .OrderByDescending(attempt => attempt.Id)
                     .Select(attempt => attempt.Status)
                     .FirstOrDefaultAsync(cancellationToken);
                 if (priorLatest is "Scheduled" or "Ready" or "InProgress")
