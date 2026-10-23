@@ -270,8 +270,9 @@ public sealed class StudentExaminationsController : Controller
             cancellationToken);
         if (existingUnusedPayment)
         {
-            TempData["ExamMessage"] = "Payment is already confirmed. Start your re-exam from the exam records.";
-            return RedirectToAction(nameof(Index));
+            TempData["ExamMessage"] = "Payment is already confirmed. You can now schedule or start this re-exam.";
+            TempData["OpenExamApplicationModal"] = true;
+            return RedirectToAction("Learn", "Courses", new { id = courseId, topicId });
         }
 
         var pendingPayment = await _db.PaymentTransactions.AnyAsync(payment =>
