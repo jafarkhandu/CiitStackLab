@@ -970,6 +970,7 @@ else
     var modalHasEverPassed = ViewBag.ExamHasEverPassed is bool hasPassed && hasPassed;
     var modalHasUnusedPaidRetake = ViewBag.ExamHasUnusedPaidRetake is bool hasUnusedPaidRetake && hasUnusedPaidRetake;
     var modalHasPendingPayment = ViewBag.ExamHasPendingRetakePayment is bool hasPendingPayment && hasPendingPayment;
+    var pendingRetakeOrderId = ViewBag.PendingRetakePaymentOrderId as string;
     var modalHasActiveAttempt = ViewBag.ExamHasActiveAttempt is bool hasActiveAttempt && hasActiveAttempt;
     var modalFee = ViewBag.ExamRetakeFee is decimal fee ? fee : 118m;
     var previousStatus = ViewBag.PreviousExamStatus as string;
@@ -1034,7 +1035,16 @@ else
                             }
                             else if (modalHasPendingPayment)
                             {
-                                <div class="small text-danger-emphasis">A payment order is already pending. Verify or complete that order before trying again.</div>
+                                <div class="small text-danger-emphasis">A payment order is already pending. Verify its latest status before creating another order.</div>
+                                @if (!string.IsNullOrWhiteSpace(pendingRetakeOrderId))
+                                {
+                                    <a class="btn btn-outline-primary w-100 mt-3"
+                                       asp-controller="Courses"
+                                       asp-action="PhonePeReturn"
+                                       asp-route-merchantOrderId="@pendingRetakeOrderId">
+                                        Verify existing payment
+                                    </a>
+                                }
                             }
                             else
                             {
