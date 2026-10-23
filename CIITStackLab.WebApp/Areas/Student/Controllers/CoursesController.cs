@@ -988,6 +988,37 @@ public class CoursesController : Controller
                     && payment.ExamAttemptNumber == nextAttemptNumber
                     && payment.Status == "Completed" && payment.ExamAttemptId == null,
                     cancellationToken);
+                var pendingRetakePayment = await _dbContext.PaymentTransactions
+                    .Where(payment => payment.UserId == studentUserId && payment.CourseId == id
+                        && payment.PaymentPurpose == "ExamRetake"
+                        && payment.ExamTopicId == examTopicId.Value
+                        && payment.ExamAttemptNumber == nextAttemptNumber
+                        && (payment.Status == "Created" || payment.Status == "Pending"))
+                    .OrderByDescending(payment => payment.CreatedAt)
+                    .FirstOrDefaultAsync(cancellationToken);
+
+                // Reconcile an abandoned checkout when the student returns to the portal.
+                // Only the gateway's confirmed state may clear a pending payment.
+                if (pendingRetakePayment is not null)
+                {
+                    try
+                    {
+                        var gatewayState = await _phonePePaymentService.GetOrderStateAsync(
+                            pendingRetakePayment.MerchantOrderId);
+                        await ProcessPhonePeStateAsync(
+                            pendingRetakePayment,
+                            gatewayState,
+                            cancellationToken);
+                    }
+                    catch (Exception ex)
+                    {
+                        _logger.LogWarning(
+                            ex,
+                            "Could not reconcile pending retake payment {MerchantOrderId} when opening Learn.",
+                            pendingRetakePayment.MerchantOrderId);
+                    }
+                }
+
                 var pendingRetakePaymentOrderId = await _dbContext.PaymentTransactions.AsNoTracking()
                     .Where(payment => payment.UserId == studentUserId && payment.CourseId == id
                         && payment.PaymentPurpose == "ExamRetake"
