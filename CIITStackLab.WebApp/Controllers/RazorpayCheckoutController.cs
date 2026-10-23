@@ -80,9 +80,7 @@ public sealed class RazorpayCheckoutController : Controller
             return NotFound(new { message = "The payment order could not be found." });
 
         if (string.Equals(transaction.Status, "Completed", StringComparison.OrdinalIgnoreCase))
-        {
             return Json(new { success = true, status = "Completed" });
-        }
 
         transaction.Status = "Failed";
         transaction.UpdatedAt = DateTime.UtcNow;
@@ -150,8 +148,6 @@ public sealed class RazorpayCheckoutController : Controller
             return BadRequest(new { message = "Payment verification failed." });
         }
 
-        // Keep the verified Razorpay order reference in the existing gateway-reference
-        // column until the dedicated Razorpay columns are introduced in a DB migration.
         transaction.PhonePeOrderId = request.RazorpayOrderId;
 
         if (string.Equals(transaction.PaymentPurpose, "ExamRetake", StringComparison.Ordinal))
@@ -205,7 +201,42 @@ public sealed class RazorpayCheckoutController : Controller
 
     private string GetPostPaymentUrl(PaymentTransaction transaction)
     {
-        return GetSuccessUrl(transaction);
+        if (string.Equals(transaction.PaymentPurpose, "ExamRetake", StringComparison.Ordinal))
+            return GetSuccessUrl(transaction);
+
+        return Url.Action(nameof(PaymentSuccess), "RazorpayCheckout", new
+        {
+            merchantOrderId = transaction.MerchantOrderId
+        }) ?? GetSuccessUrl(transaction);
+    }
+
+    [HttpGet("Payments/Razorpay/Success")]
+    public async Task<IActionResult> PaymentSuccess(
+        string merchantOrderId,
+        CancellationToken cancellationToken)
+    {
+        var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+        if (string.IsNullOrWhiteSpace(userId)) return Challenge();
+        if (string.IsNullOrWhiteSpace(merchantOrderId)) return BadRequest();
+
+        var transaction = await _db.PaymentTransactions
+            .AsNoTracking()
+            .FirstOrDefaultAsync(
+                item => item.MerchantOrderId == merchantOrderId && item.UserId == userId,
+                cancellationToken);
+
+        if (transaction is null
+            || !string.Equals(transaction.Status, "Completed", StringComparison.OrdinalIgnoreCase))
+        {
+            return BadRequest("The payment has not been confirmed.");
+        }
+
+        if (string.Equals(transaction.PaymentPurpose, "ExamRetake", StringComparison.Ordinal))
+            return Redirect(GetSuccessUrl(transaction));
+
+        ViewData["CourseId"] = transaction.CourseId;
+        ViewData["CourseUrl"] = GetSuccessUrl(transaction);
+        return View();
     }
 
     private string GetSuccessUrl(PaymentTransaction transaction)
