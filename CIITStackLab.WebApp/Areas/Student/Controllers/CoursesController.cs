@@ -964,8 +964,7 @@ public class CoursesController : Controller
                 var topicAttempts = await _dbContext.TopicExamAttempts.AsNoTracking()
                     .Where(attempt => attempt.UserId == studentUserId
                         && attempt.CourseId == id && attempt.TopicId == examTopicId.Value)
-                    .OrderByDescending(attempt => attempt.ScheduledAtUtc)
-                    .ThenByDescending(attempt => attempt.Id)
+                    .OrderByDescending(attempt => attempt.Id)
                     .Select(attempt => new
                     {
                         attempt.Status,
