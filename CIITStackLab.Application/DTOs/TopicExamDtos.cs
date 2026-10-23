@@ -21,6 +21,7 @@ public sealed class TopicExamSummaryDto
     public string Status { get; init; } = string.Empty;
     public int Score { get; init; }
     public int TotalQuestions { get; init; }
+    public int AnsweredQuestionsCount { get; init; }
     public bool Passed { get; init; }
     public int WarningCount { get; init; }
     public string? TerminationReason { get; init; }
