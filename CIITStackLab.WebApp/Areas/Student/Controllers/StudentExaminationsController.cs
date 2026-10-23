@@ -159,12 +159,6 @@ public sealed class StudentExaminationsController : Controller
             return RedirectToAction(nameof(Index));
         }
 
-        if (await _exams.HasPassedTopicAsync(userId, courseId, topicId, cancellationToken))
-        {
-            TempData["ExamError"] = "You have already passed this topic's examination.";
-            return RedirectToAction(nameof(Index));
-        }
-
         var activeAttemptExists = await _db.TopicExamAttempts.AnyAsync(attempt =>
             attempt.UserId == userId && attempt.CourseId == courseId && attempt.TopicId == topicId
             && (attempt.Status == "Scheduled" || attempt.Status == "Ready" || attempt.Status == "InProgress"),
@@ -189,9 +183,12 @@ public sealed class StudentExaminationsController : Controller
         var attemptNumber = await _db.TopicExamAttempts.CountAsync(attempt =>
             attempt.UserId == userId && attempt.CourseId == courseId && attempt.TopicId == topicId,
             cancellationToken) + 1;
-        if (attemptNumber <= 2)
+        var hasEverPassedTopic = await _db.TopicExamAttempts.AsNoTracking().AnyAsync(attempt =>
+            attempt.UserId == userId && attempt.CourseId == courseId && attempt.TopicId == topicId
+            && attempt.Passed && attempt.Status == "Passed", cancellationToken);
+        if (attemptNumber <= 2 && !hasEverPassedTopic)
         {
-            TempData["ExamMessage"] = "Your next two attempts are free. Open the latest failed attempt and choose Start re-exam.";
+            TempData["ExamError"] = "This attempt is free. Start or schedule it from the examination application.";
             return RedirectToAction(nameof(Index));
         }
 
@@ -219,7 +216,7 @@ public sealed class StudentExaminationsController : Controller
             return RedirectToAction(nameof(Index));
         }
 
-        var baseFee = (attemptNumber - 2) * 100m;
+        var baseFee = Math.Max(1, attemptNumber - 2) * 100m;
         var gst = Math.Round(baseFee * 0.18m, 2, MidpointRounding.AwayFromZero);
         var totalAmount = baseFee + gst;
         var merchantOrderId = $"CIIT-EXAM-{Guid.NewGuid():N}";
