@@ -988,14 +988,18 @@ public class CoursesController : Controller
                     && payment.ExamAttemptNumber == nextAttemptNumber
                     && payment.Status == "Completed" && payment.ExamAttemptId == null,
                     cancellationToken);
-                var hasPendingRetakePayment = await _dbContext.PaymentTransactions.AsNoTracking().AnyAsync(payment =>
-                    payment.UserId == studentUserId && payment.CourseId == id
-                    && payment.PaymentPurpose == "ExamRetake"
-                    && payment.ExamTopicId == examTopicId.Value
-                    && payment.ExamAttemptNumber == nextAttemptNumber
-                    && (payment.Status == "Created" || payment.Status == "Pending"),
-                    cancellationToken);
+                var pendingRetakePaymentOrderId = await _dbContext.PaymentTransactions.AsNoTracking()
+                    .Where(payment => payment.UserId == studentUserId && payment.CourseId == id
+                        && payment.PaymentPurpose == "ExamRetake"
+                        && payment.ExamTopicId == examTopicId.Value
+                        && payment.ExamAttemptNumber == nextAttemptNumber
+                        && (payment.Status == "Created" || payment.Status == "Pending"))
+                    .OrderByDescending(payment => payment.CreatedAt)
+                    .Select(payment => payment.MerchantOrderId)
+                    .FirstOrDefaultAsync(cancellationToken);
+                var hasPendingRetakePayment = !string.IsNullOrWhiteSpace(pendingRetakePaymentOrderId);
 
+                ViewBag.PendingRetakePaymentOrderId = pendingRetakePaymentOrderId;
                 ViewBag.ShowExamApplicationModal = topicCompleted
                     && TempData["OpenExamApplicationModal"] is true;
                 ViewBag.ExamHasActiveAttempt = hasActiveExam;
