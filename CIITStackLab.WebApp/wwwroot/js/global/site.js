@@ -166,13 +166,14 @@ document.addEventListener("DOMContentLoaded", function () {
             const checkoutUrl = new URL(result.checkoutUrl, window.location.origin);
             const orderId = checkoutUrl.searchParams.get("razorpayOrderId");
             const keyId = checkoutUrl.searchParams.get("keyId");
-            if (!orderId || !keyId) throw new Error("Razorpay order details are incomplete.");
+            const amountInPaise = Number(checkoutUrl.searchParams.get("amount"));
+            if (!orderId || !keyId || !Number.isSafeInteger(amountInPaise) || amountInPaise <= 0) throw new Error("Razorpay order details are incomplete.");
             await loadRazorpay();
             removePaymentOverlay();
             setProcessingState(false);
             const checkout = new Razorpay({
                 key: keyId,
-                amount: "@((Model.TotalPrice * 100m).ToString("0"))",
+                amount: amountInPaise,
                 currency: "INR",
                 order_id: orderId,
                 name: "CIIT Stack Lab",
