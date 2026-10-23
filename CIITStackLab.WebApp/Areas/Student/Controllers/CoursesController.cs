@@ -631,7 +631,8 @@ public class CoursesController : Controller
         int? contentId,
         int? topicId,
         int? chapterId,
-        CancellationToken cancellationToken)
+        CancellationToken cancellationToken,
+        bool reopenExamModal = false)
     {
         if (id <= 0
             || (contentId.HasValue && contentId.Value <= 0)
@@ -907,18 +908,97 @@ public class CoursesController : Controller
                         .Select(content => content.Id).Distinct().ToList();
                 var topicCompleted = topicContentIds.Count == 0
                     || topicContentIds.All(course.Progress.CompletedContentIds.Contains);
-                var hasPendingOrPassedExam = await _dbContext.TopicExamAttempts.AsNoTracking().AnyAsync(
-                    attempt => attempt.UserId == studentUserId
-                        && attempt.CourseId == id && attempt.TopicId == examTopicId.Value
-                        && (attempt.Status == "Scheduled" || attempt.Status == "Ready"
-                            || attempt.Status == "InProgress" || attempt.Status == "Passed"),
+                var topicAttempts = await _dbContext.TopicExamAttempts.AsNoTracking()
+                    .Where(attempt => attempt.UserId == studentUserId
+                        && attempt.CourseId == id && attempt.TopicId == examTopicId.Value)
+                    .OrderByDescending(attempt => attempt.Id)
+                    .Select(attempt => new
+                    {
+                        attempt.Status,
+                        attempt.Score,
+                        attempt.TotalQuestions,
+                        attempt.Passed
+                    })
+                    .ToListAsync(cancellationToken);
+                var hasActiveExam = topicAttempts.Any(attempt =>
+                    attempt.Status is "Scheduled" or "Ready" or "InProgress");
+                var hasEverPassed = topicAttempts.Any(attempt =>
+                    attempt.Passed && attempt.Status == "Passed");
+                var nextAttemptNumber = topicAttempts.Count + 1;
+                var requiresRetakePayment = nextAttemptNumber > 2 || hasEverPassed;
+                var retakeBaseFee = Math.Max(1, nextAttemptNumber - 2) * 100m;
+                var retakeFee = retakeBaseFee
+                    + Math.Round(retakeBaseFee * 0.18m, 2, MidpointRounding.AwayFromZero);
+
+                var pendingRetakePayment = await _dbContext.PaymentTransactions
+                    .Where(payment => payment.UserId == studentUserId
+                        && payment.CourseId == id
+                        && payment.PaymentPurpose == "ExamRetake"
+                        && payment.ExamTopicId == examTopicId.Value
+                        && payment.ExamAttemptNumber == nextAttemptNumber
+                        && (payment.Status == "Created" || payment.Status == "Pending"))
+                    .OrderByDescending(payment => payment.CreatedAt)
+                    .FirstOrDefaultAsync(cancellationToken);
+
+                // Reconcile an abandoned Razorpay checkout when the student returns to Learn.
+                // Only a fully paid Razorpay order may mark this retake payment as completed.
+                if (pendingRetakePayment is not null)
+                {
+                    try
+                    {
+                        var gatewayState = await _phonePePaymentService.GetOrderStateAsync(
+                            pendingRetakePayment.MerchantOrderId,
+                            cancellationToken);
+                        await ProcessPhonePeStateAsync(
+                            pendingRetakePayment,
+                            gatewayState,
+                            cancellationToken);
+                    }
+                    catch (Exception ex)
+                    {
+                        _logger.LogWarning(
+                            ex,
+                            "Could not reconcile pending Razorpay retake payment {MerchantOrderId} when opening Learn.",
+                            pendingRetakePayment.MerchantOrderId);
+                    }
+                }
+
+                var hasUnusedPaidRetake = await _dbContext.PaymentTransactions.AsNoTracking().AnyAsync(payment =>
+                    payment.UserId == studentUserId
+                    && payment.CourseId == id
+                    && payment.PaymentPurpose == "ExamRetake"
+                    && payment.ExamTopicId == examTopicId.Value
+                    && payment.ExamAttemptNumber == nextAttemptNumber
+                    && payment.Status == "Completed"
+                    && payment.ExamAttemptId == null,
                     cancellationToken);
-                var openExamApplicationModal = TempData["OpenExamApplicationModal"] is true;
+
+                var pendingRetakePaymentOrderId = await _dbContext.PaymentTransactions.AsNoTracking()
+                    .Where(payment => payment.UserId == studentUserId
+                        && payment.CourseId == id
+                        && payment.PaymentPurpose == "ExamRetake"
+                        && payment.ExamTopicId == examTopicId.Value
+                        && payment.ExamAttemptNumber == nextAttemptNumber
+                        && (payment.Status == "Created" || payment.Status == "Pending"))
+                    .OrderByDescending(payment => payment.CreatedAt)
+                    .Select(payment => payment.MerchantOrderId)
+                    .FirstOrDefaultAsync(cancellationToken);
+                var hasPendingRetakePayment = !string.IsNullOrWhiteSpace(pendingRetakePaymentOrderId);
+
+                ViewBag.PendingRetakePaymentOrderId = pendingRetakePaymentOrderId;
                 ViewBag.ShowExamApplicationModal = topicCompleted
-                    && !hasPendingOrPassedExam
-                    && openExamApplicationModal
-                    && TempData.Peek("ExamError") is null;
+                    && (reopenExamModal || TempData["OpenExamApplicationModal"] is true);
+                ViewBag.ExamHasActiveAttempt = hasActiveExam;
                 ViewBag.ExamApplicationTopicId = examTopicId.Value;
+                ViewBag.ExamAttemptNumber = nextAttemptNumber;
+                ViewBag.ExamRequiresPayment = requiresRetakePayment;
+                ViewBag.ExamRetakeFee = retakeFee;
+                ViewBag.ExamHasEverPassed = hasEverPassed;
+                ViewBag.ExamHasUnusedPaidRetake = hasUnusedPaidRetake;
+                ViewBag.ExamHasPendingRetakePayment = hasPendingRetakePayment;
+                ViewBag.PreviousExamStatus = topicAttempts.FirstOrDefault()?.Status;
+                ViewBag.PreviousExamScore = topicAttempts.FirstOrDefault()?.Score;
+                ViewBag.PreviousExamTotalQuestions = topicAttempts.FirstOrDefault()?.TotalQuestions;
             }
         }
 
