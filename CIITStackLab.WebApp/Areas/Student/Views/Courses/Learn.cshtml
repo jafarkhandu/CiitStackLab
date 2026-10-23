@@ -138,10 +138,1058 @@
         if (examApplicationModal && window.bootstrap) {
             window.bootstrap.Modal.getOrCreateInstance(examApplicationModal).show();
         }
+        document.querySelectorAll('.ciit-exam-modal-alert').forEach(function (alert) {
+            window.setTimeout(function () {
+                if (!alert.isConnected) return;
+                alert.style.transition = 'opacity .25s ease, transform .25s ease';
+                alert.style.opacity = '0';
+                alert.style.transform = 'translateY(-5px)';
+                window.setTimeout(function () { alert.remove(); }, 280);
+            }, 5000);
+        });
     </script>
 }
 
-@if (User.IsInRole("Student") && TempData["ExamError"] is string examAvailabilityError)
+@if (User.IsInRole("Student") && ViewBag.ShowExamApplicationModal != true && TempData["ExamError"] is string examAvailabilityError)
+{
+    <div class="container ciit-exam-availability-alert" role="alert" aria-live="assertive">
+        <span class="ciit-exam-availability-alert-icon" aria-hidden="true">
+            <i class="bi bi-hourglass-split"></i>
+        </span>
+        <div>
+            <strong>Exam questions are not ready yet</strong>
+            <p>@examAvailabilityError</p>
+        </div>
+    </div>
+}
+
+<script>
+    (function () {
+        var warning = document.querySelector(".ciit-exam-availability-alert");
+        if (!warning || warning.dataset.ciitAutoDismissInitialized === "true") {
+            return;
+        }
+
+        // Give this server-rendered warning its own reliable timer; this is independent
+        // of any other site scripts and avoids reappearing during the same page load.
+        warning.dataset.ciitAutoDismissInitialized = "true";
+        window.setTimeout(function () {
+            if (!warning.isConnected) {
+                return;
+            }
+
+            var height = Math.ceil(warning.getBoundingClientRect().height);
+            warning.style.overflow = "hidden";
+            warning.style.maxHeight = height + "px";
+            warning.style.transition = "opacity .36s ease, transform .36s ease, max-height .36s ease, margin .36s ease, padding .36s ease, border-width .36s ease";
+            void warning.offsetHeight;
+
+            window.requestAnimationFrame(function () {
+                warning.style.opacity = "0";
+                warning.style.transform = "translateY(-7px) scale(.99)";
+                warning.style.maxHeight = "0";
+                warning.style.marginTop = "0";
+                warning.style.marginBottom = "0";
+                warning.style.paddingTop = "0";
+                warning.style.paddingBottom = "0";
+                warning.style.borderWidth = "0";
+            });
+
+            // Hard removal fallback so CSS transitions cannot leave a permanent warning.
+            window.setTimeout(function () {
+                if (warning.isConnected) {
+                    warning.remove();
+                }
+            }, 420);
+        }, 5000);
+    })();
+</script>
+
+@if (currentContent is null && currentTopic is null)
+{
+    <main class="ciit-learning-empty container py-5">
+        <div class="ciit-learning-empty-card text-center">
+            <span class="ciit-learning-eyebrow">COURSE MATERIAL</span>
+            <h1>Learning content is not available yet</h1>
+            <p>This course does not have any active lessons at the moment.</p>
+            <a asp-action="Details" asp-route-id="@Model.Id" class="btn btn-primary">
+                <i class="bi bi-arrow-left me-2"></i>Back to Course
+            </a>
+        </div>
+    </main>
+}
+else if (currentContent is null && currentTopic is not null)
+{
+    <section class="ciit-learning-page">
+        <header class="ciit-learning-header">
+            <div class="container">
+                <div class="ciit-learning-header-row">
+                    <div class="ciit-learning-course-intro">
+                        <div class="ciit-learning-pills">
+                            <span class="ciit-learning-badge">@Model.Category</span>
+                            <span class="ciit-learning-meta-pill">@Model.Level</span>
+                            <span class="ciit-learning-meta-pill">
+                                <i class="bi bi-clock me-1"></i>@Model.DurationHours.ToString("0.##") hrs
+                            </span>
+                            <span class="ciit-learning-meta-pill">
+                                <i class="bi bi-journal-bookmark me-1"></i>@Model.Topics.Sum(topic => topic.Chapters.Count) chapters
+                            </span>
+                        </div>
+                        <h1>@Model.Title</h1>
+                        <p>@Model.ShortDescription</p>
+                        @if (User.IsInRole("Student") && learningProgress is not null)
+                        {
+                            <div class="ciit-learning-course-progress" role="group" aria-label="Course completion progress">
+                                <div class="ciit-learning-course-progress-heading">
+                                    <span><i class="bi bi-graph-up-arrow me-2"></i>Your progress</span>
+                                    <strong>@courseProgressPercentage%</strong>
+                                </div>
+                                <div class="progress ciit-learning-course-progress-track"
+                                     role="progressbar"
+                                     aria-label="Course completion"
+                                     aria-valuenow="@courseProgressPercentage"
+                                     aria-valuemin="0"
+                                     aria-valuemax="100">
+                                    <div class="progress-bar" style="width: @courseProgressPercentage%"></div>
+                                </div>
+                                <small>@courseCompletedTopics of @courseTotalTopics topics completed</small>
+                            </div>
+                        }
+                    </div>
+                </div>
+            </div>
+        </header>
+
+        <div class="container ciit-learning-shell">
+            <partial name="_LearningPathSidebar" model="Model" />
+
+            <main class="ciit-learning-main">
+                <div class="ciit-learning-panel-pager" aria-label="Learning sections">
+                    <button type="button" data-learning-page="notes">1. Notes</button>
+                    <button type="button" data-learning-page="content">2. Content</button>
+                    <button type="button" data-learning-page="assessment">3. Assessments</button>
+                </div>
+                <article class="ciit-learning-main-card">
+                    <a asp-action="CourseEnvironment"
+                       asp-route-id="@Model.Id"
+                       class="ciit-learning-back-button">
+                        <i class="bi bi-arrow-left" aria-hidden="true"></i>
+                        Back to Start Learning
+                    </a>
+
+                    <div class="ciit-learning-lesson-header">
+                        <div class="ciit-learning-lesson-heading">
+                            <span class="ciit-learning-eyebrow">
+                                TOPIC @(Math.Max(0, Model.Topics.ToList().FindIndex(topic => topic.Id == currentTopic.Id)) + 1) OF @Math.Max(Model.Topics.Count, 1)
+                            </span>
+                            <h2 class="ciit-learning-chapter-title">@CIITStackLab.WebApp.Helpers.LearningPagePresentation.FormatLearningTitle(currentTopic.Title)</h2>
+                        </div>
+                    </div>
+
+                    <div class="ciit-learning-lesson-status">
+                        <div class="ciit-learning-lesson-status-copy">
+                            <span class="ciit-learning-lesson-status-icon @(isCurrentTopicCompleted ? "is-completed" : "")">
+                                <i class="bi @(isCurrentTopicCompleted ? "bi-check2-circle" : "bi-journal-bookmark")"></i>
+                            </span>
+                            <div>
+                                <strong>@(isCurrentTopicCompleted ? "Topic completed" : "Topic learning material")</strong>
+                                <small>@(currentTopic.Contents.Count > 0 ? "Review the notes, lesson content and assessments for this topic." : "Review the notes and assessments available for this topic.")</small>
+                            </div>
+                        </div>
+                        @if (isCurrentTopicCompleted)
+                        {
+                            <span class="ciit-learning-completed-pill"><i class="bi bi-check-lg"></i> Completed</span>
+                        }
+                        @if (User.IsInRole("Student") && learningProgress is not null && currentTopic is not null)
+                        {
+                            var topicChapters = currentTopic.Chapters.OrderBy(chapter => chapter.SortOrder).ThenBy(chapter => chapter.Id).ToList();
+                            var overviewChapter = currentChapter ?? topicChapters.FirstOrDefault();
+                            var isFinalChapter = topicChapters.Count <= 1
+                                || (overviewChapter is not null && topicChapters[^1].Id == overviewChapter.Id);
+
+                            @if (overviewChapter is not null && !isFinalChapter)
+                            {
+                                var isOverviewChapterCompleted = overviewChapter.IsCompleted;
+                                @if (isOverviewChapterCompleted)
+                                {
+                                    <span class="ciit-chapter-completed-badge mt-3" role="status">
+                                        <i class="bi bi-check-circle-fill" aria-hidden="true"></i> Completed
+                                    </span>
+                                }
+                                else
+                                {
+                                    <form asp-route="CompleteCourseChapter"
+                                          asp-route-id="@Model.Id" asp-route-topicId="@currentTopic.Id"
+                                          asp-route-chapterId="@overviewChapter.Id" method="post" class="mt-3">
+                                        @Html.AntiForgeryToken()
+                                        <button type="submit" class="ciit-topic-completion-button">
+                                            <i class="bi bi-check2-circle" aria-hidden="true"></i>
+                                            <span>Complete Chapter</span>
+                                            <i class="bi bi-arrow-right ms-auto" aria-hidden="true"></i>
+                                        </button>
+                                    </form>
+                                }
+                            }
+                            else
+                            {
+                                <form asp-controller="Courses" asp-action="CompleteTopic" asp-route-id="@Model.Id" asp-route-topicId="@currentTopic.Id" method="post" class="mt-3">
+                                    @Html.AntiForgeryToken()
+                                    <button type="submit" class="ciit-topic-completion-button">
+                                        <i class="bi bi-calendar2-check" aria-hidden="true"></i>
+                                        <span>Apply for Examination</span>
+                                        <i class="bi bi-arrow-up-right ms-auto" aria-hidden="true"></i>
+                                    </button>
+                                </form>
+                            }
+                        }
+                    </div>
+
+                    <section class="ciit-learning-resource ciit-learning-notes-panel" data-learning-panel-content="notes">
+                        <div class="ciit-learning-resource-title">
+                            <span class="ciit-learning-resource-icon"><i class="bi bi-journal-text"></i></span>
+                            <div><h3>Chapter Notes</h3><p>Notes for @(currentTopic?.Title ?? Model.Title).</p></div>
+                        </div>
+                        @if (currentTopic is null || currentTopic.Chapters.Count == 0)
+                        {
+                            <p class="ciit-learning-category-empty">No notes or chapters have been added to this topic yet.</p>
+                        }
+                        else if (currentChapter is not null)
+                        {
+                            <article class="ciit-learning-notes-content">
+                                @if (!string.IsNullOrWhiteSpace(currentChapter.NotesHtml))
+                                {
+                                    @Html.Raw(currentChapter.NotesHtml)
+                                }
+                            </article>
+                        }
+                    </section>
+
+                    <section class="ciit-learning-resource ciit-learning-content-overview"
+                             data-learning-panel-content="content"
+                             data-learning-content-page="overview">
+                        <div class="ciit-learning-resource-title">
+                            <span class="ciit-learning-resource-icon"><i class="bi bi-lightbulb"></i></span>
+                            <div>
+                                <h3>@(Model.CurrentChapterId.HasValue ? "Chapter content" : "Topic content")</h3>
+                                <p>@(Model.CurrentChapterId.HasValue ? "Learning material linked to this chapter." : "Learning material linked to this topic.")</p>
+                            </div>
+                        </div>
+                        @{
+                            var displayedContent = Model.CurrentChapterId.HasValue && currentChapter is not null
+                                ? currentChapter.Contents
+                                : currentTopic.Contents;
+                        }
+                        @if (displayedContent.Count > 0)
+                        {
+                            @foreach (var content in displayedContent)
+                            {
+                                <article class="ciit-learning-assessment-question">
+                                    <strong>@content.Title</strong>
+                                    @if (!string.IsNullOrWhiteSpace(content.Slides))
+                                    {
+                                        <p>@content.Slides</p>
+                                    }
+                                    @if (!string.IsNullOrWhiteSpace(content.VideoName))
+                                    {
+                                        <p><i class="bi bi-play-circle me-2"></i>@content.VideoName</p>
+                                    }
+                                </article>
+                            }
+                        }
+                        else
+                        {
+                            <p class="ciit-learning-category-empty">This topic has notes and assessments but no separate video/slide lesson.</p>
+                        }
+                    </section>
+
+                    <section class="ciit-learning-resource ciit-learning-all-assessments" data-learning-panel-content="assessment">
+                        <div class="ciit-learning-resource-title">
+                            <span class="ciit-learning-resource-icon"><i class="bi bi-patch-check"></i></span>
+                            <div><h3>Chapter Assessments</h3><p>MCQs, interview questions and practice programs for this topic.</p></div>
+                        </div>
+                        @foreach (var chapter in displayedChapters)
+                        {
+                            <section class="ciit-learning-chapter-assessment" id="chapter-assessment-@chapter.Id">
+                                <h4>@CIITStackLab.WebApp.Helpers.LearningPagePresentation.FormatLearningTitle(chapter.Title)</h4>
+                                @if (Model.CurrentChapterId.HasValue
+                                    ? chapter.Id == Model.CurrentChapterId.Value
+                                    : chapter.Id == currentTopic.Chapters.First().Id)
+                                {
+                                    <section class="ciit-learning-assessment-subsection" id="chapter-mcqs-@chapter.Id">
+                                        <h5>MCQs</h5>
+                                        @if (topicAssessmentQuestions.Count == 0)
+                                        {
+                                            <p class="ciit-learning-category-empty">No MCQs have been added to this topic yet.</p>
+                                        }
+                                        else
+                                        {
+                                            <section id="lesson-assessment-@currentTopic.Id" class="ciit-learning-resource ciit-learning-assessment-section">
+                                                <div class="ciit-learning-resource-title">
+                                                    <span class="ciit-learning-resource-icon"><i class="bi bi-patch-check"></i></span>
+                                                    <div>
+                                                        <h3>Knowledge check</h3>
+                                                        <p>Your answers are evaluated securely when you submit.</p>
+                                                    </div>
+                                                    <span class="ciit-learning-question-count">
+                                                        @topicAssessmentQuestions.Count question@(topicAssessmentQuestions.Count == 1 ? "" : "s")
+                                                    </span>
+                                                </div>
+                                                @if (TempData["AssessmentError"] is string assessmentError)
+                                                {
+                                                    <div class="alert alert-warning ciit-assessment-error" role="alert">
+                                                        <i class="bi bi-exclamation-triangle-fill me-2"></i>@assessmentError
+                                                    </div>
+                                                }
+                                                @if (User.IsInRole("Student"))
+                                                {
+                                                    <form asp-controller="Courses"
+                                                          asp-action="SubmitAssessment"
+                                                          asp-route-id="@Model.Id"
+                                                          asp-route-topicId="@currentTopic.Id"
+                                                          method="post"
+                                                          class="ciit-assessment-form">
+                                                        @for (var i = 0; i < topicAssessmentQuestions.Count; i++)
+                                                        {
+                                                            var question = topicAssessmentQuestions[i];
+                                                            <input type="hidden" name="answers[@i].QuestionId" value="@question.Id" />
+                                                            <div class="ciit-learning-question">
+                                                                <strong class="ciit-learning-question-title">
+                                                                    <span>@(i + 1)</span>
+                                                                    @question.Question
+                                                                </strong>
+                                                                <div class="ciit-learning-options">
+                                                                    @for (var optionIndex = 0; optionIndex < question.Options.Count; optionIndex++)
+                                                                    {
+                                                                        var option = question.Options[optionIndex];
+                                                                        if (!string.IsNullOrWhiteSpace(option))
+                                                                        {
+                                                                            <label>
+                                                                                <input type="radio" name="answers[@i].SelectedOptionNumber" value="@(optionIndex + 1)" required />
+                                                                                <span class="ciit-learning-option-letter">@((char)('A' + optionIndex))</span>
+                                                                                <span>@option</span>
+                                                                            </label>
+                                                                        }
+                                                                    }
+                                                                </div>
+                                                            </div>
+                                                        }
+                                                        <div class="ciit-assessment-submit-row">
+                                                            <p><i class="bi bi-shield-check me-2"></i>Correct answers stay hidden until after submission.</p>
+                                                            <button type="submit" class="btn btn-primary">
+                                                                <i class="bi bi-send-check me-2"></i>Submit assessment
+                                                            </button>
+                                                        </div>
+                                                    </form>
+                                                }
+                                                else
+                                                {
+                                                    <div class="ciit-assessment-signin">
+                                                        <div>
+                                                            <strong>Ready to test your knowledge?</strong>
+                                                            <p>Sign in with your student account to submit answers and save your result.</p>
+                                                        </div>
+                                                        <a asp-controller="Account" asp-action="Login" class="btn btn-primary">
+                                                            <i class="bi bi-box-arrow-in-right me-2"></i>Student sign in
+                                                        </a>
+                                                    </div>
+                                                }
+                                            </section>
+                                        }
+                                    </section>
+                                }
+                                <section class="ciit-learning-assessment-subsection" id="chapter-interview-@chapter.Id">
+                                    <h5>Interview Questions</h5>
+                                    @if (chapter.InterviewQuestions.Count == 0)
+                                    {
+                                        <p class="ciit-learning-category-empty">No interview questions have been added to this chapter yet.</p>
+                                    }
+                                    @foreach (var question in chapter.InterviewQuestions)
+                                    {
+                                        <article class="ciit-learning-assessment-question">
+                                            <strong>@question.Question</strong>
+                                            @if (!string.IsNullOrWhiteSpace(question.Answer))
+                                            {
+                                                <p>@question.Answer</p>
+                                            }
+                                        </article>
+                                    }
+                                </section>
+                                <section class="ciit-learning-assessment-subsection" id="chapter-practice-@chapter.Id">
+                                    <h5>Practice Programs</h5>
+                                    @if (chapter.PracticeQuestions.Count == 0)
+                                    {
+                                        <p class="ciit-learning-category-empty">No practice programs have been added to this chapter yet.</p>
+                                    }
+                                    @foreach (var question in chapter.PracticeQuestions)
+                                    {
+                                        <article class="ciit-learning-assessment-question">
+                                            <strong>@question.QuestionTitle</strong>
+                                            @if (!string.IsNullOrWhiteSpace(question.QuestionDescription))
+                                            {
+                                                <p>@question.QuestionDescription</p>
+                                            }
+                                        </article>
+                                    }
+                                </section>
+                            </section>
+                        }
+                    </section>
+                </article>
+            </main>
+        </div>
+    </section>
+}
+
+else
+{
+    <section class="ciit-learning-page">
+        <header class="ciit-learning-header">
+            <div class="container">
+                                <div class="ciit-learning-header-row">
+                    <div class="ciit-learning-course-intro">
+                        <div class="ciit-learning-pills">
+                            <span class="ciit-learning-badge">@Model.Category</span>
+                            <span class="ciit-learning-meta-pill">@Model.Level</span>
+                            <span class="ciit-learning-meta-pill">
+                                <i class="bi bi-clock me-1"></i>@Model.DurationHours.ToString("0.##") hrs
+                            </span>
+                            <span class="ciit-learning-meta-pill">
+                                <i class="bi bi-journal-bookmark me-1"></i>@Model.Topics.Sum(topic => topic.Chapters.Count) chapters
+                            </span>
+                        </div>
+
+                        <h1>@Model.Title</h1>
+                        <p>@Model.ShortDescription</p>
+
+                        @if (User.IsInRole("Student") && learningProgress is not null)
+                        {
+                            <div class="ciit-learning-course-progress" role="group" aria-label="Course completion progress">
+                                <div class="ciit-learning-course-progress-heading">
+                                    <span><i class="bi bi-graph-up-arrow me-2"></i>Your progress</span>
+                                    <strong>@courseProgressPercentage%</strong>
+                                </div>
+                                <div class="progress ciit-learning-course-progress-track"
+                                     role="progressbar"
+                                     aria-label="Course completion"
+                                     aria-valuenow="@courseProgressPercentage"
+                                     aria-valuemin="0"
+                                     aria-valuemax="100">
+                                    <div class="progress-bar" style="width: @courseProgressPercentage%"></div>
+                                </div>
+                                <small>@courseCompletedTopics of @courseTotalTopics topics completed</small>
+                            </div>
+                        }
+                    </div>
+
+                </div>
+            </div>
+        </header>
+
+        <div class="container ciit-learning-shell">
+            <partial name="_LearningPathSidebar" model="Model" />
+
+            <main class="ciit-learning-main">
+                <div class="ciit-learning-panel-pager" aria-label="Learning sections">
+                    <button type="button" data-learning-page="notes">1. Notes</button>
+                    <button type="button" data-learning-page="content">2. Content</button>
+                    <button type="button" data-learning-page="assessment">3. Assessments</button>
+                </div>
+                <article class="ciit-learning-main-card">
+                    <a asp-action="CourseEnvironment"
+                       asp-route-id="@Model.Id"
+                       class="ciit-learning-back-button">
+                        <i class="bi bi-arrow-left" aria-hidden="true"></i>
+                        Back to Start Learning
+                    </a>
+                    <div class="ciit-learning-lesson-header">
+                        <div class="ciit-learning-lesson-heading">
+                            <span class="ciit-learning-eyebrow">
+                                TOPIC @(Math.Max(0, Model.Topics.ToList().FindIndex(topic => topic.Id == currentTopic?.Id)) + 1) OF @Math.Max(Model.Topics.Count, 1)
+                            </span>
+                            <h2 class="ciit-learning-chapter-title">@CIITStackLab.WebApp.Helpers.LearningPagePresentation.FormatLearningTitle(currentChapter?.Title ?? currentTopic?.Title ?? currentContent?.Title)</h2>
+                        </div>
+
+                        <div class="ciit-learning-lesson-actions">
+                            @if (previousItem is not null)
+                            {
+                                <a asp-action="Learn"
+                                   asp-route-id="@Model.Id"
+                                   asp-route-contentId="@previousItem.Content.Id"
+                                   class="btn btn-outline-secondary">
+                                    <i class="bi bi-chevron-left"></i> Previous
+                                </a>
+                            }
+
+                            @if (nextItem is not null)
+                            {
+                                <a asp-action="Learn"
+                                   asp-route-id="@Model.Id"
+                                   asp-route-contentId="@nextItem.Content.Id"
+                                   class="btn btn-primary">
+                                    Next <i class="bi bi-chevron-right"></i>
+                                </a>
+                            }
+                        </div>
+                    </div>
+
+                    @if (User.IsInRole("Student") && learningProgress is not null && currentTopic is not null)
+                    {
+                        var topicChapters = currentTopic.Chapters.OrderBy(chapter => chapter.SortOrder).ThenBy(chapter => chapter.Id).ToList();
+                        var isFinalChapter = topicChapters.Count <= 1
+                            || (currentChapter is not null && topicChapters[^1].Id == currentChapter.Id);
+                        <div class="ciit-learning-lesson-status">
+                            <div class="ciit-learning-lesson-status-copy">
+                                <span class="ciit-learning-lesson-status-icon">
+                                    <i class="bi @(isFinalChapter ? "bi-calendar2-check" : "bi-check2-circle")"></i>
+                                </span>
+                                <div>
+                                    <strong>@(isFinalChapter ? "Apply for Examination" : "Complete Chapter")</strong>
+                                    <small>@(isFinalChapter ? "Apply for this topic's examination after completing the final chapter." : "Mark this chapter complete and continue to the next chapter.")</small>
+                                </div>
+                            </div>
+
+                            @if (isFinalChapter)
+                            {
+                                <form asp-controller="Courses"
+                                      asp-action="CompleteTopic"
+                                      asp-route-id="@Model.Id"
+                                      asp-route-topicId="@currentTopic.Id"
+                                      method="post"
+                                      class="ciit-learning-completion-form">
+                                    @Html.AntiForgeryToken()
+                                    <button type="submit" class="btn btn-primary">
+                                        <i class="bi bi-arrow-right-circle-fill me-2"></i>Apply for Examination
+                                    </button>
+                                </form>
+                            }
+                            else if (currentChapter is not null)
+                            {
+                                var isChapterCompleted = currentChapter.IsCompleted;
+                                @if (isChapterCompleted)
+                                {
+                                    <span class="ciit-chapter-completed-badge" role="status">
+                                        <i class="bi bi-check-circle-fill" aria-hidden="true"></i> Completed
+                                    </span>
+                                }
+                                else
+                                {
+                                    <form asp-route="CompleteCourseChapter"
+                                          asp-route-id="@Model.Id"
+                                          asp-route-topicId="@currentTopic.Id"
+                                          asp-route-chapterId="@currentChapter.Id"
+                                          method="post"
+                                          class="ciit-learning-completion-form">
+                                        @Html.AntiForgeryToken()
+                                        <button type="submit" class="btn btn-primary">
+                                            <i class="bi bi-check2-circle me-2"></i>Complete Chapter
+                                        </button>
+                                    </form>
+                                }
+                            }
+                        </div>
+
+                        @if (TempData["LearningProgressMessage"] is string progressMessage)
+                        {
+                            <div class="alert alert-success ciit-learning-progress-alert" role="status">
+                                <i class="bi bi-check-circle-fill me-2"></i>@progressMessage
+                            </div>
+                        }
+                    }
+
+                    <section class="ciit-learning-resource ciit-learning-notes-panel" data-learning-panel-content="notes">
+                        <div class="ciit-learning-resource-title">
+                            <span class="ciit-learning-resource-icon"><i class="bi bi-journal-text"></i></span>
+                            <div>
+                                <h3>Chapter Notes</h3>
+                                <p>Start with the notes, then review content and assessments.</p>
+                            </div>
+                        </div>
+                        @if (currentChapter is not null)
+                        {
+                            <article class="ciit-learning-notes-content">
+                                @if (!string.IsNullOrWhiteSpace(currentChapter.NotesHtml))
+                                {
+                                    @Html.Raw(currentChapter.NotesHtml)
+                                }
+                                else
+                                {
+                                    <p class="ciit-learning-category-empty">No notes have been added to this chapter yet.</p>
+                                }
+                            </article>
+                        }
+                    </section>
+
+                    <section class="ciit-learning-resource ciit-learning-content-overview" data-learning-panel-content="content" data-learning-content-combined="overview">
+                                <div class="ciit-learning-resource-title">
+                                    <span class="ciit-learning-resource-icon"><i class="bi bi-lightbulb"></i></span>
+                                    <div><h3>What you'll cover</h3><p>A quick overview of this lesson's learning resources.</p></div>
+                                </div>
+                                <ul>
+                                    <li><strong>Lesson:</strong> @(currentContent?.Title ?? "Lesson")</li>
+                                    <li><strong>Video:</strong> @(string.IsNullOrWhiteSpace(currentContent?.VideoName) ? "Not provided for this lesson" : "Available — load it when you're ready")</li>
+                                    <li><strong>Slides:</strong> @(string.IsNullOrWhiteSpace(currentContent?.Slides) ? "Not provided for this lesson" : "Available as supplementary study material")</li>
+                                    <li><strong>Practice:</strong> Review the chapter assessment section after studying the notes and lesson resources.</li>
+                                    <li><strong>Suggested order:</strong> Notes → lesson content → chapter assessments.</li>
+                                </ul>
+                    </section>
+
+                    @if (currentContent is not null && !string.IsNullOrWhiteSpace(currentContent.VideoName))
+                    {
+                        var videoUrl = CIITStackLab.WebApp.Helpers.LearningPagePresentation.ResolveResourceUrl(currentContent.VideoName, "videos");
+                        var videoPath = Uri.TryCreate(videoUrl, UriKind.Absolute, out var absoluteVideoUri)
+                            ? absoluteVideoUri.AbsolutePath
+                            : videoUrl;
+                        var videoExtension = System.IO.Path.GetExtension(videoPath);
+                        var isDirectVideoFile = videoExtension.Equals(".mp4", StringComparison.OrdinalIgnoreCase)
+                            || videoExtension.Equals(".webm", StringComparison.OrdinalIgnoreCase)
+                            || videoExtension.Equals(".mov", StringComparison.OrdinalIgnoreCase);
+                        var muxPlaybackId = CIITStackLab.WebApp.Helpers.LearningPagePresentation.ResolveMuxPlaybackId(currentContent.VideoName);
+
+                        <section class="ciit-learning-resource ciit-learning-video-section" data-learning-panel-content="content" data-learning-content-combined="video">
+                            <div class="ciit-learning-resource-title">
+                                <span class="ciit-learning-resource-icon"><i class="bi bi-play-circle"></i></span>
+                                <div>
+                                    <h3>Video lesson</h3>
+                                    <p>Watch the lesson at your own pace.</p>
+                                </div>
+                            </div>
+
+                            @if (muxPlaybackId is not null)
+                            {
+                                <div class="ciit-learning-video-frame ciit-mux-watch-player"
+                                     data-playback-id="@muxPlaybackId"
+                                     data-title="@currentContent.Title"
+                                     aria-label="@currentContent.Title video player">
+                                    <div class="ciit-video-fallback">
+                                        <i class="bi bi-play-circle"></i>
+                                        <span>Preparing video player…</span>
+                                        <a href="@videoUrl" target="_blank" rel="noopener noreferrer" class="ciit-video-fallback-link">Open video in a new tab</a>
+                                    </div>
+                                </div>
+                            }
+                            else if (isDirectVideoFile)
+                            {
+                                var videoType = videoExtension.Equals(".webm", StringComparison.OrdinalIgnoreCase)
+                                    ? "video/webm"
+                                    : videoExtension.Equals(".mov", StringComparison.OrdinalIgnoreCase)
+                                        ? "video/quicktime"
+                                        : "video/mp4";
+
+                                <div class="ciit-learning-video-frame ciit-learning-direct-video-frame">
+                                    <video controls preload="metadata" playsinline>
+                                        <source src="@videoUrl" type="@videoType" />
+                                        Your browser does not support embedded video.
+                                    </video>
+                                </div>
+                            }
+                            else
+                            {
+                                <div class="ratio ratio-16x9 ciit-learning-video-frame">
+                                    <iframe src="@videoUrl"
+                                            title="@currentContent.Title video"
+                                            loading="lazy"
+                                            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+                                            referrerpolicy="strict-origin-when-cross-origin"
+                                            allowfullscreen></iframe>
+                                </div>
+                            }
+                        </section>
+                    }
+
+                    @if (currentContent is not null && !string.IsNullOrWhiteSpace(currentContent.Slides))
+                    {
+                        <section class="ciit-learning-resource" data-learning-panel-content="content" data-learning-content-page="slides">
+                            <div class="ciit-learning-resource-title">
+                                <span class="ciit-learning-resource-icon"><i class="bi bi-file-earmark-slides"></i></span>
+                                <div>
+                                    <h3>Study material</h3>
+                                    <p>Review the slides and keep your learning on track.</p>
+                                </div>
+                            </div>
+
+                            <a href="@CIITStackLab.WebApp.Helpers.LearningPagePresentation.ResolveResourceUrl(currentContent.Slides, "slides")"
+                               target="_blank"
+                               rel="noopener noreferrer"
+                               class="ciit-learning-open-resource">
+                                <span class="ciit-learning-open-resource-icon">
+                                    <i class="bi bi-file-earmark-pdf"></i>
+                                </span>
+                                <span>
+                                    <strong>Open lesson slides</strong>
+                                    <small>Opens in a new tab</small>
+                                </span>
+                                <i class="bi bi-arrow-up-right ms-auto"></i>
+                            </a>
+                        </section>
+                    }
+
+                    <section class="ciit-learning-resource ciit-learning-all-assessments" data-learning-panel-content="assessment">
+                        <div class="ciit-learning-resource-title">
+                            <span class="ciit-learning-resource-icon"><i class="bi bi-patch-check"></i></span>
+                            <div><h3>Chapter Assessments</h3><p>MCQs, interview questions and practice programs for this chapter.</p></div>
+                        </div>
+                        @if (currentChapter is not null)
+                        {
+                                var assessmentChapter = currentChapter;
+                                <section class="ciit-learning-chapter-assessment" id="chapter-assessment-@assessmentChapter.Id">
+                                    <h4>@CIITStackLab.WebApp.Helpers.LearningPagePresentation.FormatLearningTitle(assessmentChapter.Title)</h4>
+
+
+                                    <section id="chapter-mcqs-@assessmentChapter.Id" class="ciit-learning-assessment-subsection">
+                                        <h5>MCQs</h5>
+                                        @if (topicAssessmentQuestions.Count == 0)
+                                        {
+                                            <p class="ciit-learning-category-empty">No MCQs have been added to this topic yet.</p>
+                                        }
+                                        else
+                                        {
+                                            <section id="lesson-assessment" class="ciit-learning-resource ciit-learning-assessment-section">
+                                                <div class="ciit-learning-resource-title">
+                                                    <span class="ciit-learning-resource-icon"><i class="bi bi-patch-check"></i></span>
+                                                    <div>
+                                                        <h3>Knowledge check</h3>
+                                                        <p>Your answers are evaluated securely when you submit.</p>
+                                                    </div>
+                                                    <span class="ciit-learning-question-count">
+                                                        @topicAssessmentQuestions.Count question@(topicAssessmentQuestions.Count == 1 ? "" : "s")
+                                                    </span>
+                                                </div>
+                                                @if (TempData["AssessmentError"] is string assessmentError)
+                                                {
+                                                    <div class="alert alert-warning ciit-assessment-error" role="alert">
+                                                        <i class="bi bi-exclamation-triangle-fill me-2"></i>@assessmentError
+                                                    </div>
+                                                }
+                                                @if (User.IsInRole("Student"))
+                                                {
+                                                    <form asp-controller="Courses"
+                                                          asp-action="SubmitAssessment"
+                                                          asp-route-id="@Model.Id"
+                                                          asp-route-topicId="@currentTopic!.Id"
+                                                          method="post"
+                                                          class="ciit-assessment-form">
+                                                        @for (var i = 0; i < topicAssessmentQuestions.Count; i++)
+                                                        {
+                                                            var question = topicAssessmentQuestions[i];
+                                                            <input type="hidden" name="answers[@i].QuestionId" value="@question.Id" />
+                                                            <div class="ciit-learning-question">
+                                                                <strong class="ciit-learning-question-title">
+                                                                    <span>@(i + 1)</span>
+                                                                    @question.Question
+                                                                </strong>
+                                                                <div class="ciit-learning-options">
+                                                                    @for (var optionIndex = 0; optionIndex < question.Options.Count; optionIndex++)
+                                                                    {
+                                                                        var option = question.Options[optionIndex];
+                                                                        if (!string.IsNullOrWhiteSpace(option))
+                                                                        {
+                                                                            <label>
+                                                                                <input type="radio" name="answers[@i].SelectedOptionNumber" value="@(optionIndex + 1)" required />
+                                                                                <span class="ciit-learning-option-letter">@((char)('A' + optionIndex))</span>
+                                                                                <span>@option</span>
+                                                                            </label>
+                                                                        }
+                                                                    }
+                                                                </div>
+                                                            </div>
+                                                        }
+                                                        <div class="ciit-assessment-submit-row">
+                                                            <p><i class="bi bi-shield-check me-2"></i>Correct answers stay hidden until after submission.</p>
+                                                            <button type="submit" class="btn btn-primary">
+                                                                <i class="bi bi-send-check me-2"></i>Submit assessment
+                                                            </button>
+                                                        </div>
+                                                    </form>
+                                                }
+                                                else
+                                                {
+                                                    <div class="ciit-assessment-signin">
+                                                        <div>
+                                                            <strong>Ready to test your knowledge?</strong>
+                                                            <p>Sign in with your student account to submit answers and save your result.</p>
+                                                        </div>
+                                                        <a asp-controller="Account" asp-action="Login" class="btn btn-primary">
+                                                            <i class="bi bi-box-arrow-in-right me-2"></i>Student sign in
+                                                        </a>
+                                                    </div>
+                                                }
+                                            </section>
+                                        }
+                                    </section>
+                                    <section id="chapter-interview-@assessmentChapter.Id" class="ciit-learning-assessment-subsection">
+                                        <h5>Interview Questions</h5>
+                                        @if (assessmentChapter.InterviewQuestions.Count == 0)
+                                        {
+                                            <p class="ciit-learning-category-empty">No interview questions are linked to this chapter yet.</p>
+                                        }
+                                        else
+                                        {
+                                            @for (var qi = 0; qi < assessmentChapter.InterviewQuestions.Count; qi++)
+                                            {
+                                                var q = assessmentChapter.InterviewQuestions[qi];
+                                                <article class="ciit-learning-assessment-question">
+                                                    <strong>@(qi + 1). @q.Question</strong>
+                                                    @if (!string.IsNullOrWhiteSpace(q.Answer)) { <p>@q.Answer</p> }
+                                                </article>
+                                            }
+                                        }
+                                    </section>
+                                    <section id="chapter-practice-@assessmentChapter.Id" class="ciit-learning-assessment-subsection">
+                                        <h5>Practice Programs</h5>
+                                        @if (assessmentChapter.PracticeQuestions.Count == 0)
+                                        {
+                                            <p class="ciit-learning-category-empty">No practice programs are linked to this chapter yet.</p>
+                                        }
+                                        else
+                                        {
+                                            @for (var qi = 0; qi < assessmentChapter.PracticeQuestions.Count; qi++)
+                                            {
+                                                var q = assessmentChapter.PracticeQuestions[qi];
+                                                <article class="ciit-learning-assessment-question">
+                                                    <strong>@(qi + 1). @q.QuestionTitle</strong>
+                                                    <div class="ciit-practice-import-description">@q.QuestionDescription</div>
+                                                </article>
+                                            }
+                                        }
+                                    </section>
+                                </section>
+                        }
+                    </section>
+                </article>
+            </main>
+        </div>
+    </section>
+}
+@if (User.IsInRole("Student") && ViewBag.ShowExamApplicationModal == true && currentTopic is not null)
+{
+    var modalAttemptNumber = ViewBag.ExamAttemptNumber is int attemptNumber ? attemptNumber : 1;
+    var modalRequiresPayment = ViewBag.ExamRequiresPayment is bool requiresPayment && requiresPayment;
+    var modalHasEverPassed = ViewBag.ExamHasEverPassed is bool hasPassed && hasPassed;
+    var modalFee = ViewBag.ExamRetakeFee is decimal fee ? fee : 118m;
+    var previousStatus = ViewBag.PreviousExamStatus as string;
+    var previousScore = ViewBag.PreviousExamScore as int?;
+    var previousTotal = ViewBag.PreviousExamTotalQuestions as int?;
+
+    <div class="modal fade" id="topicExamApplicationModal" tabindex="-1" aria-labelledby="topicExamApplicationTitle" aria-hidden="true" data-bs-backdrop="static" data-bs-keyboard="false">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <div>
+                        <span class="text-uppercase text-primary small fw-bold">Exam application</span>
+                        <h2 class="modal-title fs-5 mt-1" id="topicExamApplicationTitle">Apply for @(currentTopic?.Title ?? "this topic") examination</h2>
+                    </div>
+                </div>
+                <div class="modal-body">
+                    @if (previousStatus is not null)
+                    {
+                        <div class="rounded-3 border p-3 mb-3">
+                            <strong>Previous attempt #@(modalAttemptNumber - 1) result</strong>
+                            <div class="mt-1">@previousStatus@if (previousScore.HasValue && previousTotal.HasValue) { <span> · Score: @previousScore/@previousTotal</span> }</div>
+                        </div>
+                    }
+
+                    @if (TempData["ExamError"] is string modalExamError)
+                    {
+                        <div class="alert alert-danger ciit-exam-modal-alert" role="alert" aria-live="assertive">@modalExamError</div>
+                    }
+                    @if (TempData["ExamMessage"] is string modalExamMessage)
+                    {
+                        <div class="alert alert-success ciit-exam-modal-alert" role="status" aria-live="polite">@modalExamMessage</div>
+                    }
+
+                    @if (modalHasEverPassed)
+                    {
+                        <p>You have already passed this topic. Would you like to apply for a re-exam to improve your score?</p>
+                    }
+                    else
+                    {
+                        <p>Your topic is complete. Schedule your 50-question examination or start now.</p>
+                    }
+
+                    @if (modalAttemptNumber == 2 && !modalHasEverPassed)
+                    {
+                        <p class="text-danger fw-semibold mb-3">This is your last free attempt.</p>
+                    }
+
+                    @if (modalRequiresPayment)
+                    {
+                        <div class="rounded-3 border border-danger-subtle bg-danger-subtle p-3 mb-3">
+                            <div class="small text-danger-emphasis">Exam fee for attempt #@modalAttemptNumber</div>
+                            <div class="fs-4 fw-bold text-danger">₹@modalFee.ToString("0.00")</div>
+                            <div class="small text-danger-emphasis">Payment is required before this re-exam can be scheduled or started.</div>
+                        </div>
+                        <form asp-controller="StudentExaminations" asp-action="PayForReExam" method="post">
+                            @Html.AntiForgeryToken()
+                            <input type="hidden" name="courseId" value="@Model.Id" />
+                            <input type="hidden" name="topicId" value="@currentTopic.Id" />
+                            <button type="submit" class="btn btn-danger w-100">Pay ₹@modalFee.ToString("0.00") and continue</button>
+                        </form>
+                    }
+                    else
+                    {
+                        <form asp-controller="StudentExaminations" asp-action="Schedule" method="post">
+                            @Html.AntiForgeryToken()
+                            <input type="hidden" name="CourseId" value="@Model.Id" />
+                            <input type="hidden" name="TopicId" value="@currentTopic.Id" />
+                            <input type="hidden" name="TimezoneOffsetMinutes" class="exam-timezone-offset" />
+                            <label class="form-label" for="topicExamScheduledAt">Exam date and time</label>
+                            <input class="form-control" type="datetime-local" id="topicExamScheduledAt" name="ScheduledAtLocal" required />
+                            <div class="form-text">Instructions open 30 minutes before the scheduled time. The exam starts at the scheduled time.</div>
+                            <div class="modal-footer px-0 pb-0">
+                                <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Later</button>
+                                <button type="submit" class="btn btn-primary" formaction="/Examinations/StartNow" formnovalidate>Start now <i class="bi bi-arrow-right ms-1" aria-hidden="true"></i></button>
+                                <button type="submit" class="btn btn-outline-primary">Schedule examination</button>
+                            </div>
+                        </form>
+                    }
+                </div>
+            </div>
+        </div>
+    </div>
+}odel CIITStackLab.Application.DTOs.CourseLearningDto
+
+@{
+    ViewData["Title"] = $"Learn — {Model.Title}";
+
+    var orderedContents = Model.Topics
+        .SelectMany(topic => topic.Contents.Select(content => new
+        {
+            Topic = topic,
+            Content = content
+        }))
+        .ToList();
+
+    var currentIndex = Model.CurrentContentId.HasValue
+        ? orderedContents.FindIndex(x => x.Content.Id == Model.CurrentContentId.Value)
+        : 0;
+
+    if (currentIndex < 0)
+    {
+        currentIndex = 0;
+    }
+
+    var currentItem = orderedContents.ElementAtOrDefault(currentIndex);
+    var selectedTopic = Model.CurrentTopicId.HasValue
+        ? Model.Topics.FirstOrDefault(topic => topic.Id == Model.CurrentTopicId.Value)
+        : null;
+    var currentTopic = selectedTopic ?? currentItem?.Topic;
+    var currentContent = selectedTopic is not null && selectedTopic.Contents.Count == 0
+        ? null
+        : currentItem?.Content;
+    var learningProgress = Model.Progress;
+    var completedContentIds = learningProgress?.CompletedContentIds?.ToHashSet() ?? new HashSet<int>();
+    // Calculate each topic's completion state once for consistent display.
+    var courseTopicProgress = Model.Topics.Select(topic =>
+    {
+        var topicContentIds = topic.Contents
+            .Concat(topic.Chapters.SelectMany(chapter => chapter.Contents))
+            .Select(content => content.Id)
+            .Distinct()
+            .ToList();
+        var hasResources = topicContentIds.Count > 0;
+
+        return new
+        {
+            TopicId = topic.Id,
+            HasResources = hasResources,
+            IsCompleted = hasResources && topicContentIds.All(completedContentIds.Contains)
+        };
+    }).ToList();
+    var currentTopicProgress = currentTopic is null
+        ? null
+        : courseTopicProgress.FirstOrDefault(progress => progress.TopicId == currentTopic.Id);
+    var isCurrentTopicCompleted = currentTopicProgress?.IsCompleted == true;
+    var courseTotalTopics = Model.Topics.Count;
+    var courseCompletedTopics = courseTopicProgress.Count(topic => topic.IsCompleted);
+    var courseProgressPercentage = courseTotalTopics == 0
+        ? 0
+        : (int)Math.Round(courseCompletedTopics * 100d / courseTotalTopics, MidpointRounding.AwayFromZero);
+    var orderedChapters = Model.Topics.SelectMany(topic => topic.Chapters).ToList();
+    var currentChapter = Model.CurrentChapterId.HasValue
+        ? orderedChapters.FirstOrDefault(chapter => chapter.Id == Model.CurrentChapterId.Value)
+        : currentContent?.NoteId is int currentNoteId
+            ? orderedChapters.FirstOrDefault(chapter => chapter.Id == currentNoteId)
+            : currentTopic?.Chapters.FirstOrDefault();
+    IEnumerable<CIITStackLab.Application.DTOs.CourseLearningChapterDto> displayedChapters =
+        currentTopic?.Chapters ?? Array.Empty<CIITStackLab.Application.DTOs.CourseLearningChapterDto>();
+    if (Model.CurrentChapterId.HasValue && currentChapter is not null)
+    {
+        displayedChapters = new[] { currentChapter };
+    }
+    var currentChapterIndex = currentChapter is not null
+        ? orderedChapters.FindIndex(chapter => chapter.Id == currentChapter.Id)
+        : 0;
+    if (currentChapterIndex < 0) currentChapterIndex = 0;
+    var topicAssessmentQuestions = currentTopic is null
+        ? new List<CIITStackLab.Application.DTOs.ContentQuestionDto>()
+        : Model.CurrentChapterId.HasValue && currentChapter is not null
+            ? currentChapter.Contents
+                .SelectMany(content => content.Questions)
+                .Concat(currentChapter.Questions)
+                .DistinctBy(question => question.Id)
+                .ToList()
+            : currentTopic.Contents
+                .SelectMany(content => content.Questions)
+                .Concat(currentTopic.Chapters.SelectMany(chapter => chapter.Questions))
+                .DistinctBy(question => question.Id)
+                .ToList();
+    var previousItem = currentIndex > 0 ? orderedContents[currentIndex - 1] : null;
+    var nextItem = currentIndex < orderedContents.Count - 1
+        ? orderedContents.ElementAtOrDefault(currentIndex + 1)
+        : null;
+
+
+
+}
+
+@section Styles {
+    <link rel="stylesheet" href="~/css/student/course-learning.css" asp-append-version="true" />
+}
+
+@section Scripts {
+    <script>
+        document.querySelectorAll('.ciit-learning-chapter[data-chapter-url]').forEach(function (chapter) {
+            const summary = chapter.querySelector(':scope > .ciit-learning-chapter-summary');
+            const chapterUrl = chapter.dataset.chapterUrl;
+
+            if (!summary || !chapterUrl) {
+                return;
+            }
+
+            summary.addEventListener('click', function (event) {
+                if (event.target.closest('.ciit-learning-disclosure-icon')) {
+                    return;
+                }
+
+                event.preventDefault();
+                window.location.assign(chapterUrl);
+            });
+        });
+
+        document.querySelectorAll('.ciit-learning-topic').forEach(function (topic) {
+            const heading = topic.querySelector(':scope > .ciit-learning-topic-heading');
+            const firstContentUrl = topic.dataset.topicFirstContentUrl;
+
+            if (!heading || !firstContentUrl || topic.classList.contains('is-active-topic') || topic.classList.contains('is-locked-topic')) {
+                return;
+            }
+
+            heading.addEventListener('click', function (event) {
+                event.preventDefault();
+                window.location.assign(firstContentUrl);
+            });
+        });
+        document.querySelectorAll('.exam-timezone-offset').forEach(function (input) {
+            input.value = new Date().getTimezoneOffset();
+        });
+        const examApplicationModal = document.getElementById('topicExamApplicationModal');
+        if (examApplicationModal && window.bootstrap) {
+            window.bootstrap.Modal.getOrCreateInstance(examApplicationModal).show();
+        }
+    </script>
+}
+
+@if (User.IsInRole("Student") && ViewBag.ShowExamApplicationModal != true && TempData["ExamError"] is string examAvailabilityError)
 {
     <div class="container ciit-exam-availability-alert" role="alert" aria-live="assertive">
         <span class="ciit-exam-availability-alert-icon" aria-hidden="true">
