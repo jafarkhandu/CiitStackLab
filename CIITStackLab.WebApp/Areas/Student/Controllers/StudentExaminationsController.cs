@@ -57,6 +57,33 @@ public sealed class StudentExaminationsController : Controller
             select new ExamTopicOption { CourseId = course.Id, CourseTitle = course.Title, TopicId = topic.Id, TopicTitle = topic.Title }
         ).ToListAsync(cancellationToken);
 
+        // Reconcile unfinished retake checkouts when the student returns to Examinations.
+        // This lets confirmed failures release the retry button without treating an
+        // unconfirmed gateway response as a failed payment.
+        var pendingRetakePayments = await _db.PaymentTransactions
+            .Where(payment => payment.UserId == userId
+                && payment.PaymentPurpose == "ExamRetake"
+                && (payment.Status == "Created" || payment.Status == "Pending"))
+            .OrderByDescending(payment => payment.CreatedAt)
+            .Take(20)
+            .ToListAsync(cancellationToken);
+
+        foreach (var payment in pendingRetakePayments)
+        {
+            try
+            {
+                var gatewayState = await _phonePePaymentService.GetOrderStateAsync(payment.MerchantOrderId);
+                await ProcessPhonePeStateAsync(payment, gatewayState, cancellationToken);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogWarning(
+                    ex,
+                    "Could not reconcile retake payment {MerchantOrderId} when opening Examinations.",
+                    payment.MerchantOrderId);
+            }
+        }
+
         var unusedPaidRetakeKeys = await _db.PaymentTransactions.AsNoTracking()
             .Where(payment => payment.UserId == userId
                 && payment.PaymentPurpose == "ExamRetake"
