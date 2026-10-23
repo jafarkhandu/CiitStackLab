@@ -62,6 +62,37 @@ public sealed class RazorpayCheckoutController : Controller
         return View();
     }
 
+    [HttpGet("Payments/Razorpay/Success")]
+    public async Task<IActionResult> PaymentSuccess(
+        string merchantOrderId,
+        CancellationToken cancellationToken)
+    {
+        var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+        if (string.IsNullOrWhiteSpace(userId)) return Challenge();
+        if (string.IsNullOrWhiteSpace(merchantOrderId)) return BadRequest();
+
+        var transaction = await _db.PaymentTransactions
+            .AsNoTracking()
+            .FirstOrDefaultAsync(
+                item => item.MerchantOrderId == merchantOrderId && item.UserId == userId,
+                cancellationToken);
+
+        if (transaction is null
+            || !string.Equals(transaction.Status, "Completed", StringComparison.OrdinalIgnoreCase))
+        {
+            return BadRequest("The payment has not been confirmed.");
+        }
+
+        if (string.Equals(transaction.PaymentPurpose, "ExamRetake", StringComparison.Ordinal))
+        {
+            return Redirect(GetSuccessUrl(transaction));
+        }
+
+        ViewData["CourseId"] = transaction.CourseId;
+        ViewData["CourseUrl"] = GetSuccessUrl(transaction);
+        return View();
+    }
+
     [HttpPost("Payments/Razorpay/Verify")]
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> Verify(
@@ -90,7 +121,7 @@ public sealed class RazorpayCheckoutController : Controller
             {
                 success = true,
                 message = "Payment already confirmed.",
-                redirectUrl = GetSuccessUrl(transaction)
+                redirectUrl = GetPostPaymentUrl(transaction)
             });
         }
 
@@ -164,8 +195,19 @@ public sealed class RazorpayCheckoutController : Controller
         {
             success = true,
             message = "Payment successful. Your access is now available.",
-            redirectUrl = GetSuccessUrl(transaction)
+            redirectUrl = GetPostPaymentUrl(transaction)
         });
+    }
+
+    private string GetPostPaymentUrl(PaymentTransaction transaction)
+    {
+        if (string.Equals(transaction.PaymentPurpose, "ExamRetake", StringComparison.Ordinal))
+            return GetSuccessUrl(transaction);
+
+        return Url.Action(nameof(PaymentSuccess), "RazorpayCheckout", new
+        {
+            merchantOrderId = transaction.MerchantOrderId
+        }) ?? GetSuccessUrl(transaction);
     }
 
     private string GetSuccessUrl(PaymentTransaction transaction)
