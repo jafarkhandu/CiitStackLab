@@ -80,7 +80,8 @@ public sealed class PhonePePaymentService
         var checkoutUrl = $"{baseUri}/Payments/RazorpayCheckout"
             + $"?merchantOrderId={Uri.EscapeDataString(merchantOrderId)}"
             + $"&razorpayOrderId={Uri.EscapeDataString(razorpayOrderId)}"
-            + $"&keyId={Uri.EscapeDataString(options.KeyId)}";
+            + $"&keyId={Uri.EscapeDataString(options.KeyId)}"
+            + $"&amount={amountInPaise}";
 
         _logger.LogInformation(
             "Razorpay order created for merchant order {MerchantOrderId}.",
@@ -160,11 +161,7 @@ public sealed class PhonePePaymentService
                 "Razorpay credentials are not configured. Configure Razorpay:KeyId and Razorpay:KeySecret or Razorpay__KeySecret.");
         }
 
-        if (!string.Equals(_options.KeySecret, keySecret, StringComparison.Ordinal))
-        {
-            _options.KeySecret = keySecret;
-        }
-
+        _options.KeySecret = keySecret;
         return _options;
     }
 
@@ -177,8 +174,7 @@ public sealed class PhonePePaymentService
 
     private static AuthenticationHeaderValue CreateBasicAuthentication(RazorpayOptions options)
     {
-        var token = Convert.ToBase64String(
-            Encoding.UTF8.GetBytes($"{options.KeyId}:{options.KeySecret}"));
+        var token = Convert.ToBase64String(Encoding.UTF8.GetBytes($"{options.KeyId}:{options.KeySecret}"));
         return new AuthenticationHeaderValue("Basic", token);
     }
 }
