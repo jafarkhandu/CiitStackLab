@@ -3,6 +3,7 @@
     var keyId = ViewData["RazorpayKeyId"]?.ToString() ?? string.Empty;
     var orderId = ViewData["RazorpayOrderId"]?.ToString() ?? string.Empty;
     var merchantOrderId = ViewData["MerchantOrderId"]?.ToString() ?? string.Empty;
+    var amountInPaise = Convert.ToInt64(ViewData["RazorpayAmount"] ?? 0L);
 }
 <!doctype html>
 <html lang="en">
@@ -40,7 +41,7 @@
                     credentials: "same-origin",
                     headers: {
                         "Content-Type": "application/json",
-                        "RequestVerificationToken": token
+                        "RequestVerificationToken": token || ""
                     },
                     body: JSON.stringify({
                         merchantOrderId,
@@ -51,10 +52,7 @@
                 });
 
                 const data = await result.json().catch(() => ({}));
-                if (!result.ok || !data.success) {
-                    throw new Error(data.message || "Payment verification failed.");
-                }
-
+                if (!result.ok || !data.success) throw new Error(data.message || "Payment verification failed.");
                 window.location.assign(data.redirectUrl);
             };
 
@@ -65,15 +63,13 @@
 
             const checkout = new Razorpay({
                 key: keyId,
-                amount: "@((ViewData["RazorpayAmount"] as long?) ?? 0)",
+                amount: "@amountInPaise",
                 currency: "INR",
                 order_id: orderId,
                 name: "CIIT Stack Lab",
-                description: "Course payment",
+                description: "CIIT Stack Lab payment",
                 handler: function (response) {
-                    verify(response).catch(error => {
-                        status.textContent = error.message;
-                    });
+                    verify(response).catch(error => { status.textContent = error.message; });
                 },
                 modal: {
                     ondismiss: function () {
