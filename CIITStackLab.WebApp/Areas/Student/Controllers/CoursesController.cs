@@ -277,7 +277,7 @@ public class CoursesController : Controller
 
             if (!string.IsNullOrWhiteSpace(returnUrl) && Url.IsLocalUrl(returnUrl))
             {
-                var separator = returnUrl.Contains('?', StringComparison.Ordinal) ? "&" : "?";
+                var separator = returnUrl.Contains('?') ? "&" : "?";
                 return Redirect($"{returnUrl}{separator}reopenExamModal=true");
             }
 
