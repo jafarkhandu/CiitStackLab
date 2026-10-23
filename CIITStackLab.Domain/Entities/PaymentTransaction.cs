@@ -8,6 +8,14 @@ public sealed class PaymentTransaction
 
     public int CourseId { get; set; }
 
+    public string PaymentPurpose { get; set; } = "Course";
+
+    public int? ExamTopicId { get; set; }
+
+    public int? ExamAttemptNumber { get; set; }
+
+    public long? ExamAttemptId { get; set; }
+
     public string MerchantOrderId { get; set; } = string.Empty;
 
     public decimal Amount { get; set; }

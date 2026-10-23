@@ -76,6 +76,33 @@ public sealed class TopicExaminationService : ITopicExaminationService
         if (await HasPassedTopicAsync(userId, courseId, topicId, cancellationToken))
             return (false, "You have already passed this topic's examination.", null);
 
+        var previousAttemptCount = await _db.TopicExamAttempts.CountAsync(x =>
+            x.UserId == userId && x.CourseId == courseId && x.TopicId == topicId,
+            cancellationToken);
+        var nextAttemptNumber = previousAttemptCount + 1;
+        CIITStackLab.Domain.Entities.PaymentTransaction? retakePayment = null;
+        if (nextAttemptNumber > 2)
+        {
+            retakePayment = await _db.PaymentTransactions.SingleOrDefaultAsync(payment =>
+                payment.UserId == userId
+                && payment.CourseId == courseId
+                && payment.PaymentPurpose == "ExamRetake"
+                && payment.ExamTopicId == topicId
+                && payment.ExamAttemptNumber == nextAttemptNumber
+                && payment.Status == "Completed"
+                && payment.ExamAttemptId == null,
+                cancellationToken);
+
+            if (retakePayment is null)
+            {
+                var baseFee = (nextAttemptNumber - 2) * 100m;
+                var totalFee = baseFee + Math.Round(baseFee * 0.18m, 2, MidpointRounding.AwayFromZero);
+                return (false,
+                    $"Attempt #{nextAttemptNumber} requires payment of ₹{totalFee:0.00} including 18% GST before it can start.",
+                    null);
+            }
+        }
+
         var activeAttempt = await _db.TopicExamAttempts.AnyAsync(x =>
             x.UserId == userId && x.CourseId == courseId && x.TopicId == topicId
             && (x.Status == "Scheduled" || x.Status == "Ready" || x.Status == "InProgress"), cancellationToken);
@@ -142,8 +169,25 @@ public sealed class TopicExaminationService : ITopicExaminationService
             OptionOrderJson = JsonSerializer.Serialize(optionOrders, JsonOptions),
             AnswersJson = "{}", TotalQuestions = QuestionCount, CreatedAtUtc = now
         };
-        _db.TopicExamAttempts.Add(attempt);
-        await _db.SaveChangesAsync(cancellationToken);
+        if (retakePayment is null)
+        {
+            _db.TopicExamAttempts.Add(attempt);
+            await _db.SaveChangesAsync(cancellationToken);
+        }
+        else
+        {
+            // Create the paid attempt and consume its payment atomically so a
+            // database failure cannot leave a paid attempt partially linked.
+            await using var transaction = await _db.Database.BeginTransactionAsync(cancellationToken);
+            _db.TopicExamAttempts.Add(attempt);
+            await _db.SaveChangesAsync(cancellationToken);
+
+            retakePayment.ExamAttemptId = attempt.Id;
+            retakePayment.UpdatedAt = DateTime.UtcNow;
+            await _db.SaveChangesAsync(cancellationToken);
+            await transaction.CommitAsync(cancellationToken);
+        }
+
         return (true, null, await MapSummaryAsync(attempt, cancellationToken));
     }
 
@@ -391,8 +435,8 @@ public sealed class TopicExaminationService : ITopicExaminationService
     {
         var topicIds = await _db.CourseModules.AsNoTracking()
             .Where(cm => cm.CourseId == courseId && cm.Flag == 0 && cm.Topic.Flag == 0 && cm.Course.Flag == 0)
-            // Keep exam progression in the same order used by DynamicCourseService and Learn.cshtml.
-            .OrderBy(cm => cm.TopicId)
+            // Keep exam progression aligned with the course-topic mapping order shown in the learning path.
+            .OrderBy(cm => cm.Id)
             .Select(cm => cm.TopicId)
             .Distinct()
             .ToListAsync(cancellationToken);

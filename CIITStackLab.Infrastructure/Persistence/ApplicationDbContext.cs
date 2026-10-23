@@ -295,6 +295,10 @@ public class ApplicationDbContext : IdentityDbContext<ApplicationUser>
             entity.Property(x => x.Id).HasColumnName("payment_transaction_id").ValueGeneratedOnAdd();
             entity.Property(x => x.UserId).HasColumnName("user_id").HasMaxLength(450).IsRequired();
             entity.Property(x => x.CourseId).HasColumnName("course_id").IsRequired();
+            entity.Property(x => x.PaymentPurpose).HasColumnName("payment_purpose").HasMaxLength(32).HasDefaultValue("Course").IsRequired();
+            entity.Property(x => x.ExamTopicId).HasColumnName("exam_topic_id");
+            entity.Property(x => x.ExamAttemptNumber).HasColumnName("exam_attempt_number");
+            entity.Property(x => x.ExamAttemptId).HasColumnName("exam_attempt_id");
             entity.Property(x => x.MerchantOrderId).HasColumnName("merchant_order_id").HasMaxLength(100).IsRequired();
             entity.Property(x => x.Amount).HasColumnName("amount").HasPrecision(18, 2).IsRequired();
             entity.Property(x => x.Status).HasColumnName("status").HasMaxLength(32).IsRequired();

@@ -9,15 +9,17 @@
 <style>
 .ciit-examination-page{max-width:1280px;padding-top:34px;padding-bottom:54px;color:#1b3153}
 .ciit-exam-hero{position:relative;overflow:hidden;padding:30px 34px;border:1px solid rgba(255,255,255,.88);border-radius:26px;background:linear-gradient(125deg,rgba(255,255,255,.92),rgba(229,240,255,.76));box-shadow:0 20px 55px rgba(44,83,140,.1),inset 0 1px 0 #fff;-webkit-backdrop-filter:blur(24px);backdrop-filter:blur(24px)}
-.ciit-exam-hero:after{content:"";position:absolute;width:260px;height:260px;right:-70px;top:-130px;border-radius:50%;background:radial-gradient(circle,rgba(63,132,255,.23),transparent 70%);pointer-events:none}
+.ciit-exam-hero:before{content:"";position:absolute;left:0;top:24px;bottom:24px;width:4px;border-radius:0 5px 5px 0;background:linear-gradient(180deg,#2f7cff,rgba(88,157,255,.18));pointer-events:none}
+.ciit-exam-hero:after{content:"";position:absolute;width:300px;height:300px;right:-78px;top:-155px;border-radius:50%;background:radial-gradient(circle,rgba(63,132,255,.24),rgba(104,164,255,.08) 38%,transparent 72%);pointer-events:none}
+.ciit-exam-hero>*{position:relative;z-index:1}
 .ciit-exam-kicker{display:inline-flex;align-items:center;gap:9px;color:#2368e8;font-size:.73rem;font-weight:850;letter-spacing:.13em;text-transform:uppercase}
 .ciit-exam-kicker:before{content:"";width:7px;height:7px;border-radius:50%;background:#3a8cff;box-shadow:0 0 0 5px rgba(58,140,255,.12)}
 .ciit-exam-hero h1{margin:12px 0 8px;font-size:clamp(1.8rem,3vw,2.55rem);font-weight:850;letter-spacing:-.045em}
 .ciit-exam-hero p{max-width:650px;margin:0;color:#71839e;line-height:1.7}
-.ciit-exam-panel{margin-top:24px;border:1px solid rgba(255,255,255,.9);border-radius:23px;background:rgba(255,255,255,.76);box-shadow:0 16px 42px rgba(38,74,125,.075),inset 0 1px 0 #fff;-webkit-backdrop-filter:blur(22px);backdrop-filter:blur(22px);overflow:hidden}
+.ciit-exam-panel{margin-top:24px;border:1px solid rgba(255,255,255,.94);border-radius:23px;background:linear-gradient(145deg,rgba(255,255,255,.84),rgba(246,250,255,.76));box-shadow:0 18px 46px rgba(38,74,125,.085),inset 0 1px 0 #fff;-webkit-backdrop-filter:blur(24px);backdrop-filter:blur(24px);overflow:hidden}
 .ciit-exam-panel-head{display:flex;align-items:center;justify-content:space-between;gap:16px;padding:24px 26px;border-bottom:1px solid rgba(211,226,247,.8)}
 .ciit-exam-panel-head h2{margin:0;font-size:1.08rem;font-weight:820}.ciit-exam-panel-head p{margin:6px 0 0;color:#7c8da5;font-size:.86rem}
-.ciit-exam-count{display:grid;place-items:center;min-width:38px;height:38px;padding:0 12px;border:1px solid #d8e7ff;border-radius:13px;background:#eef5ff;color:#2167ee;font-weight:850}
+.ciit-exam-count{display:grid;place-items:center;min-width:40px;height:40px;padding:0 12px;border:1px solid rgba(195,218,255,.95);border-radius:14px;background:linear-gradient(145deg,#fff,#eaf2ff);color:#2167ee;font-weight:850;box-shadow:0 5px 14px rgba(37,99,235,.08)}
 .ciit-exam-table-wrap{padding:8px 24px 18px}.ciit-exam-table{width:100%;margin:0;border-collapse:separate;border-spacing:0 8px}
 .ciit-exam-table thead th{padding:12px 14px;border:0;color:#8191a9;font-size:.7rem;font-weight:850;letter-spacing:.09em;text-transform:uppercase;white-space:nowrap}
 .ciit-exam-table{border-spacing:0 10px}
@@ -88,12 +90,36 @@
                                 else if (exam.Status == "InProgress") { <a class="ciit-exam-action" asp-action="Instructions" asp-route-attemptId="@exam.AttemptId">Resume exam</a> }
                                 else if (exam.Status is "Terminated" or "Failed" or "TimedOut")
                                 {
-                                    <form asp-controller="StudentExaminations" asp-action="ReExam" method="post" class="d-inline">
-                                        @Html.AntiForgeryToken()
-                                        <input type="hidden" name="courseId" value="@exam.CourseId" />
-                                        <input type="hidden" name="topicId" value="@exam.TopicId" />
-                                        <button type="submit" class="ciit-exam-action">Start re-exam</button>
-                                    </form>
+                                    var topicAttempts = Model.Where(item => item.CourseId == exam.CourseId && item.TopicId == exam.TopicId).ToList();
+                                    var isLatestAttempt = topicAttempts.All(item => item.AttemptId == exam.AttemptId
+                                        || item.ScheduledAtUtc < exam.ScheduledAtUtc
+                                        || (item.ScheduledAtUtc == exam.ScheduledAtUtc && item.AttemptId < exam.AttemptId));
+                                    var nextAttemptNumber = topicAttempts.Count + 1;
+                                    var paidKeys = ViewBag.UnusedPaidRetakeKeys as IReadOnlyList<string> ?? Array.Empty<string>();
+                                    var paymentKey = $"{exam.CourseId}:{exam.TopicId}:{nextAttemptNumber}";
+                                    var hasPaidRetake = paidKeys.Contains(paymentKey);
+                                    if (isLatestAttempt)
+                                    {
+                                        <form asp-controller="StudentExaminations" asp-action="@(nextAttemptNumber > 2 && !hasPaidRetake ? "PayForReExam" : "ReExam")" method="post" class="d-inline">
+                                            @Html.AntiForgeryToken()
+                                            <input type="hidden" name="courseId" value="@exam.CourseId" />
+                                            <input type="hidden" name="topicId" value="@exam.TopicId" />
+                                            @if (nextAttemptNumber > 2 && !hasPaidRetake)
+                                            {
+                                                var baseFee = (nextAttemptNumber - 2) * 100m;
+                                                var gst = Math.Round(baseFee * 0.18m, 2, MidpointRounding.AwayFromZero);
+                                                <button type="submit" class="ciit-exam-action">Pay ₹@((baseFee + gst).ToString("0.00")) and re-exam</button>
+                                            }
+                                            else
+                                            {
+                                                <button type="submit" class="ciit-exam-action">Start re-exam</button>
+                                            }
+                                        </form>
+                                    }
+                                    else
+                                    {
+                                        <span class="ciit-exam-sub">Previous attempt</span>
+                                    }
                                 }
                                 else { <span class="ciit-exam-sub">Closed</span> }
                             </td>

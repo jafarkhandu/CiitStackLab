@@ -217,7 +217,15 @@ public class CoursesController : Controller
             state = await _phonePePaymentService.GetOrderStateAsync(merchantOrderId);
             await ProcessPhonePeStateAsync(transaction, state, cancellationToken);
 
-            if (string.Equals(state, "COMPLETED", StringComparison.OrdinalIgnoreCase))
+            if (string.Equals(transaction.PaymentPurpose, "ExamRetake", StringComparison.Ordinal))
+            {
+                message = string.Equals(state, "COMPLETED", StringComparison.OrdinalIgnoreCase)
+                    ? "Payment successful. Your paid re-exam is unlocked; open Examinations to start it."
+                    : string.Equals(state, "FAILED", StringComparison.OrdinalIgnoreCase)
+                        ? "Re-exam payment failed. No attempt was unlocked."
+                        : "Re-exam payment is still being processed. No attempt has been unlocked yet.";
+            }
+            else if (string.Equals(state, "COMPLETED", StringComparison.OrdinalIgnoreCase))
             {
                 message = "Payment successful. Your course is now available.";
             }
@@ -258,6 +266,15 @@ public class CoursesController : Controller
                 message,
                 courseId = transaction.CourseId
             });
+        }
+
+        if (string.Equals(transaction.PaymentPurpose, "ExamRetake", StringComparison.Ordinal))
+        {
+            TempData[completed ? "ExamMessage" : "ExamError"] = message;
+            if (completed)
+                return RedirectToAction("Index", "StudentExaminations");
+
+            return RedirectToAction("Index", "StudentExaminations");
         }
 
         TempData["CoursePaymentMessage"] = message;
@@ -306,6 +323,25 @@ public class CoursesController : Controller
 
     private async Task ProcessPhonePeStateAsync(PaymentTransaction transaction, string state, CancellationToken cancellationToken)
     {
+        if (string.Equals(transaction.PaymentPurpose, "ExamRetake", StringComparison.Ordinal))
+        {
+            if (string.Equals(state, "COMPLETED", StringComparison.OrdinalIgnoreCase))
+            {
+                transaction.Status = "Completed";
+                transaction.CompletedAt ??= DateTime.UtcNow;
+            }
+            else
+            {
+                transaction.Status = string.Equals(state, "FAILED", StringComparison.OrdinalIgnoreCase)
+                    ? "Failed"
+                    : "Pending";
+            }
+
+            transaction.UpdatedAt = DateTime.UtcNow;
+            await _dbContext.SaveChangesAsync(cancellationToken);
+            return;
+        }
+
         if (string.Equals(state, "COMPLETED", StringComparison.OrdinalIgnoreCase))
         {
             if (string.Equals(transaction.Status, "Completed", StringComparison.OrdinalIgnoreCase)) return;
@@ -501,7 +537,17 @@ public class CoursesController : Controller
             return NotFound();
         }
 
-        var course = await _courseService.GetLearningAsync(id, null, cancellationToken);
+        CourseLearningDto? course;
+
+        try
+        {
+            course = await _courseService.GetLearningAsync(id, null, cancellationToken);
+        }
+        catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
+        {
+            // Ignore the abandoned request when the user navigates to another page.
+            return new EmptyResult();
+        }
 
         if (course is null)
         {
@@ -767,12 +813,7 @@ public class CoursesController : Controller
 
             if (allowedTopicId.HasValue && requestedTopicId.HasValue)
             {
-                var allowedTopicPosition = course.Topics.ToList()
-                    .FindIndex(topic => topic.Id == allowedTopicId.Value);
-                var requestedTopicPosition = course.Topics.ToList()
-                    .FindIndex(topic => topic.Id == requestedTopicId.Value);
-
-                if (allowedTopicPosition >= 0 && requestedTopicPosition > allowedTopicPosition)
+                if (requestedTopicId.Value != allowedTopicId.Value)
                 {
                     TempData["LearningProgressMessage"] = "This topic is locked until you pass the current topic examination.";
                     return RedirectToAction(nameof(Learn), new { id, topicId = allowedTopicId.Value });
@@ -800,11 +841,20 @@ public class CoursesController : Controller
         {
             if (course.CurrentContentId.HasValue)
             {
-                await _studentProgressService.RecordAccessAsync(
-                    studentUserId,
-                    id,
-                    course.CurrentContentId.Value,
-                    cancellationToken);
+                try
+                {
+                    await _studentProgressService.RecordAccessAsync(
+                        studentUserId,
+                        id,
+                        course.CurrentContentId.Value,
+                        cancellationToken);
+                }
+                catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
+                {
+                    // A newer navigation can cancel this request while access progress is being saved.
+                    // The abandoned request no longer needs to finish rendering a response.
+                    return new EmptyResult();
+                }
             }
 
             course.Progress = await _studentProgressService.GetProgressAsync(

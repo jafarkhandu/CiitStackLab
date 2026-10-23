@@ -7,34 +7,9 @@
     var completedContentIds = learningProgress?.CompletedContentIds?.ToHashSet() ?? new HashSet<int>();
     var topics = Model.Topics.ToList();
     var allowedTopicId = ViewBag.AllowedTopicId as int?;
-    var allowedTopicPosition = allowedTopicId.HasValue
-        ? topics.FindIndex(topic => topic.Id == allowedTopicId.Value)
-        : -1;
 
-    string FormatLearningTitle(string? value)
-    {
-        if (string.IsNullOrWhiteSpace(value)) return string.Empty;
-        var title = value.Trim();
-        title = System.Text.RegularExpressions.Regex.Replace(title, @"(?<=[a-z0-9])(?=[A-Z])", " ");
-        title = System.Text.RegularExpressions.Regex.Replace(title, @"(?<=[A-Z])(?=[A-Z][a-z])", " ");
-        title = System.Text.RegularExpressions.Regex.Replace(title, @"(?<=\d)(?=[A-Z])", " ");
-        title = System.Text.RegularExpressions.Regex.Replace(title, @"(?<=\d)(?=[a-z])", " ");
-        title = System.Text.RegularExpressions.Regex.Replace(title, @"(?i)andthe", "and the");
-        return System.Text.RegularExpressions.Regex.Replace(title, @"\s{2,}", " ");
-    }
-
-    string ResolveResourceUrl(string? value, string folder)
-    {
-        if (string.IsNullOrWhiteSpace(value)) return string.Empty;
-        var resource = value.Trim().Replace('\\', '/');
-        if (Uri.TryCreate(resource, UriKind.Absolute, out var uri)
-            && (uri.Scheme == Uri.UriSchemeHttp || uri.Scheme == Uri.UriSchemeHttps)) return resource;
-        if (resource.StartsWith("~/", StringComparison.Ordinal)) return resource[1..];
-        if (resource.StartsWith("/", StringComparison.Ordinal)) return resource;
-        if (resource.StartsWith("uploads/", StringComparison.OrdinalIgnoreCase)) return "/" + resource;
-        return $"/uploads/{folder}/{Uri.EscapeDataString(System.IO.Path.GetFileName(resource))}";
-    }
 }
+
 <aside class="ciit-learning-sidebar" aria-label="Course chapters and resources">
     <div class="ciit-learning-sidebar-head">
         <div>
@@ -56,7 +31,7 @@
             var progress = topicContents.Count == 0 ? 0 :
                 (int)Math.Round(completedCount * 100d / topicContents.Count, MidpointRounding.AwayFromZero);
             var isCurrentTopic = currentTopic?.Id == topic.Id;
-            var isLocked = User.IsInRole("Student") && allowedTopicPosition >= 0 && topicIndex > allowedTopicPosition;
+            var isLocked = User.IsInRole("Student") && allowedTopicId.HasValue && topic.Id != allowedTopicId.Value;
             var chapterContentIds = topic.Chapters.SelectMany(chapter => chapter.Contents).Select(content => content.Id).ToHashSet();
             var additionalContents = topic.Contents.Where(content => !chapterContentIds.Contains(content.Id)).ToList();
 
@@ -86,7 +61,7 @@
                              open="@(chapterIsCurrent || Model.CurrentChapterId == chapter.Id ? "open" : null)">
                         <summary class="ciit-learning-chapter-summary">
                             <span class="ciit-learning-chapter-number">@((chapterIndex + 1).ToString("00"))</span>
-                            <span class="ciit-learning-chapter-title"><strong>@FormatLearningTitle(chapter.Title)</strong><small>@chapterResourceCount resource@(chapterResourceCount == 1 ? "" : "s")</small></span>
+                            <span class="ciit-learning-chapter-title"><strong>@CIITStackLab.WebApp.Helpers.LearningPagePresentation.FormatLearningTitle(chapter.Title)</strong><small>@chapterResourceCount resource@(chapterResourceCount == 1 ? "" : "s")</small></span>
                             <i class="bi bi-chevron-down ciit-learning-disclosure-icon" aria-hidden="true"></i>
                         </summary>
                         <div class="ciit-learning-chapter-body ciit-learning-chapter-categories">
@@ -114,11 +89,11 @@
                                             <div class="ciit-learning-resource-links">
                                                 @if (!string.IsNullOrWhiteSpace(content.VideoName))
                                                 {
-                                                    <a href="@ResolveResourceUrl(content.VideoName, "videos")" target="_blank" rel="noopener noreferrer"><i class="bi bi-play-circle"></i> Watch video</a>
+                                                    <a href="@CIITStackLab.WebApp.Helpers.LearningPagePresentation.ResolveResourceUrl(content.VideoName, "videos")" target="_blank" rel="noopener noreferrer"><i class="bi bi-play-circle"></i> Watch video</a>
                                                 }
                                                 @if (!string.IsNullOrWhiteSpace(content.Slides))
                                                 {
-                                                    <a href="@ResolveResourceUrl(content.Slides, "slides")" target="_blank" rel="noopener noreferrer"><i class="bi bi-file-earmark-slides"></i> Open slides</a>
+                                                    <a href="@CIITStackLab.WebApp.Helpers.LearningPagePresentation.ResolveResourceUrl(content.Slides, "slides")" target="_blank" rel="noopener noreferrer"><i class="bi bi-file-earmark-slides"></i> Open slides</a>
                                                 }
                                                 @if (string.IsNullOrWhiteSpace(content.VideoName) && string.IsNullOrWhiteSpace(content.Slides))
                                                 {
@@ -156,11 +131,11 @@
                                     <div class="ciit-learning-additional-meta">
                                         @if (!string.IsNullOrWhiteSpace(content.VideoName))
                                         {
-                                            <a href="@ResolveResourceUrl(content.VideoName, "videos")" target="_blank" rel="noopener noreferrer" aria-label="Open video for @content.Title" title="Open video"><i class="bi bi-play-btn"></i></a>
+                                            <a href="@CIITStackLab.WebApp.Helpers.LearningPagePresentation.ResolveResourceUrl(content.VideoName, "videos")" target="_blank" rel="noopener noreferrer" aria-label="Open video for @content.Title" title="Open video"><i class="bi bi-play-btn"></i></a>
                                         }
                                         @if (!string.IsNullOrWhiteSpace(content.Slides))
                                         {
-                                            <a href="@ResolveResourceUrl(content.Slides, "slides")" target="_blank" rel="noopener noreferrer" aria-label="Open slides for @content.Title" title="Open slides"><i class="bi bi-file-earmark-slides"></i></a>
+                                            <a href="@CIITStackLab.WebApp.Helpers.LearningPagePresentation.ResolveResourceUrl(content.Slides, "slides")" target="_blank" rel="noopener noreferrer" aria-label="Open slides for @content.Title" title="Open slides"><i class="bi bi-file-earmark-slides"></i></a>
                                         }
                                         @if (content.QuestionCount > 0)
                                         {
