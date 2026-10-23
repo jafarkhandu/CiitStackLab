@@ -483,8 +483,7 @@ public sealed class TopicExaminationService : ITopicExaminationService
     {
         var latestAttempt = await _db.TopicExamAttempts.AsNoTracking()
             .Where(x => x.UserId == userId && x.CourseId == courseId && x.TopicId == topicId)
-            .OrderByDescending(x => x.ScheduledAtUtc)
-            .ThenByDescending(x => x.Id)
+            .OrderByDescending(x => x.Id)
             .Select(x => new { x.Status, x.Passed })
             .FirstOrDefaultAsync(cancellationToken);
 
