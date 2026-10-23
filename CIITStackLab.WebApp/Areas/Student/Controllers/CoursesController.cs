@@ -271,8 +271,15 @@ public class CoursesController : Controller
         if (string.Equals(transaction.PaymentPurpose, "ExamRetake", StringComparison.Ordinal))
         {
             TempData[completed ? "ExamMessage" : "ExamError"] = message;
-            if (completed)
-                return RedirectToAction("Index", "StudentExaminations");
+            TempData["OpenExamApplicationModal"] = true;
+            if (transaction.ExamTopicId.HasValue)
+            {
+                return RedirectToAction("Learn", "Courses", new
+                {
+                    id = transaction.CourseId,
+                    topicId = transaction.ExamTopicId.Value
+                });
+            }
 
             return RedirectToAction("Index", "StudentExaminations");
         }
