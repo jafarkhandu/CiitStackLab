@@ -65,6 +65,16 @@ public sealed class StudentExaminationsController : Controller
             .ToListAsync(cancellationToken);
         ViewBag.UnusedPaidRetakeKeys = unusedPaidRetakeKeys;
 
+        var pendingRetakeKeys = await _db.PaymentTransactions.AsNoTracking()
+            .Where(payment => payment.UserId == userId
+                && payment.PaymentPurpose == "ExamRetake"
+                && (payment.Status == "Created" || payment.Status == "Pending")
+                && payment.ExamTopicId.HasValue
+                && payment.ExamAttemptNumber.HasValue)
+            .Select(payment => payment.CourseId + ":" + payment.ExamTopicId!.Value + ":" + payment.ExamAttemptNumber!.Value)
+            .ToListAsync(cancellationToken);
+        ViewBag.PendingRetakeKeys = pendingRetakeKeys;
+
         return View(await _exams.GetStudentExamsAsync(userId, cancellationToken));
     }
 
@@ -120,8 +130,6 @@ public sealed class StudentExaminationsController : Controller
         var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
         if (string.IsNullOrWhiteSpace(userId)) return Challenge();
 
-        // A retake is a new attempt; the examination service enforces the free-attempt limit
-        // and consumes a verified, matching payment for every later attempt.
         var result = await _exams.ScheduleAsync(
             userId, courseId, topicId, DateTime.UtcNow, cancellationToken, startNow: true);
 
@@ -144,56 +152,57 @@ public sealed class StudentExaminationsController : Controller
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> PayForReExam(int courseId, int topicId, CancellationToken cancellationToken)
     {
+        var wantsJsonResponse = Request.Headers.Accept.Any(value => value.Contains("application/json", StringComparison.OrdinalIgnoreCase));
         var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
-        if (string.IsNullOrWhiteSpace(userId)) return Challenge();
-        if (courseId <= 0 || topicId <= 0) return NotFound();
+        if (string.IsNullOrWhiteSpace(userId)) return Unauthorized();
+        if (courseId <= 0 || topicId <= 0)
+        {
+            if (wantsJsonResponse) return NotFound(new { success = false, message = "The requested examination could not be found." });
+            return NotFound();
+        }
+
+        IActionResult Error(string message, int statusCode = StatusCodes.Status400BadRequest)
+        {
+            if (wantsJsonResponse)
+                return StatusCode(statusCode, new { success = false, message });
+
+            TempData["ExamError"] = message;
+            return RedirectToAction(nameof(Index));
+        }
 
         var validTopic = await _db.CourseModules.AsNoTracking().AnyAsync(module =>
             module.CourseId == courseId && module.TopicId == topicId && module.Flag == 0
             && module.Course.Flag == 0 && module.Topic.Flag == 0, cancellationToken);
-        if (!validTopic) return NotFound();
+        if (!validTopic) return Error("The requested examination topic could not be found.", StatusCodes.Status404NotFound);
 
         if (!await _coursePurchaseService.CanAccessCourseAsync(userId, courseId, cancellationToken))
-        {
-            TempData["ExamError"] = "You do not have access to this course.";
-            return RedirectToAction(nameof(Index));
-        }
+            return Error("You do not have access to this course.");
 
         if (await _exams.HasPassedTopicAsync(userId, courseId, topicId, cancellationToken))
-        {
-            TempData["ExamError"] = "You have already passed this topic's examination.";
-            return RedirectToAction(nameof(Index));
-        }
+            return Error("You have already passed this topic's examination.");
 
         var activeAttemptExists = await _db.TopicExamAttempts.AnyAsync(attempt =>
             attempt.UserId == userId && attempt.CourseId == courseId && attempt.TopicId == topicId
             && (attempt.Status == "Scheduled" || attempt.Status == "Ready" || attempt.Status == "InProgress"),
             cancellationToken);
         if (activeAttemptExists)
-        {
-            TempData["ExamError"] = "An exam is already scheduled or active for this topic.";
-            return RedirectToAction(nameof(Index));
-        }
+            return Error("An exam is already scheduled or active for this topic.");
 
         var questionAvailability = await _exams.CheckQuestionAvailabilityAsync(
             userId, courseId, topicId, cancellationToken);
         if (!questionAvailability.IsAvailable)
         {
-            TempData["ExamError"] = questionAvailability.Error
-                ?? "Exam questions are not available for this topic right now.";
             await NotifyIfQuestionBankUnavailableAsync(
                 userId, courseId, topicId, questionAvailability.Error, cancellationToken);
-            return RedirectToAction(nameof(Index));
+            return Error(questionAvailability.Error
+                ?? "Exam questions are not available for this topic right now.");
         }
 
         var attemptNumber = await _db.TopicExamAttempts.CountAsync(attempt =>
             attempt.UserId == userId && attempt.CourseId == courseId && attempt.TopicId == topicId,
             cancellationToken) + 1;
         if (attemptNumber <= 2)
-        {
-            TempData["ExamMessage"] = "Your next two attempts are free. Open the latest failed attempt and choose Start re-exam.";
-            return RedirectToAction(nameof(Index));
-        }
+            return Error("Your next two attempts are free. Start the re-exam from the examination records.");
 
         var existingUnusedPayment = await _db.PaymentTransactions.AnyAsync(payment =>
             payment.UserId == userId && payment.CourseId == courseId
@@ -203,6 +212,9 @@ public sealed class StudentExaminationsController : Controller
             cancellationToken);
         if (existingUnusedPayment)
         {
+            if (wantsJsonResponse)
+                return Json(new { success = true, alreadyPaid = true, message = "Payment is already confirmed." });
+
             TempData["ExamMessage"] = "Payment is already confirmed. Start your re-exam from the exam records.";
             return RedirectToAction(nameof(Index));
         }
@@ -214,10 +226,7 @@ public sealed class StudentExaminationsController : Controller
             && (payment.Status == "Created" || payment.Status == "Pending"),
             cancellationToken);
         if (pendingPayment)
-        {
-            TempData["ExamError"] = "A payment order for this attempt is already pending. Complete or verify that order before creating another.";
-            return RedirectToAction(nameof(Index));
-        }
+            return Error("A payment order for this attempt is already pending. Complete or verify that order before creating another.");
 
         var baseFee = (attemptNumber - 2) * 100m;
         var gst = Math.Round(baseFee * 0.18m, 2, MidpointRounding.AwayFromZero);
@@ -241,18 +250,17 @@ public sealed class StudentExaminationsController : Controller
         await _db.SaveChangesAsync(cancellationToken);
 
         var returnUrl = Url.Action(
-            "PhonePeReturn",
-            "Courses",
-            new { merchantOrderId },
-            Request.Scheme,
-            Request.Host.Value);
+            nameof(Index),
+            "StudentExaminations",
+            values: null,
+            protocol: Request.Scheme,
+            host: Request.Host.Value);
         if (string.IsNullOrWhiteSpace(returnUrl))
         {
             transaction.Status = "Failed";
             transaction.UpdatedAt = DateTime.UtcNow;
             await _db.SaveChangesAsync(cancellationToken);
-            TempData["ExamError"] = "Payment could not be started. Please try again.";
-            return RedirectToAction(nameof(Index));
+            return Error("Payment could not be started. Please try again.");
         }
 
         try
@@ -262,6 +270,10 @@ public sealed class StudentExaminationsController : Controller
             transaction.Status = "Pending";
             transaction.UpdatedAt = DateTime.UtcNow;
             await _db.SaveChangesAsync(cancellationToken);
+
+            if (wantsJsonResponse)
+                return Json(new { success = true, checkoutUrl, merchantOrderId, amount = totalAmount });
+
             return Redirect(checkoutUrl);
         }
         catch (Exception ex)
@@ -269,10 +281,16 @@ public sealed class StudentExaminationsController : Controller
             transaction.Status = ex is ArgumentException or InvalidOperationException ? "Failed" : "Pending";
             transaction.UpdatedAt = DateTime.UtcNow;
             await _db.SaveChangesAsync(CancellationToken.None);
-            _logger.LogError(ex, "PhonePe exam retake checkout could not be created for order {MerchantOrderId}.", merchantOrderId);
-            TempData["ExamError"] = transaction.Status == "Pending"
+            _logger.LogError(ex, "Razorpay exam retake checkout could not be created for order {MerchantOrderId}.", merchantOrderId);
+
+            var message = transaction.Status == "Pending"
                 ? "The payment gateway response could not be confirmed. The order remains pending and no attempt has been unlocked."
-                : "The payment could not be started. Please check the payment configuration and try again.";
+                : "The payment could not be started. Please try again.";
+            if (wantsJsonResponse)
+                return StatusCode(transaction.Status == "Pending" ? StatusCodes.Status504GatewayTimeout : StatusCodes.Status502BadGateway,
+                    new { success = false, status = transaction.Status, message });
+
+            TempData["ExamError"] = message;
             return RedirectToAction(nameof(Index));
         }
     }
@@ -368,7 +386,6 @@ public sealed class StudentExaminationsController : Controller
         var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
         if (string.IsNullOrWhiteSpace(userId)) return Unauthorized();
         var deviceToken = Request.Cookies[DeviceCookieName(attemptId)] ?? string.Empty;
-        // Device verification is also required for event logging; answer submission is scoped to the authenticated owner.
         var result = await _exams.SaveAnswersAsync(
             userId, attemptId, answers, deviceToken, cancellationToken, finalSubmission);
         if (!result.Succeeded) return BadRequest(new { error = result.Error });
