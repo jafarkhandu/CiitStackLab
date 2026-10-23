@@ -612,7 +612,6 @@ public sealed class StudentExaminationsController : Controller
             TempData["LastExamResultTotal"] = result.Result.TotalQuestions;
             TempData["LastExamResultAnswered"] = result.Result.AnsweredQuestionsCount;
             TempData["LastExamResultPassed"] = result.Result.Passed;
-            TempData["LastExamResultAttemptId"] = result.Result.AttemptId;
         }
 
         return Json(new
