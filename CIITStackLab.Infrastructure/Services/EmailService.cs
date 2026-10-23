@@ -97,6 +97,65 @@ public sealed class EmailService : IEmailService
             new ContentType("application", "pdf"));
     }
 
+    public Task SendExamLifecycleEmailAsync(
+        string toEmail,
+        string userName,
+        string courseTitle,
+        string topicTitle,
+        int attemptNumber,
+        DateTime scheduledAtUtc,
+        string eventType,
+        decimal? paymentAmount,
+        string paymentStatus,
+        string? merchantOrderId,
+        CancellationToken cancellationToken = default)
+    {
+        var isStarted = string.Equals(eventType, "Started", StringComparison.OrdinalIgnoreCase);
+        var safeUserName = HtmlEncode(userName);
+        var safeCourseTitle = HtmlEncode(courseTitle);
+        var safeTopicTitle = HtmlEncode(topicTitle);
+        var safePaymentStatus = HtmlEncode(paymentStatus);
+        var safeOrderId = HtmlEncode(merchantOrderId ?? "Not applicable");
+        var scheduledTime = DateTime.SpecifyKind(scheduledAtUtc, DateTimeKind.Utc)
+            .ToLocalTime().ToString("dd MMM yyyy, hh:mm tt");
+        var paymentText = paymentAmount.HasValue
+            ? $"INR {paymentAmount.Value:0.00}"
+            : "Free attempt";
+        var safePaymentText = HtmlEncode(paymentText);
+        var title = isStarted ? "Your examination has started" : "Examination scheduled successfully";
+        var subtitle = isStarted
+            ? "All the best with your CIIT Stack Lab examination."
+            : "Your examination booking details are confirmed.";
+        var html = BuildEmailTemplate(
+            title,
+            subtitle,
+            $"""
+            <p style="margin:0 0 18px;">Hello <strong>{safeUserName}</strong>,</p>
+            <p style="margin:0 0 20px;">{(isStarted ? "Your examination is now in progress. Stay focused and do your best." : "Your examination has been scheduled. Please join at the date and time below.")}</p>
+            <div style="margin:20px 0;border:1px solid #dbeafe;border-radius:16px;overflow:hidden;background:#f8fbff;">
+                <div style="padding:14px 18px;background:linear-gradient(135deg,#1769ff,#06b6d4);color:#fff;font-weight:700;">Examination Details</div>
+                <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="border-collapse:collapse;">
+                    <tr><td style="padding:12px 18px;color:{MutedText};border-bottom:1px solid #e5edf7;">Course</td><td align="right" style="padding:12px 18px;color:{DarkText};font-weight:700;border-bottom:1px solid #e5edf7;">{safeCourseTitle}</td></tr>
+                    <tr><td style="padding:12px 18px;color:{MutedText};border-bottom:1px solid #e5edf7;">Topic</td><td align="right" style="padding:12px 18px;color:{DarkText};font-weight:700;border-bottom:1px solid #e5edf7;">{safeTopicTitle}</td></tr>
+                    <tr><td style="padding:12px 18px;color:{MutedText};border-bottom:1px solid #e5edf7;">Attempt</td><td align="right" style="padding:12px 18px;color:{DarkText};font-weight:700;border-bottom:1px solid #e5edf7;">#{attemptNumber}</td></tr>
+                    <tr><td style="padding:12px 18px;color:{MutedText};border-bottom:1px solid #e5edf7;">Scheduled time</td><td align="right" style="padding:12px 18px;color:{DarkText};font-weight:700;border-bottom:1px solid #e5edf7;">{HtmlEncode(scheduledTime)}</td></tr>
+                    <tr><td style="padding:12px 18px;color:{MutedText};border-bottom:1px solid #e5edf7;">Payment amount</td><td align="right" style="padding:12px 18px;color:{DarkText};font-weight:700;border-bottom:1px solid #e5edf7;">{safePaymentText}</td></tr>
+                    <tr><td style="padding:12px 18px;color:{MutedText};border-bottom:1px solid #e5edf7;">Payment status</td><td align="right" style="padding:12px 18px;color:{DarkText};font-weight:700;border-bottom:1px solid #e5edf7;">{safePaymentStatus}</td></tr>
+                    <tr><td style="padding:12px 18px;color:{MutedText};">Payment order</td><td align="right" style="padding:12px 18px;color:{DarkText};font-weight:700;">{safeOrderId}</td></tr>
+                </table>
+            </div>
+            <div style="margin:20px 0;padding:18px;border-radius:14px;background:#eff6ff;color:{PrimaryBlue};font-size:18px;font-weight:800;text-align:center;">Best of luck! Give it your best.</div>
+            """);
+
+        var textBody = $"Hello {userName}. {title}. Course: {courseTitle}. Topic: {topicTitle}. Attempt: #{attemptNumber}. Scheduled: {scheduledTime}. Payment: {paymentText}; status: {paymentStatus}; order: {merchantOrderId ?? "Not applicable"}. Best of luck!";
+        return SendEmailAsync(
+            toEmail,
+            $"CIIT Stack Lab - {title}",
+            textBody,
+            html,
+            cancellationToken);
+    }
+
     public Task SendPasswordResetOtpAsync(
         string toEmail,
         string otp,
