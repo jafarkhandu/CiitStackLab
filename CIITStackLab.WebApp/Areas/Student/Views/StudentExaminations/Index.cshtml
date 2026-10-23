@@ -74,8 +74,29 @@
                     @foreach (var row in Model.Select((item, rowIndex) => new { Exam = item, RowIndex = rowIndex }))
                     {
                         var exam = row.Exam;
+                        var topicAttempts = Model
+                            .Where(item => item.CourseId == exam.CourseId && item.TopicId == exam.TopicId)
+                            .OrderBy(item => item.ScheduledAtUtc)
+                            .ThenBy(item => item.AttemptId)
+                            .ToList();
+                        var attemptNumber = topicAttempts.FindIndex(item => item.AttemptId == exam.AttemptId) + 1;
+                        var hasEverPassedTopic = topicAttempts.Any(item => item.Passed && item.Status == "Passed");
+                        var isPaidRetake = attemptNumber > 2 || hasEverPassedTopic && attemptNumber > 1;
+                        var retakeFeeBase = Math.Max(1, attemptNumber - 2) * 100m;
+                        var retakeFee = retakeFeeBase + Math.Round(retakeFeeBase * 0.18m, 2, MidpointRounding.AwayFromZero);
                         <tr style="--row-index: @row.RowIndex">
-                            <td><span class="ciit-exam-topic">@exam.TopicTitle</span><span class="ciit-exam-sub">Attempt #@exam.AttemptId</span></td>
+                            <td>
+                                <span class="ciit-exam-topic">@exam.TopicTitle</span>
+                                <span class="ciit-exam-sub">Attempt #@attemptNumber</span>
+                                @if (attemptNumber > 1)
+                                {
+                                    <span class="badge rounded-pill text-bg-info ms-1">Re-exam</span>
+                                    @if (isPaidRetake)
+                                    {
+                                        <span class="ciit-exam-sub">Fee: ₹@retakeFee.ToString("0.00")</span>
+                                    }
+                                }
+                            </td>
                             <td><time class="exam-local-time" datetime="@DateTime.SpecifyKind(exam.ScheduledAtUtc, DateTimeKind.Utc).ToString("O")">@exam.ScheduledAtUtc.ToString("yyyy-MM-dd HH:mm") UTC</time></td>
                             <td><span class="ciit-exam-status" data-status="@exam.Status">@(exam.Status == "TimedOut" ? "Time’s up" : exam.Status)</span></td>
                             <td class="text-end">
@@ -88,9 +109,8 @@
                                     <span class="ciit-exam-sub exam-open-countdown" data-open-at="@DateTime.SpecifyKind(openAtUtc, DateTimeKind.Utc).ToString("O")" data-exam-end="@DateTime.SpecifyKind(examEndUtc, DateTimeKind.Utc).ToString("O")"></span>
                                 }
                                 else if (exam.Status == "InProgress") { <a class="ciit-exam-action" asp-action="Instructions" asp-route-attemptId="@exam.AttemptId">Resume exam</a> }
-                                else if (exam.Status is "Terminated" or "Failed" or "TimedOut")
+                                else if (exam.Status is "Terminated" or "Failed" or "TimedOut" or "Passed")
                                 {
-                                    var topicAttempts = Model.Where(item => item.CourseId == exam.CourseId && item.TopicId == exam.TopicId).ToList();
                                     var isLatestAttempt = topicAttempts.All(item => item.AttemptId == exam.AttemptId
                                         || item.ScheduledAtUtc < exam.ScheduledAtUtc
                                         || (item.ScheduledAtUtc == exam.ScheduledAtUtc && item.AttemptId < exam.AttemptId));
@@ -98,15 +118,16 @@
                                     var paidKeys = ViewBag.UnusedPaidRetakeKeys as IReadOnlyList<string> ?? Array.Empty<string>();
                                     var paymentKey = $"{exam.CourseId}:{exam.TopicId}:{nextAttemptNumber}";
                                     var hasPaidRetake = paidKeys.Contains(paymentKey);
+                                    var nextAttemptIsPaid = nextAttemptNumber > 2 || hasEverPassedTopic;
                                     if (isLatestAttempt)
                                     {
-                                        <form asp-controller="StudentExaminations" asp-action="@(nextAttemptNumber > 2 && !hasPaidRetake ? "PayForReExam" : "ReExam")" method="post" class="d-inline">
+                                        <form asp-controller="StudentExaminations" asp-action="@(nextAttemptIsPaid && !hasPaidRetake ? "PayForReExam" : "ReExam")" method="post" class="d-inline">
                                             @Html.AntiForgeryToken()
                                             <input type="hidden" name="courseId" value="@exam.CourseId" />
                                             <input type="hidden" name="topicId" value="@exam.TopicId" />
-                                            @if (nextAttemptNumber > 2 && !hasPaidRetake)
+                                            @if (nextAttemptIsPaid && !hasPaidRetake)
                                             {
-                                                var baseFee = (nextAttemptNumber - 2) * 100m;
+                                                var baseFee = Math.Max(1, nextAttemptNumber - 2) * 100m;
                                                 var gst = Math.Round(baseFee * 0.18m, 2, MidpointRounding.AwayFromZero);
                                                 <button type="submit" class="ciit-exam-action">Pay ₹@((baseFee + gst).ToString("0.00")) and re-exam</button>
                                             }
