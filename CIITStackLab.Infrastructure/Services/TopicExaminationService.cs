@@ -73,6 +73,59 @@ public sealed class TopicExaminationService : ITopicExaminationService
             cancellationToken);
         if (!hasAccess) return (false, "You do not have access to this course.", null);
 
+        var orderedTopicIds = await _db.CourseModules.AsNoTracking()
+            .Where(module => module.CourseId == courseId && module.Flag == 0
+                && module.Course.Flag == 0 && module.Topic.Flag == 0)
+            .OrderBy(module => module.Id)
+            .Select(module => module.TopicId)
+            .Distinct()
+            .ToListAsync(cancellationToken);
+        var requestedTopicIndex = orderedTopicIds.IndexOf(topicId);
+        var currentTopicId = await GetCurrentTopicIdAsync(userId, courseId, cancellationToken);
+        var currentTopicIndex = currentTopicId.HasValue
+            ? orderedTopicIds.IndexOf(currentTopicId.Value)
+            : -1;
+
+        if (requestedTopicIndex < 0)
+            return (false, "The selected topic is not available in this course.", null);
+
+        if (currentTopicIndex >= 0 && requestedTopicIndex > currentTopicIndex)
+            return (false, "Please first clear your previous topic exam.", null);
+
+        if (currentTopicIndex >= 0 && requestedTopicIndex < currentTopicIndex)
+        {
+            var laterTopicIds = orderedTopicIds.Skip(requestedTopicIndex + 1).ToList();
+            var laterTopicExamExists = laterTopicIds.Count > 0 && await _db.TopicExamAttempts.AsNoTracking()
+                .AnyAsync(attempt => attempt.UserId == userId && attempt.CourseId == courseId
+                    && laterTopicIds.Contains(attempt.TopicId), cancellationToken);
+            if (laterTopicExamExists)
+                return (false, "You can no longer apply for a previous topic exam after moving on to a later topic exam.", null);
+        }
+
+        if (requestedTopicIndex > 0)
+        {
+            var previousTopicIds = orderedTopicIds.Take(requestedTopicIndex).ToList();
+            foreach (var previousTopicId in previousTopicIds)
+            {
+                var previousTopicHasPassed = await _db.TopicExamAttempts.AsNoTracking().AnyAsync(attempt =>
+                    attempt.UserId == userId && attempt.CourseId == courseId
+                    && attempt.TopicId == previousTopicId && attempt.Passed && attempt.Status == "Passed",
+                    cancellationToken);
+                if (!previousTopicHasPassed)
+                    continue;
+
+                var latestPreviousAttempt = await _db.TopicExamAttempts.AsNoTracking()
+                    .Where(attempt => attempt.UserId == userId && attempt.CourseId == courseId
+                        && attempt.TopicId == previousTopicId)
+                    .OrderByDescending(attempt => attempt.ScheduledAtUtc)
+                    .ThenByDescending(attempt => attempt.Id)
+                    .Select(attempt => new { attempt.Status, attempt.Passed })
+                    .FirstOrDefaultAsync(cancellationToken);
+                if (latestPreviousAttempt?.Status is "Scheduled" or "Ready" or "InProgress")
+                    return (false, "Please first clear your previous topic exam.", null);
+            }
+        }
+
         var hasEverPassedTopic = await _db.TopicExamAttempts.AsNoTracking().AnyAsync(x =>
             x.UserId == userId && x.CourseId == courseId && x.TopicId == topicId
             && x.Passed && x.Status == "Passed", cancellationToken);
