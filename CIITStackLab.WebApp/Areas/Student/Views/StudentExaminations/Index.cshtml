@@ -55,6 +55,20 @@
 .ciit-exam-action{display:inline-flex;align-items:center;justify-content:center;min-height:38px;padding:9px 13px;border:1px solid #cfe0ff;border-radius:11px;background:linear-gradient(135deg,#fff,#edf4ff);color:#2167ed;font-size:.78rem;font-weight:820;text-decoration:none;white-space:nowrap}.ciit-exam-action:hover{border-color:#8fb7ff;background:#eaf2ff;color:#1354d7}.ciit-exam-action.disabled{opacity:.45;pointer-events:none}
 .ciit-exam-empty{padding:54px 20px;text-align:center}.ciit-exam-empty-icon{display:grid;place-items:center;width:58px;height:58px;margin:0 auto 16px;border:1px solid #dce9ff;border-radius:19px;background:linear-gradient(145deg,#fff,#eaf3ff);color:#3679ef;font-size:1.35rem;box-shadow:0 10px 25px rgba(45,101,184,.1)}
 .ciit-exam-empty h3{margin:0 0 7px;color:#294365;font-size:1rem;font-weight:820}.ciit-exam-empty p{margin:0;color:#8494aa;font-size:.87rem}.ciit-exam-flash{margin-top:18px;border-radius:14px}
+.ciit-result-card{position:relative;display:grid;grid-template-columns:minmax(0,1fr) auto;gap:20px;align-items:center;margin-top:20px;padding:24px 28px;border:1px solid rgba(191,219,254,.95);border-radius:22px;background:radial-gradient(circle at 90% 0%,rgba(147,197,253,.24),transparent 38%),linear-gradient(125deg,rgba(255,255,255,.97),rgba(239,246,255,.92));box-shadow:0 16px 40px rgba(37,99,235,.09),inset 0 1px 0 #fff}
+.ciit-result-card.is-passed{border-color:#b7e8d1;background:radial-gradient(circle at 90% 0%,rgba(110,231,183,.2),transparent 38%),linear-gradient(125deg,#fff,#effdf5)}
+.ciit-result-eyebrow{display:flex;align-items:center;gap:8px;margin-bottom:8px;color:#4776bd;font-size:.7rem;font-weight:850;letter-spacing:.12em;text-transform:uppercase}
+.ciit-result-title{margin:0;color:#20395f;font-size:clamp(1.15rem,2vw,1.55rem);font-weight:850;letter-spacing:-.035em}
+.ciit-result-copy{margin:7px 0 0;color:#71839e;font-size:.86rem;line-height:1.6}
+.ciit-result-score{min-width:130px;padding:14px 18px;border:1px solid #d7e6ff;border-radius:17px;background:rgba(255,255,255,.8);text-align:center}
+.ciit-result-score strong{display:block;color:#2466dc;font-size:1.8rem;line-height:1.2;font-weight:900;letter-spacing:-.05em}
+.ciit-result-score span{display:block;margin-top:4px;color:#7c8da5;font-size:.72rem;font-weight:800}
+.ciit-result-metrics{display:flex;flex-wrap:wrap;gap:8px;margin-top:15px}
+.ciit-result-metric{display:inline-flex;align-items:center;gap:6px;padding:7px 10px;border:1px solid #dce8fa;border-radius:999px;background:rgba(255,255,255,.76);color:#506783;font-size:.75rem;font-weight:750}
+.ciit-result-metric strong{color:#263f63}
+.ciit-exam-result-detail{display:block;margin-top:8px;color:#536d91;font-size:.76rem;line-height:1.55}
+.ciit-exam-result-detail strong{color:#263f63}
+@media(max-width:575.98px){.ciit-result-card{grid-template-columns:1fr;padding:21px}.ciit-result-score{justify-self:start;min-width:120px}}
 @@media(max-width:767.98px){.ciit-exam-hero{padding:24px 21px;border-radius:20px}.ciit-exam-panel-head{padding:20px;align-items:flex-start}.ciit-exam-table-wrap{padding:8px 12px 14px}.ciit-exam-table{min-width:760px}.ciit-examination-page{padding-top:20px}}
 @@media(prefers-reduced-motion:reduce){.ciit-exam-table tbody tr{transition:none}}
 </style>
@@ -67,6 +81,31 @@
     </header>
     @if (TempData["ExamMessage"] is string message) { <div class="alert alert-success ciit-exam-flash" role="status">@message</div> }
     @if (TempData["ExamError"] is string error) { <div class="alert alert-warning ciit-exam-flash" role="alert">@error</div> }
+
+    @if (TempData["LastExamResultStatus"] is string lastResultStatus)
+    {
+        var lastResultScore = Convert.ToInt32(TempData["LastExamResultScore"] ?? 0);
+        var lastResultTotal = Convert.ToInt32(TempData["LastExamResultTotal"] ?? 0);
+        var lastResultAnswered = Convert.ToInt32(TempData["LastExamResultAnswered"] ?? 0);
+        var lastResultPassed = Convert.ToBoolean(TempData["LastExamResultPassed"] ?? false);
+        var lastResultAttemptId = Convert.ToInt64(TempData["LastExamResultAttemptId"] ?? 0);
+        <section class="ciit-result-card @(lastResultPassed ? "is-passed" : "")" aria-labelledby="latest-exam-result-title" role="status">
+            <div>
+                <div class="ciit-result-eyebrow"><i class="bi bi-award"></i> Examination result</div>
+                <h2 class="ciit-result-title" id="latest-exam-result-title">@(lastResultPassed ? "Congratulations! You passed." : "Exam completed — keep practising.")</h2>
+                <p class="ciit-result-copy">Attempt #@lastResultAttemptId has been evaluated. Your result is saved in Exam Attempts below.</p>
+                <div class="ciit-result-metrics">
+                    <span class="ciit-result-metric"><i class="bi bi-check2-circle"></i> Answered <strong>@lastResultAnswered/@lastResultTotal</strong></span>
+                    <span class="ciit-result-metric"><i class="bi bi-flag"></i> Passing mark <strong>35/@lastResultTotal</strong></span>
+                    <span class="ciit-result-metric"><i class="bi bi-clipboard-check"></i> Status <strong>@lastResultStatus</strong></span>
+                </div>
+            </div>
+            <div class="ciit-result-score">
+                <strong>@lastResultScore<span style="display:inline;font-size:1rem">/@lastResultTotal</span></strong>
+                <span>@(lastResultPassed ? "PASSED" : lastResultStatus == "Terminated" ? "TERMINATED" : lastResultStatus == "TimedOut" ? "TIME EXPIRED" : "NOT PASSED")</span>
+            </div>
+        </section>
+    }
 
     @if (pendingExams.Count > 0)
     {
@@ -174,7 +213,26 @@
                                 }
                             </td>
                             <td><time class="exam-local-time" datetime="@DateTime.SpecifyKind(exam.ScheduledAtUtc, DateTimeKind.Utc).ToString("O")">@exam.ScheduledAtUtc.ToString("yyyy-MM-dd HH:mm") UTC</time></td>
-                            <td><span class="ciit-exam-status" data-status="@exam.Status">@(exam.Status == "TimedOut" ? "Time’s up" : exam.Status)</span></td>
+                            <td>
+                                <span class="ciit-exam-status" data-status="@exam.Status">@(exam.Status == "TimedOut" ? "Time’s up" : exam.Status)</span>
+                                @if (exam.Status is "Passed" or "Failed" or "Terminated" or "TimedOut" or "Submitted")
+                                {
+                                    <span class="ciit-exam-result-detail"><strong>Score:</strong> @exam.Score/@exam.TotalQuestions</span>
+                                    <span class="ciit-exam-result-detail"><strong>Answered:</strong> @exam.AnsweredQuestionsCount/@exam.TotalQuestions questions</span>
+                                    @if (exam.Status == "Passed")
+                                    {
+                                        <span class="ciit-exam-result-detail">Passing score achieved</span>
+                                    }
+                                    else if (exam.Status == "Failed")
+                                    {
+                                        <span class="ciit-exam-result-detail">Passing score: 35/@exam.TotalQuestions</span>
+                                    }
+                                    else if (!string.IsNullOrWhiteSpace(exam.TerminationReason))
+                                    {
+                                        <span class="ciit-exam-result-detail">Reason: @exam.TerminationReason</span>
+                                    }
+                                }
+                            </td>
                             <td class="text-end">
                                 @if (exam.Status is "Scheduled" or "Ready")
                                 {
