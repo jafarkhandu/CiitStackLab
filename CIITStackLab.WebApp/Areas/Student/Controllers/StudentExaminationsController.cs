@@ -65,6 +65,16 @@ public sealed class StudentExaminationsController : Controller
             .ToListAsync(cancellationToken);
         ViewBag.UnusedPaidRetakeKeys = unusedPaidRetakeKeys;
 
+        var pendingRetakeKeys = await _db.PaymentTransactions.AsNoTracking()
+            .Where(payment => payment.UserId == userId
+                && payment.PaymentPurpose == "ExamRetake"
+                && (payment.Status == "Created" || payment.Status == "Pending")
+                && payment.ExamTopicId.HasValue
+                && payment.ExamAttemptNumber.HasValue)
+            .Select(payment => payment.CourseId + ":" + payment.ExamTopicId!.Value + ":" + payment.ExamAttemptNumber!.Value)
+            .ToListAsync(cancellationToken);
+        ViewBag.PendingRetakeKeys = pendingRetakeKeys;
+
         return View(await _exams.GetStudentExamsAsync(userId, cancellationToken));
     }
 
