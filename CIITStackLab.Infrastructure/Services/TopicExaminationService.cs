@@ -231,16 +231,35 @@ public sealed class TopicExaminationService : ITopicExaminationService
         }
         else
         {
-            // Create the paid attempt and consume its payment atomically so a
-            // database failure cannot leave a paid attempt partially linked.
-            await using var transaction = await _db.Database.BeginTransactionAsync(cancellationToken);
-            _db.TopicExamAttempts.Add(attempt);
-            await _db.SaveChangesAsync(cancellationToken);
+            // SQL Server retry strategies require the entire explicit transaction
+            // to execute through the configured execution strategy.
+            var executionStrategy = _db.Database.CreateExecutionStrategy();
+            await executionStrategy.ExecuteAsync(async () =>
+            {
+                await using var transaction = await _db.Database.BeginTransactionAsync(cancellationToken);
+                try
+                {
+                    _db.TopicExamAttempts.Add(attempt);
+                    await _db.SaveChangesAsync(cancellationToken);
 
-            retakePayment.ExamAttemptId = attempt.Id;
-            retakePayment.UpdatedAt = DateTime.UtcNow;
-            await _db.SaveChangesAsync(cancellationToken);
-            await transaction.CommitAsync(cancellationToken);
+                    retakePayment.ExamAttemptId = attempt.Id;
+                    retakePayment.UpdatedAt = DateTime.UtcNow;
+                    await _db.SaveChangesAsync(cancellationToken);
+
+                    await transaction.CommitAsync(cancellationToken);
+                }
+                catch
+                {
+                    await transaction.RollbackAsync(cancellationToken);
+
+                    // Restore tracked state before the execution strategy retries.
+                    _db.Entry(attempt).State = EntityState.Detached;
+                    attempt.Id = 0;
+                    retakePayment.ExamAttemptId = null;
+                    _db.Entry(retakePayment).State = EntityState.Unchanged;
+                    throw;
+                }
+            });
         }
 
         return (true, null, await MapSummaryAsync(attempt, cancellationToken));
