@@ -21,7 +21,7 @@ jobs:
           dotnet-version: '10.0.x'
 
       - name: Restore
-        run: dotnet restore CiitStackLab.sln
+        run: dotnet restore CIITStackLab.slnx
 
       - name: Build
-        run: dotnet build CiitStackLab.sln --configuration Release --no-restore
+        run: dotnet build CIITStackLab.slnx --configuration Release --no-restore
