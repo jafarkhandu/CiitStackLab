@@ -1,0 +1,52 @@
+@{
+    ViewData["Title"] = "Payment Successful";
+    var courseUrl = ViewData["CourseUrl"] as string ?? "/";
+}
+
+@section Styles {
+    <link rel="stylesheet" href="~/css/student/course-payment-modal.css" />
+    <style>
+        .ciit-payment-success-page {
+            min-height: 70vh;
+            display: grid;
+            place-items: center;
+            padding: 3rem 1rem;
+            background: rgba(241, 247, 255, .55);
+        }
+
+        .ciit-payment-success-page .ciit-payment-success-state {
+            width: min(100%, 500px);
+            display: flex;
+            position: relative;
+            padding: 2.75rem 2rem;
+            background: #fff;
+            border: 1px solid #dce8f8;
+            border-radius: 1.4rem;
+            box-shadow: 0 24px 70px rgba(25, 58, 105, .16);
+        }
+    </style>
+}
+
+<main class="ciit-payment-success-page">
+    <div class="ciit-payment-state ciit-payment-success-state" aria-live="polite">
+        <div class="ciit-payment-success-icon" aria-hidden="true">
+            <i class="bi bi-check-lg"></i>
+        </div>
+        <strong>Payment Successful</strong>
+        <span class="ciit-payment-success-course">Your course access is ready.</span>
+        <span class="ciit-payment-success-note">Payment confirmed by Razorpay.</span>
+        <small>Opening your learning page...</small>
+        <div class="ciit-payment-redirect-bar" aria-hidden="true">
+            <span></span>
+        </div>
+    </div>
+</main>
+
+@section Scripts {
+    <script>
+        (() => {
+            const courseUrl = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(courseUrl));
+            window.setTimeout(() => window.location.assign(courseUrl), 3000);
+        })();
+    </script>
+}
