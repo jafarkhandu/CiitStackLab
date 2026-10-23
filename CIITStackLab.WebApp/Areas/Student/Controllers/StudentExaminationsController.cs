@@ -163,6 +163,60 @@ public sealed class StudentExaminationsController : Controller
             return RedirectToAction("Learn", "Courses", new { id = courseId, topicId });
         }
 
+        var orderedTopicIds = await _db.CourseModules.AsNoTracking()
+            .Where(module => module.CourseId == courseId && module.Flag == 0
+                && module.Course.Flag == 0 && module.Topic.Flag == 0)
+            .OrderBy(module => module.Id)
+            .Select(module => module.TopicId)
+            .Distinct()
+            .ToListAsync(cancellationToken);
+        var requestedTopicIndex = orderedTopicIds.IndexOf(topicId);
+        var currentTopicId = await _exams.GetCurrentTopicIdAsync(userId, courseId, cancellationToken);
+        var currentTopicIndex = currentTopicId.HasValue ? orderedTopicIds.IndexOf(currentTopicId.Value) : -1;
+        if (requestedTopicIndex < 0
+            || currentTopicIndex >= 0 && requestedTopicIndex > currentTopicIndex)
+        {
+            TempData["ExamError"] = "Please first clear your previous topic exam.";
+            TempData["OpenExamApplicationModal"] = true;
+            return RedirectToAction("Learn", "Courses", new { id = courseId, topicId });
+        }
+        if (currentTopicIndex >= 0 && requestedTopicIndex < currentTopicIndex)
+        {
+            var laterTopicIds = orderedTopicIds.Skip(requestedTopicIndex + 1).ToList();
+            if (laterTopicIds.Count > 0 && await _db.TopicExamAttempts.AsNoTracking().AnyAsync(attempt =>
+                attempt.UserId == userId && attempt.CourseId == courseId
+                && laterTopicIds.Contains(attempt.TopicId), cancellationToken))
+            {
+                TempData["ExamError"] = "You can no longer apply for a previous topic exam after moving on to a later topic exam.";
+                TempData["OpenExamApplicationModal"] = true;
+                return RedirectToAction("Learn", "Courses", new { id = courseId, topicId });
+            }
+        }
+        if (requestedTopicIndex > 0)
+        {
+            foreach (var previousTopicId in orderedTopicIds.Take(requestedTopicIndex))
+            {
+                var priorPassExists = await _db.TopicExamAttempts.AsNoTracking().AnyAsync(attempt =>
+                    attempt.UserId == userId && attempt.CourseId == courseId
+                    && attempt.TopicId == previousTopicId && attempt.Passed && attempt.Status == "Passed",
+                    cancellationToken);
+                if (!priorPassExists) continue;
+                var priorLatest = await _db.TopicExamAttempts.AsNoTracking()
+                    .Where(attempt => attempt.UserId == userId && attempt.CourseId == courseId
+                        && attempt.TopicId == previousTopicId)
+                    .OrderByDescending(attempt => attempt.ScheduledAtUtc)
+                    .ThenByDescending(attempt => attempt.Id)
+                    .Select(attempt => attempt.Status)
+                    .FirstOrDefaultAsync(cancellationToken);
+                if (priorLatest is "Scheduled" or "Ready" or "InProgress")
+                {
+                    TempData["ExamError"] = "Please first clear your previous topic exam.";
+                    TempData["OpenExamApplicationModal"] = true;
+                    return RedirectToAction("Learn", "Courses", new { id = courseId, topicId });
+                }
+            }
+        }
+
         var activeAttemptExists = await _db.TopicExamAttempts.AnyAsync(attempt =>
             attempt.UserId == userId && attempt.CourseId == courseId && attempt.TopicId == topicId
             && (attempt.Status == "Scheduled" || attempt.Status == "Ready" || attempt.Status == "InProgress"),
