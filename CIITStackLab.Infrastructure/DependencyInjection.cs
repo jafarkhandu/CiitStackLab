@@ -44,7 +44,7 @@ public static class DependencyInjection
             options.SlidingExpiration = true;
         });
 
-        services.Configure<PhonePeOptions>(configuration.GetSection("PhonePe"));
+        services.Configure<RazorpayOptions>(configuration.GetSection("Razorpay"));
         services.AddSingleton<PhonePePaymentService>();
 
         services.AddScoped<CourseService>();
