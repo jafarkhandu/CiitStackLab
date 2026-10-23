@@ -88,7 +88,6 @@
         var lastResultTotal = Convert.ToInt32(TempData["LastExamResultTotal"] ?? 0);
         var lastResultAnswered = Convert.ToInt32(TempData["LastExamResultAnswered"] ?? 0);
         var lastResultPassed = Convert.ToBoolean(TempData["LastExamResultPassed"] ?? false);
-        var lastResultAttemptId = Convert.ToInt64(TempData["LastExamResultAttemptId"] ?? 0);
         <section class="ciit-result-card @(lastResultPassed ? "is-passed" : "")" aria-labelledby="latest-exam-result-title" role="status">
             <div>
                 <div class="ciit-result-eyebrow"><i class="bi bi-award"></i> Examination result</div>
