@@ -967,6 +967,7 @@ else
     var modalHasEverPassed = ViewBag.ExamHasEverPassed is bool hasPassed && hasPassed;
     var modalHasUnusedPaidRetake = ViewBag.ExamHasUnusedPaidRetake is bool hasUnusedPaidRetake && hasUnusedPaidRetake;
     var modalHasPendingPayment = ViewBag.ExamHasPendingRetakePayment is bool hasPendingPayment && hasPendingPayment;
+    var modalHasActiveAttempt = ViewBag.ExamHasActiveAttempt is bool hasActiveAttempt && hasActiveAttempt;
     var modalFee = ViewBag.ExamRetakeFee is decimal fee ? fee : 118m;
     var previousStatus = ViewBag.PreviousExamStatus as string;
     var previousScore = ViewBag.PreviousExamScore as int?;
@@ -1003,7 +1004,11 @@ else
                     {
                         <div class="alert alert-success ciit-exam-modal-alert" role="status" aria-live="polite">@modalExamMessage</div>
                     }
-                    @if (modalHasEverPassed)
+                    @if (modalHasActiveAttempt)
+                    {
+                        <div class="alert alert-info" role="status">An exam is already scheduled or active for this topic. Open Exam Attempts to continue it.</div>
+                    }
+                    else if (modalHasEverPassed)
                     {
                         <p>You have already passed this topic. Would you like to apply for a re-exam to improve your score?</p>
                     }
@@ -1015,7 +1020,7 @@ else
                     {
                         <p class="text-danger fw-semibold mb-3">This is your last free attempt.</p>
                     }
-                    @if (modalRequiresPayment)
+                    @if (!modalHasActiveAttempt && modalRequiresPayment)
                     {
                         <div class="rounded-3 border border-danger-subtle bg-danger-subtle p-3 mb-3">
                             <div class="small text-danger-emphasis">Exam fee for attempt #@modalAttemptNumber</div>
@@ -1034,7 +1039,7 @@ else
                             }
                         </div>
                     }
-                    @if (!modalRequiresPayment || modalHasUnusedPaidRetake)
+                    @if (!modalHasActiveAttempt && (!modalRequiresPayment || modalHasUnusedPaidRetake))
                     {
                         <form asp-controller="StudentExaminations" asp-action="Schedule" method="post">
                             @Html.AntiForgeryToken()
@@ -1051,7 +1056,7 @@ else
                             </div>
                         </form>
                     }
-                    @if (modalRequiresPayment && !modalHasUnusedPaidRetake && !modalHasPendingPayment)
+                    @if (!modalHasActiveAttempt && modalRequiresPayment && !modalHasUnusedPaidRetake && !modalHasPendingPayment)
                     {
                         <form asp-controller="StudentExaminations" asp-action="PayForReExam" method="post">
                             @Html.AntiForgeryToken()
