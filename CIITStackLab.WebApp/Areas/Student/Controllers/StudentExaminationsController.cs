@@ -198,7 +198,9 @@ public sealed class StudentExaminationsController : Controller
         var attemptNumber = await _db.TopicExamAttempts.CountAsync(attempt =>
             attempt.UserId == userId && attempt.CourseId == courseId && attempt.TopicId == topicId,
             cancellationToken) + 1;
-        if (attemptNumber <= 2)
+        var hasEverPassedTopic = await _exams.HasPassedTopicAsync(
+            userId, courseId, topicId, cancellationToken);
+        if (attemptNumber <= 2 && !hasEverPassedTopic)
             return Error("Your next two attempts are free. Start the re-exam from the examination records.");
 
         var existingUnusedPayment = await _db.PaymentTransactions.AnyAsync(payment =>
@@ -225,7 +227,7 @@ public sealed class StudentExaminationsController : Controller
         if (pendingPayment)
             return Error("A payment order for this attempt is already pending. Complete or verify that order before creating another.");
 
-        var baseFee = (attemptNumber - 2) * 100m;
+        var baseFee = Math.Max(1, attemptNumber - 2) * 100m;
         var gst = Math.Round(baseFee * 0.18m, 2, MidpointRounding.AwayFromZero);
         var totalAmount = baseFee + gst;
         var merchantOrderId = $"CIIT-EXAM-{Guid.NewGuid():N}";
