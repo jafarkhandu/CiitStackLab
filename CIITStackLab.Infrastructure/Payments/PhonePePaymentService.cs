@@ -90,10 +90,67 @@ public sealed class PhonePePaymentService
         return checkoutUrl;
     }
 
-    public async Task<string> GetOrderStateAsync(string merchantOrderId)
+    public async Task<string> GetOrderStateAsync(
+        string merchantOrderId,
+        CancellationToken cancellationToken = default)
     {
         if (string.IsNullOrWhiteSpace(merchantOrderId))
             throw new ArgumentException("Merchant order ID is required.", nameof(merchantOrderId));
+
+        var options = RequireOptions();
+        var client = CreateClient(options);
+        var requestUri = $"{OrdersEndpoint}?receipt={Uri.EscapeDataString(merchantOrderId)}";
+
+        using var request = new HttpRequestMessage(HttpMethod.Get, requestUri);
+        request.Headers.Authorization = CreateBasicAuthentication(options);
+
+        using var response = await client.SendAsync(request, cancellationToken);
+        var responseBody = await response.Content.ReadAsStringAsync(cancellationToken);
+
+        if (!response.IsSuccessStatusCode)
+        {
+            _logger.LogWarning(
+                "Razorpay order status lookup failed for merchant order {MerchantOrderId}. Status: {StatusCode}.",
+                merchantOrderId,
+                response.StatusCode);
+            throw new InvalidOperationException("Razorpay could not verify the payment order.");
+        }
+
+        using var document = JsonDocument.Parse(responseBody);
+        if (!document.RootElement.TryGetProperty("items", out var items)
+            || items.ValueKind != JsonValueKind.Array)
+        {
+            _logger.LogWarning(
+                "Razorpay returned an unexpected order status response for merchant order {MerchantOrderId}.",
+                merchantOrderId);
+            return "PENDING";
+        }
+
+        foreach (var order in items.EnumerateArray())
+        {
+            var receipt = order.TryGetProperty("receipt", out var receiptElement)
+                ? receiptElement.GetString()
+                : null;
+            if (!string.Equals(receipt, merchantOrderId, StringComparison.Ordinal))
+                continue;
+
+            var status = order.TryGetProperty("status", out var statusElement)
+                ? statusElement.GetString()
+                : null;
+            var amount = order.TryGetProperty("amount", out var amountElement)
+                ? amountElement.GetInt64()
+                : 0L;
+            var amountPaid = order.TryGetProperty("amount_paid", out var amountPaidElement)
+                ? amountPaidElement.GetInt64()
+                : 0L;
+
+            if (string.Equals(status, "paid", StringComparison.OrdinalIgnoreCase)
+                && amount > 0
+                && amountPaid == amount)
+            {
+                return "COMPLETED";
+            }
+        }
 
         return "PENDING";
     }
