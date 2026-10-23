@@ -16,6 +16,19 @@ public interface IEmailService
         DateTime purchasedAt,
         CancellationToken cancellationToken = default);
 
+    Task SendExamLifecycleEmailAsync(
+        string toEmail,
+        string userName,
+        string courseTitle,
+        string topicTitle,
+        int attemptNumber,
+        DateTime scheduledAtUtc,
+        string eventType,
+        decimal? paymentAmount,
+        string paymentStatus,
+        string? merchantOrderId,
+        CancellationToken cancellationToken = default);
+
     Task SendPasswordResetOtpAsync(
         string toEmail,
         string otp,
