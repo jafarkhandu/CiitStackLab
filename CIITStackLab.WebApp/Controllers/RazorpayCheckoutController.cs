@@ -115,6 +115,10 @@ public sealed class RazorpayCheckoutController : Controller
             return BadRequest(new { message = "Payment verification failed." });
         }
 
+        // Keep the verified Razorpay order reference in the existing gateway-reference
+        // column until the dedicated Razorpay columns are introduced in a DB migration.
+        transaction.PhonePeOrderId = request.RazorpayOrderId;
+
         if (string.Equals(transaction.PaymentPurpose, "ExamRetake", StringComparison.Ordinal))
         {
             transaction.Status = "Completed";
