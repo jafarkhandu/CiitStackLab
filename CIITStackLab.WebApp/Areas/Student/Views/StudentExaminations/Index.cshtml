@@ -63,6 +63,41 @@
 @@keyframes exam-payment-spin{to{transform:rotate(360deg)}}@@keyframes exam-payment-progress{from{width:0}to{width:100%}}
 @@media(max-width:767.98px){.ciit-exam-hero{padding:24px 21px;border-radius:20px}.ciit-exam-panel-head{padding:20px;align-items:flex-start}.ciit-exam-table-wrap{padding:8px 12px 14px}.ciit-exam-table{min-width:760px}.ciit-examination-page{padding-top:20px}.ciit-exam-table tbody td{padding:16px 12px}.ciit-exam-table tbody td:first-child{padding-left:15px}.ciit-exam-table tbody td:last-child{padding-right:13px}}
 @@media(prefers-reduced-motion:reduce){.ciit-exam-table tbody tr{animation:none;transition:none}.ciit-exam-action,.ciit-exam-payment-spinner,.ciit-exam-payment-progress span{transition:none;animation:none}}
+
+/* Refined attempt-card hierarchy, aligned with the current glass-style student UI. */
+.ciit-exam-table{table-layout:fixed;border-spacing:0 12px}
+.ciit-exam-table thead th:nth-child(1){width:23%}
+.ciit-exam-table thead th:nth-child(2){width:23%}
+.ciit-exam-table thead th:nth-child(3){width:29%}
+.ciit-exam-table thead th:nth-child(4){width:25%;text-align:right}
+.ciit-exam-table tbody tr{background:linear-gradient(112deg,#fff 0%,#f8fbff 62%,#f0f6ff 100%);filter:drop-shadow(0 5px 10px rgba(35,74,132,.055))}
+.ciit-exam-table tbody tr:hover{background:linear-gradient(112deg,#fff 0%,#f7faff 55%,#eaf3ff 100%);filter:drop-shadow(0 10px 16px rgba(39,91,170,.11))}
+.ciit-exam-table tbody td{padding:19px 15px;border-top:1px solid #d9e7fa;border-bottom:1px solid #d9e7fa}
+.ciit-exam-table tbody td:first-child{padding-left:19px;border-left:1px solid #d9e7fa;border-radius:17px 0 0 17px;box-shadow:inset 3px 0 0 #8db8ff}
+.ciit-exam-table tbody td:last-child{padding-right:18px;border-right:1px solid #d9e7fa;border-radius:0 17px 17px 0}
+.ciit-exam-topic{color:#203a60;font-size:.94rem;line-height:1.45;font-weight:850}
+.ciit-exam-sub{margin-top:6px;font-size:.75rem;line-height:1.45}
+.ciit-exam-table td .badge{display:inline-flex;align-items:center;margin-top:7px;padding:5px 9px;font-size:.68rem;font-weight:800;letter-spacing:.01em}
+.ciit-exam-status{padding:7px 11px;font-size:.72rem;letter-spacing:.01em}
+.ciit-exam-result-detail{margin-top:7px;font-size:.75rem;line-height:1.45}
+.ciit-exam-table td time{display:inline-block;color:#536d91;font-size:.83rem;line-height:1.55;font-variant-numeric:tabular-nums}
+.ciit-exam-action{min-height:40px;padding:10px 14px;border-radius:12px;font-size:.76rem;line-height:1.35;white-space:normal;text-align:center}
+.ciit-exam-action:focus-visible{outline:3px solid rgba(37,99,235,.3);outline-offset:3px}
+.ciit-exam-table tbody tr:has(.ciit-exam-status[data-status="Passed"]) td:first-child{box-shadow:inset 3px 0 0 #5bc99a}
+.ciit-exam-table tbody tr:has(.ciit-exam-status[data-status="Failed"]) td:first-child,
+.ciit-exam-table tbody tr:has(.ciit-exam-status[data-status="Terminated"]) td:first-child,
+.ciit-exam-table tbody tr:has(.ciit-exam-status[data-status="TimedOut"]) td:first-child{box-shadow:inset 3px 0 0 #f19a9a}
+@@media(max-width:767.98px){
+  .ciit-exam-table{min-width:760px;border-spacing:0 10px}
+  .ciit-exam-table tbody td{padding:16px 12px}
+  .ciit-exam-table tbody td:first-child{padding-left:15px}
+  .ciit-exam-table tbody td:last-child{padding-right:13px}
+}
+@@media(prefers-reduced-motion:reduce){
+  .ciit-exam-table tbody tr{animation:none;transition:none}
+  .ciit-exam-action{transition:none}
+}
+
 </style>
 }
 <section class="container ciit-examination-page">
