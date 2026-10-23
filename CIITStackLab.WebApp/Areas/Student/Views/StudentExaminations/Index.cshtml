@@ -87,6 +87,8 @@
                     var exam = pending.Latest;
                     var nextAttemptNumber = pending.AttemptCount + 1;
                     var paymentKey = $"{exam.CourseId}:{exam.TopicId}:{nextAttemptNumber}";
+                    var pendingOrderIds = ViewBag.PendingRetakeOrderIds as IReadOnlyDictionary<string, string>
+                        ?? new Dictionary<string, string>();
                     var paidKeys = ViewBag.UnusedPaidRetakeKeys as IReadOnlyList<string> ?? Array.Empty<string>();
                     var pendingKeys = ViewBag.PendingRetakeKeys as IReadOnlyList<string> ?? Array.Empty<string>();
                     var hasPaidRetake = paidKeys.Contains(paymentKey);
@@ -100,12 +102,7 @@
                         {
                             <div class="d-flex flex-column align-items-end gap-2">
                                 <span class="badge rounded-pill text-bg-warning">Payment pending</span>
-                                @{
-                                    var pendingOrderIds = ViewBag.PendingRetakeOrderIds as IReadOnlyDictionary<string, string>
-                                        ?? new Dictionary<string, string>();
-                                    var pendingOrderKey = $"{exam.CourseId}:{exam.TopicId}:{nextAttemptNumber}";
-                                }
-                                @if (pendingOrderIds.TryGetValue(pendingOrderKey, out var pendingOrderId))
+                                @if (pendingOrderIds.TryGetValue(paymentKey, out var pendingOrderId))
                                 {
                                     <a class="ciit-exam-action" asp-controller="Courses" asp-action="PhonePeReturn" asp-route-merchantOrderId="@pendingOrderId">Verify payment</a>
                                 }
@@ -147,6 +144,8 @@
                         var paidKeys = ViewBag.UnusedPaidRetakeKeys as IReadOnlyList<string> ?? Array.Empty<string>();
                         var pendingKeys = ViewBag.PendingRetakeKeys as IReadOnlyList<string> ?? Array.Empty<string>();
                         var paymentKey = $"{exam.CourseId}:{exam.TopicId}:{nextAttemptNumber}";
+                        var pendingOrderIds = ViewBag.PendingRetakeOrderIds as IReadOnlyDictionary<string, string>
+                            ?? new Dictionary<string, string>();
                         var hasPaidRetake = paidKeys.Contains(paymentKey);
                         var hasPendingPayment = pendingKeys.Contains(paymentKey);
                         var hasEverPassedTopic = topicAttempts.Any(item => item.Passed && item.Status == "Passed");
@@ -170,10 +169,6 @@
                                     {
                                         <div class="d-flex flex-column align-items-end gap-2">
                                             <span class="badge rounded-pill text-bg-warning">Payment pending</span>
-                                            @{
-                                                var pendingOrderIds = ViewBag.PendingRetakeOrderIds as IReadOnlyDictionary<string, string>
-                                                    ?? new Dictionary<string, string>();
-                                            }
                                             @if (pendingOrderIds.TryGetValue(paymentKey, out var pendingOrderId))
                                             {
                                                 <a class="ciit-exam-action" asp-controller="Courses" asp-action="PhonePeReturn" asp-route-merchantOrderId="@pendingOrderId">Verify payment</a>
