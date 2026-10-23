@@ -932,18 +932,39 @@ public class CoursesController : Controller
                         .Select(content => content.Id).Distinct().ToList();
                 var topicCompleted = topicContentIds.Count == 0
                     || topicContentIds.All(course.Progress.CompletedContentIds.Contains);
-                var hasPendingOrPassedExam = await _dbContext.TopicExamAttempts.AsNoTracking().AnyAsync(
-                    attempt => attempt.UserId == studentUserId
-                        && attempt.CourseId == id && attempt.TopicId == examTopicId.Value
-                        && (attempt.Status == "Scheduled" || attempt.Status == "Ready"
-                            || attempt.Status == "InProgress" || attempt.Status == "Passed"),
-                    cancellationToken);
-                var openExamApplicationModal = TempData["OpenExamApplicationModal"] is true;
+                var topicAttempts = await _dbContext.TopicExamAttempts.AsNoTracking()
+                    .Where(attempt => attempt.UserId == studentUserId
+                        && attempt.CourseId == id && attempt.TopicId == examTopicId.Value)
+                    .OrderByDescending(attempt => attempt.ScheduledAtUtc)
+                    .ThenByDescending(attempt => attempt.Id)
+                    .Select(attempt => new
+                    {
+                        attempt.Status,
+                        attempt.Score,
+                        attempt.TotalQuestions,
+                        attempt.Passed
+                    })
+                    .ToListAsync(cancellationToken);
+                var hasActiveExam = topicAttempts.Any(attempt =>
+                    attempt.Status is "Scheduled" or "Ready" or "InProgress");
+                var hasEverPassed = topicAttempts.Any(attempt => attempt.Passed && attempt.Status == "Passed");
+                var nextAttemptNumber = topicAttempts.Count + 1;
+                var requiresRetakePayment = nextAttemptNumber > 2 || hasEverPassed;
+                var retakeBaseFee = Math.Max(1, nextAttemptNumber - 2) * 100m;
+                var retakeFee = retakeBaseFee
+                    + Math.Round(retakeBaseFee * 0.18m, 2, MidpointRounding.AwayFromZero);
+
                 ViewBag.ShowExamApplicationModal = topicCompleted
-                    && !hasPendingOrPassedExam
-                    && openExamApplicationModal
-                    && TempData.Peek("ExamError") is null;
+                    && !hasActiveExam
+                    && TempData["OpenExamApplicationModal"] is true;
                 ViewBag.ExamApplicationTopicId = examTopicId.Value;
+                ViewBag.ExamAttemptNumber = nextAttemptNumber;
+                ViewBag.ExamRequiresPayment = requiresRetakePayment;
+                ViewBag.ExamRetakeFee = retakeFee;
+                ViewBag.ExamHasEverPassed = hasEverPassed;
+                ViewBag.PreviousExamStatus = topicAttempts.FirstOrDefault()?.Status;
+                ViewBag.PreviousExamScore = topicAttempts.FirstOrDefault()?.Score;
+                ViewBag.PreviousExamTotalQuestions = topicAttempts.FirstOrDefault()?.TotalQuestions;
             }
         }
 
