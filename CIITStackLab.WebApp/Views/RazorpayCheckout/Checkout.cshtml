@@ -1,0 +1,93 @@
+@{
+    Layout = null;
+    var keyId = ViewData["RazorpayKeyId"]?.ToString() ?? string.Empty;
+    var orderId = ViewData["RazorpayOrderId"]?.ToString() ?? string.Empty;
+    var merchantOrderId = ViewData["MerchantOrderId"]?.ToString() ?? string.Empty;
+}
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Secure Payment - CIIT Stack Lab</title>
+</head>
+<body>
+    <div style="min-height:100vh;display:grid;place-items:center;font-family:Arial,sans-serif;color:#172744;">
+        <div style="text-align:center;max-width:420px;padding:32px;">
+            <h1 style="font-size:24px;margin-bottom:10px;">Opening secure payment</h1>
+            <p style="color:#68758b;line-height:1.6;">Please complete your payment in the Razorpay checkout window.</p>
+            <p id="payment-status" style="color:#68758b;">Connecting securely…</p>
+        </div>
+    </div>
+
+    <form id="verification-form">
+        @Html.AntiForgeryToken()
+    </form>
+
+    <script src="https://checkout.razorpay.com/v1/checkout.js"></script>
+    <script>
+        (() => {
+            const keyId = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(keyId));
+            const orderId = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(orderId));
+            const merchantOrderId = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(merchantOrderId));
+            const status = document.getElementById("payment-status");
+            const token = document.querySelector('input[name="__RequestVerificationToken"]')?.value;
+
+            const verify = async (response) => {
+                status.textContent = "Verifying your payment securely…";
+                const result = await fetch("/Payments/Razorpay/Verify", {
+                    method: "POST",
+                    credentials: "same-origin",
+                    headers: {
+                        "Content-Type": "application/json",
+                        "RequestVerificationToken": token
+                    },
+                    body: JSON.stringify({
+                        merchantOrderId,
+                        razorpayOrderId: response.razorpay_order_id,
+                        razorpayPaymentId: response.razorpay_payment_id,
+                        razorpaySignature: response.razorpay_signature
+                    })
+                });
+
+                const data = await result.json().catch(() => ({}));
+                if (!result.ok || !data.success) {
+                    throw new Error(data.message || "Payment verification failed.");
+                }
+
+                window.location.assign(data.redirectUrl);
+            };
+
+            if (!window.Razorpay) {
+                status.textContent = "Razorpay Checkout could not be loaded. Please try again.";
+                return;
+            }
+
+            const checkout = new Razorpay({
+                key: keyId,
+                amount: "@((ViewData["RazorpayAmount"] as long?) ?? 0)",
+                currency: "INR",
+                order_id: orderId,
+                name: "CIIT Stack Lab",
+                description: "Course payment",
+                handler: function (response) {
+                    verify(response).catch(error => {
+                        status.textContent = error.message;
+                    });
+                },
+                modal: {
+                    ondismiss: function () {
+                        status.textContent = "Payment window closed. No access was granted.";
+                    }
+                }
+            });
+
+            checkout.on("payment.failed", function (response) {
+                status.textContent = response?.error?.description || "Payment failed. Please try again.";
+            });
+
+            checkout.open();
+        })();
+    </script>
+</body>
+</html>
