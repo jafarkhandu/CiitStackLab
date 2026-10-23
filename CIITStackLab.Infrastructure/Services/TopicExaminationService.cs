@@ -73,15 +73,17 @@ public sealed class TopicExaminationService : ITopicExaminationService
             cancellationToken);
         if (!hasAccess) return (false, "You do not have access to this course.", null);
 
-        if (await HasPassedTopicAsync(userId, courseId, topicId, cancellationToken))
-            return (false, "You have already passed this topic's examination.", null);
+        var hasEverPassedTopic = await _db.TopicExamAttempts.AsNoTracking().AnyAsync(x =>
+            x.UserId == userId && x.CourseId == courseId && x.TopicId == topicId
+            && x.Passed && x.Status == "Passed", cancellationToken);
 
         var previousAttemptCount = await _db.TopicExamAttempts.CountAsync(x =>
             x.UserId == userId && x.CourseId == courseId && x.TopicId == topicId,
             cancellationToken);
         var nextAttemptNumber = previousAttemptCount + 1;
+        var paymentRequired = nextAttemptNumber > 2 || hasEverPassedTopic;
         CIITStackLab.Domain.Entities.PaymentTransaction? retakePayment = null;
-        if (nextAttemptNumber > 2)
+        if (paymentRequired)
         {
             retakePayment = await _db.PaymentTransactions.SingleOrDefaultAsync(payment =>
                 payment.UserId == userId
@@ -95,7 +97,7 @@ public sealed class TopicExaminationService : ITopicExaminationService
 
             if (retakePayment is null)
             {
-                var baseFee = (nextAttemptNumber - 2) * 100m;
+                var baseFee = Math.Max(1, nextAttemptNumber - 2) * 100m;
                 var totalFee = baseFee + Math.Round(baseFee * 0.18m, 2, MidpointRounding.AwayFromZero);
                 return (false,
                     $"Attempt #{nextAttemptNumber} requires payment of ₹{totalFee:0.00} including 18% GST before it can start.",
