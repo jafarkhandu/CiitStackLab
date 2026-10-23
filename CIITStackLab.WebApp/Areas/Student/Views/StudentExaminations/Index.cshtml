@@ -83,7 +83,9 @@
                     var nextAttemptNumber = pending.AttemptCount + 1;
                     var paymentKey = $"{exam.CourseId}:{exam.TopicId}:{nextAttemptNumber}";
                     var paidKeys = ViewBag.UnusedPaidRetakeKeys as IReadOnlyList<string> ?? Array.Empty<string>();
+                    var pendingKeys = ViewBag.PendingRetakeKeys as IReadOnlyList<string> ?? Array.Empty<string>();
                     var hasPaidRetake = paidKeys.Contains(paymentKey);
+                    var hasPendingPayment = pendingKeys.Contains(paymentKey);
                     var paymentRequired = nextAttemptNumber > 2 || pending.HasPassed;
                     var feeBase = Math.Max(1, nextAttemptNumber - 2) * 100m;
                     var fee = feeBase + Math.Round(feeBase * 0.18m, 2, MidpointRounding.AwayFromZero);
@@ -100,19 +102,26 @@
                                 <div class="small text-success fw-semibold">Free attempt remaining</div>
                             }
                         </div>
-                        <form asp-controller="StudentExaminations" asp-action="@(paymentRequired && !hasPaidRetake ? "PayForReExam" : "ReExam")" method="post" class="d-inline">
-                            @Html.AntiForgeryToken()
-                            <input type="hidden" name="courseId" value="@exam.CourseId" />
-                            <input type="hidden" name="topicId" value="@exam.TopicId" />
-                            @if (paymentRequired && !hasPaidRetake)
-                            {
-                                <button type="submit" class="ciit-exam-action">Pay ₹@fee.ToString("0.00") and re-exam</button>
-                            }
-                            else
-                            {
-                                <button type="submit" class="ciit-exam-action">Start re-exam</button>
-                            }
-                        </form>
+                        @if (hasPendingPayment)
+                        {
+                            <span class="badge rounded-pill text-bg-warning">Payment pending</span>
+                        }
+                        else
+                        {
+                            <form asp-controller="StudentExaminations" asp-action="@(paymentRequired && !hasPaidRetake ? "PayForReExam" : "ReExam")" method="post" class="d-inline">
+                                @Html.AntiForgeryToken()
+                                <input type="hidden" name="courseId" value="@exam.CourseId" />
+                                <input type="hidden" name="topicId" value="@exam.TopicId" />
+                                @if (paymentRequired && !hasPaidRetake)
+                                {
+                                    <button type="submit" class="ciit-exam-action">Pay ₹@fee.ToString("0.00") and re-exam</button>
+                                }
+                                else
+                                {
+                                    <button type="submit" class="ciit-exam-action">Start re-exam</button>
+                                }
+                            </form>
+                        }
                     </div>
                 }
             </div>
@@ -187,8 +196,14 @@
                                     var paidKeys = ViewBag.UnusedPaidRetakeKeys as IReadOnlyList<string> ?? Array.Empty<string>();
                                     var paymentKey = $"{exam.CourseId}:{exam.TopicId}:{nextAttemptNumber}";
                                     var hasPaidRetake = paidKeys.Contains(paymentKey);
+                                    var pendingKeys = ViewBag.PendingRetakeKeys as IReadOnlyList<string> ?? Array.Empty<string>();
+                                    var hasPendingPayment = pendingKeys.Contains(paymentKey);
                                     var nextAttemptIsPaid = nextAttemptNumber > 2 || hasEverPassedTopic;
-                                    if (isLatestAttempt)
+                                    if (isLatestAttempt && hasPendingPayment)
+                                    {
+                                        <span class="badge rounded-pill text-bg-warning">Payment pending</span>
+                                    }
+                                    else if (isLatestAttempt)
                                     {
                                         <form asp-controller="StudentExaminations" asp-action="@(nextAttemptIsPaid && !hasPaidRetake ? "PayForReExam" : "ReExam")" method="post" class="d-inline">
                                             @Html.AntiForgeryToken()
