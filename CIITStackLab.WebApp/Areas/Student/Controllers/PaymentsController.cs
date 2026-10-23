@@ -33,7 +33,6 @@ public sealed class PaymentsController : Controller
                 transaction.MerchantOrderId,
                 transaction.Amount,
                 transaction.Status,
-                transaction.PhonePeOrderId,
                 transaction.CreatedAt,
                 transaction.UpdatedAt,
                 transaction.CompletedAt
@@ -41,9 +40,7 @@ public sealed class PaymentsController : Controller
             .ToListAsync(cancellationToken);
 
         if (transactions.Count == 0)
-        {
             return Json(new { records = Array.Empty<object>() });
-        }
 
         var courseIds = transactions.Select(transaction => transaction.CourseId).Distinct().ToList();
         var courses = await _dbContext.Courses
@@ -60,12 +57,11 @@ public sealed class PaymentsController : Controller
             merchantOrderId = transaction.MerchantOrderId,
             amount = transaction.Amount,
             status = NormalizeStatus(transaction.Status),
-            phonePeOrderId = transaction.PhonePeOrderId,
             createdAt = transaction.CreatedAt,
             updatedAt = transaction.UpdatedAt,
             completedAt = transaction.CompletedAt,
-            gateway = "PhonePe",
-            paymentMethod = "Not recorded"
+            gateway = "Razorpay",
+            paymentMethod = "Razorpay Checkout"
         });
 
         return Json(new { records });
@@ -89,7 +85,6 @@ public sealed class PaymentsController : Controller
                 item.MerchantOrderId,
                 item.Amount,
                 item.Status,
-                item.PhonePeOrderId,
                 item.CreatedAt,
                 item.UpdatedAt,
                 item.CompletedAt
@@ -124,9 +119,8 @@ public sealed class PaymentsController : Controller
             updatedAt = transaction.UpdatedAt,
             completedAt = transaction.CompletedAt,
             merchantOrderId = transaction.MerchantOrderId,
-            phonePeOrderId = transaction.PhonePeOrderId,
-            gateway = "PhonePe",
-            paymentMethod = "Not recorded",
+            gateway = "Razorpay",
+            paymentMethod = "Razorpay Checkout",
             purchase = isCompleted && purchase is not null
                 ? new
                 {
