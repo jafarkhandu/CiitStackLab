@@ -537,7 +537,17 @@ public class CoursesController : Controller
             return NotFound();
         }
 
-        var course = await _courseService.GetLearningAsync(id, null, cancellationToken);
+        CourseLearningDto? course;
+
+        try
+        {
+            course = await _courseService.GetLearningAsync(id, null, cancellationToken);
+        }
+        catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
+        {
+            // Ignore the abandoned request when the user navigates to another page.
+            return new EmptyResult();
+        }
 
         if (course is null)
         {
