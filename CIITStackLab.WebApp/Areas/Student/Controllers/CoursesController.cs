@@ -217,7 +217,7 @@ public class CoursesController : Controller
 
         try
         {
-            state = await _phonePePaymentService.GetOrderStateAsync(merchantOrderId);
+            state = await _phonePePaymentService.GetOrderStateAsync(merchantOrderId, cancellationToken);
             await ProcessPhonePeStateAsync(transaction, state, cancellationToken);
 
             if (string.Equals(transaction.PaymentPurpose, "ExamRetake", StringComparison.Ordinal))
