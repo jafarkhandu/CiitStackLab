@@ -2181,28 +2181,28 @@ details[open] > summary .ciit-learning-disclosure-icon {
 }
 .ciit-learning-notes-content {
     color: #2f4059;
-    font-size: 1.08rem;
-    line-height: 1.9;
+    font-size: 1.25rem;
+    line-height: 2;
 }
 .ciit-learning-notes-content h1,
 .ciit-learning-notes-content h2,
 .ciit-learning-notes-content h3,
 .ciit-learning-notes-content h4,
 .ciit-learning-notes-content h5 {
-    margin: 1.45em 0 .65em;
+    margin: 1.4em 0 .7em;
     color: #203653;
     font-weight: 800;
-    line-height: 1.35;
+    line-height: 1.4;
 }
-.ciit-learning-notes-content h1 { font-size: 2rem; }
-.ciit-learning-notes-content h2 { font-size: 1.7rem; }
-.ciit-learning-notes-content h3 { font-size: 1.4rem; }
-.ciit-learning-notes-content h4 { font-size: 1.2rem; }
-.ciit-learning-notes-content h5 { font-size: 1.08rem; }
-.ciit-learning-notes-content p { margin: 0 0 1.1rem; }
+.ciit-learning-notes-content h1 { font-size: 2.4rem; }
+.ciit-learning-notes-content h2 { font-size: 2.05rem; }
+.ciit-learning-notes-content h3 { font-size: 1.7rem; }
+.ciit-learning-notes-content h4 { font-size: 1.45rem; }
+.ciit-learning-notes-content h5 { font-size: 1.25rem; }
+.ciit-learning-notes-content p { margin: 0 0 1.25rem; }
 .ciit-learning-notes-content ul,
-.ciit-learning-notes-content ol { padding-left: 1.65rem; margin: .6rem 0 1.35rem; }
-.ciit-learning-notes-content li { margin: .45rem 0; }
+.ciit-learning-notes-content ol { padding-left: 1.8rem; margin: .7rem 0 1.5rem; }
+.ciit-learning-notes-content li { margin: .55rem 0; }
 .ciit-learning-notes-content blockquote {
     margin: 1.25rem 0;
     padding: 1rem 1.15rem;
@@ -2221,8 +2221,8 @@ details[open] > summary .ciit-learning-disclosure-icon {
     color: #e5edf8;
     box-shadow: 0 12px 26px rgba(15,23,42,.16);
     font-family: "Fira Code", Consolas, monospace;
-    font-size: .9rem;
-    line-height: 1.8;
+    font-size: 1rem;
+    line-height: 1.85;
     tab-size: 4;
 }
 .ciit-learning-notes-content pre code {
