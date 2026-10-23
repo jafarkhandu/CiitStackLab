@@ -50,6 +50,20 @@ if (!app.Environment.IsDevelopment())
     app.UseHsts();
 }
 
+// A browser navigation can abort an in-flight request. Treat only cancellations
+// caused by RequestAborted as expected, without hiding unrelated application errors.
+app.Use(async (context, next) =>
+{
+    try
+    {
+        await next();
+    }
+    catch (OperationCanceledException) when (context.RequestAborted.IsCancellationRequested)
+    {
+        // The client has already abandoned this request; do not turn it into an application error.
+    }
+});
+
 app.UseHttpsRedirection();
 
 var contentTypeProvider = new FileExtensionContentTypeProvider();
