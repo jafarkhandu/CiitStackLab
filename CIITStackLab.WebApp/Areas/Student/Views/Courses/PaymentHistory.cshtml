@@ -231,8 +231,8 @@
                         detailRow('Last updated', dateTime(data.updatedAt)) +
                         detailRow('Transaction ID', '#' + data.id) +
                         detailRow('Merchant Order ID', data.merchantOrderId) +
-                        detailRow('PhonePe Order ID', data.phonePeOrderId || 'Not available') +
-                        detailRow('Payment gateway', data.gateway || 'PhonePe') +
+                        detailRow('Razorpay Order ID', data.razorpayOrderId || 'Not available') +
+                        detailRow('Payment gateway', data.gateway || 'Razorpay') +
                         detailRow('Payment method', data.paymentMethod || 'Not recorded') +
                         detailRow('Completed at', dateTime(data.completedAt)) +
                         detailRow('Course access', data.status === 'SUCCESS' ? 'Granted' : 'Not granted');
