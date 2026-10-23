@@ -150,8 +150,7 @@
                         var exam = row.Exam;
                         var topicAttempts = Model
                             .Where(item => item.CourseId == exam.CourseId && item.TopicId == exam.TopicId)
-                            .OrderBy(item => item.ScheduledAtUtc)
-                            .ThenBy(item => item.AttemptId)
+                            .OrderBy(item => item.AttemptId)
                             .ToList();
                         var attemptNumber = topicAttempts.FindIndex(item => item.AttemptId == exam.AttemptId) + 1;
                         var hasEverPassedTopic = topicAttempts.Any(item => item.Passed && item.Status == "Passed");
@@ -188,9 +187,7 @@
                                 else if (exam.Status == "InProgress") { <a class="ciit-exam-action" asp-action="Instructions" asp-route-attemptId="@exam.AttemptId">Resume exam</a> }
                                 else if (exam.Status is "Terminated" or "Failed" or "TimedOut" or "Passed")
                                 {
-                                    var isLatestAttempt = topicAttempts.All(item => item.AttemptId == exam.AttemptId
-                                        || item.ScheduledAtUtc < exam.ScheduledAtUtc
-                                        || (item.ScheduledAtUtc == exam.ScheduledAtUtc && item.AttemptId < exam.AttemptId));
+                                    var isLatestAttempt = topicAttempts.All(item => item.AttemptId <= exam.AttemptId);
                                     var nextAttemptNumber = topicAttempts.Count + 1;
                                     var paidKeys = ViewBag.UnusedPaidRetakeKeys as IReadOnlyList<string> ?? Array.Empty<string>();
                                     var paymentKey = $"{exam.CourseId}:{exam.TopicId}:{nextAttemptNumber}";
