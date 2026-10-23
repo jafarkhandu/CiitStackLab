@@ -178,9 +178,6 @@ public sealed class StudentExaminationsController : Controller
         if (!await _coursePurchaseService.CanAccessCourseAsync(userId, courseId, cancellationToken))
             return Error("You do not have access to this course.");
 
-        if (await _exams.HasPassedTopicAsync(userId, courseId, topicId, cancellationToken))
-            return Error("You have already passed this topic's examination.");
-
         var activeAttemptExists = await _db.TopicExamAttempts.AnyAsync(attempt =>
             attempt.UserId == userId && attempt.CourseId == courseId && attempt.TopicId == topicId
             && (attempt.Status == "Scheduled" || attempt.Status == "Ready" || attempt.Status == "InProgress"),
