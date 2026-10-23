@@ -186,7 +186,10 @@ public class CoursesController : Controller
 
     [HttpGet("Courses/PhonePeReturn")]
     [Authorize(Roles = "Student")]
-    public async Task<IActionResult> PhonePeReturn(string merchantOrderId, CancellationToken cancellationToken)
+    public async Task<IActionResult> PhonePeReturn(
+        string merchantOrderId,
+        CancellationToken cancellationToken,
+        string? returnUrl = null)
     {
         var wantsJsonResponse = Request.Headers.Accept.Any(value => value.Contains("application/json", StringComparison.OrdinalIgnoreCase));
         if (string.IsNullOrWhiteSpace(merchantOrderId))
@@ -271,8 +274,12 @@ public class CoursesController : Controller
         if (string.Equals(transaction.PaymentPurpose, "ExamRetake", StringComparison.Ordinal))
         {
             TempData[completed ? "ExamMessage" : "ExamError"] = message;
-            if (completed)
-                return RedirectToAction("Index", "StudentExaminations");
+
+            if (!string.IsNullOrWhiteSpace(returnUrl) && Url.IsLocalUrl(returnUrl))
+            {
+                var separator = returnUrl.Contains('?', StringComparison.Ordinal) ? "&" : "?";
+                return Redirect($"{returnUrl}{separator}reopenExamModal=true");
+            }
 
             return RedirectToAction("Index", "StudentExaminations");
         }
