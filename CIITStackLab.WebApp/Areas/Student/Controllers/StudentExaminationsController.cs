@@ -22,6 +22,7 @@ public sealed class StudentExaminationsController : Controller
     private readonly PhonePePaymentService _phonePePaymentService;
     private readonly CoursePurchaseService _coursePurchaseService;
     private readonly ILogger<StudentExaminationsController> _logger;
+    private readonly IEmailService _emailService;
 
     public StudentExaminationsController(
         ITopicExaminationService exams,
@@ -29,6 +30,7 @@ public sealed class StudentExaminationsController : Controller
         ExamApplicationNotificationService examApplicationNotificationService,
         PhonePePaymentService phonePePaymentService,
         CoursePurchaseService coursePurchaseService,
+        IEmailService emailService,
         ILogger<StudentExaminationsController> logger)
     {
         _exams = exams;
@@ -36,6 +38,7 @@ public sealed class StudentExaminationsController : Controller
         _examApplicationNotificationService = examApplicationNotificationService;
         _phonePePaymentService = phonePePaymentService;
         _coursePurchaseService = coursePurchaseService;
+        _emailService = emailService;
         _logger = logger;
     }
 
@@ -99,6 +102,13 @@ public sealed class StudentExaminationsController : Controller
             TempData["OpenExamApplicationModal"] = true;
             return RedirectToAction("Learn", "Courses", new { id = request.CourseId, topicId = request.TopicId });
         }
+        await SendExamLifecycleEmailSafelyAsync(
+            userId,
+            result.Exam!.CourseId,
+            result.Exam.TopicId,
+            result.Exam.AttemptId,
+            "Scheduled",
+            cancellationToken);
         return RedirectToAction(nameof(Index));
     }
 
@@ -348,6 +358,84 @@ public sealed class StudentExaminationsController : Controller
         }
     }
 
+    private async Task SendExamLifecycleEmailSafelyAsync(
+        string userId,
+        int courseId,
+        int topicId,
+        long attemptId,
+        string eventType,
+        CancellationToken cancellationToken)
+    {
+        var email = User.FindFirstValue(ClaimTypes.Email)
+            ?? User.FindFirstValue("email");
+        if (string.IsNullOrWhiteSpace(email))
+        {
+            _logger.LogWarning(
+                "Exam {EventType} email was not sent because the authenticated user has no email claim. Attempt {AttemptId}.",
+                eventType,
+                attemptId);
+            return;
+        }
+
+        try
+        {
+            var courseTitle = await _db.Courses.AsNoTracking()
+                .Where(course => course.Id == courseId)
+                .Select(course => course.Title)
+                .FirstOrDefaultAsync(cancellationToken) ?? "Course";
+            var topicTitle = await _db.Topics.AsNoTracking()
+                .Where(topic => topic.Id == topicId)
+                .Select(topic => topic.Title)
+                .FirstOrDefaultAsync(cancellationToken) ?? "Topic";
+            var attempt = await _db.TopicExamAttempts.AsNoTracking()
+                .Where(item => item.Id == attemptId && item.UserId == userId)
+                .Select(item => new { item.ScheduledAtUtc })
+                .FirstOrDefaultAsync(cancellationToken);
+            if (attempt is null)
+            {
+                _logger.LogWarning("Exam lifecycle email skipped because attempt {AttemptId} was not found.", attemptId);
+                return;
+            }
+
+            var attemptNumber = await _db.TopicExamAttempts.AsNoTracking()
+                .CountAsync(item => item.UserId == userId
+                    && item.CourseId == courseId
+                    && item.TopicId == topicId
+                    && (item.ScheduledAtUtc < attempt.ScheduledAtUtc
+                        || (item.ScheduledAtUtc == attempt.ScheduledAtUtc && item.Id <= attemptId)),
+                    cancellationToken);
+            var payment = await _db.PaymentTransactions.AsNoTracking()
+                .Where(item => item.UserId == userId
+                    && item.CourseId == courseId
+                    && item.PaymentPurpose == "ExamRetake"
+                    && item.ExamAttemptId == attemptId
+                    && item.Status == "Completed")
+                .Select(item => new { item.Amount, item.Status, item.MerchantOrderId })
+                .FirstOrDefaultAsync(cancellationToken);
+
+            await _emailService.SendExamLifecycleEmailAsync(
+                email,
+                User.Identity?.Name ?? "Student",
+                courseTitle,
+                topicTitle,
+                attemptNumber,
+                attempt.ScheduledAtUtc,
+                eventType,
+                payment?.Amount,
+                payment?.Status ?? "Not required",
+                payment?.MerchantOrderId,
+                cancellationToken);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(
+                ex,
+                "Could not send exam {EventType} email for attempt {AttemptId}.",
+                eventType,
+                attemptId);
+        }
+    }
+
     private async Task NotifyIfQuestionBankUnavailableAsync(
         string userId,
         int courseId,
@@ -425,6 +513,13 @@ public sealed class StudentExaminationsController : Controller
             TempData["ExamError"] = result.Error;
             return RedirectToAction(nameof(Index));
         }
+        await SendExamLifecycleEmailSafelyAsync(
+            userId,
+            result.Session.CourseId,
+            result.Session.TopicId,
+            result.Session.AttemptId,
+            "Started",
+            cancellationToken);
         return View("TakeExam", result.Session);
     }
 
