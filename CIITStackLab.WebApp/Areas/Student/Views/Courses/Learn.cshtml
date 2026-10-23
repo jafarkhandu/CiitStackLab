@@ -138,6 +138,27 @@
         if (examApplicationModal && window.bootstrap) {
             window.bootstrap.Modal.getOrCreateInstance(examApplicationModal).show();
         }
+
+        // When the student returns from the payment gateway with browser Back,
+        // confirm the exit. No keeps the gateway page in the forward history;
+        // Yes returns to Learn and triggers server-side payment reconciliation.
+        window.addEventListener('pageshow', function (event) {
+            const pendingModal = document.getElementById('topicExamApplicationModal');
+            const navigation = performance.getEntriesByType('navigation')[0];
+            const isBackNavigation = event.persisted || (navigation && navigation.type === 'back_forward');
+            if (!pendingModal || pendingModal.dataset.pendingPayment !== 'true' || !isBackNavigation) {
+                return;
+            }
+
+            const shouldExitPayment = window.confirm('Do you want to exit payment and return to the learning portal?');
+            if (shouldExitPayment) {
+                const separator = window.location.search ? '&' : '?';
+                window.location.assign(window.location.pathname + window.location.search + separator + 'reopenExamModal=true');
+            } else {
+                window.history.forward();
+            }
+        });
+
         document.querySelectorAll('.ciit-exam-modal-alert').forEach(function (alert) {
             window.setTimeout(function () {
                 if (!alert.isConnected) return;
@@ -977,7 +998,7 @@ else
     var previousScore = ViewBag.PreviousExamScore as int?;
     var previousTotal = ViewBag.PreviousExamTotalQuestions as int?;
 
-    <div class="modal fade" id="topicExamApplicationModal" tabindex="-1" aria-labelledby="topicExamApplicationTitle" aria-hidden="true" data-bs-backdrop="static" data-bs-keyboard="false">
+    <div class="modal fade" id="topicExamApplicationModal" data-pending-payment="@(modalHasPendingPayment ? "true" : "false")" tabindex="-1" aria-labelledby="topicExamApplicationTitle" aria-hidden="true" data-bs-backdrop="static" data-bs-keyboard="false">
         <div class="modal-dialog modal-dialog-centered">
             <div class="modal-content">
                 <div class="modal-header">
