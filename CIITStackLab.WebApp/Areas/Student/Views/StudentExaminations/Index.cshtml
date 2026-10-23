@@ -147,7 +147,10 @@
                             .ToList();
                         var attemptNumber = topicAttempts.FindIndex(item => item.AttemptId == exam.AttemptId) + 1;
                         var hasEverPassedTopic = topicAttempts.Any(item => item.Passed && item.Status == "Passed");
-                        var isPaidRetake = attemptNumber > 2 || hasEverPassedTopic && attemptNumber > 1;
+                        var hasPassedBeforeThisAttempt = topicAttempts
+                            .Take(Math.Max(0, attemptNumber - 1))
+                            .Any(item => item.Passed && item.Status == "Passed");
+                        var isPaidRetake = attemptNumber > 2 || hasPassedBeforeThisAttempt;
                         var retakeFeeBase = Math.Max(1, attemptNumber - 2) * 100m;
                         var retakeFee = retakeFeeBase + Math.Round(retakeFeeBase * 0.18m, 2, MidpointRounding.AwayFromZero);
                         <tr style="--row-index: @row.RowIndex">
