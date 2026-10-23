@@ -660,7 +660,8 @@ public class CoursesController : Controller
         int? contentId,
         int? topicId,
         int? chapterId,
-        CancellationToken cancellationToken)
+        CancellationToken cancellationToken,
+        bool reopenExamModal = false)
     {
         if (id <= 0
             || (contentId.HasValue && contentId.Value <= 0)
@@ -1032,7 +1033,7 @@ public class CoursesController : Controller
 
                 ViewBag.PendingRetakePaymentOrderId = pendingRetakePaymentOrderId;
                 ViewBag.ShowExamApplicationModal = topicCompleted
-                    && TempData["OpenExamApplicationModal"] is true;
+                    && (reopenExamModal || TempData["OpenExamApplicationModal"] is true);
                 ViewBag.ExamHasActiveAttempt = hasActiveExam;
                 ViewBag.ExamApplicationTopicId = examTopicId.Value;
                 ViewBag.ExamAttemptNumber = nextAttemptNumber;
