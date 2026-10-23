@@ -65,7 +65,7 @@ public sealed class StudentExaminationsController : Controller
                 && payment.PaymentPurpose == "ExamRetake"
                 && (payment.Status == "Created" || payment.Status == "Pending"))
             .OrderByDescending(payment => payment.CreatedAt)
-            .Take(20)
+            .Take(5)
             .ToListAsync(cancellationToken);
 
         foreach (var payment in pendingRetakePayments)
