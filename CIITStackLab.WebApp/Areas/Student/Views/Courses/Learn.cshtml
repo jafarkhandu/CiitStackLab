@@ -1084,7 +1084,8 @@ else
                                     <a class="btn btn-outline-primary w-100 mt-3"
                                        asp-controller="Courses"
                                        asp-action="PhonePeReturn"
-                                       asp-route-merchantOrderId="@pendingRetakeOrderId">
+                                       asp-route-merchantOrderId="@pendingRetakeOrderId"
+                                       asp-route-returnUrl="@($"{Context.Request.Path}{Context.Request.QueryString}")">
                                         Verify existing payment
                                     </a>
                                 }
