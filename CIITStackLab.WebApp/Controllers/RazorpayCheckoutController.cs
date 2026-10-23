@@ -58,6 +58,7 @@ public sealed class RazorpayCheckoutController : Controller
         ViewData["RazorpayKeyId"] = string.IsNullOrWhiteSpace(keyId) ? _payments.KeyId : keyId;
         ViewData["RazorpayOrderId"] = razorpayOrderId;
         ViewData["MerchantOrderId"] = merchantOrderId;
+        ViewData["RazorpayAmount"] = order.Amount;
         return View();
     }
 
