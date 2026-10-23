@@ -998,8 +998,8 @@ public class CoursesController : Controller
                     cancellationToken);
 
                 ViewBag.ShowExamApplicationModal = topicCompleted
-                    && !hasActiveExam
                     && TempData["OpenExamApplicationModal"] is true;
+                ViewBag.ExamHasActiveAttempt = hasActiveExam;
                 ViewBag.ExamApplicationTopicId = examTopicId.Value;
                 ViewBag.ExamAttemptNumber = nextAttemptNumber;
                 ViewBag.ExamRequiresPayment = requiresRetakePayment;
