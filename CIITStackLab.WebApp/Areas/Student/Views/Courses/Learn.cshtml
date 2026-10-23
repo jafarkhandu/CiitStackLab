@@ -965,6 +965,7 @@ else
     var modalAttemptNumber = ViewBag.ExamAttemptNumber is int attemptNumber ? attemptNumber : 1;
     var modalRequiresPayment = ViewBag.ExamRequiresPayment is bool requiresPayment && requiresPayment;
     var modalHasEverPassed = ViewBag.ExamHasEverPassed is bool hasPassed && hasPassed;
+    var modalHasUnusedPaidRetake = ViewBag.ExamHasUnusedPaidRetake is bool hasUnusedPaidRetake && hasUnusedPaidRetake;
     var modalFee = ViewBag.ExamRetakeFee is decimal fee ? fee : 118m;
     var previousStatus = ViewBag.PreviousExamStatus as string;
     var previousScore = ViewBag.PreviousExamScore as int?;
@@ -1018,16 +1019,17 @@ else
                         <div class="rounded-3 border border-danger-subtle bg-danger-subtle p-3 mb-3">
                             <div class="small text-danger-emphasis">Exam fee for attempt #@modalAttemptNumber</div>
                             <div class="fs-4 fw-bold text-danger">₹@modalFee.ToString("0.00")</div>
-                            <div class="small text-danger-emphasis">Payment is required before this re-exam can be scheduled or started.</div>
+                            @if (modalHasUnusedPaidRetake)
+                            {
+                                <div class="small text-success fw-semibold">Payment confirmed. You can now schedule or start this attempt.</div>
+                            }
+                            else
+                            {
+                                <div class="small text-danger-emphasis">Payment is required before this re-exam can be scheduled or started.</div>
+                            }
                         </div>
-                        <form asp-controller="StudentExaminations" asp-action="PayForReExam" method="post">
-                            @Html.AntiForgeryToken()
-                            <input type="hidden" name="courseId" value="@Model.Id" />
-                            <input type="hidden" name="topicId" value="@currentTopic.Id" />
-                            <button type="submit" class="btn btn-danger w-100">Pay ₹@modalFee.ToString("0.00") and continue</button>
-                        </form>
                     }
-                    else
+                    @if (!modalRequiresPayment || modalHasUnusedPaidRetake)
                     {
                         <form asp-controller="StudentExaminations" asp-action="Schedule" method="post">
                             @Html.AntiForgeryToken()
@@ -1042,6 +1044,15 @@ else
                                 <button type="submit" class="btn btn-primary" formaction="/Examinations/StartNow" formnovalidate>Start now <i class="bi bi-arrow-right ms-1" aria-hidden="true"></i></button>
                                 <button type="submit" class="btn btn-outline-primary">Schedule examination</button>
                             </div>
+                        </form>
+                    }
+                    @if (modalRequiresPayment && !modalHasUnusedPaidRetake)
+                    {
+                        <form asp-controller="StudentExaminations" asp-action="PayForReExam" method="post">
+                            @Html.AntiForgeryToken()
+                            <input type="hidden" name="courseId" value="@Model.Id" />
+                            <input type="hidden" name="topicId" value="@currentTopic.Id" />
+                            <button type="submit" class="btn btn-danger w-100">Pay ₹@modalFee.ToString("0.00") and continue</button>
                         </form>
                     }
                 </div>
