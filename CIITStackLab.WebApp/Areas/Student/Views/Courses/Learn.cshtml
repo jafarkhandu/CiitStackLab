@@ -150,17 +150,20 @@
     </script>
 }
 
-@if (User.IsInRole("Student") && ViewBag.ShowExamApplicationModal != true && TempData["ExamError"] is string examAvailabilityError)
+@if (User.IsInRole("Student") && ViewBag.ShowExamApplicationModal != true)
 {
-    <div class="container ciit-exam-availability-alert" role="alert" aria-live="assertive">
-        <span class="ciit-exam-availability-alert-icon" aria-hidden="true">
-            <i class="bi bi-hourglass-split"></i>
-        </span>
-        <div>
-            <strong>Exam questions are not ready yet</strong>
-            <p>@examAvailabilityError</p>
+    @if (TempData["ExamError"] is string examAvailabilityError)
+    {
+        <div class="container ciit-exam-availability-alert" role="alert" aria-live="assertive">
+            <span class="ciit-exam-availability-alert-icon" aria-hidden="true">
+                <i class="bi bi-hourglass-split"></i>
+            </span>
+            <div>
+                <strong>Exam questions are not ready yet</strong>
+                <p>@examAvailabilityError</p>
+            </div>
         </div>
-    </div>
+    }
 }
 
 <script>
