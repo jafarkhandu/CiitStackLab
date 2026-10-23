@@ -1,158 +1,185 @@
+using System.Net.Http.Headers;
+using System.Security.Cryptography;
+using System.Text;
+using System.Text.Json;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
-using pg_sdk_dotnet;
-using pg_sdk_dotnet.Common.Models.Response;
-using pg_sdk_dotnet.Payments.v2;
-using pg_sdk_dotnet.Payments.v2.Models.Request;
 
 namespace CIITStackLab.Infrastructure.Payments;
 
+// Kept as a compatibility type for the existing controllers during the gateway migration.
+// The implementation is Razorpay-only; no PhonePe SDK or API is used.
 public sealed class PhonePePaymentService
 {
-    private readonly PhonePeOptions _options;
+    private const string OrdersEndpoint = "https://api.razorpay.com/v1/orders";
+    private readonly RazorpayOptions _options;
+    private readonly IHttpClientFactory _httpClientFactory;
     private readonly ILogger<PhonePePaymentService> _logger;
-    private readonly Lazy<StandardCheckoutClient> _client;
 
     public PhonePePaymentService(
-        IOptions<PhonePeOptions> options,
+        IOptions<RazorpayOptions> options,
+        IHttpClientFactory httpClientFactory,
         ILogger<PhonePePaymentService> logger)
     {
         _options = options.Value;
+        _httpClientFactory = httpClientFactory;
         _logger = logger;
-        _client = new Lazy<StandardCheckoutClient>(CreateClient);
     }
+
+    public string KeyId => RequireOptions().KeyId;
 
     public async Task<string> CreateCheckoutAsync(
         string merchantOrderId,
         long amountInPaise,
-        string redirectUrl)
+        string redirectUrl,
+        CancellationToken cancellationToken = default)
     {
         if (string.IsNullOrWhiteSpace(merchantOrderId))
-        {
             throw new ArgumentException("Merchant order ID is required.", nameof(merchantOrderId));
-        }
-
         if (amountInPaise <= 0)
-        {
             throw new ArgumentOutOfRangeException(nameof(amountInPaise));
-        }
-
         if (string.IsNullOrWhiteSpace(redirectUrl))
-        {
             throw new ArgumentException("Redirect URL is required.", nameof(redirectUrl));
-        }
 
-        var request = StandardCheckoutPayRequest.Builder()
-            .SetMerchantOrderId(merchantOrderId)
-            .SetAmount(amountInPaise)
-            .SetRedirectUrl(redirectUrl)
-            .Build();
-
-        try
+        var options = RequireOptions();
+        var client = CreateClient(options);
+        var payload = JsonSerializer.Serialize(new
         {
-            var response = await _client.Value
-                .Pay(request)
-                .WaitAsync(GetTimeout());
+            amount = amountInPaise,
+            currency = "INR",
+            receipt = merchantOrderId,
+            partial_payment = false
+        });
 
-            if (string.IsNullOrWhiteSpace(response.RedirectUrl))
-            {
-                throw new InvalidOperationException(
-                    "PhonePe could not create the checkout order because no redirect URL was returned.");
-            }
-
-            _logger.LogInformation(
-                "PhonePe checkout created for merchant order {MerchantOrderId}.",
-                merchantOrderId);
-
-            return response.RedirectUrl;
-        }
-        catch (TimeoutException)
+        using var request = new HttpRequestMessage(HttpMethod.Post, OrdersEndpoint)
         {
-            _logger.LogWarning(
-                "PhonePe checkout creation timed out for merchant order {MerchantOrderId}.",
-                merchantOrderId);
-            throw;
+            Content = new StringContent(payload, Encoding.UTF8, "application/json")
+        };
+        request.Headers.Authorization = CreateBasicAuthentication(options);
+
+        using var response = await client.SendAsync(request, cancellationToken);
+        var responseBody = await response.Content.ReadAsStringAsync(cancellationToken);
+        if (!response.IsSuccessStatusCode)
+        {
+            _logger.LogError(
+                "Razorpay order creation failed for merchant order {MerchantOrderId}. Status: {StatusCode}.",
+                merchantOrderId,
+                response.StatusCode);
+            throw new InvalidOperationException("Razorpay could not create the payment order.");
         }
+
+        using var document = JsonDocument.Parse(responseBody);
+        if (!document.RootElement.TryGetProperty("id", out var idElement)
+            || string.IsNullOrWhiteSpace(idElement.GetString()))
+        {
+            throw new InvalidOperationException("Razorpay did not return a payment order ID.");
+        }
+
+        var razorpayOrderId = idElement.GetString()!;
+        var baseUri = new Uri(redirectUrl).GetLeftPart(UriPartial.Authority);
+        var checkoutUrl = $"{baseUri}/Payments/RazorpayCheckout"
+            + $"?merchantOrderId={Uri.EscapeDataString(merchantOrderId)}"
+            + $"&razorpayOrderId={Uri.EscapeDataString(razorpayOrderId)}"
+            + $"&keyId={Uri.EscapeDataString(options.KeyId)}";
+
+        _logger.LogInformation(
+            "Razorpay order created for merchant order {MerchantOrderId}.",
+            merchantOrderId);
+
+        return checkoutUrl;
     }
 
     public async Task<string> GetOrderStateAsync(string merchantOrderId)
     {
+        // Legacy controller compatibility. New Razorpay flow verifies the order/payment
+        // using the returned Razorpay order ID and signature before fulfilment.
         if (string.IsNullOrWhiteSpace(merchantOrderId))
-        {
             throw new ArgumentException("Merchant order ID is required.", nameof(merchantOrderId));
-        }
 
-        try
-        {
-            var response = await _client.Value
-                .GetOrderStatus(merchantOrderId)
-                .WaitAsync(GetTimeout());
-
-            if (string.IsNullOrWhiteSpace(response.State))
-            {
-                throw new InvalidOperationException("PhonePe returned an empty order state.");
-            }
-
-            return response.State;
-        }
-        catch (TimeoutException)
-        {
-            _logger.LogWarning(
-                "PhonePe order status check timed out for merchant order {MerchantOrderId}.",
-                merchantOrderId);
-            throw;
-        }
+        return "PENDING";
     }
 
-    public CallbackResponse ValidateCallback(
-        string authorizationHeader,
-        string requestBody)
+    public async Task<RazorpayOrderDetails> GetOrderAsync(
+        string razorpayOrderId,
+        CancellationToken cancellationToken = default)
     {
-        if (string.IsNullOrWhiteSpace(_options.CallbackUsername)
-            || string.IsNullOrWhiteSpace(_options.CallbackPassword))
+        if (string.IsNullOrWhiteSpace(razorpayOrderId))
+            throw new ArgumentException("Razorpay order ID is required.", nameof(razorpayOrderId));
+
+        var options = RequireOptions();
+        var client = CreateClient(options);
+        using var request = new HttpRequestMessage(
+            HttpMethod.Get,
+            $"{OrdersEndpoint}/{Uri.EscapeDataString(razorpayOrderId)}");
+        request.Headers.Authorization = CreateBasicAuthentication(options);
+
+        using var response = await client.SendAsync(request, cancellationToken);
+        var responseBody = await response.Content.ReadAsStringAsync(cancellationToken);
+        if (!response.IsSuccessStatusCode)
+            throw new InvalidOperationException("Razorpay could not verify the payment order.");
+
+        using var document = JsonDocument.Parse(responseBody);
+        var root = document.RootElement;
+        return new RazorpayOrderDetails(
+            root.GetProperty("id").GetString() ?? string.Empty,
+            root.TryGetProperty("receipt", out var receipt) ? receipt.GetString() : null,
+            root.GetProperty("amount").GetInt64(),
+            root.TryGetProperty("amount_paid", out var amountPaid) ? amountPaid.GetInt64() : 0,
+            root.TryGetProperty("status", out var status) ? status.GetString() ?? string.Empty : string.Empty);
+    }
+
+    public bool VerifyPaymentSignature(
+        string razorpayOrderId,
+        string razorpayPaymentId,
+        string razorpaySignature)
+    {
+        if (string.IsNullOrWhiteSpace(razorpayOrderId)
+            || string.IsNullOrWhiteSpace(razorpayPaymentId)
+            || string.IsNullOrWhiteSpace(razorpaySignature))
+        {
+            return false;
+        }
+
+        var options = RequireOptions();
+        var payload = $"{razorpayOrderId}|{razorpayPaymentId}";
+        using var hmac = new HMACSHA256(Encoding.UTF8.GetBytes(options.KeySecret));
+        var expected = Convert.ToHexString(hmac.ComputeHash(Encoding.UTF8.GetBytes(payload))).ToLowerInvariant();
+
+        return CryptographicOperations.FixedTimeEquals(
+            Encoding.UTF8.GetBytes(expected),
+            Encoding.UTF8.GetBytes(razorpaySignature));
+    }
+
+    private RazorpayOptions RequireOptions()
+    {
+        if (string.IsNullOrWhiteSpace(_options.KeyId)
+            || string.IsNullOrWhiteSpace(_options.KeySecret))
         {
             throw new InvalidOperationException(
-                "PhonePe callback credentials are not configured.");
+                "Razorpay credentials are not configured. Configure Razorpay:KeyId and Razorpay:KeySecret.");
         }
 
-        if (string.IsNullOrWhiteSpace(authorizationHeader))
-        {
-            throw new InvalidOperationException("PhonePe callback authorization is missing.");
-        }
-
-        return _client.Value.ValidateCallback(
-            _options.CallbackUsername,
-            _options.CallbackPassword,
-            authorizationHeader,
-            requestBody);
+        return _options;
     }
 
-    private TimeSpan GetTimeout()
+    private HttpClient CreateClient(RazorpayOptions options)
     {
-        return TimeSpan.FromSeconds(Math.Clamp(_options.TimeoutSeconds, 5, 120));
+        var client = _httpClientFactory.CreateClient();
+        client.Timeout = TimeSpan.FromSeconds(Math.Clamp(options.TimeoutSeconds, 5, 120));
+        return client;
     }
 
-    private StandardCheckoutClient CreateClient()
+    private static AuthenticationHeaderValue CreateBasicAuthentication(RazorpayOptions options)
     {
-        if (string.IsNullOrWhiteSpace(_options.ClientId)
-            || string.IsNullOrWhiteSpace(_options.ClientSecret)
-            || _options.ClientVersion <= 0)
-        {
-            throw new InvalidOperationException(
-                "PhonePe credentials are not configured. Configure PhonePe:ClientId, ClientSecret and ClientVersion.");
-        }
-
-        var environment = _options.Environment.Equals(
-            "PRODUCTION",
-            StringComparison.OrdinalIgnoreCase)
-            ? Env.PRODUCTION
-            : Env.SANDBOX;
-
-        return StandardCheckoutClient.GetInstance(
-            _options.ClientId,
-            _options.ClientSecret,
-            _options.ClientVersion,
-            environment,
-            null);
+        var token = Convert.ToBase64String(
+            Encoding.UTF8.GetBytes($"{options.KeyId}:{options.KeySecret}"));
+        return new AuthenticationHeaderValue("Basic", token);
     }
 }
+
+public sealed record RazorpayOrderDetails(
+    string Id,
+    string? Receipt,
+    long Amount,
+    long AmountPaid,
+    string Status);
