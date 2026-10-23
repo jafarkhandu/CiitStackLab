@@ -133,6 +133,13 @@ public sealed class StudentExaminationsController : Controller
             TempData["OpenExamApplicationModal"] = true;
             return RedirectToAction("Learn", "Courses", new { id = request.CourseId, topicId = request.TopicId });
         }
+        await SendExamLifecycleEmailSafelyAsync(
+            userId,
+            result.Exam.CourseId,
+            result.Exam.TopicId,
+            result.Exam.AttemptId,
+            "Scheduled",
+            cancellationToken);
         return RedirectToAction(nameof(Instructions), new { attemptId = result.Exam.AttemptId });
     }
 
@@ -160,6 +167,13 @@ public sealed class StudentExaminationsController : Controller
             return RedirectToAction(nameof(Index));
         }
 
+        await SendExamLifecycleEmailSafelyAsync(
+            userId,
+            result.Exam.CourseId,
+            result.Exam.TopicId,
+            result.Exam.AttemptId,
+            "Scheduled",
+            cancellationToken);
         return RedirectToAction(nameof(Instructions), new { attemptId = result.Exam.AttemptId });
     }
 
@@ -366,19 +380,22 @@ public sealed class StudentExaminationsController : Controller
         string eventType,
         CancellationToken cancellationToken)
     {
-        var email = User.FindFirstValue(ClaimTypes.Email)
-            ?? User.FindFirstValue("email");
-        if (string.IsNullOrWhiteSpace(email))
-        {
-            _logger.LogWarning(
-                "Exam {EventType} email was not sent because the authenticated user has no email claim. Attempt {AttemptId}.",
-                eventType,
-                attemptId);
-            return;
-        }
-
         try
         {
+            var user = await _db.Users.AsNoTracking()
+                .Where(item => item.Id == userId)
+                .Select(item => new { item.Email, item.UserName })
+                .FirstOrDefaultAsync(cancellationToken);
+            if (user is null || string.IsNullOrWhiteSpace(user.Email))
+            {
+                _logger.LogWarning(
+                    "Exam {EventType} email was not sent because the student email is unavailable. Attempt {AttemptId}.",
+                    eventType,
+                    attemptId);
+                return;
+            }
+
+            var email = user.Email;
             var courseTitle = await _db.Courses.AsNoTracking()
                 .Where(course => course.Id == courseId)
                 .Select(course => course.Title)
@@ -415,7 +432,7 @@ public sealed class StudentExaminationsController : Controller
 
             await _emailService.SendExamLifecycleEmailAsync(
                 email,
-                User.Identity?.Name ?? "Student",
+                user.UserName ?? "Student",
                 courseTitle,
                 topicTitle,
                 attemptNumber,
