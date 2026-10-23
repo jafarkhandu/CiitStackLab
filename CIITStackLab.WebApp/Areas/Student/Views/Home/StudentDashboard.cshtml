@@ -173,6 +173,22 @@
 </template>
 
 <template id="student-dashboard-progress-template">
+    <div class="ciit-learning-progress-summary">
+        <div class="ciit-learning-progress-ring" style="--progress:@Model.ProgressPercent%" role="img" aria-label="Overall progress @Model.ProgressPercent percent">
+            <div><strong>@Model.ProgressPercent%</strong><span>Overall</span></div>
+        </div>
+        <div class="ciit-learning-progress-summary-stats">
+            <div class="ciit-learning-progress-summary-stat">
+                <span class="ciit-learning-progress-summary-icon"><i class="bi bi-collection-play" aria-hidden="true"></i></span>
+                <div><strong>@Model.Courses.Count.ToString("00")</strong><span>Courses available</span></div>
+            </div>
+            <div class="ciit-learning-progress-summary-stat">
+                <span class="ciit-learning-progress-summary-icon is-time"><i class="bi bi-clock-history" aria-hidden="true"></i></span>
+                <div><strong>@totalLearningHours.ToString("0.##") hrs</strong><span>Total learning time</span></div>
+            </div>
+        </div>
+    </div>
+
     <div class="ciit-learning-modal-list">
         @foreach (var course in Model.CourseStats)
         {
