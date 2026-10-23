@@ -67,7 +67,8 @@ public static class DependencyInjection
         services.AddScoped<IMcqImportService, McqImportService>();
         services.AddScoped<IStudentProgressService, StudentProgressService>();
         services.AddScoped<ICourseAssessmentService, CourseAssessmentService>();
-        services.AddScoped<ITopicExaminationService, TopicExaminationService>();
+        services.AddScoped<TopicExaminationService>();
+        services.AddScoped<ITopicExaminationService, HatimExamApplicationService>();
         services.AddHostedService<TopicExamExpiryWorker>();
         services.AddScoped<CoursePurchaseService>();
         services.AddScoped<IEmailService, EmailService>();
