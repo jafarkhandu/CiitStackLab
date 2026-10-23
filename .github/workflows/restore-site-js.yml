@@ -1,0 +1,27 @@
+name: Restore site.js
+
+on:
+  push:
+    paths:
+      - '.github/workflows/restore-site-js.yml'
+
+permissions:
+  contents: write
+
+jobs:
+  restore:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+
+      - name: Restore site.js from pre-payment baseline
+        run: |
+          git checkout ec59c4b9ea8ed72271a0f13fd980c4c9cf60b201 -- CIITStackLab.WebApp/wwwroot/js/global/site.js
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add CIITStackLab.WebApp/wwwroot/js/global/site.js
+          git commit -m "fix: restore existing site.js functionality" || exit 0
+          git push
