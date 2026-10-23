@@ -827,8 +827,7 @@
             if (!response.ok) throw new Error(await readFailure(response));
             const result = await response.json();
             saveStatus.textContent = 'Exam submitted successfully.';
-            showMessage('Exam submitted. Result: ' + result.status + '. Score: ' + result.score + '/' + questions.length + '.', 'success');
-            alert('Exam submitted. Status: ' + result.status + '. Score: ' + result.score + '/' + questions.length + '.');
+            showMessage('Your result is ready. Opening your exam summary…', 'success');
             window.location.assign('/Examinations');
         } catch (error) {
             finishing = false;
