@@ -96,7 +96,21 @@
                     var fee = feeBase + Math.Round(feeBase * 0.18m, 2, MidpointRounding.AwayFromZero);
                     <div class="d-flex flex-wrap align-items-center justify-content-between gap-3 p-3 mb-2 rounded-4 border border-danger-subtle bg-white bg-opacity-75">
                         <div><strong class="ciit-exam-topic">@exam.TopicTitle</strong><div class="ciit-exam-sub">Attempt #@nextAttemptNumber required</div>@if (paymentRequired){<div class="fw-bold text-danger">Exam fee: ₹@fee.ToString("0.00")</div>}else{<div class="small text-success fw-semibold">Free attempt remaining</div>}</div>
-                        @if (hasPendingPayment){<span class="badge rounded-pill text-bg-warning">Payment pending</span>}
+                        @if (hasPendingPayment)
+                        {
+                            <div class="d-flex flex-column align-items-end gap-2">
+                                <span class="badge rounded-pill text-bg-warning">Payment pending</span>
+                                @{
+                                    var pendingOrderIds = ViewBag.PendingRetakeOrderIds as IReadOnlyDictionary<string, string>
+                                        ?? new Dictionary<string, string>();
+                                    var pendingOrderKey = $"{exam.CourseId}:{exam.TopicId}:{nextAttemptNumber}";
+                                }
+                                @if (pendingOrderIds.TryGetValue(pendingOrderKey, out var pendingOrderId))
+                                {
+                                    <a class="ciit-exam-action" asp-controller="Courses" asp-action="PhonePeReturn" asp-route-merchantOrderId="@pendingOrderId">Verify payment</a>
+                                }
+                            </div>
+                        }
                         else if (paymentRequired && !hasPaidRetake)
                         {
                             <form asp-controller="StudentExaminations" asp-action="PayForReExam" method="post" class="d-inline js-exam-payment-form">@Html.AntiForgeryToken()<input type="hidden" name="courseId" value="@exam.CourseId" /><input type="hidden" name="topicId" value="@exam.TopicId" /><button type="submit" class="ciit-exam-action">Pay ₹@fee.ToString("0.00") and re-exam</button></form>
@@ -135,7 +149,8 @@
                         var paymentKey = $"{exam.CourseId}:{exam.TopicId}:{nextAttemptNumber}";
                         var hasPaidRetake = paidKeys.Contains(paymentKey);
                         var hasPendingPayment = pendingKeys.Contains(paymentKey);
-                        var nextAttemptIsPaid = nextAttemptNumber > 2;
+                        var hasEverPassedTopic = topicAttempts.Any(item => item.Passed && item.Status == "Passed");
+                        var nextAttemptIsPaid = nextAttemptNumber > 2 || hasEverPassedTopic;
                         var retakeFeeBase = Math.Max(1, nextAttemptNumber - 2) * 100m;
                         var retakeFee = retakeFeeBase + Math.Round(retakeFeeBase * 0.18m, 2, MidpointRounding.AwayFromZero);
                         <tr style="--row-index: @row.RowIndex">
@@ -149,9 +164,22 @@
                                     <a class="ciit-exam-action exam-open-button @(canOpen ? "" : "disabled")" href="@(canOpen ? Url.Action("Instructions", "StudentExaminations", new { attemptId = exam.AttemptId }) : "#")" data-open-at="@DateTime.SpecifyKind(openAtUtc, DateTimeKind.Utc).ToString("O")" data-exam-end="@DateTime.SpecifyKind(examEndUtc, DateTimeKind.Utc).ToString("O")" data-target-url="@Url.Action("Instructions", "StudentExaminations", new { attemptId = exam.AttemptId })" aria-disabled="@(!canOpen ? "true" : "false")" tabindex="@(!canOpen ? "-1" : "0")">@(DateTime.UtcNow >= examEndUtc ? "Time's up" : "Instructions / Start")</a><span class="ciit-exam-sub exam-open-countdown" data-open-at="@DateTime.SpecifyKind(openAtUtc, DateTimeKind.Utc).ToString("O")" data-exam-end="@DateTime.SpecifyKind(examEndUtc, DateTimeKind.Utc).ToString("O")"></span>
                                 }
                                 else if (exam.Status == "InProgress") { <a class="ciit-exam-action" asp-action="Instructions" asp-route-attemptId="@exam.AttemptId">Resume exam</a> }
-                                else if (exam.Status is "Terminated" or "Failed" or "TimedOut")
+                                else if (exam.Status is "Terminated" or "Failed" or "TimedOut" or "Passed")
                                 {
-                                    if (isLatestAttempt && hasPendingPayment){<span class="badge rounded-pill text-bg-warning">Payment pending</span>}
+                                    if (isLatestAttempt && hasPendingPayment)
+                                    {
+                                        <div class="d-flex flex-column align-items-end gap-2">
+                                            <span class="badge rounded-pill text-bg-warning">Payment pending</span>
+                                            @{
+                                                var pendingOrderIds = ViewBag.PendingRetakeOrderIds as IReadOnlyDictionary<string, string>
+                                                    ?? new Dictionary<string, string>();
+                                            }
+                                            @if (pendingOrderIds.TryGetValue(paymentKey, out var pendingOrderId))
+                                            {
+                                                <a class="ciit-exam-action" asp-controller="Courses" asp-action="PhonePeReturn" asp-route-merchantOrderId="@pendingOrderId">Verify payment</a>
+                                            }
+                                        </div>
+                                    }
                                     else if (isLatestAttempt)
                                     {
                                         <form asp-controller="StudentExaminations" asp-action="@(nextAttemptIsPaid && !hasPaidRetake ? "PayForReExam" : "ReExam")" method="post" class="d-inline @(nextAttemptIsPaid && !hasPaidRetake ? "js-exam-payment-form" : "")">
