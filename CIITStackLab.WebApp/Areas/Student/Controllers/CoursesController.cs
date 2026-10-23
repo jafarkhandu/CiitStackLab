@@ -967,6 +967,13 @@ public class CoursesController : Controller
                     && payment.ExamAttemptNumber == nextAttemptNumber
                     && payment.Status == "Completed" && payment.ExamAttemptId == null,
                     cancellationToken);
+                var hasPendingRetakePayment = await _dbContext.PaymentTransactions.AsNoTracking().AnyAsync(payment =>
+                    payment.UserId == studentUserId && payment.CourseId == id
+                    && payment.PaymentPurpose == "ExamRetake"
+                    && payment.ExamTopicId == examTopicId.Value
+                    && payment.ExamAttemptNumber == nextAttemptNumber
+                    && (payment.Status == "Created" || payment.Status == "Pending"),
+                    cancellationToken);
 
                 ViewBag.ShowExamApplicationModal = topicCompleted
                     && !hasActiveExam
@@ -977,6 +984,7 @@ public class CoursesController : Controller
                 ViewBag.ExamRetakeFee = retakeFee;
                 ViewBag.ExamHasEverPassed = hasEverPassed;
                 ViewBag.ExamHasUnusedPaidRetake = hasUnusedPaidRetake;
+                ViewBag.ExamHasPendingRetakePayment = hasPendingRetakePayment;
                 ViewBag.PreviousExamStatus = topicAttempts.FirstOrDefault()?.Status;
                 ViewBag.PreviousExamScore = topicAttempts.FirstOrDefault()?.Score;
                 ViewBag.PreviousExamTotalQuestions = topicAttempts.FirstOrDefault()?.TotalQuestions;
@@ -1263,6 +1271,7 @@ public class CoursesController : Controller
             var examAvailabilityMessage = questionAvailability.Error
                 ?? "Exam questions are not available for this topic right now. Please try applying again later.";
             TempData["ExamError"] = examAvailabilityMessage;
+            TempData["OpenExamApplicationModal"] = true;
 
             await NotifyExamQuestionsUnavailableAsync(
                 userId,
