@@ -88,9 +88,20 @@ public sealed class PhonePePaymentService
                 .GetOrderStatus(merchantOrderId)
                 .WaitAsync(GetTimeout());
 
+            if (response is null)
+            {
+                _logger.LogWarning(
+                    "PhonePe returned no order status response for merchant order {MerchantOrderId}. The payment will remain pending until it can be verified.",
+                    merchantOrderId);
+                return "PENDING";
+            }
+
             if (string.IsNullOrWhiteSpace(response.State))
             {
-                throw new InvalidOperationException("PhonePe returned an empty order state.");
+                _logger.LogWarning(
+                    "PhonePe returned an empty order state for merchant order {MerchantOrderId}. The payment will remain pending until it can be verified.",
+                    merchantOrderId);
+                return "PENDING";
             }
 
             return response.State;
