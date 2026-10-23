@@ -243,6 +243,17 @@ public class CoursesController : Controller
             _logger.LogWarning(ex, "PhonePe status verification timed out for merchant order {MerchantOrderId}.", merchantOrderId);
             message = "We could not confirm the payment because the payment gateway timed out. Your order remains pending.";
             if (wantsJsonResponse) return StatusCode(StatusCodes.Status504GatewayTimeout, new { success = false, state = "PENDING", message, courseId = transaction.CourseId });
+            if (string.Equals(transaction.PaymentPurpose, "ExamRetake", StringComparison.Ordinal)
+                && transaction.ExamTopicId.HasValue)
+            {
+                TempData["ExamError"] = message;
+                TempData["OpenExamApplicationModal"] = true;
+                return RedirectToAction("Learn", "Courses", new
+                {
+                    id = transaction.CourseId,
+                    topicId = transaction.ExamTopicId.Value
+                });
+            }
             TempData["CoursePaymentMessage"] = message;
             return RedirectToAction(nameof(Details), new { id = transaction.CourseId });
         }
@@ -251,6 +262,17 @@ public class CoursesController : Controller
             _logger.LogError(ex, "PhonePe status verification failed for merchant order {MerchantOrderId}.", merchantOrderId);
             message = "We could not verify the payment yet. Your order remains pending. Please try again shortly.";
             if (wantsJsonResponse) return StatusCode(StatusCodes.Status503ServiceUnavailable, new { success = false, state = "PENDING", message, courseId = transaction.CourseId });
+            if (string.Equals(transaction.PaymentPurpose, "ExamRetake", StringComparison.Ordinal)
+                && transaction.ExamTopicId.HasValue)
+            {
+                TempData["ExamError"] = message;
+                TempData["OpenExamApplicationModal"] = true;
+                return RedirectToAction("Learn", "Courses", new
+                {
+                    id = transaction.CourseId,
+                    topicId = transaction.ExamTopicId.Value
+                });
+            }
             TempData["CoursePaymentMessage"] = message;
             return RedirectToAction(nameof(Details), new { id = transaction.CourseId });
         }
