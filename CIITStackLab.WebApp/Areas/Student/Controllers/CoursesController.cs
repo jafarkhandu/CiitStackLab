@@ -811,9 +811,34 @@ public class CoursesController : Controller
                     || topic.Chapters.Any(chapter => chapter.Contents.Any(content => content.Id == contentId.Value)))?.Id;
             }
 
-            if (allowedTopicId.HasValue && requestedTopicId.HasValue)
+            if (allowedTopicId.HasValue && requestedTopicId.HasValue
+                && requestedTopicId.Value != allowedTopicId.Value)
             {
-                if (requestedTopicId.Value != allowedTopicId.Value)
+                var orderedTopicIds = await _dbContext.CourseModules.AsNoTracking()
+                    .Where(module => module.CourseId == id && module.Flag == 0
+                        && module.Course.Flag == 0 && module.Topic.Flag == 0)
+                    .OrderBy(module => module.Id)
+                    .Select(module => module.TopicId)
+                    .Distinct()
+                    .ToListAsync(cancellationToken);
+                var requestedIndex = orderedTopicIds.IndexOf(requestedTopicId.Value);
+                var allowedIndex = orderedTopicIds.IndexOf(allowedTopicId.Value);
+                var mayReviewPreviousTopic = requestedIndex >= 0
+                    && allowedIndex >= 0
+                    && requestedIndex < allowedIndex
+                    && await _topicExaminationService.HasPassedTopicAsync(
+                        studentUserId, id, requestedTopicId.Value, cancellationToken);
+
+                if (mayReviewPreviousTopic)
+                {
+                    var laterTopicIds = orderedTopicIds.Skip(requestedIndex + 1).ToList();
+                    mayReviewPreviousTopic = laterTopicIds.Count == 0
+                        || !await _dbContext.TopicExamAttempts.AsNoTracking().AnyAsync(attempt =>
+                            attempt.UserId == studentUserId && attempt.CourseId == id
+                            && laterTopicIds.Contains(attempt.TopicId), cancellationToken);
+                }
+
+                if (!mayReviewPreviousTopic)
                 {
                     TempData["LearningProgressMessage"] = "This topic is locked until you pass the current topic examination.";
                     return RedirectToAction(nameof(Learn), new { id, topicId = allowedTopicId.Value });
@@ -1220,8 +1245,7 @@ public class CoursesController : Controller
                 && attempt.TopicId == topicId
                 && (attempt.Status == "Scheduled"
                     || attempt.Status == "Ready"
-                    || attempt.Status == "InProgress"
-                    || attempt.Status == "Passed"),
+                    || attempt.Status == "InProgress"),
             cancellationToken);
         if (hasExistingExam)
         {
