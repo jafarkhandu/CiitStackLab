@@ -953,6 +953,13 @@ public class CoursesController : Controller
                 var retakeBaseFee = Math.Max(1, nextAttemptNumber - 2) * 100m;
                 var retakeFee = retakeBaseFee
                     + Math.Round(retakeBaseFee * 0.18m, 2, MidpointRounding.AwayFromZero);
+                var hasUnusedPaidRetake = await _dbContext.PaymentTransactions.AsNoTracking().AnyAsync(payment =>
+                    payment.UserId == studentUserId && payment.CourseId == id
+                    && payment.PaymentPurpose == "ExamRetake"
+                    && payment.ExamTopicId == examTopicId.Value
+                    && payment.ExamAttemptNumber == nextAttemptNumber
+                    && payment.Status == "Completed" && payment.ExamAttemptId == null,
+                    cancellationToken);
 
                 ViewBag.ShowExamApplicationModal = topicCompleted
                     && !hasActiveExam
@@ -962,6 +969,7 @@ public class CoursesController : Controller
                 ViewBag.ExamRequiresPayment = requiresRetakePayment;
                 ViewBag.ExamRetakeFee = retakeFee;
                 ViewBag.ExamHasEverPassed = hasEverPassed;
+                ViewBag.ExamHasUnusedPaidRetake = hasUnusedPaidRetake;
                 ViewBag.PreviousExamStatus = topicAttempts.FirstOrDefault()?.Status;
                 ViewBag.PreviousExamScore = topicAttempts.FirstOrDefault()?.Score;
                 ViewBag.PreviousExamTotalQuestions = topicAttempts.FirstOrDefault()?.TotalQuestions;
