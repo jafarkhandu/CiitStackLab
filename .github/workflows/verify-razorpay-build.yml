@@ -25,3 +25,5 @@ jobs:
 
       - name: Build
         run: dotnet build CIITStackLab.slnx --configuration Release --no-restore
+
+      # Temporary verification only.
