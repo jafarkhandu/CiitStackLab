@@ -1296,9 +1296,36 @@ public class CoursesController : Controller
             cancellationToken);
         if (allowedTopicId.HasValue && allowedTopicId.Value != topicId)
         {
-            TempData["LearningProgressMessage"] =
-                "Complete the current topic examination before applying for a different topic.";
-            return RedirectToAction(nameof(Learn), new { id, topicId = allowedTopicId.Value });
+            var orderedTopicIds = await _dbContext.CourseModules.AsNoTracking()
+                .Where(module => module.CourseId == id && module.Flag == 0
+                    && module.Course.Flag == 0 && module.Topic.Flag == 0)
+                .OrderBy(module => module.Id)
+                .Select(module => module.TopicId)
+                .Distinct()
+                .ToListAsync(cancellationToken);
+            var requestedIndex = orderedTopicIds.IndexOf(topicId);
+            var allowedIndex = orderedTopicIds.IndexOf(allowedTopicId.Value);
+            var mayApplyForPreviousRetake = requestedIndex >= 0
+                && allowedIndex >= 0
+                && requestedIndex < allowedIndex
+                && await _topicExaminationService.HasPassedTopicAsync(
+                    userId, id, topicId, cancellationToken);
+
+            if (mayApplyForPreviousRetake)
+            {
+                var laterTopicIds = orderedTopicIds.Skip(requestedIndex + 1).ToList();
+                mayApplyForPreviousRetake = laterTopicIds.Count == 0
+                    || !await _dbContext.TopicExamAttempts.AsNoTracking().AnyAsync(attempt =>
+                        attempt.UserId == userId && attempt.CourseId == id
+                        && laterTopicIds.Contains(attempt.TopicId), cancellationToken);
+            }
+
+            if (!mayApplyForPreviousRetake)
+            {
+                TempData["LearningProgressMessage"] =
+                    "Complete the current topic examination before applying for a different topic.";
+                return RedirectToAction(nameof(Learn), new { id, topicId = allowedTopicId.Value });
+            }
         }
 
         var topicNoteIds = await _dbContext.TrainingNotes.AsNoTracking()
