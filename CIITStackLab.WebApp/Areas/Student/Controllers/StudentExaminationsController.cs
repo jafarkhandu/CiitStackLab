@@ -86,6 +86,8 @@ public sealed class StudentExaminationsController : Controller
                 request.TopicId,
                 result.Error,
                 cancellationToken);
+            TempData["OpenExamApplicationModal"] = true;
+            return RedirectToAction("Learn", "Courses", new { id = request.CourseId, topicId = request.TopicId });
         }
         return RedirectToAction(nameof(Index));
     }
@@ -108,6 +110,7 @@ public sealed class StudentExaminationsController : Controller
                 request.TopicId,
                 result.Error,
                 cancellationToken);
+            TempData["OpenExamApplicationModal"] = true;
             return RedirectToAction("Learn", "Courses", new { id = request.CourseId, topicId = request.TopicId });
         }
         return RedirectToAction(nameof(Instructions), new { attemptId = result.Exam.AttemptId });
@@ -156,7 +159,8 @@ public sealed class StudentExaminationsController : Controller
         if (!await _coursePurchaseService.CanAccessCourseAsync(userId, courseId, cancellationToken))
         {
             TempData["ExamError"] = "You do not have access to this course.";
-            return RedirectToAction(nameof(Index));
+            TempData["OpenExamApplicationModal"] = true;
+            return RedirectToAction("Learn", "Courses", new { id = courseId, topicId });
         }
 
         var activeAttemptExists = await _db.TopicExamAttempts.AnyAsync(attempt =>
@@ -166,7 +170,8 @@ public sealed class StudentExaminationsController : Controller
         if (activeAttemptExists)
         {
             TempData["ExamError"] = "An exam is already scheduled or active for this topic.";
-            return RedirectToAction(nameof(Index));
+            TempData["OpenExamApplicationModal"] = true;
+            return RedirectToAction("Learn", "Courses", new { id = courseId, topicId });
         }
 
         var questionAvailability = await _exams.CheckQuestionAvailabilityAsync(
@@ -177,7 +182,8 @@ public sealed class StudentExaminationsController : Controller
                 ?? "Exam questions are not available for this topic right now.";
             await NotifyIfQuestionBankUnavailableAsync(
                 userId, courseId, topicId, questionAvailability.Error, cancellationToken);
-            return RedirectToAction(nameof(Index));
+            TempData["OpenExamApplicationModal"] = true;
+            return RedirectToAction("Learn", "Courses", new { id = courseId, topicId });
         }
 
         var attemptNumber = await _db.TopicExamAttempts.CountAsync(attempt =>
@@ -213,7 +219,8 @@ public sealed class StudentExaminationsController : Controller
         if (pendingPayment)
         {
             TempData["ExamError"] = "A payment order for this attempt is already pending. Complete or verify that order before creating another.";
-            return RedirectToAction(nameof(Index));
+            TempData["OpenExamApplicationModal"] = true;
+            return RedirectToAction("Learn", "Courses", new { id = courseId, topicId });
         }
 
         var baseFee = Math.Max(1, attemptNumber - 2) * 100m;
@@ -249,7 +256,8 @@ public sealed class StudentExaminationsController : Controller
             transaction.UpdatedAt = DateTime.UtcNow;
             await _db.SaveChangesAsync(cancellationToken);
             TempData["ExamError"] = "Payment could not be started. Please try again.";
-            return RedirectToAction(nameof(Index));
+            TempData["OpenExamApplicationModal"] = true;
+            return RedirectToAction("Learn", "Courses", new { id = courseId, topicId });
         }
 
         try
@@ -270,7 +278,8 @@ public sealed class StudentExaminationsController : Controller
             TempData["ExamError"] = transaction.Status == "Pending"
                 ? "The payment gateway response could not be confirmed. The order remains pending and no attempt has been unlocked."
                 : "The payment could not be started. Please check the payment configuration and try again.";
-            return RedirectToAction(nameof(Index));
+            TempData["OpenExamApplicationModal"] = true;
+            return RedirectToAction("Learn", "Courses", new { id = courseId, topicId });
         }
     }
 
