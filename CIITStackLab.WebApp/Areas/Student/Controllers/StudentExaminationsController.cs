@@ -562,7 +562,26 @@ public sealed class StudentExaminationsController : Controller
         var result = await _exams.SaveAnswersAsync(
             userId, attemptId, answers, deviceToken, cancellationToken, finalSubmission);
         if (!result.Succeeded) return BadRequest(new { error = result.Error });
-        return Json(new { success = true, status = result.Result?.Status, score = result.Result?.Score, passed = result.Result?.Passed });
+
+        if (finalSubmission && result.Result is not null)
+        {
+            TempData["LastExamResultStatus"] = result.Result.Status;
+            TempData["LastExamResultScore"] = result.Result.Score;
+            TempData["LastExamResultTotal"] = result.Result.TotalQuestions;
+            TempData["LastExamResultAnswered"] = result.Result.AnsweredQuestionsCount;
+            TempData["LastExamResultPassed"] = result.Result.Passed;
+            TempData["LastExamResultAttemptId"] = result.Result.AttemptId;
+        }
+
+        return Json(new
+        {
+            success = true,
+            status = result.Result?.Status,
+            score = result.Result?.Score,
+            totalQuestions = result.Result?.TotalQuestions,
+            answeredQuestions = result.Result?.AnsweredQuestionsCount,
+            passed = result.Result?.Passed
+        });
     }
 
     [HttpPost("{attemptId:long}/SecurityEvent")]
