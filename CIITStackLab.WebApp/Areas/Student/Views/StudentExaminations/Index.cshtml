@@ -8,8 +8,7 @@
         .GroupBy(item => new { item.CourseId, item.TopicId })
         .Select(group =>
         {
-            var ordered = group.OrderByDescending(item => item.ScheduledAtUtc)
-                .ThenByDescending(item => item.AttemptId).ToList();
+            var ordered = group.OrderByDescending(item => item.AttemptId).ToList();
             return new
             {
                 Latest = ordered[0],
