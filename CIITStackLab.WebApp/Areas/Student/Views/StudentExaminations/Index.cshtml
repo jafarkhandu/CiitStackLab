@@ -4,6 +4,21 @@
     ViewData["Title"] = "Examinations";
     var options = ViewBag.AvailableTopics as IReadOnlyList<CIITStackLab.WebApp.Controllers.StudentExaminationsController.ExamTopicOption>
         ?? Array.Empty<CIITStackLab.WebApp.Controllers.StudentExaminationsController.ExamTopicOption>();
+    var pendingExams = Model
+        .GroupBy(item => new { item.CourseId, item.TopicId })
+        .Select(group =>
+        {
+            var ordered = group.OrderByDescending(item => item.ScheduledAtUtc)
+                .ThenByDescending(item => item.AttemptId).ToList();
+            return new
+            {
+                Latest = ordered[0],
+                AttemptCount = group.Count(),
+                HasPassed = group.Any(item => item.Passed && item.Status == "Passed")
+            };
+        })
+        .Where(item => item.Latest.Status is "Failed" or "Terminated" or "TimedOut")
+        .ToList();
 }
 @section Styles {
 <style>
@@ -49,10 +64,61 @@
     <header class="ciit-exam-hero">
         <span class="ciit-exam-kicker">Student workspace</span>
         <h1>Your examinations</h1>
-        <p>Track your scheduled exams and attempts. Examination results are available separately after submission.</p>
+        <p>Track every exam attempt. You get two free attempts before passing; re-exams after a pass and later attempts require payment.</p>
     </header>
     @if (TempData["ExamMessage"] is string message) { <div class="alert alert-success ciit-exam-flash" role="status">@message</div> }
     @if (TempData["ExamError"] is string error) { <div class="alert alert-warning ciit-exam-flash" role="alert">@error</div> }
+
+    @if (pendingExams.Count > 0)
+    {
+        <section class="ciit-exam-panel" aria-labelledby="pending-exam-heading">
+            <div class="ciit-exam-panel-head">
+                <div><h2 id="pending-exam-heading">Pending Exam</h2><p>Your latest attempt needs another attempt before progression can continue.</p></div>
+                <span class="ciit-exam-count">!</span>
+            </div>
+            <div class="ciit-exam-table-wrap">
+                @foreach (var pending in pendingExams)
+                {
+                    var exam = pending.Latest;
+                    var nextAttemptNumber = pending.AttemptCount + 1;
+                    var paymentKey = $"{exam.CourseId}:{exam.TopicId}:{nextAttemptNumber}";
+                    var paidKeys = ViewBag.UnusedPaidRetakeKeys as IReadOnlyList<string> ?? Array.Empty<string>();
+                    var hasPaidRetake = paidKeys.Contains(paymentKey);
+                    var paymentRequired = nextAttemptNumber > 2 || pending.HasPassed;
+                    var feeBase = Math.Max(1, nextAttemptNumber - 2) * 100m;
+                    var fee = feeBase + Math.Round(feeBase * 0.18m, 2, MidpointRounding.AwayFromZero);
+                    <div class="d-flex flex-wrap align-items-center justify-content-between gap-3 p-3 mb-2 rounded-4 border border-danger-subtle bg-white bg-opacity-75">
+                        <div>
+                            <strong class="ciit-exam-topic">@exam.TopicTitle</strong>
+                            <div class="ciit-exam-sub">Attempt #@nextAttemptNumber required</div>
+                            @if (paymentRequired)
+                            {
+                                <div class="fw-bold text-danger">Exam fee: ₹@fee.ToString("0.00")</div>
+                            }
+                            else
+                            {
+                                <div class="small text-success fw-semibold">Free attempt remaining</div>
+                            }
+                        </div>
+                        <form asp-controller="StudentExaminations" asp-action="@(paymentRequired && !hasPaidRetake ? "PayForReExam" : "ReExam")" method="post" class="d-inline">
+                            @Html.AntiForgeryToken()
+                            <input type="hidden" name="courseId" value="@exam.CourseId" />
+                            <input type="hidden" name="topicId" value="@exam.TopicId" />
+                            @if (paymentRequired && !hasPaidRetake)
+                            {
+                                <button type="submit" class="ciit-exam-action">Pay ₹@fee.ToString("0.00") and re-exam</button>
+                            }
+                            else
+                            {
+                                <button type="submit" class="ciit-exam-action">Start re-exam</button>
+                            }
+                        </form>
+                    </div>
+                }
+            </div>
+        </section>
+    }
+
     <section class="ciit-exam-panel" aria-labelledby="exam-records-heading">
         <div class="ciit-exam-panel-head">
             <div><h2 id="exam-records-heading">Exam records</h2><p>Current and previous examination sessions</p></div>
@@ -154,6 +220,15 @@
 </section>
 @section Scripts {
 <script>
+    document.querySelectorAll('.ciit-exam-flash').forEach(function (alert) {
+        window.setTimeout(function () {
+            if (!alert.isConnected) return;
+            alert.style.transition = 'opacity .25s ease, transform .25s ease';
+            alert.style.opacity = '0';
+            alert.style.transform = 'translateY(-5px)';
+            window.setTimeout(function () { alert.remove(); }, 280);
+        }, 5000);
+    });
     document.querySelectorAll('.exam-local-time').forEach(function (element) {
         const date = new Date(element.dateTime);
         if (!Number.isNaN(date.getTime())) element.textContent = date.toLocaleString();
