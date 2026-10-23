@@ -831,11 +831,20 @@ public class CoursesController : Controller
         {
             if (course.CurrentContentId.HasValue)
             {
-                await _studentProgressService.RecordAccessAsync(
-                    studentUserId,
-                    id,
-                    course.CurrentContentId.Value,
-                    cancellationToken);
+                try
+                {
+                    await _studentProgressService.RecordAccessAsync(
+                        studentUserId,
+                        id,
+                        course.CurrentContentId.Value,
+                        cancellationToken);
+                }
+                catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
+                {
+                    // A newer navigation can cancel this request while access progress is being saved.
+                    // The abandoned request no longer needs to finish rendering a response.
+                    return new EmptyResult();
+                }
             }
 
             course.Progress = await _studentProgressService.GetProgressAsync(
