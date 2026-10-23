@@ -195,7 +195,8 @@ public sealed class StudentExaminationsController : Controller
         if (attemptNumber <= 2 && !hasEverPassedTopic)
         {
             TempData["ExamError"] = "This attempt is free. Start or schedule it from the examination application.";
-            return RedirectToAction(nameof(Index));
+            TempData["OpenExamApplicationModal"] = true;
+            return RedirectToAction("Learn", "Courses", new { id = courseId, topicId });
         }
 
         var existingUnusedPayment = await _db.PaymentTransactions.AnyAsync(payment =>
