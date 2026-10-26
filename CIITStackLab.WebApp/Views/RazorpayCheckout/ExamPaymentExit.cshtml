@@ -1,0 +1,48 @@
+@{
+    Layout = null;
+    var message = ViewData["ExitMessage"]?.ToString() ?? "Payment window closed. Payment not completed.";
+    var learningUrl = ViewData["LearningUrl"]?.ToString() ?? "/Examinations";
+}
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Payment update - CIIT Stack Lab</title>
+    <style>
+        * { box-sizing: border-box; }
+        body { margin: 0; min-height: 100vh; display: grid; place-items: center; background: #f5f7fb; color: #172744; font-family: Arial, sans-serif; }
+        main { width: min(100% - 32px, 480px); padding: 36px 28px; text-align: center; background: #fff; border: 1px solid #e1e7f0; border-radius: 20px; box-shadow: 0 18px 55px rgba(23, 39, 68, .10); }
+        h1 { margin: 0 0 14px; font-size: 24px; }
+        p { color: #68758b; line-height: 1.65; }
+        #countdown { margin: 20px auto 0; width: 58px; height: 58px; display: grid; place-items: center; border: 3px solid #dbe7ff; border-top-color: #1769e0; border-radius: 50%; color: #1769e0; font-size: 23px; font-weight: 700; }
+        a { color: #1769e0; }
+    </style>
+</head>
+<body>
+    <main>
+        <h1>Payment update</h1>
+        <p id="payment-message">@message</p>
+        <p>Redirecting to Learning Hub in <strong id="count-label">5</strong> seconds…</p>
+        <div id="countdown" aria-label="Seconds until redirect">5</div>
+        <p><a href="@learningUrl">Go to Learning Hub now</a></p>
+    </main>
+    <script>
+        (() => {
+            const destination = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(learningUrl));
+            let remaining = 5;
+            const number = document.getElementById("countdown");
+            const label = document.getElementById("count-label");
+            const timer = window.setInterval(() => {
+                remaining -= 1;
+                number.textContent = String(remaining);
+                label.textContent = String(remaining);
+                if (remaining <= 0) {
+                    window.clearInterval(timer);
+                    window.location.replace(destination);
+                }
+            }, 1000);
+        })();
+    </script>
+</body>
+</html>
