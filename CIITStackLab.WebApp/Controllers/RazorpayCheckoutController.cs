@@ -128,43 +128,20 @@ public sealed class RazorpayCheckoutController : Controller
             cancellationToken);
         if (transaction is null) return NotFound();
 
-        var message = string.Equals(outcome, "declined", StringComparison.OrdinalIgnoreCase)
+        var isDeclined = string.Equals(outcome, "declined", StringComparison.OrdinalIgnoreCase);
+        var message = isDeclined
             ? "Payment declined."
             : "Payment window closed. Payment not completed.";
-        var canRetry = false;
 
-        try
+        if (!string.Equals(transaction.Status, "Completed", StringComparison.OrdinalIgnoreCase))
         {
-            var order = await _payments.GetOrderAsync(razorpayOrderId, cancellationToken);
-            if (!string.Equals(order.Receipt, transaction.MerchantOrderId, StringComparison.Ordinal)
-                || order.Amount != ToPaise(transaction.Amount))
-            {
-                return BadRequest("The payment order does not match this transaction.");
-            }
-
-            if (string.Equals(order.Status, "paid", StringComparison.OrdinalIgnoreCase)
-                || order.AmountPaid > 0)
-            {
-                message = "Payment status is still being confirmed. Please do not pay again yet.";
-            }
-            else if (string.Equals(transaction.Status, "Completed", StringComparison.OrdinalIgnoreCase))
-            {
-                message = "Payment is already confirmed.";
-            }
-            else
-            {
-                transaction.Status = "Failed";
-                transaction.UpdatedAt = DateTime.UtcNow;
-                await _db.SaveChangesAsync(cancellationToken);
-                canRetry = true;
-            }
+            transaction.Status = "Failed";
+            transaction.UpdatedAt = DateTime.UtcNow;
+            await _db.SaveChangesAsync(cancellationToken);
         }
-        catch (Exception ex) when (ex is HttpRequestException or InvalidOperationException or TaskCanceledException)
+        else
         {
-            _logger.LogWarning(ex,
-                "Could not confirm Razorpay order state for exam retake {MerchantOrderId} after checkout exit.",
-                merchantOrderId);
-            message = "Payment status could not be confirmed. Please do not pay again until it is checked.";
+            message = "Payment was already confirmed.";
         }
 
         var learningUrl = Url.Action(
@@ -180,7 +157,6 @@ public sealed class RazorpayCheckoutController : Controller
 
         ViewData["ExitMessage"] = message;
         ViewData["LearningUrl"] = learningUrl;
-        ViewData["CanRetry"] = canRetry;
         return View("ExamPaymentExit");
     }
 
