@@ -156,6 +156,9 @@ public sealed class RazorpayCheckoutController : Controller
             }) ?? $"/Courses/Learn/{transaction.CourseId}?topicId={transaction.ExamTopicId}&reopenExamModal=true";
 
         ViewData["ExitMessage"] = message;
+        ViewData["ExitOutcome"] = string.Equals(transaction.Status, "Completed", StringComparison.OrdinalIgnoreCase)
+            ? "completed"
+            : isDeclined ? "declined" : "cancelled";
         ViewData["LearningUrl"] = learningUrl;
         return View("ExamPaymentExit");
     }
