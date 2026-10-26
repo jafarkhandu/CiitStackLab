@@ -973,27 +973,15 @@ public class CoursesController : Controller
                     .OrderByDescending(payment => payment.CreatedAt)
                     .FirstOrDefaultAsync(cancellationToken);
 
-                // Reconcile an abandoned Razorpay checkout when the student returns to Learn.
-                // Only a fully paid Razorpay order may mark this retake payment as completed.
-                if (pendingRetakePayment is not null)
+                // Do not block the student in a pending-payment verification state.
+                // The checkout exit callback records cancellation/decline immediately.
+                // Recover older abandoned orders from the previous flow after five minutes.
+                if (pendingRetakePayment is not null
+                    && pendingRetakePayment.CreatedAt <= DateTime.UtcNow.AddMinutes(-5))
                 {
-                    try
-                    {
-                        var gatewayState = await _phonePePaymentService.GetOrderStateAsync(
-                            pendingRetakePayment.MerchantOrderId,
-                            cancellationToken);
-                        await ProcessPhonePeStateAsync(
-                            pendingRetakePayment,
-                            gatewayState,
-                            cancellationToken);
-                    }
-                    catch (Exception ex)
-                    {
-                        _logger.LogWarning(
-                            ex,
-                            "Could not reconcile pending Razorpay retake payment {MerchantOrderId} when opening Learn.",
-                            pendingRetakePayment.MerchantOrderId);
-                    }
+                    pendingRetakePayment.Status = "Failed";
+                    pendingRetakePayment.UpdatedAt = DateTime.UtcNow;
+                    await _dbContext.SaveChangesAsync(cancellationToken);
                 }
 
                 var hasUnusedPaidRetake = await _dbContext.PaymentTransactions.AsNoTracking().AnyAsync(payment =>
