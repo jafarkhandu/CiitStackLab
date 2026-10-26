@@ -45,6 +45,23 @@
 .ciit-exam-action:hover{transform:translateY(-2px);box-shadow:0 8px 17px rgba(37,99,235,.16)}
 .ciit-exam-action:focus-visible{outline:3px solid rgba(37,99,235,.25);outline-offset:3px}
 .ciit-exam-status{box-shadow:inset 0 1px 0 rgba(255,255,255,.8)}
+.ciit-exam-payment-paid{display:inline-flex;align-items:center;gap:7px;margin-top:5px;color:#168154;font-size:.82rem;font-weight:850}
+.ciit-exam-payment-paid i{display:inline-grid;place-items:center;width:18px;height:18px;border-radius:50%;background:#e5f8ef}
+.ciit-exam-result-card{min-width:0;padding:11px 12px;border:1px solid rgba(213,228,248,.95);border-radius:14px;background:linear-gradient(145deg,rgba(255,255,255,.95),rgba(245,249,255,.88));box-shadow:inset 0 1px 0 rgba(255,255,255,.9)}
+.ciit-exam-result-heading{display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px}
+.ciit-exam-result-heading .ciit-exam-status{gap:6px}
+.ciit-exam-result-heading .ciit-exam-status i{font-size:.78rem}
+.ciit-exam-score-chip{display:inline-flex;align-items:center;padding:5px 9px;border:1px solid #dbe7f8;border-radius:9px;background:#f0f5ff;color:#294a78;font-size:.76rem;font-weight:850;font-variant-numeric:tabular-nums}
+.ciit-exam-status[data-status="InProgress"]{border-color:#b8e6fa;background:#ecfaff;color:#087da6}
+.ciit-exam-status[data-status="Scheduled"],.ciit-exam-status[data-status="Ready"]{border-color:#cbdcff;background:#eef4ff;color:#3265c7}
+.ciit-exam-result-metrics{display:grid;gap:6px;margin-top:9px;color:#667b99;font-size:.74rem;line-height:1.45}
+.ciit-exam-result-metrics>span{display:flex;align-items:flex-start;gap:6px}
+.ciit-exam-result-metrics i{margin-top:2px}
+.ciit-exam-result-note{font-weight:750}
+.ciit-exam-result-note.is-success{color:#168154}
+.ciit-exam-result-note.is-danger{color:#b74747}
+.ciit-exam-result-note.is-neutral{color:#657995}
+@media(max-width:767.98px){.ciit-exam-result-card{padding:10px}.ciit-exam-result-heading{align-items:flex-start}.ciit-exam-score-chip{font-size:.72rem}}
 .ciit-exam-table tbody tr{animation:exam-row-enter .42s both;animation-delay:calc(var(--row-index,0)*35ms)}
 @@keyframes exam-row-enter{from{opacity:0;transform:translateY(9px)}to{opacity:1;transform:translateY(0)}}
 @@media(prefers-reduced-motion:reduce){.ciit-exam-table tbody tr{animation:none;transition:none}.ciit-exam-action{transition:none}}
@@ -132,7 +149,7 @@
                     var feeBase = Math.Max(1, nextAttemptNumber - 2) * 100m;
                     var fee = feeBase + Math.Round(feeBase * 0.18m, 2, MidpointRounding.AwayFromZero);
                     <div class="d-flex flex-wrap align-items-center justify-content-between gap-3 p-3 mb-2 rounded-4 border border-danger-subtle bg-white bg-opacity-75">
-                        <div><strong class="ciit-exam-topic">@exam.TopicTitle</strong><div class="ciit-exam-sub">Attempt #@nextAttemptNumber required</div>@if (paymentRequired){<div class="fw-bold text-danger">Exam fee: ₹@fee.ToString("0.00")</div>}else{<div class="small text-success fw-semibold">Free attempt remaining</div>}</div>
+                        <div><strong class="ciit-exam-topic">@exam.TopicTitle</strong><div class="ciit-exam-sub">Attempt #@nextAttemptNumber required</div>@if (paymentRequired && hasPaidRetake){<div class="ciit-exam-payment-paid"><i class="bi bi-check-circle-fill" aria-hidden="true"></i> Fee paid · ₹@fee.ToString("0.00")</div>}else if (paymentRequired){<div class="fw-bold text-danger">Exam fee: ₹@fee.ToString("0.00")</div>}else{<div class="small text-success fw-semibold">Free attempt remaining</div>}</div>
                         @if (hasPendingPayment)
                         {
                             <div class="d-flex flex-column align-items-end gap-2">
@@ -190,7 +207,44 @@
                         <tr style="--row-index: @row.RowIndex">
                             <td><span class="ciit-exam-topic">@exam.TopicTitle</span><span class="ciit-exam-sub">Attempt #@attemptNumber</span>@if(attemptNumber > 1){<span class="badge rounded-pill text-bg-info ms-1">Re-exam</span>@if(attemptNumber > 2){<span class="ciit-exam-sub">Fee: ₹@retakeFee.ToString("0.00")</span>}}</td>
                             <td><time class="exam-local-time" datetime="@DateTime.SpecifyKind(exam.ScheduledAtUtc, DateTimeKind.Utc).ToString("O")">@exam.ScheduledAtUtc.ToString("yyyy-MM-dd HH:mm") UTC</time></td>
-                            <td><span class="ciit-exam-status" data-status="@exam.Status">@(exam.Status == "TimedOut" ? "Time’s up" : exam.Status)</span>@if(exam.Status is "Passed" or "Failed" or "Terminated" or "TimedOut" or "Submitted"){<span class="ciit-exam-result-detail"><strong>Score:</strong> @exam.Score/@exam.TotalQuestions</span><span class="ciit-exam-result-detail"><strong>Answered:</strong> @exam.AnsweredQuestionsCount/@exam.TotalQuestions questions</span>@if(exam.Status == "Passed"){<span class="ciit-exam-result-detail">Passing score achieved</span>}else if(exam.Status == "Failed"){<span class="ciit-exam-result-detail">Passing score: 35/@exam.TotalQuestions</span>}else if(!string.IsNullOrWhiteSpace(exam.TerminationReason)){<span class="ciit-exam-result-detail">Reason: @exam.TerminationReason</span>}}</td>
+                            <td>
+                                <div class="ciit-exam-result-card">
+                                    <div class="ciit-exam-result-heading">
+                                        <span class="ciit-exam-status" data-status="@exam.Status">
+                                            <i class="bi @(exam.Status == "Passed" ? "bi-check-circle-fill" : exam.Status == "Failed" ? "bi-x-circle-fill" : exam.Status == "Terminated" ? "bi-slash-circle-fill" : exam.Status == "TimedOut" ? "bi-clock-fill" : exam.Status == "InProgress" ? "bi-play-circle-fill" : exam.Status == "Scheduled" || exam.Status == "Ready" ? "bi-calendar-check-fill" : "bi-hourglass-split")" aria-hidden="true"></i>
+                                            @(exam.Status == "TimedOut" ? "Time’s up" : exam.Status)
+                                        </span>
+                                        @if (exam.Status is "Passed" or "Failed" or "Terminated" or "TimedOut" or "Submitted")
+                                        {
+                                            <span class="ciit-exam-score-chip">@exam.Score / @exam.TotalQuestions</span>
+                                        }
+                                    </div>
+                                    @if (exam.Status is "Passed" or "Failed" or "Terminated" or "TimedOut" or "Submitted")
+                                    {
+                                        <div class="ciit-exam-result-metrics">
+                                            <span><i class="bi bi-check2-square" aria-hidden="true"></i> @exam.AnsweredQuestionsCount / @exam.TotalQuestions answered</span>
+                                            @if (exam.Status == "Passed")
+                                            {
+                                                <span class="ciit-exam-result-note is-success"><i class="bi bi-award-fill" aria-hidden="true"></i> Passing score achieved</span>
+                                            }
+                                            else if (exam.Status == "Failed")
+                                            {
+                                                <span class="ciit-exam-result-note is-danger"><i class="bi bi-graph-down-arrow" aria-hidden="true"></i> Passing score: 35 / @exam.TotalQuestions</span>
+                                            }
+                                            else if (!string.IsNullOrWhiteSpace(exam.TerminationReason))
+                                            {
+                                                <span class="ciit-exam-result-note is-neutral"><i class="bi bi-info-circle" aria-hidden="true"></i> @exam.TerminationReason</span>
+                                            }
+                                        </div>
+                                    }
+                                    else if (exam.Status is "Scheduled" or "Ready" or "InProgress")
+                                    {
+                                        <div class="ciit-exam-result-metrics">
+                                            <span class="ciit-exam-result-note is-neutral"><i class="bi bi-info-circle" aria-hidden="true"></i> @(exam.Status == "InProgress" ? "Exam in progress" : "Awaiting scheduled start")</span>
+                                        </div>
+                                    }
+                                </div>
+                            </td>
                             <td class="text-end">
                                 @if (exam.Status is "Scheduled" or "Ready")
                                 {
