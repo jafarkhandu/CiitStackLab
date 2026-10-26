@@ -2,30 +2,70 @@
     Layout = null;
     var message = ViewData["ExitMessage"]?.ToString() ?? "Payment window closed. Payment not completed.";
     var learningUrl = ViewData["LearningUrl"]?.ToString() ?? "/Examinations";
+    var outcome = ViewData["ExitOutcome"]?.ToString() ?? "cancelled";
+    var statusClass = outcome == "declined" ? "is-declined" : outcome == "completed" ? "is-completed" : "is-cancelled";
+    var statusTitle = outcome == "declined" ? "Payment Declined" : outcome == "completed" ? "Payment Confirmed" : "Payment Canceled";
+    var statusIcon = outcome == "declined" ? "!" : outcome == "completed" ? "✓" : "×";
 }
 <!doctype html>
 <html lang="en">
 <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>Payment update - CIIT Stack Lab</title>
+    <title>@statusTitle - CIIT Stack Lab</title>
     <style>
         * { box-sizing: border-box; }
-        body { margin: 0; min-height: 100vh; display: grid; place-items: center; background: #f5f7fb; color: #172744; font-family: Arial, sans-serif; }
-        main { width: min(100% - 32px, 480px); padding: 36px 28px; text-align: center; background: #fff; border: 1px solid #e1e7f0; border-radius: 20px; box-shadow: 0 18px 55px rgba(23, 39, 68, .10); }
-        h1 { margin: 0 0 14px; font-size: 24px; }
-        p { color: #68758b; line-height: 1.65; }
-        #countdown { margin: 20px auto 0; width: 58px; height: 58px; display: grid; place-items: center; border: 3px solid #dbe7ff; border-top-color: #1769e0; border-radius: 50%; color: #1769e0; font-size: 23px; font-weight: 700; }
-        a { color: #1769e0; }
+        :root { color-scheme: light; }
+        body {
+            margin: 0; min-height: 100vh; display: grid; place-items: center; padding: 24px;
+            background: radial-gradient(circle at 15% 12%, #e4edff 0, transparent 34%),
+                        radial-gradient(circle at 88% 86%, #e4eaff 0, transparent 32%), #f4f7fc;
+            color: #172744; font-family: Inter, "Segoe UI", Arial, sans-serif;
+        }
+        main {
+            --status: #d99b13; --status-soft: #fff5d7; --status-border: #f4d98a;
+            position: relative; overflow: hidden; width: min(100%, 470px); padding: 38px 30px 34px;
+            text-align: center; background: rgba(255,255,255,.88); backdrop-filter: blur(18px);
+            border: 1px solid rgba(255,255,255,.95); border-radius: 28px;
+            box-shadow: 0 30px 90px rgba(32,56,98,.15), inset 0 1px 0 rgba(255,255,255,.95);
+            animation: paymentCardEnter .55s cubic-bezier(.2,.8,.2,1) both;
+        }
+        main::before { content: ""; position: absolute; inset: 0 0 auto; height: 5px; background: linear-gradient(90deg, transparent, var(--status), transparent); }
+        main.is-cancelled { --status: #d99b13; --status-soft: #fff5d7; --status-border: #f4d98a; }
+        main.is-declined { --status: #dc3545; --status-soft: #fff0f1; --status-border: #f5bdc3; }
+        main.is-completed { --status: #16835e; --status-soft: #e8f8f0; --status-border: #b9e8d2; }
+        .status-icon {
+            display: grid; place-items: center; width: 72px; height: 72px; margin: 0 auto 20px;
+            border-radius: 24px; color: var(--status); background: var(--status-soft);
+            border: 1px solid var(--status-border); font-size: 38px; font-weight: 700;
+            box-shadow: 0 10px 24px color-mix(in srgb, var(--status) 12%, transparent);
+            animation: statusIconEnter .65s .12s cubic-bezier(.2,.8,.2,1) both;
+        }
+        .eyebrow { margin: 0 0 8px; color: #75829a; font-size: 11px; font-weight: 800; letter-spacing: .16em; text-transform: uppercase; }
+        h1 { margin: 0; color: var(--status); font-size: clamp(24px, 5vw, 29px); font-weight: 800; letter-spacing: -.035em; }
+        .message { margin: 13px 0 22px; color: #61708a; line-height: 1.65; }
+        .redirect-copy { margin: 0; color: #66758d; font-size: 14px; }
+        .count-label { color: #233957; font-weight: 800; font-variant-numeric: tabular-nums; }
+        #countdown {
+            position: relative; margin: 18px auto 0; width: 60px; height: 60px; display: grid; place-items: center;
+            border: 3px solid var(--status-border); border-top-color: var(--status); border-radius: 50%;
+            color: var(--status); font-size: 23px; font-weight: 800; font-variant-numeric: tabular-nums;
+            animation: timerPulse 1.8s ease-in-out infinite;
+        }
+        @keyframes paymentCardEnter { from { opacity: 0; transform: translateY(18px) scale(.98); } to { opacity: 1; transform: translateY(0) scale(1); } }
+        @keyframes statusIconEnter { from { opacity: 0; transform: scale(.72) rotate(-8deg); } to { opacity: 1; transform: scale(1) rotate(0); } }
+        @keyframes timerPulse { 0%,100% { box-shadow: 0 0 0 0 color-mix(in srgb, var(--status) 0%, transparent); } 50% { box-shadow: 0 0 0 7px color-mix(in srgb, var(--status) 10%, transparent); } }
+        @media (prefers-reduced-motion: reduce) { *, *::before, *::after { animation: none !important; transition: none !important; } }
     </style>
 </head>
 <body>
-    <main>
-        <h1>Payment update</h1>
-        <p id="payment-message">@message</p>
-        <p>Redirecting to Learning Hub in <strong id="count-label">5</strong> seconds…</p>
+    <main class="@statusClass">
+        <div class="status-icon" aria-hidden="true">@statusIcon</div>
+        <p class="eyebrow">CIIT Stack Lab · Examination payment</p>
+        <h1>@statusTitle</h1>
+        <p class="message" id="payment-message">@message</p>
+        <p class="redirect-copy">Redirecting to Learning Hub in <span class="count-label" id="count-label">5</span> seconds…</p>
         <div id="countdown" aria-label="Seconds until redirect">5</div>
-        <p><a href="@learningUrl">Go to Learning Hub now</a></p>
     </main>
     <script>
         (() => {
