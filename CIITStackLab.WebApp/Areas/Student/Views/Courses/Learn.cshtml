@@ -1078,17 +1078,7 @@ else
                             }
                             else if (modalHasPendingPayment)
                             {
-                                <div class="small text-danger-emphasis">A payment order is already pending. Verify its latest status before creating another order.</div>
-                                @if (!string.IsNullOrWhiteSpace(pendingRetakeOrderId))
-                                {
-                                    <a class="btn btn-outline-primary w-100 mt-3"
-                                       asp-controller="Courses"
-                                       asp-action="PhonePeReturn"
-                                       asp-route-merchantOrderId="@pendingRetakeOrderId"
-                                       asp-route-returnUrl="@($"{Context.Request.Path}{Context.Request.QueryString}")">
-                                        Verify existing payment
-                                    </a>
-                                }
+                                <div class="small text-danger-emphasis">Payment status is being confirmed. Please wait before retrying to avoid a duplicate payment.</div>
                             }
                             else
                             {
