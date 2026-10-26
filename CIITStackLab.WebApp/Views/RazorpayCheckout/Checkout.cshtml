@@ -73,13 +73,19 @@
                 },
                 modal: {
                     ondismiss: function () {
-                        status.textContent = "Payment window closed. No access was granted.";
+                        window.location.assign("/Payments/Razorpay/ExamPaymentExit"
+                            + "?merchantOrderId=" + encodeURIComponent(merchantOrderId)
+                            + "&razorpayOrderId=" + encodeURIComponent(orderId)
+                            + "&outcome=closed");
                     }
                 }
             });
 
             checkout.on("payment.failed", function (response) {
-                status.textContent = response?.error?.description || "Payment failed. Please try again.";
+                window.location.assign("/Payments/Razorpay/ExamPaymentExit"
+                    + "?merchantOrderId=" + encodeURIComponent(merchantOrderId)
+                    + "&razorpayOrderId=" + encodeURIComponent(orderId)
+                    + "&outcome=declined");
             });
 
             checkout.open();
