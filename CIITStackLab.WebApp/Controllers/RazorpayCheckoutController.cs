@@ -82,6 +82,22 @@ public sealed class RazorpayCheckoutController : Controller
         if (string.Equals(transaction.Status, "Completed", StringComparison.OrdinalIgnoreCase))
             return Json(new { success = true, status = "Completed" });
 
+        if (string.IsNullOrWhiteSpace(request.RazorpayOrderId))
+            return BadRequest(new { message = "Razorpay order details are incomplete." });
+
+        var order = await _payments.GetOrderAsync(request.RazorpayOrderId, cancellationToken);
+        if (!string.Equals(order.Receipt, transaction.MerchantOrderId, StringComparison.Ordinal)
+            || order.Amount != ToPaise(transaction.Amount))
+        {
+            return BadRequest(new { message = "The payment order does not match this transaction." });
+        }
+
+        if (string.Equals(order.Status, "paid", StringComparison.OrdinalIgnoreCase)
+            || order.AmountPaid > 0)
+        {
+            return Conflict(new { message = "Razorpay may have received this payment. Its status must be confirmed before retrying." });
+        }
+
         transaction.Status = "Failed";
         transaction.UpdatedAt = DateTime.UtcNow;
         await _db.SaveChangesAsync(cancellationToken);
@@ -93,6 +109,79 @@ public sealed class RazorpayCheckoutController : Controller
             request.Reason);
 
         return Json(new { success = true, status = "Failed" });
+    }
+
+    [HttpGet("Payments/Razorpay/ExamPaymentExit")]
+    public async Task<IActionResult> ExamPaymentExit(
+        string merchantOrderId,
+        string razorpayOrderId,
+        string outcome,
+        CancellationToken cancellationToken)
+    {
+        var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+        if (string.IsNullOrWhiteSpace(userId)) return Challenge();
+
+        var transaction = await _db.PaymentTransactions.FirstOrDefaultAsync(
+            item => item.MerchantOrderId == merchantOrderId
+                && item.UserId == userId
+                && item.PaymentPurpose == "ExamRetake",
+            cancellationToken);
+        if (transaction is null) return NotFound();
+
+        var message = string.Equals(outcome, "declined", StringComparison.OrdinalIgnoreCase)
+            ? "Payment declined."
+            : "Payment window closed. Payment not completed.";
+        var canRetry = false;
+
+        try
+        {
+            var order = await _payments.GetOrderAsync(razorpayOrderId, cancellationToken);
+            if (!string.Equals(order.Receipt, transaction.MerchantOrderId, StringComparison.Ordinal)
+                || order.Amount != ToPaise(transaction.Amount))
+            {
+                return BadRequest("The payment order does not match this transaction.");
+            }
+
+            if (string.Equals(order.Status, "paid", StringComparison.OrdinalIgnoreCase)
+                || order.AmountPaid > 0)
+            {
+                message = "Payment status is still being confirmed. Please do not pay again yet.";
+            }
+            else if (string.Equals(transaction.Status, "Completed", StringComparison.OrdinalIgnoreCase))
+            {
+                message = "Payment is already confirmed.";
+            }
+            else
+            {
+                transaction.Status = "Failed";
+                transaction.UpdatedAt = DateTime.UtcNow;
+                await _db.SaveChangesAsync(cancellationToken);
+                canRetry = true;
+            }
+        }
+        catch (Exception ex) when (ex is HttpRequestException or InvalidOperationException or TaskCanceledException)
+        {
+            _logger.LogWarning(ex,
+                "Could not confirm Razorpay order state for exam retake {MerchantOrderId} after checkout exit.",
+                merchantOrderId);
+            message = "Payment status could not be confirmed. Please do not pay again until it is checked.";
+        }
+
+        var learningUrl = Url.Action(
+            "Learn",
+            "Courses",
+            new
+            {
+                area = "Student",
+                id = transaction.CourseId,
+                topicId = transaction.ExamTopicId,
+                reopenExamModal = true
+            }) ?? $"/Courses/Learn/{transaction.CourseId}?topicId={transaction.ExamTopicId}&reopenExamModal=true";
+
+        ViewData["ExitMessage"] = message;
+        ViewData["LearningUrl"] = learningUrl;
+        ViewData["CanRetry"] = canRetry;
+        return View("ExamPaymentExit");
     }
 
     [HttpPost("Payments/Razorpay/Verify")]
@@ -265,6 +354,7 @@ public sealed class RazorpayVerificationRequest
 public sealed class RazorpayFailureRequest
 {
     public string MerchantOrderId { get; init; } = string.Empty;
+    public string RazorpayOrderId { get; init; } = string.Empty;
     public string? Code { get; init; }
     public string? Reason { get; init; }
 }
