@@ -82,20 +82,20 @@ public sealed class RazorpayCheckoutController : Controller
         if (string.Equals(transaction.Status, "Completed", StringComparison.OrdinalIgnoreCase))
             return Json(new { success = true, status = "Completed" });
 
-        if (string.IsNullOrWhiteSpace(request.RazorpayOrderId))
-            return BadRequest(new { message = "Razorpay order details are incomplete." });
-
-        var order = await _payments.GetOrderAsync(request.RazorpayOrderId, cancellationToken);
-        if (!string.Equals(order.Receipt, transaction.MerchantOrderId, StringComparison.Ordinal)
-            || order.Amount != ToPaise(transaction.Amount))
+        if (!string.IsNullOrWhiteSpace(request.RazorpayOrderId))
         {
-            return BadRequest(new { message = "The payment order does not match this transaction." });
-        }
+            var order = await _payments.GetOrderAsync(request.RazorpayOrderId, cancellationToken);
+            if (!string.Equals(order.Receipt, transaction.MerchantOrderId, StringComparison.Ordinal)
+                || order.Amount != ToPaise(transaction.Amount))
+            {
+                return BadRequest(new { message = "The payment order does not match this transaction." });
+            }
 
-        if (string.Equals(order.Status, "paid", StringComparison.OrdinalIgnoreCase)
-            || order.AmountPaid > 0)
-        {
-            return Conflict(new { message = "Razorpay may have received this payment. Its status must be confirmed before retrying." });
+            if (string.Equals(order.Status, "paid", StringComparison.OrdinalIgnoreCase)
+                || order.AmountPaid > 0)
+            {
+                return Conflict(new { message = "Razorpay may have received this payment. Its status must be confirmed before retrying." });
+            }
         }
 
         transaction.Status = "Failed";
