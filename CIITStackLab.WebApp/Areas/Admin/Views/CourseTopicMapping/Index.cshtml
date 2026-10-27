@@ -121,7 +121,7 @@
                                                    name="TopicIds"
                                                    value="@topic.Id"
                                                    @(topic.IsAssigned ? "checked" : "")
-                                                   @((topic.WasEverMapped && !topic.IsAssigned) ? "disabled" : "") />
+                                                   />
                                             <span class="ciit-mapping-check"><i class="bi bi-check-lg"></i></span>
                                             <span class="ciit-mapping-topic-icon"><i class="bi bi-diagram-3"></i></span>
                                             <span class="ciit-mapping-topic-copy">
@@ -129,7 +129,7 @@
                                                 <small>Topic #@topic.Id</small>
                                             </span>
                                             <span class="ciit-mapping-topic-state @(topic.WasEverMapped && !topic.IsAssigned ? "is-removed" : "")">
-                                                @(topic.IsAssigned ? "Assigned" : topic.WasEverMapped ? "Removed" : "Available")
+                                                @(topic.IsAssigned ? "Assigned" : topic.WasEverMapped ? "Removed · available to reassign" : "Available to assign")
                                             </span>
                                         </label>
                                     }
@@ -154,7 +154,7 @@
                         <div class="ciit-mapping-footer">
                             <div class="ciit-mapping-footer-note">
                                 <i class="bi bi-info-circle"></i>
-                                <span>New topics can be assigned once. Uncheck a saved topic to remove its course mapping; removed topics cannot be assigned again later.</span>
+                                <span>Select any active topic to assign it. Removed topics can be selected again to restore their mapping.</span>
                             </div>
                             <button type="submit" class="ciit-mapping-save-btn" id="mappingSaveBtn">
                                 <i class="bi bi-check2-circle"></i><span id="mappingSaveLabel">Save Mapping</span>
