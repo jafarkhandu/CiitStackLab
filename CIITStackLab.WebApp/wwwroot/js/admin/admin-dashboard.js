@@ -74,10 +74,10 @@ document.addEventListener("DOMContentLoaded", function () {
     }
 
     const routes = {
-        "Active Courses": function (id) { return "/Admin/Courses?editId=" + encodeURIComponent(id); },
-        "Active Topics": function (id) { return "/Admin/Topics?editId=" + encodeURIComponent(id); },
+        "Active Courses": function () { return "/Admin/Courses"; },
+        "Active Topics": function () { return "/Admin/Topics"; },
         "Learning Content": function (id) { return "/Admin/Content/Details?id=" + encodeURIComponent(id); },
-        "Active MCQs": function (id) { return "/Admin/Assessments/EditMcq?id=" + encodeURIComponent(id); }
+        "Active MCQs": function () { return "/Admin/Assessments/Mcqs"; }
     };
 
     function getTarget(row) {
