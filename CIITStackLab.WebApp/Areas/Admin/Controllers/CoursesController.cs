@@ -49,6 +49,18 @@ public class CoursesController : Controller
             return Fail("Choose a valid discount type.", model.Id);
         if (model.DiscountMode is not null && !model.DiscountValue.HasValue)
             return Fail("Enter a discount value.", model.Id);
+
+        if (model.DiscountMode is not null)
+        {
+            var existingCourse = model.Id > 0
+                ? (await _courseService.GetActiveAsync(cancellationToken))
+                    .FirstOrDefault(item => item.Id == model.Id)
+                : null;
+
+            var currentTotalPrice = existingCourse?.TotalPrice ?? 0m;
+            if (currentTotalPrice <= 0m)
+                return Fail("A discount cannot be applied when the course total price is ₹0.00. Assign active topics with a price first.", model.Id);
+        }
         if (model.DiscountMode == "percentage" && (model.DiscountValue < 0m || model.DiscountValue > 100m))
             return Fail("Percentage discount must be between 0 and 100.", model.Id);
         if (model.DiscountMode == "direct" && model.DiscountValue < 0m)
