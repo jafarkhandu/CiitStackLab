@@ -93,10 +93,10 @@
             <div class="ciit-practice-list">
                 @foreach (var topicGroup in Model.ActivePrograms
                     .GroupBy(x => x.TopicTitle)
-                    .OrderBy(x => x.Key.TopicTitle))
+                    .OrderBy(x => x.Key))
                 {
                     var topicPrograms = topicGroup.ToList();
-                    var topicName = string.IsNullOrWhiteSpace(topicGroup.Key.TopicTitle) ? "Unassigned topic" : topicGroup.Key.TopicTitle;
+                    var topicName = string.IsNullOrWhiteSpace(topicGroup.Key) ? "Unassigned topic" : topicGroup.Key;
                     <details class="ciit-assessment-tree-topic">
                         <summary>
                             <span class="ciit-assessment-tree-title"><i class="bi bi-chevron-right"></i><i class="bi bi-diagram-3"></i><strong>@topicName</strong></span>
