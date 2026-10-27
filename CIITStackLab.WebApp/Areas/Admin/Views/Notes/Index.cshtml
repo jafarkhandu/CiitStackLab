@@ -256,6 +256,14 @@
                 let visibleTopics = 0;
                 let visibleChapters = 0;
 
+                if (!query && expandedTopics.size > 1) {
+                    const lastExpandedTopicId = Array.from(expandedTopics).at(-1);
+                    expandedTopics.clear();
+                    if (lastExpandedTopicId !== undefined) {
+                        expandedTopics.add(lastExpandedTopicId);
+                    }
+                }
+
                 topicRows.forEach(topicRow => {
                     const topicId = topicRow.dataset.topicId;
                     const topicMatches = (topicRow.dataset.search || "")
