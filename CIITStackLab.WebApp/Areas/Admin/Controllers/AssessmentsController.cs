@@ -47,6 +47,7 @@ public sealed class AssessmentsController : Controller
     [HttpGet]
     public async Task<IActionResult> Mcqs(
         string? previewToken,
+        int? editId,
         CancellationToken cancellationToken)
     {
         ViewBag.McqMessage = TempData["AdminMcqMessage"] as string;
@@ -106,6 +107,26 @@ public sealed class AssessmentsController : Controller
                 {
                     ViewBag.McqChapters = Array.Empty<AdminAssessmentChapterLookupDto>();
                 }
+            }
+        }
+
+        if (editId.HasValue)
+        {
+            var selectedMcq = await _mcqService.GetByIdAsync(editId.Value, cancellationToken);
+            if (selectedMcq is not null)
+            {
+                ViewBag.EditMcqId = selectedMcq.Id;
+                ViewBag.EditMcqInput = new AdminChapterMcqInputDto
+                {
+                    NoteId = selectedMcq.NoteId ?? 0,
+                    Question = selectedMcq.Question,
+                    Option1 = selectedMcq.Option1,
+                    Option2 = selectedMcq.Option2,
+                    Option3 = selectedMcq.Option3,
+                    Option4 = selectedMcq.Option4,
+                    CorrectOptionNumber = selectedMcq.CorrectOptionNumber
+                };
+                ViewBag.OpenMcqModal = "edit";
             }
         }
 
