@@ -27,6 +27,12 @@
             <button type="button" class="ciit-mcq-primary-btn" data-bs-toggle="modal" data-bs-target="#createInterviewQuestionModal">
                 <i class="bi bi-plus-lg"></i><span>Add Interview Question</span>
             </button>
+            @if (Model.ArchivedQuestions.Count > 0)
+            {
+                <button type="button" class="ciit-mcq-archive-header-btn" data-bs-toggle="modal" data-bs-target="#archivedInterviewQuestionsModal">
+                    <i class="bi bi-archive"></i><span>Archived (@Model.ArchivedQuestions.Count)</span>
+                </button>
+            }
         </div>
     </div>
 
@@ -54,34 +60,92 @@
         <div class="ciit-mcq-card-header"><div><h2>Active Interview Questions</h2><p>@Model.ActiveQuestions.Count active question@(Model.ActiveQuestions.Count == 1 ? "" : "s")</p></div></div>
         @if (Model.ActiveQuestions.Count == 0)
         {
-            <div class="ciit-mcq-empty"><i class="bi bi-chat-left-text"></i><h3>No active interview questions</h3><p>Create an interview question and attach it to a Notes chapter.</p><button type="button" class="ciit-mcq-secondary-btn" data-bs-toggle="modal" data-bs-target="#createInterviewQuestionModal">Add Interview Question</button></div>
+            <div class="ciit-mcq-empty">
+                <i class="bi bi-chat-left-text"></i>
+                <h3>No active interview questions</h3>
+                <p>Create an interview question and attach it to a Notes chapter.</p>
+                <button type="button" class="ciit-mcq-secondary-btn" data-bs-toggle="modal" data-bs-target="#createInterviewQuestionModal">Add Interview Question</button>
+            </div>
         }
         else
         {
-            <div class="ciit-mcq-table-wrap">
-                <table class="ciit-mcq-table"><thead><tr><th>Question</th><th>Notes Chapter</th><th>Answer</th><th>Actions</th></tr></thead><tbody>
-                @foreach (var question in Model.ActiveQuestions)
+            <div class="ciit-assessment-tree">
+                @foreach (var topicGroup in Model.ActiveQuestions
+                    .GroupBy(x => new { x.TopicId, x.TopicTitle })
+                    .OrderBy(x => x.Key.TopicTitle))
                 {
-                    <tr><td><div class="ciit-mcq-question"><strong>@question.Question</strong><span>#@question.Id</span></div></td><td>@question.ChapterTitle</td><td>@question.Answer</td><td><div class="ciit-mcq-actions"><a asp-area="Admin" asp-controller="Assessments" asp-action="EditInterviewQuestion" asp-route-id="@question.Id" title="Edit"><i class="bi bi-pencil-square"></i></a><form asp-area="Admin" asp-controller="Assessments" asp-action="DeleteInterviewQuestion" method="post" onsubmit="return confirm('Archive this interview question?');">@Html.AntiForgeryToken()<input type="hidden" name="id" value="@question.Id" /><button type="submit" title="Archive"><i class="bi bi-archive"></i></button></form></div></td></tr>
+                    var topicQuestions = topicGroup.ToList();
+                    var topicName = string.IsNullOrWhiteSpace(topicGroup.Key.TopicTitle) ? "Unassigned topic" : topicGroup.Key.TopicTitle;
+                    <details class="ciit-assessment-tree-topic">
+                        <summary>
+                            <span class="ciit-assessment-tree-title"><i class="bi bi-chevron-right"></i><i class="bi bi-diagram-3"></i><strong>@topicName</strong></span>
+                            <span class="ciit-assessment-tree-count">@topicQuestions.Count @(topicQuestions.Count == 1 ? "question" : "questions")</span>
+                        </summary>
+                        <div class="ciit-assessment-tree-children">
+                            @foreach (var chapterGroup in topicGroup.GroupBy(x => new { x.NoteId, x.ChapterTitle }).OrderBy(x => x.Key.ChapterTitle))
+                            {
+                                var chapterQuestions = chapterGroup.ToList();
+                                var chapterName = string.IsNullOrWhiteSpace(chapterGroup.Key.ChapterTitle) ? "Unassigned chapter" : chapterGroup.Key.ChapterTitle;
+                                <details class="ciit-assessment-tree-chapter">
+                                    <summary>
+                                        <span class="ciit-assessment-tree-title"><i class="bi bi-chevron-right"></i><i class="bi bi-journal-text"></i><strong>@chapterName</strong></span>
+                                        <span class="ciit-assessment-tree-count">@chapterQuestions.Count</span>
+                                    </summary>
+                                    <div class="ciit-assessment-question-list">
+                                        @foreach (var question in chapterQuestions.OrderByDescending(x => x.Id))
+                                        {
+                                            <article class="ciit-assessment-question-item ciit-assessment-interview-item">
+                                                <div class="ciit-assessment-question-copy">
+                                                    <strong>@question.Question</strong>
+                                                    <span>#@question.Id</span>
+                                                    <p>@question.Answer</p>
+                                                </div>
+                                                <div class="ciit-mcq-actions">
+                                                    <a asp-area="Admin" asp-controller="Assessments" asp-action="EditInterviewQuestion" asp-route-id="@question.Id" title="Edit interview question" aria-label="Edit interview question @question.Id"><i class="bi bi-pencil-square"></i></a>
+                                                    <form asp-area="Admin" asp-controller="Assessments" asp-action="DeleteInterviewQuestion" method="post" onsubmit="return confirm('Archive this interview question?');">
+                                                        @Html.AntiForgeryToken()
+                                                        <input type="hidden" name="id" value="@question.Id" />
+                                                        <button type="submit" title="Archive question" aria-label="Archive interview question @question.Id"><i class="bi bi-archive"></i></button>
+                                                    </form>
+                                                </div>
+                                            </article>
+                                        }
+                                    </div>
+                                </details>
+                            }
+                        </div>
+                    </details>
                 }
-                </tbody></table>
             </div>
         }
     </section>
 
-    <section class="ciit-mcq-card ciit-mcq-archive ciit-assessment-data-card">
-        <div class="ciit-mcq-card-header"><div><h2>Archived Interview Questions</h2><p>Archived questions can be restored.</p></div><span class="ciit-mcq-count">@Model.ArchivedQuestions.Count</span></div>
-        @if (Model.ArchivedQuestions.Count == 0) { <div class="ciit-mcq-empty compact"><p>No archived interview questions.</p></div> }
-        else
-        {
-            <div class="ciit-mcq-archive-list">
-            @foreach (var question in Model.ArchivedQuestions)
-            {
-                <div class="ciit-mcq-archive-row"><div><strong>@question.Question</strong><span>@question.ChapterTitle</span></div><form asp-area="Admin" asp-controller="Assessments" asp-action="RestoreInterviewQuestion" method="post">@Html.AntiForgeryToken()<input type="hidden" name="id" value="@question.Id" /><button type="submit" class="ciit-mcq-restore"><i class="bi bi-arrow-counterclockwise"></i> Restore</button></form></div>
-            }
+    @if (Model.ArchivedQuestions.Count > 0)
+    {
+        <div class="modal fade ciit-assessment-archive-modal" id="archivedInterviewQuestionsModal" tabindex="-1" aria-labelledby="archivedInterviewQuestionsModalLabel" aria-hidden="true">
+            <div class="modal-dialog modal-lg modal-dialog-centered modal-dialog-scrollable">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <div><span class="ciit-admin-eyebrow">Recovery</span><h2 class="modal-title" id="archivedInterviewQuestionsModalLabel">Archived Interview Questions</h2><p>Archived questions can be restored.</p></div>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
+                    <div class="modal-body">
+                        @foreach (var question in Model.ArchivedQuestions.OrderBy(x => x.TopicTitle).ThenBy(x => x.ChapterTitle).ThenByDescending(x => x.Id))
+                        {
+                            <div class="ciit-assessment-archive-row">
+                                <div><strong>@question.Question</strong><span>@question.TopicTitle · @question.ChapterTitle</span></div>
+                                <form asp-area="Admin" asp-controller="Assessments" asp-action="RestoreInterviewQuestion" method="post">
+                                    @Html.AntiForgeryToken()
+                                    <input type="hidden" name="id" value="@question.Id" />
+                                    <button type="submit" class="ciit-mcq-restore"><i class="bi bi-arrow-counterclockwise"></i> Restore</button>
+                                </form>
+                            </div>
+                        }
+                    </div>
+                </div>
             </div>
-        }
-    </section>
+        </div>
+    }
     @await Html.PartialAsync("_InterviewQuestionImportModal", Model)
     @await Html.PartialAsync("_CreateInterviewQuestionModal",
         ViewBag.InterviewQuestionInput as CIITStackLab.Application.DTOs.AdminInterviewQuestionInputDto
