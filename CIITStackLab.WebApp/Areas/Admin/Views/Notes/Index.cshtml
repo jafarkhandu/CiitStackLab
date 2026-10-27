@@ -210,6 +210,23 @@
                     return;
                 }
 
+                if (expanded && !searchInput?.value.trim()) {
+                    topicRows.forEach(otherRow => {
+                        const otherTopicId = otherRow.dataset.topicId;
+                        if (otherTopicId === topicId) {
+                            return;
+                        }
+
+                        const otherToggle = otherRow.querySelector("[data-notes-topic-toggle]");
+                        otherToggle?.setAttribute("aria-expanded", "false");
+                        otherRow.classList.remove("is-expanded");
+                        chaptersFor(otherTopicId).forEach(row => {
+                            row.hidden = true;
+                        });
+                        expandedTopics.delete(otherTopicId);
+                    });
+                }
+
                 toggle.setAttribute("aria-expanded", expanded ? "true" : "false");
                 topicRow.classList.toggle("is-expanded", expanded);
 
