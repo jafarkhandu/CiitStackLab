@@ -168,25 +168,20 @@
 
                             <section class="ciit-curriculum-topic">
                                 <div class="ciit-curriculum-topic-header">
-                                    <div class="ciit-curriculum-topic-heading">
-                                        <span class="ciit-curriculum-topic-icon" aria-hidden="true">
-                                            <i class="bi bi-collection"></i>
-                                        </span>
-                                        <div>
-                                            <strong>@topic.Title</strong>
-                                            <span>
-                                                @topic.Chapters.Count chapter@(topic.Chapters.Count == 1 ? "" : "s")
-                                                · @topicResourceCount resource@(topicResourceCount == 1 ? "" : "s")
+                                    <strong>
+                                        <i class="bi bi-collection me-2" aria-hidden="true"></i>
+                                        @topic.Title
+                                    </strong>
+                                    <span>
+                                        @topic.Chapters.Count chapter@(topic.Chapters.Count == 1 ? "" : "s")
+                                        · @topicResourceCount resource@(topicResourceCount == 1 ? "" : "s")
+                                        @if (topicCompleted)
+                                        {
+                                            <span class="ms-2 text-success fw-semibold">
+                                                <i class="bi bi-check-circle-fill me-1" aria-hidden="true"></i>Completed
                                             </span>
-                                        </div>
-                                    </div>
-                                    @if (topicCompleted)
-                                    {
-                                        <span class="ciit-curriculum-topic-completed" title="Topic completed">
-                                            <i class="bi bi-check-circle-fill" aria-hidden="true"></i>
-                                            Completed
-                                        </span>
-                                    }
+                                        }
+                                    </span>
                                 </div>
 
                                 @if (topic.Chapters.Count == 0 && topic.Contents.Count == 0)
@@ -199,7 +194,7 @@
                                     {
                                         <div class="ciit-curriculum-lesson">
                                             <div class="ciit-curriculum-lesson-title">
-                                                <span class="ciit-curriculum-lesson-number">@chapter.SortOrder.ToString("00")</span>
+                                                <span class="ciit-curriculum-lesson-number">@chapter.SortOrder</span>
                                                 <div>
                                                     <strong>@chapter.Title</strong>
                                                     <small>Chapter learning map</small>
@@ -252,7 +247,9 @@
                                     {
                                         <div class="ciit-curriculum-lesson">
                                             <div class="ciit-curriculum-lesson-title">
-                                                <span class="ciit-curriculum-lesson-number"><i class="bi bi-play-fill"></i></span>
+                                                <span class="ciit-curriculum-lesson-number">
+                                                    <i class="bi bi-play-fill" aria-hidden="true"></i>
+                                                </span>
                                                 <div>
                                                     <strong>Topic learning content</strong>
                                                     <small>@topic.Contents.Count direct resource@(topic.Contents.Count == 1 ? "" : "s")</small>
@@ -271,7 +268,6 @@
                     </div>
                 }
             </section>
-
         </main>
     </div>
 </section>
