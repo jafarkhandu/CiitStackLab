@@ -590,14 +590,19 @@
                             },
                             modal: {
                                 ondismiss: function () {
-                                    if (typeof options.callback === 'function') options.callback('USER_CANCEL');
+                                    window.location.assign('/Payments/Razorpay/PaymentExit'
+                                        + '?merchantOrderId=' + encodeURIComponent(merchantOrderId)
+                                        + '&razorpayOrderId=' + encodeURIComponent(orderId)
+                                        + '&outcome=cancelled');
                                 }
                             }
                         });
 
-                        checkout.on('payment.failed', function (response) {
-                            showGatewayMessage(response?.error?.description || 'Payment failed. Please try again.');
-                            if (typeof options.callback === 'function') options.callback('USER_CANCEL');
+                        checkout.on('payment.failed', function () {
+                            window.location.assign('/Payments/Razorpay/PaymentExit'
+                                + '?merchantOrderId=' + encodeURIComponent(merchantOrderId)
+                                + '&razorpayOrderId=' + encodeURIComponent(orderId)
+                                + '&outcome=declined');
                         });
 
                         checkout.open();
