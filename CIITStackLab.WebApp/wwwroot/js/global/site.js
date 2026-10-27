@@ -185,12 +185,10 @@ document.addEventListener("DOMContentLoaded", function () {
     let merchantOrderId;
     let paymentOverlay;
 
-    paymentTrigger.removeAttribute("data-bs-toggle");
-    paymentTrigger.removeAttribute("data-bs-target");
-    paymentTrigger.innerHTML = '<i class="bi bi-shield-lock-fill me-2"></i>Pay with PhonePe';
+    paymentTrigger.innerHTML = '<i class="bi bi-bag-check me-2"></i>Enroll Now';
 
     if (modalEyebrow) {
-        modalEyebrow.textContent = "Secure PhonePe checkout";
+        modalEyebrow.textContent = "Secure Razorpay checkout";
     }
 
     if (modalSubtitle) {
@@ -198,11 +196,11 @@ document.addEventListener("DOMContentLoaded", function () {
     }
 
     if (paymentNote) {
-        paymentNote.textContent = "PhonePe checkout opens securely on this page. Course access is granted only after server-side payment verification.";
+        paymentNote.textContent = "Razorpay checkout opens securely. Course access is granted only after server-side payment verification.";
     }
 
     if (paymentButton) {
-        paymentButton.innerHTML = '<i class="bi bi-shield-lock-fill me-2"></i>Pay with PhonePe';
+        paymentButton.innerHTML = '<i class="bi bi-lock-fill me-2"></i>Pay securely with Razorpay';
     }
 
     const removePaymentOverlay = () => {
@@ -289,7 +287,7 @@ document.addEventListener("DOMContentLoaded", function () {
             script.src = phonePeScriptUrl;
             script.async = true;
             script.onload = resolve;
-            script.onerror = () => reject(new Error("PhonePe Checkout could not be loaded."));
+            script.onerror = () => reject(new Error("Razorpay Checkout could not be loaded."));
             document.head.appendChild(script);
         });
 
@@ -326,7 +324,7 @@ document.addEventListener("DOMContentLoaded", function () {
         merchantOrderId = result?.merchantOrderId;
 
         if (!result?.checkoutUrl || !merchantOrderId) {
-            throw new Error("PhonePe did not return the required checkout details.");
+            throw new Error("Razorpay did not return the required checkout details.");
         }
 
         return result.checkoutUrl;
@@ -334,7 +332,7 @@ document.addEventListener("DOMContentLoaded", function () {
 
     const showProcessing = (message) => {
         clearPagePaymentMessage();
-        showPaymentOverlay("Verifying your payment", message || "Checking the payment status securely with PhonePe...");
+        showPaymentOverlay("Verifying your payment", message || "Checking the payment status securely with Razorpay...");
 
         if (processingState) processingState.hidden = false;
         if (formState) formState.hidden = true;
@@ -351,7 +349,7 @@ document.addEventListener("DOMContentLoaded", function () {
 
         if (paymentButton) {
             paymentButton.disabled = false;
-            paymentButton.innerHTML = '<i class="bi bi-shield-lock-fill me-2"></i>Pay with PhonePe';
+            paymentButton.innerHTML = '<i class="bi bi-lock-fill me-2"></i>Pay securely with Razorpay';
         }
     };
 
@@ -365,7 +363,7 @@ document.addEventListener("DOMContentLoaded", function () {
 
         if (paymentButton) {
             paymentButton.disabled = false;
-            paymentButton.innerHTML = '<i class="bi bi-shield-lock-fill me-2"></i>Pay with PhonePe';
+            paymentButton.innerHTML = '<i class="bi bi-lock-fill me-2"></i>Pay securely with Razorpay';
         }
 
         if (processingState) {
@@ -390,7 +388,7 @@ document.addEventListener("DOMContentLoaded", function () {
             return;
         }
 
-        showProcessing("Checking the payment result securely with PhonePe...");
+        showProcessing("Checking the payment result securely with Razorpay...");
 
         try {
             const returnUrl = `/Courses/PhonePeReturn?merchantOrderId=${encodeURIComponent(merchantOrderId)}`;
@@ -438,7 +436,7 @@ document.addEventListener("DOMContentLoaded", function () {
                 handler: completePhonePePayment
             });
         } catch (error) {
-            console.error("PhonePe payment verification error:", error);
+            console.error("Razorpay payment verification error:", error);
             const message = error instanceof Error
                 ? error.message
                 : "We could not confirm the payment yet. Your order remains pending.";
@@ -456,7 +454,7 @@ document.addEventListener("DOMContentLoaded", function () {
 
         if (paymentButton) {
             paymentButton.disabled = true;
-            paymentButton.innerHTML = '<span class="spinner-border spinner-border-sm me-2" aria-hidden="true"></span>Opening PhonePe...';
+            paymentButton.innerHTML = '<span class="spinner-border spinner-border-sm me-2" aria-hidden="true"></span>Opening Razorpay...';
         }
 
         try {
@@ -481,18 +479,17 @@ document.addEventListener("DOMContentLoaded", function () {
                 }
             });
         } catch (error) {
-            console.error("PhonePe checkout error:", error);
-            showFailure(error instanceof Error ? error.message : "Unable to start PhonePe checkout.");
+            console.error("Razorpay checkout error:", error);
+            showFailure(error instanceof Error ? error.message : "Unable to start Razorpay checkout.");
         }
     };
 
-    paymentTrigger.addEventListener("click", function (event) {
+    paymentForm.addEventListener("submit", function (event) {
         event.preventDefault();
         event.stopPropagation();
-        event.stopImmediatePropagation();
         resetPaymentForm();
         openPhonePeCheckout();
-    }, true);
+    });
 });
 
 
