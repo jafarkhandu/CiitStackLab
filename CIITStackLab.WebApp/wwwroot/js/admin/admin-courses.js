@@ -136,6 +136,7 @@ document.addEventListener("DOMContentLoaded", function () {
             const open = archiveToggle.getAttribute("aria-expanded") === "true";
             archiveToggle.setAttribute("aria-expanded", open ? "false" : "true");
             archivePanel.hidden = open;
+            archivePanel.setAttribute("aria-hidden", open ? "true" : "false");
         });
     }
 
