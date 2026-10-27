@@ -43,7 +43,8 @@
 .ciit-assessment-subpage .ciit-mcq-table-wrap { max-height:min(62vh,570px); overflow:auto; overscroll-behavior:contain; scrollbar-gutter:stable; }
 .ciit-assessment-subpage .ciit-mcq-table thead th { position:sticky; top:0; z-index:3; box-shadow:0 1px 0 #e8edf5; }
 .ciit-assessment-subpage .ciit-mcq-archive-list,.ciit-assessment-subpage--practice .ciit-practice-archive-list { max-height:min(38vh,340px); overflow-y:auto; overscroll-behavior:contain; scrollbar-gutter:stable; }
-.ciit-assessment-subpage--practice .ciit-practice-list { max-height:min(76vh,760px); overflow-y:auto; overscroll-behavior:contain; scrollbar-gutter:stable; }
+/* Keep practice hierarchy in normal document flow so the page owns vertical scrolling. */
+.ciit-assessment-subpage--practice .ciit-practice-list { max-height:none; overflow:visible; overscroll-behavior:auto; scrollbar-gutter:auto; }
 .ciit-assessment-subpage--practice .ciit-practice-program:last-child { border-bottom:1px solid #edf1f7; }
 
 .ciit-assessment-subpage {
