@@ -93,7 +93,10 @@
                                                 }
                                                 @if (!string.IsNullOrWhiteSpace(content.Slides))
                                                 {
-                                                    <a href="@CIITStackLab.WebApp.Helpers.LearningPagePresentation.ResolveResourceUrl(content.Slides, "slides")" target="_blank" rel="noopener noreferrer"><i class="bi bi-file-earmark-slides"></i> Open slides</a>
+                                                    <a href="@CIITStackLab.WebApp.Helpers.LearningPagePresentation.ResolveResourceUrl(content.Slides, "slides")"
+                                                       data-slide-file-url="@Url.Action("SlideFile", "Notes", new { area = "Student", topicId = topic.Id, chapterId = chapter.Id, contentId = content.Id })"
+                                                       target="_blank"
+                                                       rel="noopener noreferrer"><i class="bi bi-file-earmark-slides"></i> Open slides</a>
                                                 }
                                                 @if (string.IsNullOrWhiteSpace(content.VideoName) && string.IsNullOrWhiteSpace(content.Slides))
                                                 {
@@ -135,7 +138,12 @@
                                         }
                                         @if (!string.IsNullOrWhiteSpace(content.Slides))
                                         {
-                                            <a href="@CIITStackLab.WebApp.Helpers.LearningPagePresentation.ResolveResourceUrl(content.Slides, "slides")" target="_blank" rel="noopener noreferrer" aria-label="Open slides for @content.Title" title="Open slides"><i class="bi bi-file-earmark-slides"></i></a>
+                                            <a href="@CIITStackLab.WebApp.Helpers.LearningPagePresentation.ResolveResourceUrl(content.Slides, "slides")"
+                                               data-slide-file-url="@Url.Action("SlideFile", "Notes", new { area = "Student", topicId = topic.Id, chapterId = (int?)null, contentId = content.Id })"
+                                               target="_blank"
+                                               rel="noopener noreferrer"
+                                               aria-label="Open slides for @content.Title"
+                                               title="Open slides"><i class="bi bi-file-earmark-slides"></i></a>
                                         }
                                         @if (content.QuestionCount > 0)
                                         {
@@ -151,3 +159,5 @@
         }
     </div>
 </aside>
+
+<script defer src="/js/student/learning-slide-viewer.js?v=1"></script>
