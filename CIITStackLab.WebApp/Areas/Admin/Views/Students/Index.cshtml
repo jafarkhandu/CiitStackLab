@@ -13,17 +13,7 @@
             <h1>Students</h1>
             <p>Manage registered CIIT Stack Lab student accounts from the existing Identity database.</p>
         </div>
-        <div class="ciit-student-summary">
-            <div class="ciit-student-summary-item">
-                <strong>@Model.ActiveStudents.Count</strong>
-                <span>Active</span>
-            </div>
-            <div class="ciit-student-summary-divider"></div>
-            <div class="ciit-student-summary-item is-muted">
-                <strong>@Model.InactiveStudents.Count</strong>
-                <span>Inactive</span>
-            </div>
-        </div>
+
     </div>
 
     @if (!string.IsNullOrWhiteSpace(message))
@@ -51,17 +41,17 @@
             <button type="button"
                     class="ciit-student-filter active"
                     data-student-filter="active">
-                Active <span>@Model.ActiveStudents.Count</span>
+                Active
             </button>
             <button type="button"
                     class="ciit-student-filter"
                     data-student-filter="inactive">
-                Inactive <span>@Model.InactiveStudents.Count</span>
+                Inactive
             </button>
             <button type="button"
                     class="ciit-student-filter"
                     data-student-filter="all">
-                All <span>@(Model.ActiveStudents.Count + Model.InactiveStudents.Count)</span>
+                All
             </button>
         </div>
     </div>
