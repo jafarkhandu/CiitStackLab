@@ -62,3 +62,77 @@ document.addEventListener("DOMContentLoaded", function () {
     document.querySelectorAll(".ciit-topic-alert-close").forEach(b=>b.addEventListener("click",()=>b.closest(".ciit-topic-alert")?.remove()));
     document.querySelectorAll(".js-topic-delete-form").forEach(f=>f.addEventListener("submit",function(e){if(!window.confirm("Archive "+(f.dataset.topicName||"this topic")+"? You can restore it later."))e.preventDefault();}));
 });
+
+
+/* ==================== DASHBOARD MODAL NAVIGATION ==================== */
+document.addEventListener("DOMContentLoaded", function () {
+    const modalBody = document.getElementById("ciitDashboardModalBody");
+    const modalTitle = document.getElementById("ciitDashboardModalTitle");
+
+    if (!modalBody || !modalTitle) {
+        return;
+    }
+
+    const routes = {
+        "Active Courses": function (id) { return "/Admin/Courses?editId=" + encodeURIComponent(id); },
+        "Active Topics": function (id) { return "/Admin/Topics?editId=" + encodeURIComponent(id); },
+        "Learning Content": function (id) { return "/Admin/Content/Details?id=" + encodeURIComponent(id); },
+        "Active MCQs": function (id) { return "/Admin/Assessments/EditMcq?id=" + encodeURIComponent(id); }
+    };
+
+    function getTarget(row) {
+        const idElement = row.querySelector(".ciit-dashboard-modal-number");
+        const id = idElement?.textContent.trim();
+        const routeFactory = routes[modalTitle.textContent.trim()];
+        return id && routeFactory ? routeFactory(id) : null;
+    }
+
+    function makeRowInteractive(row) {
+        const target = getTarget(row);
+        if (!target) {
+            return;
+        }
+
+        row.setAttribute("role", "link");
+        row.setAttribute("tabindex", "0");
+        row.style.cursor = "pointer";
+        row.setAttribute("aria-label", "Open selected " + modalTitle.textContent.trim().toLowerCase().replace(/^active /, ""));
+    }
+
+    const observeRows = function () {
+        modalBody.querySelectorAll(".ciit-dashboard-modal-item").forEach(makeRowInteractive);
+    };
+
+    const observer = new MutationObserver(observeRows);
+    observer.observe(modalBody, { childList: true });
+    observeRows();
+
+    modalBody.addEventListener("click", function (event) {
+        const row = event.target.closest(".ciit-dashboard-modal-item");
+        if (!row || !modalBody.contains(row)) {
+            return;
+        }
+
+        const target = getTarget(row);
+        if (target) {
+            window.location.href = target;
+        }
+    });
+
+    modalBody.addEventListener("keydown", function (event) {
+        if (event.key !== "Enter" && event.key !== " ") {
+            return;
+        }
+
+        const row = event.target.closest(".ciit-dashboard-modal-item");
+        if (!row || !modalBody.contains(row)) {
+            return;
+        }
+
+        event.preventDefault();
+        const target = getTarget(row);
+        if (target) {
+            window.location.href = target;
+        }
+    });
+});
