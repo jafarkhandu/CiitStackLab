@@ -139,7 +139,7 @@
                 <div class="ciit-course-experience-card-header">
                     <div>
                         <h2>Course Curriculum</h2>
-                        <p>Each topic is presented as its own learning block with its chapters and resources.</p>
+                        <p>Each topic is shown as a simple learning block.</p>
                     </div>
                     <span class="ciit-curriculum-summary">
                         <i class="bi bi-journal-check"></i>
@@ -156,114 +156,11 @@
                     <div class="ciit-course-curriculum-list">
                         @foreach (var topic in Model.Topics)
                         {
-                            var topicContentIds = topic.Contents
-                                .Concat(topic.Chapters.SelectMany(chapter => chapter.Contents))
-                                .Select(content => content.Id)
-                                .Distinct()
-                                .ToList();
-                            var topicCompleted = topicContentIds.Count > 0
-                                && topicContentIds.All(completedContentIds.Contains);
-                            var topicResourceCount = topic.Chapters.Sum(chapter => chapter.Contents.Count)
-                                + topic.Contents.Count;
-
-                            <section class="ciit-curriculum-topic">
+                            <div class="ciit-curriculum-topic">
                                 <div class="ciit-curriculum-topic-header">
-                                    <strong>
-                                        <i class="bi bi-collection me-2" aria-hidden="true"></i>
-                                        @topic.Title
-                                    </strong>
-                                    <span>
-                                        @topic.Chapters.Count chapter@(topic.Chapters.Count == 1 ? "" : "s")
-                                        · @topicResourceCount resource@(topicResourceCount == 1 ? "" : "s")
-                                        @if (topicCompleted)
-                                        {
-                                            <span class="ms-2 text-success fw-semibold">
-                                                <i class="bi bi-check-circle-fill me-1" aria-hidden="true"></i>Completed
-                                            </span>
-                                        }
-                                    </span>
+                                    <strong>@topic.Title</strong>
                                 </div>
-
-                                @if (topic.Chapters.Count == 0 && topic.Contents.Count == 0)
-                                {
-                                    <div class="ciit-curriculum-empty">No learning resources are linked to this topic yet.</div>
-                                }
-                                else
-                                {
-                                    @foreach (var chapter in topic.Chapters)
-                                    {
-                                        <div class="ciit-curriculum-lesson">
-                                            <div class="ciit-curriculum-lesson-title">
-                                                <span class="ciit-curriculum-lesson-number">@chapter.SortOrder</span>
-                                                <div>
-                                                    <strong>@chapter.Title</strong>
-                                                    <small>Chapter learning map</small>
-                                                </div>
-                                            </div>
-                                            <div class="ciit-curriculum-resource-map">
-                                                @if (!string.IsNullOrWhiteSpace(chapter.NotesHtml))
-                                                {
-                                                    <span class="ciit-curriculum-resource-chip">
-                                                        <i class="bi bi-journal-text"></i> Notes
-                                                    </span>
-                                                }
-                                                @if (chapter.Contents.Count > 0)
-                                                {
-                                                    <span class="ciit-curriculum-resource-chip">
-                                                        <i class="bi bi-play-btn"></i> Content (@chapter.Contents.Count)
-                                                    </span>
-                                                }
-                                                @if (chapter.Questions.Count > 0)
-                                                {
-                                                    <span class="ciit-curriculum-resource-chip">
-                                                        <i class="bi bi-ui-checks-grid"></i> MCQs (@chapter.Questions.Count)
-                                                    </span>
-                                                }
-                                                @if (chapter.InterviewQuestions.Count > 0)
-                                                {
-                                                    <span class="ciit-curriculum-resource-chip">
-                                                        <i class="bi bi-chat-square-text"></i> Interview (@chapter.InterviewQuestions.Count)
-                                                    </span>
-                                                }
-                                                @if (chapter.PracticeQuestions.Count > 0)
-                                                {
-                                                    <span class="ciit-curriculum-resource-chip">
-                                                        <i class="bi bi-code-square"></i> Practice (@chapter.PracticeQuestions.Count)
-                                                    </span>
-                                                }
-                                                @if (string.IsNullOrWhiteSpace(chapter.NotesHtml)
-                                                     && chapter.Contents.Count == 0
-                                                     && chapter.Questions.Count == 0
-                                                     && chapter.InterviewQuestions.Count == 0
-                                                     && chapter.PracticeQuestions.Count == 0)
-                                                {
-                                                    <span class="ciit-curriculum-resource-empty">No resources</span>
-                                                }
-                                            </div>
-                                        </div>
-                                    }
-
-                                    @if (topic.Contents.Count > 0)
-                                    {
-                                        <div class="ciit-curriculum-lesson">
-                                            <div class="ciit-curriculum-lesson-title">
-                                                <span class="ciit-curriculum-lesson-number">
-                                                    <i class="bi bi-play-fill" aria-hidden="true"></i>
-                                                </span>
-                                                <div>
-                                                    <strong>Topic learning content</strong>
-                                                    <small>@topic.Contents.Count direct resource@(topic.Contents.Count == 1 ? "" : "s")</small>
-                                                </div>
-                                            </div>
-                                            <div class="ciit-curriculum-resource-map">
-                                                <span class="ciit-curriculum-resource-chip">
-                                                    <i class="bi bi-play-btn"></i> Content (@topic.Contents.Count)
-                                                </span>
-                                            </div>
-                                        </div>
-                                    }
-                                }
-                            </section>
+                            </div>
                         }
                     </div>
                 }
