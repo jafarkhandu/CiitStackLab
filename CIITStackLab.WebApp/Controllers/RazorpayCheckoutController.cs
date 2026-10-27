@@ -112,7 +112,8 @@ public sealed class RazorpayCheckoutController : Controller
     }
 
     [HttpGet("Payments/Razorpay/ExamPaymentExit")]
-    public async Task<IActionResult> ExamPaymentExit(
+    [HttpGet("Payments/Razorpay/PaymentExit")]
+    public async Task<IActionResult> PaymentExit(
         string merchantOrderId,
         string razorpayOrderId,
         string outcome,
@@ -120,46 +121,122 @@ public sealed class RazorpayCheckoutController : Controller
     {
         var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
         if (string.IsNullOrWhiteSpace(userId)) return Challenge();
+        if (string.IsNullOrWhiteSpace(merchantOrderId) || string.IsNullOrWhiteSpace(razorpayOrderId))
+            return BadRequest("Payment order details are missing.");
 
         var transaction = await _db.PaymentTransactions.FirstOrDefaultAsync(
-            item => item.MerchantOrderId == merchantOrderId
-                && item.UserId == userId
-                && item.PaymentPurpose == "ExamRetake",
+            item => item.MerchantOrderId == merchantOrderId && item.UserId == userId,
             cancellationToken);
         if (transaction is null) return NotFound();
 
+        var isExamRetake = string.Equals(
+            transaction.PaymentPurpose,
+            "ExamRetake",
+            StringComparison.Ordinal);
         var isDeclined = string.Equals(outcome, "declined", StringComparison.OrdinalIgnoreCase);
-        var message = isDeclined
-            ? "Payment declined."
-            : "Payment window closed. Payment not completed.";
 
-        if (!string.Equals(transaction.Status, "Completed", StringComparison.OrdinalIgnoreCase))
+        string GetReturnUrl(bool completed)
         {
-            transaction.Status = "Failed";
-            transaction.UpdatedAt = DateTime.UtcNow;
-            await _db.SaveChangesAsync(cancellationToken);
-        }
-        else
-        {
-            message = "Payment was already confirmed.";
-        }
+            if (completed)
+                return GetSuccessUrl(transaction);
 
-        var learningUrl = Url.Action(
-            "Learn",
-            "Courses",
-            new
+            if (isExamRetake)
             {
-                area = "Student",
-                id = transaction.CourseId,
-                topicId = transaction.ExamTopicId,
-                reopenExamModal = true
-            }) ?? $"/Courses/Learn/{transaction.CourseId}?topicId={transaction.ExamTopicId}&reopenExamModal=true";
+                return Url.Action(
+                    "Learn",
+                    "Courses",
+                    new
+                    {
+                        area = "Student",
+                        id = transaction.CourseId,
+                        topicId = transaction.ExamTopicId
+                    }) ?? $"/Courses/Learn/{transaction.CourseId}?topicId={transaction.ExamTopicId}";
+            }
 
-        ViewData["ExitMessage"] = message;
-        ViewData["ExitOutcome"] = string.Equals(transaction.Status, "Completed", StringComparison.OrdinalIgnoreCase)
-            ? "completed"
-            : isDeclined ? "declined" : "cancelled";
-        ViewData["LearningUrl"] = learningUrl;
+            return Url.Action(
+                "Details",
+                "Courses",
+                new { area = "Student", id = transaction.CourseId })
+                ?? $"/Courses/Details/{transaction.CourseId}";
+        }
+
+        void SetExitView(string message, string exitOutcome, string destination)
+        {
+            ViewData["ExitMessage"] = message;
+            ViewData["ExitOutcome"] = exitOutcome;
+            ViewData["ExitPurpose"] = isExamRetake ? "exam" : "course";
+            ViewData["LearningUrl"] = destination;
+        }
+
+        if (string.Equals(transaction.Status, "Completed", StringComparison.OrdinalIgnoreCase))
+        {
+            SetExitView("Payment was already confirmed.", "completed", GetReturnUrl(completed: true));
+            return View("ExamPaymentExit");
+        }
+
+        RazorpayOrderDetails order;
+        try
+        {
+            order = await _payments.GetOrderAsync(razorpayOrderId, cancellationToken);
+        }
+        catch (Exception ex) when (ex is not OperationCanceledException)
+        {
+            _logger.LogWarning(
+                ex,
+                "Could not verify Razorpay order {RazorpayOrderId} during checkout exit for merchant order {MerchantOrderId}.",
+                razorpayOrderId,
+                merchantOrderId);
+
+            SetExitView(
+                "We could not confirm the gateway status. Your payment remains pending; access has not been granted.",
+                "pending",
+                GetReturnUrl(completed: false));
+            return View("ExamPaymentExit");
+        }
+
+        if (!string.Equals(order.Id, razorpayOrderId, StringComparison.Ordinal)
+            || !string.Equals(order.Receipt, transaction.MerchantOrderId, StringComparison.Ordinal)
+            || order.Amount != ToPaise(transaction.Amount))
+        {
+            _logger.LogWarning(
+                "Razorpay order details did not match merchant order {MerchantOrderId} during checkout exit.",
+                merchantOrderId);
+            return BadRequest("The payment order does not match this transaction.");
+        }
+
+        if (string.Equals(order.Status, "paid", StringComparison.OrdinalIgnoreCase)
+            && order.Amount > 0
+            && order.AmountPaid == order.Amount)
+        {
+            var returnUrl = isExamRetake ? GetReturnUrl(completed: false) : null;
+            return RedirectToAction(
+                "PhonePeReturn",
+                "Courses",
+                new { area = "Student", merchantOrderId, returnUrl });
+        }
+
+        if (order.AmountPaid > 0)
+        {
+            SetExitView(
+                "The gateway reports a payment attempt in progress. We have not marked it cancelled or granted access.",
+                "pending",
+                GetReturnUrl(completed: false));
+            return View("ExamPaymentExit");
+        }
+
+        transaction.Status = "Failed";
+        transaction.UpdatedAt = DateTime.UtcNow;
+        await _db.SaveChangesAsync(cancellationToken);
+
+        var message = isDeclined
+            ? isExamRetake
+                ? "Payment was declined. No exam attempt was unlocked."
+                : "Payment was declined. No course access was granted."
+            : isExamRetake
+                ? "Payment was cancelled before completion. No exam attempt was unlocked."
+                : "Payment was cancelled before completion. No course access was granted.";
+
+        SetExitView(message, isDeclined ? "declined" : "cancelled", GetReturnUrl(completed: false));
         return View("ExamPaymentExit");
     }
 
