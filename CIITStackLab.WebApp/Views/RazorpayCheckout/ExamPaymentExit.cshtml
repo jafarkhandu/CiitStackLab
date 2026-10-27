@@ -3,9 +3,19 @@
     var message = ViewData["ExitMessage"]?.ToString() ?? "Payment window closed. Payment not completed.";
     var learningUrl = ViewData["LearningUrl"]?.ToString() ?? "/Examinations";
     var outcome = ViewData["ExitOutcome"]?.ToString() ?? "cancelled";
-    var statusClass = outcome == "declined" ? "is-declined" : outcome == "completed" ? "is-completed" : "is-cancelled";
-    var statusTitle = outcome == "declined" ? "Payment Declined" : outcome == "completed" ? "Payment Confirmed" : "Payment Canceled";
-    var statusIcon = outcome == "declined" ? "!" : outcome == "completed" ? "✓" : "×";
+    var exitPurpose = ViewData["ExitPurpose"]?.ToString() ?? "exam";
+    var isCoursePayment = string.Equals(exitPurpose, "course", StringComparison.OrdinalIgnoreCase);
+    var statusClass = outcome == "declined" ? "is-declined"
+        : outcome == "completed" ? "is-completed"
+        : outcome == "pending" ? "is-pending"
+        : "is-cancelled";
+    var statusTitle = outcome == "declined" ? "Payment Declined"
+        : outcome == "completed" ? "Payment Confirmed"
+        : outcome == "pending" ? "Payment Pending"
+        : "Payment Cancelled";
+    var statusIcon = outcome == "declined" ? "!" : outcome == "completed" ? "✓" : outcome == "pending" ? "…" : "×";
+    var paymentContext = isCoursePayment ? "Course enrollment payment" : "Examination payment";
+    var redirectDestination = isCoursePayment ? "course details" : "Learning Hub";
 }
 <!doctype html>
 <html lang="en">
@@ -34,6 +44,7 @@
         main.is-cancelled { --status: #d99b13; --status-soft: #fff5d7; --status-border: #f4d98a; }
         main.is-declined { --status: #dc3545; --status-soft: #fff0f1; --status-border: #f5bdc3; }
         main.is-completed { --status: #16835e; --status-soft: #e8f8f0; --status-border: #b9e8d2; }
+        main.is-pending { --status: #2563eb; --status-soft: #edf4ff; --status-border: #bfd4ff; }
         .status-icon {
             display: grid; place-items: center; width: 72px; height: 72px; margin: 0 auto 20px;
             border-radius: 24px; color: var(--status); background: var(--status-soft);
@@ -61,10 +72,10 @@
 <body>
     <main class="@statusClass">
         <div class="status-icon" aria-hidden="true">@statusIcon</div>
-        <p class="eyebrow">CIIT Stack Lab · Examination payment</p>
+        <p class="eyebrow">CIIT Stack Lab · @paymentContext</p>
         <h1>@statusTitle</h1>
         <p class="message" id="payment-message">@message</p>
-        <p class="redirect-copy">Redirecting to Learning Hub in <span class="count-label" id="count-label">5</span> seconds…</p>
+        <p class="redirect-copy">Returning to @redirectDestination in <span class="count-label" id="count-label">5</span> seconds…</p>
         <div id="countdown" aria-label="Seconds until redirect">5</div>
     </main>
     <script>
