@@ -35,7 +35,7 @@
         </div>
         <div class="ciit-course-toolbar-meta">
             <span><strong id="courseVisibleCount">@Model.ActiveCourses.Count</strong> active</span>
-            <button type="button" class="ciit-course-archive-toggle" id="archiveToggle" aria-expanded="false">
+            <button type="button" class="ciit-course-archive-toggle" id="archiveToggle" data-bs-toggle="modal" data-bs-target="#courseArchiveModal">
                 <i class="bi bi-archive"></i><span>Archived (@Model.ArchivedCourses.Count)</span>
             </button>
         </div>
@@ -91,7 +91,7 @@
         </div>
     </section>
 
-    <section class="ciit-course-archive-card" id="archivePanel" hidden aria-hidden="true">
+<div class="modal fade" id="courseArchiveModal" tabindex="-1" aria-labelledby="courseArchiveModalLabel" aria-hidden="true"><div class="modal-dialog modal-lg modal-dialog-centered modal-dialog-scrollable"><div class="modal-content"><section class="ciit-course-archive-card">
         <div class="ciit-course-archive-header">
             <span class="ciit-admin-panel-kicker">Recovery</span>
             <h2>Archived courses</h2>
@@ -120,7 +120,7 @@
             }
             </div>
         }
-    </section>
+    </section></div></div></div>
 </section>
 
 <div class="modal fade" id="courseModal" tabindex="-1" aria-labelledby="courseModalLabel" aria-hidden="true">
