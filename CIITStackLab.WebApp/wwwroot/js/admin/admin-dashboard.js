@@ -77,7 +77,7 @@ document.addEventListener("DOMContentLoaded", function () {
         "Active Courses": function () { return "/Admin/Courses"; },
         "Active Topics": function () { return "/Admin/Topics"; },
         "Learning Content": function (id) { return "/Admin/Content/Details?id=" + encodeURIComponent(id); },
-        "Active MCQs": function () { return "/Admin/Assessments/Mcqs"; }
+        "Active MCQs": function (id) { return "/Admin/Assessments/Mcqs?editId=" + encodeURIComponent(id); }
     };
 
     function getTarget(row) {
