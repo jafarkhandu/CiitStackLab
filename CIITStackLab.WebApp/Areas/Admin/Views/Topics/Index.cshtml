@@ -47,7 +47,7 @@
         </div>
         <div class="ciit-topic-toolbar-meta">
             <span><strong id="topicVisibleCount">@Model.ActiveTopics.Count</strong> active</span>
-            <button type="button" class="ciit-topic-archive-toggle" id="topicArchiveToggle" aria-expanded="false">
+            <button type="button" class="ciit-topic-archive-toggle" id="topicArchiveToggle" data-bs-toggle="modal" data-bs-target="#topicArchiveModal">
                 <i class="bi bi-archive"></i><span>Archived (@Model.ArchivedTopics.Count)</span>
             </button>
         </div>
@@ -102,7 +102,7 @@
         </div>
     </section>
 
-    <section class="ciit-topic-archive-card" id="topicArchivePanel" hidden>
+<div class="modal fade" id="topicArchiveModal" tabindex="-1" aria-labelledby="topicArchiveModalLabel" aria-hidden="true"><div class="modal-dialog modal-lg modal-dialog-centered modal-dialog-scrollable"><div class="modal-content"><section class="ciit-topic-archive-card">
         <div class="ciit-topic-archive-header">
             <span class="ciit-admin-panel-kicker">Recovery</span>
             <h2>Archived topics</h2>
@@ -131,7 +131,7 @@
                 }
             </div>
         }
-    </section>
+    </section></div></div></div>
 </section>
 
 <div class="modal fade" id="topicModal" tabindex="-1" aria-labelledby="topicModalLabel" aria-hidden="true">
