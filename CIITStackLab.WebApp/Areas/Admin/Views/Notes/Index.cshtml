@@ -234,7 +234,7 @@
                 });
             });
 
-            searchInput?.addEventListener("input", () => {
+            const refreshSearch = () => {
                 const query = searchInput.value.trim().toLowerCase();
                 let visibleTopics = 0;
                 let visibleChapters = 0;
@@ -298,7 +298,10 @@
                 if (empty) {
                     empty.hidden = visibleTopics !== 0;
                 }
-            });
+            };
+
+            searchInput?.addEventListener("input", refreshSearch);
+            searchInput?.addEventListener("search", refreshSearch);
         })();
     </script>
 }
