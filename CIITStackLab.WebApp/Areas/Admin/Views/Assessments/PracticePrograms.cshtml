@@ -10,6 +10,7 @@
 
 @section Styles {
     <link rel="stylesheet" href="~/css/admin-assessment-detail.css" asp-append-version="true" />
+    <link rel="stylesheet" href="~/css/admin-assessment-tree.css" asp-append-version="true" />
     <link rel="stylesheet" href="~/css/admin-practice.css" asp-append-version="true" />
     <link rel="stylesheet" href="~/css/admin-mcq-import.css" asp-append-version="true" />
     <link rel="stylesheet" href="~/css/admin-practice-import.css" asp-append-version="true" />
@@ -38,6 +39,12 @@
                     data-bs-toggle="modal" data-bs-target="#createPracticeProgramModal">
                 <i class="bi bi-plus-lg"></i><span>Add Program</span>
             </button>
+            @if (Model.ArchivedPrograms.Count > 0 || Model.ArchivedAnswers.Count > 0)
+            {
+                <button type="button" class="ciit-practice-archive-header-btn" data-bs-toggle="modal" data-bs-target="#archivedPracticeModal">
+                    <i class="bi bi-archive"></i><span>Archived (@(Model.ArchivedPrograms.Count + Model.ArchivedAnswers.Count))</span>
+                </button>
+            }
         </div>
     </div>
 
@@ -84,14 +91,40 @@
         else
         {
             <div class="ciit-practice-list">
-                @foreach (var program in Model.ActivePrograms)
+                @foreach (var topicGroup in Model.ActivePrograms
+                    .GroupBy(x => x.TopicTitle)
+                    .OrderBy(x => x.Key.TopicTitle))
                 {
+                    var topicPrograms = topicGroup.ToList();
+                    var topicName = string.IsNullOrWhiteSpace(topicGroup.Key.TopicTitle) ? "Unassigned topic" : topicGroup.Key.TopicTitle;
+                    <details class="ciit-assessment-tree-topic">
+                        <summary>
+                            <span class="ciit-assessment-tree-title"><i class="bi bi-chevron-right"></i><i class="bi bi-diagram-3"></i><strong>@topicName</strong></span>
+                            <span class="ciit-assessment-tree-count">@topicPrograms.Count @(topicPrograms.Count == 1 ? "program" : "programs")</span>
+                        </summary>
+                        <div class="ciit-assessment-tree-children">
+                            @foreach (var chapterGroup in topicGroup.GroupBy(x => new { x.NoteId, x.ChapterTitle }).OrderBy(x => x.Key.ChapterTitle))
+                            {
+                                var chapterPrograms = chapterGroup.ToList();
+                                var chapterName = string.IsNullOrWhiteSpace(chapterGroup.Key.ChapterTitle) ? "Unassigned chapter" : chapterGroup.Key.ChapterTitle;
+                                if (chapterName.StartsWith(topicName + " / ", StringComparison.OrdinalIgnoreCase))
+                                {
+                                    chapterName = chapterName.Substring(topicName.Length + 3);
+                                }
+                                <details class="ciit-assessment-tree-chapter">
+                                    <summary>
+                                        <span class="ciit-assessment-tree-title"><i class="bi bi-chevron-right"></i><i class="bi bi-journal-text"></i><strong>@chapterName</strong></span>
+                                        <span class="ciit-assessment-tree-count">@chapterPrograms.Count</span>
+                                    </summary>
+                                    <div class="ciit-practice-list ciit-assessment-practice-list">
+                                        @foreach (var program in chapterPrograms.OrderByDescending(x => x.Id))
+                                        {
                     <article class="ciit-practice-program">
                         <div class="ciit-practice-program-header">
                             <div>
                                 <span class="ciit-practice-id">#@program.Id</span>
                                 <h3>@program.QuestionTitle</h3>
-                                <p class="ciit-practice-meta">@program.ChapterTitle</p>
+                                <p class="ciit-practice-meta">@chapterName</p>
                             </div>
                             <div class="ciit-practice-actions">
                                 <a asp-area="Admin" asp-controller="Assessments" asp-action="EditPracticeProgram" asp-route-id="@program.Id" title="Edit program"><i class="bi bi-pencil-square"></i></a>
@@ -140,76 +173,62 @@
                             }
                         </div>
                     </article>
+                                        }
+                                    </div>
+                                </details>
+                            }
+                        </div>
+                    </details>
                 }
             </div>
         }
     </section>
 
-    <section class="ciit-practice-card ciit-practice-archive ciit-assessment-data-card">
-        <div class="ciit-practice-card-header">
-            <div>
-                <h2>Archived Practice Programs</h2>
-                <p>Archived programs can be restored.</p>
-            </div>
-            <span class="ciit-practice-count">@Model.ArchivedPrograms.Count</span>
-        </div>
-        @if (Model.ArchivedPrograms.Count == 0)
-        {
-            <div class="ciit-practice-empty compact"><p>No archived practice programs.</p></div>
-        }
-        else
-        {
-            <div class="ciit-practice-archive-list">
-                @foreach (var program in Model.ArchivedPrograms)
-                {
-                    <div class="ciit-practice-archive-row">
-                        <div>
-                            <strong>@program.QuestionTitle</strong>
-                            <span>@program.ChapterTitle</span>
-                        </div>
-                        <form asp-area="Admin" asp-controller="Assessments" asp-action="RestorePracticeProgram" method="post">
-                            @Html.AntiForgeryToken()
-                            <input type="hidden" name="id" value="@program.Id" />
-                            <button type="submit" class="ciit-practice-restore"><i class="bi bi-arrow-counterclockwise"></i> Restore</button>
-                        </form>
+    @if (Model.ArchivedPrograms.Count > 0 || Model.ArchivedAnswers.Count > 0)
+    {
+        <div class="modal fade ciit-assessment-archive-modal" id="archivedPracticeModal" tabindex="-1" aria-labelledby="archivedPracticeModalLabel" aria-hidden="true">
+            <div class="modal-dialog modal-lg modal-dialog-centered modal-dialog-scrollable">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <div><span class="ciit-admin-eyebrow">Recovery</span><h2 class="modal-title" id="archivedPracticeModalLabel">Archived Practice Items</h2><p>Restore archived programs or solutions.</p></div>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                     </div>
-                }
-            </div>
-        }
-    </section>
-
-    <section class="ciit-practice-card ciit-practice-archive ciit-assessment-data-card">
-        <div class="ciit-practice-card-header">
-            <div>
-                <h2>Archived Solutions</h2>
-                <p>Solutions can be restored while their parent program is active.</p>
-            </div>
-            <span class="ciit-practice-count">@Model.ArchivedAnswers.Count</span>
-        </div>
-        @if (Model.ArchivedAnswers.Count == 0)
-        {
-            <div class="ciit-practice-empty compact"><p>No archived solutions.</p></div>
-        }
-        else
-        {
-            <div class="ciit-practice-archive-list">
-                @foreach (var answer in Model.ArchivedAnswers)
-                {
-                    <div class="ciit-practice-archive-row">
-                        <div>
-                            <strong>@answer.Answer</strong>
-                            <span>@answer.QuestionTitle</span>
-                        </div>
-                        <form asp-area="Admin" asp-controller="Assessments" asp-action="RestorePracticeAnswer" method="post">
-                            @Html.AntiForgeryToken()
-                            <input type="hidden" name="id" value="@answer.Id" />
-                            <button type="submit" class="ciit-practice-restore"><i class="bi bi-arrow-counterclockwise"></i> Restore</button>
-                        </form>
+                    <div class="modal-body">
+                        @if (Model.ArchivedPrograms.Count > 0)
+                        {
+                            <h3 class="ciit-assessment-archive-subtitle">Archived Programs (@Model.ArchivedPrograms.Count)</h3>
+                            @foreach (var program in Model.ArchivedPrograms.OrderBy(x => x.TopicTitle).ThenBy(x => x.ChapterTitle).ThenByDescending(x => x.Id))
+                            {
+                                <div class="ciit-assessment-archive-row">
+                                    <div><strong>@program.QuestionTitle</strong><span>@program.TopicTitle · @program.ChapterTitle</span></div>
+                                    <form asp-area="Admin" asp-controller="Assessments" asp-action="RestorePracticeProgram" method="post">
+                                        @Html.AntiForgeryToken()
+                                        <input type="hidden" name="id" value="@program.Id" />
+                                        <button type="submit" class="ciit-practice-restore"><i class="bi bi-arrow-counterclockwise"></i> Restore</button>
+                                    </form>
+                                </div>
+                            }
+                        }
+                        @if (Model.ArchivedAnswers.Count > 0)
+                        {
+                            <h3 class="ciit-assessment-archive-subtitle">Archived Solutions (@Model.ArchivedAnswers.Count)</h3>
+                            @foreach (var answer in Model.ArchivedAnswers.OrderBy(x => x.QuestionTitle).ThenByDescending(x => x.Id))
+                            {
+                                <div class="ciit-assessment-archive-row">
+                                    <div><strong>@answer.Answer</strong><span>@answer.QuestionTitle</span></div>
+                                    <form asp-area="Admin" asp-controller="Assessments" asp-action="RestorePracticeAnswer" method="post">
+                                        @Html.AntiForgeryToken()
+                                        <input type="hidden" name="id" value="@answer.Id" />
+                                        <button type="submit" class="ciit-practice-restore"><i class="bi bi-arrow-counterclockwise"></i> Restore</button>
+                                    </form>
+                                </div>
+                            }
+                        }
                     </div>
-                }
+                </div>
             </div>
-        }
-    </section>
+        </div>
+    }
     @await Html.PartialAsync("_PracticeProgramImportModal", Model)
     @await Html.PartialAsync("_CreatePracticeProgramModal",
         ViewBag.PracticeProgramInput as CIITStackLab.Application.DTOs.AdminPracticeProgramInputDto
