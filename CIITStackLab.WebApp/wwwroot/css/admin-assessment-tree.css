@@ -43,6 +43,16 @@
 .ciit-assessment-archive-subtitle{margin:14px 0 4px;padding-bottom:9px;border-bottom:1px solid #e8edf5;font-size:.9rem;font-weight:800;color:#334155}
 @media(max-width:700px){.ciit-assessment-tree-topic>summary{padding:14px}.ciit-assessment-tree-children{padding-left:12px}.ciit-assessment-tree-title{gap:8px}.ciit-assessment-tree-title strong{font-size:.82rem}.ciit-assessment-question-item,.ciit-assessment-archive-row{align-items:flex-start;flex-direction:column}.ciit-assessment-question-item .ciit-mcq-actions{align-self:flex-end}.ciit-assessment-archive-row form,.ciit-assessment-archive-row button{width:100%}.ciit-assessment-archive-modal .modal-body{padding:8px 14px 14px}}
 
+/* Ensure the native disclosure marker never duplicates the custom chevron. */
+.ciit-assessment-tree-topic>summary::-webkit-details-marker,
+.ciit-assessment-tree-chapter>summary::-webkit-details-marker{
+    display:none;
+}
+.ciit-assessment-tree-topic>summary::marker,
+.ciit-assessment-tree-chapter>summary::marker{
+    content:"";
+}
+
 /* Match the compact, connected hierarchy used by the Notes page. */
 .ciit-assessment-tree-topic{
     border-bottom:1px solid #e2e8f0;
@@ -181,4 +191,11 @@
     .ciit-assessment-tree-chapter::before{left:-16px;width:10px}
     .ciit-assessment-question-list,.ciit-assessment-practice-list{margin-left:10px;padding-left:10px}
     .ciit-assessment-question-item::before{left:-11px;width:6px}
+}
+
+/* Allow wheel scrolling to chain from nested scroll areas to their parents. */
+html,
+body,
+body *{
+    overscroll-behavior:auto;
 }
