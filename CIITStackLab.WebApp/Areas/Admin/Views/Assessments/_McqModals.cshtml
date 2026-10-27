@@ -10,6 +10,66 @@
     var importMessage = ViewBag.McqImportMessage as string;
 }
 
+<div class="modal fade ciit-mcq-modal" id="editMcqModal" tabindex="-1" aria-labelledby="editMcqModalTitle" aria-hidden="true">
+    <div class="modal-dialog modal-lg modal-dialog-scrollable">
+        <div class="modal-content">
+            <div class="modal-header">
+                <div>
+                    <span class="ciit-admin-eyebrow">Assessment</span>
+                    <h2 class="modal-title" id="editMcqModalTitle">Edit MCQ</h2>
+                    <p class="mb-0">Update the question, answer options and correct answer.</p>
+                </div>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            @{
+                var editInput = ViewBag.EditMcqInput as CIITStackLab.Application.DTOs.AdminChapterMcqInputDto
+                    ?? new CIITStackLab.Application.DTOs.AdminChapterMcqInputDto();
+                var editMcqId = ViewBag.EditMcqId is int selectedEditId ? selectedEditId : 0;
+            }
+            <form asp-area="Admin" asp-controller="Assessments" asp-action="EditMcq" asp-route-id="@editMcqId" method="post">
+                @Html.AntiForgeryToken()
+                <div class="modal-body ciit-mcq-modal-body">
+                    <div asp-validation-summary="All" class="text-danger small mb-3"></div>
+                    <div class="ciit-mcq-modal-field">
+                        <label for="EditMcqNoteId">Chapter <span>*</span></label>
+                        <select id="EditMcqNoteId" name="NoteId" required>
+                            <option value="0">Select chapter</option>
+                            @foreach (var chapter in chapters)
+                            {
+                                <option value="@chapter.NoteId" selected="@(editInput.NoteId == chapter.NoteId ? "selected" : null)">@chapter.TopicTitle / @chapter.ChapterId — @chapter.ChapterTitle</option>
+                            }
+                        </select>
+                    </div>
+                    <div class="ciit-mcq-modal-field">
+                        <label for="EditMcqQuestion">Question <span>*</span></label>
+                        <textarea id="EditMcqQuestion" name="Question" rows="3" maxlength="4000" required>@editInput.Question</textarea>
+                    </div>
+                    <div class="ciit-mcq-modal-option-grid">
+                        <div class="ciit-mcq-modal-field"><label for="EditMcqOption1">Option A <span>*</span></label><input id="EditMcqOption1" name="Option1" value="@editInput.Option1" maxlength="2000" required /></div>
+                        <div class="ciit-mcq-modal-field"><label for="EditMcqOption2">Option B <span>*</span></label><input id="EditMcqOption2" name="Option2" value="@editInput.Option2" maxlength="2000" required /></div>
+                        <div class="ciit-mcq-modal-field"><label for="EditMcqOption3">Option C <span>*</span></label><input id="EditMcqOption3" name="Option3" value="@editInput.Option3" maxlength="2000" required /></div>
+                        <div class="ciit-mcq-modal-field"><label for="EditMcqOption4">Option D <span>*</span></label><input id="EditMcqOption4" name="Option4" value="@editInput.Option4" maxlength="2000" required /></div>
+                    </div>
+                    <div class="ciit-mcq-modal-field">
+                        <label for="EditMcqCorrectOption">Correct option <span>*</span></label>
+                        <select id="EditMcqCorrectOption" name="CorrectOptionNumber" required>
+                            <option value="0">Select correct answer</option>
+                            <option value="1" selected="@(editInput.CorrectOptionNumber == 1 ? "selected" : null)">A</option>
+                            <option value="2" selected="@(editInput.CorrectOptionNumber == 2 ? "selected" : null)">B</option>
+                            <option value="3" selected="@(editInput.CorrectOptionNumber == 3 ? "selected" : null)">C</option>
+                            <option value="4" selected="@(editInput.CorrectOptionNumber == 4 ? "selected" : null)">D</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-primary"><i class="bi bi-check2-circle me-1"></i>Save Changes</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
 <div class="modal fade ciit-mcq-modal" id="addMcqModal" tabindex="-1"
      aria-labelledby="addMcqModalTitle" aria-hidden="true">
     <div class="modal-dialog modal-lg modal-dialog-scrollable">
