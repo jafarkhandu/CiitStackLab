@@ -366,7 +366,7 @@
                 items: [
                     @foreach (var item in Model.ActiveCourses)
                     {
-                        <text>{ id: '@item.Id', name: @Html.Raw(System.Text.Json.JsonSerializer.Serialize(item.Title)), url: @Html.Raw(System.Text.Json.JsonSerializer.Serialize(Url.Action("Index", "Courses", new { area = "Admin", editId = item.Id }))), meta: @Html.Raw(System.Text.Json.JsonSerializer.Serialize(item.UpdatedAt.HasValue ? $"Updated {item.UpdatedAt.Value:dd MMM yyyy}" : "Updated date not available")) },</text>
+                        <text>{ id: '@item.Id', name: @Html.Raw(System.Text.Json.JsonSerializer.Serialize(item.Title)), url: @Html.Raw(System.Text.Json.JsonSerializer.Serialize(Url.Action("Index", "Courses", new { area = "Admin" }))), meta: @Html.Raw(System.Text.Json.JsonSerializer.Serialize(item.UpdatedAt.HasValue ? $"Updated {item.UpdatedAt.Value:dd MMM yyyy}" : "Updated date not available")) },</text>
                     }
                 ]
             },
@@ -376,7 +376,7 @@
                 items: [
                     @foreach (var item in Model.ActiveTopics)
                     {
-                        <text>{ id: '@item.Id', name: @Html.Raw(System.Text.Json.JsonSerializer.Serialize(item.Title)), url: @Html.Raw(System.Text.Json.JsonSerializer.Serialize(Url.Action("Index", "Topics", new { area = "Admin", editId = item.Id }))), meta: @Html.Raw(System.Text.Json.JsonSerializer.Serialize(item.UpdatedAt.HasValue ? $"Updated {item.UpdatedAt.Value:dd MMM yyyy}" : "Updated date not available")) },</text>
+                        <text>{ id: '@item.Id', name: @Html.Raw(System.Text.Json.JsonSerializer.Serialize(item.Title)), url: @Html.Raw(System.Text.Json.JsonSerializer.Serialize(Url.Action("Index", "Topics", new { area = "Admin" }))), meta: @Html.Raw(System.Text.Json.JsonSerializer.Serialize(item.UpdatedAt.HasValue ? $"Updated {item.UpdatedAt.Value:dd MMM yyyy}" : "Updated date not available")) },</text>
                     }
                 ]
             },
