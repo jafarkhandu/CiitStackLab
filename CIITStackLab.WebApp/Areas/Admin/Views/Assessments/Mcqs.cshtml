@@ -63,7 +63,7 @@
                 <table class="ciit-mcq-table"><thead><tr><th>Question</th><th>Chapter</th><th>Correct</th><th>Actions</th></tr></thead><tbody>
                 @foreach (var mcq in Model.ActiveMcqs)
                 {
-                    <tr><td><div class="ciit-mcq-question"><strong>@mcq.Question</strong><span>#@mcq.Id</span></div></td><td>@mcq.ChapterTitle</td><td>Option @mcq.CorrectOptionNumber</td><td><div class="ciit-mcq-actions"><a asp-area="Admin" asp-controller="Assessments" asp-action="EditMcq" asp-route-id="@mcq.Id" title="Edit"><i class="bi bi-pencil-square"></i></a><form asp-area="Admin" asp-controller="Assessments" asp-action="DeleteMcq" method="post" onsubmit="return confirm('Archive this MCQ?');">@Html.AntiForgeryToken()<input type="hidden" name="id" value="@mcq.Id" /><button type="submit" title="Archive"><i class="bi bi-archive"></i></button></form></div></td></tr>
+                    <tr><td><div class="ciit-mcq-question"><strong>@mcq.Question</strong><span>#@mcq.Id</span></div></td><td>@mcq.ChapterTitle</td><td>Option @mcq.CorrectOptionNumber</td><td><div class="ciit-mcq-actions"><a asp-area="Admin" asp-controller="Assessments" asp-action="Mcqs" asp-route-editId="@mcq.Id" title="Edit"><i class="bi bi-pencil-square"></i></a><form asp-area="Admin" asp-controller="Assessments" asp-action="DeleteMcq" method="post" onsubmit="return confirm('Archive this MCQ?');">@Html.AntiForgeryToken()<input type="hidden" name="id" value="@mcq.Id" /><button type="submit" title="Archive"><i class="bi bi-archive"></i></button></form></div></td></tr>
                 }
                 </tbody></table>
             </div>
@@ -105,6 +105,17 @@
         <script>
             document.addEventListener("DOMContentLoaded", function () {
                 const element = document.getElementById("bulkImportMcqModal");
+                if (element && window.bootstrap) {
+                    bootstrap.Modal.getOrCreateInstance(element).show();
+                }
+            });
+        </script>
+    }
+    else if (openModal == "edit")
+    {
+        <script>
+            document.addEventListener("DOMContentLoaded", function () {
+                const element = document.getElementById("editMcqModal");
                 if (element && window.bootstrap) {
                     bootstrap.Modal.getOrCreateInstance(element).show();
                 }
