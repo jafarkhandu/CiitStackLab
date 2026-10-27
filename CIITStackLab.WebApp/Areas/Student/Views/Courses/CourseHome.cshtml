@@ -139,7 +139,7 @@
                 <div class="ciit-course-experience-card-header">
                     <div>
                         <h2>Course Curriculum</h2>
-                        <p>Open a topic to view its chapters and learning resources without leaving your course home.</p>
+                        <p>Each topic is presented as its own learning block with its chapters and resources.</p>
                     </div>
                     <span class="ciit-curriculum-summary">
                         <i class="bi bi-journal-check"></i>
@@ -156,7 +156,6 @@
                     <div class="ciit-course-curriculum-list">
                         @foreach (var topic in Model.Topics)
                         {
-                            var topicKey = $"course-topic-{topic.Id}";
                             var topicContentIds = topic.Contents
                                 .Concat(topic.Chapters.SelectMany(chapter => chapter.Contents))
                                 .Select(content => content.Id)
@@ -164,78 +163,110 @@
                                 .ToList();
                             var topicCompleted = topicContentIds.Count > 0
                                 && topicContentIds.All(completedContentIds.Contains);
+                            var topicResourceCount = topic.Chapters.Sum(chapter => chapter.Contents.Count)
+                                + topic.Contents.Count;
 
-                            <div class="ciit-curriculum-accordion" data-curriculum-item>
-                                <button type="button"
-                                        class="ciit-curriculum-topic-toggle"
-                                        aria-expanded="false"
-                                        aria-controls="@topicKey">
-                                    <span class="ciit-curriculum-topic-toggle-content">
-                                        <span class="ciit-curriculum-topic-icon">
+                            <section class="ciit-curriculum-topic">
+                                <div class="ciit-curriculum-topic-header">
+                                    <div class="ciit-curriculum-topic-heading">
+                                        <span class="ciit-curriculum-topic-icon" aria-hidden="true">
                                             <i class="bi bi-collection"></i>
                                         </span>
-                                        <span class="@(topicCompleted ? "is-completed" : "")">
+                                        <div>
                                             <strong>@topic.Title</strong>
-                                            <small>@topic.Chapters.Count chapter@(topic.Chapters.Count == 1 ? "" : "s")</small>
-                                            @if (topicCompleted)
-                                            {
-                                                <span class="ciit-curriculum-topic-completed" title="Topic completed" aria-label="Topic completed">
-                                                    <i class="bi bi-check-circle-fill" aria-hidden="true"></i>
-                                                </span>
-                                            }
-                                        </span>
-                                    </span>
-                                    <span class="ciit-curriculum-topic-toggle-end">
-                                        <span class="ciit-curriculum-topic-status">Expand</span>
-                                        <i class="bi bi-chevron-down" aria-hidden="true"></i>
-                                    </span>
-                                </button>
-
-                                                                <div id="@topicKey" class="ciit-curriculum-topic-panel" hidden>
-                                    <div class="ciit-curriculum-topic-panel-inner">
-                                        @if (topic.Chapters.Count == 0 && topic.Contents.Count == 0)
-                                        {
-                                            <div class="ciit-curriculum-empty">No learning resources are linked to this topic yet.</div>
-                                        }
-                                        else
-                                        {
-                                            @foreach (var chapter in topic.Chapters)
-                                            {
-                                                <section class="ciit-curriculum-chapter-map">
-                                                    <div class="ciit-curriculum-chapter-map-heading">
-                                                        <span class="ciit-curriculum-lesson-number">@chapter.SortOrder</span>
-                                                        <div><strong>@chapter.Title</strong><small>Chapter learning map</small></div>
-                                                    </div>
-                                                    <div class="ciit-curriculum-resource-map">
-                                                        @if (!string.IsNullOrWhiteSpace(chapter.NotesHtml)) { <span class="ciit-curriculum-resource-chip"><i class="bi bi-journal-text"></i> Notes</span> }
-                                                        @if (chapter.Contents.Count > 0)
-                                                        {
-                                                            <div class="ciit-curriculum-resource-group">
-                                                                <span class="ciit-curriculum-resource-chip"><i class="bi bi-play-btn"></i> Content (@chapter.Contents.Count)</span>
-                                                                @foreach (var resource in chapter.Contents)
-                                                                {
-                                                                    <p class="ciit-curriculum-resource-detail">@resource.Title@if (!string.IsNullOrWhiteSpace(resource.VideoName)) { <span> · Video</span> }@if (!string.IsNullOrWhiteSpace(resource.Slides)) { <span> · Slides</span> }</p>
-                                                                }
-                                                            </div>
-                                                        }
-                                                        @if (chapter.Questions.Count > 0) { <span class="ciit-curriculum-resource-chip"><i class="bi bi-ui-checks-grid"></i> MCQs (@chapter.Questions.Count)</span> }
-                                                        @if (chapter.InterviewQuestions.Count > 0) { <span class="ciit-curriculum-resource-chip"><i class="bi bi-chat-square-text"></i> Interview Questions (@chapter.InterviewQuestions.Count)</span> }
-                                                        @if (chapter.PracticeQuestions.Count > 0) { <span class="ciit-curriculum-resource-chip"><i class="bi bi-code-square"></i> Practice Programs (@chapter.PracticeQuestions.Count)</span> }
-                                                        @if (string.IsNullOrWhiteSpace(chapter.NotesHtml) && chapter.Contents.Count == 0 && chapter.Questions.Count == 0 && chapter.InterviewQuestions.Count == 0 && chapter.PracticeQuestions.Count == 0)
-                                                        { <p class="ciit-curriculum-empty">No resources are linked to this chapter yet.</p> }
-                                                    </div>
-                                                </section>
-                                            }
-                                            @if (topic.Chapters.Count == 0 && topic.Contents.Count > 0)
-                                            {
-                                                <section class="ciit-curriculum-chapter-map"><div class="ciit-curriculum-chapter-map-heading"><strong>Learning content</strong></div>
-                                                    @foreach (var resource in topic.Contents) { <p class="ciit-curriculum-resource-detail">@resource.Title</p> }
-                                                </section>
-                                            }
-                                        }
+                                            <span>
+                                                @topic.Chapters.Count chapter@(topic.Chapters.Count == 1 ? "" : "s")
+                                                · @topicResourceCount resource@(topicResourceCount == 1 ? "" : "s")
+                                            </span>
+                                        </div>
                                     </div>
+                                    @if (topicCompleted)
+                                    {
+                                        <span class="ciit-curriculum-topic-completed" title="Topic completed">
+                                            <i class="bi bi-check-circle-fill" aria-hidden="true"></i>
+                                            Completed
+                                        </span>
+                                    }
                                 </div>
-                            </div>
+
+                                @if (topic.Chapters.Count == 0 && topic.Contents.Count == 0)
+                                {
+                                    <div class="ciit-curriculum-empty">No learning resources are linked to this topic yet.</div>
+                                }
+                                else
+                                {
+                                    @foreach (var chapter in topic.Chapters)
+                                    {
+                                        <div class="ciit-curriculum-lesson">
+                                            <div class="ciit-curriculum-lesson-title">
+                                                <span class="ciit-curriculum-lesson-number">@chapter.SortOrder.ToString("00")</span>
+                                                <div>
+                                                    <strong>@chapter.Title</strong>
+                                                    <small>Chapter learning map</small>
+                                                </div>
+                                            </div>
+                                            <div class="ciit-curriculum-resource-map">
+                                                @if (!string.IsNullOrWhiteSpace(chapter.NotesHtml))
+                                                {
+                                                    <span class="ciit-curriculum-resource-chip">
+                                                        <i class="bi bi-journal-text"></i> Notes
+                                                    </span>
+                                                }
+                                                @if (chapter.Contents.Count > 0)
+                                                {
+                                                    <span class="ciit-curriculum-resource-chip">
+                                                        <i class="bi bi-play-btn"></i> Content (@chapter.Contents.Count)
+                                                    </span>
+                                                }
+                                                @if (chapter.Questions.Count > 0)
+                                                {
+                                                    <span class="ciit-curriculum-resource-chip">
+                                                        <i class="bi bi-ui-checks-grid"></i> MCQs (@chapter.Questions.Count)
+                                                    </span>
+                                                }
+                                                @if (chapter.InterviewQuestions.Count > 0)
+                                                {
+                                                    <span class="ciit-curriculum-resource-chip">
+                                                        <i class="bi bi-chat-square-text"></i> Interview (@chapter.InterviewQuestions.Count)
+                                                    </span>
+                                                }
+                                                @if (chapter.PracticeQuestions.Count > 0)
+                                                {
+                                                    <span class="ciit-curriculum-resource-chip">
+                                                        <i class="bi bi-code-square"></i> Practice (@chapter.PracticeQuestions.Count)
+                                                    </span>
+                                                }
+                                                @if (string.IsNullOrWhiteSpace(chapter.NotesHtml)
+                                                     && chapter.Contents.Count == 0
+                                                     && chapter.Questions.Count == 0
+                                                     && chapter.InterviewQuestions.Count == 0
+                                                     && chapter.PracticeQuestions.Count == 0)
+                                                {
+                                                    <span class="ciit-curriculum-resource-empty">No resources</span>
+                                                }
+                                            </div>
+                                        </div>
+                                    }
+
+                                    @if (topic.Contents.Count > 0)
+                                    {
+                                        <div class="ciit-curriculum-lesson">
+                                            <div class="ciit-curriculum-lesson-title">
+                                                <span class="ciit-curriculum-lesson-number"><i class="bi bi-play-fill"></i></span>
+                                                <div>
+                                                    <strong>Topic learning content</strong>
+                                                    <small>@topic.Contents.Count direct resource@(topic.Contents.Count == 1 ? "" : "s")</small>
+                                                </div>
+                                            </div>
+                                            <div class="ciit-curriculum-resource-map">
+                                                <span class="ciit-curriculum-resource-chip">
+                                                    <i class="bi bi-play-btn"></i> Content (@topic.Contents.Count)
+                                                </span>
+                                            </div>
+                                        </div>
+                                    }
+                                }
+                            </section>
                         }
                     </div>
                 }
@@ -244,66 +275,3 @@
         </main>
     </div>
 </section>
-
-@section Scripts {
-    <script>
-        document.querySelectorAll('[data-curriculum-item]').forEach(function (item) {
-            const toggle = item.querySelector('.ciit-curriculum-topic-toggle');
-            const panel = item.querySelector('.ciit-curriculum-topic-panel');
-            const status = item.querySelector('.ciit-curriculum-topic-status');
-            const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-
-            if (!toggle || !panel) {
-                return;
-            }
-
-            toggle.addEventListener('click', function () {
-                const isExpanded = toggle.getAttribute('aria-expanded') === 'true';
-                const shouldExpand = !isExpanded;
-
-                toggle.setAttribute('aria-expanded', String(shouldExpand));
-                item.classList.toggle('is-expanded', shouldExpand);
-                if (status) {
-                    status.textContent = shouldExpand ? 'Collapse' : 'Expand';
-                }
-
-                if (reduceMotion) {
-                    panel.hidden = !shouldExpand;
-                    panel.style.maxHeight = shouldExpand ? 'none' : '';
-                    return;
-                }
-
-                if (shouldExpand) {
-                    panel.hidden = false;
-                    panel.style.maxHeight = '0px';
-                    requestAnimationFrame(function () {
-                        panel.style.maxHeight = panel.scrollHeight + 'px';
-                    });
-
-                    panel.addEventListener('transitionend', function handleExpand(event) {
-                        if (event.propertyName !== 'max-height') {
-                            return;
-                        }
-                        panel.style.maxHeight = 'none';
-                        panel.removeEventListener('transitionend', handleExpand);
-                    });
-                }
-                else {
-                    panel.style.maxHeight = panel.scrollHeight + 'px';
-                    requestAnimationFrame(function () {
-                        panel.style.maxHeight = '0px';
-                    });
-
-                    panel.addEventListener('transitionend', function handleCollapse(event) {
-                        if (event.propertyName !== 'max-height') {
-                            return;
-                        }
-                        panel.hidden = true;
-                        panel.style.maxHeight = '';
-                        panel.removeEventListener('transitionend', handleCollapse);
-                    });
-                }
-            });
-        });
-    </script>
-}
