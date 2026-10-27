@@ -1,0 +1,44 @@
+/* Shared expandable hierarchy for assessment admin pages. */
+.ciit-assessment-tree{display:flex;flex-direction:column}
+.ciit-assessment-tree details{min-width:0}
+.ciit-assessment-tree details>summary{list-style:none;display:flex;align-items:center;justify-content:space-between;gap:16px;cursor:pointer}
+.ciit-assessment-tree details>summary::-webkit-details-marker{display:none}
+.ciit-assessment-tree details>summary::marker{content:""}
+.ciit-assessment-tree-topic{border-bottom:1px solid #e8edf5}
+.ciit-assessment-tree-topic:last-child{border-bottom:0}
+.ciit-assessment-tree-topic>summary{padding:17px 22px;background:#fbfcff}
+.ciit-assessment-tree-topic>summary:hover,.ciit-assessment-tree-chapter>summary:hover{background:#f5f8ff}
+.ciit-assessment-tree-title{display:flex;align-items:center;gap:11px;min-width:0;color:#24334d}
+.ciit-assessment-tree-title>i:first-child{color:#8a9bb5;transition:transform .18s ease}
+.ciit-assessment-tree-title>i:nth-child(2){display:grid;place-items:center;width:34px;height:34px;flex:0 0 34px;border-radius:10px;background:#edf4ff;color:#2563eb}
+.ciit-assessment-tree-title strong{font-size:.92rem;font-weight:800;overflow-wrap:anywhere}
+.ciit-assessment-tree-topic[open]>summary .ciit-assessment-tree-title>i:first-child,.ciit-assessment-tree-chapter[open]>summary .ciit-assessment-tree-title>i:first-child{transform:rotate(90deg)}
+.ciit-assessment-tree-count{display:inline-flex;align-items:center;justify-content:center;min-width:30px;min-height:28px;padding:4px 9px;border-radius:999px;background:#eef4ff;color:#2457b7;font-size:.75rem;font-weight:800;white-space:nowrap}
+.ciit-assessment-tree-children{padding:0 0 8px 26px}
+.ciit-assessment-tree-chapter{margin:0 0 8px;border:1px solid #e6ebf3;border-radius:12px;overflow:hidden;background:#fff}
+.ciit-assessment-tree-chapter>summary{padding:13px 16px;background:#fff}
+.ciit-assessment-tree-chapter .ciit-assessment-tree-title>i:nth-child(2){width:30px;height:30px;flex-basis:30px;background:#f2f5fa;color:#64748b}
+.ciit-assessment-question-list{padding:0 14px}
+.ciit-assessment-question-item{display:flex;align-items:flex-start;justify-content:space-between;gap:18px;padding:15px 4px;border-top:1px solid #edf1f6}
+.ciit-assessment-question-copy{display:flex;flex-direction:column;gap:5px;min-width:0;flex:1}
+.ciit-assessment-question-copy>strong{color:#1e293b;font-size:.86rem;font-weight:750;overflow-wrap:anywhere}
+.ciit-assessment-question-copy>span{color:#8a9bb5;font-size:.75rem}
+.ciit-assessment-question-copy>p{margin:3px 0 0;color:#52627a;font-size:.82rem;line-height:1.55;white-space:pre-wrap;overflow-wrap:anywhere}
+.ciit-assessment-question-item .ciit-mcq-actions{flex-shrink:0}
+.ciit-assessment-practice-list{padding:0 12px 12px}
+.ciit-assessment-practice-list .ciit-practice-program{padding:16px 8px;border-top:1px solid #edf1f6;border-bottom:0}
+.ciit-mcq-archive-header-btn,.ciit-practice-archive-header-btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;min-height:42px;padding:9px 14px;border:1px solid #dbe5f2;border-radius:10px;background:#fff;color:#536783;font-size:.84rem;font-weight:750;white-space:nowrap}
+.ciit-mcq-archive-header-btn:hover,.ciit-practice-archive-header-btn:hover{border-color:#b9cff6;background:#f7faff;color:#2457b7}
+.ciit-assessment-archive-modal .modal-content{overflow:hidden;border:1px solid #e1e7ef;border-radius:16px;box-shadow:0 24px 70px rgba(15,23,42,.2)}
+.ciit-assessment-archive-modal .modal-header{align-items:flex-start;padding:20px 22px;border-bottom:1px solid #edf1f6}
+.ciit-assessment-archive-modal .modal-title{margin:4px 0;font-size:1.15rem;font-weight:800;color:#1e293b}
+.ciit-assessment-archive-modal .modal-header p{margin:0;color:#8a9bb5;font-size:.82rem}
+.ciit-assessment-archive-modal .modal-body{padding:8px 18px 18px}
+.ciit-assessment-archive-row{display:flex;align-items:center;justify-content:space-between;gap:16px;padding:14px 4px;border-bottom:1px solid #edf1f6}
+.ciit-assessment-archive-row:last-child{border-bottom:0}
+.ciit-assessment-archive-row>div{display:flex;flex-direction:column;gap:4px;min-width:0}
+.ciit-assessment-archive-row strong{color:#26364f;font-size:.84rem;overflow-wrap:anywhere}
+.ciit-assessment-archive-row span{color:#8a9bb5;font-size:.75rem;overflow-wrap:anywhere}
+.ciit-assessment-archive-row form{flex-shrink:0}
+.ciit-assessment-archive-subtitle{margin:14px 0 4px;padding-bottom:9px;border-bottom:1px solid #e8edf5;font-size:.9rem;font-weight:800;color:#334155}
+@media(max-width:700px){.ciit-assessment-tree-topic>summary{padding:14px}.ciit-assessment-tree-children{padding-left:12px}.ciit-assessment-tree-title{gap:8px}.ciit-assessment-tree-title strong{font-size:.82rem}.ciit-assessment-question-item,.ciit-assessment-archive-row{align-items:flex-start;flex-direction:column}.ciit-assessment-question-item .ciit-mcq-actions{align-self:flex-end}.ciit-assessment-archive-row form,.ciit-assessment-archive-row button{width:100%}.ciit-assessment-archive-modal .modal-body{padding:8px 14px 14px}}
