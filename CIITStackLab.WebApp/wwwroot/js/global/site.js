@@ -90,7 +90,7 @@ document.addEventListener("DOMContentLoaded", function () {
 
 document.addEventListener("DOMContentLoaded", function () {
     const paymentForm = document.getElementById("ciit-demo-payment-form");
-    const paymentTrigger = document.querySelector('[data-bs-target="#coursePaymentModal"]');
+    const paymentTrigger = document.querySelector("[data-ciit-pay-now]");
 
     const getServerPaymentMessage = () => {
         const icon = document.querySelector("main .container.mt-3 .alert .bi-credit-card");
@@ -183,7 +183,8 @@ document.addEventListener("DOMContentLoaded", function () {
     let merchantOrderId;
     let paymentOverlay;
 
-    paymentTrigger.innerHTML = '<i class="bi bi-bag-check me-2"></i>Enroll Now';
+    const defaultPayNowHtml = paymentTrigger.innerHTML;
+    paymentTrigger.innerHTML = '<i class="bi bi-credit-card me-2"></i>Pay Now';
 
     if (modalEyebrow) {
         modalEyebrow.textContent = "Secure Razorpay checkout";
@@ -329,6 +330,9 @@ document.addEventListener("DOMContentLoaded", function () {
             paymentButton.disabled = false;
             paymentButton.innerHTML = defaultPaymentButtonHtml;
         }
+
+        paymentTrigger.disabled = false;
+        paymentTrigger.innerHTML = defaultPayNowHtml;
     };
 
     function resetPaymentForm() {
@@ -343,6 +347,9 @@ document.addEventListener("DOMContentLoaded", function () {
             paymentButton.disabled = false;
             paymentButton.innerHTML = defaultPaymentButtonHtml;
         }
+
+        paymentTrigger.disabled = false;
+        paymentTrigger.innerHTML = defaultPayNowHtml;
 
         if (processingState) {
             processingState.innerHTML = `
@@ -430,6 +437,9 @@ document.addEventListener("DOMContentLoaded", function () {
         clearPagePaymentMessage();
         removePaymentOverlay();
 
+        paymentTrigger.disabled = true;
+        paymentTrigger.innerHTML = '<span class="spinner-border spinner-border-sm me-2" aria-hidden="true"></span>Opening Razorpay...';
+
         if (paymentButton) {
             paymentButton.disabled = true;
             paymentButton.innerHTML = '<span class="spinner-border spinner-border-sm me-2" aria-hidden="true"></span>Opening Razorpay...';
@@ -461,6 +471,12 @@ document.addEventListener("DOMContentLoaded", function () {
             showFailure(error instanceof Error ? error.message : "Unable to start Razorpay checkout.");
         }
     };
+
+    paymentTrigger.addEventListener("click", function (event) {
+        event.preventDefault();
+        resetPaymentForm();
+        openRazorpayCheckout();
+    });
 
     paymentForm.addEventListener("submit", function (event) {
         event.preventDefault();
