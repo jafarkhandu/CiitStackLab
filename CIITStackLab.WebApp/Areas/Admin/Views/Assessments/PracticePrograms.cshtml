@@ -229,9 +229,16 @@
                 solutionModal.addEventListener("show.bs.modal", function (event) {
                     const trigger = event.relatedTarget;
                     const questionId = trigger && trigger.getAttribute("data-program-question-id");
-                    if (!questionId) return;
                     const selector = solutionModal.querySelector('[name="ProgramQuestionId"]');
-                    if (selector) selector.value = questionId;
+                    if (!selector) return;
+
+                    // Start a fresh selection for the general Add Solution button.
+                    // When opened from a specific question, preselect that question;
+                    // the user can still deliberately choose a different active question.
+                    selector.value = questionId && Array.from(selector.options).some(option => option.value === questionId)
+                        ? questionId
+                        : "0";
+                    selector.dispatchEvent(new Event("change", { bubbles: true }));
                 });
             }
 
