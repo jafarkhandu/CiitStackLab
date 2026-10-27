@@ -73,7 +73,7 @@
                 },
                 modal: {
                     ondismiss: function () {
-                        window.location.assign("/Payments/Razorpay/ExamPaymentExit"
+                        window.location.assign("/Payments/Razorpay/PaymentExit"
                             + "?merchantOrderId=" + encodeURIComponent(merchantOrderId)
                             + "&razorpayOrderId=" + encodeURIComponent(orderId)
                             + "&outcome=closed");
@@ -82,7 +82,7 @@
             });
 
             checkout.on("payment.failed", function (response) {
-                window.location.assign("/Payments/Razorpay/ExamPaymentExit"
+                window.location.assign("/Payments/Razorpay/PaymentExit"
                     + "?merchantOrderId=" + encodeURIComponent(merchantOrderId)
                     + "&razorpayOrderId=" + encodeURIComponent(orderId)
                     + "&outcome=declined");
