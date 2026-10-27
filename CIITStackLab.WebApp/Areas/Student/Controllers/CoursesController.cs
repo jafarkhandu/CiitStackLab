@@ -234,7 +234,11 @@ public class CoursesController : Controller
             }
             else if (string.Equals(state, "FAILED", StringComparison.OrdinalIgnoreCase))
             {
-                message = "Payment failed. No course access was granted.";
+                message = "Payment declined. No course access was granted.";
+            }
+            else if (string.Equals(state, "CANCELLED", StringComparison.OrdinalIgnoreCase))
+            {
+                message = "Payment cancelled. No course access was granted.";
             }
             else
             {
@@ -314,6 +318,18 @@ public class CoursesController : Controller
 
         if (completed)
             return RedirectToAction(nameof(CourseEnvironment), new { id = transaction.CourseId });
+
+        if (string.Equals(state, "FAILED", StringComparison.OrdinalIgnoreCase)
+            || string.Equals(state, "CANCELLED", StringComparison.OrdinalIgnoreCase))
+        {
+            ViewData["ExitMessage"] = message;
+            ViewData["ExitOutcome"] = string.Equals(state, "FAILED", StringComparison.OrdinalIgnoreCase)
+                ? "declined"
+                : "cancelled";
+            ViewData["LearningUrl"] = Url.Action(nameof(Details), "Courses", new { area = "Student", id = transaction.CourseId })
+                ?? $"/Courses/Details/{transaction.CourseId}";
+            return View("PaymentExit");
+        }
 
         return RedirectToAction(nameof(Details), new { id = transaction.CourseId });
     }
@@ -412,9 +428,9 @@ public class CoursesController : Controller
         }
 
         var wasAlreadyFailed = string.Equals(transaction.Status, "Failed", StringComparison.OrdinalIgnoreCase);
-        transaction.Status = string.Equals(state, "FAILED", StringComparison.OrdinalIgnoreCase)
-            ? "Failed"
-            : "Pending";
+        var isTerminalFailure = string.Equals(state, "FAILED", StringComparison.OrdinalIgnoreCase)
+            || string.Equals(state, "CANCELLED", StringComparison.OrdinalIgnoreCase);
+        transaction.Status = isTerminalFailure ? "Failed" : "Pending";
         transaction.UpdatedAt = DateTime.UtcNow;
         await _dbContext.SaveChangesAsync(cancellationToken);
 
