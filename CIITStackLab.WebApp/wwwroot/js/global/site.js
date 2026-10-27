@@ -180,118 +180,14 @@ document.addEventListener("DOMContentLoaded", function () {
     const formState = document.getElementById("ciit-payment-form-state");
     const modalEyebrow = document.querySelector(".ciit-payment-modal-eyebrow");
     const modalSubtitle = document.querySelector(".ciit-payment-modal-subtitle");
-    const phonePeScriptUrl = "https://mercury.phonepe.com/web/bundle/checkout.js";
-    let phonePeScriptPromise;
-    let merchantOrderId;
-    let paymentOverlay;
-
-    paymentTrigger.innerHTML = '<i class="bi bi-bag-check me-2"></i>Enroll Now';
-
-    if (modalEyebrow) {
-        modalEyebrow.textContent = "Secure Razorpay checkout";
-    }
-
-    if (modalSubtitle) {
-        modalSubtitle.textContent = "Complete your payment securely. Course access is granted only after server-side verification.";
-    }
-
-    if (paymentNote) {
-        paymentNote.textContent = "Razorpay checkout opens securely. Course access is granted only after server-side payment verification.";
-    }
-
-    if (paymentButton) {
-        paymentButton.innerHTML = '<i class="bi bi-lock-fill me-2"></i>Pay securely with Razorpay';
-    }
-
-    const removePaymentOverlay = () => {
-        paymentOverlay?.remove();
-        paymentOverlay = null;
-    };
-
-    const showPaymentOverlay = (title, message, state = "processing", action = null) => {
-        removePaymentOverlay();
-
-        const overlay = document.createElement("div");
-        overlay.className = `ciit-payment-overlay ciit-payment-overlay-${state}`;
-        overlay.setAttribute("role", "dialog");
-        overlay.setAttribute("aria-modal", "true");
-        overlay.setAttribute("aria-live", "polite");
-
-        if (state === "success") {
-            overlay.innerHTML = `
-                <div class="ciit-payment-overlay-card">
-                    <div class="ciit-payment-success-ring" aria-hidden="true">
-                        <i class="bi bi-check-lg"></i>
-                    </div>
-                    <strong>${title}</strong>
-                    <span>${message}</span>
-                    <div class="ciit-payment-overlay-progress" aria-hidden="true"><span></span></div>
-                </div>`;
-        } else {
-            overlay.innerHTML = `
-                <div class="ciit-payment-overlay-card">
-                    <div class="ciit-payment-overlay-spinner" aria-hidden="true">
-                        <span></span>
-                        <i class="bi bi-shield-check"></i>
-                    </div>
-                    <strong>${title}</strong>
-                    <span class="ciit-payment-overlay-message"></span>
-                    <div class="ciit-payment-overlay-dots" aria-hidden="true"><span></span><span></span><span></span></div>
-                    ${action ? '<div class="ciit-payment-overlay-action"></div>' : ""}
-                </div>`;
-            overlay.querySelector(".ciit-payment-overlay-message").textContent = message;
-
-            if (action) {
-                const actionHost = overlay.querySelector(".ciit-payment-overlay-action");
-                const button = document.createElement("button");
-                button.type = "button";
-                button.className = "btn btn-outline-primary btn-sm";
-                button.textContent = action.label;
-                button.addEventListener("click", action.handler, { once: true });
-                actionHost.appendChild(button);
-            }
-        }
-
-        document.body.appendChild(overlay);
-        requestAnimationFrame(() => overlay.classList.add("is-visible"));
-        paymentOverlay = overlay;
-    };
-
-    const showPagePaymentMessage = (message, type = "danger") => {
-        showPaymentToast(message, type);
-    };
-
-    const clearPagePaymentMessage = () => {
-        clearPaymentToast();
-    };
-
-    const loadPhonePeCheckout = () => {
-        if (window.PhonePeCheckout?.transact) {
+    const loadRazorpayCheckout = () => {
+        if (window.CiitRazorpayCheckout?.transact) {
             return Promise.resolve();
         }
 
-        if (phonePeScriptPromise) {
-            return phonePeScriptPromise;
-        }
-
-        phonePeScriptPromise = new Promise((resolve, reject) => {
-            const existingScript = document.querySelector(`script[src="${phonePeScriptUrl}"]`);
-
-            if (existingScript) {
-                existingScript.addEventListener("load", resolve, { once: true });
-                existingScript.addEventListener("error", reject, { once: true });
-                return;
-            }
-
-            const script = document.createElement("script");
-            script.src = phonePeScriptUrl;
-            script.async = true;
-            script.onload = resolve;
-            script.onerror = () => reject(new Error("Razorpay Checkout could not be loaded."));
-            document.head.appendChild(script);
-        });
-
-        return phonePeScriptPromise;
+        return Promise.reject(new Error(
+            "Razorpay Checkout could not be initialized. Refresh the page and try again."
+        ));
     };
 
     const getCheckoutUrl = async () => {
@@ -373,7 +269,7 @@ document.addEventListener("DOMContentLoaded", function () {
                     <i class="bi bi-credit-card-2-front"></i>
                 </div>
                 <strong>Verifying payment</strong>
-                <span>Checking the payment status securely with PhonePe...</span>
+                <span>Checking the payment status securely with Razorpay...</span>
                 <div class="ciit-payment-processing-steps" aria-label="Payment processing status">
                     <div class="ciit-payment-processing-step" data-payment-step="gateway"><i class="bi bi-check-lg" aria-hidden="true"></i><span>Connecting to payment gateway...</span></div>
                     <div class="ciit-payment-processing-step" data-payment-step="verify"><i class="bi bi-check-lg" aria-hidden="true"></i><span>Verifying payment details...</span></div>
@@ -382,7 +278,7 @@ document.addEventListener("DOMContentLoaded", function () {
         }
     }
 
-    const completePhonePePayment = async () => {
+    const completeCoursePayment = async () => {
         if (!merchantOrderId) {
             showFailure("We could not identify the payment order. Please start the payment again.");
             return;
@@ -433,7 +329,7 @@ document.addEventListener("DOMContentLoaded", function () {
             const pendingMessage = result?.message || "Payment is still being verified. No course access has been granted yet.";
             showPaymentOverlay("Payment still processing", pendingMessage, "processing", {
                 label: "Check payment status again",
-                handler: completePhonePePayment
+                handler: completeCoursePayment
             });
         } catch (error) {
             console.error("Razorpay payment verification error:", error);
@@ -443,12 +339,12 @@ document.addEventListener("DOMContentLoaded", function () {
 
             showPaymentOverlay("Verification needs another check", message, "processing", {
                 label: "Retry verification",
-                handler: completePhonePePayment
+                handler: completeCoursePayment
             });
         }
     };
 
-    const openPhonePeCheckout = async () => {
+    const openRazorpayCheckout = async () => {
         clearPagePaymentMessage();
         removePaymentOverlay();
 
@@ -459,18 +355,18 @@ document.addEventListener("DOMContentLoaded", function () {
 
         try {
             const checkoutUrl = await getCheckoutUrl();
-            await loadPhonePeCheckout();
+            await loadRazorpayCheckout();
 
-            if (!window.PhonePeCheckout?.transact) {
-                throw new Error("PhonePe Checkout is not available yet. Please try again.");
+            if (!window.CiitRazorpayCheckout?.transact) {
+                throw new Error("Razorpay Checkout is not available yet. Please try again.");
             }
 
-            window.PhonePeCheckout.transact({
+            window.CiitRazorpayCheckout.transact({
                 tokenUrl: checkoutUrl,
                 type: "IFRAME",
                 callback: function (response) {
                     if (response === "CONCLUDED") {
-                        completePhonePePayment();
+                        completeCoursePayment();
                     }
 
                     if (response === "USER_CANCEL") {
@@ -488,7 +384,7 @@ document.addEventListener("DOMContentLoaded", function () {
         event.preventDefault();
         event.stopPropagation();
         resetPaymentForm();
-        openPhonePeCheckout();
+        openRazorpayCheckout();
     });
 });
 
