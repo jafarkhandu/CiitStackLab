@@ -141,20 +141,28 @@ public sealed class AdminCourseTopicMappingService : IAdminCourseTopicMappingSer
             }
         }
 
-        // Only topics that have never been mapped to this course may be added.
-        // A previously removed Course + Topic pair is permanently blocked from
-        // being re-added, per the admin workflow requirement.
-        var historicalTopicIds = allMappings
-            .Select(x => x.TopicId)
-            .Distinct()
-            .ToHashSet();
+        // Re-activate a historical mapping when a removed topic is selected again.
+        // This preserves the existing Course + Topic row and avoids duplicate mappings.
+        var historicalMappings = allMappings
+            .GroupBy(x => x.TopicId)
+            .ToDictionary(group => group.Key, group => group.OrderByDescending(x => x.Id).First());
 
-        var newTopicIds = requestedTopicIds
-            .Where(topicId => !historicalTopicIds.Contains(topicId))
-            .ToList();
-
-        foreach (var topicId in newTopicIds)
+        foreach (var topicId in requestedTopicIds)
         {
+            if (currentActiveMappings.Any(mapping => mapping.TopicId == topicId))
+            {
+                continue;
+            }
+
+            if (historicalMappings.TryGetValue(topicId, out var historicalMapping))
+            {
+                historicalMapping.Flag = 0;
+                historicalMapping.DeletedAt = null;
+                historicalMapping.RestoredAt = DateTime.Now;
+                historicalMapping.UpdatedAt = DateTime.Now;
+                continue;
+            }
+
             _dbContext.CourseModules.Add(new Domain.Entities.CourseModule
             {
                 CourseId = courseId,
