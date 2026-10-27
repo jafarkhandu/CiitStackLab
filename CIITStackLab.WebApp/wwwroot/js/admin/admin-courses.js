@@ -82,16 +82,18 @@ document.addEventListener("DOMContentLoaded", function () {
         const selected = Number(discountValueInput.value);
         const activeRow = rows.find(row => row.dataset.courseName === (nameInput?.value || "").trim().toLowerCase());
         const original = Number(activeRow?.dataset.coursePrice || 0);
-        if (!mode || !discountValueInput.value || !Number.isFinite(selected) || selected < 0) discountPreview.textContent = "";
-        else if (mode === "percentage" && selected > 100) discountPreview.textContent = "Percentage must be between 0 and 100.";
-        else if (mode === "direct" && selected > original && original > 0) discountPreview.textContent = "Discounted price cannot exceed ₹" + original.toLocaleString("en-IN", { maximumFractionDigits: 2 });
-        else if (original <= 0) {
+        discountPreview.classList.remove("is-error");
+
+        if (!mode || !discountValueInput.value || !Number.isFinite(selected) || selected < 0) {
+            discountPreview.textContent = "";
+        } else if (mode === "percentage" && selected > 100) {
+            discountPreview.textContent = "Percentage must be between 0 and 100.";
+        } else if (mode === "direct" && selected > original && original > 0) {
+            discountPreview.textContent = "Discounted price cannot exceed ₹" + original.toLocaleString("en-IN", { maximumFractionDigits: 2 });
+        } else if (original <= 0) {
             discountPreview.textContent = "Error: a discount cannot be applied while the course total price is ₹0.00.";
             discountPreview.classList.add("is-error");
         } else {
-            discountPreview.classList.remove("is-error");
-        }
-        else {
             const finalPrice = mode === "percentage" ? original * (1 - selected / 100) : selected;
             discountPreview.textContent = "Student pays ₹" + finalPrice.toLocaleString("en-IN", { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + " · saves ₹" + (original - finalPrice).toLocaleString("en-IN", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
         }
