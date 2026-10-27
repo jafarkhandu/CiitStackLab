@@ -107,6 +107,10 @@
                             {
                                 var chapterPrograms = chapterGroup.ToList();
                                 var chapterName = string.IsNullOrWhiteSpace(chapterGroup.Key.ChapterTitle) ? "Unassigned chapter" : chapterGroup.Key.ChapterTitle;
+                                if (chapterName.StartsWith(topicName + " / ", StringComparison.OrdinalIgnoreCase))
+                                {
+                                    chapterName = chapterName.Substring(topicName.Length + 3);
+                                }
                                 <details class="ciit-assessment-tree-chapter">
                                     <summary>
                                         <span class="ciit-assessment-tree-title"><i class="bi bi-chevron-right"></i><i class="bi bi-journal-text"></i><strong>@chapterName</strong></span>
@@ -120,7 +124,7 @@
                             <div>
                                 <span class="ciit-practice-id">#@program.Id</span>
                                 <h3>@program.QuestionTitle</h3>
-                                <p class="ciit-practice-meta">@program.ChapterTitle</p>
+                                <p class="ciit-practice-meta">@chapterName</p>
                             </div>
                             <div class="ciit-practice-actions">
                                 <a asp-area="Admin" asp-controller="Assessments" asp-action="EditPracticeProgram" asp-route-id="@program.Id" title="Edit program"><i class="bi bi-pencil-square"></i></a>
