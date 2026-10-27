@@ -546,7 +546,7 @@
                 Object.assign(overlay.style, {
                     position: 'fixed',
                     inset: '0',
-                    zIndex: '20000',
+                    zIndex: '2147483647',
                     display: 'grid',
                     placeItems: 'center',
                     padding: '20px',
@@ -676,7 +676,7 @@
                             },
                             modal: {
                                 ondismiss: function () {
-                                    if (paymentDeclined) return;
+                                    if (paymentDeclined || declineHandled) return;
 
                                     showPaymentStatusModal(
                                         'You cancelled the payment. No course access was granted.',
@@ -688,22 +688,31 @@
                         });
 
                         let paymentDeclined = false;
-                        checkout.on('payment.failed', function () {
-                            paymentDeclined = true;
-                            window.setTimeout(() => {
-                                try {
-                                    checkout.close();
-                                } catch (error) {
-                                    console.warn('Could not close Razorpay checkout after decline:', error);
-                                }
+                        let declineHandled = false;
 
+                        const handlePaymentDeclined = () => {
+                            if (declineHandled) return;
+                            declineHandled = true;
+                            paymentDeclined = true;
+
+                            try {
+                                checkout.close();
+                            } catch (error) {
+                                console.warn('Could not close Razorpay checkout after decline:', error);
+                            }
+
+                            // Allow Razorpay's own failure screen/iframe to finish closing
+                            // before displaying our status modal above the page.
+                            window.setTimeout(() => {
                                 showPaymentStatusModal(
                                     'Your payment was declined. No course access was granted.',
                                     'declined'
                                 );
                                 if (typeof options.callback === 'function') options.callback('USER_CANCEL');
-                            }, 0);
-                        });
+                            }, 250);
+                        };
+
+                        checkout.on('payment.failed', handlePaymentDeclined);
 
                         checkout.open();
                     } catch (error) {
