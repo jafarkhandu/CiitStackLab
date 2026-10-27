@@ -63,7 +63,7 @@ document.addEventListener("DOMContentLoaded", function () {
     document.querySelectorAll(".js-student-status-form").forEach(function (form) {
         form.addEventListener("submit", function (event) {
             const name = form.dataset.studentName || "this student";
-            const activating = form.querySelector("input[name='isActive']")?.value === "True";
+            const activating = (form.querySelector("input[name='isActive']")?.value || "").toLowerCase() === "true";
 
             const message = activating
                 ? "Activate " + name + "?"
