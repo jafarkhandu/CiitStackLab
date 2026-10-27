@@ -366,7 +366,7 @@
                 items: [
                     @foreach (var item in Model.ActiveCourses)
                     {
-                        <text>{ id: '@item.Id', name: @Html.Raw(System.Text.Json.JsonSerializer.Serialize(item.Title)), meta: @Html.Raw(System.Text.Json.JsonSerializer.Serialize(item.UpdatedAt.HasValue ? $"Updated {item.UpdatedAt.Value:dd MMM yyyy}" : "Updated date not available")) },</text>
+                        <text>{ id: '@item.Id', name: @Html.Raw(System.Text.Json.JsonSerializer.Serialize(item.Title)), url: @Html.Raw(System.Text.Json.JsonSerializer.Serialize(Url.Action("Index", "Courses", new { area = "Admin", editId = item.Id }))), meta: @Html.Raw(System.Text.Json.JsonSerializer.Serialize(item.UpdatedAt.HasValue ? $"Updated {item.UpdatedAt.Value:dd MMM yyyy}" : "Updated date not available")) },</text>
                     }
                 ]
             },
@@ -376,7 +376,7 @@
                 items: [
                     @foreach (var item in Model.ActiveTopics)
                     {
-                        <text>{ id: '@item.Id', name: @Html.Raw(System.Text.Json.JsonSerializer.Serialize(item.Title)), meta: @Html.Raw(System.Text.Json.JsonSerializer.Serialize(item.UpdatedAt.HasValue ? $"Updated {item.UpdatedAt.Value:dd MMM yyyy}" : "Updated date not available")) },</text>
+                        <text>{ id: '@item.Id', name: @Html.Raw(System.Text.Json.JsonSerializer.Serialize(item.Title)), url: @Html.Raw(System.Text.Json.JsonSerializer.Serialize(Url.Action("Index", "Topics", new { area = "Admin", editId = item.Id }))), meta: @Html.Raw(System.Text.Json.JsonSerializer.Serialize(item.UpdatedAt.HasValue ? $"Updated {item.UpdatedAt.Value:dd MMM yyyy}" : "Updated date not available")) },</text>
                     }
                 ]
             },
@@ -386,7 +386,7 @@
                 items: [
                     @foreach (var item in Model.LearningContent)
                     {
-                        <text>{ id: '@item.Id', name: @Html.Raw(System.Text.Json.JsonSerializer.Serialize(item.Title)), meta: @Html.Raw(System.Text.Json.JsonSerializer.Serialize(string.IsNullOrWhiteSpace(item.TopicTitle) ? "Topic not assigned" : $"Topic: {item.TopicTitle}")) },</text>
+                        <text>{ id: '@item.Id', name: @Html.Raw(System.Text.Json.JsonSerializer.Serialize(item.Title)), url: @Html.Raw(System.Text.Json.JsonSerializer.Serialize(Url.Action("Details", "Content", new { area = "Admin", id = item.Id }))), meta: @Html.Raw(System.Text.Json.JsonSerializer.Serialize(string.IsNullOrWhiteSpace(item.TopicTitle) ? "Topic not assigned" : $"Topic: {item.TopicTitle}")) },</text>
                     }
                 ]
             },
@@ -396,7 +396,7 @@
                 items: [
                     @foreach (var item in Model.ActiveMcqs)
                     {
-                        <text>{ id: '@item.Id', name: @Html.Raw(System.Text.Json.JsonSerializer.Serialize(string.IsNullOrWhiteSpace(item.Question) ? "Question text not available" : item.Question)), meta: @Html.Raw(System.Text.Json.JsonSerializer.Serialize(item.ContentId.HasValue ? $"Content #{item.ContentId}" : item.TopicId.HasValue ? $"Topic #{item.TopicId}" : "No linked content or topic")) },</text>
+                        <text>{ id: '@item.Id', name: @Html.Raw(System.Text.Json.JsonSerializer.Serialize(string.IsNullOrWhiteSpace(item.Question) ? "Question text not available" : item.Question)), url: @Html.Raw(System.Text.Json.JsonSerializer.Serialize(Url.Action("EditMcq", "Assessments", new { area = "Admin", id = item.Id }))), meta: @Html.Raw(System.Text.Json.JsonSerializer.Serialize(item.ContentId.HasValue ? $"Content #{item.ContentId}" : item.TopicId.HasValue ? $"Topic #{item.TopicId}" : "No linked content or topic")) },</text>
                     }
                 ]
             },
@@ -433,6 +433,20 @@
             selected.items.forEach(function (item) {
                 var row = document.createElement('div');
                 row.className = 'ciit-dashboard-modal-item';
+                if (item.url) {
+                    row.tabIndex = 0;
+                    row.setAttribute('role', 'link');
+                    row.style.cursor = 'pointer';
+                    row.addEventListener('click', function () {
+                        window.location.href = item.url;
+                    });
+                    row.addEventListener('keydown', function (event) {
+                        if (event.key === 'Enter' || event.key === ' ') {
+                            event.preventDefault();
+                            window.location.href = item.url;
+                        }
+                    });
+                }
 
                 var number = document.createElement('div');
                 number.className = 'ciit-dashboard-modal-number';
