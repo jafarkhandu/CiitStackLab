@@ -8,3 +8,7 @@
     height: 0;
     display: none;
 }
+
+.ciit-admin-dashboard .ciit-admin-live-pill {
+    color: var(--ciit-admin-text);
+}
