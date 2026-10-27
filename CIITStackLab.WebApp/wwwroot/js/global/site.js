@@ -174,6 +174,8 @@ document.addEventListener("DOMContentLoaded", function () {
     }
 
     const paymentButton = document.getElementById("ciit-demo-payment-button");
+    const defaultPaymentButtonHtml = paymentButton?.innerHTML
+        || '<i class="bi bi-lock-fill me-2"></i>Pay securely with Razorpay';
     const paymentNote = paymentForm.nextElementSibling;
     const processingState = document.getElementById("ciit-payment-processing-state");
     const successState = document.getElementById("ciit-payment-success-state");
@@ -245,7 +247,7 @@ document.addEventListener("DOMContentLoaded", function () {
 
         if (paymentButton) {
             paymentButton.disabled = false;
-            paymentButton.innerHTML = '<i class="bi bi-lock-fill me-2"></i>Pay securely with Razorpay';
+            paymentButton.innerHTML = defaultPaymentButtonHtml;
         }
     };
 
@@ -259,7 +261,7 @@ document.addEventListener("DOMContentLoaded", function () {
 
         if (paymentButton) {
             paymentButton.disabled = false;
-            paymentButton.innerHTML = '<i class="bi bi-lock-fill me-2"></i>Pay securely with Razorpay';
+            paymentButton.innerHTML = defaultPaymentButtonHtml;
         }
 
         if (processingState) {
