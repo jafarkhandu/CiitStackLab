@@ -525,15 +525,87 @@
                 document.head.appendChild(script);
             });
 
+            let paymentStatusTimer;
+
+            const showPaymentStatusModal = (message, status = 'error') => {
+                document.getElementById('ciit-payment-status-modal')?.remove();
+                window.clearTimeout(paymentStatusTimer);
+
+                const isCancelled = status === 'cancelled';
+                const isDeclined = status === 'declined';
+                const title = isCancelled ? 'Payment Cancelled'
+                    : isDeclined ? 'Payment Declined' : 'Payment Update';
+                const icon = isCancelled ? '×' : isDeclined ? '!' : 'i';
+
+                const overlay = document.createElement('div');
+                overlay.id = 'ciit-payment-status-modal';
+                overlay.setAttribute('role', 'alertdialog');
+                overlay.setAttribute('aria-modal', 'true');
+                overlay.setAttribute('aria-live', 'assertive');
+                Object.assign(overlay.style, {
+                    position: 'fixed',
+                    inset: '0',
+                    zIndex: '20000',
+                    display: 'grid',
+                    placeItems: 'center',
+                    padding: '20px',
+                    background: 'rgba(15, 23, 42, 0.48)',
+                    backdropFilter: 'blur(4px)'
+                });
+
+                const card = document.createElement('div');
+                Object.assign(card.style, {
+                    width: 'min(100%, 380px)',
+                    padding: '26px 24px 22px',
+                    borderRadius: '18px',
+                    background: '#ffffff',
+                    color: '#172033',
+                    textAlign: 'center',
+                    boxShadow: '0 22px 70px rgba(15, 23, 42, 0.24)',
+                    fontFamily: 'inherit'
+                });
+
+                const symbol = document.createElement('div');
+                symbol.textContent = icon;
+                Object.assign(symbol.style, {
+                    display: 'grid',
+                    placeItems: 'center',
+                    width: '48px',
+                    height: '48px',
+                    margin: '0 auto 14px',
+                    borderRadius: '50%',
+                    background: isCancelled ? '#fff5d7' : isDeclined ? '#fff0f1' : '#edf4ff',
+                    color: isCancelled ? '#a66b00' : isDeclined ? '#c62838' : '#2456d8',
+                    fontSize: '30px',
+                    fontWeight: '700'
+                });
+
+                const heading = document.createElement('h2');
+                heading.textContent = title;
+                Object.assign(heading.style, {
+                    margin: '0 0 8px',
+                    fontSize: '20px',
+                    fontWeight: '700'
+                });
+
+                const detail = document.createElement('p');
+                detail.textContent = message;
+                Object.assign(detail.style, {
+                    margin: '0',
+                    color: '#5c6678',
+                    fontSize: '14px',
+                    lineHeight: '1.55'
+                });
+
+                card.append(symbol, heading, detail);
+                overlay.appendChild(card);
+                document.body.appendChild(overlay);
+
+                paymentStatusTimer = window.setTimeout(() => overlay.remove(), 3000);
+            };
+
             const showGatewayMessage = message => {
-                document.getElementById('ciit-razorpay-gateway-message')?.remove();
-                const host = document.querySelector('.ciit-payment-modal .modal-body') || document.body;
-                const alert = document.createElement('div');
-                alert.id = 'ciit-razorpay-gateway-message';
-                alert.className = 'alert alert-danger mt-3';
-                alert.setAttribute('role', 'alert');
-                alert.textContent = message;
-                host.prepend(alert);
+                showPaymentStatusModal(message || 'We could not start the payment. Please try again.');
             };
 
             window.CiitRazorpayCheckout = {
@@ -590,19 +662,25 @@
                             },
                             modal: {
                                 ondismiss: function () {
-                                    window.location.assign('/Payments/Razorpay/PaymentExit'
-                                        + '?merchantOrderId=' + encodeURIComponent(merchantOrderId)
-                                        + '&razorpayOrderId=' + encodeURIComponent(orderId)
-                                        + '&outcome=cancelled');
+                                    if (paymentDeclined) return;
+
+                                    showPaymentStatusModal(
+                                        'You cancelled the payment. No course access was granted.',
+                                        'cancelled'
+                                    );
+                                    if (typeof options.callback === 'function') options.callback('USER_CANCEL');
                                 }
                             }
                         });
 
+                        let paymentDeclined = false;
                         checkout.on('payment.failed', function () {
-                            window.location.assign('/Payments/Razorpay/PaymentExit'
-                                + '?merchantOrderId=' + encodeURIComponent(merchantOrderId)
-                                + '&razorpayOrderId=' + encodeURIComponent(orderId)
-                                + '&outcome=declined');
+                            paymentDeclined = true;
+                            showPaymentStatusModal(
+                                'Your payment was declined. No course access was granted.',
+                                'declined'
+                            );
+                            if (typeof options.callback === 'function') options.callback('USER_CANCEL');
                         });
 
                         checkout.open();
@@ -613,10 +691,7 @@
                 }
             };
 
-            document.addEventListener('DOMContentLoaded', function () {
-                document.querySelectorAll('[data-bs-target="#coursePaymentModal"]').forEach(button => {
-                    button.innerHTML = '<i class="bi bi-bag-check me-2"></i>Enroll Now';
-                });
+
             });
         })();
 
