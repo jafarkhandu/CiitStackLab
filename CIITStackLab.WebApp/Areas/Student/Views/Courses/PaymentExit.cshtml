@@ -1,0 +1,84 @@
+@{
+    Layout = null;
+    var message = ViewData["ExitMessage"]?.ToString() ?? "Payment was not completed. No course access was granted.";
+    var destination = ViewData["LearningUrl"]?.ToString() ?? "/Courses";
+    var outcome = ViewData["ExitOutcome"]?.ToString() ?? "cancelled";
+    var isDeclined = outcome == "declined";
+    var statusClass = isDeclined ? "is-declined" : "is-cancelled";
+    var statusTitle = isDeclined ? "Payment Declined" : "Payment Cancelled";
+    var statusIcon = isDeclined ? "!" : "×";
+}
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>@statusTitle - CIIT Stack Lab</title>
+    <style>
+        * { box-sizing: border-box; }
+        body {
+            margin: 0; min-height: 100vh; display: grid; place-items: center; padding: 24px;
+            background: radial-gradient(circle at 15% 12%, #e4edff 0, transparent 34%),
+                        radial-gradient(circle at 88% 86%, #e4eaff 0, transparent 32%), #f4f7fc;
+            color: #172744; font-family: Inter, "Segoe UI", Arial, sans-serif;
+        }
+        main {
+            --status: #d99b13; --status-soft: #fff5d7; --status-border: #f4d98a;
+            position: relative; overflow: hidden; width: min(100%, 470px); padding: 38px 30px 34px;
+            text-align: center; background: rgba(255,255,255,.9); backdrop-filter: blur(18px);
+            border: 1px solid rgba(255,255,255,.95); border-radius: 28px;
+            box-shadow: 0 30px 90px rgba(32,56,98,.15), inset 0 1px 0 rgba(255,255,255,.95);
+        }
+        main::before { content: ""; position: absolute; inset: 0 0 auto; height: 5px; background: linear-gradient(90deg, transparent, var(--status), transparent); }
+        main.is-cancelled { --status: #d99b13; --status-soft: #fff5d7; --status-border: #f4d98a; }
+        main.is-declined { --status: #dc3545; --status-soft: #fff0f1; --status-border: #f5bdc3; }
+        .status-icon {
+            display: grid; place-items: center; width: 72px; height: 72px; margin: 0 auto 20px;
+            border-radius: 24px; color: var(--status); background: var(--status-soft);
+            border: 1px solid var(--status-border); font-size: 38px; font-weight: 700;
+        }
+        .eyebrow { margin: 0 0 8px; color: #75829a; font-size: 11px; font-weight: 800; letter-spacing: .16em; text-transform: uppercase; }
+        h1 { margin: 0; color: var(--status); font-size: clamp(24px, 5vw, 29px); font-weight: 800; letter-spacing: -.035em; }
+        .message { margin: 13px 0 22px; color: #61708a; line-height: 1.65; }
+        .redirect-copy { margin: 0; color: #66758d; font-size: 14px; }
+        .count-label { color: #233957; font-weight: 800; font-variant-numeric: tabular-nums; }
+        #countdown { margin: 18px auto 0; width: 60px; height: 60px; display: grid; place-items: center; border: 3px solid var(--status-border); border-top-color: var(--status); border-radius: 50%; color: var(--status); font-size: 23px; font-weight: 800; }
+        .actions { display: flex; justify-content: center; flex-wrap: wrap; gap: 10px; margin-top: 24px; }
+        .actions a { display: inline-flex; align-items: center; justify-content: center; min-height: 42px; padding: 10px 15px; border: 1px solid #d7e2f2; border-radius: 11px; color: #25436b; background: #fff; text-decoration: none; font-size: 13px; font-weight: 750; }
+        .actions a.primary { color: #fff; border-color: #2563eb; background: #2563eb; }
+        @@keyframes paymentCardEnter { from { opacity: 0; transform: translateY(18px) scale(.98); } to { opacity: 1; transform: translateY(0) scale(1); } }
+        @@media (prefers-reduced-motion: reduce) { *, *::before, *::after { animation: none !important; transition: none !important; } }
+    </style>
+</head>
+<body>
+    <main class="@statusClass">
+        <div class="status-icon" aria-hidden="true">@statusIcon</div>
+        <p class="eyebrow">CIIT Stack Lab · Course enrollment</p>
+        <h1>@statusTitle</h1>
+        <p class="message" id="payment-message">@message</p>
+        <p class="redirect-copy">Returning to the course in <span class="count-label" id="count-label">5</span> seconds…</p>
+        <div id="countdown" aria-label="Seconds until redirect">5</div>
+        <div class="actions">
+            <a class="primary" href="@destination">Return to Course</a>
+            <a href="/Courses">Browse Courses</a>
+        </div>
+    </main>
+    <script>
+        (() => {
+            const destination = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(destination));
+            let remaining = 5;
+            const number = document.getElementById("countdown");
+            const label = document.getElementById("count-label");
+            const timer = window.setInterval(() => {
+                remaining -= 1;
+                number.textContent = String(remaining);
+                label.textContent = String(remaining);
+                if (remaining <= 0) {
+                    window.clearInterval(timer);
+                    window.location.replace(destination);
+                }
+            }, 1000);
+        })();
+    </script>
+</body>
+</html>
