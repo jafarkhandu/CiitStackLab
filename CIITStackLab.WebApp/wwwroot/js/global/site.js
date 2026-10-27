@@ -174,14 +174,94 @@ document.addEventListener("DOMContentLoaded", function () {
     }
 
     const paymentButton = document.getElementById("ciit-demo-payment-button");
-    const defaultPaymentButtonHtml = paymentButton?.innerHTML
-        || '<i class="bi bi-lock-fill me-2"></i>Pay securely with Razorpay';
     const paymentNote = paymentForm.nextElementSibling;
     const processingState = document.getElementById("ciit-payment-processing-state");
     const successState = document.getElementById("ciit-payment-success-state");
     const formState = document.getElementById("ciit-payment-form-state");
     const modalEyebrow = document.querySelector(".ciit-payment-modal-eyebrow");
     const modalSubtitle = document.querySelector(".ciit-payment-modal-subtitle");
+    let merchantOrderId;
+    let paymentOverlay;
+
+    paymentTrigger.innerHTML = '<i class="bi bi-bag-check me-2"></i>Enroll Now';
+
+    if (modalEyebrow) {
+        modalEyebrow.textContent = "Secure Razorpay checkout";
+    }
+
+    if (modalSubtitle) {
+        modalSubtitle.textContent = "Complete your payment securely. Course access is granted only after server-side verification.";
+    }
+
+    if (paymentNote) {
+        paymentNote.textContent = "Razorpay checkout opens securely. Course access is granted only after server-side payment verification.";
+    }
+
+    const defaultPaymentButtonHtml = paymentButton?.innerHTML
+        || '<i class="bi bi-lock-fill me-2"></i>Pay securely with Razorpay';
+
+    const removePaymentOverlay = () => {
+        paymentOverlay?.remove();
+        paymentOverlay = null;
+    };
+
+    const showPaymentOverlay = (title, message, state = "processing", action = null) => {
+        removePaymentOverlay();
+
+        const overlay = document.createElement("div");
+        overlay.className = `ciit-payment-overlay ciit-payment-overlay-${state}`;
+        overlay.setAttribute("role", "dialog");
+        overlay.setAttribute("aria-modal", "true");
+        overlay.setAttribute("aria-live", "polite");
+
+        if (state === "success") {
+            overlay.innerHTML = `
+                <div class="ciit-payment-overlay-card">
+                    <div class="ciit-payment-success-ring" aria-hidden="true">
+                        <i class="bi bi-check-lg"></i>
+                    </div>
+                    <strong>${title}</strong>
+                    <span>${message}</span>
+                    <div class="ciit-payment-overlay-progress" aria-hidden="true"><span></span></div>
+                </div>`;
+        } else {
+            overlay.innerHTML = `
+                <div class="ciit-payment-overlay-card">
+                    <div class="ciit-payment-overlay-spinner" aria-hidden="true">
+                        <span></span>
+                        <i class="bi bi-shield-check"></i>
+                    </div>
+                    <strong>${title}</strong>
+                    <span class="ciit-payment-overlay-message"></span>
+                    <div class="ciit-payment-overlay-dots" aria-hidden="true"><span></span><span></span><span></span></div>
+                    ${action ? '<div class="ciit-payment-overlay-action"></div>' : ""}
+                </div>`;
+            overlay.querySelector(".ciit-payment-overlay-message").textContent = message;
+
+            if (action) {
+                const actionHost = overlay.querySelector(".ciit-payment-overlay-action");
+                const button = document.createElement("button");
+                button.type = "button";
+                button.className = "btn btn-outline-primary btn-sm";
+                button.textContent = action.label;
+                button.addEventListener("click", action.handler, { once: true });
+                actionHost.appendChild(button);
+            }
+        }
+
+        document.body.appendChild(overlay);
+        requestAnimationFrame(() => overlay.classList.add("is-visible"));
+        paymentOverlay = overlay;
+    };
+
+    const showPagePaymentMessage = (message, type = "danger") => {
+        showPaymentToast(message, type);
+    };
+
+    const clearPagePaymentMessage = () => {
+        clearPaymentToast();
+    };
+
     const loadRazorpayCheckout = () => {
         if (window.CiitRazorpayCheckout?.transact) {
             return Promise.resolve();
