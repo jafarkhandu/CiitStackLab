@@ -11,6 +11,10 @@
     <link href="https://fonts.googleapis.com/css2?family=Fira+Code:wght@400;500;600;700;800&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
     <link rel="stylesheet" href="~/css/admin/admin-dashboard.css" />
     <link rel="stylesheet" href="~/css/admin/admin-courses.css" />
+    @if (string.Equals(ViewContext.RouteData.Values["controller"]?.ToString(), "Topics", StringComparison.OrdinalIgnoreCase))
+    {
+        <link rel="stylesheet" href="~/css/admin/admin-topics.css" asp-append-version="true" />
+    }
     <link rel="stylesheet" href="~/css/admin/admin-mapping.css" />
     <link rel="stylesheet" href="~/css/admin/admin-students.css" />
     <link rel="stylesheet" href="~/css/admin/admin-settings.css" />
