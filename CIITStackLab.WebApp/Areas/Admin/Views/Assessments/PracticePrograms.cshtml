@@ -10,6 +10,7 @@
 
 @section Styles {
     <link rel="stylesheet" href="~/css/admin-assessment-detail.css" asp-append-version="true" />
+    <link rel="stylesheet" href="~/css/admin-assessment-tree.css" asp-append-version="true" />
     <link rel="stylesheet" href="~/css/admin-practice.css" asp-append-version="true" />
     <link rel="stylesheet" href="~/css/admin-mcq-import.css" asp-append-version="true" />
     <link rel="stylesheet" href="~/css/admin-practice-import.css" asp-append-version="true" />
@@ -91,7 +92,7 @@
         {
             <div class="ciit-practice-list">
                 @foreach (var topicGroup in Model.ActivePrograms
-                    .GroupBy(x => new { x.TopicTitle, x.NoteId })
+                    .GroupBy(x => x.TopicTitle)
                     .OrderBy(x => x.Key.TopicTitle))
                 {
                     var topicPrograms = topicGroup.ToList();
