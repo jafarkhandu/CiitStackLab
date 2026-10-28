@@ -22,6 +22,6 @@ public sealed class AdminTopicFormModel
     [Range(typeof(decimal), "0", "1000000000", ErrorMessage = "Price cannot be negative.")]
     public decimal Price { get; set; }
 
-    [Range(1, 100000, ErrorMessage = "Duration must be between 1 and 100000 minutes.")]
-    public int? DurationMinutes { get; set; }
+    [Range(typeof(decimal), "0.5", "1666.67", ErrorMessage = "Duration must be between 0.5 and 1666.67 hours.")]
+    public decimal? DurationHours { get; set; }
 }
