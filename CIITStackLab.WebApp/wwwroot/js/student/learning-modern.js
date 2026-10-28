@@ -9,6 +9,9 @@
         const headerTitle = document.querySelector('.ciit-learning-course-intro h1');
         const headerDescription = document.querySelector('.ciit-learning-course-intro > p');
         const topicEyebrow = document.querySelector('.ciit-learning-lesson-heading .ciit-learning-eyebrow');
+        const mainCard = document.querySelector('.ciit-learning-main-card');
+        const lessonHeader = document.querySelector('.ciit-learning-lesson-header');
+        const panelPager = document.querySelector('.ciit-learning-panel-pager');
 
         if (headerTitle) {
             const topicTitle = lessonTitle?.textContent?.trim();
@@ -19,6 +22,13 @@
 
         if (topicEyebrow && headerDescription) {
             headerDescription.textContent = topicEyebrow.textContent.trim().replace(/\s+/g, ' ');
+        }
+
+        // The course-level hero is hidden on the modern lesson page. Keep the Notes /
+        // Assessments navigation, but place it inside the lesson card after the topic heading
+        // so the page starts directly with the selected topic instead of a duplicate course hero.
+        if (panelPager && mainCard && lessonHeader) {
+            lessonHeader.insertAdjacentElement('afterend', panelPager);
         }
 
         const contentButton = document.querySelector('[data-learning-page="content"]');
