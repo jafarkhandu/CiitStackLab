@@ -1433,17 +1433,6 @@ namespace CIITStackLab.Infrastructure.Migrations
                         .IsRequired();
                 });
 
-            modelBuilder.Entity("CIITStackLab.Domain.Entities.TrainingNote", b =>
-                {
-                    b.HasOne("CIITStackLab.Domain.Entities.Topic", "Topic")
-                        .WithMany()
-                        .HasForeignKey("TopicId")
-                        .OnDelete(DeleteBehavior.NoAction)
-                        .IsRequired();
-
-                    b.Navigation("Topic");
-                });
-
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityRoleClaim<string>", b =>
                 {
                     b.HasOne("Microsoft.AspNetCore.Identity.IdentityRole", null)
