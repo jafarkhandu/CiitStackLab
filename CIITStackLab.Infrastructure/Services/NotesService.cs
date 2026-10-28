@@ -53,6 +53,8 @@ public sealed class NotesService : INotesService
                 ChapterId = content.Id.ToString(),
                 Title = content.Title,
                 HtmlContent = content.HtmlContent ?? string.Empty,
+                Slides = content.Slides,
+                VideoName = content.VideoName,
                 SortOrder = content.Id,
                 UpdatedAt = content.UpdatedAt,
                 CreatedAt = content.CreatedAt
