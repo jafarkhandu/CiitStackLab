@@ -166,11 +166,10 @@ public sealed class AdminPracticeProgramService : IAdminPracticeProgramService
             .Where(note => note.Flag == 0 && note.Topic.Flag == 0)
             .OrderBy(note => note.Topic.Title)
             .ThenBy(note => note.Id)
-            .ThenBy(note => note.Id)
             .Select(note => new AdminAssessmentChapterLookupDto
             {
                 NoteId = note.Id,
-                TopicId = note.TopicId.GetValueOrDefault()
+                TopicId = note.TopicId.GetValueOrDefault(),
                 TopicTitle = note.Topic.Title,
                 ChapterId = note.Id.ToString(),
                 ChapterTitle = note.Title
