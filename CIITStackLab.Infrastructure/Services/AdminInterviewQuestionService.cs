@@ -103,18 +103,18 @@ public sealed class AdminInterviewQuestionService : IAdminInterviewQuestionServi
     public async Task<IReadOnlyList<AdminAssessmentChapterLookupDto>> GetAssessmentChapterLookupAsync(
         CancellationToken cancellationToken = default)
     {
-        return await _dbContext.TrainingNotes
+        return await _dbContext.Lessons
             .AsNoTracking()
             .Where(note => note.Flag == 0 && note.Topic.Flag == 0)
             .OrderBy(note => note.Topic.Title)
-            .ThenBy(note => note.SortOrder)
-            .ThenBy(note => note.Id)
+            
+            
             .Select(note => new AdminAssessmentChapterLookupDto
             {
                 NoteId = note.Id,
                 TopicId = note.TopicId,
                 TopicTitle = note.Topic.Title,
-                ChapterId = note.ChapterId,
+                ChapterId = note.Id.ToString(),
                 ChapterTitle = note.Title
             })
             .ToListAsync(cancellationToken);
@@ -141,7 +141,7 @@ public sealed class AdminInterviewQuestionService : IAdminInterviewQuestionServi
         AdminInterviewQuestionInputDto input,
         CancellationToken cancellationToken = default)
     {
-        var chapterExists = await _dbContext.TrainingNotes.AnyAsync(
+        var chapterExists = await _dbContext.Lessons.AnyAsync(
             note => note.Id == input.NoteId && note.Flag == 0 && note.Topic.Flag == 0,
             cancellationToken);
 
@@ -179,7 +179,7 @@ public sealed class AdminInterviewQuestionService : IAdminInterviewQuestionServi
             return (false, "The selected interview question was not found.");
         }
 
-        var chapterExists = await _dbContext.TrainingNotes.AnyAsync(
+        var chapterExists = await _dbContext.Lessons.AnyAsync(
             note => note.Id == input.NoteId && note.Flag == 0 && note.Topic.Flag == 0,
             cancellationToken);
 
