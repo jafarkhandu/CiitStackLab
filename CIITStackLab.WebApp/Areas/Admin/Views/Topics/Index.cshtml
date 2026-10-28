@@ -74,9 +74,18 @@
                             <td class="topic-value">@FormatDuration(topic.DurationMinutes)</td>
                             <td>
                                 <div class="topic-row-actions">
-                                    <a asp-area="Admin" asp-controller="Topics" asp-action="Index" asp-route-editId="@topic.Id" class="ciit-topic-icon-btn" title="Edit">
+                                    <button type="button"
+                                            class="ciit-topic-icon-btn"
+                                            title="Edit"
+                                            data-bs-toggle="modal"
+                                            data-bs-target="#topicModal"
+                                            data-topic-mode="edit"
+                                            data-topic-id="@topic.Id"
+                                            data-topic-name="@topic.Title"
+                                            data-topic-price="@topic.Price.ToString(System.Globalization.CultureInfo.InvariantCulture)"
+                                            data-topic-duration-hours="@(topic.DurationMinutes.HasValue ? (topic.DurationMinutes.Value / 60m).ToString(System.Globalization.CultureInfo.InvariantCulture) : "")">
                                         <i class="bi bi-pencil-square"></i>
-                                    </a>
+                                    </button>
                                     <form asp-area="Admin" asp-controller="Topics" asp-action="Delete" method="post" class="js-topic-delete-form" data-topic-name="@topic.Title">
                                         @Html.AntiForgeryToken()
                                         <input type="hidden" name="id" value="@topic.Id" />
@@ -161,8 +170,8 @@
                             <input id="topicPrice" name="Price" type="number" class="form-control" min="0" step="0.01" placeholder="e.g. 500" required />
                         </div>
                         <div class="ciit-topic-form-field">
-                            <label for="topicDuration">Duration <span>(minutes, optional)</span></label>
-                            <input id="topicDuration" name="DurationMinutes" type="number" class="form-control" min="1" max="100000" step="1" placeholder="e.g. 240" />
+                            <label for="topicDuration">Duration <span>(hours, optional)</span></label>
+                            <input id="topicDuration" name="DurationHours" type="number" class="form-control" min="0.5" max="1666.67" step="0.5" placeholder="e.g. 4" />
                         </div>
                     </div>
 
@@ -186,14 +195,9 @@
     </div>
 </div>
 
-@if (edit is not null)
-{
-    <script>
-        window.ciitEditTopic = {
-            id: @edit.Id,
-            topicName: @Html.Raw(System.Text.Json.JsonSerializer.Serialize(edit.TopicName)),
-            price: @edit.Price.ToString(System.Globalization.CultureInfo.InvariantCulture),
-            durationMinutes: @(edit.DurationMinutes.HasValue ? edit.DurationMinutes.Value.ToString(System.Globalization.CultureInfo.InvariantCulture) : "null")
-        };
-    </script>
+
+
+
+@section Scripts {
+    <script src="~/js/admin/admin-topics.js" asp-append-version="true"></script>
 }

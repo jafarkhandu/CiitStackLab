@@ -10,6 +10,13 @@ public sealed class CourseService
     private static readonly IReadOnlyDictionary<string, CoursePresentation> Presentations =
         new Dictionary<string, CoursePresentation>(StringComparer.OrdinalIgnoreCase)
         {
+            ["Java Full Stack Development"] = new(
+                "Learn Java, JDBC and modern full-stack development.",
+                "Follow the CIIT Java Full Stack syllabus from HTML, CSS and JavaScript through Core Java, databases, JSP, Hibernate, Spring, Git, Jenkins, Azure and Docker.",
+                "https://tutorial.ciitstudent.com/Course_img/b0998bd1-f159-4388-94ea-66a4be8d1ab2.png",
+                "Full Stack",
+                "Beginner",
+                0),
             ["Java Full Stack"] = new(
                 "Learn Java, JDBC and many more..",
                 "Build Java applications with strong programming, object-oriented and full-stack development fundamentals.",

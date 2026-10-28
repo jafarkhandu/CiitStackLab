@@ -20,14 +20,13 @@ document.addEventListener("DOMContentLoaded", function () {
         if (idInput) idInput.value = "0";
     }
 
-    function fill() {
-        const topic = window.ciitEditTopic;
+    function fill(topic) {
         if (!topic) return;
 
-        idInput.value = topic.id;
+        idInput.value = topic.id ?? "0";
         nameInput.value = topic.topicName || "";
         priceInput.value = topic.price ?? "";
-        durationInput.value = topic.durationMinutes ?? "";
+        durationInput.value = topic.durationHours ?? "";
         title.textContent = "Edit Topic";
         description.textContent = "Update the selected active topic.";
         submit.querySelector("span").textContent = "Update Topic";
@@ -35,18 +34,24 @@ document.addEventListener("DOMContentLoaded", function () {
 
     if (modal) {
         modal.addEventListener("show.bs.modal", function (event) {
-            if (event.relatedTarget?.getAttribute("data-topic-mode") === "create") {
+            const trigger = event.relatedTarget;
+            const mode = trigger?.getAttribute("data-topic-mode");
+
+            if (mode === "create") {
                 reset();
                 title.textContent = "Add Topic";
                 description.textContent = "Create a new active learning topic.";
                 submit.querySelector("span").textContent = "Save Topic";
-            } else if (window.ciitEditTopic) {
-                fill();
+            } else if (mode === "edit") {
+                fill({
+                    id: trigger.dataset.topicId,
+                    topicName: trigger.dataset.topicName,
+                    price: trigger.dataset.topicPrice,
+                    durationHours: trigger.dataset.topicDurationHours
+                });
             }
         });
 
-        if (window.ciitEditTopic)
-            bootstrap.Modal.getOrCreateInstance(modal).show();
     }
 
     if (search) {
