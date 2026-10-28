@@ -65,8 +65,8 @@ public sealed class NoteMediaDto
 
 
 /// <summary>
-/// A selectable Notes chapter. NoteId is the primary key of tbltraining_notes,
-/// not the parent TopicId or the display-only ChapterId.
+/// A selectable unified content record. NoteId is retained as a legacy DTO field
+/// and carries the content_id value; it does not reference tbltraining_notes.
 /// </summary>
 public sealed class AdminAssessmentChapterLookupDto
 {
