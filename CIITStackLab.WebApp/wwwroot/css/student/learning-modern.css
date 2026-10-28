@@ -9,8 +9,11 @@
 }
 
 .ciit-learning-mode .ciit-learning-header {
-    background: linear-gradient(135deg, #f6faff 0%, #eaf3ff 100%);
-    border-bottom: 1px solid #dce8f8;
+    display: none;
+}
+
+.ciit-learning-mode .ciit-learning-panel-pager {
+    display: none;
 }
 
 .ciit-learning-mode .ciit-learning-course-intro h1 {
@@ -20,14 +23,6 @@
 
 .ciit-learning-mode .ciit-learning-course-intro > p {
     max-width: 780px;
-}
-
-.ciit-learning-mode .ciit-learning-panel-pager {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-}
-
-.ciit-learning-mode .ciit-learning-panel-pager [data-learning-page="content"] {
-    display: none !important;
 }
 
 .ciit-learning-mode .ciit-learning-main-card {
@@ -139,16 +134,19 @@
     background: #fbfdff;
 }
 
-@media (max-width: 767.98px) {
-    .ciit-learning-mode .ciit-learning-panel-pager {
-        grid-template-columns: 1fr 1fr;
-    }
+/* The Learn page uses the shared course sidebar, but it should stay compact. */
+.ciit-learning-mode .ciit-course-global-sidebar {
+    position: sticky;
+    top: 72px;
+    align-self: start;
+    height: auto !important;
+    min-height: 0 !important;
+    max-height: none !important;
+    overflow: visible;
 }
 
-@media (prefers-reduced-motion: reduce) {
-    .ciit-learning-mode * {
-        scroll-behavior: auto !important;
-    }
+.ciit-learning-mode .ciit-course-global-sidebar .ciit-course-sidebar-art {
+    display: none;
 }
 
 /* Keep the lesson card and notes section sized to their real content. */
@@ -179,4 +177,16 @@
     height: auto !important;
     min-height: 0 !important;
     max-height: none !important;
+}
+
+@media (max-width: 767.98px) {
+    .ciit-learning-mode .ciit-learning-panel-pager {
+        grid-template-columns: 1fr 1fr;
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .ciit-learning-mode * {
+        scroll-behavior: auto !important;
+    }
 }
