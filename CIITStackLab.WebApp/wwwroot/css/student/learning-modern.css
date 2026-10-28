@@ -158,3 +158,10 @@
     min-height: 0 !important;
     height: auto !important;
 }
+
+/* The legacy learning stylesheet uses content-visibility with a 900px intrinsic size.
+   That creates the large empty placeholder visible on this modern lesson page. */
+.ciit-learning-mode .ciit-learning-page .ciit-learning-main-card {
+    content-visibility: visible !important;
+    contain-intrinsic-size: none !important;
+}
