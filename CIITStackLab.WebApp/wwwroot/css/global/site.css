@@ -2010,68 +2010,123 @@ body.ciit-hub-transitioning { overflow: hidden; }
 }
 
 
-/* Static course roadmap topic cards: no accordion, only notes and assessments */
+/* Course roadmap: clear vertical tree with compact topic nodes and resource badges */
 .ciit-student-course-details .ciit-roadmap-tree-grid {
-    align-items: stretch;
-    gap: 12px 16px;
+    position: relative;
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    gap: 10px;
+    padding-left: 27px;
+}
+.ciit-student-course-details .ciit-roadmap-tree-grid::before {
+    position: absolute;
+    top: -25px;
+    bottom: 24px;
+    left: 9px;
+    width: 2px;
+    border-radius: 2px;
+    background: linear-gradient(180deg, #b9cff4 0%, #dbe7f9 100%);
+    content: "";
 }
 .ciit-student-course-details .ciit-roadmap-topic-card {
     position: relative;
     display: flex;
-    flex-direction: column;
+    flex-direction: row;
+    align-items: center;
     justify-content: space-between;
-    gap: 13px;
+    gap: 14px;
     min-width: 0;
-    min-height: 112px;
-    padding: 15px;
+    min-height: 76px;
+    padding: 12px 16px;
     border: 1px solid #dce7f8;
-    border-radius: 15px;
-    background: linear-gradient(145deg, #fff 0%, #f9fbff 100%);
-    box-shadow: 0 5px 14px rgba(28, 53, 89, .04);
+    border-radius: 14px;
+    background: linear-gradient(105deg, #fff 0%, #f9fbff 100%);
+    box-shadow: 0 4px 12px rgba(28, 53, 89, .035);
     transition: border-color .18s ease, box-shadow .18s ease, transform .18s ease;
 }
 .ciit-student-course-details .ciit-roadmap-topic-card::before {
     position: absolute;
-    top: 26px;
-    left: -16px;
-    width: 15px;
+    top: 50%;
+    left: -19px;
+    width: 18px;
     height: 2px;
     background: #c7d8f3;
     content: "";
 }
+.ciit-student-course-details .ciit-roadmap-topic-card::after {
+    position: absolute;
+    top: calc(50% - 5px);
+    left: -24px;
+    width: 10px;
+    height: 10px;
+    border: 2px solid #fff;
+    border-radius: 50%;
+    background: #3d70cb;
+    box-shadow: 0 0 0 2px #cbdcf7;
+    content: "";
+}
 .ciit-student-course-details .ciit-roadmap-topic-card:hover {
-    transform: translateY(-2px);
+    transform: translateX(2px);
     border-color: #bfd2f4;
-    box-shadow: 0 9px 20px rgba(32, 62, 108, .075);
+    box-shadow: 0 8px 18px rgba(32, 62, 108, .065);
 }
 .ciit-roadmap-topic-main {
     display: flex;
     align-items: center;
-    gap: 10px;
+    gap: 11px;
     min-width: 0;
+    flex: 1 1 auto;
 }
 .ciit-roadmap-topic-title {
     min-width: 0;
     color: #1a2b46;
-    font-size: .92rem;
+    font-size: .95rem;
     font-weight: 800;
     line-height: 1.35;
     overflow-wrap: anywhere;
 }
 .ciit-student-course-details .ciit-roadmap-topic-card .ciit-roadmap-badges {
     display: flex;
+    flex: 0 0 auto;
     flex-wrap: wrap;
-    gap: 6px;
-    padding-left: 41px;
+    justify-content: flex-end;
+    gap: 7px;
 }
 .ciit-student-course-details .ciit-roadmap-topic-card .ciit-roadmap-badge {
-    font-size: .69rem;
+    font-size: .72rem;
 }
-@media (max-width: 575.98px) {
+.ciit-student-course-details .ciit-roadmap-tree-root {
+    margin-bottom: 25px;
+}
+.ciit-student-course-details .ciit-roadmap-tree-root::after {
+    bottom: -26px;
+    height: 25px;
+}
+@media (max-width: 767.98px) {
     .ciit-student-course-details .ciit-roadmap-topic-card {
+        align-items: flex-start;
+        flex-direction: column;
+        gap: 10px;
         min-height: 0;
         padding: 13px;
     }
+    .ciit-student-course-details .ciit-roadmap-topic-card .ciit-roadmap-badges {
+        justify-content: flex-start;
+        padding-left: 42px;
+    }
+}
+@media (max-width: 575.98px) {
+    .ciit-student-course-details .ciit-roadmap-tree-grid {
+        padding-left: 20px;
+        gap: 9px;
+    }
+    .ciit-student-course-details .ciit-roadmap-tree-grid::before { left: 6px; }
+    .ciit-student-course-details .ciit-roadmap-topic-card::before {
+        left: -15px;
+        width: 14px;
+    }
+    .ciit-student-course-details .ciit-roadmap-topic-card::after { left: -20px; }
+    .ciit-student-course-details .ciit-roadmap-topic-title { font-size: .88rem; }
     .ciit-student-course-details .ciit-roadmap-topic-card .ciit-roadmap-badges {
         padding-left: 0;
     }
