@@ -29,13 +29,16 @@
         </div>
     </div>
 
-    <section class="ciit-notes-editor-card">
+    <section>
         <form asp-area="Admin"
               asp-controller="Notes"
               asp-action="@(edit ? "Edit" : "Create")"
-              method="post">
+              method="post"
+              enctype="multipart/form-data"
+              class="ciit-notes-editor-card ciit-content-form-card">
 
             @Html.AntiForgeryToken()
+            <input type="hidden" name="vimeoVideoUrl" class="js-vimeo-video-url" />
 
             @if (edit)
             {
@@ -90,6 +93,27 @@
                       class="text-danger"></span>
             </div>
 
+            <div class="ciit-notes-media-grid">
+                <div class="ciit-notes-field">
+                    <label for="slidesFile">Slides (PDF)</label>
+                    <input type="file" id="slidesFile" name="slidesFile" class="form-control" accept=".pdf,application/pdf" />
+                    @if (edit && !string.IsNullOrWhiteSpace(Model.Slides))
+                    {
+                        <small>Current slides: @System.IO.Path.GetFileName(Model.Slides)</small>
+                    }
+                    <small>Optional. Upload a PDF to attach or replace slides.</small>
+                </div>
+                <div class="ciit-notes-field">
+                    <label for="videoFile">Video</label>
+                    <input type="file" id="videoFile" name="videoFile" class="form-control" accept=".mp4,.webm,.mov" />
+                    @if (edit && !string.IsNullOrWhiteSpace(Model.VideoName))
+                    {
+                        <small>Video already attached to this note.</small>
+                    }
+                    <small>Optional. Video uploads directly to Vimeo.</small>
+                </div>
+            </div>
+
             <div class="ciit-notes-editor-actions">
                 <a asp-area="Admin"
                    asp-controller="Notes"
@@ -101,7 +125,7 @@
                 <button class="ciit-notes-primary-btn"
                         type="submit">
                     <i class="bi bi-check2-circle"></i>
-                    @(edit ? "Save Changes" : "Create Chapter")
+                    @(edit ? "Save Changes" : "Create Note")
                 </button>
             </div>
         </form>
