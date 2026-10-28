@@ -161,7 +161,7 @@ public sealed class AdminPracticeProgramService : IAdminPracticeProgramService
     public async Task<IReadOnlyList<AdminAssessmentChapterLookupDto>> GetAssessmentChapterLookupAsync(
         CancellationToken cancellationToken = default)
     {
-        return await _dbContext.TrainingNotes
+        return await _dbContext.Lessons
             .AsNoTracking()
             .Where(note => note.Flag == 0 && note.Topic.Flag == 0)
             .OrderBy(note => note.Topic.Title)
@@ -172,7 +172,7 @@ public sealed class AdminPracticeProgramService : IAdminPracticeProgramService
                 NoteId = note.Id,
                 TopicId = note.TopicId,
                 TopicTitle = note.Topic.Title,
-                ChapterId = note.ChapterId,
+                ChapterId = note.Id.ToString(),
                 ChapterTitle = note.Title
             })
             .ToListAsync(cancellationToken);
@@ -386,8 +386,8 @@ public sealed class AdminPracticeProgramService : IAdminPracticeProgramService
 
     private Task<bool> NoteExistsAsync(int noteId, CancellationToken cancellationToken)
     {
-        return _dbContext.TrainingNotes.AnyAsync(
-            note => note.Id == noteId && note.Flag == 0 && note.Topic.Flag == 0,
+        return _dbContext.Lessons.AnyAsync(
+            note => note.Id == noteId && note.Flag == 0 && note.TopicId.HasValue && note.Topic.Flag == 0,
             cancellationToken);
     }
 
