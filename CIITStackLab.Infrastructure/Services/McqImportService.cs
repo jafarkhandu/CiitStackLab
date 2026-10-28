@@ -128,9 +128,9 @@ public sealed class McqImportService : IMcqImportService
             .Select(note => new
             {
                 note.Id,
-                note.TopicId,
+                TopicId = note.TopicId!.Value,
                 TopicTitle = note.Topic.Title,
-                note.Id.ToString(),
+                ChapterId = note.Id.ToString(),
                 ChapterTitle = note.Title
             })
             .SingleOrDefaultAsync(cancellationToken);
