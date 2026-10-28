@@ -39,7 +39,8 @@ public sealed class NotesController : Controller
         AdminNoteInputDto input,
         IFormFile? slidesFile,
         string? vimeoVideoUrl,
-        CancellationToken ct)
+        bool modal = false,
+        CancellationToken ct = default)
     {
         if (!ModelState.IsValid)
         {
@@ -65,6 +66,8 @@ public sealed class NotesController : Controller
             ViewBag.Options = await _notesService.GetTopicOptionsAsync(ct);
             return View(input);
         }
+
+        if (modal) return ModalSaved();
 
         TempData["AdminNotesMessage"] = "Note and learning media created successfully.";
         TempData["AdminNotesMessageType"] = "success";
@@ -98,7 +101,8 @@ public sealed class NotesController : Controller
         AdminNoteInputDto input,
         IFormFile? slidesFile,
         string? vimeoVideoUrl,
-        CancellationToken ct)
+        bool modal = false,
+        CancellationToken ct = default)
     {
         if (id <= 0)
         {
@@ -146,6 +150,8 @@ public sealed class NotesController : Controller
             ViewBag.Options = await _notesService.GetTopicOptionsAsync(ct);
             return View(input);
         }
+
+        if (modal) return ModalSaved();
 
         TempData["AdminNotesMessage"] = "Note and learning media updated successfully.";
         TempData["AdminNotesMessageType"] = "success";
@@ -204,6 +210,12 @@ public sealed class NotesController : Controller
             : result.Error ?? "Unable to delete chapter.";
         TempData["AdminNotesMessageType"] = result.Succeeded ? "success" : "error";
         return RedirectToAction(nameof(Index));
+    }
+
+    private ContentResult ModalSaved()
+    {
+        const string script = "<!doctype html><html><head><meta charset=\"utf-8\"></head><body><script>window.parent.postMessage({ type: 'ciit-content-saved' }, window.location.origin);</script></body></html>";
+        return Content(script, "text/html");
     }
 
     private async Task SaveUploadedFilesAsync(
