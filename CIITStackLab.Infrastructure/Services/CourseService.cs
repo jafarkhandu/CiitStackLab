@@ -460,7 +460,9 @@ public sealed class CourseService
             Title = course.Title,
             ShortDescription = presentation.ShortDescription,
             Description = presentation.Description,
-            ImageUrl = presentation.ImageUrl,
+            ImageUrl = !string.IsNullOrWhiteSpace(course.ImagePath)
+                ? course.ImagePath
+                : presentation.ImageUrl,
             Category = presentation.Category,
             Level = presentation.Level,
             DurationHours = durationHours,
