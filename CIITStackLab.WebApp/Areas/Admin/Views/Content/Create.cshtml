@@ -57,15 +57,6 @@
                     <span asp-validation-for="TopicId" class="text-danger"></span>
                 </div>
 
-                <div class="ciit-content-field">
-                    <label asp-for="NoteId">Notes / Chapter</label>
-                    <select asp-for="NoteId" asp-items="ViewBag.Notes" class="form-select" id="contentNote" disabled>
-                        <option value="0">Select note chapter</option>
-                    </select>
-                    <span asp-validation-for="NoteId" class="text-danger"></span>
-                    <small>Select a topic first to load its note chapters.</small>
-                </div>
-
                 <div class="ciit-content-field full-width">
                     <label asp-for="Title">Content Name</label>
                     <input asp-for="Title" class="form-control" maxlength="100" placeholder="e.g. Dependency Injection Resources" autocomplete="off" />
