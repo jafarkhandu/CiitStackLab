@@ -13,6 +13,12 @@ public class HomeController : Controller
         _courseService = courseService;
     }
 
+    [HttpGet]
+    public IActionResult Dashboard()
+    {
+        return RedirectToAction("MyCourses", "Courses");
+    }
+
     public async Task<IActionResult> Index(CancellationToken cancellationToken)
     {
         ViewBag.ShowLearningHub = User.IsInRole("Student");
