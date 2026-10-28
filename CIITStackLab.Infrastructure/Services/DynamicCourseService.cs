@@ -409,8 +409,7 @@ public sealed class DynamicCourseService : ICourseService
                 group => group.Min(content => content.Id));
 
         var firstContentIdByNoteId = contentRows
-            .Where(content => content.Id.HasValue)
-            .GroupBy(content => content.Id!.Value)
+            .GroupBy(content => content.Id)
             .ToDictionary(
                 group => group.Key,
                 group => group.Min(content => content.Id));
@@ -423,8 +422,7 @@ public sealed class DynamicCourseService : ICourseService
             .ToDictionary(group => group.Key, group => group.ToList());
 
         var contentRowsByNoteId = contentRows
-            .Where(content => content.Id.HasValue)
-            .GroupBy(content => content.Id!.Value)
+            .GroupBy(content => content.Id)
             .ToDictionary(group => group.Key, group => group.ToList());
 
         var chapterRowsByTopicId = chapterRows
