@@ -148,7 +148,7 @@ public sealed class AdminMcqService : IAdminMcqService
         CancellationToken cancellationToken = default)
     {
         var chapterExists = await _dbContext.Lessons.AnyAsync(
-            note => note.Id == input.NoteId && note.Flag == 0 && note.TopicId.HasValue && note.TopicId.HasValue && note.Topic.Flag == 0,
+            note => note.Id == input.NoteId && note.Flag == 0 && note.TopicId.HasValue && note.Topic.Flag == 0,
             cancellationToken);
 
         if (!chapterExists)
@@ -190,7 +190,7 @@ public sealed class AdminMcqService : IAdminMcqService
         }
 
         var chapterExists = await _dbContext.Lessons.AnyAsync(
-            note => note.Id == input.NoteId && note.Flag == 0 && note.TopicId.HasValue && note.TopicId.HasValue && note.Topic.Flag == 0,
+            note => note.Id == input.NoteId && note.Flag == 0 && note.TopicId.HasValue && note.Topic.Flag == 0,
             cancellationToken);
 
         if (!chapterExists)
