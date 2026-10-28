@@ -6,9 +6,6 @@ public class Lesson
 
     public int? TopicId { get; set; }
 
-    // Legacy in-memory property retained for dependent services; not mapped to the unified content table.
-    public int? NoteId { get; set; }
-
     public string Title { get; set; } = string.Empty;
 
     public string? HtmlContent { get; set; }
