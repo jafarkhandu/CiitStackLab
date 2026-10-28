@@ -429,12 +429,14 @@
         </section>
 
         <div id="course-roadmap" class="ciit-course-outline-card ciit-student-course-roadmap mt-4">
-            <div class="d-flex justify-content-between align-items-center gap-3 flex-wrap mb-3">
+            <div class="ciit-roadmap-tree-root">
+                <span class="ciit-roadmap-tree-root-icon"><i class="bi bi-mortarboard-fill" aria-hidden="true"></i></span>
                 <div>
-                    <h2 class="mb-1">Course Roadmap</h2>
-                    <p class="text-secondary mb-0">Explore notes, learning content and assessments by topic.</p>
+                    <span class="ciit-roadmap-tree-eyebrow">YOUR COURSE</span>
+                    <h2>@Model.Title</h2>
+                    <p>Follow the topics in sequence and open any topic to explore its resources.</p>
                 </div>
-                <span class="badge rounded-pill text-bg-light border">@Model.Topics.Count Topics</span>
+                <span class="ciit-roadmap-tree-count">@Model.Topics.Count Topics</span>
             </div>
 
             @if (Model.Topics.Count == 0)
@@ -445,7 +447,7 @@
             }
             else
             {
-                <div class="accordion ciit-premium-roadmap" id="courseTopicsAccordion">
+                <div class="ciit-premium-roadmap ciit-roadmap-tree-grid" id="courseTopicsAccordion">
                     @{ var topicNumber = 0; }
                     @foreach (var topic in Model.Topics)
                     {
