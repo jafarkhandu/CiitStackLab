@@ -35,7 +35,7 @@ public sealed class AdminMcqService : IAdminMcqService
                             ? x.Topic.Title + " / legacy topic-level assessment"
                             : "Unassigned",
                 ContentTitle = x.Content != null ? x.Content.Title ?? string.Empty : string.Empty,
-                TopicTitle = x.Note != null ? x.Note.Topic.Title : x.Topic != null ? x.Topic.Title : x.Content != null && x.Content.Topic != null ? x.Content.Topic.Title : "Unassigned",
+                TopicTitle = x.Topic != null ? x.Topic.Title : x.Content != null && x.Content.Topic != null ? x.Content.Topic.Title : "Unassigned",
                 Question = x.Question ?? string.Empty,
                 Option1 = x.Option1 ?? string.Empty,
                 Option2 = x.Option2 ?? string.Empty,
@@ -64,7 +64,7 @@ public sealed class AdminMcqService : IAdminMcqService
                             ? x.Topic.Title + " / legacy topic-level assessment"
                             : "Unassigned",
                 ContentTitle = x.Content != null ? x.Content.Title ?? string.Empty : string.Empty,
-                TopicTitle = x.Note != null ? x.Note.Topic.Title : x.Topic != null ? x.Topic.Title : x.Content != null && x.Content.Topic != null ? x.Content.Topic.Title : "Unassigned",
+                TopicTitle = x.Topic != null ? x.Topic.Title : x.Content != null && x.Content.Topic != null ? x.Content.Topic.Title : "Unassigned",
                 Question = x.Question ?? string.Empty,
                 DeletedAt = x.DeletedAt
             })
@@ -96,7 +96,7 @@ public sealed class AdminMcqService : IAdminMcqService
                             ? x.Topic.Title + " / legacy topic-level assessment"
                             : "Unassigned",
                 ContentTitle = x.Content != null ? x.Content.Title ?? string.Empty : string.Empty,
-                TopicTitle = x.Note != null ? x.Note.Topic.Title : x.Topic != null ? x.Topic.Title : x.Content != null && x.Content.Topic != null ? x.Content.Topic.Title : "Unassigned",
+                TopicTitle = x.Topic != null ? x.Topic.Title : x.Content != null && x.Content.Topic != null ? x.Content.Topic.Title : "Unassigned",
                 Question = x.Question ?? string.Empty,
                 Option1 = x.Option1 ?? string.Empty,
                 Option2 = x.Option2 ?? string.Empty,
@@ -112,18 +112,18 @@ public sealed class AdminMcqService : IAdminMcqService
     public async Task<IReadOnlyList<AdminAssessmentChapterLookupDto>> GetAssessmentChapterLookupAsync(
         CancellationToken cancellationToken = default)
     {
-        return await _dbContext.TrainingNotes
+        return await _dbContext.Lessons
             .AsNoTracking()
             .Where(note => note.Flag == 0 && note.Topic.Flag == 0)
             .OrderBy(note => note.Topic.Title)
-            .ThenBy(note => note.SortOrder)
+            
             .ThenBy(note => note.Id)
             .Select(note => new AdminAssessmentChapterLookupDto
             {
                 NoteId = note.Id,
                 TopicId = note.TopicId,
                 TopicTitle = note.Topic.Title,
-                ChapterId = note.ChapterId,
+                ChapterId = note.Id.ToString(),
                 ChapterTitle = note.Title
             })
             .ToListAsync(cancellationToken);
@@ -165,8 +165,8 @@ public sealed class AdminMcqService : IAdminMcqService
         AdminChapterMcqInputDto input,
         CancellationToken cancellationToken = default)
     {
-        var chapterExists = await _dbContext.TrainingNotes.AnyAsync(
-            note => note.Id == input.NoteId && note.Flag == 0 && note.Topic.Flag == 0,
+        var chapterExists = await _dbContext.Lessons.AnyAsync(
+            note => note.Id == input.NoteId && note.Flag == 0 && note.TopicId.HasValue && note.TopicId.HasValue && note.Topic.Flag == 0,
             cancellationToken);
 
         if (!chapterExists)
@@ -207,8 +207,8 @@ public sealed class AdminMcqService : IAdminMcqService
             return (false, "The selected MCQ was not found.");
         }
 
-        var chapterExists = await _dbContext.TrainingNotes.AnyAsync(
-            note => note.Id == input.NoteId && note.Flag == 0 && note.Topic.Flag == 0,
+        var chapterExists = await _dbContext.Lessons.AnyAsync(
+            note => note.Id == input.NoteId && note.Flag == 0 && note.TopicId.HasValue && note.TopicId.HasValue && note.Topic.Flag == 0,
             cancellationToken);
 
         if (!chapterExists)
