@@ -20,8 +20,12 @@ public static class DependencyInjection
         services.AddMemoryCache();
         services.AddHttpClient();
 
-        services.AddDbContext<ApplicationDbContext>(options =>
-            options.UseSqlServer(connectionString, sqlOptions => { sqlOptions.EnableRetryOnFailure(); }));
+            services.AddDbContext<ApplicationDbContext>(options =>
+            options.UseSqlServer(connectionString, sqlOptions =>
+            {
+                sqlOptions.EnableRetryOnFailure();
+                sqlOptions.MigrationsHistoryTable("__EFMigrationsHistory", "erpsystem");
+            }));
 
         services.AddIdentity<ApplicationUser, IdentityRole>(options =>
         {
