@@ -1354,7 +1354,6 @@ namespace CIITStackLab.Infrastructure.Migrations
 
                     b.Navigation("Content");
 
-                    b.Navigation("Note");
                 });
 
             modelBuilder.Entity("CIITStackLab.Domain.Entities.ContentQuestion", b =>
