@@ -41,15 +41,17 @@ public partial class UnifyTrainingContent : Migration
                 DECLARE @contentFkSql nvarchar(max) = N'';
 
                 SELECT @contentFkSql += N'ALTER TABLE '
-                    + QUOTENAME(OBJECT_SCHEMA_NAME(parent_object_id)) + N'.'
-                    + QUOTENAME(OBJECT_NAME(parent_object_id))
-                    + N' DROP CONSTRAINT ' + QUOTENAME(name) + N';'
-                FROM sys.foreign_keys
-                WHERE parent_object_id = OBJECT_ID(N'erpsystem.tbltraining_topic_contents')
-                  AND COL_NAME(parent_object_id, (
-                      SELECT column_id FROM sys.columns
-                      WHERE object_id = parent_object_id AND name = N'note_id'
-                  )) = N'note_id';
+                    + QUOTENAME(OBJECT_SCHEMA_NAME(fk.parent_object_id)) + N'.'
+                    + QUOTENAME(OBJECT_NAME(fk.parent_object_id))
+                    + N' DROP CONSTRAINT ' + QUOTENAME(fk.name) + N';'
+                FROM sys.foreign_keys AS fk
+                INNER JOIN sys.foreign_key_columns AS fkc
+                    ON fkc.constraint_object_id = fk.object_id
+                INNER JOIN sys.columns AS col
+                    ON col.object_id = fkc.parent_object_id
+                   AND col.column_id = fkc.parent_column_id
+                WHERE fk.parent_object_id = OBJECT_ID(N'erpsystem.tbltraining_topic_contents')
+                  AND col.name = N'note_id';
 
                 IF LEN(@contentFkSql) > 0
                     EXEC sys.sp_executesql @contentFkSql;
