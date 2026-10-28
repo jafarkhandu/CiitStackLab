@@ -35,4 +35,6 @@ public class ContentQuestion
     public Lesson? Content { get; set; }
 
     public Topic? Topic { get; set; }
+
+    public TrainingNote? Note { get; set; }
 }
