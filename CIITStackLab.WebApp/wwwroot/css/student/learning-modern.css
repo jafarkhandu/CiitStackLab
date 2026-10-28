@@ -165,3 +165,18 @@
     content-visibility: visible !important;
     contain-intrinsic-size: none !important;
 }
+
+/* The old learning sidebar is moved inside Notes by learning-modern.js.
+   Its original viewport height must not become blank space in the Notes flow. */
+.ciit-learning-mode .ciit-learning-chapter-navigation .ciit-learning-sidebar {
+    position: static;
+    height: auto !important;
+    min-height: 0 !important;
+    max-height: none !important;
+}
+
+.ciit-learning-mode .ciit-learning-chapter-navigation .ciit-learning-sidebar-scroll {
+    height: auto !important;
+    min-height: 0 !important;
+    max-height: none !important;
+}
