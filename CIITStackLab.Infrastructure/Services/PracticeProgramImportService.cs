@@ -119,9 +119,9 @@ public sealed class PracticeProgramImportService : IPracticeProgramImportService
             .Select(item => new
             {
                 item.Id,
-                item.TopicId,
+                TopicId = item.TopicId!.Value,
                 TopicTitle = item.Topic.Title,
-                item.Id.ToString(),
+                ChapterId = item.Id.ToString(),
                 ChapterTitle = item.Title
             })
             .SingleOrDefaultAsync(cancellationToken);
