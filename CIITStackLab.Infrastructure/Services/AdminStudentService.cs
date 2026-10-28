@@ -39,6 +39,12 @@ public sealed class AdminStudentService : IAdminStudentService
             join user in _dbContext.Users.AsNoTracking()
                 on userRole.UserId equals user.Id
             where userRole.RoleId == studentRoleId
+                && !_dbContext.UserRoles.AsNoTracking().Any(adminUserRole =>
+                    adminUserRole.UserId == user.Id
+                    && _dbContext.Roles.AsNoTracking().Any(role =>
+                        role.Id == adminUserRole.RoleId
+                        && (role.NormalizedName == "ADMIN"
+                            || role.NormalizedName == "SUPER USER")))
             orderby user.UserName
             select new AdminStudentDto
             {
