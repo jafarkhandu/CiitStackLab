@@ -1094,7 +1094,7 @@ main{min-height:calc(100vh - 120px)}.ciit-footer{background:#0b0f19;color:#94a3b
 }
 
 
-/* Fixed-size course roadmap card with a compact, scrollable topic grid */
+/* Compact, balanced hierarchy roadmap with a fixed card footprint */
 .ciit-student-course-details .ciit-student-course-hero > .row {
     align-items: flex-start !important;
 }
@@ -1102,10 +1102,10 @@ main{min-height:calc(100vh - 120px)}.ciit-footer{background:#0b0f19;color:#94a3b
     position: relative;
     display: flex;
     flex-direction: column;
-    height: auto;
-    min-height: 600px;
-    max-height: none;
-    padding: clamp(18px, 2vw, 26px);
+    height: 660px;
+    min-height: 660px;
+    max-height: 660px;
+    padding: clamp(17px, 1.8vw, 23px);
     overflow: hidden;
     border: 1px solid rgba(218, 230, 249, .95);
     border-radius: 22px;
@@ -1132,7 +1132,7 @@ main{min-height:calc(100vh - 120px)}.ciit-footer{background:#0b0f19;color:#94a3b
     flex: 0 0 auto;
     align-items: center;
     gap: 12px;
-    padding-bottom: 18px;
+    padding-bottom: 15px;
     border-bottom: 1px solid #e4ebf6;
 }
 .ciit-course-topic-flow-mark {
@@ -1167,31 +1167,37 @@ main{min-height:calc(100vh - 120px)}.ciit-footer{background:#0b0f19;color:#94a3b
 .ciit-course-topic-tree {
     position: relative;
     z-index: 1;
-    display: grid;
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-    align-content: start;
-    gap: 12px 16px;
-    flex: 0 0 auto;
+    display: block;
+    flex: 1 1 auto;
     min-height: 0;
-    margin: 15px 0 12px;
-    overflow: visible;
+    margin: 13px 0 10px;
+    overflow: hidden;
+    column-count: 2;
+    column-gap: 12px;
+    column-fill: balance;
 }
 .ciit-course-topic-branch {
     position: relative;
+    display: inline-block;
+    width: 100%;
     min-width: 0;
-    padding: 0 0 0 11px;
+    margin: 0 0 10px;
+    padding: 0 0 0 9px;
     border-left: 2px solid #d9e6fa;
+    vertical-align: top;
+    break-inside: avoid-column;
+    -webkit-column-break-inside: avoid;
 }
 .ciit-course-topic-branch h3 {
     display: flex;
     align-items: center;
     gap: 7px;
-    margin: 0 0 8px;
+    margin: 0 0 7px;
     color: #2856a5;
-    font-size: .72rem;
+    font-size: .7rem;
     font-weight: 850;
     line-height: 1.2;
-    letter-spacing: .015em;
+    letter-spacing: .005em;
 }
 .ciit-course-topic-branch h3 span {
     flex: 0 0 7px;
@@ -1204,7 +1210,7 @@ main{min-height:calc(100vh - 120px)}.ciit-footer{background:#0b0f19;color:#94a3b
 }
 .ciit-course-topic-branch ul {
     display: grid;
-    gap: 5px;
+    gap: 4px;
     margin: 0;
     padding: 0;
     list-style: none;
@@ -1212,13 +1218,13 @@ main{min-height:calc(100vh - 120px)}.ciit-footer{background:#0b0f19;color:#94a3b
 .ciit-course-topic-branch li {
     display: flex;
     align-items: center;
-    gap: 8px;
+    gap: 6px;
     min-width: 0;
-    min-height: 34px;
-    padding: 5px 7px;
+    min-height: 31px;
+    padding: 4px 5px;
     border: 1px solid rgba(220, 231, 248, .9);
-    border-radius: 10px;
-    background: rgba(255, 255, 255, .86);
+    border-radius: 9px;
+    background: rgba(255, 255, 255, .88);
     box-shadow: 0 2px 5px rgba(34, 70, 130, .025);
     transition: border-color .18s ease, background .18s ease, transform .18s ease;
 }
@@ -1229,16 +1235,16 @@ main{min-height:calc(100vh - 120px)}.ciit-footer{background:#0b0f19;color:#94a3b
 }
 .ciit-course-topic-node {
     display: grid;
-    flex: 0 0 25px;
-    width: 25px;
-    height: 25px;
+    flex: 0 0 23px;
+    width: 23px;
+    height: 23px;
     place-items: center;
     border: 1px solid #dbe6f7;
-    border-radius: 8px;
+    border-radius: 7px;
     color: #2860b5;
     background: #fff;
     box-shadow: 0 2px 5px rgba(27, 53, 91, .05);
-    font-size: .68rem;
+    font-size: .65rem;
 }
 .ciit-course-topic-flow-copy {
     display: flex;
@@ -1248,9 +1254,9 @@ main{min-height:calc(100vh - 120px)}.ciit-footer{background:#0b0f19;color:#94a3b
 }
 .ciit-course-topic-flow-copy strong {
     color: #1c2d48;
-    font-size: .76rem;
+    font-size: .7rem;
     font-weight: 800;
-    line-height: 1.25;
+    line-height: 1.2;
     overflow-wrap: anywhere;
 }
 .ciit-course-flow-footer {
@@ -1260,8 +1266,8 @@ main{min-height:calc(100vh - 120px)}.ciit-footer{background:#0b0f19;color:#94a3b
     flex: 0 0 auto;
     align-items: center;
     gap: 10px;
-    margin-top: 12px;
-    padding: 11px 12px;
+    margin-top: auto;
+    padding: 10px 11px;
     border: 1px solid #dcefe5;
     border-radius: 13px;
     background: linear-gradient(100deg, #effaf4, #fff);
@@ -1289,32 +1295,31 @@ main{min-height:calc(100vh - 120px)}.ciit-footer{background:#0b0f19;color:#94a3b
 }
 @media (max-width: 991.98px) {
     .ciit-student-course-details .ciit-course-topic-flow {
-        height: auto;
-        min-height: 580px;
-        max-height: none;
+        height: 660px;
+        min-height: 660px;
+        max-height: 660px;
         margin-bottom: 8px;
     }
     .ciit-course-topic-flow-heading h2 { font-size: 1.15rem; }
 }
 @media (max-width: 575.98px) {
     .ciit-student-course-details .ciit-course-topic-flow {
-        height: auto;
-        min-height: 590px;
-        max-height: none;
-        padding: 17px;
+        height: 660px;
+        min-height: 660px;
+        max-height: 660px;
+        padding: 16px;
         border-radius: 18px;
     }
     .ciit-course-topic-tree {
-        grid-template-columns: repeat(2, minmax(0, 1fr));
-        gap: 10px 9px;
+        column-gap: 9px;
         margin-top: 12px;
     }
-    .ciit-course-topic-branch { padding-left: 7px; }
-    .ciit-course-topic-branch h3 { font-size: .66rem; }
+    .ciit-course-topic-branch { padding-left: 6px; margin-bottom: 8px; }
+    .ciit-course-topic-branch h3 { font-size: .62rem; gap: 5px; }
     .ciit-course-topic-branch ul { gap: 4px; }
-    .ciit-course-topic-branch li { gap: 5px; min-height: 31px; padding: 4px; }
-    .ciit-course-topic-node { flex-basis: 20px; width: 20px; height: 20px; }
-    .ciit-course-topic-flow-copy strong { font-size: .7rem; }
+    .ciit-course-topic-branch li { gap: 4px; min-height: 29px; padding: 3px; }
+    .ciit-course-topic-node { flex-basis: 19px; width: 19px; height: 19px; font-size: .6rem; }
+    .ciit-course-topic-flow-copy strong { font-size: .65rem; }
 }
 @media (prefers-reduced-motion: reduce) {
     .ciit-course-topic-branch li { transition: none; }
