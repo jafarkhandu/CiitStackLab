@@ -103,7 +103,7 @@ BEGIN
   INSERT erpsystem.tblcontent_program_questions(content_id,note_id,question_title,question_description,flag,InsertedAt,UpdatedAt) VALUES(@ContentId,@ContentId,@PT,@PD,0,@Now,@Now);
   SET @ProgramId=CONVERT(int,SCOPE_IDENTITY());
  END
- IF NOT EXISTS(SELECT 1 FROM erpsystem.tblcontent_program_answers WHERE program_question_id=@ProgramId AND answer=@PD)
+ IF NOT EXISTS(SELECT 1 FROM erpsystem.tblcontent_program_answers WHERE program_question_id=@ProgramId AND program_answer=@PD)
   INSERT erpsystem.tblcontent_program_answers(program_question_id,answer,description,flag,InsertedAt,UpdatedAt) VALUES(@ProgramId,@PD,N'Suggested approach: break the task into small steps, validate inputs, handle edge cases, and test with normal and boundary values.',0,@Now,@Now);
  SET @i+=1;
 END;
