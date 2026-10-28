@@ -11,10 +11,14 @@ namespace CIITStackLab.WebApp.Areas.Admin.Controllers;
 public sealed class NotesController : Controller
 {
     private readonly INotesService _notesService;
+    private readonly IVimeoVideoService _vimeoVideoService;
 
-    public NotesController(INotesService notesService)
+    public NotesController(
+        INotesService notesService,
+        IVimeoVideoService vimeoVideoService)
     {
         _notesService = notesService;
+        _vimeoVideoService = vimeoVideoService;
     }
 
     [HttpGet]
@@ -146,6 +150,49 @@ public sealed class NotesController : Controller
         TempData["AdminNotesMessage"] = "Note and learning media updated successfully.";
         TempData["AdminNotesMessageType"] = "success";
         return RedirectToAction(nameof(Index));
+    }
+
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> CreateVideoUpload(
+        int contentId,
+        string? fileName,
+        long fileSize,
+        string? title,
+        CancellationToken cancellationToken)
+    {
+        try
+        {
+            string? existingVideoUrl = null;
+
+            if (contentId > 0)
+            {
+                var existing = await _notesService.GetAdminByIdAsync(contentId, cancellationToken);
+                if (existing is null)
+                {
+                    return NotFound(new { message = "The note record could not be found." });
+                }
+
+                existingVideoUrl = existing.VideoName;
+            }
+
+            var upload = await _vimeoVideoService.CreateDirectUploadAsync(
+                fileName ?? string.Empty,
+                fileSize,
+                title ?? string.Empty,
+                existingVideoUrl,
+                cancellationToken);
+
+            return Json(upload);
+        }
+        catch (ArgumentException ex)
+        {
+            return BadRequest(new { message = ex.Message });
+        }
+        catch (InvalidOperationException ex)
+        {
+            return BadRequest(new { message = ex.Message });
+        }
     }
 
     [HttpPost, ValidateAntiForgeryToken]
