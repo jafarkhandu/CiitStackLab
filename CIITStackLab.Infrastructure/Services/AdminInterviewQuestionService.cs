@@ -94,7 +94,7 @@ public sealed class AdminInterviewQuestionService : IAdminInterviewQuestionServi
             .Select(note => new AdminAssessmentChapterLookupDto
             {
                 NoteId = note.Id,
-                TopicId = note.TopicId,
+                TopicId = note.TopicId!.Value,
                 TopicTitle = note.Topic.Title,
                 ChapterId = note.Id.ToString(),
                 ChapterTitle = note.Title
