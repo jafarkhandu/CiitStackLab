@@ -27,7 +27,7 @@ document.addEventListener("DOMContentLoaded", function () {
         idInput.value = topic.id;
         nameInput.value = topic.topicName || "";
         priceInput.value = topic.price ?? "";
-        durationInput.value = topic.durationMinutes ?? "";
+        durationInput.value = topic.durationHours ?? "";
         title.textContent = "Edit Topic";
         description.textContent = "Update the selected active topic.";
         submit.querySelector("span").textContent = "Update Topic";
@@ -40,13 +40,35 @@ document.addEventListener("DOMContentLoaded", function () {
                 title.textContent = "Add Topic";
                 description.textContent = "Create a new active learning topic.";
                 submit.querySelector("span").textContent = "Save Topic";
-            } else if (window.ciitEditTopic) {
-                fill();
             }
         });
 
-        if (window.ciitEditTopic)
+        if (window.ciitEditTopic) {
+            fill();
             bootstrap.Modal.getOrCreateInstance(modal).show();
+        }
+    }
+
+    if (form && durationInput) {
+        form.addEventListener("submit", function (event) {
+            const hours = durationInput.value.trim();
+            if (!hours) {
+                durationInput.disabled = true;
+                return;
+            }
+
+            const minutes = Number(hours) * 60;
+            if (!Number.isFinite(minutes) || minutes < 1 || minutes > 100000) {
+                event.preventDefault();
+                durationInput.setCustomValidity("Enter a duration between 0.02 and 1666.67 hours.");
+                durationInput.reportValidity();
+                return;
+            }
+
+            durationInput.setCustomValidity("");
+            durationInput.name = "DurationMinutes";
+            durationInput.value = String(Math.round(minutes));
+        });
     }
 
     if (search) {
