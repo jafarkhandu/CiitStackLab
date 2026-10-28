@@ -38,6 +38,7 @@
               class="ciit-notes-editor-card ciit-content-form-card" data-video-upload-url="/Admin/Notes/CreateVideoUpload">
 
             @Html.AntiForgeryToken()
+            <input type="hidden" name="modal" value="@(string.Equals(Context.Request.Query["modal"], "true", StringComparison.OrdinalIgnoreCase) || (Context.Request.HasFormContentType && string.Equals(Context.Request.Form["modal"], "true", StringComparison.OrdinalIgnoreCase)) ? "true" : "false")" />
             <input type="hidden" name="vimeoVideoUrl" class="js-vimeo-video-url" />
 
             @if (edit)
