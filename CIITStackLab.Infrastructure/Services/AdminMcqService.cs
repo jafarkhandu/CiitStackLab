@@ -26,14 +26,8 @@ public sealed class AdminMcqService : IAdminMcqService
                 Id = x.Id,
                 ContentId = x.ContentId,
                 TopicId = x.TopicId ?? (x.Content != null ? x.Content.TopicId : null),
-                NoteId = x.NoteId ?? (x.Content != null ? x.Content.NoteId : null),
-                ChapterTitle = x.Note != null
-                    ? x.Note.Topic.Title + " / " + x.Note.ChapterId + " — " + x.Note.Title
-                    : x.Content != null && x.Content.Note != null
-                        ? x.Content.Note.Topic.Title + " / " + x.Content.Note.ChapterId + " — " + x.Content.Note.Title
-                        : x.Topic != null
-                            ? x.Topic.Title + " / legacy topic-level assessment"
-                            : "Unassigned",
+                NoteId = x.NoteId ?? (x.Content != null ? x.Content.Id : null),
+                ChapterTitle = x.Content != null && x.Content.Topic != null ? x.Content.Topic.Title + " / " + x.Content.Id + " — " + x.Content.Title : x.Topic != null ? x.Topic.Title + " / legacy topic-level assessment" : "Unassigned",
                 ContentTitle = x.Content != null ? x.Content.Title ?? string.Empty : string.Empty,
                 TopicTitle = x.Topic != null ? x.Topic.Title : x.Content != null && x.Content.Topic != null ? x.Content.Topic.Title : "Unassigned",
                 Question = x.Question ?? string.Empty,
@@ -55,14 +49,8 @@ public sealed class AdminMcqService : IAdminMcqService
             {
                 Id = x.Id,
                 TopicId = x.TopicId ?? (x.Content != null ? x.Content.TopicId : null),
-                NoteId = x.NoteId ?? (x.Content != null ? x.Content.NoteId : null),
-                ChapterTitle = x.Note != null
-                    ? x.Note.Topic.Title + " / " + x.Note.ChapterId + " — " + x.Note.Title
-                    : x.Content != null && x.Content.Note != null
-                        ? x.Content.Note.Topic.Title + " / " + x.Content.Note.ChapterId + " — " + x.Content.Note.Title
-                        : x.Topic != null
-                            ? x.Topic.Title + " / legacy topic-level assessment"
-                            : "Unassigned",
+                NoteId = x.NoteId ?? (x.Content != null ? x.Content.Id : null),
+                ChapterTitle = x.Content != null && x.Content.Topic != null ? x.Content.Topic.Title + " / " + x.Content.Id + " — " + x.Content.Title : x.Topic != null ? x.Topic.Title + " / legacy topic-level assessment" : "Unassigned",
                 ContentTitle = x.Content != null ? x.Content.Title ?? string.Empty : string.Empty,
                 TopicTitle = x.Topic != null ? x.Topic.Title : x.Content != null && x.Content.Topic != null ? x.Content.Topic.Title : "Unassigned",
                 Question = x.Question ?? string.Empty,
@@ -87,14 +75,8 @@ public sealed class AdminMcqService : IAdminMcqService
                 Id = x.Id,
                 ContentId = x.ContentId,
                 TopicId = x.TopicId ?? (x.Content != null ? x.Content.TopicId : null),
-                NoteId = x.NoteId ?? (x.Content != null ? x.Content.NoteId : null),
-                ChapterTitle = x.Note != null
-                    ? x.Note.Topic.Title + " / " + x.Note.ChapterId + " — " + x.Note.Title
-                    : x.Content != null && x.Content.Note != null
-                        ? x.Content.Note.Topic.Title + " / " + x.Content.Note.ChapterId + " — " + x.Content.Note.Title
-                        : x.Topic != null
-                            ? x.Topic.Title + " / legacy topic-level assessment"
-                            : "Unassigned",
+                NoteId = x.NoteId ?? (x.Content != null ? x.Content.Id : null),
+                ChapterTitle = x.Content != null && x.Content.Topic != null ? x.Content.Topic.Title + " / " + x.Content.Id + " — " + x.Content.Title : x.Topic != null ? x.Topic.Title + " / legacy topic-level assessment" : "Unassigned",
                 ContentTitle = x.Content != null ? x.Content.Title ?? string.Empty : string.Empty,
                 TopicTitle = x.Topic != null ? x.Topic.Title : x.Content != null && x.Content.Topic != null ? x.Content.Topic.Title : "Unassigned",
                 Question = x.Question ?? string.Empty,
