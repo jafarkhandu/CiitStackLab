@@ -27,10 +27,7 @@ public sealed class NotesController : Controller
     {
         ViewBag.Options = await _notesService.GetTopicOptionsAsync(ct);
 
-        return View(new AdminNoteInputDto
-        {
-            SortOrder = 1
-        });
+        return View(new AdminNoteInputDto());
     }
 
     [HttpPost, ValidateAntiForgeryToken]
@@ -80,10 +77,8 @@ public sealed class NotesController : Controller
         {
             Id = note.Id,
             TopicId = note.TopicId,
-            ChapterId = note.ChapterId,
             Title = note.Title,
             HtmlContent = note.HtmlContent,
-            SortOrder = note.SortOrder
         });
     }
 
