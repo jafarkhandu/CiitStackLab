@@ -30,6 +30,7 @@
             contentPanel.classList.add('ciit-learning-embedded-content');
             contentPanel.removeAttribute('data-learning-panel-content');
             contentPanel.removeAttribute('data-learning-content-page');
+            contentPanel.style.display = '';
 
             const title = contentPanel.querySelector('.ciit-learning-resource-title h3');
             const description = contentPanel.querySelector('.ciit-learning-resource-title p');
