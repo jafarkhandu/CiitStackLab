@@ -30,6 +30,8 @@ public sealed class NotesService : INotesService
                 ChapterId = content.Id.ToString(),
                 Title = content.Title,
                 HtmlContent = content.HtmlContent ?? string.Empty,
+                Slides = content.Slides,
+                VideoName = content.VideoName,
                 SortOrder = content.Id,
                 UpdatedAt = content.UpdatedAt,
                 CreatedAt = content.CreatedAt
@@ -78,6 +80,8 @@ public sealed class NotesService : INotesService
             TopicId = input.TopicId,
             Title = input.Title.Trim(),
             HtmlContent = input.HtmlContent.Trim(),
+            Slides = NormalizeOptional(input.Slides),
+            VideoName = NormalizeOptional(input.VideoName),
             Flag = 0,
             CreatedAt = now,
             UpdatedAt = now
@@ -98,6 +102,8 @@ public sealed class NotesService : INotesService
         content.TopicId = input.TopicId;
         content.Title = input.Title.Trim();
         content.HtmlContent = input.HtmlContent.Trim();
+        content.Slides = NormalizeOptional(input.Slides);
+        content.VideoName = NormalizeOptional(input.VideoName);
         content.UpdatedAt = DateTime.Now;
         await _dbContext.SaveChangesAsync(cancellationToken);
         return (true, null);
@@ -160,6 +166,9 @@ public sealed class NotesService : INotesService
             CurrentChapter = current
         };
     }
+
+    private static string? NormalizeOptional(string? value) =>
+        string.IsNullOrWhiteSpace(value) ? null : value.Trim();
 
     private async Task<string?> ValidateTargetAsync(int topicId, CancellationToken cancellationToken)
     {
