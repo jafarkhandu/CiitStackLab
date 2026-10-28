@@ -44,6 +44,7 @@
 .ciit-learning-mode .ciit-learning-notes-content {
     margin-top: 16px;
     padding: 22px;
+    min-height: 0 !important;
     border: 1px solid #e1e9f4;
     border-radius: 16px;
     background: #fff;
@@ -146,4 +147,9 @@
     .ciit-learning-mode * {
         scroll-behavior: auto !important;
     }
+}
+
+/* Notes should grow with the actual lesson content instead of reserving viewport height. */
+.ciit-learning-mode .ciit-learning-main-card .ciit-learning-notes-content {
+    min-height: 0 !important;
 }
