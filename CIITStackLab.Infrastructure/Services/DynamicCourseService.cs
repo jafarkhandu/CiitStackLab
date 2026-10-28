@@ -150,19 +150,20 @@ public sealed class DynamicCourseService : ICourseService
             ? []
             : await _dbContext.Lessons
                 .AsNoTracking()
-                .Where(note => note.TopicId.HasValue && topicIds.Contains(note.TopicId.Value) && note.Flag == 0)
-                .OrderBy(note => note.TopicId)
-                .ThenBy(note => note.Id)
-                .ThenBy(note => note.Id)
-                .Select(note => new
+                .Where(content => content.TopicId.HasValue
+                    && topicIds.Contains(content.TopicId.Value)
+                    && content.Flag == 0)
+                .OrderBy(content => content.TopicId)
+                .ThenBy(content => content.Id)
+                .Select(content => new
                 {
-                    note.Id,
-                    note.TopicId,
-                    note.Id.ToString(),
-                    note.Title,
-                    HtmlContent = loadAllTopicDetails ? note.HtmlContent : null,
-                    HasNotes = note.HtmlContent != null && note.HtmlContent.Trim() != "",
-                    note.Id
+                    content.Id,
+                    TopicId = content.TopicId!.Value,
+                    ChapterId = content.Id.ToString(),
+                    content.Title,
+                    HtmlContent = loadAllTopicDetails ? content.HtmlContent : null,
+                    HasNotes = content.HtmlContent != null && content.HtmlContent.Trim() != "",
+                    SortOrder = content.Id
                 })
                 .ToListAsync(cancellationToken);
 
