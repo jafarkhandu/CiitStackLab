@@ -4,18 +4,23 @@
 @{
     var options = (IReadOnlyList<NoteTopicOptionDto>)(ViewBag.Options ?? Array.Empty<NoteTopicOptionDto>());
     var edit = Model.Id > 0;
+    var isModal = string.Equals(Context.Request.Query["modal"], "true", StringComparison.OrdinalIgnoreCase)
+        || (Context.Request.HasFormContentType && string.Equals(Context.Request.Form["modal"], "true", StringComparison.OrdinalIgnoreCase));
 }
 
 <section class="ciit-notes-page ciit-notes-editor-page">
     <div class="ciit-notes-header">
         <div>
-            <a asp-area="Admin"
-               asp-controller="Notes"
-               asp-action="Index"
-               class="ciit-notes-back-link">
-                <i class="bi bi-arrow-left"></i>
-                Back to Notes
-            </a>
+            @if (!isModal)
+            {
+                <a asp-area="Admin"
+                   asp-controller="Notes"
+                   asp-action="Index"
+                   class="ciit-notes-back-link">
+                    <i class="bi bi-arrow-left"></i>
+                    Back to Notes
+                </a>
+            }
 
             <span class="ciit-notes-eyebrow">
                 @(edit ? "Edit chapter" : "New chapter")
@@ -116,12 +121,15 @@
             </div>
 
             <div class="ciit-notes-editor-actions">
-                <a asp-area="Admin"
-                   asp-controller="Notes"
-                   asp-action="Index"
-                   class="btn btn-outline-secondary">
-                    Cancel
-                </a>
+                @if (!isModal)
+                {
+                    <a asp-area="Admin"
+                       asp-controller="Notes"
+                       asp-action="Index"
+                       class="btn btn-outline-secondary">
+                        Cancel
+                    </a>
+                }
 
                 <button class="ciit-notes-primary-btn"
                         type="submit">
