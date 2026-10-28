@@ -140,6 +140,11 @@
                         <div><strong>@Model.Topics.Count</strong><span>Topics</span></div>
                     </div>
 
+                    <section class="ciit-course-checkout-panel" aria-label="Course purchase">
+                    <div class="ciit-course-checkout-heading">
+                        <span><i class="bi bi-shield-lock" aria-hidden="true"></i></span>
+                        <div><strong>Start learning today</strong><small>One course. A clear path to practical skills.</small></div>
+                    </div>
                     <div class="ciit-course-price-card">
                         <span>Course price</span>
                         @if (Model.TotalPrice <= 0m)
@@ -210,6 +215,7 @@
                             Sign in before completing payment for this course.
                         </small>
                     }
+                    </section>
 
                     @if (Model.Title.Contains("Java Full Stack", StringComparison.OrdinalIgnoreCase))
                     {
