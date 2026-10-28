@@ -16,7 +16,7 @@ public class HomeController : Controller
     [HttpGet]
     public IActionResult Dashboard()
     {
-        return RedirectToAction("MyCourses", "Courses");
+        return RedirectToAction("CourseHome", "Courses");
     }
 
     public async Task<IActionResult> Index(CancellationToken cancellationToken)
