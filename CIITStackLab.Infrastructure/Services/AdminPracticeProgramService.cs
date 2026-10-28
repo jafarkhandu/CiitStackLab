@@ -25,16 +25,10 @@ public sealed class AdminPracticeProgramService : IAdminPracticeProgramService
             {
                 Id = x.Id,
                 ContentId = x.ContentId,
-                NoteId = x.NoteId ?? (x.Content != null ? x.Content.NoteId : null),
-                ChapterTitle = x.Note != null
-                    ? x.Note.Topic.Title + " / " + x.Note.ChapterId + " — " + x.Note.Title
-                    : x.Content != null && x.Content.Note != null
-                        ? x.Content.Note.Topic.Title + " / " + x.Content.Note.ChapterId + " — " + x.Content.Note.Title
-                        : x.Content != null && x.Content.Topic != null
-                            ? x.Content.Topic.Title + " / legacy content-linked question"
-                            : "Unassigned",
-                ContentTitle = x.Content != null ? x.Content.Title ?? string.Empty : x.Note != null ? "Chapter-level" : "Unassigned",
-                TopicTitle = x.Note != null ? x.Note.Topic.Title : x.Content != null && x.Content.Topic != null ? x.Content.Topic.Title : "Unassigned",
+                NoteId = x.NoteId ?? (x.Content != null ? x.Content.Id : null),
+                ChapterTitle = x.Content != null && x.Content.Topic != null ? x.Content.Topic.Title + " / " + x.Content.Id + " — " + x.Content.Title : "Unassigned",
+                ContentTitle = x.Content != null ? x.Content.Title ?? string.Empty : "Unassigned",
+                TopicTitle = x.Content != null && x.Content.Topic != null ? x.Content.Topic.Title : "Unassigned",
                 QuestionTitle = x.QuestionTitle,
                 QuestionDescription = x.QuestionDescription,
                 CreatedAt = x.CreatedAt,
@@ -75,16 +69,10 @@ public sealed class AdminPracticeProgramService : IAdminPracticeProgramService
             .Select(x => new AdminArchivedPracticeProgramDto
             {
                 Id = x.Id,
-                NoteId = x.NoteId ?? (x.Content != null ? x.Content.NoteId : null),
-                ChapterTitle = x.Note != null
-                    ? x.Note.Topic.Title + " / " + x.Note.ChapterId + " — " + x.Note.Title
-                    : x.Content != null && x.Content.Note != null
-                        ? x.Content.Note.Topic.Title + " / " + x.Content.Note.ChapterId + " — " + x.Content.Note.Title
-                        : x.Content != null && x.Content.Topic != null
-                            ? x.Content.Topic.Title + " / legacy content-linked question"
-                            : "Unassigned",
-                ContentTitle = x.Content != null ? x.Content.Title ?? string.Empty : x.Note != null ? "Chapter-level" : "Unassigned",
-                TopicTitle = x.Note != null ? x.Note.Topic.Title : x.Content != null && x.Content.Topic != null ? x.Content.Topic.Title : "Unassigned",
+                NoteId = x.NoteId ?? (x.Content != null ? x.Content.Id : null),
+                ChapterTitle = x.Content != null && x.Content.Topic != null ? x.Content.Topic.Title + " / " + x.Content.Id + " — " + x.Content.Title : "Unassigned",
+                ContentTitle = x.Content != null ? x.Content.Title ?? string.Empty : "Unassigned",
+                TopicTitle = x.Content != null && x.Content.Topic != null ? x.Content.Topic.Title : "Unassigned",
                 QuestionTitle = x.QuestionTitle,
                 DeletedAt = x.DeletedAt
             })
@@ -121,16 +109,10 @@ public sealed class AdminPracticeProgramService : IAdminPracticeProgramService
             {
                 Id = x.Id,
                 ContentId = x.ContentId,
-                NoteId = x.NoteId ?? (x.Content != null ? x.Content.NoteId : null),
-                ChapterTitle = x.Note != null
-                    ? x.Note.Topic.Title + " / " + x.Note.ChapterId + " — " + x.Note.Title
-                    : x.Content != null && x.Content.Note != null
-                        ? x.Content.Note.Topic.Title + " / " + x.Content.Note.ChapterId + " — " + x.Content.Note.Title
-                        : x.Content != null && x.Content.Topic != null
-                            ? x.Content.Topic.Title + " / legacy content-linked question"
-                            : "Unassigned",
-                ContentTitle = x.Content != null ? x.Content.Title ?? string.Empty : x.Note != null ? "Chapter-level" : "Unassigned",
-                TopicTitle = x.Note != null ? x.Note.Topic.Title : x.Content != null && x.Content.Topic != null ? x.Content.Topic.Title : "Unassigned",
+                NoteId = x.NoteId ?? (x.Content != null ? x.Content.Id : null),
+                ChapterTitle = x.Content != null && x.Content.Topic != null ? x.Content.Topic.Title + " / " + x.Content.Id + " — " + x.Content.Title : "Unassigned",
+                ContentTitle = x.Content != null ? x.Content.Title ?? string.Empty : "Unassigned",
+                TopicTitle = x.Content != null && x.Content.Topic != null ? x.Content.Topic.Title : "Unassigned",
                 QuestionTitle = x.QuestionTitle,
                 QuestionDescription = x.QuestionDescription,
                 CreatedAt = x.CreatedAt,
@@ -179,18 +161,17 @@ public sealed class AdminPracticeProgramService : IAdminPracticeProgramService
     public async Task<IReadOnlyList<AdminAssessmentChapterLookupDto>> GetAssessmentChapterLookupAsync(
         CancellationToken cancellationToken = default)
     {
-        return await _dbContext.TrainingNotes
+        return await _dbContext.Lessons
             .AsNoTracking()
             .Where(note => note.Flag == 0 && note.Topic.Flag == 0)
             .OrderBy(note => note.Topic.Title)
-            .ThenBy(note => note.SortOrder)
             .ThenBy(note => note.Id)
             .Select(note => new AdminAssessmentChapterLookupDto
             {
                 NoteId = note.Id,
-                TopicId = note.TopicId,
+                TopicId = note.TopicId.GetValueOrDefault(),
                 TopicTitle = note.Topic.Title,
-                ChapterId = note.ChapterId,
+                ChapterId = note.Id.ToString(),
                 ChapterTitle = note.Title
             })
             .ToListAsync(cancellationToken);
@@ -404,8 +385,8 @@ public sealed class AdminPracticeProgramService : IAdminPracticeProgramService
 
     private Task<bool> NoteExistsAsync(int noteId, CancellationToken cancellationToken)
     {
-        return _dbContext.TrainingNotes.AnyAsync(
-            note => note.Id == noteId && note.Flag == 0 && note.Topic.Flag == 0,
+        return _dbContext.Lessons.AnyAsync(
+            note => note.Id == noteId && note.Flag == 0 && note.TopicId.HasValue && note.Topic.Flag == 0,
             cancellationToken);
     }
 

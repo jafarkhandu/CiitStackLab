@@ -1,7 +1,22 @@
 @model CIITStackLab.Application.DTOs.AdminNoteInputDto
 
 @{
-    ViewData["Title"] = "Add Note Chapter";
+    ViewData["Title"] = "Add Note";
+    var isModal = string.Equals(Context.Request.Query["modal"], "true", StringComparison.OrdinalIgnoreCase)
+        || (Context.Request.HasFormContentType && string.Equals(Context.Request.Form["modal"], "true", StringComparison.OrdinalIgnoreCase));
+    if (isModal)
+    {
+        Layout = "~/Areas/Admin/Views/Shared/_ContentModalLayout.cshtml";
+    }
+}
+
+@section Styles {
+    <link rel="stylesheet" href="~/css/admin/admin-notes.css" asp-append-version="true" />
+}
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+    <script src="~/js/admin/admin-content.js" asp-append-version="true"></script>
 }
 
 <partial name="_NoteForm" model="Model" />

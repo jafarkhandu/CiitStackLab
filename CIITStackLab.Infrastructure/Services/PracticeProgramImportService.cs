@@ -113,15 +113,15 @@ public sealed class PracticeProgramImportService : IPracticeProgramImportService
         }
 
         await ReportProgressAsync("Checking the selected Notes chapter...");
-        var chapter = await _dbContext.TrainingNotes
+        var chapter = await _dbContext.Lessons
             .AsNoTracking()
-            .Where(item => item.Id == noteId && item.Flag == 0 && item.Topic.Flag == 0)
+            .Where(item => item.Id == noteId && item.Flag == 0 && item.TopicId.HasValue && item.Topic.Flag == 0)
             .Select(item => new
             {
                 item.Id,
-                item.TopicId,
+                TopicId = item.TopicId!.Value,
                 TopicTitle = item.Topic.Title,
-                item.ChapterId,
+                ChapterId = item.Id.ToString(),
                 ChapterTitle = item.Title
             })
             .SingleOrDefaultAsync(cancellationToken);
@@ -157,7 +157,7 @@ public sealed class PracticeProgramImportService : IPracticeProgramImportService
                 || (item.ContentId.HasValue
                     && _dbContext.Lessons.Any(contentItem =>
                         contentItem.Id == item.ContentId.Value
-                        && contentItem.NoteId == noteId)))
+                        && contentItem.Id == noteId)))
             .Select(item => new
             {
                 item.QuestionTitle,
@@ -221,11 +221,9 @@ public sealed class PracticeProgramImportService : IPracticeProgramImportService
             };
         }
 
-        var chapterExists = await _dbContext.TrainingNotes
+        var chapterExists = await _dbContext.Lessons
             .AsNoTracking()
-            .AnyAsync(item => item.Id == preview.NoteId
-                && item.Flag == 0
-                && item.Topic.Flag == 0, cancellationToken);
+            .AnyAsync(item => item.Id == preview.NoteId && item.Flag == 0 && item.TopicId.HasValue && item.Topic.Flag == 0, cancellationToken);
 
         if (!chapterExists)
         {
@@ -244,7 +242,7 @@ public sealed class PracticeProgramImportService : IPracticeProgramImportService
                 || (item.ContentId.HasValue
                     && _dbContext.Lessons.Any(contentItem =>
                         contentItem.Id == item.ContentId.Value
-                        && contentItem.NoteId == preview.NoteId)))
+                        && contentItem.Id == preview.NoteId)))
             .Select(item => new
             {
                 item.QuestionTitle,

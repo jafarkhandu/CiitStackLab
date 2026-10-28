@@ -45,12 +45,7 @@ public sealed class StudentProgressService : IStudentProgressService
                   && courseTopic.Flag == 0
                   && topic.Flag == 0
                   && lesson.Flag == 0
-                  && (lesson.TopicId == topic.Id
-                      || (lesson.NoteId.HasValue
-                          && _dbContext.TrainingNotes.AsNoTracking().Any(note =>
-                              note.Id == lesson.NoteId.Value
-                              && note.TopicId == topic.Id
-                              && note.Flag == 0)))
+                  && lesson.TopicId == topic.Id
             orderby topic.Id, lesson.Id
             select lesson.Id)
             .Distinct()
@@ -271,12 +266,7 @@ public sealed class StudentProgressService : IStudentProgressService
                   && courseTopic.Flag == 0
                   && topic.Flag == 0
                   && lesson.Flag == 0
-                  && (lesson.TopicId == topic.Id
-                      || (lesson.NoteId.HasValue
-                          && _dbContext.TrainingNotes.AsNoTracking().Any(note =>
-                              note.Id == lesson.NoteId.Value
-                              && note.TopicId == topic.Id
-                              && note.Flag == 0)))
+                  && lesson.TopicId == topic.Id
             select lesson.Id)
             .Distinct()
             .OrderBy(contentId => contentId)
@@ -300,12 +290,7 @@ public sealed class StudentProgressService : IStudentProgressService
                   && courseTopic.Flag == 0
                   && topic.Flag == 0
                   && lesson.Flag == 0
-                  && (lesson.TopicId == topic.Id
-                      || (lesson.NoteId.HasValue
-                          && _dbContext.TrainingNotes.AsNoTracking().Any(note =>
-                              note.Id == lesson.NoteId.Value
-                              && note.TopicId == topic.Id
-                              && note.Flag == 0)))
+                  && lesson.TopicId == topic.Id
                   && lesson.Id == contentId
             select lesson.Id)
             .AnyAsync(cancellationToken);

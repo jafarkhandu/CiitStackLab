@@ -10,6 +10,8 @@ public sealed class AdminNoteDto
     public string ChapterId { get; init; } = string.Empty;
     public string Title { get; init; } = string.Empty;
     public string HtmlContent { get; init; } = string.Empty;
+    public string? Slides { get; init; }
+    public string? VideoName { get; init; }
     public int SortOrder { get; init; }
     public DateTime? UpdatedAt { get; init; }
     public DateTime? CreatedAt { get; init; }
@@ -22,19 +24,15 @@ public sealed class AdminNoteInputDto
     [Range(1, int.MaxValue, ErrorMessage = "Select a topic.")]
     public int TopicId { get; set; }
 
-    [Required, StringLength(50)]
-    [Display(Name = "Chapter ID")]
-    public string ChapterId { get; set; } = string.Empty;
-
     [Required, StringLength(100)]
     public string Title { get; set; } = string.Empty;
 
     [Required(ErrorMessage = "Chapter content is required.")]
     public string HtmlContent { get; set; } = string.Empty;
 
-    [Range(1, int.MaxValue, ErrorMessage = "Sort order must be 1 or greater.")]
-    [Display(Name = "Sort Order")]
-    public int SortOrder { get; set; } = 1;
+    public string? Slides { get; set; }
+
+    public string? VideoName { get; set; }
 }
 
 public sealed class NoteTopicOptionDto
@@ -72,8 +70,8 @@ public sealed class NoteMediaDto
 
 
 /// <summary>
-/// A selectable Notes chapter. NoteId is the primary key of tbltraining_notes,
-/// not the parent TopicId or the display-only ChapterId.
+/// A selectable unified content record. NoteId is retained as a legacy DTO field
+/// and carries the content_id value; it does not reference tbltraining_notes.
 /// </summary>
 public sealed class AdminAssessmentChapterLookupDto
 {

@@ -57,11 +57,7 @@ public sealed class CourseAssessmentService : ICourseAssessmentService
                 .Select(lesson => lesson.TopicId)
                 .SingleOrDefaultAsync(cancellationToken);
 
-            var lessonNoteId = await _dbContext.Lessons
-                .AsNoTracking()
-                .Where(lesson => lesson.Id == contentId.Value && lesson.Flag == 0)
-                .Select(lesson => lesson.NoteId)
-                .SingleOrDefaultAsync(cancellationToken);
+            int? lessonNoteId = contentId.Value;
 
             int? firstActiveContentId = null;
             int? firstActiveChapterContentId = null;
@@ -78,12 +74,7 @@ public sealed class CourseAssessmentService : ICourseAssessmentService
 
             if (lessonNoteId.HasValue)
             {
-                firstActiveChapterContentId = await _dbContext.Lessons
-                    .AsNoTracking()
-                    .Where(lesson => lesson.NoteId == lessonNoteId.Value && lesson.Flag == 0)
-                    .OrderBy(lesson => lesson.Id)
-                    .Select(lesson => (int?)lesson.Id)
-                    .FirstOrDefaultAsync(cancellationToken);
+                firstActiveChapterContentId = lessonNoteId;
             }
 
             questions = await _dbContext.ContentQuestions
@@ -113,7 +104,7 @@ public sealed class CourseAssessmentService : ICourseAssessmentService
                     "This topic is no longer available in the selected course.");
             }
 
-            var topicNoteIds = await _dbContext.TrainingNotes
+            var topicNoteIds = await _dbContext.Lessons
                 .AsNoTracking()
                 .Where(note => note.TopicId == topicId.Value && note.Flag == 0)
                 .Select(note => note.Id)
@@ -325,7 +316,7 @@ public sealed class CourseAssessmentService : ICourseAssessmentService
             return null;
         }
 
-        var topicNoteIds = await _dbContext.TrainingNotes
+        var topicNoteIds = await _dbContext.Lessons
             .AsNoTracking()
             .Where(note => note.TopicId == topicId && note.Flag == 0)
             .Select(note => note.Id)

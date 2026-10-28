@@ -53,10 +53,16 @@ public sealed class AdminContentService : IAdminContentService
 
     public async Task<IReadOnlyList<AdminNoteLookupDto>> GetNotesForTopicAsync(int topicId, CancellationToken cancellationToken = default)
     {
-        return await _dbContext.TrainingNotes.AsNoTracking()
+        return await _dbContext.Lessons.AsNoTracking()
             .Where(x => x.TopicId == topicId && x.Flag == 0)
-            .OrderBy(x => x.SortOrder).ThenBy(x => x.Id)
-            .Select(x => new AdminNoteLookupDto { Id = x.Id, ChapterId = x.ChapterId, Title = x.Title, SortOrder = x.SortOrder })
+            .OrderBy(x => x.Id)
+            .Select(x => new AdminNoteLookupDto
+            {
+                Id = x.Id,
+                ChapterId = x.Id.ToString(),
+                Title = x.Title,
+                SortOrder = x.Id
+            })
             .ToListAsync(cancellationToken);
     }
 
@@ -80,8 +86,8 @@ public sealed class AdminContentService : IAdminContentService
         _dbContext.Lessons.Add(new Lesson
         {
             TopicId = input.TopicId,
-            NoteId = input.NoteId,
             Title = input.Title.Trim(),
+            HtmlContent = null,
             Slides = NormalizeOptional(input.Slides),
             VideoName = NormalizeOptional(input.VideoName),
             Flag = 0,
@@ -101,7 +107,6 @@ public sealed class AdminContentService : IAdminContentService
         if (validationError is not null) return (false, validationError);
 
         lesson.TopicId = input.TopicId;
-        lesson.NoteId = input.NoteId;
         lesson.Title = input.Title.Trim();
         lesson.Slides = NormalizeOptional(input.Slides);
         lesson.VideoName = NormalizeOptional(input.VideoName);
@@ -150,9 +155,7 @@ public sealed class AdminContentService : IAdminContentService
             .AnyAsync(x => x.Id == input.TopicId && x.Flag == 0, cancellationToken);
         if (!topicExists) return "The selected topic was not found or is inactive.";
 
-        var noteExists = await _dbContext.TrainingNotes.AsNoTracking()
-            .AnyAsync(x => x.Id == input.NoteId && x.TopicId == input.TopicId && x.Flag == 0, cancellationToken);
-        return noteExists ? null : "The selected note chapter was not found for this topic.";
+        return null;
     }
 
     private IQueryable<ContentRow> BuildContentQuery(int? flag)
@@ -161,8 +164,6 @@ public sealed class AdminContentService : IAdminContentService
             from l in _dbContext.Lessons.AsNoTracking()
             where l.TopicId.HasValue
             join t in _dbContext.Topics.AsNoTracking() on l.TopicId!.Value equals t.Id
-            join note in _dbContext.TrainingNotes.AsNoTracking() on l.NoteId equals (int?)note.Id into noteGroup
-            from note in noteGroup.DefaultIfEmpty()
             join cm in _dbContext.CourseModules.AsNoTracking() on t.Id equals cm.TopicId
             join c in _dbContext.Courses.AsNoTracking() on cm.CourseId equals c.Id
             where t.Flag == 0 && cm.Flag == 0 && c.Flag == 0 && (flag == null || l.Flag == flag)
@@ -172,9 +173,9 @@ public sealed class AdminContentService : IAdminContentService
                 CourseId = c.Id,
                 CourseTitle = c.Title,
                 TopicId = t.Id,
-                NoteId = l.NoteId,
-                NoteChapterId = note.ChapterId,
-                NoteTitle = note.Title,
+                NoteId = l.Id,
+                NoteChapterId = l.Id.ToString(),
+                NoteTitle = l.Title,
                 TopicTitle = t.Title,
                 Title = l.Title,
                 Slides = l.Slides,

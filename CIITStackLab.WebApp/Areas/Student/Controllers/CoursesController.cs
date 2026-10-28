@@ -737,7 +737,7 @@ public class CoursesController : Controller
         if (chapterId.HasValue)
         {
             var chapterTopicId = await (
-                from note in _dbContext.TrainingNotes.AsNoTracking()
+                from note in _dbContext.Lessons.AsNoTracking()
                 join courseModule in _dbContext.CourseModules.AsNoTracking()
                     on note.TopicId equals courseModule.TopicId
                 where note.Id == chapterId.Value
@@ -756,7 +756,7 @@ public class CoursesController : Controller
             topicId = chapterTopicId.Value;
             contentId = await _dbContext.Lessons
                 .AsNoTracking()
-                .Where(lesson => lesson.NoteId == chapterId.Value && lesson.Flag == 0)
+                .Where(lesson => lesson.Id == chapterId.Value && lesson.Flag == 0)
                 .OrderBy(lesson => lesson.Id)
                 .Select(lesson => (int?)lesson.Id)
                 .FirstOrDefaultAsync(cancellationToken);
@@ -805,16 +805,11 @@ public class CoursesController : Controller
                 .Select(lesson => lesson.Id)
                 .ToListAsync(cancellationToken);
 
-            var chapterContentIds = await (
-                from lesson in _dbContext.Lessons.AsNoTracking()
-                join note in _dbContext.TrainingNotes.AsNoTracking()
-                    on lesson.NoteId equals (int?)note.Id
-                where lesson.Flag == 0
-                    && note.TopicId == topicId.Value
-                    && note.Flag == 0
-                orderby note.SortOrder, note.Id, lesson.Id
-                select lesson.Id)
-                .Distinct()
+            var chapterContentIds = await _dbContext.Lessons
+                .AsNoTracking()
+                .Where(lesson => lesson.TopicId == topicId.Value && lesson.Flag == 0)
+                .OrderBy(lesson => lesson.Id)
+                .Select(lesson => lesson.Id)
                 .ToListAsync(cancellationToken);
 
             var topicContentIds = directTopicContentIds
@@ -912,7 +907,7 @@ public class CoursesController : Controller
                 id,
                 cancellationToken);
 
-            // Recompute completion from persisted lesson progress via each lesson's NoteId.
+            // Recompute completion from persisted progress using content_id as the chapter ID.
             var chapterIds = course.Topics
                 .SelectMany(topic => topic.Chapters)
                 .Select(chapter => chapter.Id)
@@ -923,10 +918,8 @@ public class CoursesController : Controller
             {
                 var lessonIdsByChapter = await _dbContext.Lessons
                     .AsNoTracking()
-                    .Where(lesson => lesson.Flag == 0
-                        && lesson.NoteId.HasValue
-                        && chapterIds.Contains(lesson.NoteId.Value))
-                    .GroupBy(lesson => lesson.NoteId!.Value)
+                    .Where(lesson => lesson.Flag == 0 && chapterIds.Contains(lesson.Id))
+                    .GroupBy(lesson => lesson.Id)
                     .Select(group => new
                     {
                         ChapterId = group.Key,
@@ -1160,12 +1153,8 @@ public class CoursesController : Controller
         var allowedTopicId = await _topicExaminationService.GetCurrentTopicIdAsync(userId, id, cancellationToken);
         var contentTopicId = await (
             from lesson in _dbContext.Lessons.AsNoTracking()
-            join topic in _dbContext.Topics.AsNoTracking() on lesson.TopicId equals topic.Id into topicJoin
-            from topic in topicJoin.DefaultIfEmpty()
-            join note in _dbContext.TrainingNotes.AsNoTracking() on lesson.NoteId equals note.Id into noteJoin
-            from note in noteJoin.DefaultIfEmpty()
             where lesson.Id == contentId && lesson.Flag == 0
-            select (int?)(topic != null ? topic.Id : note != null ? note.TopicId : null))
+            select lesson.TopicId)
             .SingleOrDefaultAsync(cancellationToken);
 
         if (allowedTopicId.HasValue && contentTopicId.HasValue && allowedTopicId.Value != contentTopicId.Value)
@@ -1255,7 +1244,7 @@ public class CoursesController : Controller
         // DTO content IDs so existing chapter navigation keeps working.
         var linkedContentIds = await _dbContext.Lessons
             .AsNoTracking()
-            .Where(lesson => lesson.Flag == 0 && lesson.NoteId == chapterId)
+            .Where(lesson => lesson.Flag == 0 && lesson.Id == chapterId)
             .Select(lesson => lesson.Id)
             .ToListAsync(cancellationToken);
 
@@ -1358,12 +1347,8 @@ public class CoursesController : Controller
             return RedirectToAction(nameof(Learn), new { id, topicId = allowedTopicId.Value });
         }
 
-        var topicNoteIds = await _dbContext.TrainingNotes.AsNoTracking()
-            .Where(x => x.TopicId == topicId && x.Flag == 0)
-            .Select(x => x.Id).ToListAsync(cancellationToken);
         var contentIds = await _dbContext.Lessons.AsNoTracking()
-            .Where(x => x.Flag == 0 && (x.TopicId == topicId
-                || (x.NoteId.HasValue && topicNoteIds.Contains(x.NoteId.Value))))
+            .Where(x => x.Flag == 0 && x.TopicId == topicId)
             .Select(x => x.Id).Distinct().ToListAsync(cancellationToken);
         foreach (var contentId in contentIds)
         {

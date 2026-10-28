@@ -4,18 +4,23 @@
 @{
     var options = (IReadOnlyList<NoteTopicOptionDto>)(ViewBag.Options ?? Array.Empty<NoteTopicOptionDto>());
     var edit = Model.Id > 0;
+    var isModal = string.Equals(Context.Request.Query["modal"], "true", StringComparison.OrdinalIgnoreCase)
+        || (Context.Request.HasFormContentType && string.Equals(Context.Request.Form["modal"], "true", StringComparison.OrdinalIgnoreCase));
 }
 
 <section class="ciit-notes-page ciit-notes-editor-page">
     <div class="ciit-notes-header">
         <div>
-            <a asp-area="Admin"
-               asp-controller="Notes"
-               asp-action="Index"
-               class="ciit-notes-back-link">
-                <i class="bi bi-arrow-left"></i>
-                Back to Notes
-            </a>
+            @if (!isModal)
+            {
+                <a asp-area="Admin"
+                   asp-controller="Notes"
+                   asp-action="Index"
+                   class="ciit-notes-back-link">
+                    <i class="bi bi-arrow-left"></i>
+                    Back to Notes
+                </a>
+            }
 
             <span class="ciit-notes-eyebrow">
                 @(edit ? "Edit chapter" : "New chapter")
@@ -24,18 +29,22 @@
             <h1>@ViewData["Title"]</h1>
 
             <p>
-                Notes are independent from lessons, videos, slides and MCQs.
+                Notes, HTML, videos and slides now share the same content record.
             </p>
         </div>
     </div>
 
-    <section class="ciit-notes-editor-card">
+    <section>
         <form asp-area="Admin"
               asp-controller="Notes"
               asp-action="@(edit ? "Edit" : "Create")"
-              method="post">
+              method="post"
+              enctype="multipart/form-data"
+              class="ciit-notes-editor-card ciit-content-form-card" data-video-upload-url="/Admin/Notes/CreateVideoUpload">
 
             @Html.AntiForgeryToken()
+            <input type="hidden" name="modal" value="@(string.Equals(Context.Request.Query["modal"], "true", StringComparison.OrdinalIgnoreCase) || (Context.Request.HasFormContentType && string.Equals(Context.Request.Form["modal"], "true", StringComparison.OrdinalIgnoreCase)) ? "true" : "false")" />
+            <input type="hidden" name="vimeoVideoUrl" class="js-vimeo-video-url" />
 
             @if (edit)
             {
@@ -67,17 +76,6 @@
                 </div>
 
                 <div class="ciit-notes-field">
-                    <label asp-for="ChapterId"></label>
-
-                    <input asp-for="ChapterId"
-                           class="form-control"
-                           placeholder="ch1" />
-
-                    <span asp-validation-for="ChapterId"
-                          class="text-danger"></span>
-                </div>
-
-                <div class="ciit-notes-field">
                     <label asp-for="Title"></label>
 
                     <input asp-for="Title"
@@ -86,22 +84,6 @@
 
                     <span asp-validation-for="Title"
                           class="text-danger"></span>
-                </div>
-
-                <div class="ciit-notes-field">
-                    <label asp-for="SortOrder"></label>
-
-                    <input asp-for="SortOrder"
-                           class="form-control"
-                           type="number"
-                           min="1" />
-
-                    <span asp-validation-for="SortOrder"
-                          class="text-danger"></span>
-
-                    <small class="text-secondary">
-                        Chapters are displayed in ascending order by default.
-                    </small>
                 </div>
             </div>
 
@@ -117,24 +99,45 @@
                       class="text-danger"></span>
             </div>
 
+            <div class="ciit-notes-media-grid">
+                <div class="ciit-notes-field">
+                    <label for="slidesFile">Slides (PDF)</label>
+                    <input type="file" id="slidesFile" name="slidesFile" class="form-control" accept=".pdf,application/pdf" />
+                    @if (edit && !string.IsNullOrWhiteSpace(Model.Slides))
+                    {
+                        <small>Current slides: @System.IO.Path.GetFileName(Model.Slides)</small>
+                    }
+                    <small>Optional. Upload a PDF to attach or replace slides.</small>
+                </div>
+                <div class="ciit-notes-field">
+                    <label for="videoFile">Video</label>
+                    <input type="file" id="videoFile" name="videoFile" class="form-control" accept=".mp4,.webm,.mov" />
+                    @if (edit && !string.IsNullOrWhiteSpace(Model.VideoName))
+                    {
+                        <small>Video already attached to this note.</small>
+                    }
+                    <small>Optional. Video uploads directly to Vimeo.</small>
+                </div>
+            </div>
+
             <div class="ciit-notes-editor-actions">
-                <a asp-area="Admin"
-                   asp-controller="Notes"
-                   asp-action="Index"
-                   class="btn btn-outline-secondary">
-                    Cancel
-                </a>
+                @if (!isModal)
+                {
+                    <a asp-area="Admin"
+                       asp-controller="Notes"
+                       asp-action="Index"
+                       class="btn btn-outline-secondary">
+                        Cancel
+                    </a>
+                }
 
                 <button class="ciit-notes-primary-btn"
                         type="submit">
                     <i class="bi bi-check2-circle"></i>
-                    @(edit ? "Save Changes" : "Create Chapter")
+                    @(edit ? "Save Changes" : "Create Note")
                 </button>
             </div>
         </form>
     </section>
 </section>
 
-@section Scripts {
-    <partial name="_ValidationScriptsPartial" />
-}

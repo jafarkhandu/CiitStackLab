@@ -110,10 +110,10 @@ public sealed class TopicExaminationService : ITopicExaminationService
             && (x.Status == "Scheduled" || x.Status == "Ready" || x.Status == "InProgress"), cancellationToken);
         if (activeAttempt) return (false, "An exam is already scheduled or active for this topic.", null);
 
-        var topicNoteIds = await _db.TrainingNotes.AsNoTracking()
+        var topicNoteIds = await _db.Lessons.AsNoTracking()
             .Where(n => n.TopicId == topicId && n.Flag == 0).Select(n => n.Id).ToListAsync(cancellationToken);
         var topicContentIds = await _db.Lessons.AsNoTracking()
-            .Where(l => l.Flag == 0 && (l.TopicId == topicId || (l.NoteId.HasValue && topicNoteIds.Contains(l.NoteId.Value))))
+            .Where(l => l.Flag == 0 && l.TopicId == topicId)
             .Select(l => l.Id).Distinct().ToListAsync(cancellationToken);
         var completedContentIds = topicContentIds.Count == 0
             ? new List<int>()

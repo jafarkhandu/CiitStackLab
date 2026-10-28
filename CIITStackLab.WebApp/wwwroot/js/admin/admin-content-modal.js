@@ -39,7 +39,8 @@
                 const segments = parsed.pathname.split('/').filter(Boolean);
                 if (segments.length < 3) return false;
                 if (segments[0].toLowerCase() !== 'Admin'.toLowerCase()) return false;
-                if (segments[1].toLowerCase() !== 'Content'.toLowerCase()) return false;
+                const controller = segments[1].toLowerCase();
+                if (controller !== 'content' && controller !== 'notes') return false;
 
                 const action = segments[2].toLowerCase();
                 if (action === 'create') return segments.length === 3;
@@ -55,9 +56,12 @@
 
         const getModalTitle = url => {
             const parsed = new URL(url, window.location.origin);
-            const action = parsed.pathname.split('/').filter(Boolean).at(2)?.toLowerCase();
-            if (action === 'create') return 'Add Content';
-            if (action === 'edit') return 'Edit Content';
+            const segments = parsed.pathname.split('/').filter(Boolean);
+            const controller = segments[1]?.toLowerCase();
+            const action = segments[2]?.toLowerCase();
+            const label = controller === 'notes' ? 'Note' : 'Content';
+            if (action === 'create') return `Add ${label}`;
+            if (action === 'edit') return `Edit ${label}`;
             if (action === 'details') return 'Content Details';
             return 'Content';
         };

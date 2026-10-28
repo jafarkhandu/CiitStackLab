@@ -122,15 +122,15 @@ public sealed class McqImportService : IMcqImportService
         await ReportProgressAsync(
             "Checking that the selected Notes chapter is active...");
 
-        var chapter = await _dbContext.TrainingNotes
+        var chapter = await _dbContext.Lessons
             .AsNoTracking()
-            .Where(note => note.Id == noteId && note.Flag == 0 && note.Topic.Flag == 0)
+            .Where(note => note.Id == noteId && note.Flag == 0 && note.TopicId.HasValue && note.Topic.Flag == 0)
             .Select(note => new
             {
                 note.Id,
-                note.TopicId,
+                TopicId = note.TopicId!.Value,
                 TopicTitle = note.Topic.Title,
-                note.ChapterId,
+                ChapterId = note.Id.ToString(),
                 ChapterTitle = note.Title
             })
             .SingleOrDefaultAsync(cancellationToken);
@@ -182,7 +182,7 @@ public sealed class McqImportService : IMcqImportService
                 || (question.ContentId.HasValue
                     && _dbContext.Lessons.Any(lesson =>
                         lesson.Id == question.ContentId.Value
-                        && lesson.NoteId == noteId)))
+                        && lesson.Id == noteId)))
             .Select(question => new
             {
                 question.Id,
@@ -261,10 +261,10 @@ public sealed class McqImportService : IMcqImportService
                 preview);
         }
 
-        var chapterExists = await _dbContext.TrainingNotes
+        var chapterExists = await _dbContext.Lessons
             .AsNoTracking()
             .AnyAsync(
-                note => note.Id == preview.NoteId && note.Flag == 0 && note.Topic.Flag == 0,
+                note => note.Id == preview.NoteId && note.Flag == 0 && note.TopicId.HasValue && note.Topic.Flag == 0,
                 cancellationToken);
 
         if (!chapterExists)
@@ -284,7 +284,7 @@ public sealed class McqImportService : IMcqImportService
                 || (question.ContentId.HasValue
                     && _dbContext.Lessons.Any(lesson =>
                         lesson.Id == question.ContentId.Value
-                        && lesson.NoteId == preview.NoteId)))
+                        && lesson.Id == preview.NoteId)))
             .Select(question => question.Question)
             .ToListAsync(cancellationToken);
 

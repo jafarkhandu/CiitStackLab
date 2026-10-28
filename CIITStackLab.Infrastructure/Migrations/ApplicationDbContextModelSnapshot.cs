@@ -507,13 +507,13 @@ namespace CIITStackLab.Infrastructure.Migrations
                         .HasColumnType("int")
                         .HasColumnName("flag");
 
-                    b.Property<int?>("NoteId")
-                        .HasColumnType("int")
-                        .HasColumnName("note_id");
-
                     b.Property<DateTime?>("RestoredAt")
                         .HasColumnType("datetime2")
                         .HasColumnName("RestoredAt");
+
+                    b.Property<string>("HtmlContent")
+                        .HasColumnType("nvarchar(max)")
+                        .HasColumnName("html_content");
 
                     b.Property<string>("Slides")
                         .HasColumnType("nvarchar(max)")
@@ -539,8 +539,6 @@ namespace CIITStackLab.Infrastructure.Migrations
                         .HasColumnName("video_name");
 
                     b.HasKey("Id");
-
-                    b.HasIndex("NoteId");
 
                     b.HasIndex("TopicId");
 
@@ -1119,65 +1117,6 @@ namespace CIITStackLab.Infrastructure.Migrations
                     b.ToTable("tblstudent_topic_exam_security_events", "erpsystem");
                 });
 
-            modelBuilder.Entity("CIITStackLab.Domain.Entities.TrainingNote", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("int")
-                        .HasColumnName("note_id");
-
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
-
-                    b.Property<string>("ChapterId")
-                        .IsRequired()
-                        .HasMaxLength(50)
-                        .HasColumnType("nvarchar(50)")
-                        .HasColumnName("chapter_id");
-
-                    b.Property<DateTime?>("CreatedAt")
-                        .HasColumnType("datetime2")
-                        .HasColumnName("InsertedAt");
-
-                    b.Property<DateTime?>("DeletedAt")
-                        .HasColumnType("datetime2")
-                        .HasColumnName("DeletedAt");
-
-                    b.Property<int?>("Flag")
-                        .HasColumnType("int")
-                        .HasColumnName("flag");
-
-                    b.Property<string>("HtmlContent")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)")
-                        .HasColumnName("html_content");
-
-                    b.Property<int>("SortOrder")
-                        .HasColumnType("int")
-                        .HasColumnName("sort_order");
-
-                    b.Property<string>("Title")
-                        .IsRequired()
-                        .HasMaxLength(100)
-                        .HasColumnType("nvarchar(100)")
-                        .HasColumnName("title");
-
-                    b.Property<int>("TopicId")
-                        .HasColumnType("int")
-                        .HasColumnName("topic_id");
-
-                    b.Property<DateTime?>("UpdatedAt")
-                        .HasColumnType("datetime2")
-                        .HasColumnName("UpdatedAt");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("TopicId", "ChapterId")
-                        .IsUnique()
-                        .HasDatabaseName("UX_tbltraining_notes_topic_chapter");
-
-                    b.ToTable("tbltraining_notes", "erpsystem");
-                });
-
             modelBuilder.Entity("CIITStackLab.Infrastructure.Identity.ApplicationUser", b =>
                 {
                     b.Property<string>("Id")
@@ -1386,19 +1325,12 @@ namespace CIITStackLab.Infrastructure.Migrations
                         .HasForeignKey("ContentId")
                         .OnDelete(DeleteBehavior.NoAction);
 
-                    b.HasOne("CIITStackLab.Domain.Entities.TrainingNote", "Note")
-                        .WithMany()
-                        .HasForeignKey("NoteId")
-                        .OnDelete(DeleteBehavior.NoAction);
-
                     b.HasOne("CIITStackLab.Domain.Entities.Topic", "Topic")
                         .WithMany()
                         .HasForeignKey("TopicId")
                         .OnDelete(DeleteBehavior.NoAction);
 
                     b.Navigation("Content");
-
-                    b.Navigation("Note");
 
                     b.Navigation("Topic");
                 });
@@ -1420,14 +1352,8 @@ namespace CIITStackLab.Infrastructure.Migrations
                         .HasForeignKey("ContentId")
                         .OnDelete(DeleteBehavior.NoAction);
 
-                    b.HasOne("CIITStackLab.Domain.Entities.TrainingNote", "Note")
-                        .WithMany()
-                        .HasForeignKey("NoteId")
-                        .OnDelete(DeleteBehavior.NoAction);
-
                     b.Navigation("Content");
 
-                    b.Navigation("Note");
                 });
 
             modelBuilder.Entity("CIITStackLab.Domain.Entities.ContentQuestion", b =>
@@ -1437,19 +1363,12 @@ namespace CIITStackLab.Infrastructure.Migrations
                         .HasForeignKey("ContentId")
                         .OnDelete(DeleteBehavior.NoAction);
 
-                    b.HasOne("CIITStackLab.Domain.Entities.TrainingNote", "Note")
-                        .WithMany()
-                        .HasForeignKey("NoteId")
-                        .OnDelete(DeleteBehavior.NoAction);
-
                     b.HasOne("CIITStackLab.Domain.Entities.Topic", "Topic")
                         .WithMany()
                         .HasForeignKey("TopicId")
                         .OnDelete(DeleteBehavior.NoAction);
 
                     b.Navigation("Content");
-
-                    b.Navigation("Note");
 
                     b.Navigation("Topic");
                 });
@@ -1475,17 +1394,10 @@ namespace CIITStackLab.Infrastructure.Migrations
 
             modelBuilder.Entity("CIITStackLab.Domain.Entities.Lesson", b =>
                 {
-                    b.HasOne("CIITStackLab.Domain.Entities.TrainingNote", "Note")
-                        .WithMany()
-                        .HasForeignKey("NoteId")
-                        .OnDelete(DeleteBehavior.NoAction);
-
                     b.HasOne("CIITStackLab.Domain.Entities.Topic", "Topic")
                         .WithMany("Lessons")
                         .HasForeignKey("TopicId")
                         .OnDelete(DeleteBehavior.NoAction);
-
-                    b.Navigation("Note");
 
                     b.Navigation("Topic");
                 });
@@ -1518,17 +1430,6 @@ namespace CIITStackLab.Infrastructure.Migrations
                         .HasForeignKey("UserId")
                         .OnDelete(DeleteBehavior.NoAction)
                         .IsRequired();
-                });
-
-            modelBuilder.Entity("CIITStackLab.Domain.Entities.TrainingNote", b =>
-                {
-                    b.HasOne("CIITStackLab.Domain.Entities.Topic", "Topic")
-                        .WithMany()
-                        .HasForeignKey("TopicId")
-                        .OnDelete(DeleteBehavior.NoAction)
-                        .IsRequired();
-
-                    b.Navigation("Topic");
                 });
 
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityRoleClaim<string>", b =>

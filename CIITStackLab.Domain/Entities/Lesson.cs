@@ -6,9 +6,9 @@ public class Lesson
 
     public int? TopicId { get; set; }
 
-    public int? NoteId { get; set; }
-
     public string Title { get; set; } = string.Empty;
+
+    public string? HtmlContent { get; set; }
 
     public string? Slides { get; set; }
 
@@ -25,6 +25,4 @@ public class Lesson
     public DateTime? RestoredAt { get; set; }
 
     public Topic Topic { get; set; } = null!;
-
-    public TrainingNote? Note { get; set; }
 }
