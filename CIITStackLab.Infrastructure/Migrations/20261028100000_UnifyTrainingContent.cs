@@ -80,17 +80,10 @@ public partial class UnifyTrainingContent : Migration
 
     protected override void Down(MigrationBuilder migrationBuilder)
     {
-        migrationBuilder.Sql("""
-            IF COL_LENGTH(N'erpsystem.tbltraining_topic_contents', N'note_id') IS NULL
-            BEGIN
-                ALTER TABLE [erpsystem].[tbltraining_topic_contents]
-                ADD [note_id] int NULL;
-            END;
-
-            IF COL_LENGTH(N'erpsystem.tbltraining_topic_contents', N'html_content') IS NOT NULL
-            BEGIN
-                ALTER TABLE [erpsystem].[tbltraining_topic_contents] DROP COLUMN [html_content];
-            END;
-            """);
+        // This migration removes a legacy table and unifies content in html_content.
+        // A safe rollback cannot restore the removed table or its data. Prevent EF from
+        // dropping html_content on rollback, since that column may contain live content.
+        throw new NotSupportedException(
+            "UnifyTrainingContent is forward-only. Restore a database backup to roll back this migration safely.");
     }
 }
