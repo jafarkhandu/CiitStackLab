@@ -45,7 +45,7 @@
             notesPanel.appendChild(contentPanel);
         }
 
-        const chapterSidebar = document.querySelector('.ciit-learning-main > .ciit-learning-sidebar');
+        const chapterSidebar = document.querySelector('.ciit-learning-shell > .ciit-learning-sidebar');
         if (chapterSidebar && notesPanel) {
             const navigation = document.createElement('section');
             navigation.className = 'ciit-learning-chapter-navigation';
