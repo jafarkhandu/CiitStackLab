@@ -907,7 +907,7 @@ public class CoursesController : Controller
                 id,
                 cancellationToken);
 
-            // Recompute completion from persisted lesson progress via each lesson's NoteId.
+            // Recompute completion from persisted progress using content_id as the chapter ID.
             var chapterIds = course.Topics
                 .SelectMany(topic => topic.Chapters)
                 .Select(chapter => chapter.Id)
@@ -918,10 +918,8 @@ public class CoursesController : Controller
             {
                 var lessonIdsByChapter = await _dbContext.Lessons
                     .AsNoTracking()
-                    .Where(lesson => lesson.Flag == 0
-                        && lesson.NoteId.HasValue
-                        && chapterIds.Contains(lesson.NoteId.Value))
-                    .GroupBy(lesson => lesson.NoteId!.Value)
+                    .Where(lesson => lesson.Flag == 0 && chapterIds.Contains(lesson.Id))
+                    .GroupBy(lesson => lesson.Id)
                     .Select(group => new
                     {
                         ChapterId = group.Key,
@@ -1246,7 +1244,7 @@ public class CoursesController : Controller
         // DTO content IDs so existing chapter navigation keeps working.
         var linkedContentIds = await _dbContext.Lessons
             .AsNoTracking()
-            .Where(lesson => lesson.Flag == 0 && lesson.NoteId == chapterId)
+            .Where(lesson => lesson.Flag == 0 && lesson.Id == chapterId)
             .Select(lesson => lesson.Id)
             .ToListAsync(cancellationToken);
 
