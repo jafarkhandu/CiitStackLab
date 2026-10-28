@@ -202,8 +202,6 @@ public class ApplicationDbContext : IdentityDbContext<ApplicationUser>
             entity.HasKey(x => x.Id);
             entity.Property(x => x.Id).HasColumnName("content_id");
             entity.Property(x => x.TopicId).HasColumnName("topic_id");
-            entity.Ignore(x => x.NoteId);
-            entity.Ignore(x => x.Note);
             entity.Property(x => x.Title).HasColumnName("content_name").HasMaxLength(100);
             entity.Property(x => x.HtmlContent).HasColumnName("html_content");
             entity.Property(x => x.Slides).HasColumnName("slides");
