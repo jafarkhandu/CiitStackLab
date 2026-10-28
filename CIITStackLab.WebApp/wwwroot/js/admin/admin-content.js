@@ -106,7 +106,8 @@ document.addEventListener('DOMContentLoaded', () => {
             formData.set('title', titleInput.value.trim());
             formData.set('contentId', contentIdInput?.value || '0');
 
-            const response = await fetch('/Admin/Content/CreateVideoUpload', {
+            const uploadEndpoint = form.dataset.videoUploadUrl || '/Admin/Content/CreateVideoUpload';
+            const response = await fetch(uploadEndpoint, {
                 method: 'POST',
                 headers: {
                     'RequestVerificationToken': tokenInput.value,
