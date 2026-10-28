@@ -22,7 +22,7 @@
         <a asp-area="Admin"
            asp-controller="Notes"
            asp-action="Create"
-           class="ciit-notes-primary-btn">
+           class="ciit-notes-primary-btn js-content-modal-link">
             <i class="bi bi-plus-lg"></i>
             Add Chapter
         </a>
@@ -137,7 +137,7 @@
                                        asp-controller="Notes"
                                        asp-action="Edit"
                                        asp-route-id="@note.Id"
-                                       class="ciit-notes-edit-btn">
+                                       class="ciit-notes-edit-btn js-content-modal-link">
                                         <i class="bi bi-pencil-square"></i>
                                         Edit
                                     </a>
@@ -187,7 +187,12 @@
     </section>
 </section>
 
+@section Styles {
+    <link rel="stylesheet" href="~/css/admin/admin-content-modal.css" asp-append-version="true" />
+}
+
 @section Scripts {
+    <script src="~/js/admin/admin-content-modal.js" asp-append-version="true"></script>
     <script>
         (() => {
             const searchInput = document.getElementById("notesSearch");
