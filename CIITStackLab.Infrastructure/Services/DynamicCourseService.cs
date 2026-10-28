@@ -32,9 +32,9 @@ public sealed class DynamicCourseService : ICourseService
         }
 
         var detailTopicIds = details.Topics.Select(topic => topic.Id).ToList();
-        var chapterCounts = await _dbContext.TrainingNotes
+        var chapterCounts = await _dbContext.Lessons
             .AsNoTracking()
-            .Where(note => detailTopicIds.Contains(note.TopicId) && note.Flag == 0)
+            .Where(note => note.TopicId.HasValue && detailTopicIds.Contains(note.TopicId.Value) && note.Flag == 0)
             .GroupBy(note => note.TopicId)
             .Select(group => new { TopicId = group.Key, Count = group.Count() })
             .ToDictionaryAsync(item => item.TopicId, item => item.Count, cancellationToken);
@@ -119,7 +119,7 @@ public sealed class DynamicCourseService : ICourseService
             ? []
             : await (
                 from lesson in _dbContext.Lessons.AsNoTracking()
-                join note in _dbContext.TrainingNotes.AsNoTracking()
+                join note in _dbContext.Lessons.AsNoTracking()
                     on lesson.NoteId equals (int?)note.Id into noteJoin
                 from note in noteJoin.DefaultIfEmpty()
                 where lesson.Flag == 0
@@ -127,7 +127,7 @@ public sealed class DynamicCourseService : ICourseService
                         || (lesson.NoteId.HasValue
                             && note != null
                             && note.Flag == 0
-                            && topicIds.Contains(note.TopicId)))
+                            && note.TopicId.HasValue && topicIds.Contains(note.TopicId.Value)))
                 orderby (lesson.TopicId ?? (int?)note.TopicId), lesson.Id
                 select new
                 {
@@ -154,21 +154,21 @@ public sealed class DynamicCourseService : ICourseService
         // every refresh can dominate response time for courses with large notes.
         var chapterRows = topicIds.Count == 0
             ? []
-            : await _dbContext.TrainingNotes
+            : await _dbContext.Lessons
                 .AsNoTracking()
-                .Where(note => topicIds.Contains(note.TopicId) && note.Flag == 0)
+                .Where(note => note.TopicId.HasValue && topicIds.Contains(note.TopicId.Value) && note.Flag == 0)
                 .OrderBy(note => note.TopicId)
-                .ThenBy(note => note.SortOrder)
+                .ThenBy(note => note.Id)
                 .ThenBy(note => note.Id)
                 .Select(note => new
                 {
                     note.Id,
                     note.TopicId,
-                    note.ChapterId,
+                    note.Id.ToString(),
                     note.Title,
                     HtmlContent = loadAllTopicDetails ? note.HtmlContent : null,
                     HasNotes = note.HtmlContent != null && note.HtmlContent.Trim() != "",
-                    note.SortOrder
+                    note.Id
                 })
                 .ToListAsync(cancellationToken);
 
@@ -177,7 +177,7 @@ public sealed class DynamicCourseService : ICourseService
             ?? chapterRows.FirstOrDefault(chapter => chapter.TopicId == selectedTopicId)?.Id;
 
         var selectedChapterHtml = !loadAllTopicDetails && selectedChapterId.HasValue
-            ? await _dbContext.TrainingNotes
+            ? await _dbContext.Lessons
                 .AsNoTracking()
                 .Where(note => note.Id == selectedChapterId.Value && note.Flag == 0)
                 .Select(note => note.HtmlContent)
@@ -414,8 +414,8 @@ public sealed class DynamicCourseService : ICourseService
                 group => group.Min(content => content.Id));
 
         var firstContentIdByNoteId = contentRows
-            .Where(content => content.NoteId.HasValue)
-            .GroupBy(content => content.NoteId!.Value)
+            .Where(content => content.Id.HasValue)
+            .GroupBy(content => content.Id!.Value)
             .ToDictionary(
                 group => group.Key,
                 group => group.Min(content => content.Id));
@@ -428,8 +428,8 @@ public sealed class DynamicCourseService : ICourseService
             .ToDictionary(group => group.Key, group => group.ToList());
 
         var contentRowsByNoteId = contentRows
-            .Where(content => content.NoteId.HasValue)
-            .GroupBy(content => content.NoteId!.Value)
+            .Where(content => content.Id.HasValue)
+            .GroupBy(content => content.Id!.Value)
             .ToDictionary(group => group.Key, group => group.ToList());
 
         var chapterRowsByTopicId = chapterRows
@@ -739,18 +739,18 @@ public sealed class DynamicCourseService : ICourseService
                         .Select(content => new CourseLearningContentDto
                         {
                             Id = content.Id,
-                            NoteId = content.NoteId,
+                            NoteId = content.Id,
                             Title = content.Title ?? string.Empty,
                             Slides = content.Slides,
                             VideoName = content.VideoName,
                             QuestionCount = CountQuestionReferencesForContent(
                                 content.Id,
                                 content.TopicId,
-                                content.NoteId,
+                                content.Id,
                                 questionReferencesByContentId,
                                 questionReferencesByTopicId,
                                 questionReferencesByNoteId),
-                            Questions = GetQuestionsForContent(content.Id, content.TopicId, content.NoteId)
+                            Questions = GetQuestionsForContent(content.Id, content.TopicId, content.Id)
                         })
                         .ToList(),
                     Chapters = topicChapters
@@ -799,11 +799,11 @@ public sealed class DynamicCourseService : ICourseService
                                         QuestionCount = CountQuestionReferencesForContent(
                                             content.Id,
                                             content.TopicId,
-                                            content.NoteId,
+                                            content.Id,
                                             questionReferencesByContentId,
                                             questionReferencesByTopicId,
                                             questionReferencesByNoteId),
-                                        Questions = GetQuestionsForContent(content.Id, content.TopicId, content.NoteId)
+                                        Questions = GetQuestionsForContent(content.Id, content.TopicId, content.Id)
                                     })
                                     .ToList()
                                 : new List<CourseLearningContentDto>()
