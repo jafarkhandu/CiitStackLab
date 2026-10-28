@@ -10,6 +10,8 @@ public sealed class AdminNoteDto
     public string ChapterId { get; init; } = string.Empty;
     public string Title { get; init; } = string.Empty;
     public string HtmlContent { get; init; } = string.Empty;
+    public string? Slides { get; init; }
+    public string? VideoName { get; init; }
     public int SortOrder { get; init; }
     public DateTime? UpdatedAt { get; init; }
     public DateTime? CreatedAt { get; init; }
@@ -28,6 +30,9 @@ public sealed class AdminNoteInputDto
     [Required(ErrorMessage = "Chapter content is required.")]
     public string HtmlContent { get; set; } = string.Empty;
 
+    public string? Slides { get; set; }
+
+    public string? VideoName { get; set; }
 }
 
 public sealed class NoteTopicOptionDto
