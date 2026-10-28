@@ -28,4 +28,6 @@ public class Lesson
     public DateTime? RestoredAt { get; set; }
 
     public Topic Topic { get; set; } = null!;
+
+    public TrainingNote? Note { get; set; }
 }
