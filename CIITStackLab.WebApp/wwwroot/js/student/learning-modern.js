@@ -5,14 +5,13 @@
             return;
         }
 
-        const activeTopicTitle = document.querySelector('.ciit-learning-topic.is-active-topic > .ciit-learning-topic-heading strong');
         const lessonTitle = document.querySelector('.ciit-learning-lesson-heading .ciit-learning-chapter-title');
         const headerTitle = document.querySelector('.ciit-learning-course-intro h1');
         const headerDescription = document.querySelector('.ciit-learning-course-intro > p');
         const topicEyebrow = document.querySelector('.ciit-learning-lesson-heading .ciit-learning-eyebrow');
 
         if (headerTitle) {
-            const topicTitle = activeTopicTitle?.textContent?.trim() || lessonTitle?.textContent?.trim();
+            const topicTitle = lessonTitle?.textContent?.trim();
             if (topicTitle) {
                 headerTitle.textContent = topicTitle;
             }
@@ -49,13 +48,12 @@
             notesPanel.appendChild(contentPanel);
         }
 
+        // The legacy learning-path sidebar is intentionally not moved into the modern Notes view.
+        // Its chapter accordion duplicates the Notes/Resources/Assessment experience and leaves
+        // legacy layout spacing behind. The modern page uses the global course navigation instead.
         const chapterSidebar = document.querySelector('.ciit-learning-shell > .ciit-learning-sidebar');
-        if (chapterSidebar && notesPanel) {
-            const navigation = document.createElement('section');
-            navigation.className = 'ciit-learning-chapter-navigation';
-            navigation.setAttribute('aria-label', 'Topic chapters');
-            navigation.appendChild(chapterSidebar);
-            notesPanel.insertBefore(navigation, notesPanel.firstChild);
+        if (chapterSidebar) {
+            chapterSidebar.remove();
         }
 
         const notesButton = document.querySelector('[data-learning-page="notes"]');
