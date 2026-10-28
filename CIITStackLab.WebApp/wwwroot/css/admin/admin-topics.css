@@ -11,3 +11,40 @@
 .ciit-topic-restore-btn,.ciit-topic-secondary-btn{display:inline-flex;align-items:center;justify-content:center;gap:7px;min-height:39px;padding:0 13px;border:1px solid #dfe6ef;border-radius:9px;background:#fff;color:#64748b;font-size:.72rem;font-weight:800}.ciit-topic-restore-btn:hover{border-color:#bbf7d0;background:#f0fdf4;color:#15803d}.ciit-topic-secondary-btn:hover{border-color:#b8d0fb;color:#1769ff;background:#f8fbff}
 .ciit-topic-modal{border:1px solid #e1e7ef;border-radius:18px;box-shadow:0 25px 70px rgba(2,6,23,.18);overflow:hidden}.ciit-topic-modal .modal-header{padding:22px;border-bottom:1px solid #eef2f7}.ciit-topic-modal .modal-title{margin:5px 0 4px;font-size:1.2rem;font-weight:800}.ciit-topic-modal .modal-header p{margin:0;color:#94a3b8;font-size:.68rem}.ciit-topic-modal .modal-body{padding:22px}.ciit-topic-modal .modal-footer{padding:15px 22px;border-top:1px solid #eef2f7}.ciit-topic-form-field{margin-bottom:16px}.ciit-topic-form-field label{display:block;margin-bottom:7px;color:#334155;font-size:.72rem;font-weight:800}.ciit-topic-form-field label span{color:#94a3b8;font-weight:600}.ciit-topic-form-field .form-control{border-color:#dce4ed;border-radius:10px;font-size:.77rem}.ciit-topic-form-field .form-control:focus{border-color:#1769ff;box-shadow:0 0 0 .18rem rgba(23,105,255,.1)}.ciit-topic-form-grid{display:grid;grid-template-columns:1fr 1fr;gap:13px}.ciit-topic-form-hint{display:flex;align-items:flex-start;gap:9px;padding:11px 12px;border:1px solid #dce7f7;border-radius:10px;background:#f8fbff;color:#64748b;font-size:.66rem;line-height:1.55}.ciit-topic-form-hint i{color:#1769ff}
 @media(max-width:700px){.ciit-topic-page-header{align-items:flex-start;flex-direction:column}.ciit-topic-primary-btn{width:100%}.ciit-topic-toolbar{align-items:stretch;flex-direction:column}.ciit-topic-toolbar-meta{justify-content:space-between}.ciit-topic-form-grid{grid-template-columns:1fr}.ciit-topic-modal .modal-body{padding:18px}.ciit-topic-modal .modal-footer{padding:13px 18px}.ciit-topic-modal .modal-footer .ciit-topic-primary-btn,.ciit-topic-modal .modal-footer .ciit-topic-secondary-btn{flex:1}}
+
+
+/* Keep the topics card at a stable height; only the list scrolls. */
+.ciit-topic-table-card {
+    height: min(560px, 62vh);
+    min-height: 300px;
+    display: flex;
+    flex-direction: column;
+}
+.ciit-topic-table-wrap {
+    height: 100%;
+    min-height: 0;
+    overflow: auto;
+    scrollbar-gutter: stable;
+}
+.ciit-topic-table {
+    flex: 0 0 auto;
+}
+.ciit-topic-table thead th {
+    position: sticky;
+    top: 0;
+    z-index: 2;
+}
+.ciit-topic-table tbody tr[hidden] {
+    display: none;
+}
+@media (max-height: 800px) {
+    .ciit-topic-table-card {
+        height: min(520px, 62vh);
+    }
+}
+@media (max-width: 700px) {
+    .ciit-topic-table-card {
+        height: min(520px, 65vh);
+        min-height: 280px;
+    }
+}
