@@ -122,14 +122,14 @@ public sealed class InterviewQuestionImportService : IInterviewQuestionImportSer
         }
 
         await ReportProgressAsync("Checking the selected Notes chapter...");
-        var chapter = await _dbContext.TrainingNotes.AsNoTracking()
-            .Where(item => item.Id == noteId && item.Flag == 0 && item.Topic.Flag == 0)
+        var chapter = await _dbContext.Lessons.AsNoTracking()
+            .Where(item => item.Id == noteId && item.Flag == 0 && item.TopicId.HasValue && item.Topic.Flag == 0)
             .Select(item => new
             {
                 item.Id,
                 item.TopicId,
                 TopicTitle = item.Topic.Title,
-                item.ChapterId,
+                item.Id.ToString(),
                 ChapterTitle = item.Title
             })
             .SingleOrDefaultAsync(cancellationToken);
@@ -176,7 +176,7 @@ public sealed class InterviewQuestionImportService : IInterviewQuestionImportSer
             var existingQuestions = await _dbContext.ContentInterviewQuestions
                 .AsNoTracking()
                 .Where(question => question.NoteId == noteId
-                    || (question.Content != null && question.Content.NoteId == noteId))
+                    || (question.Content != null && question.Content.Id == noteId))
                 .Select(question => question.Question)
                 .ToListAsync(cancellationToken);
 
@@ -232,8 +232,8 @@ public sealed class InterviewQuestionImportService : IInterviewQuestionImportSer
                 preview);
         }
 
-        var chapterExists = await _dbContext.TrainingNotes.AsNoTracking()
-            .AnyAsync(item => item.Id == preview.NoteId && item.Flag == 0 && item.Topic.Flag == 0, cancellationToken);
+        var chapterExists = await _dbContext.Lessons.AsNoTracking()
+            .AnyAsync(item => item.Id == preview.NoteId && item.Flag == 0 && item.TopicId.HasValue && item.Topic.Flag == 0, cancellationToken);
         if (!chapterExists)
         {
             AddFileError(preview, "The selected Notes chapter is no longer active. Nothing was imported.");
@@ -244,7 +244,7 @@ public sealed class InterviewQuestionImportService : IInterviewQuestionImportSer
         var existingQuestions = await _dbContext.ContentInterviewQuestions
             .AsNoTracking()
             .Where(question => question.NoteId == preview.NoteId
-                || (question.Content != null && question.Content.NoteId == preview.NoteId))
+                || (question.Content != null && question.Content.Id == preview.NoteId))
             .Select(question => question.Question)
             .ToListAsync(cancellationToken);
 
