@@ -127,9 +127,9 @@ public sealed class InterviewQuestionImportService : IInterviewQuestionImportSer
             .Select(item => new
             {
                 item.Id,
-                item.TopicId,
+                TopicId = item.TopicId!.Value,
                 TopicTitle = item.Topic.Title,
-                item.Id.ToString(),
+                ChapterId = item.Id.ToString(),
                 ChapterTitle = item.Title
             })
             .SingleOrDefaultAsync(cancellationToken);
