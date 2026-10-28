@@ -24,7 +24,7 @@
             <h1>@ViewData["Title"]</h1>
 
             <p>
-                Notes are independent from lessons, videos, slides and MCQs.
+                Notes, HTML, videos and slides now share the same content record.
             </p>
         </div>
     </div>
@@ -63,17 +63,6 @@
                     </select>
 
                     <span asp-validation-for="TopicId"
-                          class="text-danger"></span>
-                </div>
-
-                <div class="ciit-notes-field">
-                    <label asp-for="ChapterId"></label>
-
-                    <input asp-for="ChapterId"
-                           class="form-control"
-                           placeholder="ch1" />
-
-                    <span asp-validation-for="ChapterId"
                           class="text-danger"></span>
                 </div>
 
