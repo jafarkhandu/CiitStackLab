@@ -180,7 +180,7 @@ public sealed class CourseService
             ? new HashSet<int>()
             : new HashSet<int>(await _dbContext.Lessons
                 .AsNoTracking()
-                .Where(note => note.TopicId!.Value.HasValue && topicIds.Contains(note.TopicId.Value) && (note.Flag == 0 || note.Flag == null))
+                .Where(note => note.TopicId.HasValue && topicIds.Contains(note.TopicId.Value) && (note.Flag == 0 || note.Flag == null))
                 .Select(note => note.TopicId!.Value)
                 .Distinct()
                 .ToListAsync(cancellationToken));
@@ -189,13 +189,12 @@ public sealed class CourseService
             ? new List<(int TopicId, string Title)>()
             : (await _dbContext.Lessons
                 .AsNoTracking()
-                .Where(note => note.TopicId!.Value.HasValue && topicIds.Contains(note.TopicId.Value) && (note.Flag == 0 || note.Flag == null))
+                .Where(note => note.TopicId.HasValue && topicIds.Contains(note.TopicId.Value) && (note.Flag == 0 || note.Flag == null))
                 .OrderBy(note => note.TopicId!.Value)
-                .ThenBy(note => note.Id)
                 .ThenBy(note => note.Id)
                 .Select(note => new { TopicId = note.TopicId!.Value, note.Title })
                 .ToListAsync(cancellationToken))
-                .Select(note => (TopicId = note.TopicId!.Value, note.Title))
+                .Select(note => (TopicId: note.TopicId!.Value, note.Title))
                 .ToList();
 
         var contentIds = rows
@@ -206,7 +205,7 @@ public sealed class CourseService
         var chapterIds = topicIds.Count == 0
             ? new List<int>()
             : await _dbContext.Lessons.AsNoTracking()
-                .Where(note => note.TopicId!.Value.HasValue && topicIds.Contains(note.TopicId.Value) && (note.Flag == 0 || note.Flag == null))
+                .Where(note => note.TopicId.HasValue && topicIds.Contains(note.TopicId.Value) && (note.Flag == 0 || note.Flag == null))
                 .Select(note => note.Id)
                 .ToListAsync(cancellationToken);
         var noteIds = rows
@@ -223,8 +222,8 @@ public sealed class CourseService
         var topicIdByChapterId = topicIds.Count == 0
             ? new Dictionary<int, int>()
             : await _dbContext.Lessons.AsNoTracking()
-                .Where(note => note.TopicId!.Value.HasValue && topicIds.Contains(note.TopicId.Value) && (note.Flag == 0 || note.Flag == null))
-                .ToDictionaryAsync(note => note.Id, note => note.TopicId!.Value!.Value, cancellationToken);
+                .Where(note => note.TopicId.HasValue && topicIds.Contains(note.TopicId.Value) && (note.Flag == 0 || note.Flag == null))
+                .ToDictionaryAsync(note => note.Id, note => note.TopicId!.Value, cancellationToken);
 
         var interviewRows = await _dbContext.ContentInterviewQuestions.AsNoTracking()
             .Where(question => (question.Flag == 0 || question.Flag == null)
