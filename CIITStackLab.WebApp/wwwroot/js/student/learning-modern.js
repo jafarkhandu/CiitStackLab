@@ -5,13 +5,17 @@
             return;
         }
 
+        const activeTopicTitle = document.querySelector('.ciit-learning-topic.is-active-topic > .ciit-learning-topic-heading strong');
         const lessonTitle = document.querySelector('.ciit-learning-lesson-heading .ciit-learning-chapter-title');
         const headerTitle = document.querySelector('.ciit-learning-course-intro h1');
         const headerDescription = document.querySelector('.ciit-learning-course-intro > p');
         const topicEyebrow = document.querySelector('.ciit-learning-lesson-heading .ciit-learning-eyebrow');
 
-        if (lessonTitle && headerTitle) {
-            headerTitle.textContent = lessonTitle.textContent.trim();
+        if (headerTitle) {
+            const topicTitle = activeTopicTitle?.textContent?.trim() || lessonTitle?.textContent?.trim();
+            if (topicTitle) {
+                headerTitle.textContent = topicTitle;
+            }
         }
 
         if (topicEyebrow && headerDescription) {
