@@ -26,7 +26,7 @@ public class TopicsController : Controller
                 editTopic = new AdminTopicFormModel
                 {
                     Id = topic.Id, TopicName = topic.Title, PublicFolderId = topic.PublicFolderId,
-                    Price = topic.Price, DurationMinutes = topic.DurationMinutes
+                    Price = topic.Price, DurationHours = topic.DurationMinutes.HasValue ? topic.DurationMinutes.Value / 60m : null
                 };
         }
 
@@ -46,9 +46,13 @@ public class TopicsController : Controller
         if (await _topicService.TopicNameExistsAsync(model.TopicName, model.Id == 0 ? null : model.Id, cancellationToken))
             return Fail("A topic with this name already exists.", model.Id);
 
+        int? durationMinutes = model.DurationHours.HasValue
+            ? (int?)Math.Round(model.DurationHours.Value * 60m, MidpointRounding.AwayFromZero)
+            : null;
+
         if (model.Id == 0)
         {
-            var created = await _topicService.CreateAsync(model.TopicName, model.PublicFolderId, model.Price, model.DurationMinutes, cancellationToken);
+            var created = await _topicService.CreateAsync(model.TopicName, model.PublicFolderId, model.Price, durationMinutes, cancellationToken);
             return created.Succeeded ? Success("Topic created successfully.") : Fail(created.Error ?? "Unable to create the topic.");
         }
 
