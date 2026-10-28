@@ -54,6 +54,23 @@ public partial class UnifyTrainingContent : Migration
                 IF LEN(@contentFkSql) > 0
                     EXEC sys.sp_executesql @contentFkSql;
 
+                DECLARE @dropIndexSql nvarchar(max) = N'';
+                SELECT @dropIndexSql += N'DROP INDEX ' + QUOTENAME(i.name)
+                    + N' ON ' + QUOTENAME(OBJECT_SCHEMA_NAME(i.object_id)) + N'.'
+                    + QUOTENAME(OBJECT_NAME(i.object_id)) + N';'
+                FROM sys.indexes AS i
+                INNER JOIN sys.index_columns AS ic
+                    ON ic.object_id = i.object_id AND ic.index_id = i.index_id
+                INNER JOIN sys.columns AS col
+                    ON col.object_id = ic.object_id AND col.column_id = ic.column_id
+                WHERE i.object_id = OBJECT_ID(N'erpsystem.tbltraining_topic_contents')
+                  AND col.name = N'note_id'
+                  AND i.is_primary_key = 0
+                  AND i.is_unique_constraint = 0;
+
+                IF LEN(@dropIndexSql) > 0
+                    EXEC sys.sp_executesql @dropIndexSql;
+
                 ALTER TABLE [erpsystem].[tbltraining_topic_contents] DROP COLUMN [note_id];
             END;
             """);
