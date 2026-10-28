@@ -23,9 +23,9 @@ public sealed class ContentController : Controller
     }
 
     [HttpGet]
-    public async Task<IActionResult> Index(CancellationToken cancellationToken)
+    public IActionResult Index()
     {
-        return View(await _contentService.GetIndexAsync(cancellationToken));
+        return RedirectToAction("Index", "Notes", new { area = "Admin" });
     }
 
     [HttpGet]
