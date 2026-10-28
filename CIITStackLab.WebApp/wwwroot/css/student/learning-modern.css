@@ -33,12 +33,14 @@
 .ciit-learning-mode .ciit-learning-main-card {
     border-color: #dce7f5;
     box-shadow: 0 16px 38px rgba(18, 43, 78, .07);
+    min-height: 0 !important;
 }
 
 .ciit-learning-mode .ciit-learning-notes-panel {
     padding: 0;
     border: 0;
     background: transparent;
+    min-height: 0 !important;
 }
 
 .ciit-learning-mode .ciit-learning-notes-content {
@@ -149,7 +151,10 @@
     }
 }
 
-/* Notes should grow with the actual lesson content instead of reserving viewport height. */
+/* Keep the lesson card and notes section sized to their real content. */
+.ciit-learning-mode .ciit-learning-main-card,
+.ciit-learning-mode .ciit-learning-main-card .ciit-learning-notes-panel,
 .ciit-learning-mode .ciit-learning-main-card .ciit-learning-notes-content {
     min-height: 0 !important;
+    height: auto !important;
 }
