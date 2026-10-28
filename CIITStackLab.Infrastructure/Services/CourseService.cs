@@ -194,7 +194,7 @@ public sealed class CourseService
                 .ThenBy(note => note.Id)
                 .Select(note => new { TopicId = note.TopicId!.Value, note.Title })
                 .ToListAsync(cancellationToken))
-                .Select(note => (TopicId: note.TopicId!.Value, note.Title))
+                .Select(note => (TopicId: note.TopicId, note.Title))
                 .ToList();
 
         var contentIds = rows
