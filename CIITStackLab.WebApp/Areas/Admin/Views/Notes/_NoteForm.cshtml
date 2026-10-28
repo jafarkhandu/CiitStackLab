@@ -35,7 +35,7 @@
               asp-action="@(edit ? "Edit" : "Create")"
               method="post"
               enctype="multipart/form-data"
-              class="ciit-notes-editor-card ciit-content-form-card">
+              class="ciit-notes-editor-card ciit-content-form-card" data-video-upload-url="/Admin/Notes/CreateVideoUpload">
 
             @Html.AntiForgeryToken()
             <input type="hidden" name="vimeoVideoUrl" class="js-vimeo-video-url" />
