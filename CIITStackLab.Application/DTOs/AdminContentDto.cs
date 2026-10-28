@@ -49,7 +49,7 @@ public sealed class AdminContentInputDto
     [Range(1, int.MaxValue, ErrorMessage = "Please select a topic.")]
     public int TopicId { get; set; }
 
-    [Range(1, int.MaxValue, ErrorMessage = "Please select a note chapter.")]
+    // Legacy form field retained for compatibility; content rows are now standalone records.
     public int NoteId { get; set; }
 
     [Required(ErrorMessage = "Content name is required.")]
