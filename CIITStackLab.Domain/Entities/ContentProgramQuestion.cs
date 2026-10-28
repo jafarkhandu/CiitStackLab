@@ -14,5 +14,6 @@ public class ContentProgramQuestion
     public DateTime? RestoredAt { get; set; }
 
     public Lesson? Content { get; set; }
+    public TrainingNote? Note { get; set; }
     public ICollection<ContentProgramAnswer> Answers { get; set; } = new List<ContentProgramAnswer>();
 }
