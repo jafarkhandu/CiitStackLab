@@ -2,11 +2,16 @@
 
 @{
     ViewData["Title"] = "Add Note";
+    var isModal = string.Equals(Context.Request.Query["modal"], "true", StringComparison.OrdinalIgnoreCase)
+        || (Context.Request.HasFormContentType && string.Equals(Context.Request.Form["modal"], "true", StringComparison.OrdinalIgnoreCase));
+    if (isModal)
+    {
+        Layout = "~/Areas/Admin/Views/Shared/_ContentModalLayout.cshtml";
+    }
 }
 
 @section Styles {
-    <link rel="stylesheet" href="~/css/admin/admin-content.css" asp-append-version="true" />
-    <link rel="stylesheet" href="~/css/admin/admin-content-redesign.css" asp-append-version="true" />
+    <link rel="stylesheet" href="~/css/admin/admin-notes.css" asp-append-version="true" />
 }
 
 @section Scripts {
