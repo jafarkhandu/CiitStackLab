@@ -56,7 +56,7 @@ public class TopicsController : Controller
             return created.Succeeded ? Success("Topic created successfully.") : Fail(created.Error ?? "Unable to create the topic.");
         }
 
-        var updated = await _topicService.UpdateAsync(model.Id, model.TopicName, model.PublicFolderId, model.Price, model.DurationMinutes, cancellationToken);
+        var updated = await _topicService.UpdateAsync(model.Id, model.TopicName, model.PublicFolderId, model.Price, durationMinutes, cancellationToken);
         return updated.Succeeded ? Success("Topic updated successfully.") : Fail(updated.Error ?? "Unable to update the topic.", model.Id);
     }
 
