@@ -22,19 +22,12 @@ public sealed class AdminNoteInputDto
     [Range(1, int.MaxValue, ErrorMessage = "Select a topic.")]
     public int TopicId { get; set; }
 
-    [Required, StringLength(50)]
-    [Display(Name = "Chapter ID")]
-    public string ChapterId { get; set; } = string.Empty;
-
     [Required, StringLength(100)]
     public string Title { get; set; } = string.Empty;
 
     [Required(ErrorMessage = "Chapter content is required.")]
     public string HtmlContent { get; set; } = string.Empty;
 
-    [Range(1, int.MaxValue, ErrorMessage = "Sort order must be 1 or greater.")]
-    [Display(Name = "Sort Order")]
-    public int SortOrder { get; set; } = 1;
 }
 
 public sealed class NoteTopicOptionDto
