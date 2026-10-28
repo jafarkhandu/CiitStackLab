@@ -181,3 +181,13 @@
         animation: none !important;
     }
 }
+
+/* Learning notes should size to their real content instead of reserving viewport height. */
+.ciit-learning-mode .ciit-learning-main-card {
+    min-height: 0;
+}
+
+.ciit-learning-mode .ciit-learning-main-card .ciit-learning-notes-panel,
+.ciit-learning-mode .ciit-learning-main-card .ciit-learning-notes-content {
+    min-height: 0;
+}
