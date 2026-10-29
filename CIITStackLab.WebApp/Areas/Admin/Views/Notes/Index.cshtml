@@ -96,6 +96,7 @@
                         var topicSearch = string.Join(
                             " ",
                             group.Select(note => $"{note.TopicTitle} {note.ChapterId} {note.Title}"));
+                        var chapterNumber = 0;
 
                         <tr class="ciit-notes-topic-row"
                             data-topic-row
@@ -123,9 +124,6 @@
                             </td>
                         </tr>
 
-                        @{
-                            var chapterNumber = 0;
-                        }
                         @foreach (var note in group.OrderBy(note => note.Id))
                         {
                             chapterNumber++;
