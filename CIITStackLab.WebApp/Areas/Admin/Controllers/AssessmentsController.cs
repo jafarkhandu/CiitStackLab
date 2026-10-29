@@ -210,7 +210,7 @@ public sealed class AssessmentsController : Controller
     [RequestSizeLimit(6 * 1024 * 1024)]
     [RequestFormLimits(MultipartBodyLengthLimit = 6 * 1024 * 1024)]
     public async Task<IActionResult> AnalyzeBulkMcq(
-        int noteId,
+        int topicId,
         IFormFile? file,
         CancellationToken cancellationToken)
     {
@@ -242,12 +242,12 @@ public sealed class AssessmentsController : Controller
 
         await Response.StartAsync(cancellationToken);
         await ReportProgressAsync(
-            "Upload received. Preparing the chapter and file checks...",
+            "Upload received. Preparing the topic and file checks...",
             cancellationToken);
 
         var preview = new McqImportPreviewDto
         {
-            NoteId = noteId,
+            TopicId = topicId,
             FileName = file is null ? string.Empty : Path.GetFileName(file.FileName)
         };
 
@@ -267,7 +267,7 @@ public sealed class AssessmentsController : Controller
                 await using var fileStream = file.OpenReadStream();
 
                 preview = await _mcqImportService.PreviewAsync(
-                    noteId,
+                    topicId,
                     file.FileName,
                     fileStream,
                     userId,
@@ -289,8 +289,8 @@ public sealed class AssessmentsController : Controller
         {
             _logger.LogError(
                 exception,
-                "MCQ file analysis failed for Notes chapter {NoteId}.",
-                noteId);
+                "MCQ file analysis failed for topic {TopicId}.",
+                topicId);
 
             preview = new McqImportPreviewDto
             {
@@ -346,7 +346,7 @@ public sealed class AssessmentsController : Controller
     [RequestSizeLimit(6 * 1024 * 1024)]
     [RequestFormLimits(MultipartBodyLengthLimit = 6 * 1024 * 1024)]
     public async Task<IActionResult> PreviewBulkMcq(
-        int noteId,
+        int topicId,
         IFormFile? file,
         CancellationToken cancellationToken)
     {
@@ -373,7 +373,7 @@ public sealed class AssessmentsController : Controller
             {
                 preview = new McqImportPreviewDto
                 {
-                    NoteId = noteId,
+                    TopicId = topicId,
                     FileName = Path.GetFileName(file.FileName)
                 };
                 preview.FileErrors.Add(
@@ -384,7 +384,7 @@ public sealed class AssessmentsController : Controller
                 await using var fileStream = file.OpenReadStream();
 
                 preview = await _mcqImportService.PreviewAsync(
-                    noteId,
+                    topicId,
                     file.FileName,
                     fileStream,
                     userId,
@@ -399,7 +399,7 @@ public sealed class AssessmentsController : Controller
                 FileName = file is null ? string.Empty : Path.GetFileName(file.FileName)
             };
             preview.FileErrors.Add(
-                "The database returned an error during analysis. No MCQs were saved. Confirm the Notes chapter note_id setup SQL has been run against the database used by this application, then retry.");
+                "The database returned an error during analysis. No MCQs were saved. Confirm the Notes topic assignment setup has been run against the database used by this application, then retry.");
         }
 
         // Keep the preview in server-side cache and redirect to the list page.
