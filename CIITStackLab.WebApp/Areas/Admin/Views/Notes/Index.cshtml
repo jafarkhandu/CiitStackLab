@@ -456,7 +456,7 @@
                     topic.querySelector("[data-notes-topic-toggle]")?.setAttribute("aria-expanded", shouldExpand ? "true" : "false");
                     rows.forEach(row => {
                         row.hidden = !showTopic || !shouldExpand || (query && !(topicMatches || (row.dataset.search || "").toLowerCase().includes(query)));
-                        if (!row.hidden) visibleNotes++;
+                        if (showTopic && (!query || topicMatches || (row.dataset.search || "").toLowerCase().includes(query))) visibleNotes++;
                     });
                 });
                 if (queryChanged && query && matchingNoteTopic) expandedNotesTopicId = matchingNoteTopic;
