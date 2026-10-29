@@ -51,6 +51,10 @@
         }
     }
 
+    var practiceAssessmentCourseId = !string.IsNullOrWhiteSpace(courseId)
+        ? courseId
+        : purchasedCourses.FirstOrDefault()?.Id.ToString();
+
     if (string.IsNullOrWhiteSpace(courseTitle))
     {
         var pageTitle = ViewData["Title"]?.ToString();
@@ -223,9 +227,9 @@
                             <i class="bi bi-journal-bookmark"></i><span>Learning Path</span>
                         </a>
                     }
-                    @if (!string.IsNullOrWhiteSpace(courseId))
+                    @if (User.IsInRole("Student") && !string.IsNullOrWhiteSpace(practiceAssessmentCourseId))
                     {
-                        @if (isLearnPage)
+                        @if (isLearnPage && string.Equals(courseId, practiceAssessmentCourseId, StringComparison.Ordinal))
                         {
                             <a href="@Context.Request.Path@Context.Request.QueryString#lesson-assessment"
                                class="ciit-learning-assessment-sidebar-link"
@@ -237,7 +241,7 @@
                         {
                             <a asp-controller="Courses"
                                asp-action="Learn"
-                               asp-route-id="@courseId"
+                               asp-route-id="@practiceAssessmentCourseId"
                                asp-fragment="lesson-assessment"
                                class="ciit-learning-assessment-sidebar-link">
                                 <i class="bi bi-patch-check"></i><span>Practice Assessment</span>
