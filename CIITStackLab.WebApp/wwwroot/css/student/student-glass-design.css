@@ -9,11 +9,11 @@
     --student-glass-blue: #1769ff;
     --student-glass-border: rgba(255, 255, 255, .72);
     --student-glass-shadow: 0 18px 48px rgba(41, 83, 145, .075);
-    min-height: 100vh;
+    min-height: 100vh !important;
     background:
         radial-gradient(circle at 82% 8%, rgba(179, 214, 255, .48), transparent 28rem),
         radial-gradient(circle at 18% 92%, rgba(213, 232, 255, .42), transparent 26rem),
-        linear-gradient(135deg, #f4f8ff 0%, #edf5ff 48%, #f9fbff 100%);
+        linear-gradient(135deg, #f4f8ff 0%, #edf5ff 48%, #f9fbff 100%) !important;
 }
 
 .ciit-course-environment-body::before,
@@ -42,94 +42,93 @@
     transform: rotate(12deg);
 }
 
-/* Floating frosted header */
 .ciit-course-environment-header {
-    position: sticky;
-    top: 14px;
-    z-index: 1030;
-    width: calc(100% - 32px);
-    margin: 14px auto 0;
-    border: 1px solid rgba(255, 255, 255, .78);
-    border-radius: 22px;
-    background: rgba(255, 255, 255, .66);
-    box-shadow: 0 14px 34px rgba(54, 91, 143, .08), inset 0 1px 0 rgba(255, 255, 255, .92);
-    backdrop-filter: blur(22px) saturate(135%);
-    -webkit-backdrop-filter: blur(22px) saturate(135%);
+    position: sticky !important;
+    top: 14px !important;
+    z-index: 1030 !important;
+    width: calc(100% - 32px) !important;
+    margin: 14px auto 0 !important;
+    border: 1px solid rgba(255, 255, 255, .78) !important;
+    border-bottom: 1px solid rgba(255, 255, 255, .78) !important;
+    border-radius: 22px !important;
+    background: rgba(255, 255, 255, .66) !important;
+    box-shadow: 0 14px 34px rgba(54, 91, 143, .08), inset 0 1px 0 rgba(255, 255, 255, .92) !important;
+    backdrop-filter: blur(22px) saturate(135%) !important;
+    -webkit-backdrop-filter: blur(22px) saturate(135%) !important;
 }
 
 .ciit-course-environment-header-inner {
-    min-height: 70px;
+    min-height: 70px !important;
 }
 
 .ciit-course-environment-brand {
-    color: var(--student-glass-ink);
+    color: var(--student-glass-ink) !important;
 }
 
 .ciit-course-environment-brand-mark {
-    width: 38px;
-    height: 38px;
-    border-radius: 12px;
-    background: linear-gradient(145deg, #2f86ff, #1559df);
-    box-shadow: 0 8px 18px rgba(23, 105, 255, .22), inset 0 1px 0 rgba(255, 255, 255, .38);
+    width: 38px !important;
+    height: 38px !important;
+    border-radius: 12px !important;
+    background: linear-gradient(145deg, #2f86ff, #1559df) !important;
+    box-shadow: 0 8px 18px rgba(23, 105, 255, .22), inset 0 1px 0 rgba(255, 255, 255, .38) !important;
 }
 
 .ciit-course-environment-context {
-    border-left-color: rgba(126, 151, 188, .24);
+    border-left-color: rgba(126, 151, 188, .24) !important;
 }
 
 .ciit-course-environment-nav a {
-    border: 1px solid transparent;
-    border-radius: 13px;
+    border: 1px solid transparent !important;
+    border-radius: 13px !important;
 }
 
 .ciit-course-environment-nav a:hover,
 .ciit-course-environment-nav a.active {
-    border-color: rgba(86, 145, 239, .18);
-    background: rgba(237, 245, 255, .78);
+    border-color: rgba(86, 145, 239, .18) !important;
+    background: rgba(237, 245, 255, .78) !important;
 }
 
 .ciit-course-signout {
-    border-color: rgba(67, 125, 222, .42);
-    border-radius: 12px;
-    background: rgba(255, 255, 255, .46);
-    box-shadow: inset 0 1px 0 rgba(255, 255, 255, .85);
+    border-color: rgba(67, 125, 222, .42) !important;
+    border-radius: 12px !important;
+    background: rgba(255, 255, 255, .46) !important;
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, .85) !important;
 }
 
-/* Floating glass sidebar */
 .ciit-course-environment-workspace {
     position: relative;
 }
 
 .ciit-course-global-sidebar {
-    margin: 16px 0 16px 16px;
-    width: calc(100% - 16px);
-    height: calc(100vh - 120px);
-    padding: 20px 12px;
-    border: 1px solid rgba(255, 255, 255, .74);
-    border-right: 1px solid rgba(255, 255, 255, .74);
-    border-radius: 22px;
-    background: rgba(255, 255, 255, .56);
-    box-shadow: var(--student-glass-shadow), inset 0 1px 0 rgba(255, 255, 255, .92);
-    backdrop-filter: blur(20px) saturate(125%);
-    -webkit-backdrop-filter: blur(20px) saturate(125%);
+    margin: 16px 0 16px 16px !important;
+    width: calc(100% - 16px) !important;
+    height: calc(100vh - 120px) !important;
+    padding: 20px 12px !important;
+    border: 1px solid rgba(255, 255, 255, .74) !important;
+    border-right: 1px solid rgba(255, 255, 255, .74) !important;
+    border-radius: 22px !important;
+    background: rgba(255, 255, 255, .56) !important;
+    box-shadow: var(--student-glass-shadow), inset 0 1px 0 rgba(255, 255, 255, .92) !important;
+    backdrop-filter: blur(20px) saturate(125%) !important;
+    -webkit-backdrop-filter: blur(20px) saturate(125%) !important;
 }
 
 .ciit-course-global-sidebar-heading {
-    padding: 8px 12px 17px;
-    border-bottom-color: rgba(141, 164, 201, .22);
+    padding: 8px 12px 17px !important;
+    border-bottom-color: rgba(141, 164, 201, .22) !important;
 }
 
 .ciit-course-global-nav a {
-    border: 1px solid transparent;
-    border-radius: 13px;
+    border: 1px solid transparent !important;
+    border-radius: 13px !important;
     transition: transform .2s ease, background .2s ease, border-color .2s ease;
 }
 
 .ciit-course-global-nav a:hover,
 .ciit-course-global-nav a.active {
-    border-color: rgba(82, 143, 240, .22);
-    background: rgba(239, 246, 255, .82);
-    box-shadow: 0 7px 18px rgba(50, 107, 190, .07);
+    border-color: rgba(82, 143, 240, .22) !important;
+    background: rgba(239, 246, 255, .82) !important;
+    box-shadow: 0 7px 18px rgba(50, 107, 190, .07) !important;
 }
 
 .ciit-course-global-nav a:hover {
@@ -137,10 +136,10 @@
 }
 
 .ciit-course-switcher {
-    border: 1px solid rgba(255, 255, 255, .74);
-    border-radius: 17px;
-    background: rgba(255, 255, 255, .48);
-    box-shadow: inset 0 1px 0 rgba(255, 255, 255, .8);
+    border: 1px solid rgba(255, 255, 255, .74) !important;
+    border-radius: 17px !important;
+    background: rgba(255, 255, 255, .48) !important;
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, .8) !important;
 }
 
 .ciit-course-environment-main {
@@ -148,7 +147,6 @@
     min-width: 0;
 }
 
-/* Shared floating surfaces used by Course Home and Learn */
 .ciit-course-experience-hero,
 .ciit-course-experience-card,
 .ciit-course-stat-grid,
@@ -156,78 +154,76 @@
 .ciit-learning-notes-content,
 .ciit-learning-embedded-content,
 .ciit-learning-chapter-navigation .ciit-learning-chapter {
-    border-color: rgba(218, 229, 246, .88);
-    box-shadow: var(--student-glass-shadow), inset 0 1px 0 rgba(255, 255, 255, .72);
+    border-color: rgba(218, 229, 246, .88) !important;
+    box-shadow: var(--student-glass-shadow), inset 0 1px 0 rgba(255, 255, 255, .72) !important;
 }
 
 .ciit-course-experience-hero,
 .ciit-course-experience-card,
 .ciit-learning-main-card {
-    background: rgba(255, 255, 255, .72);
-    backdrop-filter: blur(14px) saturate(120%);
-    -webkit-backdrop-filter: blur(14px) saturate(120%);
+    background: rgba(255, 255, 255, .72) !important;
+    backdrop-filter: blur(14px) saturate(120%) !important;
+    -webkit-backdrop-filter: blur(14px) saturate(120%) !important;
 }
 
 .ciit-learning-notes-content,
 .ciit-learning-embedded-content,
 .ciit-learning-chapter-navigation .ciit-learning-chapter {
-    background: rgba(255, 255, 255, .78);
+    background: rgba(255, 255, 255, .78) !important;
 }
 
-/* My Courses keeps its existing compact card dimensions; only the surfaces become glassier. */
 .ciit-my-courses-page .ciit-my-course-card,
 .ciit-my-courses-page .ciit-learning-overview-card,
 .ciit-my-courses-page .ciit-learning-welcome {
-    border-color: rgba(218, 229, 246, .9);
-    box-shadow: var(--student-glass-shadow), inset 0 1px 0 rgba(255, 255, 255, .78);
+    border-color: rgba(218, 229, 246, .9) !important;
+    box-shadow: var(--student-glass-shadow), inset 0 1px 0 rgba(255, 255, 255, .78) !important;
 }
 
 .ciit-my-courses-page .ciit-my-course-card {
-    background: rgba(255, 255, 255, .88);
+    background: rgba(255, 255, 255, .88) !important;
 }
 
 .ciit-my-courses-page .ciit-learning-overview-card {
-    background: rgba(255, 255, 255, .72);
-    backdrop-filter: blur(12px) saturate(120%);
-    -webkit-backdrop-filter: blur(12px) saturate(120%);
+    background: rgba(255, 255, 255, .72) !important;
+    backdrop-filter: blur(12px) saturate(120%) !important;
+    -webkit-backdrop-filter: blur(12px) saturate(120%) !important;
 }
 
-/* Notes learning-path variant gets the same frosted shell without changing navigation. */
 .ciit-notes-learning-path .ciit-notes-path-heading,
 .ciit-notes-learning-path .ciit-notes-path-topic {
-    border-color: rgba(255, 255, 255, .55);
+    border-color: rgba(255, 255, 255, .55) !important;
 }
 
 .ciit-course-environment-footer {
-    border-top-color: rgba(255, 255, 255, .72);
-    background: rgba(255, 255, 255, .45);
-    backdrop-filter: blur(14px);
-    -webkit-backdrop-filter: blur(14px);
+    border-top-color: rgba(255, 255, 255, .72) !important;
+    background: rgba(255, 255, 255, .45) !important;
+    backdrop-filter: blur(14px) !important;
+    -webkit-backdrop-filter: blur(14px) !important;
 }
 
 @media (max-width: 1199.98px) {
     .ciit-course-environment-header {
-        top: 10px;
-        margin-top: 10px;
+        top: 10px !important;
+        margin-top: 10px !important;
     }
 
     .ciit-course-global-sidebar {
-        margin: 0;
-        width: 100%;
-        height: auto;
-        border: 0;
-        border-radius: 0;
-        background: transparent;
-        box-shadow: none;
-        backdrop-filter: none;
-        -webkit-backdrop-filter: none;
+        margin: 0 !important;
+        width: 100% !important;
+        height: auto !important;
+        border: 0 !important;
+        border-radius: 0 !important;
+        background: transparent !important;
+        box-shadow: none !important;
+        backdrop-filter: none !important;
+        -webkit-backdrop-filter: none !important;
     }
 }
 
 @media (max-width: 767.98px) {
     .ciit-course-environment-header {
-        width: calc(100% - 20px);
-        border-radius: 17px;
+        width: calc(100% - 20px) !important;
+        border-radius: 17px !important;
     }
 
     .ciit-course-environment-body::before,
