@@ -85,8 +85,8 @@
             notesPanel.appendChild(contentPanel);
         }
 
-        // Keep the existing learning-path sidebar beside Notes. It is the primary
-        // chapter navigator and lists every topic/chapter from the current course model.
+        // The Learn sidebar is scoped to the selected topic and shows only its chapter links.
+        // Topic switching stays in the existing learning flow; the sidebar avoids cross-topic clutter.
 
         const assessmentLink = document.querySelector('[data-learning-assessment-link]');
         const learningPathLink = document.querySelector('.ciit-course-global-nav a.active');
