@@ -240,7 +240,7 @@
 
         @if (Model.Count == 0)
         {
-            <div class="ciit-notes-empty is-visible">
+            <div class="ciit-notes-empty" data-notes-no-data hidden>
                 <i class="bi bi-journal-plus"></i>
                 <h3>No Notes chapters yet</h3>
                 <p>
@@ -324,11 +324,20 @@
                 if (count) count.textContent = query
                     ? `${visibleNotes} notes · ${visibleInterviews} interview questions · ${visiblePrograms} practice programs`
                     : `${chapterRows.length} chapters · ${contentRows.filter(row => row.dataset.contentType === "interview").length} interview questions · ${contentRows.filter(row => row.dataset.contentType === "practice").length} practice programs`;
+                const anyVisibleNotes = topicRows.some(row => !row.hidden) || chapterRows.some(row => !row.hidden);
+                const anyVisibleInterview = contentRows.some(row => row.dataset.contentType === "interview" && !row.hidden);
+                const anyVisiblePractice = contentRows.some(row => row.dataset.contentType === "practice" && !row.hidden);
                 const notesEmpty = document.getElementById("notesSearchEmpty");
-                if (notesEmpty) notesEmpty.hidden = topicRows.some(row => !row.hidden) || chapterRows.some(row => !row.hidden);
+                if (notesEmpty) {
+                    notesEmpty.hidden = anyVisibleNotes || activeTab === "interview" || activeTab === "practice" ||
+                        (activeTab === "all" && (anyVisibleInterview || anyVisiblePractice));
+                }
+                const notesNoData = document.querySelector("[data-notes-no-data]");
+                if (notesNoData) notesNoData.hidden = @Model.Count > 0 || activeTab === "interview" || activeTab === "practice";
                 ["interview", "practice"].forEach(type => {
                     const empty = document.querySelector(`[data-content-empty="${type}"]`);
-                    if (empty) empty.hidden = contentRows.some(row => row.dataset.contentType === type && !row.hidden);
+                    if (empty) empty.hidden = contentRows.some(row => row.dataset.contentType === type && !row.hidden) ||
+                        (activeTab !== type && activeTab !== "all");
                 });
             };
 
