@@ -271,7 +271,7 @@
             else
             {
                 <div class="ciit-assessment-tree ciit-notes-content-tree" data-single-open-tree="practice">
-                    @foreach (var topicGroup in practiceIndex.ActivePrograms.GroupBy(x => x.TopicTitle).OrderBy(x => x.Key.TopicTitle))
+                    @foreach (var topicGroup in practiceIndex.ActivePrograms.GroupBy(x => x.TopicTitle).OrderBy(x => x.Key))
                     {
                         var topicName = string.IsNullOrWhiteSpace(topicGroup.Key) ? "Unassigned topic" : topicGroup.Key;
                         <details class="ciit-assessment-tree-topic" data-topic-node data-search="@($"{topicName} {string.Join(" ", topicGroup.Select(x => x.QuestionTitle + " " + x.QuestionDescription + " " + x.ChapterTitle))}")">
