@@ -80,7 +80,7 @@ public sealed class AdminMcqTopicLookupDto
 
 public sealed class AdminTopicMcqInputDto
 {
-    [Range(1, int.MaxValue, ErrorMessage = "Please select a chapter.")]
+    [Range(1, int.MaxValue, ErrorMessage = "Please select a topic.")]
     public int TopicId { get; set; }
 
     [Required(ErrorMessage = "Question is required.")]
