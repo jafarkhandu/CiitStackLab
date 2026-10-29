@@ -605,13 +605,13 @@ public sealed class AssessmentsController : Controller
             TempData["AdminInterviewMessage"] = "The database could not confirm this interview-question import. Check the Interview Questions list before retrying.";
             TempData["AdminInterviewMessageType"] = "error";
             TempData["OpenAdminInterviewImportModal"] = "import";
-            return RedirectToAction(nameof(InterviewQuestions), new { previewToken });
+            return RedirectToAction("Index", "Notes", new { area = "Admin" });
         }
         if (result.Succeeded)
         {
             TempData["AdminInterviewMessage"] = result.Message;
             TempData["AdminInterviewMessageType"] = "success";
-            return RedirectToAction(nameof(InterviewQuestions));
+            return RedirectToAction("Index", "Notes", new { area = "Admin" });
         }
         TempData["AdminInterviewMessage"] = result.Message;
         TempData["AdminInterviewMessageType"] = "error";
@@ -619,9 +619,9 @@ public sealed class AssessmentsController : Controller
         if (result.Preview is not null)
         {
             _interviewQuestionImportService.CachePreview(result.Preview, userId);
-            return RedirectToAction(nameof(InterviewQuestions), new { previewToken = result.Preview.PreviewToken });
+            return RedirectToAction("Index", "Notes", new { area = "Admin" });
         }
-        return RedirectToAction(nameof(InterviewQuestions));
+        return RedirectToAction("Index", "Notes", new { area = "Admin" });
     }
 
     [HttpGet]
@@ -656,12 +656,14 @@ public sealed class AssessmentsController : Controller
             ViewBag.OpenInterviewQuestionModal = "add";
             ViewBag.InterviewMessage = result.Error;
             ViewBag.InterviewMessageType = "error";
-            return View("InterviewQuestions", await _interviewQuestionService.GetIndexAsync(cancellationToken));
+            TempData["AdminNotesMessage"] = "The interview question could not be saved. Please review the submitted details and try again.";
+            TempData["AdminNotesMessageType"] = "error";
+            return RedirectToAction("Index", "Notes", new { area = "Admin" });
         }
 
         TempData["AdminInterviewMessage"] = "Interview question created successfully.";
         TempData["AdminInterviewMessageType"] = "success";
-        return RedirectToAction(nameof(InterviewQuestions));
+        return RedirectToAction("Index", "Notes", new { area = "Admin" });
     }
 
     [HttpGet]
@@ -703,7 +705,7 @@ public sealed class AssessmentsController : Controller
         if (modal) return ModalSaved();
         TempData["AdminInterviewMessage"] = "Interview question updated successfully.";
         TempData["AdminInterviewMessageType"] = "success";
-        return RedirectToAction(nameof(InterviewQuestions));
+        return RedirectToAction("Index", "Notes", new { area = "Admin" });
     }
 
     [HttpPost]
@@ -713,7 +715,7 @@ public sealed class AssessmentsController : Controller
         var result = await _interviewQuestionService.SoftDeleteAsync(id, cancellationToken);
         TempData["AdminInterviewMessage"] = result.Succeeded ? "Interview question moved to archive." : result.Error;
         TempData["AdminInterviewMessageType"] = result.Succeeded ? "success" : "error";
-        return RedirectToAction(nameof(InterviewQuestions));
+        return RedirectToAction("Index", "Notes", new { area = "Admin" });
     }
 
     [HttpPost]
@@ -723,7 +725,7 @@ public sealed class AssessmentsController : Controller
         var result = await _interviewQuestionService.RestoreAsync(id, cancellationToken);
         TempData["AdminInterviewMessage"] = result.Succeeded ? "Interview question restored successfully." : result.Error;
         TempData["AdminInterviewMessageType"] = result.Succeeded ? "success" : "error";
-        return RedirectToAction(nameof(InterviewQuestions));
+        return RedirectToAction("Index", "Notes", new { area = "Admin" });
     }
 
     [HttpGet]
@@ -844,14 +846,14 @@ public sealed class AssessmentsController : Controller
             TempData["PracticeProgramImportMessage"] =
                 "The database could not complete this import. Check the Practice Programs list before retrying.";
             TempData["OpenPracticeProgramImportModal"] = "import";
-            return RedirectToAction(nameof(PracticePrograms), new { previewToken });
+            return RedirectToAction("Index", "Notes", new { area = "Admin" });
         }
 
         if (result.Succeeded)
         {
             TempData["AdminPracticeMessage"] = result.Message;
             TempData["AdminPracticeMessageType"] = "success";
-            return RedirectToAction(nameof(PracticePrograms));
+            return RedirectToAction("Index", "Notes", new { area = "Admin" });
         }
 
         TempData["PracticeProgramImportMessage"] = result.Message;
@@ -860,10 +862,10 @@ public sealed class AssessmentsController : Controller
         if (result.Preview is not null)
         {
             _practiceProgramImportService.CachePreview(result.Preview, userId);
-            return RedirectToAction(nameof(PracticePrograms), new { previewToken = result.Preview.PreviewToken });
+            return RedirectToAction("Index", "Notes", new { area = "Admin" });
         }
 
-        return RedirectToAction(nameof(PracticePrograms));
+        return RedirectToAction("Index", "Notes", new { area = "Admin" });
     }
 
     [HttpGet]
@@ -900,12 +902,14 @@ public sealed class AssessmentsController : Controller
             ViewBag.OpenPracticeModal = "program";
             ViewBag.PracticeMessage = result.Error;
             ViewBag.PracticeMessageType = "error";
-            return View("PracticePrograms", await _practiceProgramService.GetIndexAsync(cancellationToken));
+            TempData["AdminNotesMessage"] = "The practice program could not be saved. Please review the submitted details and try again.";
+            TempData["AdminNotesMessageType"] = "error";
+            return RedirectToAction("Index", "Notes", new { area = "Admin" });
         }
 
         TempData["AdminPracticeMessage"] = "Practice program created successfully.";
         TempData["AdminPracticeMessageType"] = "success";
-        return RedirectToAction(nameof(PracticePrograms));
+        return RedirectToAction("Index", "Notes", new { area = "Admin" });
     }
 
     [HttpGet]
@@ -947,7 +951,7 @@ public sealed class AssessmentsController : Controller
         if (modal) return ModalSaved();
         TempData["AdminPracticeMessage"] = "Practice program updated successfully.";
         TempData["AdminPracticeMessageType"] = "success";
-        return RedirectToAction(nameof(PracticePrograms));
+        return RedirectToAction("Index", "Notes", new { area = "Admin" });
     }
 
     [HttpPost]
@@ -957,7 +961,7 @@ public sealed class AssessmentsController : Controller
         var result = await _practiceProgramService.SoftDeleteAsync(id, cancellationToken);
         TempData["AdminPracticeMessage"] = result.Succeeded ? "Practice program moved to archive." : result.Error;
         TempData["AdminPracticeMessageType"] = result.Succeeded ? "success" : "error";
-        return RedirectToAction(nameof(PracticePrograms));
+        return RedirectToAction("Index", "Notes", new { area = "Admin" });
     }
 
     [HttpPost]
@@ -967,7 +971,7 @@ public sealed class AssessmentsController : Controller
         var result = await _practiceProgramService.RestoreAsync(id, cancellationToken);
         TempData["AdminPracticeMessage"] = result.Succeeded ? "Practice program restored successfully." : result.Error;
         TempData["AdminPracticeMessageType"] = result.Succeeded ? "success" : "error";
-        return RedirectToAction(nameof(PracticePrograms));
+        return RedirectToAction("Index", "Notes", new { area = "Admin" });
     }
 
     [HttpGet]
@@ -1003,7 +1007,9 @@ public sealed class AssessmentsController : Controller
             ViewBag.OpenPracticeModal = "solution";
             ViewBag.PracticeMessage = "Review the highlighted fields and try again.";
             ViewBag.PracticeMessageType = "error";
-            return View("PracticePrograms", await _practiceProgramService.GetIndexAsync(cancellationToken));
+            TempData["AdminNotesMessage"] = "The practice program could not be saved. Please review the submitted details and try again.";
+            TempData["AdminNotesMessageType"] = "error";
+            return RedirectToAction("Index", "Notes", new { area = "Admin" });
         }
 
         var result = await _practiceProgramService.CreateAnswerAsync(input, cancellationToken);
@@ -1016,12 +1022,14 @@ public sealed class AssessmentsController : Controller
             ViewBag.OpenPracticeModal = "solution";
             ViewBag.PracticeMessage = result.Error;
             ViewBag.PracticeMessageType = "error";
-            return View("PracticePrograms", await _practiceProgramService.GetIndexAsync(cancellationToken));
+            TempData["AdminNotesMessage"] = "The practice program could not be saved. Please review the submitted details and try again.";
+            TempData["AdminNotesMessageType"] = "error";
+            return RedirectToAction("Index", "Notes", new { area = "Admin" });
         }
 
         TempData["AdminPracticeMessage"] = "Practice program solution added successfully.";
         TempData["AdminPracticeMessageType"] = "success";
-        return RedirectToAction(nameof(PracticePrograms));
+        return RedirectToAction("Index", "Notes", new { area = "Admin" });
     }
 
     [HttpGet]
@@ -1059,7 +1067,7 @@ public sealed class AssessmentsController : Controller
 
         TempData["AdminPracticeMessage"] = "Practice program solution updated successfully.";
         TempData["AdminPracticeMessageType"] = "success";
-        return RedirectToAction(nameof(PracticePrograms));
+        return RedirectToAction("Index", "Notes", new { area = "Admin" });
     }
 
     [HttpPost]
@@ -1069,7 +1077,7 @@ public sealed class AssessmentsController : Controller
         var result = await _practiceProgramService.SoftDeleteAnswerAsync(id, cancellationToken);
         TempData["AdminPracticeMessage"] = result.Succeeded ? "Practice program solution moved to archive." : result.Error;
         TempData["AdminPracticeMessageType"] = result.Succeeded ? "success" : "error";
-        return RedirectToAction(nameof(PracticePrograms));
+        return RedirectToAction("Index", "Notes", new { area = "Admin" });
     }
 
     [HttpPost]
@@ -1079,7 +1087,7 @@ public sealed class AssessmentsController : Controller
         var result = await _practiceProgramService.RestoreAnswerAsync(id, cancellationToken);
         TempData["AdminPracticeMessage"] = result.Succeeded ? "Practice program solution restored successfully." : result.Error;
         TempData["AdminPracticeMessageType"] = result.Succeeded ? "success" : "error";
-        return RedirectToAction(nameof(PracticePrograms));
+        return RedirectToAction("Index", "Notes", new { area = "Admin" });
     }
 
     private async Task<AdminMcqIndexDto> LoadMcqIndexAsync(
