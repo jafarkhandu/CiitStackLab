@@ -143,47 +143,6 @@
 
 @section Scripts {
     <script>
-        document.querySelectorAll('.ciit-learning-chapter[data-chapter-url]').forEach(function (chapter) {
-            const summary = chapter.querySelector(':scope > .ciit-learning-chapter-summary');
-            const chapterUrl = chapter.dataset.chapterUrl;
-
-            if (!summary || !chapterUrl) {
-                return;
-            }
-
-            summary.addEventListener('click', function (event) {
-                if (event.target.closest('.ciit-learning-disclosure-icon')) {
-                    return;
-                }
-
-                event.preventDefault();
-                window.location.assign(chapterUrl);
-            });
-        });
-
-        document.querySelectorAll('.ciit-learning-topic').forEach(function (topic) {
-            const heading = topic.querySelector(':scope > .ciit-learning-topic-heading');
-            const firstContentUrl = topic.dataset.topicFirstContentUrl;
-
-            if (!heading) {
-                return;
-            }
-
-            heading.addEventListener('click', function (event) {
-                // Keep the selected topic expanded and prevent locked topics from opening.
-                // Selecting a different unlocked topic navigates to its learning page.
-                event.preventDefault();
-
-                if (topic.classList.contains('is-locked-topic')
-                    || topic.classList.contains('is-active-topic')) {
-                    return;
-                }
-
-                if (firstContentUrl) {
-                    window.location.assign(firstContentUrl);
-                }
-            });
-        });
         document.querySelectorAll('.exam-timezone-offset').forEach(function (input) {
             input.value = new Date().getTimezoneOffset();
         });
