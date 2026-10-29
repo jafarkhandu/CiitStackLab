@@ -365,7 +365,7 @@ public sealed class AssessmentsController : Controller
             {
                 preview = new McqImportPreviewDto
                 {
-                    TopicId = noteId
+                    TopicId = topicId
                 };
                 preview.FileErrors.Add("Choose a non-empty .xlsx Excel workbook.");
             }
