@@ -754,8 +754,9 @@ public sealed class AssessmentsController : Controller
     }
 
     [HttpGet]
-    public async Task<IActionResult> EditInterviewQuestion(int id, CancellationToken cancellationToken)
+    public async Task<IActionResult> EditInterviewQuestion(int id, bool modal, CancellationToken cancellationToken)
     {
+        ViewBag.IsModal = modal;
         var question = await _interviewQuestionService.GetByIdAsync(id, cancellationToken);
         if (question is null) return NotFound();
 
@@ -771,8 +772,9 @@ public sealed class AssessmentsController : Controller
 
     [HttpPost]
     [ValidateAntiForgeryToken]
-    public async Task<IActionResult> EditInterviewQuestion(int id, AdminInterviewQuestionInputDto input, CancellationToken cancellationToken)
+    public async Task<IActionResult> EditInterviewQuestion(int id, AdminInterviewQuestionInputDto input, bool modal, CancellationToken cancellationToken)
     {
+        ViewBag.IsModal = modal;
         if (!ModelState.IsValid)
         {
             await LoadInterviewQuestionChapterLookupAsync(cancellationToken);
@@ -787,6 +789,7 @@ public sealed class AssessmentsController : Controller
             return View(input);
         }
 
+        if (modal) return ModalSaved();
         TempData["AdminInterviewMessage"] = "Interview question updated successfully.";
         TempData["AdminInterviewMessageType"] = "success";
         return RedirectToAction(nameof(InterviewQuestions));
@@ -1125,14 +1128,16 @@ public sealed class AssessmentsController : Controller
     }
 
     [HttpGet]
-    public async Task<IActionResult> EditPracticeProgram(int id, CancellationToken cancellationToken)
+    public async Task<IActionResult> EditPracticeProgram(int id, bool modal, CancellationToken cancellationToken)
     {
+        ViewBag.IsModal = modal;
         var program = await _practiceProgramService.GetByIdAsync(id, cancellationToken);
         if (program is null) return NotFound();
 
         await LoadPracticeProgramContentAsync(cancellationToken);
         return View(new AdminPracticeProgramInputDto
         {
+            NoteId = program.NoteId ?? 0,
             ContentId = program.ContentId ?? 0,
             QuestionTitle = program.QuestionTitle,
             QuestionDescription = program.QuestionDescription
@@ -1141,8 +1146,9 @@ public sealed class AssessmentsController : Controller
 
     [HttpPost]
     [ValidateAntiForgeryToken]
-    public async Task<IActionResult> EditPracticeProgram(int id, AdminPracticeProgramInputDto input, CancellationToken cancellationToken)
+    public async Task<IActionResult> EditPracticeProgram(int id, AdminPracticeProgramInputDto input, bool modal, CancellationToken cancellationToken)
     {
+        ViewBag.IsModal = modal;
         if (!ModelState.IsValid)
         {
             await LoadPracticeProgramContentAsync(cancellationToken);
@@ -1157,6 +1163,7 @@ public sealed class AssessmentsController : Controller
             return View(input);
         }
 
+        if (modal) return ModalSaved();
         TempData["AdminPracticeMessage"] = "Practice program updated successfully.";
         TempData["AdminPracticeMessageType"] = "success";
         return RedirectToAction(nameof(PracticePrograms));
@@ -1321,6 +1328,12 @@ public sealed class AssessmentsController : Controller
     {
         var content = await _interviewQuestionService.GetContentLookupAsync(cancellationToken);
         ViewBag.InterviewQuestionContent = content.Select(x => new SelectListItem($"{x.TopicTitle} / {x.Title}", x.Id.ToString())).ToList();
+    }
+
+    private ContentResult ModalSaved()
+    {
+        const string script = "<!doctype html><html><head><meta charset=\"utf-8\"></head><body><script>window.parent.postMessage({ type: 'ciit-content-saved' }, window.location.origin);</script></body></html>";
+        return Content(script, "text/html");
     }
 
     private async Task LoadInterviewQuestionChapterLookupAsync(CancellationToken cancellationToken)
