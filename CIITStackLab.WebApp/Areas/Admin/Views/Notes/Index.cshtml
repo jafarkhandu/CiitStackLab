@@ -123,12 +123,16 @@
                             </td>
                         </tr>
 
+                        @{
+                            var chapterNumber = 0;
+                        }
                         @foreach (var note in group.OrderBy(note => note.Id))
                         {
+                            chapterNumber++;
                             <tr class="ciit-notes-chapter-row"
                                 data-chapter-row
                                 data-topic-id="@group.Key.TopicId"
-                                data-search="@($"{note.TopicTitle} {note.ChapterId} {note.Title}")"
+                                data-search="@($"{note.TopicTitle} {chapterNumber} {note.Title}")"
                                 hidden>
                                 <td>
                                     <div class="ciit-notes-chapter-label">
@@ -141,7 +145,7 @@
                                 </td>
 
                                 <td>
-                                    <code>@note.Id</code>
+                                    <code>@chapterNumber</code>
                                 </td>
 
                                 <td>
