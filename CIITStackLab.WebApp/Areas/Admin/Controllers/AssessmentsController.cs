@@ -279,7 +279,7 @@ public sealed class AssessmentsController : Controller
         {
             preview = new McqImportPreviewDto
             {
-                NoteId = noteId,
+                TopicId = topicId,
                 FileName = file is null ? string.Empty : Path.GetFileName(file.FileName)
             };
             preview.FileErrors.Add(
@@ -294,7 +294,7 @@ public sealed class AssessmentsController : Controller
 
             preview = new McqImportPreviewDto
             {
-                NoteId = noteId,
+                TopicId = topicId,
                 FileName = file is null ? string.Empty : Path.GetFileName(file.FileName)
             };
             preview.FileErrors.Add(
@@ -437,7 +437,7 @@ public sealed class AssessmentsController : Controller
         catch (DbException)
         {
             TempData["AdminMcqMessage"] =
-                "The database returned an error during confirmation, so success could not be confirmed. Check the MCQ list before retrying. If the chapter column is missing, execute Database/20261012_AddTopicIdToContentQuestions.sql first.";
+                "The database returned an error during confirmation, so success could not be confirmed. Check the MCQ list before retrying. If the topic assignment is unavailable. Verify the topic-linked MCQ schema before retrying.";
             TempData["AdminMcqMessageType"] = "error";
             TempData["OpenAdminMcqModal"] = "import";
 
