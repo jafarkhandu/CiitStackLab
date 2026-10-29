@@ -1,0 +1,205 @@
+.ciit-learning-mode .ciit-learning-page {
+    background:
+        radial-gradient(circle at 86% 0%, rgba(207, 228, 255, .6), transparent 30%),
+        linear-gradient(180deg, #f4f8ff 0%, #f7f9fd 58%, #f3f7fd 100%);
+}
+
+.ciit-learning-mode .ciit-learning-main {
+    min-width: 0;
+}
+
+.ciit-learning-mode .ciit-learning-header {
+    display: none;
+}
+
+.ciit-learning-mode .ciit-learning-panel-pager {
+    display: grid;
+    margin: 0 0 24px;
+    padding: 0;
+}
+
+.ciit-learning-mode .ciit-learning-course-intro h1 {
+    max-width: 900px;
+    font-size: clamp(2rem, 4vw, 3.25rem);
+}
+
+.ciit-learning-mode .ciit-learning-course-intro > p {
+    max-width: 780px;
+}
+
+.ciit-learning-mode .ciit-learning-main-card {
+    border-color: #dce7f5;
+    box-shadow: 0 16px 38px rgba(18, 43, 78, .07);
+    min-height: 0 !important;
+}
+
+.ciit-learning-mode .ciit-learning-notes-panel {
+    padding: 0;
+    border: 0;
+    background: transparent;
+    min-height: 0 !important;
+}
+
+.ciit-learning-mode .ciit-learning-notes-content {
+    margin-top: 16px;
+    padding: 22px;
+    min-height: 0 !important;
+    border: 1px solid #e1e9f4;
+    border-radius: 16px;
+    background: #fff;
+}
+
+.ciit-learning-mode .ciit-learning-embedded-content {
+    margin-top: 16px;
+    padding: 20px;
+    border: 1px solid #e1e9f4;
+    border-radius: 16px;
+    background: linear-gradient(145deg, #fff, #f8fbff);
+}
+
+.ciit-learning-mode .ciit-learning-embedded-content .ciit-learning-resource-title {
+    margin-bottom: 12px;
+}
+
+.ciit-learning-mode .ciit-learning-embedded-content .ciit-learning-assessment-question {
+    margin-top: 10px;
+    border-color: #e3ebf6;
+    background: #fff;
+}
+
+.ciit-learning-mode .ciit-learning-chapter-navigation {
+    margin-bottom: 18px;
+}
+
+.ciit-learning-mode .ciit-learning-chapter-navigation .ciit-learning-sidebar {
+    display: block;
+    width: 100%;
+    padding: 0;
+    border: 0;
+    background: transparent;
+    box-shadow: none;
+}
+
+.ciit-learning-mode .ciit-learning-chapter-navigation .ciit-learning-sidebar-head {
+    display: none;
+}
+
+.ciit-learning-mode .ciit-learning-chapter-navigation .ciit-learning-sidebar-scroll {
+    max-height: none;
+    overflow: visible;
+}
+
+.ciit-learning-mode .ciit-learning-chapter-navigation .ciit-learning-topic {
+    display: none;
+}
+
+.ciit-learning-mode .ciit-learning-chapter-navigation .ciit-learning-topic.is-active-topic {
+    display: block;
+}
+
+.ciit-learning-mode .ciit-learning-chapter-navigation .ciit-learning-topic > summary {
+    display: none;
+}
+
+.ciit-learning-mode .ciit-learning-chapter-navigation .ciit-learning-chapter {
+    margin-top: 9px;
+    border: 1px solid #e0e8f3;
+    border-radius: 14px;
+    background: #fff;
+    overflow: hidden;
+}
+
+.ciit-learning-mode .ciit-learning-chapter-navigation .ciit-learning-chapter:first-child {
+    margin-top: 0;
+}
+
+.ciit-learning-mode .ciit-learning-chapter-navigation .ciit-learning-chapter-summary {
+    padding: 14px 16px;
+    background: #fff;
+}
+
+.ciit-learning-mode .ciit-learning-chapter-navigation .ciit-learning-chapter-title small {
+    color: #8795aa;
+}
+
+.ciit-learning-mode .ciit-learning-chapter-navigation .ciit-learning-chapter-body {
+    display: none;
+}
+
+.ciit-learning-mode .ciit-learning-chapter-navigation .ciit-learning-additional,
+.ciit-learning-mode .ciit-learning-chapter-navigation .ciit-learning-additional + * {
+    display: none;
+}
+
+.ciit-learning-mode .ciit-learning-lesson-status {
+    border-color: #e0e8f3;
+    background: #fbfdff;
+}
+
+/* The Learn page uses the shared course sidebar, but it should stay compact. */
+.ciit-learning-mode .ciit-course-global-sidebar {
+    position: sticky;
+    top: 72px;
+    align-self: start;
+    height: auto !important;
+    min-height: 0 !important;
+    max-height: none !important;
+    overflow: visible;
+}
+
+.ciit-learning-mode .ciit-course-global-sidebar .ciit-course-sidebar-art {
+    display: none;
+}
+
+/* Keep the lesson card and notes section sized to their real content. */
+.ciit-learning-mode .ciit-learning-main-card,
+.ciit-learning-mode .ciit-learning-main-card .ciit-learning-notes-panel,
+.ciit-learning-mode .ciit-learning-main-card .ciit-learning-notes-content {
+    min-height: 0 !important;
+    height: auto !important;
+}
+
+/* The legacy learning stylesheet uses content-visibility with a 900px intrinsic size.
+   That creates the large empty placeholder visible on this modern lesson page. */
+.ciit-learning-mode .ciit-learning-page .ciit-learning-main-card {
+    content-visibility: visible !important;
+    contain-intrinsic-size: none !important;
+}
+
+/* The old learning sidebar is moved inside Notes by learning-modern.js.
+   Its original viewport height must not become blank space in the Notes flow. */
+.ciit-learning-mode .ciit-learning-chapter-navigation .ciit-learning-sidebar {
+    position: static;
+    height: auto !important;
+    min-height: 0 !important;
+    max-height: none !important;
+}
+
+.ciit-learning-mode .ciit-learning-chapter-navigation .ciit-learning-sidebar-scroll {
+    height: auto !important;
+    min-height: 0 !important;
+    max-height: none !important;
+}
+
+/* Match the normal course pages: the Learn workspace uses the same 248px sidebar column. */
+@media (min-width: 1200px) {
+    .ciit-learning-mode .ciit-course-environment-workspace {
+        grid-template-columns: 248px minmax(0, 1fr) !important;
+    }
+
+    .ciit-learning-mode .ciit-course-global-sidebar {
+        width: 100%;
+    }
+}
+
+@media (max-width: 767.98px) {
+    .ciit-learning-mode .ciit-learning-panel-pager {
+        grid-template-columns: 1fr 1fr;
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .ciit-learning-mode * {
+        scroll-behavior: auto !important;
+    }
+}

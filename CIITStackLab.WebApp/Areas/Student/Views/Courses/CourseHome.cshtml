@@ -24,6 +24,7 @@
                 && topicContentIds.All(completedContentIds.Contains)
         };
     }).ToList();
+
     var totalTopics = Model.Topics.Count;
     var completedTopics = topicProgress.Count(topic => topic.IsCompleted);
     var percentage = totalTopics == 0
@@ -35,7 +36,6 @@
         .SelectMany(topic => topic.Contents.Concat(topic.Chapters.SelectMany(chapter => chapter.Contents)))
         .DistinctBy(content => content.Id)
         .ToList();
-    var firstLesson = orderedLessons.FirstOrDefault();
     var hasStartedLearning = completedContentIds.Count > 0;
     var lastAccessedLesson = progress?.LastAccessedContentId is int lastAccessedId
         ? orderedLessons.FirstOrDefault(lesson => lesson.Id == lastAccessedId)
@@ -46,7 +46,9 @@
         ? lastAccessedLesson
         : orderedLessons.FirstOrDefault(lesson => !completedContentIds.Contains(lesson.Id));
     var continueTopic = continueLesson is not null
-        ? Model.Topics.FirstOrDefault(topic => topic.Contents.Any(content => content.Id == continueLesson.Id))
+        ? Model.Topics.FirstOrDefault(topic =>
+            topic.Contents.Any(content => content.Id == continueLesson.Id)
+            || topic.Chapters.Any(chapter => chapter.Contents.Any(content => content.Id == continueLesson.Id)))
         : Model.Topics.FirstOrDefault(topic => topic.Contents.Count == 0 && topic.Chapters.Count > 0)
             ?? Model.Topics.FirstOrDefault(topic => topic.Chapters.Count > 0)
             ?? Model.Topics.FirstOrDefault();
@@ -58,11 +60,111 @@
 
 @section Styles {
     <link rel="stylesheet" href="~/css/student/course-experience.css" asp-append-version="true" />
+    <link rel="stylesheet" href="~/css/student/course-home-modern.css" asp-append-version="true" />
 }
 
-<section class="ciit-course-experience">
+<section class="ciit-course-experience ciit-course-home-modern">
     <div class="container-fluid px-3 px-lg-4">
         <main class="ciit-course-experience-main">
+            <section id="course-curriculum" class="ciit-course-experience-card ciit-course-curriculum-section">
+                <div class="ciit-course-experience-card-header">
+                    <div>
+                        <span class="ciit-course-experience-eyebrow" style="background:#eef5ff;color:#1769ff;">Learning path</span>
+                        <h2 class="mt-2">Course Curriculum</h2>
+                        <p>Choose any topic to start learning. Your progress is saved automatically.</p>
+                    </div>
+                    <div class="ciit-course-curriculum-header-tools">
+                        <span class="ciit-course-topic-count">
+                            <i class="bi bi-journal-check"></i>
+                            @Model.TopicCount Topics
+                        </span>
+                    </div>
+                </div>
+
+                @if (Model.Topics.Count == 0)
+                {
+                    <div class="ciit-curriculum-empty">No active topics are available for this course yet.</div>
+                }
+                else
+                {
+                    <div class="ciit-course-curriculum-list">
+                        @for (var index = 0; index < Model.Topics.Count; index++)
+                        {
+                            var topic = Model.Topics[index];
+                            var topicState = topicProgress.First(progressState => progressState.TopicId == topic.Id);
+                            <a class="ciit-course-topic-card"
+                               asp-controller="Courses"
+                               asp-action="Learn"
+                               asp-route-id="@Model.Id"
+                               asp-route-topicId="@topic.Id"
+                               aria-label="Open @topic.Title topic">
+                                <div class="ciit-course-topic-card-top">
+                                    <span class="ciit-course-topic-index">@((index + 1).ToString("00"))</span>
+                                    @if (topicState.IsCompleted)
+                                    {
+                                        <span class="badge rounded-pill text-bg-success">Completed</span>
+                                    }
+                                    else
+                                    {
+                                        <span class="ciit-course-topic-number">TOPIC</span>
+                                    }
+                                </div>
+                                <div class="ciit-course-topic-card-bottom">
+                                    <span class="ciit-course-topic-card-title">
+                                        <strong>@topic.Title</strong>
+                                        <small>@topic.Chapters.Count chapter@(topic.Chapters.Count == 1 ? "" : "s")</small>
+                                    </span>
+                                    <span class="ciit-course-topic-arrow" aria-hidden="true">
+                                        <i class="bi bi-arrow-right"></i>
+                                    </span>
+                                </div>
+                            </a>
+                        }
+                    </div>
+                }
+            </section>
+
+            <section id="course-progress" class="ciit-course-experience-card ciit-course-progress-glass">
+                <div class="ciit-course-experience-card-header">
+                    <div>
+                        <h2>Your Progress</h2>
+                        <p>Track your learning progress and continue from where you left off.</p>
+                    </div>
+                    <strong>@percentage%</strong>
+                </div>
+                <div class="ciit-progress-track"
+                     role="progressbar"
+                     aria-label="Course progress"
+                     aria-valuenow="@percentage"
+                     aria-valuemin="0"
+                     aria-valuemax="100">
+                    <span style="width: @percentage%"></span>
+                </div>
+                <div class="ciit-progress-meta">
+                    <span>@completedLessons of @totalLessons topics completed</span>
+                    <span>@Model.TopicCount topics</span>
+                </div>
+            </section>
+
+            <section class="ciit-course-stat-grid" aria-label="Course summary">
+                <div class="ciit-course-stat">
+                    <strong>@totalChapters</strong>
+                    <span>Chapters</span>
+                </div>
+                <div class="ciit-course-stat">
+                    <strong>@Model.TopicCount</strong>
+                    <span>Topics</span>
+                </div>
+                <div class="ciit-course-stat">
+                    <strong>@Model.Level</strong>
+                    <span>Level</span>
+                </div>
+                <div class="ciit-course-stat">
+                    <strong>@totalDurationHours.ToString("0.##") hrs</strong>
+                    <span>Duration</span>
+                </div>
+            </section>
+
             <section class="ciit-course-experience-card ciit-course-experience-hero">
                 @if (!string.IsNullOrWhiteSpace(Model.ImageUrl))
                 {
@@ -92,78 +194,6 @@
                         </span>
                     </div>
                 </div>
-            </section>
-
-            <section class="ciit-course-stat-grid" aria-label="Course summary">
-                <div class="ciit-course-stat">
-                    <strong>@totalChapters</strong>
-                    <span>Chapters</span>
-                </div>
-                <div class="ciit-course-stat">
-                    <strong>@Model.TopicCount</strong>
-                    <span>Topics</span>
-                </div>
-                <div class="ciit-course-stat">
-                    <strong>@Model.Level</strong>
-                    <span>Level</span>
-                </div>
-                <div class="ciit-course-stat">
-                    <strong>@totalDurationHours.ToString("0.##") hrs</strong>
-                    <span>Duration</span>
-                </div>
-            </section>
-
-            <section id="course-progress" class="ciit-course-experience-card ciit-course-progress-glass">
-                <div class="ciit-course-experience-card-header">
-                    <div>
-                        <h2>Your Progress</h2>
-                        <p>Track your learning progress and continue from where you left off.</p>
-                    </div>
-                    <strong>@percentage%</strong>
-                </div>
-                <div class="ciit-progress-track"
-                     role="progressbar"
-                     aria-label="Course progress"
-                     aria-valuenow="@percentage"
-                     aria-valuemin="0"
-                     aria-valuemax="100">
-                    <span style="width: @percentage%"></span>
-                </div>
-                <div class="ciit-progress-meta">
-                    <span>@completedLessons of @totalLessons topics completed</span>
-                    <span>@Model.TopicCount topics</span>
-                </div>
-            </section>
-
-            <section class="ciit-course-experience-card ciit-course-curriculum-section">
-                <div class="ciit-course-experience-card-header">
-                    <div>
-                        <h2>Course Curriculum</h2>
-                        <p>Each topic is shown as a simple learning block.</p>
-                    </div>
-                    <span class="ciit-curriculum-summary">
-                        <i class="bi bi-journal-check"></i>
-                        @totalChapters Chapters · @Model.TopicCount Topics
-                    </span>
-                </div>
-
-                @if (Model.Topics.Count == 0)
-                {
-                    <div class="ciit-curriculum-empty">No active chapters are available for this course yet.</div>
-                }
-                else
-                {
-                    <div class="ciit-course-curriculum-list">
-                        @foreach (var topic in Model.Topics)
-                        {
-                            <div class="ciit-curriculum-topic">
-                                <div class="ciit-curriculum-topic-header">
-                                    <strong>@topic.Title</strong>
-                                </div>
-                            </div>
-                        }
-                    </div>
-                }
             </section>
         </main>
     </div>
