@@ -196,38 +196,158 @@
         </div>
         </div>
 
-        <div class="ciit-notes-tab-panel" role="tabpanel" data-content-panel="interview" hidden>
-            <div class="table-responsive"><table class="ciit-notes-table">
-                <thead><tr><th>Topic / Chapter</th><th>Question ID</th><th>Interview Question</th><th>Answer</th><th>Updated</th></tr></thead>
-                <tbody>
-                @foreach (var question in ((ViewBag.InterviewImportModel as AdminInterviewQuestionIndexDto)?.ActiveQuestions ?? Array.Empty<AdminInterviewQuestionDto>()).OrderBy(x => x.TopicTitle).ThenBy(x => x.ChapterTitle).ThenBy(x => x.Id))
-                {
-                    <tr data-content-row data-content-type="interview" data-search="@($"{question.TopicTitle} {question.ChapterTitle} {question.ContentTitle} {question.Id} {question.Question} {question.Answer}")">
-                        <td><strong>@(string.IsNullOrWhiteSpace(question.TopicTitle) ? "—" : question.TopicTitle)</strong><small class="d-block text-muted">@(string.IsNullOrWhiteSpace(question.ChapterTitle) ? question.ContentTitle : question.ChapterTitle)</small></td>
-                        <td><code>@question.Id</code></td><td class="ciit-notes-long-text">@question.Question</td><td class="ciit-notes-long-text">@question.Answer</td>
-                        <td>@((question.UpdatedAt ?? question.CreatedAt)?.ToString("dd MMM yyyy") ?? "—")</td>
-                    </tr>
-                }
-                </tbody>
-            </table></div>
-            <div class="ciit-notes-empty" data-content-empty="interview" hidden><i class="bi bi-chat-square-text"></i><h3>No matching interview questions</h3><p>Try another search or add an interview question.</p></div>
+        <div class="ciit-notes-tab-panel ciit-notes-hierarchy-panel" role="tabpanel" data-content-panel="interview" hidden>
+            <div class="ciit-notes-panel-heading"><div><h2>Interview Questions</h2><p>Browse questions and answers by topic and Notes chapter.</p></div></div>
+            @{
+                var interviewIndex = ViewBag.InterviewImportModel as AdminInterviewQuestionIndexDto ?? new AdminInterviewQuestionIndexDto();
+            }
+            @if (interviewIndex.ActiveQuestions.Count == 0)
+            {
+                <div class="ciit-notes-empty" data-content-empty="interview"><i class="bi bi-chat-square-text"></i><h3>No interview questions yet</h3><p>Add or analyze questions from the Interview Preparation card above.</p></div>
+            }
+            else
+            {
+                <div class="ciit-assessment-tree ciit-notes-content-tree" data-single-open-tree="interview">
+                    @foreach (var topicGroup in interviewIndex.ActiveQuestions.GroupBy(x => new { x.TopicId, x.TopicTitle }).OrderBy(x => x.Key.TopicTitle))
+                    {
+                        var topicName = string.IsNullOrWhiteSpace(topicGroup.Key.TopicTitle) ? "Unassigned topic" : topicGroup.Key.TopicTitle;
+                        <details class="ciit-assessment-tree-topic" data-topic-node data-search="@($"{topicName} {string.Join(" ", topicGroup.Select(x => x.Question + " " + x.Answer + " " + x.ChapterTitle))}")">
+                            <summary>
+                                <span class="ciit-assessment-tree-title"><i class="bi bi-chevron-right"></i><i class="bi bi-diagram-3"></i><strong>@topicName</strong></span>
+                                <span class="ciit-assessment-tree-count">@topicGroup.Count() @(topicGroup.Count() == 1 ? "question" : "questions")</span>
+                            </summary>
+                            <div class="ciit-assessment-tree-children">
+                                @foreach (var chapterGroup in topicGroup.GroupBy(x => new { x.NoteId, x.ChapterTitle }).OrderBy(x => x.Key.ChapterTitle))
+                                {
+                                    var chapterName = string.IsNullOrWhiteSpace(chapterGroup.Key.ChapterTitle) ? "Unassigned chapter" : chapterGroup.Key.ChapterTitle;
+                                    if (chapterName.StartsWith(topicName + " / ", StringComparison.OrdinalIgnoreCase))
+                                    {
+                                        chapterName = chapterName.Substring(topicName.Length + 3);
+                                    }
+                                    <details class="ciit-assessment-tree-chapter" data-chapter-node data-search="@($"{chapterName} {string.Join(" ", chapterGroup.Select(x => x.Question + " " + x.Answer))}")">
+                                        <summary>
+                                            <span class="ciit-assessment-tree-title"><i class="bi bi-chevron-right"></i><i class="bi bi-journal-text"></i><strong>@chapterName</strong></span>
+                                            <span class="ciit-assessment-tree-count">@chapterGroup.Count()</span>
+                                        </summary>
+                                        <div class="ciit-assessment-question-list ciit-notes-content-records">
+                                            @foreach (var question in chapterGroup.OrderByDescending(x => x.Id))
+                                            {
+                                                <article class="ciit-assessment-question-item ciit-assessment-interview-item" data-content-row data-content-type="interview" data-search="@($"{topicName} {chapterName} {question.Id} {question.Question} {question.Answer}")">
+                                                    <div class="ciit-assessment-question-copy">
+                                                        <strong>@question.Question</strong>
+                                                        <span>Question #@question.Id</span>
+                                                        <p>@question.Answer</p>
+                                                    </div>
+                                                    <div class="ciit-mcq-actions">
+                                                        <a asp-area="Admin" asp-controller="Assessments" asp-action="EditInterviewQuestion" asp-route-id="@question.Id" title="Edit interview question" aria-label="Edit interview question @question.Id"><i class="bi bi-pencil-square"></i></a>
+                                                        <form asp-area="Admin" asp-controller="Assessments" asp-action="DeleteInterviewQuestion" method="post" onsubmit="return confirm('Archive this interview question?');">
+                                                            @Html.AntiForgeryToken()
+                                                            <input type="hidden" name="id" value="@question.Id" />
+                                                            <button type="submit" title="Archive question" aria-label="Archive interview question @question.Id"><i class="bi bi-archive"></i></button>
+                                                        </form>
+                                                    </div>
+                                                </article>
+                                            }
+                                        </div>
+                                    </details>
+                                }
+                            </div>
+                        </details>
+                    }
+                </div>
+                <div class="ciit-notes-empty" data-content-empty="interview" hidden><i class="bi bi-search"></i><h3>No matching interview questions</h3><p>Try another search.</p></div>
+            }
         </div>
 
-        <div class="ciit-notes-tab-panel" role="tabpanel" data-content-panel="practice" hidden>
-            <div class="table-responsive"><table class="ciit-notes-table">
-                <thead><tr><th>Topic / Chapter</th><th>Program ID</th><th>Program</th><th>Description</th><th>Solutions</th><th>Updated</th></tr></thead>
-                <tbody>
-                @foreach (var program in ((ViewBag.PracticeImportModel as AdminPracticeProgramIndexDto)?.ActivePrograms ?? Array.Empty<AdminPracticeProgramDto>()).OrderBy(x => x.TopicTitle).ThenBy(x => x.ChapterTitle).ThenBy(x => x.Id))
-                {
-                    <tr data-content-row data-content-type="practice" data-search="@($"{program.TopicTitle} {program.ChapterTitle} {program.ContentTitle} {program.Id} {program.QuestionTitle} {program.QuestionDescription} {string.Join(" ", program.Answers.Select(a => a.Answer + " " + a.Description))}")">
-                        <td><strong>@(string.IsNullOrWhiteSpace(program.TopicTitle) ? "—" : program.TopicTitle)</strong><small class="d-block text-muted">@(string.IsNullOrWhiteSpace(program.ChapterTitle) ? program.ContentTitle : program.ChapterTitle)</small></td>
-                        <td><code>@program.Id</code></td><td>@program.QuestionTitle</td><td class="ciit-notes-long-text">@program.QuestionDescription</td><td>@program.Answers.Count</td>
-                        <td>@((program.UpdatedAt ?? program.CreatedAt)?.ToString("dd MMM yyyy") ?? "—")</td>
-                    </tr>
-                }
-                </tbody>
-            </table></div>
-            <div class="ciit-notes-empty" data-content-empty="practice" hidden><i class="bi bi-code-square"></i><h3>No matching practice programs</h3><p>Try another search or add a practice program.</p></div>
+        <div class="ciit-notes-tab-panel ciit-notes-hierarchy-panel" role="tabpanel" data-content-panel="practice" hidden>
+            <div class="ciit-notes-panel-heading"><div><h2>Practice Programs</h2><p>Browse programs and solutions by topic and Notes chapter.</p></div></div>
+            @{
+                var practiceIndex = ViewBag.PracticeImportModel as AdminPracticeProgramIndexDto ?? new AdminPracticeProgramIndexDto();
+            }
+            @if (practiceIndex.ActivePrograms.Count == 0)
+            {
+                <div class="ciit-notes-empty" data-content-empty="practice"><i class="bi bi-code-square"></i><h3>No practice programs yet</h3><p>Add or analyze programs from the Hands-on Learning card above.</p></div>
+            }
+            else
+            {
+                <div class="ciit-assessment-tree ciit-notes-content-tree" data-single-open-tree="practice">
+                    @foreach (var topicGroup in practiceIndex.ActivePrograms.GroupBy(x => new { x.TopicId, x.TopicTitle }).OrderBy(x => x.Key.TopicTitle))
+                    {
+                        var topicName = string.IsNullOrWhiteSpace(topicGroup.Key.TopicTitle) ? "Unassigned topic" : topicGroup.Key.TopicTitle;
+                        <details class="ciit-assessment-tree-topic" data-topic-node data-search="@($"{topicName} {string.Join(" ", topicGroup.Select(x => x.QuestionTitle + " " + x.QuestionDescription + " " + x.ChapterTitle))}")">
+                            <summary>
+                                <span class="ciit-assessment-tree-title"><i class="bi bi-chevron-right"></i><i class="bi bi-diagram-3"></i><strong>@topicName</strong></span>
+                                <span class="ciit-assessment-tree-count">@topicGroup.Count() @(topicGroup.Count() == 1 ? "program" : "programs")</span>
+                            </summary>
+                            <div class="ciit-assessment-tree-children">
+                                @foreach (var chapterGroup in topicGroup.GroupBy(x => new { x.NoteId, x.ChapterTitle }).OrderBy(x => x.Key.ChapterTitle))
+                                {
+                                    var chapterName = string.IsNullOrWhiteSpace(chapterGroup.Key.ChapterTitle) ? "Unassigned chapter" : chapterGroup.Key.ChapterTitle;
+                                    if (chapterName.StartsWith(topicName + " / ", StringComparison.OrdinalIgnoreCase))
+                                    {
+                                        chapterName = chapterName.Substring(topicName.Length + 3);
+                                    }
+                                    <details class="ciit-assessment-tree-chapter" data-chapter-node data-search="@($"{chapterName} {string.Join(" ", chapterGroup.Select(x => x.QuestionTitle + " " + x.QuestionDescription))}")">
+                                        <summary>
+                                            <span class="ciit-assessment-tree-title"><i class="bi bi-chevron-right"></i><i class="bi bi-journal-text"></i><strong>@chapterName</strong></span>
+                                            <span class="ciit-assessment-tree-count">@chapterGroup.Count()</span>
+                                        </summary>
+                                        <div class="ciit-practice-list ciit-assessment-practice-list ciit-notes-content-records">
+                                            @foreach (var program in chapterGroup.OrderByDescending(x => x.Id))
+                                            {
+                                                <article class="ciit-practice-program ciit-notes-program" data-content-row data-content-type="practice" data-search="@($"{topicName} {chapterName} {program.Id} {program.QuestionTitle} {program.QuestionDescription} {string.Join(" ", program.Answers.Select(a => a.Answer + " " + a.Description))}")">
+                                                    <div class="ciit-practice-program-header">
+                                                        <div>
+                                                            <span class="ciit-practice-id">#@program.Id</span>
+                                                            <h3>@program.QuestionTitle</h3>
+                                                            <p class="ciit-practice-meta">@chapterName</p>
+                                                        </div>
+                                                        <div class="ciit-practice-actions">
+                                                            <a asp-area="Admin" asp-controller="Assessments" asp-action="EditPracticeProgram" asp-route-id="@program.Id" title="Edit program"><i class="bi bi-pencil-square"></i></a>
+                                                            <button type="button" title="Add solution" data-bs-toggle="modal" data-bs-target="#createPracticeSolutionModal" data-program-question-id="@program.Id"><i class="bi bi-plus-circle"></i></button>
+                                                            <form asp-area="Admin" asp-controller="Assessments" asp-action="DeletePracticeProgram" method="post" onsubmit="return confirm('Archive this practice program?');">
+                                                                @Html.AntiForgeryToken()
+                                                                <input type="hidden" name="id" value="@program.Id" />
+                                                                <button type="submit" title="Archive"><i class="bi bi-archive"></i></button>
+                                                            </form>
+                                                        </div>
+                                                    </div>
+                                                    <div class="ciit-practice-description">@program.QuestionDescription</div>
+                                                    <div class="ciit-practice-solutions">
+                                                        <div class="ciit-practice-solutions-header"><h4>Solutions</h4><span>@program.Answers.Count</span></div>
+                                                        @if (program.Answers.Count == 0)
+                                                        {
+                                                            <p class="ciit-practice-no-solution">No active solution has been added yet.</p>
+                                                        }
+                                                        else
+                                                        {
+                                                            @foreach (var answer in program.Answers)
+                                                            {
+                                                                <div class="ciit-practice-solution">
+                                                                    <div><strong>@answer.Answer</strong><p>@answer.Description</p></div>
+                                                                    <div class="ciit-practice-actions">
+                                                                        <a asp-area="Admin" asp-controller="Assessments" asp-action="EditPracticeAnswer" asp-route-id="@answer.Id" title="Edit solution"><i class="bi bi-pencil-square"></i></a>
+                                                                        <form asp-area="Admin" asp-controller="Assessments" asp-action="DeletePracticeAnswer" method="post" onsubmit="return confirm('Archive this solution?');">
+                                                                            @Html.AntiForgeryToken()
+                                                                            <input type="hidden" name="id" value="@answer.Id" />
+                                                                            <button type="submit" title="Archive solution"><i class="bi bi-archive"></i></button>
+                                                                        </form>
+                                                                    </div>
+                                                                </div>
+                                                            }
+                                                        }
+                                                    </div>
+                                                </article>
+                                            }
+                                        </div>
+                                    </details>
+                                }
+                            </div>
+                        </details>
+                    }
+                </div>
+                <div class="ciit-notes-empty" data-content-empty="practice" hidden><i class="bi bi-search"></i><h3>No matching practice programs</h3><p>Try another search.</p></div>
+            }
         </div>
 
         <div id="notesSearchEmpty"
