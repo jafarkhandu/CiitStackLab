@@ -395,7 +395,7 @@ public sealed class AssessmentsController : Controller
         {
             preview = new McqImportPreviewDto
             {
-                NoteId = noteId,
+                TopicId = topicId,
                 FileName = file is null ? string.Empty : Path.GetFileName(file.FileName)
             };
             preview.FileErrors.Add(
