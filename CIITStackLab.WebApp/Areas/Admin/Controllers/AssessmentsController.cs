@@ -192,7 +192,7 @@ public sealed class AssessmentsController : Controller
             return View("Mcqs", failedModel);
         }
 
-        TempData["AdminMcqMessage"] = "MCQ created successfully for the selected chapter.";
+        TempData["AdminMcqMessage"] = "MCQ created successfully for the selected topic.";
         TempData["AdminMcqMessageType"] = "success";
         return RedirectToAction(nameof(Mcqs));
     }
@@ -490,11 +490,11 @@ public sealed class AssessmentsController : Controller
 
     [HttpPost]
     [ValidateAntiForgeryToken]
-    public async Task<IActionResult> EditMcq(int id, AdminChapterMcqInputDto input, CancellationToken cancellationToken)
+    public async Task<IActionResult> EditMcq(int id, AdminTopicMcqInputDto input, CancellationToken cancellationToken)
     {
         if (!ModelState.IsValid)
         {
-            await LoadMcqChapterLookupAsync(cancellationToken);
+            await LoadMcqTopicLookupAsync(cancellationToken);
             return View(input);
         }
 
@@ -502,7 +502,7 @@ public sealed class AssessmentsController : Controller
         if (!result.Succeeded)
         {
             ModelState.AddModelError(string.Empty, result.Error!);
-            await LoadMcqChapterLookupAsync(cancellationToken);
+            await LoadMcqTopicLookupAsync(cancellationToken);
             return View(input);
         }
 
@@ -1094,6 +1094,7 @@ public sealed class AssessmentsController : Controller
         CancellationToken cancellationToken)
     {
         ViewBag.McqChapters = await _mcqService.GetAssessmentChapterLookupAsync(cancellationToken);
+        ViewBag.McqTopics = await _mcqService.GetTopicLookupAsync(cancellationToken);
         return await _mcqService.GetIndexAsync(cancellationToken);
     }
 
