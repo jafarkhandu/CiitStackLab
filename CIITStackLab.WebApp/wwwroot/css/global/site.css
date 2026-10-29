@@ -2182,3 +2182,33 @@ body.ciit-hub-transitioning { overflow: hidden; }
         overflow: visible !important;
     }
 }
+
+
+/* Prevent empty grid-row gaps between topic compartments; let columns flow naturally */
+.ciit-student-course-details .ciit-course-topic-tree {
+    display: block;
+    column-count: 2;
+    column-gap: 12px;
+    column-fill: balance;
+    flex: 0 0 auto;
+    min-height: 0;
+    height: auto;
+    overflow: visible;
+    margin-bottom: 12px;
+}
+.ciit-student-course-details .ciit-course-topic-branch {
+    display: inline-block;
+    width: 100%;
+    margin: 0 0 12px;
+    break-inside: avoid;
+    page-break-inside: avoid;
+}
+.ciit-student-course-details .ciit-course-flow-footer {
+    margin-top: 0;
+}
+@media (max-width: 575.98px) {
+    .ciit-student-course-details .ciit-course-topic-tree {
+        column-count: 2;
+        column-gap: 9px;
+    }
+}
