@@ -104,7 +104,7 @@
                         <tr class="ciit-notes-topic-row"
                             data-topic-row
                             data-topic-id="@group.Key.TopicId"
-                            data-search="@topicSearch">
+                            data-search="@group.Key.TopicTitle">
                             <td colspan="5">
                                 <button type="button"
                                         class="ciit-notes-topic-toggle"
@@ -211,7 +211,7 @@
                     @foreach (var topicGroup in interviewIndex.ActiveQuestions.GroupBy(x => new { x.TopicId, x.TopicTitle }).OrderBy(x => x.Key.TopicTitle))
                     {
                         var topicName = string.IsNullOrWhiteSpace(topicGroup.Key.TopicTitle) ? "Unassigned topic" : topicGroup.Key.TopicTitle;
-                        <details class="ciit-assessment-tree-topic" data-topic-node data-search="@($"{topicName} {string.Join(" ", topicGroup.Select(x => x.Question + " " + x.Answer + " " + x.ChapterTitle))}")">
+                        <details class="ciit-assessment-tree-topic" data-topic-node data-search="@topicName">
                             <summary>
                                 <span class="ciit-assessment-tree-title"><i class="bi bi-chevron-right"></i><i class="bi bi-diagram-3"></i><strong>@topicName</strong></span>
                                 <span class="ciit-assessment-tree-count">@topicGroup.Count() @(topicGroup.Count() == 1 ? "question" : "questions")</span>
@@ -224,7 +224,7 @@
                                     {
                                         chapterName = chapterName.Substring(topicName.Length + 3);
                                     }
-                                    <details class="ciit-assessment-tree-chapter" data-chapter-node data-search="@($"{chapterName} {string.Join(" ", chapterGroup.Select(x => x.Question + " " + x.Answer))}")">
+                                    <details class="ciit-assessment-tree-chapter" data-chapter-node data-search="@chapterName">
                                         <summary>
                                             <span class="ciit-assessment-tree-title"><i class="bi bi-chevron-right"></i><i class="bi bi-journal-text"></i><strong>@chapterName</strong></span>
                                             <span class="ciit-assessment-tree-count">@chapterGroup.Count()</span>
@@ -274,7 +274,7 @@
                     @foreach (var topicGroup in practiceIndex.ActivePrograms.GroupBy(x => x.TopicTitle).OrderBy(x => x.Key))
                     {
                         var topicName = string.IsNullOrWhiteSpace(topicGroup.Key) ? "Unassigned topic" : topicGroup.Key;
-                        <details class="ciit-assessment-tree-topic" data-topic-node data-search="@($"{topicName} {string.Join(" ", topicGroup.Select(x => x.QuestionTitle + " " + x.QuestionDescription + " " + x.ChapterTitle))}")">
+                        <details class="ciit-assessment-tree-topic" data-topic-node data-search="@topicName">
                             <summary>
                                 <span class="ciit-assessment-tree-title"><i class="bi bi-chevron-right"></i><i class="bi bi-diagram-3"></i><strong>@topicName</strong></span>
                                 <span class="ciit-assessment-tree-count">@topicGroup.Count() @(topicGroup.Count() == 1 ? "program" : "programs")</span>
@@ -287,7 +287,7 @@
                                     {
                                         chapterName = chapterName.Substring(topicName.Length + 3);
                                     }
-                                    <details class="ciit-assessment-tree-chapter" data-chapter-node data-search="@($"{chapterName} {string.Join(" ", chapterGroup.Select(x => x.QuestionTitle + " " + x.QuestionDescription))}")">
+                                    <details class="ciit-assessment-tree-chapter" data-chapter-node data-search="@chapterName">
                                         <summary>
                                             <span class="ciit-assessment-tree-title"><i class="bi bi-chevron-right"></i><i class="bi bi-journal-text"></i><strong>@chapterName</strong></span>
                                             <span class="ciit-assessment-tree-count">@chapterGroup.Count()</span>
@@ -401,7 +401,7 @@
             const noteChapterRows = [...document.querySelectorAll("[data-chapter-row]")];
             const contentRows = [...document.querySelectorAll("[data-content-row]")];
             let activeTab = "all";
-            let expandedNotesTopicId = null;
+            let expandedNotesTopicId = null;\n            let lastQuery = null;
 
             const noteChaptersFor = id => noteChapterRows.filter(row => row.dataset.topicId === id);
             const setNotesTopic = (id, expanded) => {
@@ -448,7 +448,7 @@
                     const matching = rows.filter(row => (row.dataset.search || "").toLowerCase().includes(query));
                     const showTopic = !query || topicMatches || matching.length > 0;
                     topic.hidden = !showTopic;
-                    const shouldExpand = query ? id === matchingNoteTopic : expandedNotesTopicId === id;
+                    const shouldExpand = queryChanged && query ? id === matchingNoteTopic : expandedNotesTopicId === id;
                     topic.classList.toggle("is-expanded", shouldExpand);
                     topic.querySelector("[data-notes-topic-toggle]")?.setAttribute("aria-expanded", shouldExpand ? "true" : "false");
                     rows.forEach(row => {
@@ -456,7 +456,7 @@
                         if (!row.hidden) visibleNotes++;
                     });
                 });
-                if (query && matchingNoteTopic) expandedNotesTopicId = matchingNoteTopic;
+                if (queryChanged && query && matchingNoteTopic) expandedNotesTopicId = matchingNoteTopic;
 
                 document.querySelectorAll("[data-single-open-tree]").forEach(tree => {
                     const topics = [...tree.querySelectorAll(":scope > details.ciit-assessment-tree-topic")];
@@ -487,7 +487,7 @@
                     if (query && firstMatchingTopic) {
                         topics.forEach(topic => topic.open = topic === firstMatchingTopic);
                         const chapters = [...firstMatchingTopic.querySelectorAll(":scope > .ciit-assessment-tree-children > details.ciit-assessment-tree-chapter")];
-                        const matchingChapter = chapters.find(chapter => !chapter.hidden);
+                        const currentlyOpenChapter = chapters.find(chapter => chapter.open);\n                        const matchingChapter = queryChanged ? chapters.find(chapter => !chapter.hidden) : (currentlyOpenChapter || chapters.find(chapter => !chapter.hidden));
                         chapters.forEach(chapter => chapter.open = chapter === matchingChapter);
                     }
                 });
