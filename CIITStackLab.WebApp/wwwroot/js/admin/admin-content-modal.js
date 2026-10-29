@@ -40,11 +40,11 @@
                 if (segments.length < 3) return false;
                 if (segments[0].toLowerCase() !== 'Admin'.toLowerCase()) return false;
                 const controller = segments[1].toLowerCase();
-                if (controller !== 'content' && controller !== 'notes') return false;
+                if (controller !== 'content' && controller !== 'notes' && controller !== 'assessments') return false;
 
                 const action = segments[2].toLowerCase();
                 if (action === 'create') return segments.length === 3;
-                if (action === 'edit' || action === 'details') {
+                if (action === 'edit' || action === 'details' || action === 'editinterviewquestion' || action === 'editpracticeprogram') {
                     return segments.length === 4 && /^\d+$/.test(segments[3]);
                 }
 
@@ -61,6 +61,8 @@
             const action = segments[2]?.toLowerCase();
             const label = controller === 'notes' ? 'Note' : 'Content';
             if (action === 'create') return `Add ${label}`;
+            if (action === 'editinterviewquestion') return 'Edit Interview Question';
+            if (action === 'editpracticeprogram') return 'Edit Practice Program';
             if (action === 'edit') return `Edit ${label}`;
             if (action === 'details') return 'Content Details';
             return 'Content';
