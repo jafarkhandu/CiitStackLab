@@ -61,6 +61,7 @@
 @section Styles {
     <link rel="stylesheet" href="~/css/student/course-experience.css" asp-append-version="true" />
     <link rel="stylesheet" href="~/css/student/course-home-modern.css" asp-append-version="true" />
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/devicon@2.17.0/devicon.min.css" />
 }
 
 <section class="ciit-course-experience ciit-course-home-modern">
@@ -92,6 +93,30 @@
                         {
                             var topic = Model.Topics[index];
                             var topicState = topicProgress.First(progressState => progressState.TopicId == topic.Id);
+                            var normalizedTopicTitle = (topic.Title ?? string.Empty).Trim().ToLowerInvariant();
+                            var topicLogoClass = normalizedTopicTitle switch
+                            {
+                                var title when title.Contains("html") => "devicon-html5-plain colored",
+                                var title when title.Contains("css") => "devicon-css3-plain colored",
+                                var title when title.Contains("javascript") || title == "js" => "devicon-javascript-plain colored",
+                                var title when title.Contains("jquery") => "devicon-jquery-plain colored",
+                                var title when title.Contains("bootstrap") => "devicon-bootstrap-plain colored",
+                                var title when title.Contains("react") => "devicon-react-original colored",
+                                var title when title.Contains("typescript") => "devicon-typescript-plain colored",
+                                var title when title.Contains("angular") => "devicon-angularjs-plain colored",
+                                var title when title.Contains("node") => "devicon-nodejs-plain colored",
+                                var title when title.Contains("python") => "devicon-python-plain colored",
+                                var title when title.Contains("oracle") || title.Contains("pl/sql") => "devicon-oracle-original colored",
+                                var title when title.Contains("mysql") => "devicon-mysql-original colored",
+                                var title when title.Contains("sql server") || title.Contains("mssql") => "devicon-microsoftsqlserver-plain colored",
+                                var title when title.Contains("hibernate") => "devicon-hibernate-plain colored",
+                                var title when title.Contains("spring") => "devicon-spring-original colored",
+                                var title when title.Contains("java") || title.Contains("jdbc") || title.Contains("jsp") || title.Contains("servlet") => "devicon-java-plain colored",
+                                var title when title.Contains("git") => "devicon-git-plain colored",
+                                var title when title.Contains("c#") || title.Contains(".net") => "devicon-dotnetcore-plain colored",
+                                var title when title.Contains("sql") || title.Contains("database") => "bi bi-database",
+                                _ => "bi bi-code-slash"
+                            };
                             <a class="ciit-course-topic-card"
                                asp-controller="Courses"
                                asp-action="Learn"
@@ -99,23 +124,22 @@
                                asp-route-topicId="@topic.Id"
                                aria-label="Open @topic.Title topic">
                                 <div class="ciit-course-topic-card-top">
-                                    <span class="ciit-course-topic-index">@((index + 1).ToString("00"))</span>
+                                    <span class="ciit-course-topic-logo" aria-hidden="true">
+                                        <i class="@topicLogoClass"></i>
+                                    </span>
                                     @if (topicState.IsCompleted)
                                     {
-                                        <span class="badge rounded-pill text-bg-success">Completed</span>
+                                        <span class="ciit-course-topic-completed badge rounded-pill text-bg-success">Completed</span>
                                     }
                                     else
                                     {
-                                        <span class="ciit-course-topic-number">TOPIC</span>
+                                        <span class="ciit-course-topic-order">@((index + 1).ToString("00"))</span>
                                     }
                                 </div>
                                 <div class="ciit-course-topic-card-bottom">
                                     <span class="ciit-course-topic-card-title">
                                         <strong>@topic.Title</strong>
                                         <small>@topic.Chapters.Count chapter@(topic.Chapters.Count == 1 ? "" : "s")</small>
-                                    </span>
-                                    <span class="ciit-course-topic-arrow" aria-hidden="true">
-                                        <i class="bi bi-arrow-right"></i>
                                     </span>
                                 </div>
                             </a>
