@@ -62,14 +62,15 @@ document.addEventListener("DOMContentLoaded", function () {
 
     document.querySelectorAll(".js-student-status-form").forEach(function (form) {
         form.addEventListener("submit", function (event) {
+            const submitButton = event.submitter || form.querySelector(".ciit-student-status-btn");
             const name = form.dataset.studentName || "this student";
-            const statusButton = form.querySelector(".ciit-student-status-btn");
-            const statusInput = form.querySelector("input[name='isActive']");
-            const activating = statusButton?.classList.contains("is-activate") === true;
+            const actionValue = submitButton?.dataset.isActive;
+            const activating = actionValue === "true";
 
-            // Keep the submitted status aligned with the action shown to the admin.
-            if (statusInput) {
-                statusInput.value = String(activating);
+            // Do not submit unless the explicit action button supplies a valid target state.
+            if (actionValue !== "true" && actionValue !== "false") {
+                event.preventDefault();
+                return;
             }
 
             const message = activating
