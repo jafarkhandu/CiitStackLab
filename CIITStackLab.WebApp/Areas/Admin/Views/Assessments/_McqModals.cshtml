@@ -193,7 +193,7 @@
                             <strong id="mcqImportLiveTitle">Preparing analysis...</strong>
                             <span id="mcqImportLiveState">READY</span>
                         </div>
-                        <p id="mcqImportLiveDetail">Select a Notes chapter and upload an Excel workbook to begin.</p>
+                        <p id="mcqImportLiveDetail">Select a topic and upload an Excel workbook to begin.</p>
                         <ol id="mcqImportProgressLog" class="ciit-mcq-import-progress-log"></ol>
                         <div class="ciit-mcq-import-live-track" aria-hidden="true">
                             <span></span>
@@ -216,17 +216,17 @@
 
                     <div class="ciit-mcq-import-modal-fields">
                         <div class="ciit-mcq-modal-field">
-                            <label for="ImportMcqNoteId">Chapter <span>*</span></label>
-                            <select id="ImportMcqNoteId" name="noteId" required>
-                                <option value="0">Select chapter</option>
-                                @foreach (var chapter in chapters)
+                            <label for="ImportMcqTopicId">Topic <span>*</span></label>
+                            <select id="ImportMcqTopicId" name="topicId" required>
+                                <option value="0">Select topic</option>
+                                @foreach (var topic in topics)
                                 {
-                                    <option value="@chapter.NoteId" selected="@(preview?.NoteId == chapter.NoteId ? "selected" : null)">
-                                        @chapter.TopicTitle / @chapter.ChapterId — @chapter.ChapterTitle
+                                    <option value="@topic.Id" selected="@(preview?.TopicId == topic.Id ? "selected" : null)">
+                                        @topic.Title
                                     </option>
                                 }
                             </select>
-                            <small>All parsed MCQs will be linked directly to this Notes chapter.</small>
+                            <small>All parsed MCQs will be linked directly to this topic.</small>
                         </div>
 
                         <label class="ciit-mcq-import-file-drop">
@@ -242,7 +242,7 @@
                             <i class="bi bi-file-earmark-text"></i>
                             <div>
                                 <strong>Required Excel columns</strong>
-                                <span>Chapter notes are analyzed locally. Preformatted MCQs should use question text, options A–D and an ANSWER line.</span>
+                                <span>Topic-level MCQs are analyzed before import. Preformatted MCQs should use question text, options A–D and an ANSWER line.</span>
                             </div>
                         </div>
                         <pre>Question | Option A | Option B | Option C | Option D | Correct Answer
