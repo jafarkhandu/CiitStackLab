@@ -455,6 +455,11 @@
                 const query = (searchInput?.value || "").trim().toLowerCase();
                 const queryChanged = query !== lastQuery;
                 lastQuery = query;
+
+                // Clearing a search should restore the default collapsed topic list.
+                if (queryChanged && !query) {
+                    expandedNotesTopicId = null;
+                }
                 let visibleNotes = 0;
                 let visibleInterviews = 0;
                 let visiblePrograms = 0;
