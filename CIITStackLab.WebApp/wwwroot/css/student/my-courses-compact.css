@@ -1,8 +1,8 @@
 /* Compact My Courses presentation layer.
-   Keeps the existing page structure and behavior intact while reducing visual weight. */
+   Keeps page structure and course workflows intact while matching the simpler CIIT catalog-card style. */
 
 .ciit-my-courses-page {
-    padding: 28px 0 40px;
+    padding: 24px 0 36px;
 }
 
 .ciit-my-courses-shell {
@@ -15,44 +15,60 @@
 }
 
 .ciit-my-courses-section-heading {
-    margin-bottom: 16px;
+    margin-bottom: 14px;
 }
 
 .ciit-my-courses-section-heading h2 {
-    font-size: clamp(1.45rem, 2.1vw, 1.8rem);
+    font-size: clamp(1.4rem, 2vw, 1.75rem);
 }
 
 .ciit-my-courses-section-heading p {
-    font-size: .82rem;
     margin-top: 5px;
+    font-size: .8rem;
 }
 
 .ciit-my-courses-grid {
-    grid-template-columns: repeat(auto-fit, minmax(280px, 360px));
+    grid-template-columns: repeat(auto-fit, minmax(270px, 320px));
     gap: 18px;
 }
 
 .ciit-my-course-card {
     width: 100%;
-    border-radius: 17px;
-    box-shadow: 0 8px 24px rgba(19, 42, 82, .05);
+    align-self: start;
+    border: 1px solid #dce7fb;
+    border-radius: 16px;
+    box-shadow: 0 8px 22px rgba(19, 42, 82, .045);
 }
 
 .ciit-my-course-image-wrap {
-    height: 160px;
+    height: 145px;
+}
+
+.ciit-my-course-image-wrap img {
+    object-fit: contain;
+    padding: 10px;
+    background: #fff;
+}
+
+.ciit-my-course-image-shade {
+    display: none;
 }
 
 .ciit-my-course-body {
-    padding: 16px 18px 18px;
+    display: flex;
+    flex: initial;
+    padding: 15px 16px 16px;
 }
 
 .ciit-my-course-card-topline {
-    margin-bottom: 8px;
+    margin-bottom: 7px;
 }
 
-.ciit-my-course-card h3 {
-    margin-bottom: 7px;
-    font-size: 1.05rem;
+.ciit-my-course-card h3,
+.ciit-my-course-body h3 {
+    margin: 0 0 7px;
+    font-size: 1.02rem;
+    line-height: 1.35;
 }
 
 .ciit-my-course-description {
@@ -64,17 +80,25 @@
 
 .ciit-my-course-meta {
     gap: 12px;
-    margin-bottom: 14px;
+    margin: 0 0 13px;
     font-size: .7rem;
 }
 
 .ciit-my-course-open {
-    min-height: 40px;
-    border-radius: 10px;
+    min-height: 38px;
+    border-radius: 9px;
+    background: #fff;
+    color: #1769ff;
+    box-shadow: none;
     font-size: .78rem;
 }
 
-/* Keep the course card closer to the simple CIIT catalog-card language. */
+.ciit-my-course-open:hover {
+    background: #f3f7ff;
+    box-shadow: none;
+    color: #1458e9;
+}
+
 .ciit-my-course-access,
 .ciit-my-course-image-open,
 .ciit-my-course-status {
@@ -84,20 +108,20 @@
 /* 2. Stats */
 .ciit-learning-overview {
     gap: 14px;
-    margin-top: 22px;
+    margin-top: 24px;
 }
 
 .ciit-learning-overview-card {
     gap: 12px;
-    padding: 15px 16px;
-    border-radius: 15px;
+    padding: 14px 16px;
+    border-radius: 14px;
 }
 
 .ciit-learning-overview-icon {
-    width: 40px;
-    height: 40px;
-    border-radius: 12px;
-    font-size: 1.05rem;
+    width: 38px;
+    height: 38px;
+    border-radius: 11px;
+    font-size: 1rem;
 }
 
 .ciit-learning-overview-label {
@@ -105,7 +129,7 @@
 }
 
 .ciit-learning-overview-card strong {
-    font-size: 1.2rem;
+    font-size: 1.18rem;
 }
 
 .ciit-learning-overview-card small {
@@ -114,10 +138,10 @@
 
 /* 3. Explore Courses */
 .ciit-learning-welcome {
-    min-height: 225px;
-    margin-top: 22px;
-    padding: 26px 30px;
-    border-radius: 21px;
+    min-height: 190px;
+    margin-top: 24px;
+    padding: 22px 26px;
+    border-radius: 19px;
 }
 
 .ciit-learning-welcome-copy {
@@ -125,89 +149,90 @@
 }
 
 .ciit-my-courses-eyebrow {
-    margin-bottom: 10px;
-    font-size: .62rem;
+    margin-bottom: 8px;
+    font-size: .61rem;
 }
 
 .ciit-learning-welcome h1 {
-    font-size: clamp(1.85rem, 3vw, 2.65rem);
+    font-size: clamp(1.75rem, 2.8vw, 2.35rem);
 }
 
 .ciit-learning-welcome-copy > p {
     max-width: 500px;
-    margin-top: 10px;
-    font-size: .82rem;
-    line-height: 1.55;
+    margin-top: 9px;
+    font-size: .8rem;
+    line-height: 1.5;
 }
 
 .ciit-learning-welcome-actions {
-    gap: 12px;
-    margin-top: 16px;
+    gap: 11px;
+    margin-top: 14px;
 }
 
 .ciit-learning-primary-action {
-    min-height: 40px;
-    gap: 9px;
-    padding: 0 16px;
-    border-radius: 10px;
-    font-size: .78rem;
+    min-height: 38px;
+    gap: 8px;
+    padding: 0 14px;
+    border-radius: 9px;
+    font-size: .76rem;
 }
 
 .ciit-learning-secure-note {
-    font-size: .68rem;
+    font-size: .66rem;
 }
 
 .ciit-learning-welcome-art {
-    min-height: 170px;
+    min-height: 145px;
 }
 
 .ciit-learning-art-glow {
-    width: 150px;
-    height: 150px;
+    width: 130px;
+    height: 130px;
 }
 
 .ciit-learning-art-orbit {
-    width: 150px;
-    height: 150px;
+    width: 132px;
+    height: 132px;
 }
 
 .ciit-learning-art-orbit-two {
-    width: 180px;
-    height: 180px;
+    width: 160px;
+    height: 160px;
 }
 
 .ciit-learning-art-icon {
-    width: 88px;
-    height: 88px;
-    border-radius: 24px;
-    font-size: 2.5rem;
+    width: 76px;
+    height: 76px;
+    border-radius: 21px;
+    font-size: 2.2rem;
 }
 
 .ciit-learning-art-chip {
-    padding: 8px 10px;
-    border-radius: 10px;
-    font-size: .63rem;
+    padding: 7px 9px;
+    border-radius: 9px;
+    font-size: .6rem;
 }
 
 .ciit-learning-art-chip-one {
-    top: 10px;
+    top: 7px;
 }
 
 .ciit-learning-art-chip-two {
-    bottom: 10px;
+    bottom: 7px;
 }
 
 .ciit-learning-footer-note {
-    margin-top: 18px;
+    margin-top: 16px;
 }
 
+/* Keep the desktop card compact and avoid an overly narrow multi-column grid on small screens. */
 @media (max-width: 900px) {
     .ciit-my-courses-shell {
         width: min(100% - 32px, 720px);
     }
 
     .ciit-my-courses-grid {
-        grid-template-columns: minmax(0, 360px);
+        grid-template-columns: repeat(auto-fit, minmax(260px, 320px));
     }
 
     .ciit-learning-overview {
@@ -225,7 +250,7 @@
 
 @media (max-width: 576px) {
     .ciit-my-courses-page {
-        padding: 20px 0 30px;
+        padding: 18px 0 28px;
     }
 
     .ciit-my-courses-shell {
@@ -243,10 +268,10 @@
     }
 
     .ciit-my-courses-grid {
-        grid-template-columns: 1fr;
+        grid-template-columns: minmax(0, 1fr);
     }
 
     .ciit-learning-welcome {
-        padding: 22px;
+        padding: 20px;
     }
 }
