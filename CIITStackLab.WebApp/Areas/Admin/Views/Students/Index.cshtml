@@ -109,8 +109,10 @@
                                           data-student-name="@student.UserName">
                                         @Html.AntiForgeryToken()
                                         <input type="hidden" name="userId" value="@student.Id" />
-                                        <input type="hidden" name="isActive" value="@(!student.IsActive)" />
                                         <button type="submit"
+                                                name="isActive"
+                                                value="@(!student.IsActive)"
+                                                data-is-active="@(!student.IsActive)"
                                                 class="ciit-student-status-btn @(student.IsActive ? "is-deactivate" : "is-activate")">
                                             <i class="bi @(student.IsActive ? "bi-person-dash" : "bi-person-check")"></i>
                                             @(student.IsActive ? "Deactivate" : "Activate")
