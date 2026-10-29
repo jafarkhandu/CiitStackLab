@@ -10,6 +10,8 @@
     var currentAction = ViewContext.RouteData.Values["action"]?.ToString() ?? string.Empty;
     var currentController = ViewContext.RouteData.Values["controller"]?.ToString() ?? string.Empty;
     var isNotesPage = currentController.Equals("Notes", StringComparison.OrdinalIgnoreCase);
+    var isLearnPage = currentController.Equals("Courses", StringComparison.OrdinalIgnoreCase)
+        && currentAction.Equals("Learn", StringComparison.OrdinalIgnoreCase);
     var isCourseHome = currentController.Equals("Courses", StringComparison.OrdinalIgnoreCase)
         && (currentAction.Equals("CourseHome", StringComparison.OrdinalIgnoreCase)
             || currentAction.Equals("CourseEnvironment", StringComparison.OrdinalIgnoreCase));
@@ -75,12 +77,12 @@
     @await RenderSectionAsync("Styles", required: false)
     <link rel="stylesheet" href="~/css/student/course-learning-enhancements.css" asp-append-version="true" />
     <link rel="stylesheet" href="~/css/course-sidebar-art.css" asp-append-version="true" />
-    @if (currentController.Equals("Courses", StringComparison.OrdinalIgnoreCase) && currentAction.Equals("Learn", StringComparison.OrdinalIgnoreCase))
+    @if (isLearnPage)
     {
         <link rel="stylesheet" href="~/css/student/learning-modern.css" asp-append-version="true" />
     }
 </head>
-<body class="ciit-course-environment-body @(currentController.Equals("Courses", StringComparison.OrdinalIgnoreCase) && currentAction.Equals("Learn", StringComparison.OrdinalIgnoreCase) ? "ciit-learning-mode" : "")">
+<body class="ciit-course-environment-body @(isLearnPage ? "ciit-learning-mode" : "")">
     <header class="ciit-course-environment-header">
         <div class="container-fluid px-3 px-lg-4">
             <div class="ciit-course-environment-header-inner">
@@ -200,10 +202,18 @@
                     </a>
                     @if (!string.IsNullOrWhiteSpace(courseId) && !isCourseHome)
                     {
-                        <a class="@(currentController.Equals("Courses", StringComparison.OrdinalIgnoreCase) && currentAction.Equals("Learn", StringComparison.OrdinalIgnoreCase) ? "active" : "")"
+                        <a class="@(isLearnPage ? "active" : "")"
                            asp-controller="Courses" asp-action="Learn" asp-route-id="@courseId">
                             <i class="bi bi-journal-bookmark"></i><span>Learning Path</span>
                         </a>
+                        @if (isLearnPage)
+                        {
+                            <a href="@Context.Request.Path@Context.Request.QueryString#lesson-assessment"
+                               class="ciit-learning-assessment-sidebar-link"
+                               data-learning-assessment-link>
+                                <i class="bi bi-patch-check"></i><span>Assessments</span>
+                            </a>
+                        }
                     }
                     @if (!string.IsNullOrWhiteSpace(courseId))
                     {
@@ -298,7 +308,7 @@
             });
         </script>
     }
-    @if (currentController.Equals("Courses", StringComparison.OrdinalIgnoreCase) && currentAction.Equals("Learn", StringComparison.OrdinalIgnoreCase))
+    @if (isLearnPage)
     {
         <script defer src="~/js/student/learning-modern.js" asp-append-version="true"></script>
     }
