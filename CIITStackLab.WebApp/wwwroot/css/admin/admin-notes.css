@@ -218,3 +218,129 @@
         min-width: 180px;
     }
 }
+
+
+/* Keep the content workspace a comfortable fixed-height scroll area. */
+.ciit-notes-card {
+    max-height: min(76vh, 860px);
+    min-height: 560px;
+    overflow-x: hidden;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    scrollbar-gutter: stable;
+    scroll-padding-top: 132px;
+}
+
+.ciit-notes-toolbar--combined {
+    position: sticky;
+    top: 0;
+    z-index: 20;
+    min-height: 74px;
+    align-items: center;
+    background: rgba(255, 255, 255, .98);
+    backdrop-filter: blur(12px);
+}
+
+.ciit-notes-tabs {
+    position: sticky;
+    top: 73px;
+    z-index: 19;
+    min-height: 70px;
+    align-items: center;
+    background: rgba(255, 255, 255, .98);
+    box-shadow: 0 1px 0 #e2eaf6;
+}
+
+.ciit-notes-table thead th {
+    position: sticky;
+    top: 143px;
+    z-index: 10;
+}
+
+.ciit-notes-hierarchy-panel {
+    min-height: 360px;
+}
+
+.ciit-notes-panel-heading {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+    padding: 20px 22px 14px;
+    border-bottom: 1px solid #edf1f6;
+    background: #fff;
+}
+
+.ciit-notes-panel-heading h2 {
+    margin: 0;
+    color: #152744;
+    font-size: 19px;
+    font-weight: 800;
+}
+
+.ciit-notes-panel-heading p {
+    margin: 5px 0 0;
+    color: #71819a;
+    font-size: 13px;
+}
+
+.ciit-notes-content-tree .ciit-assessment-tree-topic > summary {
+    min-height: 68px;
+}
+
+.ciit-notes-content-tree .ciit-assessment-tree-children {
+    padding-bottom: 12px;
+}
+
+.ciit-notes-content-tree .ciit-assessment-tree-chapter > summary {
+    min-height: 58px;
+}
+
+.ciit-notes-content-records [data-content-row][hidden] {
+    display: none !important;
+}
+
+.ciit-notes-content-tree details[hidden] {
+    display: none !important;
+}
+
+.ciit-notes-program .ciit-practice-program-header h3 {
+    overflow-wrap: anywhere;
+}
+
+.ciit-notes-program .ciit-practice-description,
+.ciit-notes-program .ciit-practice-solution p,
+.ciit-assessment-interview-item .ciit-assessment-question-copy p {
+    overflow-wrap: anywhere;
+}
+
+@media (max-width: 700px) {
+    .ciit-notes-card {
+        max-height: 74vh;
+        min-height: 500px;
+    }
+
+    .ciit-notes-toolbar--combined {
+        top: 0;
+        min-height: 64px;
+        padding: 10px;
+    }
+
+    .ciit-notes-tabs {
+        top: 63px;
+        min-height: 60px;
+        padding: 8px 10px;
+    }
+
+    .ciit-notes-table thead th {
+        top: 123px;
+    }
+
+    .ciit-notes-panel-heading {
+        padding: 16px 14px 12px;
+    }
+
+    .ciit-notes-content-tree .ciit-assessment-tree-topic > summary {
+        min-height: 62px;
+    }
+}
