@@ -517,7 +517,9 @@
                 const hasNotes = noteTopicRows.some(row => !row.hidden);
                 const hasInterview = contentRows.some(row => row.dataset.contentType === "interview" && !row.hidden);
                 const hasPractice = contentRows.some(row => row.dataset.contentType === "practice" && !row.hidden);
-                if (notesEmpty) notesEmpty.hidden = hasNotes || activeTab === "interview" || activeTab === "practice" || (activeTab === "all" && (hasInterview || hasPractice));
+                if (notesEmpty) notesEmpty.hidden = !query || hasNotes || activeTab === "interview" || activeTab === "practice" || (activeTab === "all" && (hasInterview || hasPractice));
+                const notesNoData = document.querySelector("[data-notes-no-data]");
+                if (notesNoData) notesNoData.hidden = @Model.Count > 0 || query.length > 0 || activeTab === "interview" || activeTab === "practice" || (activeTab === "all" && (hasInterview || hasPractice));
                 ["interview", "practice"].forEach(type => {
                     const empty = document.querySelector(`[data-content-empty="${type}"]`);
                     if (empty) empty.hidden = contentRows.some(row => row.dataset.contentType === type && !row.hidden) || (activeTab !== type && activeTab !== "all");
