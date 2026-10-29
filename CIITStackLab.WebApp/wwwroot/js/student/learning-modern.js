@@ -24,19 +24,23 @@
             headerDescription.textContent = topicEyebrow.textContent.trim().replace(/\s+/g, ' ');
         }
 
-        // The course-level hero is hidden on the modern lesson page. Keep the Notes /
-        // Assessments navigation, but place it inside the lesson card after the topic heading
-        // so the page starts directly with the selected topic instead of a duplicate course hero.
+        // Keep only Notes in the lesson header. Assessments are opened from the global sidebar.
         if (panelPager && mainCard && lessonHeader) {
             lessonHeader.insertAdjacentElement('afterend', panelPager);
         }
 
         const contentButton = document.querySelector('[data-learning-page="content"]');
+        const assessmentButton = document.querySelector('[data-learning-page="assessment"]');
         const contentPanel = document.querySelector('[data-learning-panel-content="content"]');
         const notesPanel = document.querySelector('[data-learning-panel-content="notes"]');
+        const assessmentPanel = document.querySelector('[data-learning-panel-content="assessment"]');
 
         if (contentButton) {
             contentButton.remove();
+        }
+
+        if (assessmentButton) {
+            assessmentButton.remove();
         }
 
         if (contentPanel && notesPanel) {
@@ -66,10 +70,47 @@
             chapterSidebar.remove();
         }
 
+        const assessmentLink = document.querySelector('[data-learning-assessment-link]');
         const notesButton = document.querySelector('[data-learning-page="notes"]');
-        if (notesButton) {
+
+        const showAssessment = function (updateHash) {
+            if (!assessmentPanel) {
+                return;
+            }
+
+            if (notesPanel) {
+                notesPanel.hidden = true;
+            }
+            assessmentPanel.hidden = false;
+
+            if (notesButton) {
+                notesButton.classList.remove('is-active');
+            }
+            assessmentLink?.classList.add('active');
+
+            if (updateHash) {
+                const assessmentTarget = learningPage.querySelector('[id^="lesson-assessment-"]');
+                const targetId = assessmentTarget?.id || 'lesson-assessment';
+                history.replaceState(null, '', `${window.location.pathname}${window.location.search}#${targetId}`);
+            }
+
+            const assessmentTarget = learningPage.querySelector('[id^="lesson-assessment-"]');
+            assessmentTarget?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        };
+
+        if (assessmentLink) {
+            assessmentLink.addEventListener('click', function (event) {
+                event.preventDefault();
+                showAssessment(true);
+            });
+        }
+
+        if (window.location.hash && window.location.hash.startsWith('#lesson-assessment')) {
+            showAssessment(false);
+        } else if (notesButton) {
             window.setTimeout(function () {
                 notesButton.click();
+                assessmentLink?.classList.remove('active');
             }, 0);
         }
     }
