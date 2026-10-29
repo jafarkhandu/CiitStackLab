@@ -37,7 +37,7 @@
 
             <details class="ciit-learning-topic @(isCurrentTopic ? "is-active-topic" : "") @(isLocked ? "is-locked-topic" : "")"
                      data-topic-first-content-url="@Url.Action("Learn", "Courses", new { id = Model.Id, topicId = topic.Id })"
-                     open="@(isCurrentTopic ? "open" : null)">
+                     open="open">
                 <summary class="ciit-learning-topic-heading">
                     <div class="ciit-learning-topic-icon"><i class="bi @(isLocked ? "bi-lock-fill" : "bi-collection-play")"></i></div>
                     <div class="ciit-learning-topic-heading-text @(topicComplete ? "is-completed" : "")">
