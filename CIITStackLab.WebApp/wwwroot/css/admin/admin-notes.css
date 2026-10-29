@@ -252,9 +252,7 @@
 }
 
 .ciit-notes-table thead th {
-    position: sticky;
-    top: 143px;
-    z-index: 10;
+    position: static;
 }
 
 .ciit-notes-hierarchy-panel {
@@ -330,10 +328,6 @@
         top: 63px;
         min-height: 60px;
         padding: 8px 10px;
-    }
-
-    .ciit-notes-table thead th {
-        top: 123px;
     }
 
     .ciit-notes-panel-heading {
