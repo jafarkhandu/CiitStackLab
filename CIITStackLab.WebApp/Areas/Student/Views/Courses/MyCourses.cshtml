@@ -7,49 +7,11 @@
 
 @section Styles {
     <link rel="stylesheet" href="~/css/student/my-courses.css" asp-append-version="true" />
+    <link rel="stylesheet" href="~/css/student/my-courses-compact.css" asp-append-version="true" />
 }
 
 <section class="ciit-my-courses-page">
     <div class="ciit-my-courses-shell">
-        <header class="ciit-learning-welcome" data-learning-reveal>
-            <div class="ciit-learning-welcome-copy">
-                <span class="ciit-my-courses-eyebrow"><i class="bi bi-stars" aria-hidden="true"></i> YOUR LEARNING HUB</span>
-                <h1>Your next skill<br class="ciit-welcome-break" /> starts here.</h1>
-                <p>Welcome back, @(User.Identity?.Name ?? "learner"). Pick up where you left off and keep moving forward.</p>
-                <div class="ciit-learning-welcome-actions">
-                    <a asp-controller="Home" asp-action="Index" asp-fragment="tutorials" class="ciit-learning-primary-action">
-                        Explore courses <i class="bi bi-arrow-up-right" aria-hidden="true"></i>
-                    </a>
-                    <span class="ciit-learning-secure-note"><i class="bi bi-shield-check" aria-hidden="true"></i> Your purchased learning, all in one place</span>
-                </div>
-            </div>
-            <div class="ciit-learning-welcome-art" aria-hidden="true">
-                <div class="ciit-learning-art-orbit ciit-learning-art-orbit-one"></div>
-                <div class="ciit-learning-art-orbit ciit-learning-art-orbit-two"></div>
-                <div class="ciit-learning-art-glow"></div>
-                <div class="ciit-learning-art-icon"><i class="bi bi-mortarboard-fill"></i></div>
-                <span class="ciit-learning-art-chip ciit-learning-art-chip-one"><i class="bi bi-lightning-charge-fill"></i> Learn by doing</span>
-                <span class="ciit-learning-art-chip ciit-learning-art-chip-two"><i class="bi bi-check2-circle"></i> Keep progressing</span>
-                <span class="ciit-learning-art-dot ciit-learning-art-dot-one"></span>
-                <span class="ciit-learning-art-dot ciit-learning-art-dot-two"></span>
-            </div>
-        </header>
-
-        <section class="ciit-learning-overview" aria-label="Learning overview" data-learning-reveal>
-            <article class="ciit-learning-overview-card">
-                <span class="ciit-learning-overview-icon"><i class="bi bi-collection-play" aria-hidden="true"></i></span>
-                <div><span class="ciit-learning-overview-label">My courses</span><strong>@Model.Count.ToString("00")</strong><small>Courses with access</small></div>
-            </article>
-            <article class="ciit-learning-overview-card">
-                <span class="ciit-learning-overview-icon ciit-learning-overview-icon-cyan"><i class="bi bi-clock-history" aria-hidden="true"></i></span>
-                <div><span class="ciit-learning-overview-label">Learning time</span><strong>@totalLearningHours.ToString("0.##") <em>hrs</em></strong><small>Combined course duration</small></div>
-            </article>
-            <article class="ciit-learning-overview-card ciit-learning-overview-card-note">
-                <span class="ciit-learning-overview-icon ciit-learning-overview-icon-green"><i class="bi bi-stars" aria-hidden="true"></i></span>
-                <div><span class="ciit-learning-overview-label">Your next step</span><strong>Keep going</strong><small>Every lesson builds momentum</small></div>
-            </article>
-        </section>
-
         <section class="ciit-my-courses-library" aria-labelledby="ciit-my-courses-title">
             <div class="ciit-my-courses-section-heading" data-learning-reveal>
                 <div>
@@ -117,6 +79,45 @@
                 </div>
             }
         </section>
+
+        <section class="ciit-learning-overview" aria-label="Learning overview" data-learning-reveal>
+            <article class="ciit-learning-overview-card">
+                <span class="ciit-learning-overview-icon"><i class="bi bi-collection-play" aria-hidden="true"></i></span>
+                <div><span class="ciit-learning-overview-label">My courses</span><strong>@Model.Count.ToString("00")</strong><small>Courses with access</small></div>
+            </article>
+            <article class="ciit-learning-overview-card">
+                <span class="ciit-learning-overview-icon ciit-learning-overview-icon-cyan"><i class="bi bi-clock-history" aria-hidden="true"></i></span>
+                <div><span class="ciit-learning-overview-label">Learning time</span><strong>@totalLearningHours.ToString("0.##") <em>hrs</em></strong><small>Combined course duration</small></div>
+            </article>
+            <article class="ciit-learning-overview-card ciit-learning-overview-card-note">
+                <span class="ciit-learning-overview-icon ciit-learning-overview-icon-green"><i class="bi bi-stars" aria-hidden="true"></i></span>
+                <div><span class="ciit-learning-overview-label">Your next step</span><strong>Keep going</strong><small>Every lesson builds momentum</small></div>
+            </article>
+        </section>
+
+        <header class="ciit-learning-welcome" data-learning-reveal>
+            <div class="ciit-learning-welcome-copy">
+                <span class="ciit-my-courses-eyebrow"><i class="bi bi-stars" aria-hidden="true"></i> YOUR LEARNING HUB</span>
+                <h1>Your next skill<br class="ciit-welcome-break" /> starts here.</h1>
+                <p>Welcome back, @(User.Identity?.Name ?? "learner"). Pick up where you left off and keep moving forward.</p>
+                <div class="ciit-learning-welcome-actions">
+                    <a asp-controller="Home" asp-action="Index" asp-fragment="tutorials" class="ciit-learning-primary-action">
+                        Explore courses <i class="bi bi-arrow-up-right" aria-hidden="true"></i>
+                    </a>
+                    <span class="ciit-learning-secure-note"><i class="bi bi-shield-check" aria-hidden="true"></i> Your purchased learning, all in one place</span>
+                </div>
+            </div>
+            <div class="ciit-learning-welcome-art" aria-hidden="true">
+                <div class="ciit-learning-art-orbit ciit-learning-art-orbit-one"></div>
+                <div class="ciit-learning-art-orbit ciit-learning-art-orbit-two"></div>
+                <div class="ciit-learning-art-glow"></div>
+                <div class="ciit-learning-art-icon"><i class="bi bi-mortarboard-fill"></i></div>
+                <span class="ciit-learning-art-chip ciit-learning-art-chip-one"><i class="bi bi-lightning-charge-fill"></i> Learn by doing</span>
+                <span class="ciit-learning-art-chip ciit-learning-art-chip-two"><i class="bi bi-check2-circle"></i> Keep progressing</span>
+                <span class="ciit-learning-art-dot ciit-learning-art-dot-one"></span>
+                <span class="ciit-learning-art-dot ciit-learning-art-dot-two"></span>
+            </div>
+        </header>
 
         <footer class="ciit-learning-footer-note" data-learning-reveal>
             <span class="ciit-learning-footer-icon"><i class="bi bi-lightbulb" aria-hidden="true"></i></span>

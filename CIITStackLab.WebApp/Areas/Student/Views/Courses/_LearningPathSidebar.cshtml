@@ -1,163 +1,103 @@
 @model CIITStackLab.Application.DTOs.CourseLearningDto
 @{
-    var currentTopic = Model.Topics.FirstOrDefault(topic => topic.Id == Model.CurrentTopicId)
-        ?? Model.Topics.FirstOrDefault(topic => topic.Contents.Any(content => content.Id == Model.CurrentContentId));
     var currentContentId = Model.CurrentContentId;
-    var learningProgress = Model.Progress;
-    var completedContentIds = learningProgress?.CompletedContentIds?.ToHashSet() ?? new HashSet<int>();
+    var completedContentIds = Model.Progress?.CompletedContentIds?.ToHashSet() ?? new HashSet<int>();
     var topics = Model.Topics.ToList();
+    var currentTopic = topics.FirstOrDefault(topic => topic.Id == Model.CurrentTopicId)
+        ?? topics.FirstOrDefault(topic =>
+            topic.Contents.Any(content => currentContentId.HasValue && content.Id == currentContentId.Value)
+            || topic.Chapters.Any(chapter => chapter.Contents.Any(content =>
+                currentContentId.HasValue && content.Id == currentContentId.Value)));
+    var currentContentChapterId = currentContentId.HasValue
+        ? topics.SelectMany(topic => topic.Chapters)
+            .FirstOrDefault(chapter => chapter.Contents.Any(content => content.Id == currentContentId.Value))?.Id
+        : (int?)null;
+    var selectedChapterId = Model.CurrentChapterId ?? currentContentChapterId;
     var allowedTopicId = ViewBag.AllowedTopicId as int?;
-
+    var isCurrentTopicLocked = User.IsInRole("Student")
+        && allowedTopicId.HasValue
+        && currentTopic is not null
+        && currentTopic.Id != allowedTopicId.Value;
+    var currentTopicContentIds = currentTopic is null
+        ? new List<int>()
+        : currentTopic.Contents
+            .Concat(currentTopic.Chapters.SelectMany(chapter => chapter.Contents))
+            .Select(content => content.Id)
+            .Distinct()
+            .ToList();
+    var isCurrentTopicCompleted = currentTopicContentIds.Count > 0
+        && currentTopicContentIds.All(completedContentIds.Contains);
 }
 
-<aside class="ciit-learning-sidebar" aria-label="Course chapters and resources">
+<aside class="ciit-learning-sidebar" aria-label="Current topic chapters">
     <div class="ciit-learning-sidebar-head">
         <div>
             <span class="ciit-learning-eyebrow">YOUR LEARNING PATH</span>
-            <h2>Chapters &amp; Resources</h2>
+            <h2>@(currentTopic is null ? "Chapters" : $"{currentTopic.Title} Chapters")</h2>
         </div>
-        <span class="ciit-learning-count">@Model.ContentCount</span>
+        <div class="ciit-learning-current-topic-status">
+            @if (isCurrentTopicCompleted)
+            {
+                <span class="ciit-learning-current-topic-completed" title="Topic completed" aria-label="Topic completed">
+                    <i class="bi bi-check-circle-fill" aria-hidden="true"></i>
+                </span>
+            }
+            <span class="ciit-learning-count" title="@((currentTopic?.Chapters.Count ?? 0)) chapters">
+                @(currentTopic?.Chapters.Count ?? 0)
+            </span>
+        </div>
     </div>
-    <div class="ciit-learning-sidebar-scroll">
-        @for (var topicIndex = 0; topicIndex < topics.Count; topicIndex++)
-        {
-            var topic = topics[topicIndex];
-            var topicContents = topic.Contents
-                .Concat(topic.Chapters.SelectMany(chapter => chapter.Contents))
-                .DistinctBy(content => content.Id)
-                .ToList();
-            var completedCount = topicContents.Count(content => completedContentIds.Contains(content.Id));
-            var topicComplete = topicContents.Count > 0 && completedCount == topicContents.Count;
-            var progress = topicContents.Count == 0 ? 0 :
-                (int)Math.Round(completedCount * 100d / topicContents.Count, MidpointRounding.AwayFromZero);
-            var isCurrentTopic = currentTopic?.Id == topic.Id;
-            var isLocked = User.IsInRole("Student") && allowedTopicId.HasValue && topic.Id != allowedTopicId.Value;
-            var chapterContentIds = topic.Chapters.SelectMany(chapter => chapter.Contents).Select(content => content.Id).ToHashSet();
-            var additionalContents = topic.Contents.Where(content => !chapterContentIds.Contains(content.Id)).ToList();
 
-            <details class="ciit-learning-topic @(isCurrentTopic ? "is-active-topic" : "") @(isLocked ? "is-locked-topic" : "")"
-                     data-topic-first-content-url="@Url.Action("Learn", "Courses", new { id = Model.Id, topicId = topic.Id })"
-                     open="@(isCurrentTopic ? "open" : null)">
-                <summary class="ciit-learning-topic-heading">
-                    <div class="ciit-learning-topic-icon"><i class="bi @(isLocked ? "bi-lock-fill" : "bi-collection-play")"></i></div>
-                    <div class="ciit-learning-topic-heading-text @(topicComplete ? "is-completed" : "")">
-                        <strong>@topic.Title</strong>
-                        @if (topicComplete)
+    <div class="ciit-learning-sidebar-scroll">
+        @if (currentTopic is null)
+        {
+            <p class="ciit-learning-current-topic-message">No active topic is available.</p>
+        }
+        else if (isCurrentTopicLocked)
+        {
+            <p class="ciit-learning-current-topic-message">
+                <i class="bi bi-lock-fill" aria-hidden="true"></i>
+                This topic is locked until you pass the current topic examination.
+            </p>
+        }
+        else if (currentTopic.Chapters.Count == 0)
+        {
+            <p class="ciit-learning-current-topic-message">No chapters are available for this topic yet.</p>
+        }
+        else
+        {
+            <nav class="ciit-learning-current-chapters" aria-label="@($"{currentTopic.Title} chapters")">
+                @for (var chapterIndex = 0; chapterIndex < currentTopic.Chapters.Count; chapterIndex++)
+                {
+                    var chapter = currentTopic.Chapters[chapterIndex];
+                    var chapterIsCurrent = selectedChapterId == chapter.Id
+                        || (currentContentId.HasValue && chapter.Contents.Any(content => content.Id == currentContentId.Value));
+                    var chapterIsCompleted = chapter.IsCompleted;
+
+                    <a class="ciit-learning-current-chapter-link @(chapterIsCurrent ? "is-current" : "")"
+                       asp-controller="Courses"
+                       asp-action="Learn"
+                       asp-route-id="@Model.Id"
+                       asp-route-topicId="@currentTopic.Id"
+                       asp-route-chapterId="@chapter.Id"
+                       aria-current="@(chapterIsCurrent ? "page" : null)">
+                        <span class="ciit-learning-current-chapter-number">@((chapterIndex + 1).ToString("00"))</span>
+                        <span class="ciit-learning-current-chapter-title">
+                            <strong>@CIITStackLab.WebApp.Helpers.LearningPagePresentation.FormatLearningTitle(chapter.Title)</strong>
+                        </span>
+                        @if (chapterIsCompleted)
                         {
-                            <span class="ciit-learning-topic-completed" title="Topic completed" aria-label="Topic completed"><i class="bi bi-check-circle-fill" aria-hidden="true"></i></span>
+                            <span class="ciit-learning-current-chapter-completed" title="Chapter completed" aria-label="Chapter completed">
+                                <i class="bi bi-check-circle-fill" aria-hidden="true"></i>
+                            </span>
                         }
-                        <span>@topic.Chapters.Count chapter@(topic.Chapters.Count == 1 ? "" : "s")</span>
-                    </div>
-                </summary>
-                @for (var chapterIndex = 0; chapterIndex < topic.Chapters.Count; chapterIndex++)
-                {
-                    var chapter = topic.Chapters[chapterIndex];
-                    var chapterResourceCount = (chapter.HasNotes ? 1 : 0)
-                        + chapter.Contents.Count + chapter.QuestionCount
-                        + chapter.InterviewQuestionCount + chapter.PracticeQuestionCount;
-                    var chapterIsCurrent = currentContentId.HasValue && chapter.Contents.Any(content => content.Id == currentContentId.Value);
-                    <details class="ciit-learning-chapter"
-                             data-chapter-url="@Url.Action("Learn", "Courses", new { id = Model.Id, topicId = topic.Id, chapterId = chapter.Id })"
-                             open="@(chapterIsCurrent || Model.CurrentChapterId == chapter.Id ? "open" : null)">
-                        <summary class="ciit-learning-chapter-summary">
-                            <span class="ciit-learning-chapter-number">@((chapterIndex + 1).ToString("00"))</span>
-                            <span class="ciit-learning-chapter-title"><strong>@CIITStackLab.WebApp.Helpers.LearningPagePresentation.FormatLearningTitle(chapter.Title)</strong><small>@chapterResourceCount resource@(chapterResourceCount == 1 ? "" : "s")</small></span>
-                            <i class="bi bi-chevron-down ciit-learning-disclosure-icon" aria-hidden="true"></i>
-                        </summary>
-                        <div class="ciit-learning-chapter-body ciit-learning-chapter-categories">
-                            <button type="button" class="ciit-learning-category-link ciit-learning-category-notes" data-learning-panel="notes" data-chapter-id="@chapter.Id">
-                                <span class="ciit-learning-category-icon"><i class="bi bi-journal-text"></i></span>
-                                <span class="ciit-learning-category-copy"><strong>Notes</strong><small>Chapter notes</small></span>
-                                <i class="bi bi-arrow-right ciit-learning-category-arrow"></i>
-                            </button>
-                            <details class="ciit-learning-category">
-                                <summary class="ciit-learning-category-heading">
-                                    <span class="ciit-learning-category-icon"><i class="bi bi-play-btn"></i></span>
-                                    <span class="ciit-learning-category-copy"><strong>Content</strong><small>Slides and video lessons</small></span>
-                                    <span class="ciit-learning-category-count">@chapter.Contents.Count</span>
-                                    <i class="bi bi-chevron-down ciit-learning-disclosure-icon"></i>
-                                </summary>
-                                <div class="ciit-learning-category-body">
-                                    @if (chapter.Contents.Count == 0)
-                                    {
-                                        <p class="ciit-learning-category-empty">No video or slide content is linked to this chapter yet.</p>
-                                    }
-                                    @foreach (var content in chapter.Contents)
-                                    {
-                                        <div class="ciit-learning-content-item">
-                                            <div class="ciit-learning-content-item-title"><i class="bi bi-collection-play"></i><strong>@content.Title</strong></div>
-                                            <div class="ciit-learning-resource-links">
-                                                @if (!string.IsNullOrWhiteSpace(content.VideoName))
-                                                {
-                                                    <a href="@CIITStackLab.WebApp.Helpers.LearningPagePresentation.ResolveResourceUrl(content.VideoName, "videos")" target="_blank" rel="noopener noreferrer"><i class="bi bi-play-circle"></i> Watch video</a>
-                                                }
-                                                @if (!string.IsNullOrWhiteSpace(content.Slides))
-                                                {
-                                                    <a href="@CIITStackLab.WebApp.Helpers.LearningPagePresentation.ResolveResourceUrl(content.Slides, "slides")"
-                                                       data-slide-file-url="@Url.Action("SlideFile", "Notes", new { area = "Student", topicId = topic.Id, chapterId = chapter.Id, contentId = content.Id })"
-                                                       target="_blank"
-                                                       rel="noopener noreferrer"><i class="bi bi-file-earmark-slides"></i> Open slides</a>
-                                                }
-                                                @if (string.IsNullOrWhiteSpace(content.VideoName) && string.IsNullOrWhiteSpace(content.Slides))
-                                                {
-                                                    <span class="ciit-learning-resource-unavailable"><i class="bi bi-info-circle"></i> No video or slides linked</span>
-                                                }
-                                            </div>
-                                            <a asp-action="Learn" asp-route-id="@Model.Id" asp-route-contentId="@content.Id" class="ciit-learning-open-lesson @(content.Id == currentContentId ? "is-current" : "")">
-                                                <i class="bi bi-play-circle"></i>@(content.Id == currentContentId ? "Currently learning" : "Open lesson")
-                                            </a>
-                                        </div>
-                                    }
-                                </div>
-                            </details>
-                            <div class="ciit-learning-assessment-links">
-                                <a class="ciit-learning-category-link" href="#chapter-mcqs-@chapter.Id" data-learning-panel="assessment"><span class="ciit-learning-category-icon"><i class="bi bi-ui-radios-grid"></i></span><span class="ciit-learning-category-copy"><strong>MCQs</strong><small>@chapter.QuestionCount questions</small><span class="ciit-learning-category-count">@chapter.QuestionCount</span></span><i class="bi bi-arrow-right ciit-learning-category-arrow"></i></a>
-                                <a class="ciit-learning-category-link" href="#chapter-interview-@chapter.Id" data-learning-panel="assessment"><span class="ciit-learning-category-icon"><i class="bi bi-chat-square-text"></i></span><span class="ciit-learning-category-copy"><strong>Interview Questions</strong><small>@chapter.InterviewQuestionCount questions</small><span class="ciit-learning-category-count">@chapter.InterviewQuestionCount</span></span><i class="bi bi-arrow-right ciit-learning-category-arrow"></i></a>
-                                <a class="ciit-learning-category-link" href="#chapter-practice-@chapter.Id" data-learning-panel="assessment"><span class="ciit-learning-category-icon"><i class="bi bi-code-square"></i></span><span class="ciit-learning-category-copy"><strong>Practice Programs</strong><small>@chapter.PracticeQuestionCount questions</small><span class="ciit-learning-category-count">@chapter.PracticeQuestionCount</span></span><i class="bi bi-arrow-right ciit-learning-category-arrow"></i></a>
-                            </div>
-                        </div>
-                    </details>
+                        else if (chapterIsCurrent)
+                        {
+                            <span class="ciit-learning-current-chapter-current" aria-hidden="true"></span>
+                        }
+                    </a>
                 }
-                @if (additionalContents.Count > 0)
-                {
-                    <details class="ciit-learning-chapter ciit-learning-additional">
-                        <summary class="ciit-learning-chapter-summary"><span class="ciit-learning-chapter-number"><i class="bi bi-collection"></i></span><span class="ciit-learning-chapter-title"><strong>Additional lessons</strong><small>@additionalContents.Count lesson@(additionalContents.Count == 1 ? "" : "s")</small></span><i class="bi bi-chevron-down ciit-learning-disclosure-icon" aria-hidden="true"></i></summary>
-                        <div class="ciit-learning-chapter-body">
-                            @foreach (var content in additionalContents)
-                            {
-                                <div class="ciit-learning-additional-row">
-                                    <a asp-action="Learn" asp-route-id="@Model.Id" asp-route-contentId="@content.Id" class="ciit-learning-additional-link @(content.Id == currentContentId ? "is-current" : "")"><i class="bi bi-play-circle"></i><span>@content.Title</span></a>
-                                    @if (completedContentIds.Contains(content.Id))
-                                    {
-                                        <span class="ciit-learning-completed-indicator" title="Lesson completed"><i class="bi bi-check-circle-fill"></i></span>
-                                    }
-                                    <div class="ciit-learning-additional-meta">
-                                        @if (!string.IsNullOrWhiteSpace(content.VideoName))
-                                        {
-                                            <a href="@CIITStackLab.WebApp.Helpers.LearningPagePresentation.ResolveResourceUrl(content.VideoName, "videos")" target="_blank" rel="noopener noreferrer" aria-label="Open video for @content.Title" title="Open video"><i class="bi bi-play-btn"></i></a>
-                                        }
-                                        @if (!string.IsNullOrWhiteSpace(content.Slides))
-                                        {
-                                            <a href="@CIITStackLab.WebApp.Helpers.LearningPagePresentation.ResolveResourceUrl(content.Slides, "slides")"
-                                               data-slide-file-url="@Url.Action("SlideFile", "Notes", new { area = "Student", topicId = topic.Id, chapterId = (int?)null, contentId = content.Id })"
-                                               target="_blank"
-                                               rel="noopener noreferrer"
-                                               aria-label="Open slides for @content.Title"
-                                               title="Open slides"><i class="bi bi-file-earmark-slides"></i></a>
-                                        }
-                                        @if (content.QuestionCount > 0)
-                                        {
-                                            <span title="Assessment questions"><i class="bi bi-patch-question"></i> @content.QuestionCount</span>
-                                        }
-                                    </div>
-                                </div>
-                            }
-                        </div>
-                    </details>
-                }
-            </details>
+            </nav>
         }
     </div>
 </aside>
-
-<script defer src="/js/student/learning-slide-viewer.js?v=1"></script>

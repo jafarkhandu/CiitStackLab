@@ -1,5 +1,36 @@
 (function () {
     function initModernLearningPage() {
+        const sidebarToggle = document.querySelector('[data-learning-global-sidebar-toggle]');
+
+        if (sidebarToggle) {
+            const collapsedClass = 'ciit-learning-global-sidebar-collapsed';
+            const icon = sidebarToggle.querySelector('i');
+            const accessibleLabel = sidebarToggle.querySelector('.visually-hidden');
+
+            const syncSidebarToggle = function () {
+                const isCollapsed = document.body.classList.contains(collapsedClass);
+                const label = isCollapsed ? 'Show main sidebar' : 'Hide main sidebar';
+
+                sidebarToggle.setAttribute('aria-expanded', String(!isCollapsed));
+                sidebarToggle.setAttribute('aria-label', label);
+                sidebarToggle.title = label;
+
+                if (icon) {
+                    icon.className = isCollapsed ? 'bi bi-chevron-right' : 'bi bi-chevron-left';
+                }
+                if (accessibleLabel) {
+                    accessibleLabel.textContent = label;
+                }
+            };
+
+            sidebarToggle.addEventListener('click', function () {
+                document.body.classList.toggle(collapsedClass);
+                syncSidebarToggle();
+            });
+
+            syncSidebarToggle();
+        }
+
         const learningPage = document.querySelector('.ciit-learning-page');
         if (!learningPage) {
             return;
@@ -9,8 +40,6 @@
         const headerTitle = document.querySelector('.ciit-learning-course-intro h1');
         const headerDescription = document.querySelector('.ciit-learning-course-intro > p');
         const topicEyebrow = document.querySelector('.ciit-learning-lesson-heading .ciit-learning-eyebrow');
-        const mainCard = document.querySelector('.ciit-learning-main-card');
-        const lessonHeader = document.querySelector('.ciit-learning-lesson-header');
         const panelPager = document.querySelector('.ciit-learning-panel-pager');
 
         if (headerTitle) {
@@ -24,20 +53,18 @@
             headerDescription.textContent = topicEyebrow.textContent.trim().replace(/\s+/g, ' ');
         }
 
-        // The course-level hero is hidden on the modern lesson page. Keep the Notes /
-        // Assessments navigation, but place it inside the lesson card after the topic heading
-        // so the page starts directly with the selected topic instead of a duplicate course hero.
-        if (panelPager && mainCard && lessonHeader) {
-            lessonHeader.insertAdjacentElement('afterend', panelPager);
-        }
+        // Notes are the primary learning surface. Remove the legacy section pager entirely
+        // so the lesson flows directly from the module title into the exam action and notes.
+        panelPager?.remove();
 
         const contentButton = document.querySelector('[data-learning-page="content"]');
+        const assessmentButton = document.querySelector('[data-learning-page="assessment"]');
         const contentPanel = document.querySelector('[data-learning-panel-content="content"]');
         const notesPanel = document.querySelector('[data-learning-panel-content="notes"]');
+        const assessmentPanel = document.querySelector('[data-learning-panel-content="assessment"]');
 
-        if (contentButton) {
-            contentButton.remove();
-        }
+        contentButton?.remove();
+        assessmentButton?.remove();
 
         if (contentPanel && notesPanel) {
             contentPanel.classList.add('ciit-learning-embedded-content');
@@ -58,19 +85,44 @@
             notesPanel.appendChild(contentPanel);
         }
 
-        // The legacy learning-path sidebar is intentionally not moved into the modern Notes view.
-        // Its chapter accordion duplicates the Notes/Resources/Assessment experience and leaves
-        // legacy layout spacing behind. The modern page uses the global course navigation instead.
-        const chapterSidebar = document.querySelector('.ciit-learning-shell > .ciit-learning-sidebar');
-        if (chapterSidebar) {
-            chapterSidebar.remove();
+        // The Learn sidebar is scoped to the selected topic and shows only its chapter links.
+        // Topic switching stays in the existing learning flow; the sidebar avoids cross-topic clutter.
+
+        const assessmentLink = document.querySelector('[data-learning-assessment-link]');
+        const learningPathLink = document.querySelector('.ciit-course-global-nav a.active');
+
+        const showAssessment = function (updateHash) {
+            if (!assessmentPanel) {
+                return;
+            }
+
+            if (notesPanel) {
+                notesPanel.hidden = true;
+            }
+            assessmentPanel.hidden = false;
+
+            learningPathLink?.classList.remove('active');
+            assessmentLink?.classList.add('active');
+
+            if (updateHash) {
+                const assessmentTarget = learningPage.querySelector('[id^="lesson-assessment-"]');
+                const targetId = assessmentTarget?.id || 'lesson-assessment';
+                history.replaceState(null, '', `${window.location.pathname}${window.location.search}#${targetId}`);
+            }
+
+            const assessmentTarget = learningPage.querySelector('[id^="lesson-assessment-"]');
+            assessmentTarget?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        };
+
+        if (assessmentLink) {
+            assessmentLink.addEventListener('click', function (event) {
+                event.preventDefault();
+                showAssessment(true);
+            });
         }
 
-        const notesButton = document.querySelector('[data-learning-page="notes"]');
-        if (notesButton) {
-            window.setTimeout(function () {
-                notesButton.click();
-            }, 0);
+        if (window.location.hash && window.location.hash.startsWith('#lesson-assessment')) {
+            showAssessment(false);
         }
     }
 

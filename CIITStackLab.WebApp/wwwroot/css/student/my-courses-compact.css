@@ -1,0 +1,277 @@
+/* Compact My Courses presentation layer.
+   Keeps page structure and course workflows intact while matching the simpler CIIT catalog-card style. */
+
+.ciit-my-courses-page {
+    padding: 24px 0 36px;
+}
+
+.ciit-my-courses-shell {
+    width: min(100% - 48px, 1320px);
+}
+
+/* 1. Your Courses */
+.ciit-my-courses-library {
+    margin-top: 0;
+}
+
+.ciit-my-courses-section-heading {
+    margin-bottom: 14px;
+}
+
+.ciit-my-courses-section-heading h2 {
+    font-size: clamp(1.4rem, 2vw, 1.75rem);
+}
+
+.ciit-my-courses-section-heading p {
+    margin-top: 5px;
+    font-size: .8rem;
+}
+
+.ciit-my-courses-grid {
+    grid-template-columns: repeat(auto-fit, minmax(270px, 320px));
+    gap: 18px;
+}
+
+.ciit-my-course-card {
+    width: 100%;
+    align-self: start;
+    border: 1px solid #dce7fb;
+    border-radius: 16px;
+    box-shadow: 0 8px 22px rgba(19, 42, 82, .045);
+}
+
+.ciit-my-course-image-wrap {
+    height: 145px;
+}
+
+.ciit-my-course-image-wrap img {
+    object-fit: contain;
+    padding: 10px;
+    background: #fff;
+}
+
+.ciit-my-course-image-shade {
+    display: none;
+}
+
+.ciit-my-course-body {
+    display: flex;
+    flex: initial;
+    padding: 15px 16px 16px;
+}
+
+.ciit-my-course-card-topline {
+    margin-bottom: 7px;
+}
+
+.ciit-my-course-card h3,
+.ciit-my-course-body h3 {
+    margin: 0 0 7px;
+    font-size: 1.02rem;
+    line-height: 1.35;
+}
+
+.ciit-my-course-description {
+    min-height: 0;
+    margin-bottom: 12px;
+    font-size: .78rem;
+    line-height: 1.55;
+}
+
+.ciit-my-course-meta {
+    gap: 12px;
+    margin: 0 0 13px;
+    font-size: .7rem;
+}
+
+.ciit-my-course-open {
+    min-height: 38px;
+    border-radius: 9px;
+    background: #fff;
+    color: #1769ff;
+    box-shadow: none;
+    font-size: .78rem;
+}
+
+.ciit-my-course-open:hover {
+    background: #f3f7ff;
+    box-shadow: none;
+    color: #1458e9;
+}
+
+.ciit-my-course-access,
+.ciit-my-course-image-open,
+.ciit-my-course-status {
+    display: none !important;
+}
+
+/* 2. Stats */
+.ciit-learning-overview {
+    gap: 14px;
+    margin-top: 24px;
+}
+
+.ciit-learning-overview-card {
+    gap: 12px;
+    padding: 14px 16px;
+    border-radius: 14px;
+}
+
+.ciit-learning-overview-icon {
+    width: 38px;
+    height: 38px;
+    border-radius: 11px;
+    font-size: 1rem;
+}
+
+.ciit-learning-overview-label {
+    font-size: .68rem;
+}
+
+.ciit-learning-overview-card strong {
+    font-size: 1.18rem;
+}
+
+.ciit-learning-overview-card small {
+    font-size: .64rem;
+}
+
+/* 3. Explore Courses */
+.ciit-learning-welcome {
+    min-height: 190px;
+    margin-top: 24px;
+    padding: 22px 26px;
+    border-radius: 19px;
+}
+
+.ciit-learning-welcome-copy {
+    max-width: 560px;
+}
+
+.ciit-my-courses-eyebrow {
+    margin-bottom: 8px;
+    font-size: .61rem;
+}
+
+.ciit-learning-welcome h1 {
+    font-size: clamp(1.75rem, 2.8vw, 2.35rem);
+}
+
+.ciit-learning-welcome-copy > p {
+    max-width: 500px;
+    margin-top: 9px;
+    font-size: .8rem;
+    line-height: 1.5;
+}
+
+.ciit-learning-welcome-actions {
+    gap: 11px;
+    margin-top: 14px;
+}
+
+.ciit-learning-primary-action {
+    min-height: 38px;
+    gap: 8px;
+    padding: 0 14px;
+    border-radius: 9px;
+    font-size: .76rem;
+}
+
+.ciit-learning-secure-note {
+    font-size: .66rem;
+}
+
+.ciit-learning-welcome-art {
+    min-height: 145px;
+}
+
+.ciit-learning-art-glow {
+    width: 130px;
+    height: 130px;
+}
+
+.ciit-learning-art-orbit {
+    width: 132px;
+    height: 132px;
+}
+
+.ciit-learning-art-orbit-two {
+    width: 160px;
+    height: 160px;
+}
+
+.ciit-learning-art-icon {
+    width: 76px;
+    height: 76px;
+    border-radius: 21px;
+    font-size: 2.2rem;
+}
+
+.ciit-learning-art-chip {
+    padding: 7px 9px;
+    border-radius: 9px;
+    font-size: .6rem;
+}
+
+.ciit-learning-art-chip-one {
+    top: 7px;
+}
+
+.ciit-learning-art-chip-two {
+    bottom: 7px;
+}
+
+.ciit-learning-footer-note {
+    margin-top: 16px;
+}
+
+/* Keep the desktop card compact and avoid an overly narrow multi-column grid on small screens. */
+@media (max-width: 900px) {
+    .ciit-my-courses-shell {
+        width: min(100% - 32px, 720px);
+    }
+
+    .ciit-my-courses-grid {
+        grid-template-columns: repeat(auto-fit, minmax(260px, 320px));
+    }
+
+    .ciit-learning-overview {
+        grid-template-columns: 1fr;
+    }
+
+    .ciit-learning-welcome {
+        grid-template-columns: 1fr;
+    }
+
+    .ciit-learning-welcome-art {
+        display: none;
+    }
+}
+
+@media (max-width: 576px) {
+    .ciit-my-courses-page {
+        padding: 18px 0 28px;
+    }
+
+    .ciit-my-courses-shell {
+        width: min(100% - 24px, 480px);
+    }
+
+    .ciit-my-courses-section-heading {
+        align-items: flex-start;
+        flex-direction: column;
+        gap: 6px;
+    }
+
+    .ciit-my-courses-browse-link {
+        padding-left: 0;
+    }
+
+    .ciit-my-courses-grid {
+        grid-template-columns: minmax(0, 1fr);
+    }
+
+    .ciit-learning-welcome {
+        padding: 20px;
+    }
+}

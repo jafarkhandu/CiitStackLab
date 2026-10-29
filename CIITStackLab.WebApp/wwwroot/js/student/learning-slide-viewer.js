@@ -2,17 +2,16 @@
     const initialize = () => {
         const page = document.querySelector('.ciit-learning-page');
         const slideSection = page?.querySelector('[data-learning-content-page="slides"]');
-        const sidebar = page?.querySelector('.ciit-learning-sidebar');
 
-        if (!page || !slideSection || !sidebar || slideSection.dataset.slideViewerInitialized === 'true') {
+        if (!page || !slideSection || slideSection.dataset.slideViewerInitialized === 'true') {
             return;
         }
 
-        const currentLesson = sidebar.querySelector('.ciit-learning-open-lesson.is-current, .ciit-learning-additional-link.is-current');
-        const currentContentItem = currentLesson?.closest('.ciit-learning-content-item, .ciit-learning-additional-row');
-        const currentSlideLink = currentContentItem?.querySelector('[data-slide-file-url], a[title="Open slides"]');
+        // The chapter sidebar now contains chapter links only. Use the current lesson's
+        // slide link, which carries the same authorized SlideFile route previously supplied
+        // by the nested sidebar resource menu.
         const fallbackSlideLink = slideSection.querySelector('.ciit-learning-open-resource');
-        const slideUrl = currentSlideLink?.dataset.slideFileUrl || fallbackSlideLink?.href;
+        const slideUrl = fallbackSlideLink?.dataset.slideFileUrl || fallbackSlideLink?.href;
 
         if (!slideUrl) {
             return;
@@ -32,7 +31,9 @@
         const reader = document.createElement('div');
         reader.className = 'ciit-slide-reader ciit-learning-embedded-slide-reader';
         reader.dataset.slideUrl = slideUrl;
-        reader.dataset.slideTitle = currentLesson?.textContent?.trim() || 'Lesson Presentation';
+        reader.dataset.slideTitle = page.querySelector('.ciit-learning-lesson-heading .ciit-learning-chapter-title')?.textContent?.trim()
+            || fallbackSlideLink?.textContent?.trim()
+            || 'Lesson Presentation';
         reader.innerHTML = `
             <header class="ciit-slide-reader-header">
                 <div class="ciit-slide-reader-header-inner">
