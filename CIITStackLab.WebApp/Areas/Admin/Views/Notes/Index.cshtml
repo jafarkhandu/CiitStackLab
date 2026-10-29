@@ -401,7 +401,8 @@
             const noteChapterRows = [...document.querySelectorAll("[data-chapter-row]")];
             const contentRows = [...document.querySelectorAll("[data-content-row]")];
             let activeTab = "all";
-            let expandedNotesTopicId = null;\n            let lastQuery = null;
+            let expandedNotesTopicId = null;
+            let lastQuery = null;\n            let lastQuery = null;
 
             const noteChaptersFor = id => noteChapterRows.filter(row => row.dataset.topicId === id);
             const setNotesTopic = (id, expanded) => {
@@ -432,6 +433,8 @@
 
             const refresh = () => {
                 const query = (searchInput?.value || "").trim().toLowerCase();
+                const queryChanged = query !== lastQuery;
+                lastQuery = query;
                 let visibleNotes = 0;
                 let visibleInterviews = 0;
                 let visiblePrograms = 0;
@@ -484,10 +487,13 @@
                         topic.hidden = !topicHasMatch;
                     });
 
-                    if (query && firstMatchingTopic) {
-                        topics.forEach(topic => topic.open = topic === firstMatchingTopic);
-                        const chapters = [...firstMatchingTopic.querySelectorAll(":scope > .ciit-assessment-tree-children > details.ciit-assessment-tree-chapter")];
-                        const currentlyOpenChapter = chapters.find(chapter => chapter.open);\n                        const matchingChapter = queryChanged ? chapters.find(chapter => !chapter.hidden) : (currentlyOpenChapter || chapters.find(chapter => !chapter.hidden));
+                    const currentlyOpenTopic = topics.find(topic => topic.open);
+                    const selectedTopic = queryChanged && query ? firstMatchingTopic : (currentlyOpenTopic || firstMatchingTopic);
+                    if (query && selectedTopic) {
+                        topics.forEach(topic => topic.open = topic === selectedTopic);
+                        const chapters = [...selectedTopic.querySelectorAll(":scope > .ciit-assessment-tree-children > details.ciit-assessment-tree-chapter")];
+                        const currentlyOpenChapter = chapters.find(chapter => chapter.open);
+                        const matchingChapter = queryChanged ? chapters.find(chapter => !chapter.hidden) : (currentlyOpenChapter || chapters.find(chapter => !chapter.hidden));
                         chapters.forEach(chapter => chapter.open = chapter === matchingChapter);
                     }
                 });
