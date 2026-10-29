@@ -370,28 +370,35 @@
             else
             {
                 <div class="ciit-premium-roadmap ciit-roadmap-tree-grid" id="courseTopicsAccordion">
-                    @{ var topicNumber = 0; }
-                    @foreach (var topic in Model.Topics)
+                    @foreach (var topicRow in Model.Topics.Select((topic, index) => new { Topic = topic, Index = index }).GroupBy(item => item.Index / 3))
                     {
-                        topicNumber++;
-                        <article class="ciit-roadmap-topic-card">
-                            <div class="ciit-roadmap-topic-main">
-                                <span class="ciit-roadmap-number">@topicNumber.ToString("D2")</span>
-                                <span class="ciit-roadmap-topic-icon"><i class="bi bi-journal-bookmark-fill" aria-hidden="true"></i></span>
-                                <strong class="ciit-roadmap-topic-title">@topic.Title</strong>
-                            </div>
-                            <div class="ciit-roadmap-badges" aria-label="Topic resources">
-                                <span class="ciit-roadmap-badge ciit-roadmap-badge-notes">
-                                    <i class="bi bi-journal-text" aria-hidden="true"></i>
-                                    @topic.ChapterCount Notes
-                                </span>
-                                <span class="ciit-roadmap-badge ciit-roadmap-badge-assessment">
-                                    <i class="bi bi-patch-check" aria-hidden="true"></i>
-                                    @(topic.McqCount + topic.InterviewQuestionCount + topic.PracticeProgramCount) Assessments
-                                </span>
-                            </div>
-                        </article>
+                        var rowNumber = topicRow.Key;
+                        <div class="ciit-roadmap-row @(rowNumber % 2 == 0 ? "ciit-roadmap-row-forward" : "ciit-roadmap-row-reverse")">
+                            @foreach (var item in topicRow)
+                            {
+                                var topicNumber = item.Index + 1;
+                                var topic = item.Topic;
+                                <article class="ciit-roadmap-topic-card">
+                                    <div class="ciit-roadmap-topic-main">
+                                        <span class="ciit-roadmap-number">@topicNumber.ToString("D2")</span>
+                                        <span class="ciit-roadmap-topic-icon"><i class="bi bi-journal-bookmark-fill" aria-hidden="true"></i></span>
+                                        <strong class="ciit-roadmap-topic-title">@topic.Title</strong>
+                                    </div>
+                                    <div class="ciit-roadmap-badges" aria-label="Topic resources">
+                                        <span class="ciit-roadmap-badge ciit-roadmap-badge-notes">
+                                            <i class="bi bi-journal-text" aria-hidden="true"></i>
+                                            @topic.ChapterCount Notes
+                                        </span>
+                                        <span class="ciit-roadmap-badge ciit-roadmap-badge-assessment">
+                                            <i class="bi bi-patch-check" aria-hidden="true"></i>
+                                            @(topic.McqCount + topic.InterviewQuestionCount + topic.PracticeProgramCount) Assessments
+                                        </span>
+                                    </div>
+                                </article>
+                            }
+                        </div>
                     }
+                </div>
                 </div>
             }
         </div>
