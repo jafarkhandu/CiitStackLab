@@ -101,11 +101,11 @@ public sealed class AssessmentsController : Controller
             {
                 try
                 {
-                    ViewBag.McqChapters = await _mcqService.GetAssessmentChapterLookupAsync(cancellationToken);
+                    ViewBag.McqTopics = await _mcqService.GetTopicLookupAsync(cancellationToken);
                 }
                 catch (DbException)
                 {
-                    ViewBag.McqChapters = Array.Empty<AdminAssessmentChapterLookupDto>();
+                    ViewBag.McqTopics = Array.Empty<AdminMcqTopicLookupDto>();
                 }
             }
         }
@@ -116,9 +116,9 @@ public sealed class AssessmentsController : Controller
             if (selectedMcq is not null)
             {
                 ViewBag.EditMcqId = selectedMcq.Id;
-                ViewBag.EditMcqInput = new AdminChapterMcqInputDto
+                ViewBag.EditMcqInput = new AdminTopicMcqInputDto
                 {
-                    NoteId = selectedMcq.NoteId ?? 0,
+                    TopicId = selectedMcq.TopicId ?? 0,
                     Question = selectedMcq.Question,
                     Option1 = selectedMcq.Option1,
                     Option2 = selectedMcq.Option2,
@@ -143,7 +143,7 @@ public sealed class AssessmentsController : Controller
     [HttpPost]
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> CreateMcq(
-        AdminChapterMcqInputDto input,
+        AdminTopicMcqInputDto input,
         CancellationToken cancellationToken)
     {
         if (!ModelState.IsValid)
@@ -158,7 +158,7 @@ public sealed class AssessmentsController : Controller
 
         try
         {
-            result = await _mcqService.CreateForChapterAsync(input, cancellationToken);
+            result = await _mcqService.CreateForTopicAsync(input, cancellationToken);
         }
         catch (Exception exception) when (
             exception is DbException or DbUpdateException)
@@ -167,12 +167,12 @@ public sealed class AssessmentsController : Controller
 
             try
             {
-                ViewBag.McqChapters = await _mcqService.GetAssessmentChapterLookupAsync(cancellationToken);
+                ViewBag.McqTopics = await _mcqService.GetTopicLookupAsync(cancellationToken);
             }
             catch (Exception lookupException) when (
                 lookupException is DbException or DbUpdateException)
             {
-                ViewBag.McqChapters = Array.Empty<AdminAssessmentChapterLookupDto>();
+                ViewBag.McqTopics = Array.Empty<AdminMcqTopicLookupDto>();
             }
 
             ViewBag.AddMcqInput = input;
@@ -475,10 +475,10 @@ public sealed class AssessmentsController : Controller
         var mcq = await _mcqService.GetByIdAsync(id, cancellationToken);
         if (mcq is null) return NotFound();
 
-        await LoadMcqChapterLookupAsync(cancellationToken);
-        return View(new AdminChapterMcqInputDto
+        await LoadMcqTopicLookupAsync(cancellationToken);
+        return View(new AdminTopicMcqInputDto
         {
-            NoteId = mcq.NoteId ?? 0,
+            TopicId = mcq.TopicId ?? 0,
             Question = mcq.Question,
             Option1 = mcq.Option1,
             Option2 = mcq.Option2,
@@ -498,7 +498,7 @@ public sealed class AssessmentsController : Controller
             return View(input);
         }
 
-        var result = await _mcqService.UpdateForChapterAsync(id, input, cancellationToken);
+        var result = await _mcqService.UpdateForTopicAsync(id, input, cancellationToken);
         if (!result.Succeeded)
         {
             ModelState.AddModelError(string.Empty, result.Error!);
