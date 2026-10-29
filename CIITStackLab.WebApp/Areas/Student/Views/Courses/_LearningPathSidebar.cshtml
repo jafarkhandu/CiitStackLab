@@ -1,11 +1,19 @@
 @model CIITStackLab.Application.DTOs.CourseLearningDto
 @{
-    var currentTopic = Model.Topics.FirstOrDefault(topic => topic.Id == Model.CurrentTopicId)
-        ?? Model.Topics.FirstOrDefault(topic => topic.Contents.Any(content => content.Id == Model.CurrentContentId));
     var currentContentId = Model.CurrentContentId;
     var learningProgress = Model.Progress;
     var completedContentIds = learningProgress?.CompletedContentIds?.ToHashSet() ?? new HashSet<int>();
     var topics = Model.Topics.ToList();
+    var currentTopic = topics.FirstOrDefault(topic => topic.Id == Model.CurrentTopicId)
+        ?? topics.FirstOrDefault(topic =>
+            topic.Contents.Any(content => currentContentId.HasValue && content.Id == currentContentId.Value)
+            || topic.Chapters.Any(chapter => chapter.Contents.Any(content =>
+                currentContentId.HasValue && content.Id == currentContentId.Value)));
+    var currentContentChapterId = currentContentId.HasValue
+        ? topics.SelectMany(topic => topic.Contents)
+            .FirstOrDefault(content => content.Id == currentContentId.Value)?.NoteId
+        : null;
+    var selectedChapterId = Model.CurrentChapterId ?? currentContentChapterId;
     var allowedTopicId = ViewBag.AllowedTopicId as int?;
 
 }
@@ -64,7 +72,7 @@
                         @for (var chapterIndex = 0; chapterIndex < topic.Chapters.Count; chapterIndex++)
                         {
                             var chapter = topic.Chapters[chapterIndex];
-                            var chapterIsCurrent = Model.CurrentChapterId == chapter.Id
+                            var chapterIsCurrent = selectedChapterId == chapter.Id
                                 || (currentContentId.HasValue && chapter.Contents.Any(content => content.Id == currentContentId.Value));
                             var chapterIsCompleted = chapter.IsCompleted;
 
