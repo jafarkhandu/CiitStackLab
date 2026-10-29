@@ -103,15 +103,14 @@
                                 <div class="student-action-cell">
                                     <form asp-area="Admin"
                                           asp-controller="Students"
-                                          asp-action="SetStatus"
+                                          asp-action="@(student.IsActive ? "Deactivate" : "Activate")"
                                           method="post"
                                           class="js-student-status-form"
-                                          data-student-name="@student.UserName">
+                                          data-student-name="@student.UserName"
+                                          data-is-active="@(!student.IsActive ? "true" : "false")">
                                         @Html.AntiForgeryToken()
                                         <input type="hidden" name="userId" value="@student.Id" />
                                         <button type="submit"
-                                                name="isActive"
-                                                value="@(!student.IsActive)"
                                                 data-is-active="@(!student.IsActive)"
                                                 class="ciit-student-status-btn @(student.IsActive ? "is-deactivate" : "is-activate")">
                                             <i class="bi @(student.IsActive ? "bi-person-dash" : "bi-person-check")"></i>
