@@ -20,13 +20,7 @@
             <p>Add and organize notes, interview questions, and coding practice for each Notes chapter from one workspace.</p>
         </div>
 
-        <a asp-area="Admin"
-           asp-controller="Notes"
-           asp-action="Create"
-           class="ciit-notes-primary-btn js-content-modal-link">
-            <i class="bi bi-plus-lg"></i>
-            Add Chapter
-        </a>
+
     </div>
 
     @if (!string.IsNullOrWhiteSpace(message))
@@ -74,22 +68,20 @@
     </section>
 
     <section class="ciit-notes-card">
-        <div class="ciit-notes-toolbar">
+        <div class="ciit-notes-toolbar ciit-notes-toolbar--combined">
             <div class="ciit-notes-search">
                 <i class="bi bi-search"></i>
-
-                <input id="notesSearch"
-                       type="search"
-                       placeholder="Search topic, chapter or title..."
-                       aria-label="Search Notes" />
+                <input id="notesSearch" type="search" placeholder="Search notes, interview questions, programs..." aria-label="Search all learning content" />
             </div>
-
-            <span id="notesVisibleCount"
-                  class="ciit-notes-count">
-                @topicGroups.Count topics · @Model.Count chapters
-            </span>
+            <span id="notesVisibleCount" class="ciit-notes-count">@Model.Count chapters</span>
         </div>
-
+        <div class="ciit-notes-tabs" role="tablist" aria-label="Learning content tables">
+            <button type="button" class="ciit-notes-tab is-active" role="tab" aria-selected="true" data-content-tab="all">All results</button>
+            <button type="button" class="ciit-notes-tab" role="tab" aria-selected="false" data-content-tab="notes">Notes</button>
+            <button type="button" class="ciit-notes-tab" role="tab" aria-selected="false" data-content-tab="interview">Interview Questions</button>
+            <button type="button" class="ciit-notes-tab" role="tab" aria-selected="false" data-content-tab="practice">Practice Programs</button>
+        </div>
+        <div class="ciit-notes-tab-panel is-active" role="tabpanel" data-content-panel="notes">
         <div class="table-responsive">
             <table class="ciit-notes-table">
                 <thead>
@@ -202,6 +194,41 @@
                 </tbody>
             </table>
         </div>
+        </div>
+
+        <div class="ciit-notes-tab-panel" role="tabpanel" data-content-panel="interview" hidden>
+            <div class="table-responsive"><table class="ciit-notes-table">
+                <thead><tr><th>Topic / Chapter</th><th>Question ID</th><th>Interview Question</th><th>Answer</th><th>Updated</th></tr></thead>
+                <tbody>
+                @foreach (var question in ((ViewBag.InterviewImportModel as AdminInterviewQuestionIndexDto)?.ActiveQuestions ?? Array.Empty<AdminInterviewQuestionDto>()).OrderBy(x => x.TopicTitle).ThenBy(x => x.ChapterTitle).ThenBy(x => x.Id))
+                {
+                    <tr data-content-row data-content-type="interview" data-search="@($"{question.TopicTitle} {question.ChapterTitle} {question.ContentTitle} {question.Id} {question.Question} {question.Answer}")">
+                        <td><strong>@(string.IsNullOrWhiteSpace(question.TopicTitle) ? "—" : question.TopicTitle)</strong><small class="d-block text-muted">@(string.IsNullOrWhiteSpace(question.ChapterTitle) ? question.ContentTitle : question.ChapterTitle)</small></td>
+                        <td><code>@question.Id</code></td><td class="ciit-notes-long-text">@question.Question</td><td class="ciit-notes-long-text">@question.Answer</td>
+                        <td>@((question.UpdatedAt ?? question.CreatedAt)?.ToString("dd MMM yyyy") ?? "—")</td>
+                    </tr>
+                }
+                </tbody>
+            </table></div>
+            <div class="ciit-notes-empty" data-content-empty="interview" hidden><i class="bi bi-chat-square-text"></i><h3>No matching interview questions</h3><p>Try another search or add an interview question.</p></div>
+        </div>
+
+        <div class="ciit-notes-tab-panel" role="tabpanel" data-content-panel="practice" hidden>
+            <div class="table-responsive"><table class="ciit-notes-table">
+                <thead><tr><th>Topic / Chapter</th><th>Program ID</th><th>Program</th><th>Description</th><th>Solutions</th><th>Updated</th></tr></thead>
+                <tbody>
+                @foreach (var program in ((ViewBag.PracticeImportModel as AdminPracticeProgramIndexDto)?.ActivePrograms ?? Array.Empty<AdminPracticeProgramDto>()).OrderBy(x => x.TopicTitle).ThenBy(x => x.ChapterTitle).ThenBy(x => x.Id))
+                {
+                    <tr data-content-row data-content-type="practice" data-search="@($"{program.TopicTitle} {program.ChapterTitle} {program.ContentTitle} {program.Id} {program.QuestionTitle} {program.QuestionDescription} {string.Join(" ", program.Answers.Select(a => a.Answer + " " + a.Description))}")">
+                        <td><strong>@(string.IsNullOrWhiteSpace(program.TopicTitle) ? "—" : program.TopicTitle)</strong><small class="d-block text-muted">@(string.IsNullOrWhiteSpace(program.ChapterTitle) ? program.ContentTitle : program.ChapterTitle)</small></td>
+                        <td><code>@program.Id</code></td><td>@program.QuestionTitle</td><td class="ciit-notes-long-text">@program.QuestionDescription</td><td>@program.Answers.Count</td>
+                        <td>@((program.UpdatedAt ?? program.CreatedAt)?.ToString("dd MMM yyyy") ?? "—")</td>
+                    </tr>
+                }
+                </tbody>
+            </table></div>
+            <div class="ciit-notes-empty" data-content-empty="practice" hidden><i class="bi bi-code-square"></i><h3>No matching practice programs</h3><p>Try another search or add a practice program.</p></div>
+        </div>
 
         <div id="notesSearchEmpty"
              class="ciit-notes-empty"
@@ -247,140 +274,74 @@
     <script>
         (() => {
             const searchInput = document.getElementById("notesSearch");
+            const count = document.getElementById("notesVisibleCount");
+            const tabs = [...document.querySelectorAll("[data-content-tab]")];
+            const panels = [...document.querySelectorAll("[data-content-panel]")];
             const topicRows = [...document.querySelectorAll("[data-topic-row]")];
             const chapterRows = [...document.querySelectorAll("[data-chapter-row]")];
-            const count = document.getElementById("notesVisibleCount");
-            const empty = document.getElementById("notesSearchEmpty");
+            const contentRows = [...document.querySelectorAll("[data-content-row]")];
             const expandedTopics = new Set();
+            let activeTab = "all";
+            const chaptersFor = id => chapterRows.filter(row => row.dataset.topicId === id);
 
-            const chaptersFor = topicId =>
-                chapterRows.filter(row => row.dataset.topicId === topicId);
-
-            const setExpanded = (topicId, expanded) => {
-                const topicRow = topicRows.find(row => row.dataset.topicId === topicId);
-                const toggle = topicRow?.querySelector("[data-notes-topic-toggle]");
-
-                if (!toggle) {
-                    return;
-                }
-
-                if (expanded && !searchInput?.value.trim()) {
-                    topicRows.forEach(otherRow => {
-                        const otherTopicId = otherRow.dataset.topicId;
-                        if (otherTopicId === topicId) {
-                            return;
-                        }
-
-                        const otherToggle = otherRow.querySelector("[data-notes-topic-toggle]");
-                        otherToggle?.setAttribute("aria-expanded", "false");
-                        otherRow.classList.remove("is-expanded");
-                        chaptersFor(otherTopicId).forEach(row => {
-                            row.hidden = true;
-                        });
-                        expandedTopics.delete(otherTopicId);
-                    });
-                }
-
-                toggle.setAttribute("aria-expanded", expanded ? "true" : "false");
-                topicRow.classList.toggle("is-expanded", expanded);
-
-                chaptersFor(topicId).forEach(row => {
-                    row.hidden = !expanded;
-                });
-
-                if (expanded) {
-                    expandedTopics.add(topicId);
-                } else {
-                    expandedTopics.delete(topicId);
-                }
-            };
-
-            topicRows.forEach(row => {
-                const toggle = row.querySelector("[data-notes-topic-toggle]");
-
-                toggle?.addEventListener("click", () => {
-                    const topicId = row.dataset.topicId;
-                    const expanded = toggle.getAttribute("aria-expanded") === "true";
-                    setExpanded(topicId, !expanded);
-                });
-            });
-
-            const refreshSearch = () => {
-                const query = searchInput.value.trim().toLowerCase();
-                let visibleTopics = 0;
-                let visibleChapters = 0;
-
-                if (!query && expandedTopics.size > 1) {
-                    const lastExpandedTopicId = Array.from(expandedTopics).at(-1);
-                    expandedTopics.clear();
-                    if (lastExpandedTopicId !== undefined) {
-                        expandedTopics.add(lastExpandedTopicId);
-                    }
-                }
-
-                topicRows.forEach(topicRow => {
-                    const topicId = topicRow.dataset.topicId;
-                    const topicMatches = (topicRow.dataset.search || "")
-                        .toLowerCase()
-                        .includes(query);
-                    const topicChapters = chaptersFor(topicId);
-                    const matchingChapters = topicChapters.filter(row =>
-                        (row.dataset.search || "").toLowerCase().includes(query));
-                    const topicVisible = !query || topicMatches || matchingChapters.length > 0;
-
-                    topicRow.hidden = !topicVisible;
-
-                    if (!topicVisible) {
-                        return;
-                    }
-
-                    visibleTopics++;
-
-                    if (!query) {
-                        topicChapters.forEach(row => {
-                            row.hidden = !expandedTopics.has(topicId);
-                        });
-
-                        if (expandedTopics.has(topicId)) {
-                            visibleChapters += topicChapters.length;
-                        }
-
-                        return;
-                    }
-
-                    const shouldShowAll = topicMatches;
-                    topicChapters.forEach(row => {
-                        const show = shouldShowAll ||
-                            (row.dataset.search || "").toLowerCase().includes(query);
-
+            const refresh = () => {
+                const query = (searchInput?.value || "").trim().toLowerCase();
+                let visibleNotes = 0, visibleInterviews = 0, visiblePrograms = 0;
+                topicRows.forEach(topic => {
+                    const id = topic.dataset.topicId;
+                    const topicMatches = (topic.dataset.search || "").toLowerCase().includes(query);
+                    const rows = chaptersFor(id);
+                    const matching = rows.filter(row => (row.dataset.search || "").toLowerCase().includes(query));
+                    const showTopic = !query || topicMatches || matching.length > 0;
+                    topic.hidden = !showTopic;
+                    rows.forEach(row => {
+                        const show = showTopic && (query ? topicMatches || (row.dataset.search || "").toLowerCase().includes(query) : expandedTopics.has(id));
                         row.hidden = !show;
-
-                        if (show) {
-                            visibleChapters++;
-                        }
+                        if (show) visibleNotes++;
                     });
-
-                    setExpanded(topicId, true);
-                });
-
-                if (count) {
-                    if (!query) {
-                        const totalChapters = chapterRows.length;
-                        count.textContent =
-                            `${topicRows.length} topic${topicRows.length === 1 ? "" : "s"} · ${totalChapters} chapter${totalChapters === 1 ? "" : "s"}`;
-                    } else {
-                        count.textContent =
-                            `${visibleTopics} topic${visibleTopics === 1 ? "" : "s"} · ${visibleChapters} chapter${visibleChapters === 1 ? "" : "s"}`;
+                    if (query && showTopic) {
+                        expandedTopics.add(id);
+                        topic.classList.add("is-expanded");
+                        topic.querySelector("[data-notes-topic-toggle]")?.setAttribute("aria-expanded", "true");
                     }
-                }
-
-                if (empty) {
-                    empty.hidden = visibleTopics !== 0;
-                }
+                });
+                contentRows.forEach(row => {
+                    const show = !query || (row.dataset.search || "").toLowerCase().includes(query);
+                    row.hidden = !show;
+                    if (show && row.dataset.contentType === "interview") visibleInterviews++;
+                    if (show && row.dataset.contentType === "practice") visiblePrograms++;
+                });
+                tabs.forEach(tab => {
+                    const selected = tab.dataset.contentTab === activeTab;
+                    tab.classList.toggle("is-active", selected);
+                    tab.setAttribute("aria-selected", selected ? "true" : "false");
+                });
+                panels.forEach(panel => {
+                    const selected = activeTab === "all" || panel.dataset.contentPanel === activeTab;
+                    panel.hidden = !selected;
+                    panel.classList.toggle("is-active", selected);
+                });
+                if (count) count.textContent = query
+                    ? `${visibleNotes} notes · ${visibleInterviews} interview questions · ${visiblePrograms} practice programs`
+                    : `${chapterRows.length} chapters · ${contentRows.filter(row => row.dataset.contentType === "interview").length} interview questions · ${contentRows.filter(row => row.dataset.contentType === "practice").length} practice programs`;
+                const notesEmpty = document.getElementById("notesSearchEmpty");
+                if (notesEmpty) notesEmpty.hidden = topicRows.some(row => !row.hidden) || chapterRows.some(row => !row.hidden);
+                ["interview", "practice"].forEach(type => {
+                    const empty = document.querySelector(`[data-content-empty="${type}"]`);
+                    if (empty) empty.hidden = contentRows.some(row => row.dataset.contentType === type && !row.hidden);
+                });
             };
 
-            searchInput?.addEventListener("input", refreshSearch);
-            searchInput?.addEventListener("search", refreshSearch);
+            tabs.forEach(tab => tab.addEventListener("click", () => { activeTab = tab.dataset.contentTab; refresh(); }));
+            topicRows.forEach(topic => topic.querySelector("[data-notes-topic-toggle]")?.addEventListener("click", () => {
+                const id = topic.dataset.topicId;
+                const expanded = expandedTopics.has(id);
+                if (expanded) expandedTopics.delete(id); else expandedTopics.add(id);
+                refresh();
+            }));
+            searchInput?.addEventListener("input", refresh);
+            searchInput?.addEventListener("search", refresh);
+            refresh();
         })();
     </script>
 }
