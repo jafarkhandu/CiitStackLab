@@ -1,5 +1,36 @@
 (function () {
     function initModernLearningPage() {
+        const sidebarToggle = document.querySelector('[data-learning-global-sidebar-toggle]');
+
+        if (sidebarToggle) {
+            const collapsedClass = 'ciit-learning-global-sidebar-collapsed';
+            const icon = sidebarToggle.querySelector('i');
+            const accessibleLabel = sidebarToggle.querySelector('.visually-hidden');
+
+            const syncSidebarToggle = function () {
+                const isCollapsed = document.body.classList.contains(collapsedClass);
+                const label = isCollapsed ? 'Show main sidebar' : 'Hide main sidebar';
+
+                sidebarToggle.setAttribute('aria-expanded', String(!isCollapsed));
+                sidebarToggle.setAttribute('aria-label', label);
+                sidebarToggle.title = label;
+
+                if (icon) {
+                    icon.className = isCollapsed ? 'bi bi-chevron-right' : 'bi bi-chevron-left';
+                }
+                if (accessibleLabel) {
+                    accessibleLabel.textContent = label;
+                }
+            };
+
+            sidebarToggle.addEventListener('click', function () {
+                document.body.classList.toggle(collapsedClass);
+                syncSidebarToggle();
+            });
+
+            syncSidebarToggle();
+        }
+
         const learningPage = document.querySelector('.ciit-learning-page');
         if (!learningPage) {
             return;
@@ -54,13 +85,8 @@
             notesPanel.appendChild(contentPanel);
         }
 
-        // The legacy learning-path sidebar is intentionally not moved into the modern Notes view.
-        // Its chapter accordion duplicates the Notes/Resources/Assessment experience and leaves
-        // legacy layout spacing behind. The modern page uses the global course navigation instead.
-        const chapterSidebar = document.querySelector('.ciit-learning-shell > .ciit-learning-sidebar');
-        if (chapterSidebar) {
-            chapterSidebar.remove();
-        }
+        // Keep the existing learning-path sidebar beside Notes. It is the primary
+        // chapter navigator and lists every topic/chapter from the current course model.
 
         const assessmentLink = document.querySelector('[data-learning-assessment-link]');
         const learningPathLink = document.querySelector('.ciit-course-global-nav a.active');
