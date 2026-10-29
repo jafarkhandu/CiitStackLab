@@ -338,3 +338,28 @@
         min-height: 62px;
     }
 }
+
+
+/* Chapter-linked interview and practice content modal */
+.ciit-notes-chapter-content-actions{display:flex;flex-wrap:wrap;gap:7px;margin-top:9px}
+.ciit-notes-content-open-btn{display:inline-flex;align-items:center;gap:6px;border:1px solid #d8e5ff;border-radius:8px;padding:6px 9px;color:#2459dc;background:#f4f8ff;font-size:11px;font-weight:750;cursor:pointer}
+.ciit-notes-content-open-btn:hover{background:#e8f0ff}
+.ciit-notes-content-open-btn--practice{border-color:#ccefe7;color:#078b76;background:#effbf8}
+.ciit-notes-content-open-btn--practice:hover{background:#e0f7f1}
+.ciit-notes-chapter-content-modal[hidden]{display:none!important}
+.ciit-notes-chapter-content-modal{position:fixed;inset:0;z-index:1100;display:grid;place-items:center;padding:24px;background:rgba(10,20,40,.58);backdrop-filter:blur(5px)}
+.ciit-notes-chapter-content-dialog{display:flex;flex-direction:column;width:min(960px,100%);max-height:min(82vh,900px);overflow:hidden;border:1px solid #dce6f5;border-radius:20px;background:#fff;box-shadow:0 28px 90px rgba(15,23,42,.25)}
+.ciit-notes-chapter-content-header{display:flex;align-items:flex-start;justify-content:space-between;gap:20px;padding:22px 24px 18px;border-bottom:1px solid #e6edf7}
+.ciit-notes-chapter-content-header h2{margin:4px 0 0;color:#142544;font-size:22px;font-weight:800}
+.ciit-notes-chapter-content-header p{margin:6px 0 0;color:#71819a;font-size:13px}
+.ciit-notes-chapter-content-close{display:grid;place-items:center;flex:0 0 auto;width:38px;height:38px;border:1px solid #e0e8f3;border-radius:10px;color:#64748b;background:#fff;cursor:pointer}
+.ciit-notes-chapter-content-tabs{display:flex;gap:8px;padding:12px 20px;border-bottom:1px solid #e6edf7;background:#f8faff}
+.ciit-notes-chapter-content-tabs button{border:1px solid #dce6f5;border-radius:10px;padding:10px 14px;color:#53637c;background:#fff;font:inherit;font-size:13px;font-weight:750;cursor:pointer}
+.ciit-notes-chapter-content-tabs button.is-active{border-color:#2459dc;color:#fff;background:#2459dc}
+.ciit-notes-chapter-content-body{min-height:180px;overflow:auto;padding:18px 20px 22px}
+.ciit-notes-chapter-content-body [hidden]{display:none!important}
+.ciit-notes-chapter-content-empty{padding:36px 16px;border:1px dashed #d8e2f0;border-radius:12px;color:#71819a;text-align:center}
+.ciit-notes-modal-record{display:block;margin:0 0 12px}
+.ciit-notes-modal-record[hidden]{display:block!important}
+body.ciit-notes-chapter-content-open{overflow:hidden}
+@media(max-width:700px){.ciit-notes-chapter-content-modal{padding:10px}.ciit-notes-chapter-content-dialog{max-height:92vh;border-radius:15px}.ciit-notes-chapter-content-header{padding:16px}.ciit-notes-chapter-content-header h2{font-size:18px}.ciit-notes-chapter-content-tabs{padding:10px}.ciit-notes-chapter-content-tabs button{padding:9px 10px;font-size:12px}.ciit-notes-chapter-content-body{padding:12px}}
