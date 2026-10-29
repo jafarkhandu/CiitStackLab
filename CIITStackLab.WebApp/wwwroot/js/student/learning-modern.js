@@ -71,7 +71,7 @@
         }
 
         const assessmentLink = document.querySelector('[data-learning-assessment-link]');
-        const learningPathLink = document.querySelector('[data-learning-path-link]');
+        const learningPathLink = document.querySelector('.ciit-course-global-nav a.active');
         const notesButton = document.querySelector('[data-learning-page="notes"]');
 
         const showAssessment = function (updateHash) {
