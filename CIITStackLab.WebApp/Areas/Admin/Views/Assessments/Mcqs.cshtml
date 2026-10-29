@@ -76,7 +76,7 @@
                     .GroupBy(x => new { x.TopicId, x.TopicTitle })
                     .OrderBy(x => x.Key.TopicTitle))
                 {
-                    var topicQuestions = topicGroup.OrderByDescending(x => x.Id).ToList();
+                    var topicQuestions = topicGroup.OrderBy(x => x.Id).ToList();
                     var topicName = string.IsNullOrWhiteSpace(topicGroup.Key.TopicTitle) ? "Unassigned topic" : topicGroup.Key.TopicTitle;
                     <details class="ciit-assessment-tree-topic">
                         <summary>
@@ -84,12 +84,16 @@
                             <span class="ciit-assessment-tree-count">@topicQuestions.Count @(topicQuestions.Count == 1 ? "MCQ" : "MCQs")</span>
                         </summary>
                         <div class="ciit-assessment-question-list">
+                            @{
+                                var questionNumber = 0;
+                            }
                             @foreach (var mcq in topicQuestions)
                             {
+                                questionNumber++;
                                 <article class="ciit-assessment-question-item">
                                     <div class="ciit-assessment-question-copy">
-                                        <strong>@mcq.Question</strong>
-                                        <span>#@mcq.Id · Correct option @mcq.CorrectOptionNumber</span>
+                                        <strong>Q@questionNumber. @mcq.Question</strong>
+                                        <span>Correct option @mcq.CorrectOptionNumber</span>
                                     </div>
                                     <div class="ciit-mcq-actions">
                                         <a asp-area="Admin" asp-controller="Assessments" asp-action="Mcqs" asp-route-editId="@mcq.Id" title="Edit MCQ" aria-label="Edit MCQ @mcq.Id"><i class="bi bi-pencil-square"></i></a>
