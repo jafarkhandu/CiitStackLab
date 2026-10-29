@@ -77,12 +77,6 @@
             </div>
             <span id="notesVisibleCount" class="ciit-notes-count">@Model.Count chapters</span>
         </div>
-        <div class="ciit-notes-tabs" role="tablist" aria-label="Learning content tables">
-            <button type="button" class="ciit-notes-tab is-active" role="tab" aria-selected="true" data-content-tab="all">All results</button>
-            <button type="button" class="ciit-notes-tab" role="tab" aria-selected="false" data-content-tab="notes">Notes</button>
-            <button type="button" class="ciit-notes-tab" role="tab" aria-selected="false" data-content-tab="interview">Interview Questions</button>
-            <button type="button" class="ciit-notes-tab" role="tab" aria-selected="false" data-content-tab="practice">Practice Programs</button>
-        </div>
         <div class="ciit-notes-tab-panel is-active" role="tabpanel" data-content-panel="notes">
         <div class="table-responsive">
             <table class="ciit-notes-table">
@@ -426,7 +420,7 @@
             const chapterContentSubtitle = document.getElementById("chapterLearningContentSubtitle");
             const chapterContentTabs = [...document.querySelectorAll("[data-chapter-content-tab]")];
             const chapterContentPanels = [...document.querySelectorAll("[data-chapter-content-panel]")];
-            let activeTab = "all";
+            let activeTab = "notes";
             let expandedNotesTopicId = null;
             let lastQuery = null;
 
