@@ -1,5 +1,20 @@
 (function () {
+    function ensureReferenceStyles() {
+        const styleId = 'ciit-learn-reference-styles';
+        if (document.getElementById(styleId)) {
+            return;
+        }
+
+        const stylesheet = document.createElement('link');
+        stylesheet.id = styleId;
+        stylesheet.rel = 'stylesheet';
+        stylesheet.href = '/css/student/learn-reference.css?v=1';
+        document.head.appendChild(stylesheet);
+    }
+
     function initModernLearningPage() {
+        ensureReferenceStyles();
+
         const sidebarToggle = document.querySelector('[data-learning-global-sidebar-toggle]');
 
         if (sidebarToggle) {
