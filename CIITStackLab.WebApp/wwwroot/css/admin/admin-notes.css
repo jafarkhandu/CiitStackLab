@@ -135,3 +135,86 @@
     .ciit-notes-hub-card { padding: 20px; }
     .ciit-notes-hub-card h2 { font-size: 18px; }
 }
+
+
+/* Unified learning-content tables */
+.ciit-notes-toolbar--combined {
+    position: sticky;
+    top: 0;
+    z-index: 5;
+    background: var(--ciit-admin-surface, #fff);
+}
+
+.ciit-notes-tabs {
+    position: sticky;
+    top: 76px;
+    z-index: 4;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    padding: 12px 16px;
+    border-bottom: 1px solid #e2eaf6;
+    background: rgba(255, 255, 255, 0.96);
+    backdrop-filter: blur(12px);
+}
+
+.ciit-notes-tab {
+    appearance: none;
+    border: 1px solid #dce6f5;
+    border-radius: 10px;
+    padding: 10px 15px;
+    color: #52627b;
+    background: #fff;
+    font: inherit;
+    font-weight: 650;
+    cursor: pointer;
+    transition: background-color .18s ease, color .18s ease, border-color .18s ease;
+}
+
+.ciit-notes-tab:hover {
+    border-color: #9dbaff;
+    color: #2459dc;
+}
+
+.ciit-notes-tab.is-active {
+    border-color: #2459dc;
+    color: #fff;
+    background: #2459dc;
+    box-shadow: 0 5px 14px rgba(36, 89, 220, .16);
+}
+
+.ciit-notes-tab-panel[hidden] {
+    display: none !important;
+}
+
+.ciit-notes-tab-panel .table-responsive {
+    max-width: 100%;
+}
+
+.ciit-notes-long-text {
+    min-width: 220px;
+    max-width: 440px;
+    white-space: pre-wrap;
+    overflow-wrap: anywhere;
+}
+
+.ciit-notes-tab-panel [data-content-empty] {
+    padding: 28px 18px;
+}
+
+@media (max-width: 700px) {
+    .ciit-notes-tabs {
+        top: 64px;
+        gap: 6px;
+        padding: 10px;
+    }
+
+    .ciit-notes-tab {
+        padding: 8px 10px;
+        font-size: .875rem;
+    }
+
+    .ciit-notes-long-text {
+        min-width: 180px;
+    }
+}
