@@ -585,7 +585,7 @@ public sealed class AssessmentsController : Controller
         }
         _interviewQuestionImportService.CachePreview(preview, userId);
         TempData["OpenAdminInterviewImportModal"] = "import";
-        return RedirectToAction("Index", "Notes", new { area = "Admin" }, new { previewToken = preview.PreviewToken });
+        return RedirectToAction("Index", "Notes", new { area = "Admin", previewToken = preview.PreviewToken });
     }
 
     [HttpPost]
@@ -817,7 +817,7 @@ public sealed class AssessmentsController : Controller
 
         _practiceProgramImportService.CachePreview(preview, userId);
         TempData["OpenPracticeProgramImportModal"] = "import";
-        return RedirectToAction("Index", "Notes", new { area = "Admin" }, new { previewToken = preview.PreviewToken });
+        return RedirectToAction("Index", "Notes", new { area = "Admin", previewToken = preview.PreviewToken });
     }
 
     [HttpPost]
