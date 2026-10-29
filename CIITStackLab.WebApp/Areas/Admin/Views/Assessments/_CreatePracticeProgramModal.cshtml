@@ -15,7 +15,7 @@
                 </div>
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
-            <form asp-area="Admin" asp-controller="Assessments" asp-action="CreatePracticeProgram" method="post" class="ciit-assessment-modal-form">
+            <form asp-area="Admin" asp-controller="Notes" asp-action="CreatePracticeProgram" method="post" class="ciit-assessment-modal-form">
                 @Html.AntiForgeryToken()
                 <div class="modal-body">
                     <div asp-validation-summary="ModelOnly" class="text-danger"></div>
