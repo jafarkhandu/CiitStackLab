@@ -56,7 +56,7 @@
                 <button type="button" class="ciit-notes-hub-action" data-bs-toggle="modal" data-bs-target="#createInterviewQuestionModal">
                     <i class="bi bi-plus-lg"></i> Add question
                 </button>
-                <a asp-area="Admin" asp-controller="Assessments" asp-action="InterviewQuestions" class="ciit-notes-hub-secondary">Open analyzer <i class="bi bi-arrow-up-right"></i></a>
+                <a asp-area="Admin" asp-controller="Assessments" asp-action="InterviewQuestions" class="ciit-notes-hub-secondary" data-bs-toggle="modal" data-bs-target="#interviewQuestionImportModal">Open analyzer <i class="bi bi-arrow-up-right"></i></a>
             </div>
         </article>
         <article class="ciit-notes-hub-card ciit-notes-hub-card--practice">
@@ -68,7 +68,7 @@
                 <button type="button" class="ciit-notes-hub-action" data-bs-toggle="modal" data-bs-target="#createPracticeProgramModal">
                     <i class="bi bi-plus-lg"></i> Add program
                 </button>
-                <a asp-area="Admin" asp-controller="Assessments" asp-action="PracticePrograms" class="ciit-notes-hub-secondary">Open analyzer <i class="bi bi-arrow-up-right"></i></a>
+                <a asp-area="Admin" asp-controller="Assessments" asp-action="PracticePrograms" class="ciit-notes-hub-secondary" data-bs-toggle="modal" data-bs-target="#practiceProgramImportModal">Open analyzer <i class="bi bi-arrow-up-right"></i></a>
             </div>
         </article>
     </section>
@@ -226,15 +226,24 @@
 
 @await Html.PartialAsync("~/Areas/Admin/Views/Assessments/_CreateInterviewQuestionModal.cshtml", ViewBag.InterviewInput as AdminInterviewQuestionInputDto ?? new AdminInterviewQuestionInputDto())
 @await Html.PartialAsync("~/Areas/Admin/Views/Assessments/_CreatePracticeProgramModal.cshtml", ViewBag.PracticeInput as AdminPracticeProgramInputDto ?? new AdminPracticeProgramInputDto())
+@await Html.PartialAsync("~/Areas/Admin/Views/Assessments/_InterviewQuestionImportModal.cshtml", ViewBag.InterviewImportModel as AdminInterviewQuestionIndexDto ?? new AdminInterviewQuestionIndexDto())
+@await Html.PartialAsync("~/Areas/Admin/Views/Assessments/_PracticeProgramImportModal.cshtml", ViewBag.PracticeImportModel as AdminPracticeProgramIndexDto ?? new AdminPracticeProgramIndexDto())
 
 @section Styles {
     <link rel="stylesheet" href="~/css/admin/admin-content-modal.css" asp-append-version="true" />
     <link rel="stylesheet" href="~/css/admin/admin-notes.css" asp-append-version="true" />
     <link rel="stylesheet" href="~/css/admin-assessment-detail.css" asp-append-version="true" />
+    <link rel="stylesheet" href="~/css/admin-mcqs.css" asp-append-version="true" />
+    <link rel="stylesheet" href="~/css/admin-practice.css" asp-append-version="true" />
+    <link rel="stylesheet" href="~/css/admin-interview-import.css" asp-append-version="true" />
+    <link rel="stylesheet" href="~/css/admin-mcq-import.css" asp-append-version="true" />
+    <link rel="stylesheet" href="~/css/admin-practice-import.css" asp-append-version="true" />
 }
 
 @section Scripts {
     <script src="~/js/admin/admin-content-modal.js" asp-append-version="true"></script>
+    <script src="~/js/admin-interview-import.js" asp-append-version="true"></script>
+    <script src="~/js/admin-practice-import.js" asp-append-version="true"></script>
     <script>
         (() => {
             const searchInput = document.getElementById("notesSearch");
