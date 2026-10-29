@@ -222,12 +222,25 @@
                            asp-controller="Courses" asp-action="Learn" asp-route-id="@courseId">
                             <i class="bi bi-journal-bookmark"></i><span>Learning Path</span>
                         </a>
+                    }
+                    @if (!string.IsNullOrWhiteSpace(courseId))
+                    {
                         @if (isLearnPage)
                         {
                             <a href="@Context.Request.Path@Context.Request.QueryString#lesson-assessment"
                                class="ciit-learning-assessment-sidebar-link"
                                data-learning-assessment-link>
-                                <i class="bi bi-patch-check"></i><span>Assessments</span>
+                                <i class="bi bi-patch-check"></i><span>Practice Assessment</span>
+                            </a>
+                        }
+                        else
+                        {
+                            <a asp-controller="Courses"
+                               asp-action="Learn"
+                               asp-route-id="@courseId"
+                               asp-fragment="lesson-assessment"
+                               class="ciit-learning-assessment-sidebar-link">
+                                <i class="bi bi-patch-check"></i><span>Practice Assessment</span>
                             </a>
                         }
                     }
