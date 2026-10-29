@@ -333,7 +333,7 @@
                         (activeTab === "all" && (anyVisibleInterview || anyVisiblePractice));
                 }
                 const notesNoData = document.querySelector("[data-notes-no-data]");
-                if (notesNoData) notesNoData.hidden = @Model.Count > 0 || activeTab === "interview" || activeTab === "practice";
+                if (notesNoData) notesNoData.hidden = @Model.Count > 0 || activeTab === "interview" || activeTab === "practice" || (activeTab === "all" && (anyVisibleInterview || anyVisiblePractice));
                 ["interview", "practice"].forEach(type => {
                     const empty = document.querySelector(`[data-content-empty="${type}"]`);
                     if (empty) empty.hidden = contentRows.some(row => row.dataset.contentType === type && !row.hidden) ||
