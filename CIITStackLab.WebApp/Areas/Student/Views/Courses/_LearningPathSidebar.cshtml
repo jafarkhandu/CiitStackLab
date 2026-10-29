@@ -63,13 +63,13 @@
 
                 @if (isCurrentTopic)
                 {
-                    @if (topic.Chapters.Count == 0)
+                    if (topic.Chapters.Count == 0)
                     {
                         <p class="ciit-learning-topic-empty">No chapters are available for this topic yet.</p>
                     }
                     else
                     {
-                        @for (var chapterIndex = 0; chapterIndex < topic.Chapters.Count; chapterIndex++)
+                        for (var chapterIndex = 0; chapterIndex < topic.Chapters.Count; chapterIndex++)
                         {
                             var chapter = topic.Chapters[chapterIndex];
                             var chapterIsCurrent = selectedChapterId == chapter.Id
