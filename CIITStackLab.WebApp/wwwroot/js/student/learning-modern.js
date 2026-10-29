@@ -8,7 +8,7 @@
         const stylesheet = document.createElement('link');
         stylesheet.id = styleId;
         stylesheet.rel = 'stylesheet';
-        stylesheet.href = '/css/student/learn-reference.css?v=1';
+        stylesheet.href = '/css/student/learn-reference.css?v=f50c37d';
         document.head.appendChild(stylesheet);
     }
 
