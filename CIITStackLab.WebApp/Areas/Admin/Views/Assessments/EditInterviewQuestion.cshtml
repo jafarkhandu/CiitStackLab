@@ -1,21 +1,32 @@
 @model CIITStackLab.Application.DTOs.AdminInterviewQuestionInputDto
 
 @{
+    var isModal = ViewBag.IsModal is bool modal && modal;
+    Layout = isModal ? null : Layout;
     ViewData["Title"] = "Edit Interview Question";
     var chapters = ViewBag.InterviewQuestionChapters as IEnumerable<CIITStackLab.Application.DTOs.AdminAssessmentChapterLookupDto>
         ?? Array.Empty<CIITStackLab.Application.DTOs.AdminAssessmentChapterLookupDto>();
 }
 
+@if (isModal)
+{
+    <link rel="stylesheet" href="~/css/admin-mcqs.css" asp-append-version="true" />
+    <link rel="stylesheet" href="~/css/admin-assessment-detail.css" asp-append-version="true" />
+}
 @section Styles { <link rel="stylesheet" href="~/css/admin-mcqs.css" asp-append-version="true" /> 
     <link rel="stylesheet" href="~/css/admin-assessment-detail.css" asp-append-version="true" />
 }
 
 <section class="ciit-mcq-form-page">
-    <div class="ciit-assessment-standalone-nav">
-        <a asp-area="Admin" asp-controller="Assessments" asp-action="Index" class="ciit-assessment-back-link"><i class="bi bi-arrow-left"></i><span>Back to Assessments</span></a>
-    </div>
+    @if (!isModal)
+    {
+        <div class="ciit-assessment-standalone-nav">
+            <a asp-area="Admin" asp-controller="Assessments" asp-action="Index" class="ciit-assessment-back-link"><i class="bi bi-arrow-left"></i><span>Back to Assessments</span></a>
+        </div>
+    }
     <div class="ciit-mcq-header"><div><span class="ciit-admin-eyebrow">Assessment</span><h1>Edit Interview Question</h1><p>Update the interview question and its Notes chapter association.</p></div></div>
-    <form asp-area="Admin" asp-controller="Assessments" asp-action="EditInterviewQuestion" method="post" class="ciit-mcq-form">
+    <form asp-area="Admin" asp-controller="Assessments" asp-action="EditInterviewQuestion" asp-route-modal="@isModal" method="post" class="ciit-mcq-form">
+        <input type="hidden" name="modal" value="@isModal.ToString().ToLowerInvariant()" />
         @Html.AntiForgeryToken()
         <div asp-validation-summary="ModelOnly" class="ciit-mcq-validation"></div>
         <label>Notes Chapter<select asp-for="NoteId">
