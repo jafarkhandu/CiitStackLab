@@ -42,7 +42,7 @@ public sealed class AssessmentsController : Controller
     }
 
     [HttpGet]
-    public IActionResult Index() => View();
+    public IActionResult Index() => RedirectToAction(nameof(Mcqs));
 
     [HttpGet]
     public async Task<IActionResult> Mcqs(
