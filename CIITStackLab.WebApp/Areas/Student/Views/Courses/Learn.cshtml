@@ -25,6 +25,13 @@
         ? Model.Topics.FirstOrDefault(topic => topic.Id == Model.CurrentTopicId.Value)
         : null;
     var currentTopic = selectedTopic ?? currentItem?.Topic;
+    var currentTopicIndex = currentTopic is not null
+        ? Model.Topics.ToList().FindIndex(topic => topic.Id == currentTopic.Id)
+        : -1;
+    var currentTopicNumber = currentTopicIndex >= 0 ? currentTopicIndex + 1 : 1;
+    var topicPositionProgress = Model.Topics.Count == 0
+        ? 0
+        : (int)Math.Round(currentTopicNumber * 100d / Model.Topics.Count, MidpointRounding.AwayFromZero);
     var currentContent = selectedTopic is not null && selectedTopic.Contents.Count == 0
         ? null
         : currentItem?.Content;
@@ -85,10 +92,7 @@
                 .Concat(currentTopic.Chapters.SelectMany(chapter => chapter.Questions))
                 .DistinctBy(question => question.Id)
                 .ToList();
-    var previousItem = currentIndex > 0 ? orderedContents[currentIndex - 1] : null;
-    var nextItem = currentIndex < orderedContents.Count - 1
-        ? orderedContents.ElementAtOrDefault(currentIndex + 1)
-        : null;
+
 
 
 
@@ -328,78 +332,30 @@ else if (currentContent is null && currentTopic is not null)
                     <button type="button" data-learning-page="assessment">3. Assessments</button>
                 </div>
                 <article class="ciit-learning-main-card">
-                    <a asp-action="CourseEnvironment"
-                       asp-route-id="@Model.Id"
-                       class="ciit-learning-back-button">
-                        <i class="bi bi-arrow-left" aria-hidden="true"></i>
-                        Back to Start Learning
-                    </a>
+                                        <nav class="ciit-learning-breadcrumb" aria-label="Breadcrumb">
+                        <a asp-action="CourseEnvironment" asp-route-id="@Model.Id">Learning Path</a>
+                        <span aria-hidden="true">/</span>
+                        <span>@(currentTopic is null ? "Chapters" : $"{currentTopic.Title} Chapters")</span>
+                        <span aria-hidden="true">/</span>
+                        <span aria-current="page">@CIITStackLab.WebApp.Helpers.LearningPagePresentation.FormatLearningTitle(currentChapter?.Title ?? currentTopic?.Title ?? currentContent?.Title)</span>
+                    </nav>
 
                     <div class="ciit-learning-lesson-header">
                         <div class="ciit-learning-lesson-heading">
                             <span class="ciit-learning-eyebrow">
                                 TOPIC @(Math.Max(0, Model.Topics.ToList().FindIndex(topic => topic.Id == currentTopic.Id)) + 1) OF @Math.Max(Model.Topics.Count, 1)
                             </span>
-                            <h2 class="ciit-learning-chapter-title">@CIITStackLab.WebApp.Helpers.LearningPagePresentation.FormatLearningTitle(currentTopic.Title)</h2>
+                            <h2 class="ciit-learning-chapter-title">@CIITStackLab.WebApp.Helpers.LearningPagePresentation.FormatLearningTitle(currentChapter?.Title ?? currentTopic.Title)</h2>
                         </div>
                     </div>
 
-                    <div class="ciit-learning-lesson-status">
-                        <div class="ciit-learning-lesson-status-copy">
-                            <span class="ciit-learning-lesson-status-icon @(isCurrentTopicCompleted ? "is-completed" : "")">
-                                <i class="bi @(isCurrentTopicCompleted ? "bi-check2-circle" : "bi-journal-bookmark")"></i>
-                            </span>
-                            <div>
-                                <strong>@(isCurrentTopicCompleted ? "Topic completed" : "Topic learning material")</strong>
-                                <small>@(currentTopic.Contents.Count > 0 ? "Review the notes, lesson content and assessments for this topic." : "Review the notes and assessments available for this topic.")</small>
-                            </div>
-                        </div>
-                        @if (isCurrentTopicCompleted)
-                        {
-                            <span class="ciit-learning-completed-pill"><i class="bi bi-check-lg"></i> Completed</span>
-                        }
-                        @if (User.IsInRole("Student") && learningProgress is not null && currentTopic is not null)
-                        {
-                            var topicChapters = currentTopic.Chapters.OrderBy(chapter => chapter.SortOrder).ThenBy(chapter => chapter.Id).ToList();
-                            var overviewChapter = currentChapter ?? topicChapters.FirstOrDefault();
-                            var isFinalChapter = topicChapters.Count <= 1
-                                || (overviewChapter is not null && topicChapters[^1].Id == overviewChapter.Id);
-
-                            @if (overviewChapter is not null && !isFinalChapter)
-                            {
-                                var isOverviewChapterCompleted = overviewChapter.IsCompleted;
-                                @if (isOverviewChapterCompleted)
-                                {
-                                    <span class="ciit-chapter-completed-badge mt-3" role="status">
-                                        <i class="bi bi-check-circle-fill" aria-hidden="true"></i> Completed
-                                    </span>
-                                }
-                                else
-                                {
-                                    <form asp-route="CompleteCourseChapter"
-                                          asp-route-id="@Model.Id" asp-route-topicId="@currentTopic.Id"
-                                          asp-route-chapterId="@overviewChapter.Id" method="post" class="mt-3">
-                                        @Html.AntiForgeryToken()
-                                        <button type="submit" class="ciit-topic-completion-button">
-                                            <i class="bi bi-check2-circle" aria-hidden="true"></i>
-                                            <span>Complete Chapter</span>
-                                            <i class="bi bi-arrow-right ms-auto" aria-hidden="true"></i>
-                                        </button>
-                                    </form>
-                                }
-                            }
-                            else
-                            {
-                                <form asp-controller="Courses" asp-action="CompleteTopic" asp-route-id="@Model.Id" asp-route-topicId="@currentTopic.Id" method="post" class="mt-3">
-                                    @Html.AntiForgeryToken()
-                                    <button type="submit" class="ciit-topic-completion-button">
-                                        <i class="bi bi-calendar2-check" aria-hidden="true"></i>
-                                        <span>Apply for Examination</span>
-                                        <i class="bi bi-arrow-up-right ms-auto" aria-hidden="true"></i>
-                                    </button>
-                                </form>
-                            }
-                        }
+                    <div class="ciit-learning-topic-step-progress"
+                         role="progressbar"
+                         aria-label="Topic position in course"
+                         aria-valuenow="@topicPositionProgress"
+                         aria-valuemin="0"
+                         aria-valuemax="100">
+                        <span style="width: @topicPositionProgress%"></span>
                     </div>
 
                     <section class="ciit-learning-resource ciit-learning-notes-panel" data-learning-panel-content="notes">
@@ -593,6 +549,8 @@ else if (currentContent is null && currentTopic is not null)
                         }
                     </section>
                 </article>
+
+                <partial name="_LearningChapterActions" model="Model" />
             </main>
         </div>
     </section>
@@ -653,12 +611,13 @@ else
                     <button type="button" data-learning-page="assessment">3. Assessments</button>
                 </div>
                 <article class="ciit-learning-main-card">
-                    <a asp-action="CourseEnvironment"
-                       asp-route-id="@Model.Id"
-                       class="ciit-learning-back-button">
-                        <i class="bi bi-arrow-left" aria-hidden="true"></i>
-                        Back to Start Learning
-                    </a>
+                                        <nav class="ciit-learning-breadcrumb" aria-label="Breadcrumb">
+                        <a asp-action="CourseEnvironment" asp-route-id="@Model.Id">Learning Path</a>
+                        <span aria-hidden="true">/</span>
+                        <span>@(currentTopic is null ? "Chapters" : $"{currentTopic.Title} Chapters")</span>
+                        <span aria-hidden="true">/</span>
+                        <span aria-current="page">@CIITStackLab.WebApp.Helpers.LearningPagePresentation.FormatLearningTitle(currentChapter?.Title ?? currentTopic?.Title ?? currentContent?.Title)</span>
+                    </nav>
                     <div class="ciit-learning-lesson-header">
                         <div class="ciit-learning-lesson-heading">
                             <span class="ciit-learning-eyebrow">
@@ -667,91 +626,22 @@ else
                             <h2 class="ciit-learning-chapter-title">@CIITStackLab.WebApp.Helpers.LearningPagePresentation.FormatLearningTitle(currentChapter?.Title ?? currentTopic?.Title ?? currentContent?.Title)</h2>
                         </div>
 
-                        <div class="ciit-learning-lesson-actions">
-                            @if (previousItem is not null)
-                            {
-                                <a asp-action="Learn"
-                                   asp-route-id="@Model.Id"
-                                   asp-route-contentId="@previousItem.Content.Id"
-                                   class="btn btn-outline-secondary">
-                                    <i class="bi bi-chevron-left"></i> Previous
-                                </a>
-                            }
-
-                            @if (nextItem is not null)
-                            {
-                                <a asp-action="Learn"
-                                   asp-route-id="@Model.Id"
-                                   asp-route-contentId="@nextItem.Content.Id"
-                                   class="btn btn-primary">
-                                    Next <i class="bi bi-chevron-right"></i>
-                                </a>
-                            }
-                        </div>
                     </div>
 
-                    @if (User.IsInRole("Student") && learningProgress is not null && currentTopic is not null)
+                    <div class="ciit-learning-topic-step-progress"
+                         role="progressbar"
+                         aria-label="Topic position in course"
+                         aria-valuenow="@topicPositionProgress"
+                         aria-valuemin="0"
+                         aria-valuemax="100">
+                        <span style="width: @topicPositionProgress%"></span>
+                    </div>
+
+                    @if (TempData["LearningProgressMessage"] is string progressMessage)
                     {
-                        var topicChapters = currentTopic.Chapters.OrderBy(chapter => chapter.SortOrder).ThenBy(chapter => chapter.Id).ToList();
-                        var isFinalChapter = topicChapters.Count <= 1
-                            || (currentChapter is not null && topicChapters[^1].Id == currentChapter.Id);
-                        <div class="ciit-learning-lesson-status">
-                            <div class="ciit-learning-lesson-status-copy">
-                                <span class="ciit-learning-lesson-status-icon">
-                                    <i class="bi @(isFinalChapter ? "bi-calendar2-check" : "bi-check2-circle")"></i>
-                                </span>
-                                <div>
-                                    <strong>@(isFinalChapter ? "Apply for Examination" : "Complete Chapter")</strong>
-                                    <small>@(isFinalChapter ? "Apply for this topic's examination after completing the final chapter." : "Mark this chapter complete and continue to the next chapter.")</small>
-                                </div>
-                            </div>
-
-                            @if (isFinalChapter)
-                            {
-                                <form asp-controller="Courses"
-                                      asp-action="CompleteTopic"
-                                      asp-route-id="@Model.Id"
-                                      asp-route-topicId="@currentTopic.Id"
-                                      method="post"
-                                      class="ciit-learning-completion-form">
-                                    @Html.AntiForgeryToken()
-                                    <button type="submit" class="btn btn-primary">
-                                        <i class="bi bi-arrow-right-circle-fill me-2"></i>Apply for Examination
-                                    </button>
-                                </form>
-                            }
-                            else if (currentChapter is not null)
-                            {
-                                var isChapterCompleted = currentChapter.IsCompleted;
-                                @if (isChapterCompleted)
-                                {
-                                    <span class="ciit-chapter-completed-badge" role="status">
-                                        <i class="bi bi-check-circle-fill" aria-hidden="true"></i> Completed
-                                    </span>
-                                }
-                                else
-                                {
-                                    <form asp-route="CompleteCourseChapter"
-                                          asp-route-id="@Model.Id"
-                                          asp-route-topicId="@currentTopic.Id"
-                                          asp-route-chapterId="@currentChapter.Id"
-                                          method="post"
-                                          class="ciit-learning-completion-form">
-                                        @Html.AntiForgeryToken()
-                                        <button type="submit" class="btn btn-primary">
-                                            <i class="bi bi-check2-circle me-2"></i>Complete Chapter
-                                        </button>
-                                    </form>
-                                }
-                            }
+                        <div class="alert alert-success ciit-learning-progress-alert" role="status">
+                            <i class="bi bi-check-circle-fill me-2"></i>@progressMessage
                         </div>
-
-                        @if (TempData["LearningProgressMessage"] is string progressMessage)
-                        {
-                            <div class="alert alert-success ciit-learning-progress-alert" role="status">
-                                <i class="bi bi-check-circle-fill me-2"></i>@progressMessage
-                            </div>
-                        }
                     }
 
                     <section class="ciit-learning-resource ciit-learning-notes-panel" data-learning-panel-content="notes">
@@ -1015,6 +905,8 @@ else
                         }
                     </section>
                 </article>
+
+                <partial name="_LearningChapterActions" model="Model" />
             </main>
         </div>
     </section>
