@@ -866,6 +866,7 @@ else
                             </div>
 
                             <a href="@CIITStackLab.WebApp.Helpers.LearningPagePresentation.ResolveResourceUrl(currentContent.Slides, "slides")"
+                               data-slide-file-url="@Url.Action("SlideFile", "Notes", new { area = "Student", topicId = currentTopic?.Id, chapterId = currentChapter?.Id, contentId = currentContent.Id })"
                                target="_blank"
                                rel="noopener noreferrer"
                                class="ciit-learning-open-resource">
