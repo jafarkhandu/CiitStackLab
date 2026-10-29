@@ -86,7 +86,7 @@ public sealed class McqImportService : IMcqImportService
     }
 
     public async Task<McqImportPreviewDto> PreviewAsync(
-        int noteId,
+        int topicId,
         string fileName,
         Stream fileStream,
         string userId,
@@ -103,7 +103,7 @@ public sealed class McqImportService : IMcqImportService
 
         var preview = new McqImportPreviewDto
         {
-            NoteId = noteId,
+            TopicId = topicId,
             FileName = Path.GetFileName(fileName)
         };
 
@@ -113,37 +113,33 @@ public sealed class McqImportService : IMcqImportService
             return preview;
         }
 
-        if (noteId <= 0)
+        if (topicId <= 0)
         {
-            preview.FileErrors.Add("Select an active Notes chapter before uploading the MCQ workbook.");
+            preview.FileErrors.Add("Select an active topic before uploading the MCQ workbook.");
             return preview;
         }
 
         await ReportProgressAsync(
-            "Checking that the selected Notes chapter is active...");
+            "Checking that the selected topic is active...");
 
-        var chapter = await _dbContext.Lessons
+        var topic = await _dbContext.Topics
             .AsNoTracking()
-            .Where(note => note.Id == noteId && note.Flag == 0 && note.TopicId.HasValue && note.Topic.Flag == 0)
-            .Select(note => new
+            .Where(item => item.Id == topicId && item.Flag == 0)
+            .Select(item => new
             {
-                note.Id,
-                TopicId = note.TopicId!.Value,
-                TopicTitle = note.Topic.Title,
-                ChapterId = note.Id.ToString(),
-                ChapterTitle = note.Title
+                item.Id,
+                item.Title
             })
             .SingleOrDefaultAsync(cancellationToken);
 
-        if (chapter is null)
+        if (topic is null)
         {
-            preview.FileErrors.Add("The selected Notes chapter is no longer active. Refresh the page and select another chapter.");
+            preview.FileErrors.Add("The selected topic is no longer active. Refresh the page and select another topic.");
             return preview;
         }
 
-        preview.TopicId = chapter.TopicId;
-        preview.TopicLabel = chapter.TopicTitle;
-        preview.ChapterLabel = $"{chapter.TopicTitle} / {chapter.ChapterId} — {chapter.ChapterTitle}";
+        preview.TopicId = topic.Id;
+        preview.TopicLabel = topic.Title;
 
         var extension = Path.GetExtension(fileName);
         if (!extension.Equals(".xlsx", StringComparison.OrdinalIgnoreCase))
@@ -173,16 +169,20 @@ public sealed class McqImportService : IMcqImportService
         MarkDuplicatesWithinUpload(preview.Questions);
 
         await ReportProgressAsync(
-            "Checking the selected chapter for duplicate questions...");
+            "Checking the selected topic for duplicate questions...");
 
         var existingQuestions = await _dbContext.ContentQuestions
             .AsNoTracking()
-            .Where(question =>
-                question.NoteId == noteId
+             .Where(question =>
+                question.TopicId == topicId
                 || (question.ContentId.HasValue
                     && _dbContext.Lessons.Any(lesson =>
                         lesson.Id == question.ContentId.Value
-                        && lesson.Id == noteId)))
+                        && lesson.TopicId == topicId))
+                || (question.NoteId.HasValue
+                    && _dbContext.Lessons.Any(lesson =>
+                        lesson.Id == question.NoteId.Value
+                        && lesson.TopicId == topicId)))
             .Select(question => new
             {
                 question.Id,
@@ -205,7 +205,7 @@ public sealed class McqImportService : IMcqImportService
                 question.IsDuplicateInDatabase = true;
                 AddIssue(
                     question,
-                    "This question already exists for the selected chapter, including archived MCQs.");
+                    "This question already exists for the selected topic, including archived MCQs.");
             }
         }
 
@@ -261,16 +261,16 @@ public sealed class McqImportService : IMcqImportService
                 preview);
         }
 
-        var chapterExists = await _dbContext.Lessons
+        var topicExists = await _dbContext.Topics
             .AsNoTracking()
             .AnyAsync(
-                note => note.Id == preview.NoteId && note.Flag == 0 && note.TopicId.HasValue && note.Topic.Flag == 0,
+                topic => topic.Id == preview.TopicId && topic.Flag == 0,
                 cancellationToken);
 
-        if (!chapterExists)
+        if (!topicExists)
         {
             preview.FileErrors.Add(
-                "The target Notes chapter is no longer active. Nothing was imported.");
+                "The target topic is no longer active. Nothing was imported.");
             RefreshCachedPreview(previewToken, cacheEntry);
             return McqImportOutcomeDto.Failure(
                 preview.FileErrors[0],
@@ -280,11 +280,15 @@ public sealed class McqImportService : IMcqImportService
         var existingQuestions = await _dbContext.ContentQuestions
             .AsNoTracking()
             .Where(question =>
-                question.NoteId == preview.NoteId
+                question.TopicId == preview.TopicId
                 || (question.ContentId.HasValue
                     && _dbContext.Lessons.Any(lesson =>
                         lesson.Id == question.ContentId.Value
-                        && lesson.Id == preview.NoteId)))
+                        && lesson.TopicId == preview.TopicId))
+                || (question.NoteId.HasValue
+                    && _dbContext.Lessons.Any(lesson =>
+                        lesson.Id == question.NoteId.Value
+                        && lesson.TopicId == preview.TopicId)))
             .Select(question => question.Question)
             .ToListAsync(cancellationToken);
 
@@ -302,7 +306,7 @@ public sealed class McqImportService : IMcqImportService
                 question.IsDuplicateInDatabase = true;
                 AddIssue(
                     question,
-                    "This question now exists for the selected chapter. Nothing was imported; remove or edit the duplicate and upload again.");
+                    "This question now exists for the selected topic. Nothing was imported; remove or edit the duplicate and upload again.");
             }
         }
 
@@ -318,8 +322,8 @@ public sealed class McqImportService : IMcqImportService
         var questionsToInsert = preview.Questions
             .Select(question => new ContentQuestion
             {
-                NoteId = preview.NoteId,
-                TopicId = null,
+                NoteId = null,
+                TopicId = preview.TopicId,
                 ContentId = null,
                 Question = question.Question.Trim(),
                 Option1 = question.Option1.Trim(),
