@@ -215,11 +215,11 @@
     grid-template-columns: minmax(245px, 278px) minmax(0, 1fr) !important;
     align-items: start;
     gap: clamp(14px, 1.5vw, 22px) !important;
-    width: 100%;
-    max-width: 1280px !important;
+    width: 100% !important;
+    max-width: none !important;
     margin-right: auto;
     margin-left: auto;
-    padding: 18px 0 40px !important;
+    padding: 18px 12px 40px !important;
 }
 
 .ciit-learning-mode .ciit-learning-shell > .ciit-learning-sidebar {
@@ -316,6 +316,9 @@
 .ciit-learning-mode .ciit-learning-main {
     width: 100%;
     min-width: 0;
+    max-width: 1480px;
+    margin-right: auto;
+    margin-left: auto;
 }
 
 .ciit-learning-mode.ciit-learning-global-sidebar-collapsed .ciit-course-environment-workspace {
@@ -358,16 +361,8 @@
     outline-offset: 3px;
 }
 
-@media (min-width: 1400px) {
-    .ciit-learning-mode.ciit-learning-global-sidebar-collapsed .ciit-learning-global-sidebar-toggle {
-        left: calc((100vw - 1280px) / 2 + 262px);
-    }
-}
-
-@media (min-width: 1200px) and (max-width: 1399.98px) {
-    .ciit-learning-mode.ciit-learning-global-sidebar-collapsed .ciit-learning-global-sidebar-toggle {
-        left: calc((100vw - 1140px) / 2 + 262px);
-    }
+.ciit-learning-mode.ciit-learning-global-sidebar-collapsed .ciit-learning-global-sidebar-toggle {
+    left: 272px;
 }
 
 @media (min-width: 768px) and (max-width: 1199.98px) {
