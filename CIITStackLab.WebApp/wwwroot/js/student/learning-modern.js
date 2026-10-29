@@ -9,8 +9,6 @@
         const headerTitle = document.querySelector('.ciit-learning-course-intro h1');
         const headerDescription = document.querySelector('.ciit-learning-course-intro > p');
         const topicEyebrow = document.querySelector('.ciit-learning-lesson-heading .ciit-learning-eyebrow');
-        const mainCard = document.querySelector('.ciit-learning-main-card');
-        const lessonHeader = document.querySelector('.ciit-learning-lesson-header');
         const panelPager = document.querySelector('.ciit-learning-panel-pager');
 
         if (headerTitle) {
@@ -24,10 +22,9 @@
             headerDescription.textContent = topicEyebrow.textContent.trim().replace(/\s+/g, ' ');
         }
 
-        // Keep only Notes in the lesson header. Assessments are opened from the global sidebar.
-        if (panelPager && mainCard && lessonHeader) {
-            lessonHeader.insertAdjacentElement('afterend', panelPager);
-        }
+        // Notes are the primary learning surface. Remove the legacy section pager entirely
+        // so the lesson flows directly from the module title into the exam action and notes.
+        panelPager?.remove();
 
         const contentButton = document.querySelector('[data-learning-page="content"]');
         const assessmentButton = document.querySelector('[data-learning-page="assessment"]');
@@ -35,13 +32,8 @@
         const notesPanel = document.querySelector('[data-learning-panel-content="notes"]');
         const assessmentPanel = document.querySelector('[data-learning-panel-content="assessment"]');
 
-        if (contentButton) {
-            contentButton.remove();
-        }
-
-        if (assessmentButton) {
-            assessmentButton.remove();
-        }
+        contentButton?.remove();
+        assessmentButton?.remove();
 
         if (contentPanel && notesPanel) {
             contentPanel.classList.add('ciit-learning-embedded-content');
@@ -72,7 +64,6 @@
 
         const assessmentLink = document.querySelector('[data-learning-assessment-link]');
         const learningPathLink = document.querySelector('.ciit-course-global-nav a.active');
-        const notesButton = document.querySelector('[data-learning-page="notes"]');
 
         const showAssessment = function (updateHash) {
             if (!assessmentPanel) {
@@ -84,7 +75,6 @@
             }
             assessmentPanel.hidden = false;
 
-            notesButton?.classList.remove('is-active');
             learningPathLink?.classList.remove('active');
             assessmentLink?.classList.add('active');
 
@@ -107,12 +97,6 @@
 
         if (window.location.hash && window.location.hash.startsWith('#lesson-assessment')) {
             showAssessment(false);
-        } else if (notesButton) {
-            window.setTimeout(function () {
-                notesButton.click();
-                assessmentLink?.classList.remove('active');
-                learningPathLink?.classList.add('active');
-            }, 0);
         }
     }
 
