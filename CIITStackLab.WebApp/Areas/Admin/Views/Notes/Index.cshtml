@@ -1,4 +1,5 @@
 @model IReadOnlyList<CIITStackLab.Application.DTOs.AdminNoteDto>
+@using CIITStackLab.Application.DTOs
 
 @{
     ViewData["Title"] = "Notes";
@@ -15,8 +16,8 @@
     <div class="ciit-notes-header">
         <div>
             <span class="ciit-notes-eyebrow">Learning</span>
-            <h1>Notes Chapters</h1>
-            <p>Manage Notes chapters by topic from one organized view.</p>
+            <h1>Learning Content Studio</h1>
+            <p>Add and organize notes, interview questions, and coding practice for each Notes chapter from one workspace.</p>
         </div>
 
         <a asp-area="Admin"
@@ -35,6 +36,42 @@
             <span>@message</span>
         </div>
     }
+
+    <section class="ciit-notes-content-hub" aria-label="Add learning content">
+        <article class="ciit-notes-hub-card ciit-notes-hub-card--notes">
+            <div class="ciit-notes-hub-icon"><i class="bi bi-journal-richtext"></i></div>
+            <span class="ciit-notes-hub-kicker">01 · Learning material</span>
+            <h2>Notes & media</h2>
+            <p>Create a chapter with formatted notes, video and slides attached to its topic.</p>
+            <a asp-area="Admin" asp-controller="Notes" asp-action="Create" class="ciit-notes-hub-action js-content-modal-link">
+                <i class="bi bi-plus-lg"></i> Add chapter
+            </a>
+        </article>
+        <article class="ciit-notes-hub-card ciit-notes-hub-card--interview">
+            <div class="ciit-notes-hub-icon"><i class="bi bi-chat-square-text"></i></div>
+            <span class="ciit-notes-hub-kicker">02 · Interview preparation</span>
+            <h2>Interview questions</h2>
+            <p>Add a question and answer to an existing Notes chapter so it stays with its learning content.</p>
+            <div class="ciit-notes-hub-actions">
+                <button type="button" class="ciit-notes-hub-action" data-bs-toggle="modal" data-bs-target="#createInterviewQuestionModal">
+                    <i class="bi bi-plus-lg"></i> Add question
+                </button>
+                <a asp-area="Admin" asp-controller="Assessments" asp-action="InterviewQuestions" class="ciit-notes-hub-secondary">Open analyzer <i class="bi bi-arrow-up-right"></i></a>
+            </div>
+        </article>
+        <article class="ciit-notes-hub-card ciit-notes-hub-card--practice">
+            <div class="ciit-notes-hub-icon"><i class="bi bi-code-square"></i></div>
+            <span class="ciit-notes-hub-kicker">03 · Hands-on learning</span>
+            <h2>Practice programs</h2>
+            <p>Add coding problems to a Notes chapter and manage their solutions through the existing practice workspace.</p>
+            <div class="ciit-notes-hub-actions">
+                <button type="button" class="ciit-notes-hub-action" data-bs-toggle="modal" data-bs-target="#createPracticeProgramModal">
+                    <i class="bi bi-plus-lg"></i> Add program
+                </button>
+                <a asp-area="Admin" asp-controller="Assessments" asp-action="PracticePrograms" class="ciit-notes-hub-secondary">Open analyzer <i class="bi bi-arrow-up-right"></i></a>
+            </div>
+        </article>
+    </section>
 
     <section class="ciit-notes-card">
         <div class="ciit-notes-toolbar">
@@ -187,8 +224,13 @@
     </section>
 </section>
 
+@await Html.PartialAsync("~/Areas/Admin/Views/Assessments/_CreateInterviewQuestionModal.cshtml", ViewBag.InterviewInput as AdminInterviewQuestionInputDto ?? new AdminInterviewQuestionInputDto())
+@await Html.PartialAsync("~/Areas/Admin/Views/Assessments/_CreatePracticeProgramModal.cshtml", ViewBag.PracticeInput as AdminPracticeProgramInputDto ?? new AdminPracticeProgramInputDto())
+
 @section Styles {
     <link rel="stylesheet" href="~/css/admin/admin-content-modal.css" asp-append-version="true" />
+    <link rel="stylesheet" href="~/css/admin/admin-notes.css" asp-append-version="true" />
+    <link rel="stylesheet" href="~/css/admin-assessment-detail.css" asp-append-version="true" />
 }
 
 @section Scripts {
