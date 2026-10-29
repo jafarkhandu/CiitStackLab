@@ -53,10 +53,6 @@
         }
     }
 
-    var practiceAssessmentCourseId = !string.IsNullOrWhiteSpace(courseId)
-        ? courseId
-        : purchasedCourses.FirstOrDefault()?.Id.ToString();
-
     if (string.IsNullOrWhiteSpace(courseTitle))
     {
         var pageTitle = ViewData["Title"]?.ToString();
