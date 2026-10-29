@@ -1,18 +1,17 @@
 @model CIITStackLab.Application.DTOs.AdminInterviewQuestionInputDto
 
 @{
-    var isModal = ViewBag.IsModal is bool modal && modal;
-    Layout = isModal ? null : Layout;
+    var isModal = string.Equals(Context.Request.Query["modal"], "true", StringComparison.OrdinalIgnoreCase)
+        || (Context.Request.HasFormContentType && string.Equals(Context.Request.Form["modal"], "true", StringComparison.OrdinalIgnoreCase));
+    if (isModal)
+    {
+        Layout = "~/Areas/Admin/Views/Shared/_ContentModalLayout.cshtml";
+    }
     ViewData["Title"] = "Edit Interview Question";
     var chapters = ViewBag.InterviewQuestionChapters as IEnumerable<CIITStackLab.Application.DTOs.AdminAssessmentChapterLookupDto>
         ?? Array.Empty<CIITStackLab.Application.DTOs.AdminAssessmentChapterLookupDto>();
 }
 
-@if (isModal)
-{
-    <link rel="stylesheet" href="~/css/admin-mcqs.css" asp-append-version="true" />
-    <link rel="stylesheet" href="~/css/admin-assessment-detail.css" asp-append-version="true" />
-}
 @section Styles { <link rel="stylesheet" href="~/css/admin-mcqs.css" asp-append-version="true" /> 
     <link rel="stylesheet" href="~/css/admin-assessment-detail.css" asp-append-version="true" />
 }
