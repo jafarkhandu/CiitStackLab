@@ -3,8 +3,10 @@
 @{
     var chapters = ViewBag.McqChapters as IEnumerable<CIITStackLab.Application.DTOs.AdminAssessmentChapterLookupDto>
         ?? Array.Empty<CIITStackLab.Application.DTOs.AdminAssessmentChapterLookupDto>();
-    var addInput = ViewBag.AddMcqInput as CIITStackLab.Application.DTOs.AdminChapterMcqInputDto
-        ?? new CIITStackLab.Application.DTOs.AdminChapterMcqInputDto();
+    var topics = ViewBag.McqTopics as IEnumerable<CIITStackLab.Application.DTOs.AdminMcqTopicLookupDto>
+        ?? Array.Empty<CIITStackLab.Application.DTOs.AdminMcqTopicLookupDto>();
+    var addInput = ViewBag.AddMcqInput as CIITStackLab.Application.DTOs.AdminTopicMcqInputDto
+        ?? new CIITStackLab.Application.DTOs.AdminTopicMcqInputDto();
     var addMcqError = ViewBag.AddMcqError as string;
     var preview = ViewBag.McqImportPreview as CIITStackLab.Application.DTOs.McqImportPreviewDto;
     var importMessage = ViewBag.McqImportMessage as string;
@@ -17,13 +19,13 @@
                 <div>
                     <span class="ciit-admin-eyebrow">Assessment</span>
                     <h2 class="modal-title" id="editMcqModalTitle">Edit MCQ</h2>
-                    <p class="mb-0">Update the question, answer options and correct answer.</p>
+                    <p class="mb-0">Update the topic, question, answer options and correct answer.</p>
                 </div>
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
             @{
-                var editInput = ViewBag.EditMcqInput as CIITStackLab.Application.DTOs.AdminChapterMcqInputDto
-                    ?? new CIITStackLab.Application.DTOs.AdminChapterMcqInputDto();
+                var editInput = ViewBag.EditMcqInput as CIITStackLab.Application.DTOs.AdminTopicMcqInputDto
+                    ?? new CIITStackLab.Application.DTOs.AdminTopicMcqInputDto();
                 var editMcqId = ViewBag.EditMcqId is int selectedEditId ? selectedEditId : 0;
             }
             <form asp-area="Admin" asp-controller="Assessments" asp-action="EditMcq" asp-route-id="@editMcqId" method="post">
@@ -31,12 +33,12 @@
                 <div class="modal-body ciit-mcq-modal-body">
                     <div asp-validation-summary="All" class="text-danger small mb-3"></div>
                     <div class="ciit-mcq-modal-field">
-                        <label for="EditMcqNoteId">Chapter <span>*</span></label>
-                        <select id="EditMcqNoteId" name="NoteId" required>
-                            <option value="0">Select chapter</option>
-                            @foreach (var chapter in chapters)
+                        <label for="EditMcqTopicId">Topic <span>*</span></label>
+                        <select id="EditMcqTopicId" name="TopicId" required>
+                            <option value="0">Select topic</option>
+                            @foreach (var topic in topics)
                             {
-                                <option value="@chapter.NoteId" selected="@(editInput.NoteId == chapter.NoteId ? "selected" : null)">@chapter.TopicTitle / @chapter.ChapterId — @chapter.ChapterTitle</option>
+                                <option value="@topic.Id" selected="@(editInput.TopicId == topic.Id ? "selected" : null)">@topic.Title</option>
                             }
                         </select>
                     </div>
@@ -78,7 +80,7 @@
                 <div>
                     <span class="ciit-admin-eyebrow">Assessment</span>
                     <h2 class="modal-title" id="addMcqModalTitle">Add MCQ</h2>
-                    <p class="mb-0">Create a question under an individual Notes chapter.</p>
+                    <p class="mb-0">Create a question directly under a topic.</p>
                 </div>
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
@@ -96,13 +98,13 @@
                     <div asp-validation-summary="All" class="text-danger small mb-3"></div>
 
                     <div class="ciit-mcq-modal-field">
-                        <label for="AddMcqNoteId">Chapter <span>*</span></label>
-                        <select id="AddMcqNoteId" name="NoteId" required>
-                            <option value="0">Select chapter</option>
-                            @foreach (var chapter in chapters)
+                        <label for="AddMcqTopicId">Topic <span>*</span></label>
+                        <select id="AddMcqTopicId" name="TopicId" required>
+                            <option value="0">Select topic</option>
+                            @foreach (var topic in topics)
                             {
-                                <option value="@chapter.NoteId" selected="@(addInput.NoteId == chapter.NoteId ? "selected" : null)">
-                                    @chapter.TopicTitle / @chapter.ChapterId — @chapter.ChapterTitle
+                                <option value="@topic.Id" selected="@(addInput.TopicId == topic.Id ? "selected" : null)">
+                                    @topic.Title
                                 </option>
                             }
                         </select>
