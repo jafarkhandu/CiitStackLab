@@ -225,53 +225,318 @@
     margin-top: 16px;
 }
 
-/* Keep the desktop card compact and avoid an overly narrow multi-column grid on small screens. */
+/* Reference-style Student dashboard shell.
+   Scoped to My Courses so Admin and other Student pages keep their existing layout. */
+.ciit-course-environment-body:has(.ciit-my-courses-page) {
+    background: #eaf3ff;
+}
+
+.ciit-course-environment-body:has(.ciit-my-courses-page) .ciit-course-environment-header {
+    position: relative;
+    top: auto;
+    z-index: 20;
+    margin: 26px 28px 0;
+    border: 1px solid rgba(255, 255, 255, .78);
+    border-radius: 22px;
+    background: rgba(239, 247, 255, .76);
+    box-shadow: 0 12px 32px rgba(49, 93, 160, .08), inset 0 1px 0 rgba(255,255,255,.88);
+    backdrop-filter: blur(18px);
+}
+
+.ciit-course-environment-body:has(.ciit-my-courses-page) .ciit-course-environment-header-inner {
+    min-height: 76px;
+    padding: 0 2px;
+}
+
+.ciit-course-environment-body:has(.ciit-my-courses-page) .ciit-course-environment-brand-mark {
+    width: 46px;
+    height: 46px;
+    border-radius: 14px;
+    box-shadow: 0 8px 18px rgba(23, 105, 255, .22);
+}
+
+.ciit-course-environment-body:has(.ciit-my-courses-page) .ciit-course-environment-brand {
+    font-size: 1.15rem;
+}
+
+.ciit-course-environment-body:has(.ciit-my-courses-page) .ciit-course-environment-context {
+    padding-left: 22px;
+}
+
+.ciit-course-environment-body:has(.ciit-my-courses-page) .ciit-course-environment-label {
+    color: #6078a0;
+    font-size: .64rem;
+}
+
+.ciit-course-environment-body:has(.ciit-my-courses-page) .ciit-course-environment-nav {
+    justify-content: flex-end;
+}
+
+.ciit-course-environment-body:has(.ciit-my-courses-page) .ciit-course-environment-account {
+    display: flex;
+}
+
+.ciit-course-environment-body:has(.ciit-my-courses-page) .ciit-course-signout {
+    min-height: 42px;
+    padding: 0 17px;
+    border-radius: 12px;
+    font-size: .78rem;
+    font-weight: 800;
+}
+
+.ciit-course-environment-body:has(.ciit-my-courses-page) .ciit-course-environment-workspace {
+    min-height: calc(100vh - 124px);
+    background: transparent;
+}
+
+.ciit-course-environment-body:has(.ciit-my-courses-page) .ciit-course-global-sidebar {
+    position: sticky;
+    top: 18px;
+    height: calc(100vh - 142px);
+    margin: 18px 0 18px 28px;
+    padding: 30px 12px 14px;
+    overflow: hidden;
+    border: 1px solid rgba(255,255,255,.82);
+    border-right: 1px solid rgba(255,255,255,.82);
+    border-radius: 22px;
+    background: rgba(248, 252, 255, .58);
+    box-shadow: 0 14px 36px rgba(49, 93, 160, .055), inset 0 1px 0 rgba(255,255,255,.9);
+    backdrop-filter: blur(18px);
+}
+
+.ciit-course-environment-body:has(.ciit-my-courses-page) .ciit-course-global-sidebar-heading {
+    padding: 4px 12px 18px;
+}
+
+.ciit-course-environment-body:has(.ciit-my-courses-page) .ciit-course-global-nav {
+    margin-top: 10px;
+    gap: 7px;
+}
+
+.ciit-course-environment-body:has(.ciit-my-courses-page) .ciit-course-global-nav a {
+    min-height: 48px;
+    padding: 10px 14px;
+    border: 1px solid transparent;
+    border-radius: 13px;
+    font-size: .82rem;
+}
+
+.ciit-course-environment-body:has(.ciit-my-courses-page) .ciit-course-global-nav a.active {
+    border-color: rgba(84, 145, 255, .22);
+    background: rgba(255,255,255,.72);
+    box-shadow: 0 8px 22px rgba(31, 103, 221, .09), inset 3px 0 0 #1769ff;
+}
+
+.ciit-course-environment-body:has(.ciit-my-courses-page) .ciit-course-sidebar-art {
+    height: 220px;
+    border-radius: 50% 50% 0 0 / 20% 20% 0 0;
+}
+
+.ciit-course-environment-body:has(.ciit-my-courses-page) .ciit-course-global-nav {
+    margin-bottom: 184px;
+}
+
+.ciit-course-environment-body:has(.ciit-my-courses-page) .ciit-course-environment-main {
+    min-height: calc(100vh - 124px);
+}
+
+.ciit-course-environment-body:has(.ciit-my-courses-page) .ciit-course-environment-footer {
+    display: none;
+}
+
+.ciit-course-environment-body:has(.ciit-my-courses-page) .ciit-my-courses-page {
+    min-height: calc(100vh - 124px);
+    padding: 42px 0 48px;
+    background:
+        radial-gradient(circle at 78% 4%, rgba(105, 164, 255, .17), transparent 260px),
+        radial-gradient(circle at 88% 86%, rgba(113, 177, 255, .18), transparent 310px),
+        linear-gradient(135deg, #f4f9ff 0%, #eaf3ff 45%, #f7fbff 100%);
+}
+
+.ciit-course-environment-body:has(.ciit-my-courses-page) .ciit-my-courses-page::before {
+    top: 42px;
+    right: -110px;
+    width: 330px;
+    height: 330px;
+    border-color: rgba(23, 105, 255, .10);
+}
+
+.ciit-course-environment-body:has(.ciit-my-courses-page) .ciit-my-courses-page::after {
+    top: 115px;
+    right: -160px;
+    width: 410px;
+    height: 410px;
+    border-color: rgba(23, 105, 255, .08);
+}
+
+/* Reference composition: heading first, compact course card second, wide stats below. */
+.ciit-course-environment-body:has(.ciit-my-courses-page) .ciit-my-courses-shell {
+    width: min(100% - 64px, 1320px);
+}
+
+.ciit-course-environment-body:has(.ciit-my-courses-page) .ciit-my-courses-section-heading {
+    margin-bottom: 14px;
+}
+
+.ciit-course-environment-body:has(.ciit-my-courses-page) .ciit-my-courses-grid {
+    grid-template-columns: minmax(0, 480px);
+    gap: 18px;
+}
+
+.ciit-course-environment-body:has(.ciit-my-courses-page) .ciit-my-course-card {
+    width: 480px;
+    max-width: 100%;
+    border: 1px solid rgba(255,255,255,.95);
+    border-radius: 21px;
+    background: rgba(255,255,255,.94);
+    box-shadow: 0 14px 34px rgba(31, 75, 143, .09), inset 0 1px 0 rgba(255,255,255,.95);
+}
+
+.ciit-course-environment-body:has(.ciit-my-courses-page) .ciit-my-course-image-wrap {
+    height: 205px;
+    margin: 17px 17px 0;
+    border-radius: 14px;
+}
+
+.ciit-course-environment-body:has(.ciit-my-courses-page) .ciit-my-course-image-wrap img {
+    padding: 0;
+    object-fit: cover;
+    background: #edf4ff;
+}
+
+.ciit-course-environment-body:has(.ciit-my-courses-page) .ciit-my-course-body {
+    padding: 17px 20px 20px;
+}
+
+.ciit-course-environment-body:has(.ciit-my-courses-page) .ciit-my-course-card h3,
+.ciit-course-environment-body:has(.ciit-my-courses-page) .ciit-my-course-body h3 {
+    font-size: 1.08rem;
+}
+
+.ciit-course-environment-body:has(.ciit-my-courses-page) .ciit-my-course-description {
+    margin-bottom: 12px;
+    font-size: .8rem;
+}
+
+.ciit-course-environment-body:has(.ciit-my-courses-page) .ciit-my-course-open {
+    min-height: 40px;
+    border-radius: 10px;
+    background: linear-gradient(135deg, #3d8cff, #1769ff);
+    color: #fff;
+    box-shadow: 0 8px 18px rgba(23,105,255,.17);
+    font-size: .8rem;
+}
+
+.ciit-course-environment-body:has(.ciit-my-courses-page) .ciit-my-course-open:hover {
+    background: linear-gradient(135deg, #2678ff, #1458e9);
+    color: #fff;
+    box-shadow: 0 11px 22px rgba(23,105,255,.22);
+}
+
+.ciit-course-environment-body:has(.ciit-my-courses-page) .ciit-learning-overview {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 16px;
+    margin-top: 22px;
+}
+
+.ciit-course-environment-body:has(.ciit-my-courses-page) .ciit-learning-overview-card {
+    min-height: 104px;
+    padding: 18px 20px;
+    border: 1px solid rgba(255,255,255,.9);
+    border-radius: 17px;
+    background: rgba(255,255,255,.78);
+    box-shadow: 0 10px 28px rgba(31,75,143,.055), inset 0 1px 0 rgba(255,255,255,.88);
+    backdrop-filter: blur(10px);
+}
+
+.ciit-course-environment-body:has(.ciit-my-courses-page) .ciit-learning-welcome {
+    display: none;
+}
+
+.ciit-course-environment-body:has(.ciit-my-courses-page) .ciit-learning-footer-note {
+    display: none;
+}
+
+/* Responsive fallback: keep the reference proportions without horizontal overflow. */
+@media (max-width: 1199.98px) {
+    .ciit-course-environment-body:has(.ciit-my-courses-page) .ciit-course-environment-header {
+        margin: 18px 18px 0;
+    }
+
+    .ciit-course-environment-body:has(.ciit-my-courses-page) .ciit-course-environment-account {
+        display: flex;
+    }
+
+    .ciit-course-environment-body:has(.ciit-my-courses-page) .ciit-course-global-sidebar {
+        margin-left: 18px;
+    }
+
+    .ciit-course-environment-body:has(.ciit-my-courses-page) .ciit-my-courses-shell {
+        width: min(100% - 36px, 720px);
+    }
+}
+
 @media (max-width: 900px) {
-    .ciit-my-courses-shell {
-        width: min(100% - 32px, 720px);
-    }
-
-    .ciit-my-courses-grid {
-        grid-template-columns: repeat(auto-fit, minmax(260px, 320px));
-    }
-
-    .ciit-learning-overview {
-        grid-template-columns: 1fr;
-    }
-
-    .ciit-learning-welcome {
-        grid-template-columns: 1fr;
-    }
-
-    .ciit-learning-welcome-art {
+    .ciit-course-environment-body:has(.ciit-my-courses-page) .ciit-course-environment-account {
         display: none;
+    }
+
+    .ciit-course-environment-body:has(.ciit-my-courses-page) .ciit-course-global-sidebar {
+        display: none;
+    }
+
+    .ciit-course-environment-body:has(.ciit-my-courses-page) .ciit-my-courses-grid {
+        grid-template-columns: minmax(0, 480px);
+    }
+
+    .ciit-course-environment-body:has(.ciit-my-courses-page) .ciit-learning-overview {
+        grid-template-columns: 1fr;
     }
 }
 
 @media (max-width: 576px) {
-    .ciit-my-courses-page {
-        padding: 18px 0 28px;
+    .ciit-course-environment-body:has(.ciit-my-courses-page) .ciit-course-environment-header {
+        margin: 12px 12px 0;
+        border-radius: 17px;
     }
 
-    .ciit-my-courses-shell {
+    .ciit-course-environment-body:has(.ciit-my-courses-page) .ciit-course-environment-header-inner {
+        min-height: 64px;
+    }
+
+    .ciit-course-environment-body:has(.ciit-my-courses-page) .ciit-course-environment-brand-mark {
+        width: 40px;
+        height: 40px;
+        border-radius: 12px;
+    }
+
+    .ciit-course-environment-body:has(.ciit-my-courses-page) .ciit-my-courses-page {
+        padding-top: 24px;
+    }
+
+    .ciit-course-environment-body:has(.ciit-my-courses-page) .ciit-my-courses-shell {
         width: min(100% - 24px, 480px);
     }
 
-    .ciit-my-courses-section-heading {
+    .ciit-course-environment-body:has(.ciit-my-courses-page) .ciit-my-courses-section-heading {
         align-items: flex-start;
         flex-direction: column;
-        gap: 6px;
+        gap: 5px;
     }
 
-    .ciit-my-courses-browse-link {
-        padding-left: 0;
+    .ciit-course-environment-body:has(.ciit-my-courses-page) .ciit-my-course-image-wrap {
+        height: 170px;
+        margin: 13px 13px 0;
     }
 
-    .ciit-my-courses-grid {
-        grid-template-columns: minmax(0, 1fr);
+    .ciit-course-environment-body:has(.ciit-my-courses-page) .ciit-my-course-body {
+        padding: 15px 16px 16px;
     }
+}
 
-    .ciit-learning-welcome {
-        padding: 20px;
+@media (prefers-reduced-motion: reduce) {
+    .ciit-course-environment-body:has(.ciit-my-courses-page) * {
+        animation: none !important;
+        transition: none !important;
     }
 }
