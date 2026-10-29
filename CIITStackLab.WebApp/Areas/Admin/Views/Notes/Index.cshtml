@@ -271,9 +271,9 @@
             else
             {
                 <div class="ciit-assessment-tree ciit-notes-content-tree" data-single-open-tree="practice">
-                    @foreach (var topicGroup in practiceIndex.ActivePrograms.GroupBy(x => new { x.TopicId, x.TopicTitle }).OrderBy(x => x.Key.TopicTitle))
+                    @foreach (var topicGroup in practiceIndex.ActivePrograms.GroupBy(x => x.TopicTitle).OrderBy(x => x.Key.TopicTitle))
                     {
-                        var topicName = string.IsNullOrWhiteSpace(topicGroup.Key.TopicTitle) ? "Unassigned topic" : topicGroup.Key.TopicTitle;
+                        var topicName = string.IsNullOrWhiteSpace(topicGroup.Key) ? "Unassigned topic" : topicGroup.Key;
                         <details class="ciit-assessment-tree-topic" data-topic-node data-search="@($"{topicName} {string.Join(" ", topicGroup.Select(x => x.QuestionTitle + " " + x.QuestionDescription + " " + x.ChapterTitle))}")">
                             <summary>
                                 <span class="ciit-assessment-tree-title"><i class="bi bi-chevron-right"></i><i class="bi bi-diagram-3"></i><strong>@topicName</strong></span>
@@ -397,40 +397,101 @@
             const count = document.getElementById("notesVisibleCount");
             const tabs = [...document.querySelectorAll("[data-content-tab]")];
             const panels = [...document.querySelectorAll("[data-content-panel]")];
-            const topicRows = [...document.querySelectorAll("[data-topic-row]")];
-            const chapterRows = [...document.querySelectorAll("[data-chapter-row]")];
+            const noteTopicRows = [...document.querySelectorAll("[data-topic-row]")];
+            const noteChapterRows = [...document.querySelectorAll("[data-chapter-row]")];
             const contentRows = [...document.querySelectorAll("[data-content-row]")];
-            const expandedTopics = new Set();
             let activeTab = "all";
-            const chaptersFor = id => chapterRows.filter(row => row.dataset.topicId === id);
+            let expandedNotesTopicId = null;
+
+            const noteChaptersFor = id => noteChapterRows.filter(row => row.dataset.topicId === id);
+            const setNotesTopic = (id, expanded) => {
+                noteTopicRows.forEach(topic => {
+                    const open = expanded && topic.dataset.topicId === id;
+                    topic.classList.toggle("is-expanded", open);
+                    topic.querySelector("[data-notes-topic-toggle]")?.setAttribute("aria-expanded", open ? "true" : "false");
+                    noteChaptersFor(topic.dataset.topicId).forEach(row => row.hidden = !open);
+                });
+                expandedNotesTopicId = expanded ? id : null;
+            };
+
+            const closeSiblingDetails = node => {
+                const parent = node.parentElement;
+                if (!parent) return;
+                [...parent.children].forEach(sibling => {
+                    if (sibling !== node && sibling.matches("details.ciit-assessment-tree-topic, details.ciit-assessment-tree-chapter")) sibling.open = false;
+                });
+            };
+
+            document.querySelectorAll("[data-single-open-tree]").forEach(tree => {
+                tree.querySelectorAll("details.ciit-assessment-tree-topic, details.ciit-assessment-tree-chapter").forEach(node => {
+                    node.addEventListener("toggle", () => {
+                        if (node.open) closeSiblingDetails(node);
+                    });
+                });
+            });
 
             const refresh = () => {
                 const query = (searchInput?.value || "").trim().toLowerCase();
-                let visibleNotes = 0, visibleInterviews = 0, visiblePrograms = 0;
-                topicRows.forEach(topic => {
+                let visibleNotes = 0;
+                let visibleInterviews = 0;
+                let visiblePrograms = 0;
+
+                const matchingNoteTopic = query
+                    ? noteTopicRows.find(topic => (topic.dataset.search || "").toLowerCase().includes(query) ||
+                        noteChaptersFor(topic.dataset.topicId).some(row => (row.dataset.search || "").toLowerCase().includes(query)))?.dataset.topicId ?? null
+                    : null;
+
+                noteTopicRows.forEach(topic => {
                     const id = topic.dataset.topicId;
                     const topicMatches = (topic.dataset.search || "").toLowerCase().includes(query);
-                    const rows = chaptersFor(id);
+                    const rows = noteChaptersFor(id);
                     const matching = rows.filter(row => (row.dataset.search || "").toLowerCase().includes(query));
                     const showTopic = !query || topicMatches || matching.length > 0;
                     topic.hidden = !showTopic;
+                    const shouldExpand = query ? id === matchingNoteTopic : expandedNotesTopicId === id;
+                    topic.classList.toggle("is-expanded", shouldExpand);
+                    topic.querySelector("[data-notes-topic-toggle]")?.setAttribute("aria-expanded", shouldExpand ? "true" : "false");
                     rows.forEach(row => {
-                        const show = showTopic && (query ? topicMatches || (row.dataset.search || "").toLowerCase().includes(query) : expandedTopics.has(id));
-                        row.hidden = !show;
-                        if (show) visibleNotes++;
+                        row.hidden = !showTopic || !shouldExpand || (query && !(topicMatches || (row.dataset.search || "").toLowerCase().includes(query)));
+                        if (!row.hidden) visibleNotes++;
                     });
-                    if (query && showTopic) {
-                        expandedTopics.add(id);
-                        topic.classList.add("is-expanded");
-                        topic.querySelector("[data-notes-topic-toggle]")?.setAttribute("aria-expanded", "true");
+                });
+                if (query && matchingNoteTopic) expandedNotesTopicId = matchingNoteTopic;
+
+                document.querySelectorAll("[data-single-open-tree]").forEach(tree => {
+                    const topics = [...tree.querySelectorAll(":scope > details.ciit-assessment-tree-topic")];
+                    let firstMatchingTopic = null;
+                    topics.forEach(topic => {
+                        const topicMatch = (topic.dataset.search || "").toLowerCase().includes(query);
+                        const chapters = [...topic.querySelectorAll(":scope > .ciit-assessment-tree-children > details.ciit-assessment-tree-chapter")];
+                        let topicHasMatch = !query || topicMatch;
+                        chapters.forEach(chapter => {
+                            const chapterMatch = (chapter.dataset.search || "").toLowerCase().includes(query);
+                            const rows = [...chapter.querySelectorAll("[data-content-row]")];
+                            const matchingRows = rows.filter(row => (row.dataset.search || "").toLowerCase().includes(query));
+                            const chapterHasMatch = !query || topicMatch || chapterMatch || matchingRows.length > 0;
+                            chapter.hidden = !chapterHasMatch;
+                            rows.forEach(row => {
+                                row.hidden = query.length > 0 && !(topicMatch || chapterMatch || (row.dataset.search || "").toLowerCase().includes(query));
+                                if (!row.hidden) {
+                                    if (row.dataset.contentType === "interview") visibleInterviews++;
+                                    if (row.dataset.contentType === "practice") visiblePrograms++;
+                                }
+                            });
+                            if (chapterHasMatch) topicHasMatch = true;
+                            if (query && chapterHasMatch && !firstMatchingTopic) firstMatchingTopic = topic;
+                        });
+                        topic.hidden = !topicHasMatch;
+                    });
+
+                    if (query && firstMatchingTopic) {
+                        topics.forEach(topic => topic.open = topic === firstMatchingTopic);
+                        const chapters = [...firstMatchingTopic.querySelectorAll(":scope > .ciit-assessment-tree-children > details.ciit-assessment-tree-chapter")];
+                        const matchingChapter = chapters.find(chapter => !chapter.hidden);
+                        chapters.forEach(chapter => chapter.open = chapter === matchingChapter);
                     }
                 });
-                contentRows.forEach(row => {
-                    const show = !query || (row.dataset.search || "").toLowerCase().includes(query);
-                    row.hidden = !show;
-                    if (show && row.dataset.contentType === "interview") visibleInterviews++;
-                    if (show && row.dataset.contentType === "practice") visiblePrograms++;
-                });
+
                 tabs.forEach(tab => {
                     const selected = tab.dataset.contentTab === activeTab;
                     tab.classList.toggle("is-active", selected);
@@ -441,31 +502,26 @@
                     panel.hidden = !selected;
                     panel.classList.toggle("is-active", selected);
                 });
+
                 if (count) count.textContent = query
                     ? `${visibleNotes} notes · ${visibleInterviews} interview questions · ${visiblePrograms} practice programs`
-                    : `${chapterRows.length} chapters · ${contentRows.filter(row => row.dataset.contentType === "interview").length} interview questions · ${contentRows.filter(row => row.dataset.contentType === "practice").length} practice programs`;
-                const anyVisibleNotes = topicRows.some(row => !row.hidden) || chapterRows.some(row => !row.hidden);
-                const anyVisibleInterview = contentRows.some(row => row.dataset.contentType === "interview" && !row.hidden);
-                const anyVisiblePractice = contentRows.some(row => row.dataset.contentType === "practice" && !row.hidden);
+                    : `${noteChapterRows.length} chapters · ${contentRows.filter(row => row.dataset.contentType === "interview").length} interview questions · ${contentRows.filter(row => row.dataset.contentType === "practice").length} practice programs`;
+
                 const notesEmpty = document.getElementById("notesSearchEmpty");
-                if (notesEmpty) {
-                    notesEmpty.hidden = anyVisibleNotes || activeTab === "interview" || activeTab === "practice" ||
-                        (activeTab === "all" && (anyVisibleInterview || anyVisiblePractice));
-                }
-                const notesNoData = document.querySelector("[data-notes-no-data]");
-                if (notesNoData) notesNoData.hidden = @Model.Count > 0 || activeTab === "interview" || activeTab === "practice" || (activeTab === "all" && (anyVisibleInterview || anyVisiblePractice));
+                const hasNotes = noteTopicRows.some(row => !row.hidden);
+                const hasInterview = contentRows.some(row => row.dataset.contentType === "interview" && !row.hidden);
+                const hasPractice = contentRows.some(row => row.dataset.contentType === "practice" && !row.hidden);
+                if (notesEmpty) notesEmpty.hidden = hasNotes || activeTab === "interview" || activeTab === "practice" || (activeTab === "all" && (hasInterview || hasPractice));
                 ["interview", "practice"].forEach(type => {
                     const empty = document.querySelector(`[data-content-empty="${type}"]`);
-                    if (empty) empty.hidden = contentRows.some(row => row.dataset.contentType === type && !row.hidden) ||
-                        (activeTab !== type && activeTab !== "all");
+                    if (empty) empty.hidden = contentRows.some(row => row.dataset.contentType === type && !row.hidden) || (activeTab !== type && activeTab !== "all");
                 });
             };
 
             tabs.forEach(tab => tab.addEventListener("click", () => { activeTab = tab.dataset.contentTab; refresh(); }));
-            topicRows.forEach(topic => topic.querySelector("[data-notes-topic-toggle]")?.addEventListener("click", () => {
+            noteTopicRows.forEach(topic => topic.querySelector("[data-notes-topic-toggle]")?.addEventListener("click", () => {
                 const id = topic.dataset.topicId;
-                const expanded = expandedTopics.has(id);
-                if (expanded) expandedTopics.delete(id); else expandedTopics.add(id);
+                setNotesTopic(id, expandedNotesTopicId !== id);
                 refresh();
             }));
             searchInput?.addEventListener("input", refresh);
