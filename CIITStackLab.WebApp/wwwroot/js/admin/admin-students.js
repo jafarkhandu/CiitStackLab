@@ -62,8 +62,16 @@ document.addEventListener("DOMContentLoaded", function () {
 
     document.querySelectorAll(".js-student-status-form").forEach(function (form) {
         form.addEventListener("submit", function (event) {
+            const submitButton = event.submitter || form.querySelector(".ciit-student-status-btn");
             const name = form.dataset.studentName || "this student";
-            const activating = (form.querySelector("input[name='isActive']")?.value || "").toLowerCase() === "true";
+            const actionValue = String(submitButton?.dataset.isActive ?? "").toLowerCase();
+            const activating = actionValue === "true";
+
+            // Razor may render Boolean data attributes as "True"/"False"; normalize before validating.
+            if (actionValue !== "true" && actionValue !== "false") {
+                event.preventDefault();
+                return;
+            }
 
             const message = activating
                 ? "Activate " + name + "?"

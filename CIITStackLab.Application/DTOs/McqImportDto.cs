@@ -26,7 +26,7 @@ public sealed class McqImportPreviewDto
 
     public bool CanImport =>
         HasPreview
-        && NoteId > 0
+        && TopicId > 0
         && FileErrors.Count == 0
         && Questions.Count > 0
         && Questions.All(question => question.IsValid);

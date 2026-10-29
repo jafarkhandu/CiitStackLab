@@ -1,4 +1,5 @@
 @model IReadOnlyList<CIITStackLab.Application.DTOs.AdminNoteDto>
+@using CIITStackLab.Application.DTOs
 
 @{
     ViewData["Title"] = "Notes";
@@ -9,23 +10,19 @@
         .GroupBy(note => new { note.TopicId, note.TopicTitle })
         .OrderBy(group => group.Key.TopicTitle)
         .ToList();
+    var interviewIndex = ViewBag.InterviewImportModel as AdminInterviewQuestionIndexDto ?? new AdminInterviewQuestionIndexDto();
+    var practiceIndex = ViewBag.PracticeImportModel as AdminPracticeProgramIndexDto ?? new AdminPracticeProgramIndexDto();
 }
 
 <section class="ciit-notes-page">
     <div class="ciit-notes-header">
         <div>
             <span class="ciit-notes-eyebrow">Learning</span>
-            <h1>Notes Chapters</h1>
-            <p>Manage Notes chapters by topic from one organized view.</p>
+            <h1>Learning Content Studio</h1>
+            <p>Add and organize notes, interview questions, and coding practice for each Notes chapter from one workspace.</p>
         </div>
 
-        <a asp-area="Admin"
-           asp-controller="Notes"
-           asp-action="Create"
-           class="ciit-notes-primary-btn js-content-modal-link">
-            <i class="bi bi-plus-lg"></i>
-            Add Chapter
-        </a>
+
     </div>
 
     @if (!string.IsNullOrWhiteSpace(message))
@@ -36,23 +33,51 @@
         </div>
     }
 
+    <section class="ciit-notes-content-hub" aria-label="Add learning content">
+        <article class="ciit-notes-hub-card ciit-notes-hub-card--notes">
+            <div class="ciit-notes-hub-icon"><i class="bi bi-journal-richtext"></i></div>
+            <span class="ciit-notes-hub-kicker">01 · Learning material</span>
+            <h2>Notes & media</h2>
+            <p>Create a chapter with formatted notes, video and slides attached to its topic.</p>
+            <a asp-area="Admin" asp-controller="Notes" asp-action="Create" class="ciit-notes-hub-action js-content-modal-link">
+                <i class="bi bi-plus-lg"></i> Add chapter
+            </a>
+        </article>
+        <article class="ciit-notes-hub-card ciit-notes-hub-card--interview">
+            <div class="ciit-notes-hub-icon"><i class="bi bi-chat-square-text"></i></div>
+            <span class="ciit-notes-hub-kicker">02 · Interview preparation</span>
+            <h2>Interview questions</h2>
+            <p>Add a question and answer to an existing Notes chapter so it stays with its learning content.</p>
+            <div class="ciit-notes-hub-actions">
+                <button type="button" class="ciit-notes-hub-action" data-bs-toggle="modal" data-bs-target="#createInterviewQuestionModal">
+                    <i class="bi bi-plus-lg"></i> Add question
+                </button>
+                <a asp-area="Admin" asp-controller="Assessments" asp-action="InterviewQuestions" class="ciit-notes-hub-secondary" data-bs-toggle="modal" data-bs-target="#interviewQuestionImportModal">Open analyzer <i class="bi bi-arrow-up-right"></i></a>
+            </div>
+        </article>
+        <article class="ciit-notes-hub-card ciit-notes-hub-card--practice">
+            <div class="ciit-notes-hub-icon"><i class="bi bi-code-square"></i></div>
+            <span class="ciit-notes-hub-kicker">03 · Hands-on learning</span>
+            <h2>Practice programs</h2>
+            <p>Add coding problems to a Notes chapter and manage their solutions through the existing practice workspace.</p>
+            <div class="ciit-notes-hub-actions">
+                <button type="button" class="ciit-notes-hub-action" data-bs-toggle="modal" data-bs-target="#createPracticeProgramModal">
+                    <i class="bi bi-plus-lg"></i> Add program
+                </button>
+                <a asp-area="Admin" asp-controller="Assessments" asp-action="PracticePrograms" class="ciit-notes-hub-secondary" data-bs-toggle="modal" data-bs-target="#practiceProgramImportModal">Open analyzer <i class="bi bi-arrow-up-right"></i></a>
+            </div>
+        </article>
+    </section>
+
     <section class="ciit-notes-card">
-        <div class="ciit-notes-toolbar">
+        <div class="ciit-notes-toolbar ciit-notes-toolbar--combined">
             <div class="ciit-notes-search">
                 <i class="bi bi-search"></i>
-
-                <input id="notesSearch"
-                       type="search"
-                       placeholder="Search topic, chapter or title..."
-                       aria-label="Search Notes" />
+                <input id="notesSearch" type="search" placeholder="Search notes, interview questions, programs..." aria-label="Search all learning content" />
             </div>
-
-            <span id="notesVisibleCount"
-                  class="ciit-notes-count">
-                @topicGroups.Count topics · @Model.Count chapters
-            </span>
+            <span id="notesVisibleCount" class="ciit-notes-count">@Model.Count chapters</span>
         </div>
-
+        <div class="ciit-notes-tab-panel is-active" role="tabpanel" data-content-panel="notes">
         <div class="table-responsive">
             <table class="ciit-notes-table">
                 <thead>
@@ -71,11 +96,12 @@
                         var topicSearch = string.Join(
                             " ",
                             group.Select(note => $"{note.TopicTitle} {note.ChapterId} {note.Title}"));
+                        var chapterNumber = 0;
 
                         <tr class="ciit-notes-topic-row"
                             data-topic-row
                             data-topic-id="@group.Key.TopicId"
-                            data-search="@topicSearch">
+                            data-search="@group.Key.TopicTitle">
                             <td colspan="5">
                                 <button type="button"
                                         class="ciit-notes-topic-toggle"
@@ -100,10 +126,11 @@
 
                         @foreach (var note in group.OrderBy(note => note.Id))
                         {
+                            chapterNumber++;
                             <tr class="ciit-notes-chapter-row"
                                 data-chapter-row
                                 data-topic-id="@group.Key.TopicId"
-                                data-search="@($"{note.TopicTitle} {note.ChapterId} {note.Title}")"
+                                data-search="@($"{note.TopicTitle} {chapterNumber} {note.Title}")"
                                 hidden>
                                 <td>
                                     <div class="ciit-notes-chapter-label">
@@ -116,13 +143,21 @@
                                 </td>
 
                                 <td>
-                                    <code>@note.Id</code>
+                                    <code>@chapterNumber</code>
                                 </td>
 
                                 <td>
                                     <div class="ciit-notes-name">
                                         <div>
                                             <strong>@note.Title</strong>
+                                            <div class="ciit-notes-chapter-content-actions">
+                                                <button type="button" class="ciit-notes-content-open-btn" data-open-chapter-content data-note-id="@note.Id" data-content-kind="interview">
+                                                    <i class="bi bi-chat-square-text"></i> Interview (@interviewIndex.ActiveQuestions.Count(item => item.NoteId == note.Id))
+                                                </button>
+                                                <button type="button" class="ciit-notes-content-open-btn ciit-notes-content-open-btn--practice" data-open-chapter-content data-note-id="@note.Id" data-content-kind="practice">
+                                                    <i class="bi bi-code-square"></i> Practice (@practiceIndex.ActivePrograms.Count(item => item.NoteId == note.Id))
+                                                </button>
+                                            </div>
                                         </div>
                                     </div>
                                 </td>
@@ -165,6 +200,155 @@
                 </tbody>
             </table>
         </div>
+        </div>
+
+        <div class="ciit-notes-tab-panel ciit-notes-hierarchy-panel" role="tabpanel" data-content-panel="interview" hidden>
+            <div class="ciit-notes-panel-heading"><div><h2>Interview Questions</h2><p>Browse questions and answers by topic and Notes chapter.</p></div></div>
+            @if (interviewIndex.ActiveQuestions.Count == 0)
+            {
+                <div class="ciit-notes-empty" data-content-empty="interview"><i class="bi bi-chat-square-text"></i><h3>No interview questions yet</h3><p>Add or analyze questions from the Interview Preparation card above.</p></div>
+            }
+            else
+            {
+                <div class="ciit-assessment-tree ciit-notes-content-tree" data-single-open-tree="interview">
+                    @foreach (var topicGroup in interviewIndex.ActiveQuestions.GroupBy(x => new { x.TopicId, x.TopicTitle }).OrderBy(x => x.Key.TopicTitle))
+                    {
+                        var topicName = string.IsNullOrWhiteSpace(topicGroup.Key.TopicTitle) ? "Unassigned topic" : topicGroup.Key.TopicTitle;
+                        <details class="ciit-assessment-tree-topic" data-topic-node data-search="@topicName">
+                            <summary>
+                                <span class="ciit-assessment-tree-title"><i class="bi bi-chevron-right"></i><i class="bi bi-diagram-3"></i><strong>@topicName</strong></span>
+                                <span class="ciit-assessment-tree-count">@topicGroup.Count() @(topicGroup.Count() == 1 ? "question" : "questions")</span>
+                            </summary>
+                            <div class="ciit-assessment-tree-children">
+                                @foreach (var chapterGroup in topicGroup.GroupBy(x => new { x.NoteId, x.ChapterTitle }).OrderBy(x => x.Key.ChapterTitle))
+                                {
+                                    var chapterName = string.IsNullOrWhiteSpace(chapterGroup.Key.ChapterTitle) ? "Unassigned chapter" : chapterGroup.Key.ChapterTitle;
+                                    if (chapterName.StartsWith(topicName + " / ", StringComparison.OrdinalIgnoreCase))
+                                    {
+                                        chapterName = chapterName.Substring(topicName.Length + 3);
+                                    }
+                                    <details class="ciit-assessment-tree-chapter" data-chapter-node data-search="@chapterName">
+                                        <summary>
+                                            <span class="ciit-assessment-tree-title"><i class="bi bi-chevron-right"></i><i class="bi bi-journal-text"></i><strong>@chapterName</strong></span>
+                                            <span class="ciit-assessment-tree-count">@chapterGroup.Count()</span>
+                                        </summary>
+                                        <div class="ciit-assessment-question-list ciit-notes-content-records">
+                                            @foreach (var question in chapterGroup.OrderByDescending(x => x.Id))
+                                            {
+                                                <article class="ciit-assessment-question-item ciit-assessment-interview-item" data-content-row data-content-type="interview" data-note-id="@question.NoteId" data-search="@($"{topicName} {chapterName} {question.Id} {question.Question} {question.Answer}")">
+                                                    <div class="ciit-assessment-question-copy">
+                                                        <strong>@question.Question</strong>
+                                                        <span>Question #@question.Id</span>
+                                                        <p>@question.Answer</p>
+                                                    </div>
+                                                    <div class="ciit-mcq-actions">
+                                                        <a asp-area="Admin" asp-controller="Assessments" asp-action="EditInterviewQuestion" asp-route-id="@question.Id" title="Edit interview question" aria-label="Edit interview question @question.Id"><i class="bi bi-pencil-square"></i></a>
+                                                        <form asp-area="Admin" asp-controller="Assessments" asp-action="DeleteInterviewQuestion" method="post" onsubmit="return confirm('Archive this interview question?');">
+                                                            @Html.AntiForgeryToken()
+                                                            <input type="hidden" name="id" value="@question.Id" />
+                                                            <button type="submit" title="Archive question" aria-label="Archive interview question @question.Id"><i class="bi bi-archive"></i></button>
+                                                        </form>
+                                                    </div>
+                                                </article>
+                                            }
+                                        </div>
+                                    </details>
+                                }
+                            </div>
+                        </details>
+                    }
+                </div>
+                <div class="ciit-notes-empty" data-content-empty="interview" hidden><i class="bi bi-search"></i><h3>No matching interview questions</h3><p>Try another search.</p></div>
+            }
+        </div>
+
+        <div class="ciit-notes-tab-panel ciit-notes-hierarchy-panel" role="tabpanel" data-content-panel="practice" hidden>
+            <div class="ciit-notes-panel-heading"><div><h2>Practice Programs</h2><p>Browse programs and solutions by topic and Notes chapter.</p></div></div>
+            @if (practiceIndex.ActivePrograms.Count == 0)
+            {
+                <div class="ciit-notes-empty" data-content-empty="practice"><i class="bi bi-code-square"></i><h3>No practice programs yet</h3><p>Add or analyze programs from the Hands-on Learning card above.</p></div>
+            }
+            else
+            {
+                <div class="ciit-assessment-tree ciit-notes-content-tree" data-single-open-tree="practice">
+                    @foreach (var topicGroup in practiceIndex.ActivePrograms.GroupBy(x => x.TopicTitle).OrderBy(x => x.Key))
+                    {
+                        var topicName = string.IsNullOrWhiteSpace(topicGroup.Key) ? "Unassigned topic" : topicGroup.Key;
+                        <details class="ciit-assessment-tree-topic" data-topic-node data-search="@topicName">
+                            <summary>
+                                <span class="ciit-assessment-tree-title"><i class="bi bi-chevron-right"></i><i class="bi bi-diagram-3"></i><strong>@topicName</strong></span>
+                                <span class="ciit-assessment-tree-count">@topicGroup.Count() @(topicGroup.Count() == 1 ? "program" : "programs")</span>
+                            </summary>
+                            <div class="ciit-assessment-tree-children">
+                                @foreach (var chapterGroup in topicGroup.GroupBy(x => new { x.NoteId, x.ChapterTitle }).OrderBy(x => x.Key.ChapterTitle))
+                                {
+                                    var chapterName = string.IsNullOrWhiteSpace(chapterGroup.Key.ChapterTitle) ? "Unassigned chapter" : chapterGroup.Key.ChapterTitle;
+                                    if (chapterName.StartsWith(topicName + " / ", StringComparison.OrdinalIgnoreCase))
+                                    {
+                                        chapterName = chapterName.Substring(topicName.Length + 3);
+                                    }
+                                    <details class="ciit-assessment-tree-chapter" data-chapter-node data-search="@chapterName">
+                                        <summary>
+                                            <span class="ciit-assessment-tree-title"><i class="bi bi-chevron-right"></i><i class="bi bi-journal-text"></i><strong>@chapterName</strong></span>
+                                            <span class="ciit-assessment-tree-count">@chapterGroup.Count()</span>
+                                        </summary>
+                                        <div class="ciit-practice-list ciit-assessment-practice-list ciit-notes-content-records">
+                                            @foreach (var program in chapterGroup.OrderByDescending(x => x.Id))
+                                            {
+                                                <article class="ciit-practice-program ciit-notes-program" data-content-row data-content-type="practice" data-note-id="@program.NoteId" data-search="@($"{topicName} {chapterName} {program.Id} {program.QuestionTitle} {program.QuestionDescription} {string.Join(" ", program.Answers.Select(a => a.Answer + " " + a.Description))}")">
+                                                    <div class="ciit-practice-program-header">
+                                                        <div>
+                                                            <span class="ciit-practice-id">#@program.Id</span>
+                                                            <h3>@program.QuestionTitle</h3>
+                                                            <p class="ciit-practice-meta">@chapterName</p>
+                                                        </div>
+                                                        <div class="ciit-practice-actions">
+                                                            <a asp-area="Admin" asp-controller="Assessments" asp-action="EditPracticeProgram" asp-route-id="@program.Id" title="Edit program"><i class="bi bi-pencil-square"></i></a>
+                                                            <button type="button" title="Add solution" data-bs-toggle="modal" data-bs-target="#createPracticeSolutionModal" data-program-question-id="@program.Id"><i class="bi bi-plus-circle"></i></button>
+                                                            <form asp-area="Admin" asp-controller="Assessments" asp-action="DeletePracticeProgram" method="post" onsubmit="return confirm('Archive this practice program?');">
+                                                                @Html.AntiForgeryToken()
+                                                                <input type="hidden" name="id" value="@program.Id" />
+                                                                <button type="submit" title="Archive"><i class="bi bi-archive"></i></button>
+                                                            </form>
+                                                        </div>
+                                                    </div>
+                                                    <div class="ciit-practice-description">@program.QuestionDescription</div>
+                                                    <div class="ciit-practice-solutions">
+                                                        <div class="ciit-practice-solutions-header"><h4>Solutions</h4><span>@program.Answers.Count</span></div>
+                                                        @if (program.Answers.Count == 0)
+                                                        {
+                                                            <p class="ciit-practice-no-solution">No active solution has been added yet.</p>
+                                                        }
+                                                        else
+                                                        {
+                                                            @foreach (var answer in program.Answers)
+                                                            {
+                                                                <div class="ciit-practice-solution">
+                                                                    <div><strong>@answer.Answer</strong><p>@answer.Description</p></div>
+                                                                    <div class="ciit-practice-actions">
+                                                                        <a asp-area="Admin" asp-controller="Assessments" asp-action="EditPracticeAnswer" asp-route-id="@answer.Id" title="Edit solution"><i class="bi bi-pencil-square"></i></a>
+                                                                        <form asp-area="Admin" asp-controller="Assessments" asp-action="DeletePracticeAnswer" method="post" onsubmit="return confirm('Archive this solution?');">
+                                                                            @Html.AntiForgeryToken()
+                                                                            <input type="hidden" name="id" value="@answer.Id" />
+                                                                            <button type="submit" title="Archive solution"><i class="bi bi-archive"></i></button>
+                                                                        </form>
+                                                                    </div>
+                                                                </div>
+                                                            }
+                                                        }
+                                                    </div>
+                                                </article>
+                                            }
+                                        </div>
+                                    </details>
+                                }
+                            </div>
+                        </details>
+                    }
+                </div>
+                <div class="ciit-notes-empty" data-content-empty="practice" hidden><i class="bi bi-search"></i><h3>No matching practice programs</h3><p>Try another search.</p></div>
+            }
+        </div>
 
         <div id="notesSearchEmpty"
              class="ciit-notes-empty"
@@ -176,7 +360,7 @@
 
         @if (Model.Count == 0)
         {
-            <div class="ciit-notes-empty is-visible">
+            <div class="ciit-notes-empty" data-notes-no-data hidden>
                 <i class="bi bi-journal-plus"></i>
                 <h3>No Notes chapters yet</h3>
                 <p>
@@ -187,149 +371,250 @@
     </section>
 </section>
 
+<div class="ciit-notes-chapter-content-modal" id="chapterLearningContentModal" hidden role="dialog" aria-modal="true" aria-labelledby="chapterLearningContentTitle">
+    <div class="ciit-notes-chapter-content-dialog">
+        <div class="ciit-notes-chapter-content-header">
+            <div><span class="ciit-notes-eyebrow">Chapter learning content</span><h2 id="chapterLearningContentTitle">Interview & Practice</h2><p id="chapterLearningContentSubtitle"></p></div>
+            <button type="button" class="ciit-notes-chapter-content-close" data-close-chapter-content aria-label="Close dialog"><i class="bi bi-x-lg"></i></button>
+        </div>
+        <div class="ciit-notes-chapter-content-tabs" role="tablist" aria-label="Chapter content type">
+            <button type="button" class="is-active" role="tab" aria-selected="true" data-chapter-content-tab="interview">Interview Questions</button>
+            <button type="button" role="tab" aria-selected="false" data-chapter-content-tab="practice">Practice Programs</button>
+        </div>
+        <div class="ciit-notes-chapter-content-body">
+            <div data-chapter-content-panel="interview"></div>
+            <div data-chapter-content-panel="practice" hidden></div>
+        </div>
+    </div>
+</div>
+
+@await Html.PartialAsync("~/Areas/Admin/Views/Assessments/_CreateInterviewQuestionModal.cshtml", ViewBag.InterviewInput as AdminInterviewQuestionInputDto ?? new AdminInterviewQuestionInputDto())
+@await Html.PartialAsync("~/Areas/Admin/Views/Assessments/_CreatePracticeProgramModal.cshtml", ViewBag.PracticeInput as AdminPracticeProgramInputDto ?? new AdminPracticeProgramInputDto())
+@await Html.PartialAsync("~/Areas/Admin/Views/Assessments/_InterviewQuestionImportModal.cshtml", ViewBag.InterviewImportModel as AdminInterviewQuestionIndexDto ?? new AdminInterviewQuestionIndexDto())
+@await Html.PartialAsync("~/Areas/Admin/Views/Assessments/_PracticeProgramImportModal.cshtml", ViewBag.PracticeImportModel as AdminPracticeProgramIndexDto ?? new AdminPracticeProgramIndexDto())
+
 @section Styles {
     <link rel="stylesheet" href="~/css/admin/admin-content-modal.css" asp-append-version="true" />
+    <link rel="stylesheet" href="~/css/admin/admin-notes.css" asp-append-version="true" />
+    <link rel="stylesheet" href="~/css/admin/admin-assessment-detail.css" asp-append-version="true" />
+    <link rel="stylesheet" href="~/css/admin/admin-mcqs.css" asp-append-version="true" />
+    <link rel="stylesheet" href="~/css/admin/admin-practice.css" asp-append-version="true" />
+    <link rel="stylesheet" href="~/css/admin/admin-interview-import.css" asp-append-version="true" />
+    <link rel="stylesheet" href="~/css/admin/admin-mcq-import.css" asp-append-version="true" />
+    <link rel="stylesheet" href="~/css/admin/admin-practice-import.css" asp-append-version="true" />
 }
 
 @section Scripts {
     <script src="~/js/admin/admin-content-modal.js" asp-append-version="true"></script>
+    <script src="~/js/admin-interview-import.js" asp-append-version="true"></script>
+    <script src="~/js/admin-practice-import.js" asp-append-version="true"></script>
     <script>
         (() => {
             const searchInput = document.getElementById("notesSearch");
-            const topicRows = [...document.querySelectorAll("[data-topic-row]")];
-            const chapterRows = [...document.querySelectorAll("[data-chapter-row]")];
             const count = document.getElementById("notesVisibleCount");
-            const empty = document.getElementById("notesSearchEmpty");
-            const expandedTopics = new Set();
+            const tabs = [...document.querySelectorAll("[data-content-tab]")];
+            const panels = [...document.querySelectorAll("[data-content-panel]")];
+            const noteTopicRows = [...document.querySelectorAll("[data-topic-row]")];
+            const noteChapterRows = [...document.querySelectorAll("[data-chapter-row]")];
+            const contentRows = [...document.querySelectorAll("[data-content-row]")];
+            const chapterContentModal = document.getElementById("chapterLearningContentModal");
+            const chapterContentTitle = document.getElementById("chapterLearningContentTitle");
+            const chapterContentSubtitle = document.getElementById("chapterLearningContentSubtitle");
+            const chapterContentTabs = [...document.querySelectorAll("[data-chapter-content-tab]")];
+            const chapterContentPanels = [...document.querySelectorAll("[data-chapter-content-panel]")];
+            let activeTab = "notes";
+            let expandedNotesTopicId = null;
+            let lastQuery = null;
 
-            const chaptersFor = topicId =>
-                chapterRows.filter(row => row.dataset.topicId === topicId);
-
-            const setExpanded = (topicId, expanded) => {
-                const topicRow = topicRows.find(row => row.dataset.topicId === topicId);
-                const toggle = topicRow?.querySelector("[data-notes-topic-toggle]");
-
-                if (!toggle) {
-                    return;
-                }
-
-                if (expanded && !searchInput?.value.trim()) {
-                    topicRows.forEach(otherRow => {
-                        const otherTopicId = otherRow.dataset.topicId;
-                        if (otherTopicId === topicId) {
-                            return;
-                        }
-
-                        const otherToggle = otherRow.querySelector("[data-notes-topic-toggle]");
-                        otherToggle?.setAttribute("aria-expanded", "false");
-                        otherRow.classList.remove("is-expanded");
-                        chaptersFor(otherTopicId).forEach(row => {
-                            row.hidden = true;
-                        });
-                        expandedTopics.delete(otherTopicId);
-                    });
-                }
-
-                toggle.setAttribute("aria-expanded", expanded ? "true" : "false");
-                topicRow.classList.toggle("is-expanded", expanded);
-
-                chaptersFor(topicId).forEach(row => {
-                    row.hidden = !expanded;
+            const noteChaptersFor = id => noteChapterRows.filter(row => row.dataset.topicId === id);
+            const setNotesTopic = (id, expanded) => {
+                noteTopicRows.forEach(topic => {
+                    const open = expanded && topic.dataset.topicId === id;
+                    topic.classList.toggle("is-expanded", open);
+                    topic.querySelector("[data-notes-topic-toggle]")?.setAttribute("aria-expanded", open ? "true" : "false");
+                    noteChaptersFor(topic.dataset.topicId).forEach(row => row.hidden = !open);
                 });
-
-                if (expanded) {
-                    expandedTopics.add(topicId);
-                } else {
-                    expandedTopics.delete(topicId);
-                }
+                expandedNotesTopicId = expanded ? id : null;
             };
 
-            topicRows.forEach(row => {
-                const toggle = row.querySelector("[data-notes-topic-toggle]");
+            const closeSiblingDetails = node => {
+                const parent = node.parentElement;
+                if (!parent) return;
+                [...parent.children].forEach(sibling => {
+                    if (sibling !== node && sibling.matches("details.ciit-assessment-tree-topic, details.ciit-assessment-tree-chapter")) sibling.open = false;
+                });
+            };
 
-                toggle?.addEventListener("click", () => {
-                    const topicId = row.dataset.topicId;
-                    const expanded = toggle.getAttribute("aria-expanded") === "true";
-                    setExpanded(topicId, !expanded);
+            document.querySelectorAll("[data-single-open-tree]").forEach(tree => {
+                tree.querySelectorAll("details.ciit-assessment-tree-topic, details.ciit-assessment-tree-chapter").forEach(node => {
+                    node.addEventListener("toggle", () => {
+                        if (node.open) closeSiblingDetails(node);
+                    });
                 });
             });
 
-            const refreshSearch = () => {
-                const query = searchInput.value.trim().toLowerCase();
-                let visibleTopics = 0;
-                let visibleChapters = 0;
+            const refresh = () => {
+                const query = (searchInput?.value || "").trim().toLowerCase();
+                const queryChanged = query !== lastQuery;
+                lastQuery = query;
 
-                if (!query && expandedTopics.size > 1) {
-                    const lastExpandedTopicId = Array.from(expandedTopics).at(-1);
-                    expandedTopics.clear();
-                    if (lastExpandedTopicId !== undefined) {
-                        expandedTopics.add(lastExpandedTopicId);
-                    }
+                // Clearing a search should restore the default collapsed topic list.
+                if (queryChanged && !query) {
+                    expandedNotesTopicId = null;
                 }
+                let visibleNotes = 0;
+                let visibleInterviews = 0;
+                let visiblePrograms = 0;
 
-                topicRows.forEach(topicRow => {
-                    const topicId = topicRow.dataset.topicId;
-                    const topicMatches = (topicRow.dataset.search || "")
-                        .toLowerCase()
-                        .includes(query);
-                    const topicChapters = chaptersFor(topicId);
-                    const matchingChapters = topicChapters.filter(row =>
-                        (row.dataset.search || "").toLowerCase().includes(query));
-                    const topicVisible = !query || topicMatches || matchingChapters.length > 0;
+                const matchingNoteTopic = query
+                    ? noteTopicRows.find(topic => (topic.dataset.search || "").toLowerCase().includes(query) ||
+                        noteChaptersFor(topic.dataset.topicId).some(row => (row.dataset.search || "").toLowerCase().includes(query)))?.dataset.topicId ?? null
+                    : null;
 
-                    topicRow.hidden = !topicVisible;
+                noteTopicRows.forEach(topic => {
+                    const id = topic.dataset.topicId;
+                    const topicMatches = (topic.dataset.search || "").toLowerCase().includes(query);
+                    const rows = noteChaptersFor(id);
+                    const matching = rows.filter(row => (row.dataset.search || "").toLowerCase().includes(query));
+                    const showTopic = !query || topicMatches || matching.length > 0;
+                    topic.hidden = !showTopic;
+                    const shouldExpand = queryChanged && query ? id === matchingNoteTopic : expandedNotesTopicId === id;
+                    topic.classList.toggle("is-expanded", shouldExpand);
+                    topic.querySelector("[data-notes-topic-toggle]")?.setAttribute("aria-expanded", shouldExpand ? "true" : "false");
+                    rows.forEach(row => {
+                        row.hidden = !showTopic || !shouldExpand || (query && !(topicMatches || (row.dataset.search || "").toLowerCase().includes(query)));
+                        if (showTopic && (!query || topicMatches || (row.dataset.search || "").toLowerCase().includes(query))) visibleNotes++;
+                    });
+                });
+                if (queryChanged && query && matchingNoteTopic) expandedNotesTopicId = matchingNoteTopic;
 
-                    if (!topicVisible) {
-                        return;
-                    }
-
-                    visibleTopics++;
-
-                    if (!query) {
-                        topicChapters.forEach(row => {
-                            row.hidden = !expandedTopics.has(topicId);
+                document.querySelectorAll("[data-single-open-tree]").forEach(tree => {
+                    const topics = [...tree.querySelectorAll(":scope > details.ciit-assessment-tree-topic")];
+                    let firstMatchingTopic = null;
+                    topics.forEach(topic => {
+                        const topicMatch = (topic.dataset.search || "").toLowerCase().includes(query);
+                        const chapters = [...topic.querySelectorAll(":scope > .ciit-assessment-tree-children > details.ciit-assessment-tree-chapter")];
+                        let topicHasMatch = !query || topicMatch;
+                        chapters.forEach(chapter => {
+                            const chapterMatch = (chapter.dataset.search || "").toLowerCase().includes(query);
+                            const rows = [...chapter.querySelectorAll("[data-content-row]")];
+                            const matchingRows = rows.filter(row => (row.dataset.search || "").toLowerCase().includes(query));
+                            const chapterHasMatch = !query || topicMatch || chapterMatch || matchingRows.length > 0;
+                            chapter.hidden = !chapterHasMatch;
+                            rows.forEach(row => {
+                                row.hidden = query.length > 0 && !(topicMatch || chapterMatch || (row.dataset.search || "").toLowerCase().includes(query));
+                                if (!row.hidden) {
+                                    if (row.dataset.contentType === "interview") visibleInterviews++;
+                                    if (row.dataset.contentType === "practice") visiblePrograms++;
+                                }
+                            });
+                            if (chapterHasMatch) topicHasMatch = true;
+                            if (query && chapterHasMatch && !firstMatchingTopic) firstMatchingTopic = topic;
                         });
-
-                        if (expandedTopics.has(topicId)) {
-                            visibleChapters += topicChapters.length;
-                        }
-
-                        return;
-                    }
-
-                    const shouldShowAll = topicMatches;
-                    topicChapters.forEach(row => {
-                        const show = shouldShowAll ||
-                            (row.dataset.search || "").toLowerCase().includes(query);
-
-                        row.hidden = !show;
-
-                        if (show) {
-                            visibleChapters++;
-                        }
+                        topic.hidden = !topicHasMatch;
                     });
 
-                    setExpanded(topicId, true);
+                    const currentlyOpenTopic = topics.find(topic => topic.open);
+                    const selectedTopic = queryChanged && query ? firstMatchingTopic : (currentlyOpenTopic || firstMatchingTopic);
+                    if (query && selectedTopic) {
+                        topics.forEach(topic => topic.open = topic === selectedTopic);
+                        const chapters = [...selectedTopic.querySelectorAll(":scope > .ciit-assessment-tree-children > details.ciit-assessment-tree-chapter")];
+                        const currentlyOpenChapter = chapters.find(chapter => chapter.open);
+                        const matchingChapter = queryChanged ? chapters.find(chapter => !chapter.hidden) : (currentlyOpenChapter || chapters.find(chapter => !chapter.hidden));
+                        chapters.forEach(chapter => chapter.open = chapter === matchingChapter);
+                    }
                 });
 
-                if (count) {
-                    if (!query) {
-                        const totalChapters = chapterRows.length;
-                        count.textContent =
-                            `${topicRows.length} topic${topicRows.length === 1 ? "" : "s"} · ${totalChapters} chapter${totalChapters === 1 ? "" : "s"}`;
-                    } else {
-                        count.textContent =
-                            `${visibleTopics} topic${visibleTopics === 1 ? "" : "s"} · ${visibleChapters} chapter${visibleChapters === 1 ? "" : "s"}`;
-                    }
-                }
+                tabs.forEach(tab => {
+                    const selected = tab.dataset.contentTab === activeTab;
+                    tab.classList.toggle("is-active", selected);
+                    tab.setAttribute("aria-selected", selected ? "true" : "false");
+                });
+                panels.forEach(panel => {
+                    const selected = activeTab === "all" || panel.dataset.contentPanel === activeTab;
+                    panel.hidden = !selected;
+                    panel.classList.toggle("is-active", selected);
+                });
 
-                if (empty) {
-                    empty.hidden = visibleTopics !== 0;
-                }
+                if (count) count.textContent = query
+                    ? `${visibleNotes} notes · ${visibleInterviews} interview questions · ${visiblePrograms} practice programs`
+                    : `${noteChapterRows.length} chapters · ${contentRows.filter(row => row.dataset.contentType === "interview").length} interview questions · ${contentRows.filter(row => row.dataset.contentType === "practice").length} practice programs`;
+
+                const notesEmpty = document.getElementById("notesSearchEmpty");
+                const hasNotes = noteTopicRows.some(row => !row.hidden);
+                const hasInterview = contentRows.some(row => row.dataset.contentType === "interview" && !row.hidden);
+                const hasPractice = contentRows.some(row => row.dataset.contentType === "practice" && !row.hidden);
+                if (notesEmpty) notesEmpty.hidden = !query || hasNotes || activeTab === "interview" || activeTab === "practice" || (activeTab === "all" && (hasInterview || hasPractice));
+                const notesNoData = document.querySelector("[data-notes-no-data]");
+                if (notesNoData) notesNoData.hidden = @Model.Count > 0 || query.length > 0 || activeTab === "interview" || activeTab === "practice" || (activeTab === "all" && (hasInterview || hasPractice));
+                ["interview", "practice"].forEach(type => {
+                    const empty = document.querySelector(`[data-content-empty="${type}"]`);
+                    if (empty) empty.hidden = contentRows.some(row => row.dataset.contentType === type && !row.hidden) || (activeTab !== type && activeTab !== "all");
+                });
             };
 
-            searchInput?.addEventListener("input", refreshSearch);
-            searchInput?.addEventListener("search", refreshSearch);
+            tabs.forEach(tab => tab.addEventListener("click", () => { activeTab = tab.dataset.contentTab; refresh(); }));
+            noteTopicRows.forEach(topic => topic.querySelector("[data-notes-topic-toggle]")?.addEventListener("click", () => {
+                const id = topic.dataset.topicId;
+                setNotesTopic(id, expandedNotesTopicId !== id);
+                refresh();
+            }));
+            const setChapterContentTab = kind => {
+                chapterContentTabs.forEach(tab => {
+                    const selected = tab.dataset.chapterContentTab === kind;
+                    tab.classList.toggle("is-active", selected);
+                    tab.setAttribute("aria-selected", selected ? "true" : "false");
+                });
+                chapterContentPanels.forEach(panel => panel.hidden = panel.dataset.chapterContentPanel !== kind);
+            };
+            const closeChapterContentModal = () => {
+                if (!chapterContentModal) return;
+                chapterContentModal.hidden = true;
+                document.body.classList.remove("ciit-notes-chapter-content-open");
+            };
+            document.querySelectorAll("[data-open-chapter-content]").forEach(button => {
+                button.addEventListener("click", () => {
+                    const noteId = button.dataset.noteId;
+                    const kind = button.dataset.contentKind || "interview";
+                    const chapterRow = button.closest("[data-chapter-row]");
+                    const chapterName = chapterRow?.querySelector(".ciit-notes-name strong")?.textContent?.trim() || "Chapter";
+                    if (!chapterContentModal) return;
+                    chapterContentTitle.textContent = chapterName + " · Learning Content";
+                    chapterContentSubtitle.textContent = "Interview questions and practice programs linked to this chapter.";
+                    chapterContentPanels.forEach(panel => {
+                        panel.replaceChildren();
+                        const type = panel.dataset.chapterContentPanel;
+                        const matchingRows = contentRows.filter(row => row.dataset.contentType === type && row.dataset.noteId === noteId);
+                        if (!matchingRows.length) {
+                            const empty = document.createElement("div");
+                            empty.className = "ciit-notes-chapter-content-empty";
+                            empty.textContent = type === "interview" ? "No interview questions linked to this chapter yet." : "No practice programs linked to this chapter yet.";
+                            panel.appendChild(empty);
+                            return;
+                        }
+                        matchingRows.forEach(row => {
+                            const clone = row.cloneNode(true);
+                            clone.hidden = false;
+                            clone.removeAttribute("data-content-row");
+                            clone.classList.add("ciit-notes-modal-record");
+                            panel.appendChild(clone);
+                        });
+                    });
+                    setChapterContentTab(kind);
+                    chapterContentModal.hidden = false;
+                    document.body.classList.add("ciit-notes-chapter-content-open");
+                    chapterContentModal.querySelector("[data-close-chapter-content]")?.focus();
+                });
+            });
+            chapterContentTabs.forEach(tab => tab.addEventListener("click", () => setChapterContentTab(tab.dataset.chapterContentTab)));
+            chapterContentModal?.querySelectorAll("[data-close-chapter-content]").forEach(button => button.addEventListener("click", closeChapterContentModal));
+            chapterContentModal?.addEventListener("click", event => { if (event.target === chapterContentModal) closeChapterContentModal(); });
+            document.addEventListener("keydown", event => {
+                if (event.key === "Escape" && chapterContentModal && !chapterContentModal.hidden) closeChapterContentModal();
+            });
+            searchInput?.addEventListener("input", refresh);
+            searchInput?.addEventListener("search", refresh);
+            refresh();
         })();
     </script>
 }

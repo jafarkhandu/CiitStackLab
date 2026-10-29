@@ -1,9 +1,9 @@
-@model CIITStackLab.Application.DTOs.AdminChapterMcqInputDto
+@model CIITStackLab.Application.DTOs.AdminTopicMcqInputDto
 
 @{
     ViewData["Title"] = "Edit MCQ";
-    var mcqChapters = ViewBag.McqChapters as IEnumerable<CIITStackLab.Application.DTOs.AdminAssessmentChapterLookupDto>
-        ?? Array.Empty<CIITStackLab.Application.DTOs.AdminAssessmentChapterLookupDto>();
+    var mcqTopics = ViewBag.McqTopics as IEnumerable<CIITStackLab.Application.DTOs.AdminMcqTopicLookupDto>
+        ?? Array.Empty<CIITStackLab.Application.DTOs.AdminMcqTopicLookupDto>();
 }
 
 @section Styles { <link rel="stylesheet" href="~/css/admin-mcqs.css" asp-append-version="true" /> 
@@ -14,16 +14,16 @@
     <div class="ciit-assessment-standalone-nav">
         <a asp-area="Admin" asp-controller="Assessments" asp-action="Index" class="ciit-assessment-back-link"><i class="bi bi-arrow-left"></i><span>Back to Assessments</span></a>
     </div>
-    <div class="ciit-mcq-header"><div><span class="ciit-admin-eyebrow">Assessment</span><h1>Edit MCQ</h1><p>Update the question under a chapter and its answer options.</p></div></div>
+    <div class="ciit-mcq-header"><div><span class="ciit-admin-eyebrow">Assessment</span><h1>Edit MCQ</h1><p>Update the question under a topic and its answer options.</p></div></div>
     <form asp-area="Admin" asp-controller="Assessments" asp-action="EditMcq" method="post" class="ciit-mcq-form">
         @Html.AntiForgeryToken()
         <div asp-validation-summary="ModelOnly" class="ciit-mcq-validation"></div>
-        <label>Chapter<select asp-for="NoteId"><option value="0">Select Notes chapter</option>
-            @foreach (var chapter in mcqChapters)
+        <label>Topic<select asp-for="TopicId"><option value="0">Select topic</option>
+            @foreach (var topic in mcqTopics)
             {
-                <option value="@chapter.NoteId" selected="@(Model.NoteId == chapter.NoteId ? "selected" : null)">@chapter.TopicTitle / @chapter.ChapterId — @chapter.ChapterTitle</option>
+                <option value="@topic.Id" selected="@(Model.TopicId == topic.Id ? "selected" : null)">@topic.Title</option>
             }
-        </select><span asp-validation-for="NoteId"></span></label>
+        </select><span asp-validation-for="TopicId"></span></label>
         <label>Question<textarea asp-for="Question" rows="4"></textarea><span asp-validation-for="Question"></span></label>
         <div class="ciit-mcq-option-grid">
             <label>Option A<input asp-for="Option1" /><span asp-validation-for="Option1"></span></label>

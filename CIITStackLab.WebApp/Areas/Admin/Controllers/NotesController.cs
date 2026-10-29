@@ -12,19 +12,75 @@ public sealed class NotesController : Controller
 {
     private readonly INotesService _notesService;
     private readonly IVimeoVideoService _vimeoVideoService;
+    private readonly IAdminInterviewQuestionService _interviewQuestionService;
+    private readonly IAdminPracticeProgramService _practiceProgramService;
 
     public NotesController(
         INotesService notesService,
-        IVimeoVideoService vimeoVideoService)
+        IVimeoVideoService vimeoVideoService,
+        IAdminInterviewQuestionService interviewQuestionService,
+        IAdminPracticeProgramService practiceProgramService)
     {
         _notesService = notesService;
         _vimeoVideoService = vimeoVideoService;
+        _interviewQuestionService = interviewQuestionService;
+        _practiceProgramService = practiceProgramService;
     }
 
     [HttpGet]
     public async Task<IActionResult> Index(CancellationToken ct)
     {
+        ViewBag.InterviewQuestionChapters = await _interviewQuestionService.GetAssessmentChapterLookupAsync(ct);
+        ViewBag.PracticeProgramChapters = await _practiceProgramService.GetAssessmentChapterLookupAsync(ct);
+        ViewBag.InterviewInput = new AdminInterviewQuestionInputDto();
+        ViewBag.PracticeInput = new AdminPracticeProgramInputDto();
+        ViewBag.InterviewImportPreview = null;
+        ViewBag.InterviewImportMessage = null;
+        ViewBag.PracticeProgramImportPreview = null;
+        ViewBag.PracticeProgramImportMessage = null;
+
+        var interviewIndex = await _interviewQuestionService.GetIndexAsync(ct);
+        var practiceIndex = await _practiceProgramService.GetIndexAsync(ct);
+        ViewBag.InterviewImportModel = interviewIndex;
+        ViewBag.PracticeImportModel = practiceIndex;
+
         return View(await _notesService.GetAdminIndexAsync(ct));
+    }
+
+    [HttpPost, ValidateAntiForgeryToken]
+    public async Task<IActionResult> CreateInterviewQuestion(AdminInterviewQuestionInputDto input, CancellationToken ct)
+    {
+        if (!ModelState.IsValid)
+        {
+            TempData["AdminNotesMessage"] = "Enter a Notes chapter, question and answer before saving.";
+            TempData["AdminNotesMessageType"] = "error";
+            return RedirectToAction(nameof(Index));
+        }
+
+        var result = await _interviewQuestionService.CreateAsync(input, ct);
+        TempData["AdminNotesMessage"] = result.Succeeded
+            ? "Interview question added to the selected Notes chapter."
+            : result.Error ?? "Unable to add the interview question.";
+        TempData["AdminNotesMessageType"] = result.Succeeded ? "success" : "error";
+        return RedirectToAction(nameof(Index));
+    }
+
+    [HttpPost, ValidateAntiForgeryToken]
+    public async Task<IActionResult> CreatePracticeProgram(AdminPracticeProgramInputDto input, CancellationToken ct)
+    {
+        if (!ModelState.IsValid)
+        {
+            TempData["AdminNotesMessage"] = "Enter a Notes chapter, problem title and description before saving.";
+            TempData["AdminNotesMessageType"] = "error";
+            return RedirectToAction(nameof(Index));
+        }
+
+        var result = await _practiceProgramService.CreateAsync(input, ct);
+        TempData["AdminNotesMessage"] = result.Succeeded
+            ? "Practice program added to the selected Notes chapter. Add its solution from Practice Programs when ready."
+            : result.Error ?? "Unable to add the practice program.";
+        TempData["AdminNotesMessageType"] = result.Succeeded ? "success" : "error";
+        return RedirectToAction(nameof(Index));
     }
 
     [HttpGet]

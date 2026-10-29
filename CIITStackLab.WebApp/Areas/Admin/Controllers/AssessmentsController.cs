@@ -42,7 +42,7 @@ public sealed class AssessmentsController : Controller
     }
 
     [HttpGet]
-    public IActionResult Index() => View();
+    public IActionResult Index() => RedirectToAction(nameof(Mcqs));
 
     [HttpGet]
     public async Task<IActionResult> Mcqs(
@@ -101,11 +101,11 @@ public sealed class AssessmentsController : Controller
             {
                 try
                 {
-                    ViewBag.McqChapters = await _mcqService.GetAssessmentChapterLookupAsync(cancellationToken);
+                    ViewBag.McqTopics = await _mcqService.GetTopicLookupAsync(cancellationToken);
                 }
                 catch (DbException)
                 {
-                    ViewBag.McqChapters = Array.Empty<AdminAssessmentChapterLookupDto>();
+                    ViewBag.McqTopics = Array.Empty<AdminMcqTopicLookupDto>();
                 }
             }
         }
@@ -116,9 +116,9 @@ public sealed class AssessmentsController : Controller
             if (selectedMcq is not null)
             {
                 ViewBag.EditMcqId = selectedMcq.Id;
-                ViewBag.EditMcqInput = new AdminChapterMcqInputDto
+                ViewBag.EditMcqInput = new AdminTopicMcqInputDto
                 {
-                    NoteId = selectedMcq.NoteId ?? 0,
+                    TopicId = selectedMcq.TopicId ?? 0,
                     Question = selectedMcq.Question,
                     Option1 = selectedMcq.Option1,
                     Option2 = selectedMcq.Option2,
@@ -143,7 +143,7 @@ public sealed class AssessmentsController : Controller
     [HttpPost]
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> CreateMcq(
-        AdminChapterMcqInputDto input,
+        AdminTopicMcqInputDto input,
         CancellationToken cancellationToken)
     {
         if (!ModelState.IsValid)
@@ -158,7 +158,7 @@ public sealed class AssessmentsController : Controller
 
         try
         {
-            result = await _mcqService.CreateForChapterAsync(input, cancellationToken);
+            result = await _mcqService.CreateForTopicAsync(input, cancellationToken);
         }
         catch (Exception exception) when (
             exception is DbException or DbUpdateException)
@@ -167,12 +167,12 @@ public sealed class AssessmentsController : Controller
 
             try
             {
-                ViewBag.McqChapters = await _mcqService.GetAssessmentChapterLookupAsync(cancellationToken);
+                ViewBag.McqTopics = await _mcqService.GetTopicLookupAsync(cancellationToken);
             }
             catch (Exception lookupException) when (
                 lookupException is DbException or DbUpdateException)
             {
-                ViewBag.McqChapters = Array.Empty<AdminAssessmentChapterLookupDto>();
+                ViewBag.McqTopics = Array.Empty<AdminMcqTopicLookupDto>();
             }
 
             ViewBag.AddMcqInput = input;
@@ -192,7 +192,7 @@ public sealed class AssessmentsController : Controller
             return View("Mcqs", failedModel);
         }
 
-        TempData["AdminMcqMessage"] = "MCQ created successfully for the selected chapter.";
+        TempData["AdminMcqMessage"] = "MCQ created successfully for the selected topic.";
         TempData["AdminMcqMessageType"] = "success";
         return RedirectToAction(nameof(Mcqs));
     }
@@ -210,7 +210,7 @@ public sealed class AssessmentsController : Controller
     [RequestSizeLimit(6 * 1024 * 1024)]
     [RequestFormLimits(MultipartBodyLengthLimit = 6 * 1024 * 1024)]
     public async Task<IActionResult> AnalyzeBulkMcq(
-        int noteId,
+        int topicId,
         IFormFile? file,
         CancellationToken cancellationToken)
     {
@@ -242,12 +242,12 @@ public sealed class AssessmentsController : Controller
 
         await Response.StartAsync(cancellationToken);
         await ReportProgressAsync(
-            "Upload received. Preparing the chapter and file checks...",
+            "Upload received. Preparing the topic and file checks...",
             cancellationToken);
 
         var preview = new McqImportPreviewDto
         {
-            NoteId = noteId,
+            TopicId = topicId,
             FileName = file is null ? string.Empty : Path.GetFileName(file.FileName)
         };
 
@@ -267,7 +267,7 @@ public sealed class AssessmentsController : Controller
                 await using var fileStream = file.OpenReadStream();
 
                 preview = await _mcqImportService.PreviewAsync(
-                    noteId,
+                    topicId,
                     file.FileName,
                     fileStream,
                     userId,
@@ -279,7 +279,7 @@ public sealed class AssessmentsController : Controller
         {
             preview = new McqImportPreviewDto
             {
-                NoteId = noteId,
+                TopicId = topicId,
                 FileName = file is null ? string.Empty : Path.GetFileName(file.FileName)
             };
             preview.FileErrors.Add(
@@ -289,12 +289,12 @@ public sealed class AssessmentsController : Controller
         {
             _logger.LogError(
                 exception,
-                "MCQ file analysis failed for Notes chapter {NoteId}.",
-                noteId);
+                "MCQ file analysis failed for topic {TopicId}.",
+                topicId);
 
             preview = new McqImportPreviewDto
             {
-                NoteId = noteId,
+                TopicId = topicId,
                 FileName = file is null ? string.Empty : Path.GetFileName(file.FileName)
             };
             preview.FileErrors.Add(
@@ -346,7 +346,7 @@ public sealed class AssessmentsController : Controller
     [RequestSizeLimit(6 * 1024 * 1024)]
     [RequestFormLimits(MultipartBodyLengthLimit = 6 * 1024 * 1024)]
     public async Task<IActionResult> PreviewBulkMcq(
-        int noteId,
+        int topicId,
         IFormFile? file,
         CancellationToken cancellationToken)
     {
@@ -365,7 +365,7 @@ public sealed class AssessmentsController : Controller
             {
                 preview = new McqImportPreviewDto
                 {
-                    TopicId = noteId
+                    TopicId = topicId
                 };
                 preview.FileErrors.Add("Choose a non-empty .xlsx Excel workbook.");
             }
@@ -373,7 +373,7 @@ public sealed class AssessmentsController : Controller
             {
                 preview = new McqImportPreviewDto
                 {
-                    NoteId = noteId,
+                    TopicId = topicId,
                     FileName = Path.GetFileName(file.FileName)
                 };
                 preview.FileErrors.Add(
@@ -384,7 +384,7 @@ public sealed class AssessmentsController : Controller
                 await using var fileStream = file.OpenReadStream();
 
                 preview = await _mcqImportService.PreviewAsync(
-                    noteId,
+                    topicId,
                     file.FileName,
                     fileStream,
                     userId,
@@ -395,11 +395,11 @@ public sealed class AssessmentsController : Controller
         {
             preview = new McqImportPreviewDto
             {
-                NoteId = noteId,
+                TopicId = topicId,
                 FileName = file is null ? string.Empty : Path.GetFileName(file.FileName)
             };
             preview.FileErrors.Add(
-                "The database returned an error during analysis. No MCQs were saved. Confirm the Notes chapter note_id setup SQL has been run against the database used by this application, then retry.");
+                "The database returned an error during analysis. No MCQs were saved. Confirm the Notes topic assignment setup has been run against the database used by this application, then retry.");
         }
 
         // Keep the preview in server-side cache and redirect to the list page.
@@ -437,7 +437,7 @@ public sealed class AssessmentsController : Controller
         catch (DbException)
         {
             TempData["AdminMcqMessage"] =
-                "The database returned an error during confirmation, so success could not be confirmed. Check the MCQ list before retrying. If the chapter column is missing, execute Database/20261012_AddTopicIdToContentQuestions.sql first.";
+                "The database returned an error during confirmation, so success could not be confirmed. Check the MCQ list before retrying. If the topic assignment is unavailable. Verify the topic-linked MCQ schema before retrying.";
             TempData["AdminMcqMessageType"] = "error";
             TempData["OpenAdminMcqModal"] = "import";
 
@@ -475,10 +475,10 @@ public sealed class AssessmentsController : Controller
         var mcq = await _mcqService.GetByIdAsync(id, cancellationToken);
         if (mcq is null) return NotFound();
 
-        await LoadMcqChapterLookupAsync(cancellationToken);
-        return View(new AdminChapterMcqInputDto
+        await LoadMcqTopicLookupAsync(cancellationToken);
+        return View(new AdminTopicMcqInputDto
         {
-            NoteId = mcq.NoteId ?? 0,
+            TopicId = mcq.TopicId ?? 0,
             Question = mcq.Question,
             Option1 = mcq.Option1,
             Option2 = mcq.Option2,
@@ -490,19 +490,19 @@ public sealed class AssessmentsController : Controller
 
     [HttpPost]
     [ValidateAntiForgeryToken]
-    public async Task<IActionResult> EditMcq(int id, AdminChapterMcqInputDto input, CancellationToken cancellationToken)
+    public async Task<IActionResult> EditMcq(int id, AdminTopicMcqInputDto input, CancellationToken cancellationToken)
     {
         if (!ModelState.IsValid)
         {
-            await LoadMcqChapterLookupAsync(cancellationToken);
+            await LoadMcqTopicLookupAsync(cancellationToken);
             return View(input);
         }
 
-        var result = await _mcqService.UpdateForChapterAsync(id, input, cancellationToken);
+        var result = await _mcqService.UpdateForTopicAsync(id, input, cancellationToken);
         if (!result.Succeeded)
         {
             ModelState.AddModelError(string.Empty, result.Error!);
-            await LoadMcqChapterLookupAsync(cancellationToken);
+            await LoadMcqTopicLookupAsync(cancellationToken);
             return View(input);
         }
 
@@ -532,100 +532,9 @@ public sealed class AssessmentsController : Controller
     }
 
     [HttpGet]
-    public async Task<IActionResult> InterviewQuestions(string? previewToken, CancellationToken cancellationToken)
+    public IActionResult InterviewQuestions()
     {
-        ViewBag.InterviewMessage = TempData["AdminInterviewMessage"] as string;
-        ViewBag.InterviewMessageType = TempData["AdminInterviewMessageType"] as string;
-        ViewBag.OpenInterviewImportModal = TempData["OpenAdminInterviewImportModal"] as string;
-        ViewBag.InterviewImportMessage = null;
-        var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
-        if (!string.IsNullOrWhiteSpace(userId) && !string.IsNullOrWhiteSpace(previewToken))
-        {
-            ViewBag.InterviewImportPreview = _interviewQuestionImportService.GetPreview(previewToken, userId);
-            if (ViewBag.InterviewImportPreview is null)
-                ViewBag.InterviewImportMessage = "This preview has expired or is no longer available. Upload the chapter file again.";
-        }
-        if (string.Equals(ViewBag.OpenInterviewImportModal as string, "import", StringComparison.OrdinalIgnoreCase)
-            && string.Equals(ViewBag.InterviewMessageType as string, "error", StringComparison.OrdinalIgnoreCase))
-            ViewBag.InterviewImportMessage = ViewBag.InterviewMessage;
-        await LoadInterviewQuestionChapterLookupAsync(cancellationToken);
-        return View(await _interviewQuestionService.GetIndexAsync(cancellationToken));
-    }
-
-
-    [HttpPost]
-    [ValidateAntiForgeryToken]
-    [RequestSizeLimit(6 * 1024 * 1024)]
-    [RequestFormLimits(MultipartBodyLengthLimit = 6 * 1024 * 1024)]
-    public async Task<IActionResult> AnalyzeInterviewQuestions(int noteId, IFormFile? file, CancellationToken cancellationToken)
-    {
-        var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
-        if (string.IsNullOrWhiteSpace(userId)) return Unauthorized();
-        Response.ContentType = "application/x-ndjson; charset=utf-8";
-        Response.Headers["Cache-Control"] = "no-cache, no-store, must-revalidate";
-        Response.Headers["X-Accel-Buffering"] = "no";
-
-        async Task WriteEventAsync(object payload, CancellationToken token)
-        {
-            await Response.WriteAsync(JsonSerializer.Serialize(payload) + "\n", token);
-            await Response.Body.FlushAsync(token);
-        }
-        async Task ReportProgressAsync(string message, CancellationToken token)
-        {
-            await WriteEventAsync(new { type = "progress", message }, token);
-        }
-
-        await Response.StartAsync(cancellationToken);
-        await ReportProgressAsync("Upload received. Preparing content and file checks...", cancellationToken);
-        var preview = new InterviewQuestionImportPreviewDto
-        {
-            NoteId = noteId,
-            FileName = file is null ? string.Empty : Path.GetFileName(file.FileName)
-        };
-
-        try
-        {
-            if (file is null || file.Length == 0)
-                preview.FileErrors.Add("Choose a non-empty .xlsx Excel workbook.");
-            else if (file.Length > 5 * 1024 * 1024)
-                preview.FileErrors.Add("The upload is larger than 5 MB. Split the file into smaller batches.");
-            else
-            {
-                await using var stream = file.OpenReadStream();
-                preview = await _interviewQuestionImportService.PreviewAsync(
-                    noteId, file.FileName, stream, userId, cancellationToken, ReportProgressAsync);
-            }
-        }
-        catch (DbException exception)
-        {
-            _logger.LogError(exception, "Interview question analysis database failure for Notes chapter {NoteId}.", noteId);
-            preview = new InterviewQuestionImportPreviewDto
-            {
-                NoteId = noteId,
-                FileName = file is null ? string.Empty : Path.GetFileName(file.FileName)
-            };
-            preview.FileErrors.Add("The database returned an error while checking the selected chapter. No interview questions were saved.");
-        }
-        catch (Exception exception) when (!cancellationToken.IsCancellationRequested)
-        {
-            _logger.LogError(exception, "Interview question analysis failed for Notes chapter {NoteId}.", noteId);
-            preview = new InterviewQuestionImportPreviewDto
-            {
-                NoteId = noteId,
-                FileName = file is null ? string.Empty : Path.GetFileName(file.FileName)
-            };
-            preview.FileErrors.Add("The file could not be analyzed. Verify that it is a valid .xlsx Excel workbook and try again. No questions were saved.");
-        }
-
-        _interviewQuestionImportService.CachePreview(preview, userId);
-        await WriteEventAsync(new
-        {
-            type = "result", previewToken = preview.PreviewToken,
-            questionCount = preview.Questions.Count, validCount = preview.ValidQuestionCount,
-            invalidCount = preview.InvalidQuestionCount, fileErrorCount = preview.FileErrors.Count,
-            canImport = preview.CanImport
-        }, cancellationToken);
-        return new EmptyResult();
+        return NotFound();
     }
 
     [HttpGet]
@@ -676,7 +585,7 @@ public sealed class AssessmentsController : Controller
         }
         _interviewQuestionImportService.CachePreview(preview, userId);
         TempData["OpenAdminInterviewImportModal"] = "import";
-        return RedirectToAction(nameof(InterviewQuestions), new { previewToken = preview.PreviewToken });
+        return RedirectToAction("Index", "Notes", new { area = "Admin", previewToken = preview.PreviewToken });
     }
 
     [HttpPost]
@@ -696,13 +605,13 @@ public sealed class AssessmentsController : Controller
             TempData["AdminInterviewMessage"] = "The database could not confirm this interview-question import. Check the Interview Questions list before retrying.";
             TempData["AdminInterviewMessageType"] = "error";
             TempData["OpenAdminInterviewImportModal"] = "import";
-            return RedirectToAction(nameof(InterviewQuestions), new { previewToken });
+            return RedirectToAction("Index", "Notes", new { area = "Admin" });
         }
         if (result.Succeeded)
         {
             TempData["AdminInterviewMessage"] = result.Message;
             TempData["AdminInterviewMessageType"] = "success";
-            return RedirectToAction(nameof(InterviewQuestions));
+            return RedirectToAction("Index", "Notes", new { area = "Admin" });
         }
         TempData["AdminInterviewMessage"] = result.Message;
         TempData["AdminInterviewMessageType"] = "error";
@@ -710,9 +619,9 @@ public sealed class AssessmentsController : Controller
         if (result.Preview is not null)
         {
             _interviewQuestionImportService.CachePreview(result.Preview, userId);
-            return RedirectToAction(nameof(InterviewQuestions), new { previewToken = result.Preview.PreviewToken });
+            return RedirectToAction("Index", "Notes", new { area = "Admin" });
         }
-        return RedirectToAction(nameof(InterviewQuestions));
+        return RedirectToAction("Index", "Notes", new { area = "Admin" });
     }
 
     [HttpGet]
@@ -733,7 +642,9 @@ public sealed class AssessmentsController : Controller
             ViewBag.OpenInterviewQuestionModal = "add";
             ViewBag.InterviewMessage = "Review the highlighted fields and try again.";
             ViewBag.InterviewMessageType = "error";
-            return View("InterviewQuestions", await _interviewQuestionService.GetIndexAsync(cancellationToken));
+            TempData["AdminNotesMessage"] = "The interview question could not be saved. Please review the submitted details and try again.";
+            TempData["AdminNotesMessageType"] = "error";
+            return RedirectToAction("Index", "Notes", new { area = "Admin" });
         }
 
         var result = await _interviewQuestionService.CreateAsync(input, cancellationToken);
@@ -745,17 +656,20 @@ public sealed class AssessmentsController : Controller
             ViewBag.OpenInterviewQuestionModal = "add";
             ViewBag.InterviewMessage = result.Error;
             ViewBag.InterviewMessageType = "error";
-            return View("InterviewQuestions", await _interviewQuestionService.GetIndexAsync(cancellationToken));
+            TempData["AdminNotesMessage"] = "The interview question could not be saved. Please review the submitted details and try again.";
+            TempData["AdminNotesMessageType"] = "error";
+            return RedirectToAction("Index", "Notes", new { area = "Admin" });
         }
 
         TempData["AdminInterviewMessage"] = "Interview question created successfully.";
         TempData["AdminInterviewMessageType"] = "success";
-        return RedirectToAction(nameof(InterviewQuestions));
+        return RedirectToAction("Index", "Notes", new { area = "Admin" });
     }
 
     [HttpGet]
-    public async Task<IActionResult> EditInterviewQuestion(int id, CancellationToken cancellationToken)
+    public async Task<IActionResult> EditInterviewQuestion(int id, bool modal, CancellationToken cancellationToken)
     {
+        ViewBag.IsModal = modal;
         var question = await _interviewQuestionService.GetByIdAsync(id, cancellationToken);
         if (question is null) return NotFound();
 
@@ -771,8 +685,9 @@ public sealed class AssessmentsController : Controller
 
     [HttpPost]
     [ValidateAntiForgeryToken]
-    public async Task<IActionResult> EditInterviewQuestion(int id, AdminInterviewQuestionInputDto input, CancellationToken cancellationToken)
+    public async Task<IActionResult> EditInterviewQuestion(int id, AdminInterviewQuestionInputDto input, bool modal, CancellationToken cancellationToken)
     {
+        ViewBag.IsModal = modal;
         if (!ModelState.IsValid)
         {
             await LoadInterviewQuestionChapterLookupAsync(cancellationToken);
@@ -787,9 +702,10 @@ public sealed class AssessmentsController : Controller
             return View(input);
         }
 
+        if (modal) return ModalSaved();
         TempData["AdminInterviewMessage"] = "Interview question updated successfully.";
         TempData["AdminInterviewMessageType"] = "success";
-        return RedirectToAction(nameof(InterviewQuestions));
+        return RedirectToAction("Index", "Notes", new { area = "Admin" });
     }
 
     [HttpPost]
@@ -799,7 +715,7 @@ public sealed class AssessmentsController : Controller
         var result = await _interviewQuestionService.SoftDeleteAsync(id, cancellationToken);
         TempData["AdminInterviewMessage"] = result.Succeeded ? "Interview question moved to archive." : result.Error;
         TempData["AdminInterviewMessageType"] = result.Succeeded ? "success" : "error";
-        return RedirectToAction(nameof(InterviewQuestions));
+        return RedirectToAction("Index", "Notes", new { area = "Admin" });
     }
 
     [HttpPost]
@@ -809,145 +725,13 @@ public sealed class AssessmentsController : Controller
         var result = await _interviewQuestionService.RestoreAsync(id, cancellationToken);
         TempData["AdminInterviewMessage"] = result.Succeeded ? "Interview question restored successfully." : result.Error;
         TempData["AdminInterviewMessageType"] = result.Succeeded ? "success" : "error";
-        return RedirectToAction(nameof(InterviewQuestions));
+        return RedirectToAction("Index", "Notes", new { area = "Admin" });
     }
 
     [HttpGet]
-    public async Task<IActionResult> PracticePrograms(
-        string? previewToken,
-        CancellationToken cancellationToken)
+    public IActionResult PracticePrograms()
     {
-        ViewBag.PracticeMessage = TempData["AdminPracticeMessage"] as string;
-        ViewBag.PracticeMessageType = TempData["AdminPracticeMessageType"] as string;
-        ViewBag.OpenPracticeProgramImportModal = TempData["OpenPracticeProgramImportModal"] as string;
-        ViewBag.PracticeProgramImportMessage = TempData["PracticeProgramImportMessage"] as string;
-        ViewBag.PracticeProgramImportPreview = null;
-
-        var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
-        if (!string.IsNullOrWhiteSpace(userId) && !string.IsNullOrWhiteSpace(previewToken))
-        {
-            ViewBag.PracticeProgramImportPreview =
-                _practiceProgramImportService.GetPreview(previewToken, userId);
-            if (ViewBag.PracticeProgramImportPreview is null)
-            {
-                ViewBag.PracticeProgramImportMessage =
-                    "This preview has expired or is no longer available. Upload the Excel workbook again.";
-            }
-        }
-
-        await LoadPracticeProgramChapterLookupAsync(cancellationToken);
-        await LoadPracticeProgramLookupAsync(cancellationToken);
-        return View(await _practiceProgramService.GetIndexAsync(cancellationToken));
-    }
-
-
-    [HttpPost]
-    [ValidateAntiForgeryToken]
-    [RequestSizeLimit(6 * 1024 * 1024)]
-    [RequestFormLimits(MultipartBodyLengthLimit = 6 * 1024 * 1024)]
-    public async Task<IActionResult> AnalyzePracticePrograms(
-        int noteId,
-        IFormFile? file,
-        CancellationToken cancellationToken)
-    {
-        var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
-        if (string.IsNullOrWhiteSpace(userId))
-        {
-            return Unauthorized();
-        }
-
-        Response.ContentType = "application/x-ndjson; charset=utf-8";
-        Response.Headers["Cache-Control"] = "no-cache, no-store, must-revalidate";
-        Response.Headers["X-Accel-Buffering"] = "no";
-
-        async Task WriteEventAsync(object payload, CancellationToken token)
-        {
-            await Response.WriteAsync(JsonSerializer.Serialize(payload) + "\n", token);
-            await Response.Body.FlushAsync(token);
-        }
-
-        async Task ReportProgressAsync(string message, CancellationToken token)
-        {
-            await WriteEventAsync(new { type = "progress", message }, token);
-        }
-
-        await Response.StartAsync(cancellationToken);
-        await ReportProgressAsync(
-            "Upload received. Preparing the learning content and Excel workbook checks...",
-            cancellationToken);
-
-        var preview = new PracticeProgramImportPreviewDto
-        {
-            NoteId = noteId,
-            FileName = file is null ? string.Empty : Path.GetFileName(file.FileName)
-        };
-
-        try
-        {
-            if (file is null || file.Length == 0)
-            {
-                preview.FileErrors.Add("Choose a non-empty .xlsx Excel workbook.");
-            }
-            else if (file.Length > 5 * 1024 * 1024)
-            {
-                preview.FileErrors.Add("The upload is larger than 5 MB. Split it into smaller workbooks.");
-            }
-            else
-            {
-                await using var fileStream = file.OpenReadStream();
-                preview = await _practiceProgramImportService.PreviewAsync(
-                    noteId,
-                    file.FileName,
-                    fileStream,
-                    userId,
-                    cancellationToken,
-                    ReportProgressAsync);
-            }
-        }
-        catch (DbException exception)
-        {
-            _logger.LogError(
-                exception,
-                "Practice-program Excel analysis database failure for Notes chapter {NoteId}.",
-                noteId);
-            preview = new PracticeProgramImportPreviewDto
-            {
-                NoteId = noteId,
-                FileName = file is null ? string.Empty : Path.GetFileName(file.FileName)
-            };
-            preview.FileErrors.Add(
-                "The database returned an error while checking the selected Notes chapter. No questions or solutions were saved.");
-        }
-        catch (Exception exception) when (!cancellationToken.IsCancellationRequested)
-        {
-            _logger.LogError(
-                exception,
-                "Practice-program Excel analysis failed for Notes chapter {NoteId}.",
-                noteId);
-            preview = new PracticeProgramImportPreviewDto
-            {
-                NoteId = noteId,
-                FileName = file is null ? string.Empty : Path.GetFileName(file.FileName)
-            };
-            preview.FileErrors.Add(
-                "The file could not be analyzed. Verify that it is a valid .xlsx workbook and try again. No questions or solutions were saved.");
-        }
-
-        _practiceProgramImportService.CachePreview(preview, userId);
-        await WriteEventAsync(
-            new
-            {
-                type = "result",
-                previewToken = preview.PreviewToken,
-                questionCount = preview.Programs.Count,
-                validCount = preview.ValidQuestionCount,
-                invalidCount = preview.InvalidQuestionCount,
-                fileErrorCount = preview.FileErrors.Count,
-                canImport = preview.CanImport
-            },
-            cancellationToken);
-
-        return new EmptyResult();
+        return NotFound();
     }
 
     [HttpGet]
@@ -1033,7 +817,7 @@ public sealed class AssessmentsController : Controller
 
         _practiceProgramImportService.CachePreview(preview, userId);
         TempData["OpenPracticeProgramImportModal"] = "import";
-        return RedirectToAction(nameof(PracticePrograms), new { previewToken = preview.PreviewToken });
+        return RedirectToAction("Index", "Notes", new { area = "Admin", previewToken = preview.PreviewToken });
     }
 
     [HttpPost]
@@ -1062,14 +846,14 @@ public sealed class AssessmentsController : Controller
             TempData["PracticeProgramImportMessage"] =
                 "The database could not complete this import. Check the Practice Programs list before retrying.";
             TempData["OpenPracticeProgramImportModal"] = "import";
-            return RedirectToAction(nameof(PracticePrograms), new { previewToken });
+            return RedirectToAction("Index", "Notes", new { area = "Admin" });
         }
 
         if (result.Succeeded)
         {
             TempData["AdminPracticeMessage"] = result.Message;
             TempData["AdminPracticeMessageType"] = "success";
-            return RedirectToAction(nameof(PracticePrograms));
+            return RedirectToAction("Index", "Notes", new { area = "Admin" });
         }
 
         TempData["PracticeProgramImportMessage"] = result.Message;
@@ -1078,10 +862,10 @@ public sealed class AssessmentsController : Controller
         if (result.Preview is not null)
         {
             _practiceProgramImportService.CachePreview(result.Preview, userId);
-            return RedirectToAction(nameof(PracticePrograms), new { previewToken = result.Preview.PreviewToken });
+            return RedirectToAction("Index", "Notes", new { area = "Admin" });
         }
 
-        return RedirectToAction(nameof(PracticePrograms));
+        return RedirectToAction("Index", "Notes", new { area = "Admin" });
     }
 
     [HttpGet]
@@ -1103,7 +887,9 @@ public sealed class AssessmentsController : Controller
             ViewBag.OpenPracticeModal = "program";
             ViewBag.PracticeMessage = "Review the highlighted fields and try again.";
             ViewBag.PracticeMessageType = "error";
-            return View("PracticePrograms", await _practiceProgramService.GetIndexAsync(cancellationToken));
+            TempData["AdminNotesMessage"] = "The practice program could not be saved. Please review the submitted details and try again.";
+            TempData["AdminNotesMessageType"] = "error";
+            return RedirectToAction("Index", "Notes", new { area = "Admin" });
         }
 
         var result = await _practiceProgramService.CreateAsync(input, cancellationToken);
@@ -1116,23 +902,27 @@ public sealed class AssessmentsController : Controller
             ViewBag.OpenPracticeModal = "program";
             ViewBag.PracticeMessage = result.Error;
             ViewBag.PracticeMessageType = "error";
-            return View("PracticePrograms", await _practiceProgramService.GetIndexAsync(cancellationToken));
+            TempData["AdminNotesMessage"] = "The practice program could not be saved. Please review the submitted details and try again.";
+            TempData["AdminNotesMessageType"] = "error";
+            return RedirectToAction("Index", "Notes", new { area = "Admin" });
         }
 
         TempData["AdminPracticeMessage"] = "Practice program created successfully.";
         TempData["AdminPracticeMessageType"] = "success";
-        return RedirectToAction(nameof(PracticePrograms));
+        return RedirectToAction("Index", "Notes", new { area = "Admin" });
     }
 
     [HttpGet]
-    public async Task<IActionResult> EditPracticeProgram(int id, CancellationToken cancellationToken)
+    public async Task<IActionResult> EditPracticeProgram(int id, bool modal, CancellationToken cancellationToken)
     {
+        ViewBag.IsModal = modal;
         var program = await _practiceProgramService.GetByIdAsync(id, cancellationToken);
         if (program is null) return NotFound();
 
         await LoadPracticeProgramContentAsync(cancellationToken);
         return View(new AdminPracticeProgramInputDto
         {
+            NoteId = program.NoteId ?? 0,
             ContentId = program.ContentId ?? 0,
             QuestionTitle = program.QuestionTitle,
             QuestionDescription = program.QuestionDescription
@@ -1141,8 +931,9 @@ public sealed class AssessmentsController : Controller
 
     [HttpPost]
     [ValidateAntiForgeryToken]
-    public async Task<IActionResult> EditPracticeProgram(int id, AdminPracticeProgramInputDto input, CancellationToken cancellationToken)
+    public async Task<IActionResult> EditPracticeProgram(int id, AdminPracticeProgramInputDto input, bool modal, CancellationToken cancellationToken)
     {
+        ViewBag.IsModal = modal;
         if (!ModelState.IsValid)
         {
             await LoadPracticeProgramContentAsync(cancellationToken);
@@ -1157,9 +948,10 @@ public sealed class AssessmentsController : Controller
             return View(input);
         }
 
+        if (modal) return ModalSaved();
         TempData["AdminPracticeMessage"] = "Practice program updated successfully.";
         TempData["AdminPracticeMessageType"] = "success";
-        return RedirectToAction(nameof(PracticePrograms));
+        return RedirectToAction("Index", "Notes", new { area = "Admin" });
     }
 
     [HttpPost]
@@ -1169,7 +961,7 @@ public sealed class AssessmentsController : Controller
         var result = await _practiceProgramService.SoftDeleteAsync(id, cancellationToken);
         TempData["AdminPracticeMessage"] = result.Succeeded ? "Practice program moved to archive." : result.Error;
         TempData["AdminPracticeMessageType"] = result.Succeeded ? "success" : "error";
-        return RedirectToAction(nameof(PracticePrograms));
+        return RedirectToAction("Index", "Notes", new { area = "Admin" });
     }
 
     [HttpPost]
@@ -1179,7 +971,7 @@ public sealed class AssessmentsController : Controller
         var result = await _practiceProgramService.RestoreAsync(id, cancellationToken);
         TempData["AdminPracticeMessage"] = result.Succeeded ? "Practice program restored successfully." : result.Error;
         TempData["AdminPracticeMessageType"] = result.Succeeded ? "success" : "error";
-        return RedirectToAction(nameof(PracticePrograms));
+        return RedirectToAction("Index", "Notes", new { area = "Admin" });
     }
 
     [HttpGet]
@@ -1215,7 +1007,9 @@ public sealed class AssessmentsController : Controller
             ViewBag.OpenPracticeModal = "solution";
             ViewBag.PracticeMessage = "Review the highlighted fields and try again.";
             ViewBag.PracticeMessageType = "error";
-            return View("PracticePrograms", await _practiceProgramService.GetIndexAsync(cancellationToken));
+            TempData["AdminNotesMessage"] = "The practice program could not be saved. Please review the submitted details and try again.";
+            TempData["AdminNotesMessageType"] = "error";
+            return RedirectToAction("Index", "Notes", new { area = "Admin" });
         }
 
         var result = await _practiceProgramService.CreateAnswerAsync(input, cancellationToken);
@@ -1228,12 +1022,14 @@ public sealed class AssessmentsController : Controller
             ViewBag.OpenPracticeModal = "solution";
             ViewBag.PracticeMessage = result.Error;
             ViewBag.PracticeMessageType = "error";
-            return View("PracticePrograms", await _practiceProgramService.GetIndexAsync(cancellationToken));
+            TempData["AdminNotesMessage"] = "The practice program could not be saved. Please review the submitted details and try again.";
+            TempData["AdminNotesMessageType"] = "error";
+            return RedirectToAction("Index", "Notes", new { area = "Admin" });
         }
 
         TempData["AdminPracticeMessage"] = "Practice program solution added successfully.";
         TempData["AdminPracticeMessageType"] = "success";
-        return RedirectToAction(nameof(PracticePrograms));
+        return RedirectToAction("Index", "Notes", new { area = "Admin" });
     }
 
     [HttpGet]
@@ -1271,7 +1067,7 @@ public sealed class AssessmentsController : Controller
 
         TempData["AdminPracticeMessage"] = "Practice program solution updated successfully.";
         TempData["AdminPracticeMessageType"] = "success";
-        return RedirectToAction(nameof(PracticePrograms));
+        return RedirectToAction("Index", "Notes", new { area = "Admin" });
     }
 
     [HttpPost]
@@ -1281,7 +1077,7 @@ public sealed class AssessmentsController : Controller
         var result = await _practiceProgramService.SoftDeleteAnswerAsync(id, cancellationToken);
         TempData["AdminPracticeMessage"] = result.Succeeded ? "Practice program solution moved to archive." : result.Error;
         TempData["AdminPracticeMessageType"] = result.Succeeded ? "success" : "error";
-        return RedirectToAction(nameof(PracticePrograms));
+        return RedirectToAction("Index", "Notes", new { area = "Admin" });
     }
 
     [HttpPost]
@@ -1291,13 +1087,14 @@ public sealed class AssessmentsController : Controller
         var result = await _practiceProgramService.RestoreAnswerAsync(id, cancellationToken);
         TempData["AdminPracticeMessage"] = result.Succeeded ? "Practice program solution restored successfully." : result.Error;
         TempData["AdminPracticeMessageType"] = result.Succeeded ? "success" : "error";
-        return RedirectToAction(nameof(PracticePrograms));
+        return RedirectToAction("Index", "Notes", new { area = "Admin" });
     }
 
     private async Task<AdminMcqIndexDto> LoadMcqIndexAsync(
         CancellationToken cancellationToken)
     {
         ViewBag.McqChapters = await _mcqService.GetAssessmentChapterLookupAsync(cancellationToken);
+        ViewBag.McqTopics = await _mcqService.GetTopicLookupAsync(cancellationToken);
         return await _mcqService.GetIndexAsync(cancellationToken);
     }
 
@@ -1321,6 +1118,12 @@ public sealed class AssessmentsController : Controller
     {
         var content = await _interviewQuestionService.GetContentLookupAsync(cancellationToken);
         ViewBag.InterviewQuestionContent = content.Select(x => new SelectListItem($"{x.TopicTitle} / {x.Title}", x.Id.ToString())).ToList();
+    }
+
+    private ContentResult ModalSaved()
+    {
+        const string script = "<!doctype html><html><head><meta charset=\"utf-8\"></head><body><script>window.parent.postMessage({ type: 'ciit-content-saved' }, window.location.origin);</script></body></html>";
+        return Content(script, "text/html");
     }
 
     private async Task LoadInterviewQuestionChapterLookupAsync(CancellationToken cancellationToken)

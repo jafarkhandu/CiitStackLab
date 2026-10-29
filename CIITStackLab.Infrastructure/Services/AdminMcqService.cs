@@ -25,11 +25,11 @@ public sealed class AdminMcqService : IAdminMcqService
             {
                 Id = x.Id,
                 ContentId = x.ContentId,
-                TopicId = x.TopicId ?? (x.Content != null ? x.Content.TopicId : null),
+                TopicId = x.TopicId ?? (x.Content != null ? x.Content.TopicId : x.Note != null ? x.Note.TopicId : null),
                 NoteId = x.NoteId ?? (x.Content != null ? x.Content.Id : null),
                 ChapterTitle = x.Content != null && x.Content.Topic != null ? x.Content.Topic.Title + " / " + x.Content.Id + " — " + x.Content.Title : x.Topic != null ? x.Topic.Title + " / legacy topic-level assessment" : "Unassigned",
                 ContentTitle = x.Content != null ? x.Content.Title ?? string.Empty : string.Empty,
-                TopicTitle = x.Topic != null ? x.Topic.Title : x.Content != null && x.Content.Topic != null ? x.Content.Topic.Title : "Unassigned",
+                TopicTitle = x.Topic != null ? x.Topic.Title : x.Content != null && x.Content.Topic != null ? x.Content.Topic.Title : x.Note != null && x.Note.Topic != null ? x.Note.Topic.Title : "Unassigned",
                 Question = x.Question ?? string.Empty,
                 Option1 = x.Option1 ?? string.Empty,
                 Option2 = x.Option2 ?? string.Empty,
@@ -48,11 +48,11 @@ public sealed class AdminMcqService : IAdminMcqService
             .Select(x => new AdminArchivedMcqDto
             {
                 Id = x.Id,
-                TopicId = x.TopicId ?? (x.Content != null ? x.Content.TopicId : null),
+                TopicId = x.TopicId ?? (x.Content != null ? x.Content.TopicId : x.Note != null ? x.Note.TopicId : null),
                 NoteId = x.NoteId ?? (x.Content != null ? x.Content.Id : null),
                 ChapterTitle = x.Content != null && x.Content.Topic != null ? x.Content.Topic.Title + " / " + x.Content.Id + " — " + x.Content.Title : x.Topic != null ? x.Topic.Title + " / legacy topic-level assessment" : "Unassigned",
                 ContentTitle = x.Content != null ? x.Content.Title ?? string.Empty : string.Empty,
-                TopicTitle = x.Topic != null ? x.Topic.Title : x.Content != null && x.Content.Topic != null ? x.Content.Topic.Title : "Unassigned",
+                TopicTitle = x.Topic != null ? x.Topic.Title : x.Content != null && x.Content.Topic != null ? x.Content.Topic.Title : x.Note != null && x.Note.Topic != null ? x.Note.Topic.Title : "Unassigned",
                 Question = x.Question ?? string.Empty,
                 DeletedAt = x.DeletedAt
             })
@@ -74,11 +74,11 @@ public sealed class AdminMcqService : IAdminMcqService
             {
                 Id = x.Id,
                 ContentId = x.ContentId,
-                TopicId = x.TopicId ?? (x.Content != null ? x.Content.TopicId : null),
+                TopicId = x.TopicId ?? (x.Content != null ? x.Content.TopicId : x.Note != null ? x.Note.TopicId : null),
                 NoteId = x.NoteId ?? (x.Content != null ? x.Content.Id : null),
                 ChapterTitle = x.Content != null && x.Content.Topic != null ? x.Content.Topic.Title + " / " + x.Content.Id + " — " + x.Content.Title : x.Topic != null ? x.Topic.Title + " / legacy topic-level assessment" : "Unassigned",
                 ContentTitle = x.Content != null ? x.Content.Title ?? string.Empty : string.Empty,
-                TopicTitle = x.Topic != null ? x.Topic.Title : x.Content != null && x.Content.Topic != null ? x.Content.Topic.Title : "Unassigned",
+                TopicTitle = x.Topic != null ? x.Topic.Title : x.Content != null && x.Content.Topic != null ? x.Content.Topic.Title : x.Note != null && x.Note.Topic != null ? x.Note.Topic.Title : "Unassigned",
                 Question = x.Question ?? string.Empty,
                 Option1 = x.Option1 ?? string.Empty,
                 Option2 = x.Option2 ?? string.Empty,
@@ -223,7 +223,7 @@ public sealed class AdminMcqService : IAdminMcqService
 
         if (!topicExists)
         {
-            return (false, "The selected chapter is not available.");
+            return (false, "The selected topic is not available.");
         }
 
         var question = new ContentQuestion
@@ -269,6 +269,7 @@ public sealed class AdminMcqService : IAdminMcqService
         }
 
         question.TopicId = input.TopicId;
+        question.NoteId = null;
         question.ContentId = null;
         question.Question = input.Question.Trim();
         question.Option1 = input.Option1.Trim();

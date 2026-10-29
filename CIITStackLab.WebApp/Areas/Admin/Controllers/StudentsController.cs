@@ -30,7 +30,23 @@ public class StudentsController : Controller
 
     [HttpPost]
     [ValidateAntiForgeryToken]
-    public async Task<IActionResult> SetStatus(
+    public Task<IActionResult> Activate(
+        string userId,
+        CancellationToken cancellationToken)
+    {
+        return UpdateStudentStatusAsync(userId, true, cancellationToken);
+    }
+
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    public Task<IActionResult> Deactivate(
+        string userId,
+        CancellationToken cancellationToken)
+    {
+        return UpdateStudentStatusAsync(userId, false, cancellationToken);
+    }
+
+    private async Task<IActionResult> UpdateStudentStatusAsync(
         string userId,
         bool isActive,
         CancellationToken cancellationToken)
