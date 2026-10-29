@@ -165,13 +165,23 @@
             const heading = topic.querySelector(':scope > .ciit-learning-topic-heading');
             const firstContentUrl = topic.dataset.topicFirstContentUrl;
 
-            if (!heading || !firstContentUrl || topic.classList.contains('is-active-topic') || topic.classList.contains('is-locked-topic')) {
+            if (!heading) {
                 return;
             }
 
             heading.addEventListener('click', function (event) {
+                // Keep the selected topic expanded and prevent locked topics from opening.
+                // Selecting a different unlocked topic navigates to its learning page.
                 event.preventDefault();
-                window.location.assign(firstContentUrl);
+
+                if (topic.classList.contains('is-locked-topic')
+                    || topic.classList.contains('is-active-topic')) {
+                    return;
+                }
+
+                if (firstContentUrl) {
+                    window.location.assign(firstContentUrl);
+                }
             });
         });
         document.querySelectorAll('.exam-timezone-offset').forEach(function (input) {
