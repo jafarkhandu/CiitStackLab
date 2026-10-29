@@ -27,6 +27,8 @@
             .ToList();
     var isCurrentTopicCompleted = currentTopicContentIds.Count > 0
         && currentTopicContentIds.All(completedContentIds.Contains);
+    var completedChapterCount = currentTopic?.Chapters.Count(chapter => chapter.IsCompleted) ?? 0;
+    var totalChapterCount = currentTopic?.Chapters.Count ?? 0;
 }
 
 <aside class="ciit-learning-sidebar" aria-label="Current topic chapters">
@@ -42,9 +44,7 @@
                     <i class="bi bi-check-circle-fill" aria-hidden="true"></i>
                 </span>
             }
-            <span class="ciit-learning-count" title="@((currentTopic?.Chapters.Count ?? 0)) chapters">
-                @(currentTopic?.Chapters.Count ?? 0)
-            </span>
+            <span class="ciit-learning-chapter-progress-count">@completedChapterCount / @totalChapterCount done</span>
         </div>
     </div>
 
