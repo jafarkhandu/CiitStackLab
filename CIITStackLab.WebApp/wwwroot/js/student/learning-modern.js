@@ -71,6 +71,7 @@
         }
 
         const assessmentLink = document.querySelector('[data-learning-assessment-link]');
+        const learningPathLink = document.querySelector('[data-learning-path-link]');
         const notesButton = document.querySelector('[data-learning-page="notes"]');
 
         const showAssessment = function (updateHash) {
@@ -83,9 +84,8 @@
             }
             assessmentPanel.hidden = false;
 
-            if (notesButton) {
-                notesButton.classList.remove('is-active');
-            }
+            notesButton?.classList.remove('is-active');
+            learningPathLink?.classList.remove('active');
             assessmentLink?.classList.add('active');
 
             if (updateHash) {
@@ -111,6 +111,7 @@
             window.setTimeout(function () {
                 notesButton.click();
                 assessmentLink?.classList.remove('active');
+                learningPathLink?.classList.add('active');
             }, 0);
         }
     }
