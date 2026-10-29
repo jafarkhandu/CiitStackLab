@@ -64,10 +64,10 @@ document.addEventListener("DOMContentLoaded", function () {
         form.addEventListener("submit", function (event) {
             const submitButton = event.submitter || form.querySelector(".ciit-student-status-btn");
             const name = form.dataset.studentName || "this student";
-            const actionValue = submitButton?.dataset.isActive;
+            const actionValue = String(submitButton?.dataset.isActive ?? "").toLowerCase();
             const activating = actionValue === "true";
 
-            // Do not submit unless the explicit action button supplies a valid target state.
+            // Razor may render Boolean data attributes as "True"/"False"; normalize before validating.
             if (actionValue !== "true" && actionValue !== "false") {
                 event.preventDefault();
                 return;
