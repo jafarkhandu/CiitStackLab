@@ -544,6 +544,47 @@ public class CoursesController : Controller
         return View("MyCourses", courses);
     }
 
+    [HttpGet("Courses/PracticeAssessment")]
+    [Authorize(Roles = "Student")]
+    public async Task<IActionResult> PracticeAssessment(CancellationToken cancellationToken)
+    {
+        var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+
+        if (string.IsNullOrWhiteSpace(userId))
+        {
+            return Challenge();
+        }
+
+        var accessibleCourseIds = await _coursePurchaseService.GetAccessibleCourseIdsAsync(
+            userId,
+            cancellationToken);
+        var accessibleCourseIdSet = accessibleCourseIds.ToHashSet();
+        var publishedCourses = await _courseService.GetPublishedAsync(cancellationToken);
+        var accessibleCourses = publishedCourses
+            .Where(course => accessibleCourseIdSet.Contains(course.Id))
+            .OrderBy(course => course.Title)
+            .ToList();
+
+        var coursesWithTopics = new List<CourseLearningDto>();
+
+        foreach (var accessibleCourse in accessibleCourses)
+        {
+            cancellationToken.ThrowIfCancellationRequested();
+
+            var course = await _courseService.GetLearningAsync(
+                accessibleCourse.Id,
+                null,
+                cancellationToken);
+
+            if (course is not null)
+            {
+                coursesWithTopics.Add(course);
+            }
+        }
+
+        return View(coursesWithTopics);
+    }
+
     [HttpGet("Courses/PaymentHistory")]
     [Authorize(Roles = "Student")]
     public async Task<IActionResult> PaymentHistory(CancellationToken cancellationToken)

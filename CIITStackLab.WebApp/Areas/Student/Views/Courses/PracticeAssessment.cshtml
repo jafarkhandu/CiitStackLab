@@ -1,0 +1,177 @@
+@model IReadOnlyList<CIITStackLab.Application.DTOs.CourseLearningDto>
+
+@{
+    Layout = "_CourseLayout";
+    ViewData["Title"] = "Practice Assessment";
+    var totalTopics = Model.Sum(course => course.Topics.Count);
+}
+
+@section Styles {
+    <link rel="stylesheet" href="~/css/student/course-experience.css" asp-append-version="true" />
+    <link rel="stylesheet" href="~/css/student/course-home-modern.css" asp-append-version="true" />
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/devicon@2.17.0/devicon.min.css" />
+    <style>
+        .ciit-practice-assessment-page {
+            padding: clamp(24px, 3vw, 42px) 0 64px;
+            background: radial-gradient(circle at 88% 4%, rgba(204, 225, 255, .55), transparent 30%), linear-gradient(180deg, #f4f8ff 0%, #f7f9fd 55%, #f3f7fd 100%);
+            min-height: calc(100vh - 90px);
+        }
+        .ciit-practice-assessment-page .ciit-course-experience-main { max-width: 1440px; margin: 0 auto; }
+        .ciit-practice-search { display:flex; align-items:center; gap:12px; width:min(100%,560px); margin: 0 0 24px; padding: 0 16px; border:1px solid #dce7f6; border-radius:14px; background:rgba(255,255,255,.92); box-shadow:0 7px 18px rgba(28,67,120,.045); }
+        .ciit-practice-search i { color:#7b91b1; font-size:1.05rem; }
+        .ciit-practice-search input { width:100%; min-width:0; padding:14px 0; border:0; outline:0; background:transparent; color:#13284b; font:inherit; }
+        .ciit-practice-course-section + .ciit-practice-course-section { margin-top:22px; }
+        .ciit-practice-course-heading { display:flex; align-items:center; justify-content:space-between; gap:16px; margin-bottom:14px; }
+        .ciit-practice-course-heading h2 { margin:0; color:#13284b; font-size:1.12rem; font-weight:800; }
+        .ciit-practice-course-heading span { color:#7183a0; font-size:.78rem; font-weight:700; white-space:nowrap; }
+        .ciit-practice-assessment-page .ciit-course-curriculum-list { display:grid; grid-template-columns:repeat(6,minmax(0,1fr)); gap:12px; }
+        .ciit-practice-assessment-page .ciit-course-topic-card { aspect-ratio:1/1; }
+        .ciit-practice-assessment-page [hidden] { display:none !important; }
+        .ciit-practice-empty { padding:40px 20px; border:1px solid #e2e9f3; border-radius:16px; background:rgba(255,255,255,.86); color:#7183a0; text-align:center; }
+        @media(max-width:1399.98px){.ciit-practice-assessment-page .ciit-course-curriculum-list{grid-template-columns:repeat(5,minmax(0,1fr));}}
+        @media(max-width:1199.98px){.ciit-practice-assessment-page .ciit-course-curriculum-list{grid-template-columns:repeat(4,minmax(0,1fr));}}
+        @media(max-width:991.98px){.ciit-practice-assessment-page .ciit-course-curriculum-list{grid-template-columns:repeat(3,minmax(0,1fr));}}
+        @media(max-width:539.98px){.ciit-practice-assessment-page .ciit-course-curriculum-list{grid-template-columns:repeat(2,minmax(0,1fr));gap:9px;}.ciit-practice-assessment-page .ciit-course-topic-card{border-radius:13px;padding:10px 7px;}.ciit-practice-assessment-page .ciit-course-topic-logo{width:42px;height:42px;border-radius:12px;}.ciit-practice-assessment-page .ciit-course-topic-logo i{font-size:1.75rem;}.ciit-practice-assessment-page .ciit-course-topic-card-title strong{font-size:.8rem;}.ciit-practice-course-heading{align-items:flex-start;flex-direction:column;gap:4px;}}
+    </style>
+}
+
+<section class="ciit-course-experience ciit-course-home-modern ciit-practice-assessment-page">
+    <div class="container-fluid px-3 px-lg-4">
+        <main class="ciit-course-experience-main">
+            <section class="ciit-course-experience-card ciit-course-curriculum-section">
+                <div class="ciit-course-experience-card-header">
+                    <div>
+                        <span class="ciit-course-experience-eyebrow" style="background:#eef5ff;color:#1769ff;">Practice assessment</span>
+                        <h2 class="mt-2">Choose a Topic</h2>
+                        <p>Browse topics from all your accessible courses to find the assessment you want to practise.</p>
+                    </div>
+                    <div class="ciit-course-curriculum-header-tools">
+                        <span class="ciit-course-topic-count"><i class="bi bi-journal-check"></i><span data-topic-total>@totalTopics Topics</span></span>
+                    </div>
+                </div>
+
+                <label class="ciit-practice-search" for="practice-topic-search">
+                    <i class="bi bi-search" aria-hidden="true"></i>
+                    <input id="practice-topic-search" type="search" placeholder="Search topics or courses..." autocomplete="off" />
+                </label>
+
+                @if (totalTopics == 0)
+                {
+                    <div class="ciit-practice-empty">No topics are available in your accessible courses yet.</div>
+                }
+                else
+                {
+                    <div data-practice-course-list>
+                        @foreach (var course in Model.Where(course => course.Topics.Count > 0))
+                        {
+                            <section class="ciit-practice-course-section" data-practice-course>
+                                <div class="ciit-practice-course-heading">
+                                    <h2>@course.Title</h2>
+                                    <span data-course-topic-count>@course.Topics.Count topic@(course.Topics.Count == 1 ? "" : "s")</span>
+                                </div>
+                                <div class="ciit-course-curriculum-list">
+                                    @for (var index = 0; index < course.Topics.Count; index++)
+                                    {
+                                        var topic = course.Topics[index];
+                                        var normalizedTopicTitle = (topic.Title ?? string.Empty).Trim().ToLowerInvariant();
+                                        var topicLogoClass = normalizedTopicTitle switch
+                                        {
+                                            var title when title.Contains("html") => "devicon-html5-plain colored",
+                                            var title when title.Contains("css") => "devicon-css3-plain colored",
+                                            var title when title.Contains("javascript") || title == "js" => "devicon-javascript-plain colored",
+                                            var title when title.Contains("jquery") => "devicon-jquery-plain colored",
+                                            var title when title.Contains("bootstrap") => "devicon-bootstrap-plain colored",
+                                            var title when title.Contains("react") => "devicon-react-original colored",
+                                            var title when title.Contains("typescript") => "devicon-typescript-plain colored",
+                                            var title when title.Contains("angular") => "devicon-angularjs-plain colored",
+                                            var title when title.Contains("node") => "devicon-nodejs-plain colored",
+                                            var title when title.Contains("python") => "devicon-python-plain colored",
+                                            var title when title.Contains("oracle") || title.Contains("pl/sql") => "devicon-oracle-original colored",
+                                            var title when title.Contains("mysql") => "devicon-mysql-original colored",
+                                            var title when title.Contains("sql server") || title.Contains("mssql") => "devicon-microsoftsqlserver-plain colored",
+                                            var title when title.Contains("hibernate") => "devicon-hibernate-plain colored",
+                                            var title when title.Contains("spring") => "devicon-spring-original colored",
+                                            var title when title.Contains("java") || title.Contains("jdbc") || title.Contains("jsp") || title.Contains("servlet") => "devicon-java-plain colored",
+                                            var title when title.Contains("jenkins") => "devicon-jenkins-plain colored",
+                                            var title when title.Contains("azure") => "devicon-azure-plain colored",
+                                            var title when title.Contains("aws") || title.Contains("amazon web services") => "devicon-amazonwebservices-plain-wordmark colored",
+                                            var title when title.Contains("docker") => "devicon-docker-plain colored",
+                                            var title when title.Contains("github") => "devicon-github-original colored",
+                                            var title when title.Contains("git") => "devicon-git-plain colored",
+                                            var title when title.Contains("c#") || title.Contains(".net") => "devicon-dotnetcore-plain colored",
+                                            var title when title.Contains("sql") || title.Contains("database") => "bi bi-database",
+                                            _ => "bi bi-code-slash"
+                                        };
+                                        <a class="ciit-course-topic-card"
+                                           asp-controller="Courses"
+                                           asp-action="Learn"
+                                           asp-route-id="@course.Id"
+                                           asp-route-topicId="@topic.Id"
+                                           data-practice-topic
+                                           data-topic-title="@topic.Title"
+                                           data-course-title="@course.Title"
+                                           aria-label="Practise assessment for @topic.Title in @course.Title">
+                                            <div class="ciit-course-topic-card-top">
+                                                <span class="ciit-course-topic-logo" aria-hidden="true"><i class="@topicLogoClass"></i></span>
+                                                <span class="ciit-course-topic-order">@((index + 1).ToString("00"))</span>
+                                            </div>
+                                            <div class="ciit-course-topic-card-bottom">
+                                                <span class="ciit-course-topic-card-title">
+                                                    <strong>@topic.Title</strong>
+                                                    <small>@topic.Chapters.Count chapter@(topic.Chapters.Count == 1 ? "" : "s")</small>
+                                                </span>
+                                            </div>
+                                        </a>
+                                    }
+                                </div>
+                            </section>
+                        }
+                    </div>
+                    <div class="ciit-practice-empty" data-practice-no-results hidden>No topics match your search.</div>
+                }
+            </section>
+        </main>
+    </div>
+</section>
+
+@section Scripts {
+    <script>
+        (() => {
+            const searchInput = document.getElementById('practice-topic-search');
+            const courseSections = Array.from(document.querySelectorAll('[data-practice-course]'));
+            const noResults = document.querySelector('[data-practice-no-results]');
+            const totalLabel = document.querySelector('[data-topic-total]');
+
+            if (!searchInput) return;
+
+            const filterTopics = () => {
+                const query = searchInput.value.trim().toLocaleLowerCase();
+                let visibleTopics = 0;
+
+                courseSections.forEach(section => {
+                    const topics = Array.from(section.querySelectorAll('[data-practice-topic]'));
+                    let visibleInCourse = 0;
+
+                    topics.forEach(topic => {
+                        const searchableText = `${topic.dataset.topicTitle || ''} ${topic.dataset.courseTitle || ''}`.toLocaleLowerCase();
+                        const matches = searchableText.includes(query);
+                        topic.hidden = !matches;
+                        if (matches) {
+                            visibleInCourse++;
+                            visibleTopics++;
+                        }
+                    });
+
+                    section.hidden = visibleInCourse === 0;
+                    const count = section.querySelector('[data-course-topic-count]');
+                    if (count) count.textContent = `${visibleInCourse} topic${visibleInCourse === 1 ? '' : 's'}`;
+                });
+
+                if (totalLabel) totalLabel.textContent = `${visibleTopics} topic${visibleTopics === 1 ? '' : 's'}`;
+                if (noResults) noResults.hidden = visibleTopics !== 0;
+            };
+
+            searchInput.addEventListener('input', filterTopics);
+        })();
+    </script>
+}

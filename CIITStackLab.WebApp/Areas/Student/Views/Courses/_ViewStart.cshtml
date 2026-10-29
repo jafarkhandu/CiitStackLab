@@ -4,6 +4,7 @@
     Layout = action.Equals("CourseHome", StringComparison.OrdinalIgnoreCase)
         || action.Equals("Curriculum", StringComparison.OrdinalIgnoreCase)
         || action.Equals("Learn", StringComparison.OrdinalIgnoreCase)
+        || action.Equals("PracticeAssessment", StringComparison.OrdinalIgnoreCase)
         ? "~/Views/Shared/_CourseLayout.cshtml"
         : "~/Views/Shared/_Layout.cshtml";
 }
