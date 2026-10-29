@@ -12,7 +12,85 @@
         ?? Array.Empty<CIITStackLab.Application.DTOs.AdminAssessmentChapterLookupDto>();
 }
 
-@section Styles { <link rel="stylesheet" href="~/css/admin-mcqs.css" asp-append-version="true" /> 
+@section Styles {
+@if (isModal)
+{
+    <style>
+        .ciit-content-modal-body { background: #f5f7fc; color: #17233b; font-family: 'Plus Jakarta Sans', sans-serif; }
+        .ciit-content-modal-page { width: 100%; max-width: 100%; padding: 0; margin: 0; }
+        .ciit-content-modal-body .ciit-mcq-form-page,
+        .ciit-content-modal-body .ciit-practice-form-page {
+            width: 100%; max-width: 100%; margin: 0; padding: 26px 30px 30px;
+            background: #f7f9fd; color: #17233b; box-sizing: border-box;
+        }
+        .ciit-content-modal-body .ciit-mcq-header,
+        .ciit-content-modal-body .ciit-practice-header { margin: 0 0 22px; }
+        .ciit-content-modal-body .ciit-mcq-header h1,
+        .ciit-content-modal-body .ciit-practice-header h1 {
+            margin: 5px 0 8px; color: #142544; font-size: 25px; line-height: 1.3; font-weight: 800;
+        }
+        .ciit-content-modal-body .ciit-mcq-header p,
+        .ciit-content-modal-body .ciit-practice-header p { margin: 0; color: #71819a; font-size: 13px; }
+        .ciit-content-modal-body .ciit-admin-eyebrow {
+            color: #7283a0; font: 700 10px/1.4 'Fira Code', monospace; letter-spacing: .12em; text-transform: uppercase;
+        }
+        .ciit-content-modal-body .ciit-mcq-form,
+        .ciit-content-modal-body .ciit-practice-form-card {
+            display: grid; gap: 18px; padding: 24px; margin: 0;
+            border: 1px solid #e1e8f3; border-radius: 16px; background: #fff;
+            box-shadow: 0 8px 28px rgba(27, 48, 86, .06); box-sizing: border-box;
+        }
+        .ciit-content-modal-body .ciit-practice-form-card { display: block; }
+        .ciit-content-modal-body .ciit-mcq-form label,
+        .ciit-content-modal-body .ciit-practice-field label {
+            display: block; margin: 0 0 8px; color: #43536d; font-size: 12px; font-weight: 750;
+        }
+        .ciit-content-modal-body .ciit-mcq-form input:not([type="hidden"]),
+        .ciit-content-modal-body .ciit-mcq-form select,
+        .ciit-content-modal-body .ciit-mcq-form textarea,
+        .ciit-content-modal-body .ciit-practice-form input:not([type="hidden"]),
+        .ciit-content-modal-body .ciit-practice-form select,
+        .ciit-content-modal-body .ciit-practice-form textarea {
+            display: block; width: 100%; min-width: 0; min-height: 44px; padding: 11px 13px;
+            border: 1px solid #dbe4f1; border-radius: 10px; background: #fbfcff;
+            color: #17233b; font: 500 13px/1.5 'Plus Jakarta Sans', sans-serif;
+            box-sizing: border-box; outline: none; transition: border-color .15s, box-shadow .15s;
+        }
+        .ciit-content-modal-body .ciit-mcq-form textarea,
+        .ciit-content-modal-body .ciit-practice-form textarea { min-height: 125px; resize: vertical; }
+        .ciit-content-modal-body .ciit-mcq-form input:focus,
+        .ciit-content-modal-body .ciit-mcq-form select:focus,
+        .ciit-content-modal-body .ciit-mcq-form textarea:focus,
+        .ciit-content-modal-body .ciit-practice-form input:focus,
+        .ciit-content-modal-body .ciit-practice-form select:focus,
+        .ciit-content-modal-body .ciit-practice-form textarea:focus {
+            border-color: #3b6df6; box-shadow: 0 0 0 3px rgba(59, 109, 246, .12);
+        }
+        .ciit-content-modal-body .ciit-mcq-form button[type="submit"],
+        .ciit-content-modal-body .ciit-practice-form button[type="submit"],
+        .ciit-content-modal-body .ciit-mcq-form input[type="submit"],
+        .ciit-content-modal-body .ciit-practice-form input[type="submit"] {
+            display: inline-flex; align-items: center; justify-content: center; min-height: 42px;
+            padding: 10px 17px; border: 0; border-radius: 10px; background: #2459e8;
+            color: #fff; font-size: 12px; font-weight: 800; cursor: pointer;
+        }
+        .ciit-content-modal-body .ciit-mcq-form a,
+        .ciit-content-modal-body .ciit-practice-form a { color: #526681; font-size: 12px; font-weight: 700; }
+        .ciit-content-modal-body .ciit-mcq-validation,
+        .ciit-content-modal-body .text-danger { color: #c2414b; font-size: 12px; }
+        .ciit-content-modal-body .ciit-practice-field { margin-bottom: 17px; }
+        .ciit-content-modal-body .ciit-mcq-form > div,
+        .ciit-content-modal-body .ciit-practice-form > div { min-width: 0; }
+        @media (max-width: 640px) {
+            .ciit-content-modal-body .ciit-mcq-form-page,
+            .ciit-content-modal-body .ciit-practice-form-page { padding: 20px 14px; }
+            .ciit-content-modal-body .ciit-mcq-form,
+            .ciit-content-modal-body .ciit-practice-form-card { padding: 16px; }
+        }
+    </style>
+}
+
+    <link rel="stylesheet" href="~/css/admin-mcqs.css" asp-append-version="true" /> 
     <link rel="stylesheet" href="~/css/admin-assessment-detail.css" asp-append-version="true" />
 }
 
