@@ -10,6 +10,8 @@
         .GroupBy(note => new { note.TopicId, note.TopicTitle })
         .OrderBy(group => group.Key.TopicTitle)
         .ToList();
+    var interviewIndex = ViewBag.InterviewImportModel as AdminInterviewQuestionIndexDto ?? new AdminInterviewQuestionIndexDto();
+    var practiceIndex = ViewBag.PracticeImportModel as AdminPracticeProgramIndexDto ?? new AdminPracticeProgramIndexDto();
 }
 
 <section class="ciit-notes-page">
@@ -152,6 +154,14 @@
                                     <div class="ciit-notes-name">
                                         <div>
                                             <strong>@note.Title</strong>
+                                            <div class="ciit-notes-chapter-content-actions">
+                                                <button type="button" class="ciit-notes-content-open-btn" data-open-chapter-content data-note-id="@note.Id" data-content-kind="interview">
+                                                    <i class="bi bi-chat-square-text"></i> Interview (@interviewIndex.ActiveQuestions.Count(item => item.NoteId == note.Id))
+                                                </button>
+                                                <button type="button" class="ciit-notes-content-open-btn ciit-notes-content-open-btn--practice" data-open-chapter-content data-note-id="@note.Id" data-content-kind="practice">
+                                                    <i class="bi bi-code-square"></i> Practice (@practiceIndex.ActivePrograms.Count(item => item.NoteId == note.Id))
+                                                </button>
+                                            </div>
                                         </div>
                                     </div>
                                 </td>
@@ -198,9 +208,6 @@
 
         <div class="ciit-notes-tab-panel ciit-notes-hierarchy-panel" role="tabpanel" data-content-panel="interview" hidden>
             <div class="ciit-notes-panel-heading"><div><h2>Interview Questions</h2><p>Browse questions and answers by topic and Notes chapter.</p></div></div>
-            @{
-                var interviewIndex = ViewBag.InterviewImportModel as AdminInterviewQuestionIndexDto ?? new AdminInterviewQuestionIndexDto();
-            }
             @if (interviewIndex.ActiveQuestions.Count == 0)
             {
                 <div class="ciit-notes-empty" data-content-empty="interview"><i class="bi bi-chat-square-text"></i><h3>No interview questions yet</h3><p>Add or analyze questions from the Interview Preparation card above.</p></div>
@@ -232,7 +239,7 @@
                                         <div class="ciit-assessment-question-list ciit-notes-content-records">
                                             @foreach (var question in chapterGroup.OrderByDescending(x => x.Id))
                                             {
-                                                <article class="ciit-assessment-question-item ciit-assessment-interview-item" data-content-row data-content-type="interview" data-search="@($"{topicName} {chapterName} {question.Id} {question.Question} {question.Answer}")">
+                                                <article class="ciit-assessment-question-item ciit-assessment-interview-item" data-content-row data-content-type="interview" data-note-id="@question.NoteId" data-search="@($"{topicName} {chapterName} {question.Id} {question.Question} {question.Answer}")">
                                                     <div class="ciit-assessment-question-copy">
                                                         <strong>@question.Question</strong>
                                                         <span>Question #@question.Id</span>
@@ -261,9 +268,6 @@
 
         <div class="ciit-notes-tab-panel ciit-notes-hierarchy-panel" role="tabpanel" data-content-panel="practice" hidden>
             <div class="ciit-notes-panel-heading"><div><h2>Practice Programs</h2><p>Browse programs and solutions by topic and Notes chapter.</p></div></div>
-            @{
-                var practiceIndex = ViewBag.PracticeImportModel as AdminPracticeProgramIndexDto ?? new AdminPracticeProgramIndexDto();
-            }
             @if (practiceIndex.ActivePrograms.Count == 0)
             {
                 <div class="ciit-notes-empty" data-content-empty="practice"><i class="bi bi-code-square"></i><h3>No practice programs yet</h3><p>Add or analyze programs from the Hands-on Learning card above.</p></div>
@@ -295,7 +299,7 @@
                                         <div class="ciit-practice-list ciit-assessment-practice-list ciit-notes-content-records">
                                             @foreach (var program in chapterGroup.OrderByDescending(x => x.Id))
                                             {
-                                                <article class="ciit-practice-program ciit-notes-program" data-content-row data-content-type="practice" data-search="@($"{topicName} {chapterName} {program.Id} {program.QuestionTitle} {program.QuestionDescription} {string.Join(" ", program.Answers.Select(a => a.Answer + " " + a.Description))}")">
+                                                <article class="ciit-practice-program ciit-notes-program" data-content-row data-content-type="practice" data-note-id="@program.NoteId" data-search="@($"{topicName} {chapterName} {program.Id} {program.QuestionTitle} {program.QuestionDescription} {string.Join(" ", program.Answers.Select(a => a.Answer + " " + a.Description))}")">
                                                     <div class="ciit-practice-program-header">
                                                         <div>
                                                             <span class="ciit-practice-id">#@program.Id</span>
@@ -371,6 +375,23 @@
     </section>
 </section>
 
+<div class="ciit-notes-chapter-content-modal" id="chapterLearningContentModal" hidden role="dialog" aria-modal="true" aria-labelledby="chapterLearningContentTitle">
+    <div class="ciit-notes-chapter-content-dialog">
+        <div class="ciit-notes-chapter-content-header">
+            <div><span class="ciit-notes-eyebrow">Chapter learning content</span><h2 id="chapterLearningContentTitle">Interview & Practice</h2><p id="chapterLearningContentSubtitle"></p></div>
+            <button type="button" class="ciit-notes-chapter-content-close" data-close-chapter-content aria-label="Close dialog"><i class="bi bi-x-lg"></i></button>
+        </div>
+        <div class="ciit-notes-chapter-content-tabs" role="tablist" aria-label="Chapter content type">
+            <button type="button" class="is-active" role="tab" aria-selected="true" data-chapter-content-tab="interview">Interview Questions</button>
+            <button type="button" role="tab" aria-selected="false" data-chapter-content-tab="practice">Practice Programs</button>
+        </div>
+        <div class="ciit-notes-chapter-content-body">
+            <div data-chapter-content-panel="interview"></div>
+            <div data-chapter-content-panel="practice" hidden></div>
+        </div>
+    </div>
+</div>
+
 @await Html.PartialAsync("~/Areas/Admin/Views/Assessments/_CreateInterviewQuestionModal.cshtml", ViewBag.InterviewInput as AdminInterviewQuestionInputDto ?? new AdminInterviewQuestionInputDto())
 @await Html.PartialAsync("~/Areas/Admin/Views/Assessments/_CreatePracticeProgramModal.cshtml", ViewBag.PracticeInput as AdminPracticeProgramInputDto ?? new AdminPracticeProgramInputDto())
 @await Html.PartialAsync("~/Areas/Admin/Views/Assessments/_InterviewQuestionImportModal.cshtml", ViewBag.InterviewImportModel as AdminInterviewQuestionIndexDto ?? new AdminInterviewQuestionIndexDto())
@@ -400,6 +421,11 @@
             const noteTopicRows = [...document.querySelectorAll("[data-topic-row]")];
             const noteChapterRows = [...document.querySelectorAll("[data-chapter-row]")];
             const contentRows = [...document.querySelectorAll("[data-content-row]")];
+            const chapterContentModal = document.getElementById("chapterLearningContentModal");
+            const chapterContentTitle = document.getElementById("chapterLearningContentTitle");
+            const chapterContentSubtitle = document.getElementById("chapterLearningContentSubtitle");
+            const chapterContentTabs = [...document.querySelectorAll("[data-chapter-content-tab]")];
+            const chapterContentPanels = [...document.querySelectorAll("[data-chapter-content-panel]")];
             let activeTab = "all";
             let expandedNotesTopicId = null;
             let lastQuery = null;
@@ -532,6 +558,59 @@
                 setNotesTopic(id, expandedNotesTopicId !== id);
                 refresh();
             }));
+            const setChapterContentTab = kind => {
+                chapterContentTabs.forEach(tab => {
+                    const selected = tab.dataset.chapterContentTab === kind;
+                    tab.classList.toggle("is-active", selected);
+                    tab.setAttribute("aria-selected", selected ? "true" : "false");
+                });
+                chapterContentPanels.forEach(panel => panel.hidden = panel.dataset.chapterContentPanel !== kind);
+            };
+            const closeChapterContentModal = () => {
+                if (!chapterContentModal) return;
+                chapterContentModal.hidden = true;
+                document.body.classList.remove("ciit-notes-chapter-content-open");
+            };
+            document.querySelectorAll("[data-open-chapter-content]").forEach(button => {
+                button.addEventListener("click", () => {
+                    const noteId = button.dataset.noteId;
+                    const kind = button.dataset.contentKind || "interview";
+                    const chapterRow = button.closest("[data-chapter-row]");
+                    const chapterName = chapterRow?.querySelector(".ciit-notes-name strong")?.textContent?.trim() || "Chapter";
+                    if (!chapterContentModal) return;
+                    chapterContentTitle.textContent = chapterName + " · Learning Content";
+                    chapterContentSubtitle.textContent = "Interview questions and practice programs linked to this chapter.";
+                    chapterContentPanels.forEach(panel => {
+                        panel.replaceChildren();
+                        const type = panel.dataset.chapterContentPanel;
+                        const matchingRows = contentRows.filter(row => row.dataset.contentType === type && row.dataset.noteId === noteId);
+                        if (!matchingRows.length) {
+                            const empty = document.createElement("div");
+                            empty.className = "ciit-notes-chapter-content-empty";
+                            empty.textContent = type === "interview" ? "No interview questions linked to this chapter yet." : "No practice programs linked to this chapter yet.";
+                            panel.appendChild(empty);
+                            return;
+                        }
+                        matchingRows.forEach(row => {
+                            const clone = row.cloneNode(true);
+                            clone.hidden = false;
+                            clone.removeAttribute("data-content-row");
+                            clone.classList.add("ciit-notes-modal-record");
+                            panel.appendChild(clone);
+                        });
+                    });
+                    setChapterContentTab(kind);
+                    chapterContentModal.hidden = false;
+                    document.body.classList.add("ciit-notes-chapter-content-open");
+                    chapterContentModal.querySelector("[data-close-chapter-content]")?.focus();
+                });
+            });
+            chapterContentTabs.forEach(tab => tab.addEventListener("click", () => setChapterContentTab(tab.dataset.chapterContentTab)));
+            chapterContentModal?.querySelectorAll("[data-close-chapter-content]").forEach(button => button.addEventListener("click", closeChapterContentModal));
+            chapterContentModal?.addEventListener("click", event => { if (event.target === chapterContentModal) closeChapterContentModal(); });
+            document.addEventListener("keydown", event => {
+                if (event.key === "Escape" && chapterContentModal && !chapterContentModal.hidden) closeChapterContentModal();
+            });
             searchInput?.addEventListener("input", refresh);
             searchInput?.addEventListener("search", refresh);
             refresh();
