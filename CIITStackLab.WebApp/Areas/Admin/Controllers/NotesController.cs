@@ -34,6 +34,16 @@ public sealed class NotesController : Controller
         ViewBag.PracticeProgramChapters = await _practiceProgramService.GetAssessmentChapterLookupAsync(ct);
         ViewBag.InterviewInput = new AdminInterviewQuestionInputDto();
         ViewBag.PracticeInput = new AdminPracticeProgramInputDto();
+        ViewBag.InterviewImportPreview = null;
+        ViewBag.InterviewImportMessage = null;
+        ViewBag.PracticeProgramImportPreview = null;
+        ViewBag.PracticeProgramImportMessage = null;
+
+        var interviewIndex = await _interviewQuestionService.GetIndexAsync(ct);
+        var practiceIndex = await _practiceProgramService.GetIndexAsync(ct);
+        ViewBag.InterviewImportModel = interviewIndex;
+        ViewBag.PracticeImportModel = practiceIndex;
+
         return View(await _notesService.GetAdminIndexAsync(ct));
     }
 
