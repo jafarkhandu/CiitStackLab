@@ -42,3 +42,35 @@ public sealed class MeetBatchDetailsViewModel
     public IReadOnlyList<MeetStudentOptionViewModel> Students { get; init; } = [];
     public List<string> SelectedStudentIds { get; set; } = [];
 }
+
+public sealed class MeetSessionCreateViewModel
+{
+    [Required, StringLength(150)]
+    public string Title { get; set; } = string.Empty;
+
+    [StringLength(1000)]
+    public string? Description { get; set; }
+
+    [Range(1, int.MaxValue)]
+    public int MeetBatchId { get; set; }
+
+    [Range(5, 480)]
+    public int DurationMinutes { get; set; } = 60;
+
+    public DateTime? StartsAtLocal { get; set; }
+
+    public int ClientUtcOffsetMinutes { get; set; }
+}
+
+public sealed class MeetSessionListItemViewModel
+{
+    public int Id { get; init; }
+    public int MeetBatchId { get; init; }
+    public string BatchName { get; init; } = string.Empty;
+    public string Title { get; init; } = string.Empty;
+    public string? Description { get; init; }
+    public DateTime StartsAtUtc { get; init; }
+    public int DurationMinutes { get; init; }
+    public string Status { get; init; } = string.Empty;
+}
+
