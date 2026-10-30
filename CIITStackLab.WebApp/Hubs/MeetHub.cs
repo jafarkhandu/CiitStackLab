@@ -26,6 +26,24 @@ public sealed class MeetHub : Hub
             throw new HubException("Access denied.");
 
         await Groups.AddToGroupAsync(Context.ConnectionId, AdminGroup, Context.ConnectionAborted);
+
+        var currentSessions = await _dbContext.MeetSessions
+            .AsNoTracking()
+            .Where(session => !session.MeetBatch.IsArchived)
+            .Select(session => new
+            {
+                sessionId = session.Id,
+                batchId = session.MeetBatchId,
+                session.Title,
+                session.Status,
+                startsAtUtc = session.StartsAtUtc,
+                startedAtUtc = session.StartedAtUtc,
+                session.DurationMinutes
+            })
+            .ToListAsync(Context.ConnectionAborted);
+
+        foreach (var session in currentSessions)
+            await Clients.Caller.SendAsync("MeetAdminUpdated", session, Context.ConnectionAborted);
     }
 
     public async Task JoinMyBatchUpdates()
@@ -42,6 +60,34 @@ public sealed class MeetHub : Hub
 
         foreach (var batchId in batchIds)
             await Groups.AddToGroupAsync(Context.ConnectionId, BatchGroup(batchId), Context.ConnectionAborted);
+
+        var now = DateTime.UtcNow;
+        var currentSessions = await _dbContext.MeetSessions
+            .AsNoTracking()
+            .Where(session => batchIds.Contains(session.MeetBatchId)
+                && !session.MeetBatch.IsArchived
+                && (session.Status == "Live" || session.Status == "Scheduled"))
+            .Select(session => new
+            {
+                sessionId = session.Id,
+                batchId = session.MeetBatchId,
+                session.Title,
+                session.Status,
+                startsAtUtc = session.StartsAtUtc,
+                startedAtUtc = session.StartedAtUtc,
+                session.DurationMinutes
+            })
+            .ToListAsync(Context.ConnectionAborted);
+
+        foreach (var session in currentSessions)
+        {
+            if (session.Status == "Live"
+                && (!session.startedAtUtc.HasValue
+                    || session.startedAtUtc.Value.AddMinutes(session.DurationMinutes) <= now))
+                continue;
+
+            await Clients.Caller.SendAsync("MeetBatchUpdated", session, Context.ConnectionAborted);
+        }
     }
 
     public async Task JoinMeetingRoom(int sessionId)
