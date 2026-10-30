@@ -419,9 +419,7 @@ public sealed class MeetController : Controller
             || model.DurationMinutes is < 5 or > 480
             || model.ClientUtcOffsetMinutes is < -840 or > 840)
         {
-            TempData["MeetBatchMessage"] = "Check the meeting title, description and duration.";
-            TempData["MeetBatchMessageType"] = "error";
-            return RedirectToAction(nameof(Index));
+            return CreateSessionResponse("Check the meeting title, description and duration.", false);
         }
 
         var batch = await _dbContext.MeetBatches
@@ -430,9 +428,7 @@ public sealed class MeetController : Controller
 
         if (batch is null || batch.Members.Count == 0)
         {
-            TempData["MeetBatchMessage"] = "Select an active batch that has assigned students.";
-            TempData["MeetBatchMessageType"] = "error";
-            return RedirectToAction(nameof(Index));
+            return CreateSessionResponse("Select an active batch that has assigned students.", false);
         }
 
         var creatorId = User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
@@ -452,9 +448,7 @@ public sealed class MeetController : Controller
 
             if (hasActiveMeeting)
             {
-                TempData["MeetBatchMessage"] = "This batch already has an active meeting.";
-                TempData["MeetBatchMessageType"] = "error";
-                return RedirectToAction(nameof(Index));
+                return CreateSessionResponse("This batch already has an active meeting.", false);
             }
         }
         DateTime startsAtUtc;
@@ -466,9 +460,7 @@ public sealed class MeetController : Controller
         {
             if (!model.StartsAtLocal.HasValue)
             {
-                TempData["MeetBatchMessage"] = "Choose a date and time for the scheduled meeting.";
-                TempData["MeetBatchMessageType"] = "error";
-                return RedirectToAction(nameof(Index));
+                return CreateSessionResponse("Choose a date and time for the scheduled meeting.", false);
             }
 
             var localStart = DateTime.SpecifyKind(model.StartsAtLocal.Value, DateTimeKind.Unspecified);
@@ -478,9 +470,7 @@ public sealed class MeetController : Controller
 
             if (startsAtUtc <= DateTime.UtcNow.AddMinutes(1))
             {
-                TempData["MeetBatchMessage"] = "Scheduled meeting time must be in the future.";
-                TempData["MeetBatchMessageType"] = "error";
-                return RedirectToAction(nameof(Index));
+                return CreateSessionResponse("Scheduled meeting time must be in the future.", false);
             }
         }
 
@@ -504,11 +494,10 @@ public sealed class MeetController : Controller
 
         await _dbContext.SaveChangesAsync(cancellationToken);
         await _meetRealtime.PublishSessionUpdateAsync(session.Id, cancellationToken);
-        TempData["MeetBatchMessage"] = isInstant
-            ? "Instant meeting created. Live room is ready for the conferencing phase."
+        var successMessage = isInstant
+            ? "Instant meeting created successfully."
             : "Meeting scheduled successfully.";
-        TempData["MeetBatchMessageType"] = "success";
-        return RedirectToAction(nameof(Index));
+        return CreateSessionResponse(successMessage, true, session.Id);
     }
 
     [HttpPost]
@@ -733,6 +722,16 @@ public sealed class MeetController : Controller
         }
 
         throw new InvalidOperationException("A unique Meet batch code could not be generated.");
+    }
+
+    private IActionResult CreateSessionResponse(string message, bool succeeded, int? sessionId = null)
+    {
+        if (Request.Headers.XRequestedWith == "XMLHttpRequest")
+            return Json(new { success = succeeded, message, sessionId });
+
+        TempData["MeetBatchMessage"] = message;
+        TempData["MeetBatchMessageType"] = succeeded ? "success" : "error";
+        return RedirectToAction(nameof(Index));
     }
 
     private IActionResult CreateResponse(string message, bool succeeded)
