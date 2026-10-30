@@ -33,6 +33,32 @@ document.addEventListener("DOMContentLoaded", () => {
     const room = document.querySelector("[data-meet-room]");
     if (!room) return;
 
+    room.querySelectorAll("form[data-meet-ajax]").forEach(form => {
+        form.addEventListener("submit", async event => {
+            event.preventDefault();
+            if (form.dataset.submitting === "true") return;
+
+            const submit = form.querySelector('[type="submit"]');
+            form.dataset.submitting = "true";
+            if (submit) submit.disabled = true;
+
+            try {
+                const response = await fetch(form.action, {
+                    method: "POST",
+                    body: new FormData(form),
+                    credentials: "same-origin",
+                    headers: { "X-Requested-With": "XMLHttpRequest" }
+                });
+                if (!response.ok) throw new Error("Unable to update the meeting.");
+            } catch (error) {
+                console.error(error);
+                if (submit) submit.disabled = false;
+            } finally {
+                form.dataset.submitting = "false";
+            }
+        });
+    });
+
     const toggle = room.querySelector("[data-meet-controls-toggle]");
     const controlsBody = room.querySelector("[data-meet-controls-body]");
     if (toggle && controlsBody) {
