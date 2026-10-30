@@ -125,6 +125,7 @@ document.addEventListener("DOMContentLoaded", () => {
                 form.method = "post";
                 form.action = action;
                 form.dataset.meetSessionAction = "";
+                form.dataset.meetAjax = "";
                 addHidden(form, "__RequestVerificationToken", token());
                 addHidden(form, "id", state.sessionId);
                 const button = document.createElement("button");
@@ -142,6 +143,28 @@ document.addEventListener("DOMContentLoaded", () => {
             link.className = state.status === "Live" ? "meet-primary-button" : "meet-secondary-button";
         }
     };
+
+    if (adminRoot) {
+        adminRoot.addEventListener("submit", async event => {
+            const form = event.target.closest("form[data-meet-ajax]");
+            if (!form) return;
+            event.preventDefault();
+            const button = form.querySelector('[type="submit"]');
+            if (button) button.disabled = true;
+            try {
+                const response = await fetch(form.action, {
+                    method: "POST",
+                    body: new FormData(form),
+                    credentials: "same-origin",
+                    headers: { "X-Requested-With": "XMLHttpRequest" }
+                });
+                if (!response.ok) throw new Error("Unable to update this meeting.");
+            } catch (error) {
+                console.error(error);
+                if (button) button.disabled = false;
+            }
+        });
+    }
 
     const handleUpdate = state => {
         if (adminRoot) updateAdminSession(state);
