@@ -1,8 +1,6 @@
 @using System.Security.Claims
 @using CIITStackLab.Application.DTOs
-@using CIITStackLab.Application.Interfaces
 @inject CoursePurchaseService CoursePurchaseService
-@inject ICourseService CourseService
 
 @{
     var courseId = ViewContext.RouteData.Values["id"]?.ToString()
@@ -28,28 +26,13 @@
 
         if (!string.IsNullOrWhiteSpace(userId))
         {
-            var activeCourseIds = await CoursePurchaseService.GetAccessibleCourseIdsAsync(userId);
-            var publishedCourses = await CourseService.GetPublishedAsync();
-            var activeCourseIdSet = activeCourseIds.ToHashSet();
+            int? currentCourseId = int.TryParse(courseId, out var parsedCourseId)
+                ? parsedCourseId
+                : null;
 
-            purchasedCourses = publishedCourses
-                .Where(course => activeCourseIdSet.Contains(course.Id))
-                .OrderBy(course => course.Title)
-                .ToArray();
-
-            if (int.TryParse(courseId, out var currentCourseId)
-                && purchasedCourses.All(course => course.Id != currentCourseId))
-            {
-                var currentCourse = await CourseService.GetByIdAsync(currentCourseId);
-
-                if (currentCourse is not null)
-                {
-                    purchasedCourses = purchasedCourses
-                        .Append(currentCourse)
-                        .OrderBy(course => course.Title)
-                        .ToArray();
-                }
-            }
+            purchasedCourses = (await CoursePurchaseService.GetCourseSwitcherItemsAsync(
+                userId,
+                currentCourseId)).ToArray();
         }
     }
 
@@ -82,6 +65,7 @@
     @if (isLearnPage)
     {
         <link rel="stylesheet" href="~/css/student/learning-modern.css" asp-append-version="true" />
+        <link rel="stylesheet" href="~/css/student/learn-glass.css" asp-append-version="true" />
     }
 </head>
 <body class="ciit-course-environment-body @(isLearnPage ? "ciit-learning-mode" : "")">
@@ -329,6 +313,7 @@
     @if (isLearnPage)
     {
         <script defer src="~/js/student/learning-modern.js" asp-append-version="true"></script>
+        <script defer src="~/js/student/learn-glass.js" asp-append-version="true"></script>
     }
     @await RenderSectionAsync("Scripts", required: false)
 </body>

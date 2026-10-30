@@ -1,3 +1,4 @@
+using CIITStackLab.Application.DTOs;
 using CIITStackLab.Domain.Entities;
 using CIITStackLab.Infrastructure.Persistence;
 using Microsoft.EntityFrameworkCore;
@@ -172,6 +173,35 @@ public sealed class CoursePurchaseService
             .Distinct()
             .OrderBy(courseId => courseId)
             .ToArray();
+    }
+
+    public async Task<IReadOnlyList<CourseDto>> GetCourseSwitcherItemsAsync(
+        string userId,
+        int? currentCourseId = null,
+        CancellationToken cancellationToken = default)
+    {
+        if (string.IsNullOrWhiteSpace(userId))
+        {
+            return Array.Empty<CourseDto>();
+        }
+
+        // Return the student's published purchases and the already-authorized current
+        // course (for demo/current-course access) in one lightweight query. The layout
+        // only displays course IDs and titles, so duration and presentation data are not needed.
+        return await _dbContext.Courses
+            .AsNoTracking()
+            .Where(course => course.Flag == 0
+                && ((currentCourseId.HasValue && course.Id == currentCourseId.Value)
+                    || (_dbContext.Users.Any(user => user.Id == userId && user.IsActive)
+                        && _dbContext.StudentCoursePurchases.Any(purchase =>
+                            purchase.UserId == userId && purchase.CourseId == course.Id))))
+            .OrderBy(course => course.Title)
+            .Select(course => new CourseDto
+            {
+                Id = course.Id,
+                Title = course.Title
+            })
+            .ToListAsync(cancellationToken);
     }
 
     public async Task<decimal> GetCoursePriceAsync(
