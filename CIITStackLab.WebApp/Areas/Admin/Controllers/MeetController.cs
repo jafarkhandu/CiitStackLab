@@ -479,7 +479,7 @@ public sealed class MeetController : Controller
             }
         }
 
-        _dbContext.MeetSessions.Add(new MeetSession
+        var session = new MeetSession
         {
             MeetBatchId = batch.Id,
             Title = title,
@@ -494,7 +494,8 @@ public sealed class MeetController : Controller
             RecordingStatus = "Disabled",
             CreatedByUserId = creatorId,
             CreatedAtUtc = DateTime.UtcNow
-        });
+        };
+        _dbContext.MeetSessions.Add(session);
 
         await _dbContext.SaveChangesAsync(cancellationToken);
         await _meetRealtime.PublishSessionUpdateAsync(session.Id, cancellationToken);
