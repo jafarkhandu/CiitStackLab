@@ -68,10 +68,9 @@
                         <div class="ciit-student-meet-meta">
                             <span><i class="bi bi-calendar-event"></i> @session.StartsAtUtc.ToLocalTime().ToString("dd MMM yyyy, hh:mm tt")</span>
                         </div>
-                        @if (session.Status == "Live")
-                        {
-                            <span class="ciit-student-meet-join-disabled">Live room access will be enabled in the conferencing phase.</span>
-                        }
+                        <a asp-area="Student" asp-controller="Meet" asp-action="Room" asp-route-id="@session.Id" class="ciit-student-meet-open">
+                            Open meeting room <i class="bi bi-arrow-up-right"></i>
+                        </a>
                     </article>
                 }
             </div>
