@@ -1725,6 +1725,8 @@ namespace CIITStackLab.Infrastructure.Migrations
 
             modelBuilder.Entity("CIITStackLab.Domain.Entities.MeetBatch", b =>
             {
+                b.Navigation("Members");
+
                 b.Navigation("Sessions");
             });
 
