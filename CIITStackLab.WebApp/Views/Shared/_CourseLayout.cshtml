@@ -72,7 +72,7 @@
     <header class="ciit-course-environment-header">
         <div class="container-fluid px-3 px-lg-4">
             <div class="ciit-course-environment-header-inner">
-                <a class="ciit-course-environment-brand" asp-controller="Home" asp-action="Index" aria-label="CIIT Stack Lab home">
+                <a class="ciit-course-environment-brand" asp-area="" asp-controller="Home" asp-action="Index" aria-label="CIIT Stack Lab home">
                     <span class="ciit-course-environment-brand-mark">C</span>
                     <span>CIIT<span> Stack Lab</span></span>
                 </a>
@@ -99,7 +99,7 @@
                     @if (User.Identity?.IsAuthenticated == true)
                     {
                         <span class="ciit-course-environment-user d-none d-md-inline">Hi, @User.Identity.Name</span>
-                        <form asp-controller="Account" asp-action="Logout" method="post" class="m-0">
+                        <form asp-area="" asp-controller="Account" asp-action="Logout" method="post" class="m-0">
                             <button type="submit" class="btn btn-outline-primary ciit-course-signout">Sign Out</button>
                         </form>
                     }
@@ -243,7 +243,7 @@
                         </a>
                     }
                     <a class="@(currentController.Equals("Account", StringComparison.OrdinalIgnoreCase) && currentAction.Equals("Profile", StringComparison.OrdinalIgnoreCase) ? "active" : "")"
-                       asp-controller="Account" asp-action="Profile">
+                       asp-area="" asp-controller="Account" asp-action="Profile">
                         <i class="bi bi-person-circle"></i><span>My Profile</span>
                     </a>
                 </nav>
