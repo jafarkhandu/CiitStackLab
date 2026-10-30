@@ -35,24 +35,28 @@ public sealed class MeetRealtimeService
                 item.WaitingRoomEnabled,
                 item.RecordingEnabled,
                 item.RecordingStatus,
-                item.RecordingRetentionUntilUtc,
-                Participants = item.Participants
-                    .OrderBy(participant => participant.RequestedAtUtc)
-                    .Select(participant => new
-                    {
-                        participant.Id,
-                        StudentName = participant.StudentUser.UserName ?? participant.StudentUser.Email ?? "Student",
-                        participant.Status,
-                        participant.CanUseMicrophone,
-                        participant.CanUseCamera,
-                        participant.CanShareScreen
-                    })
-                    .ToList()
+                item.RecordingRetentionUntilUtc
             })
             .SingleOrDefaultAsync(cancellationToken);
 
         if (session is null)
             return;
+
+        var participants = await (
+            from participant in _dbContext.MeetSessionParticipants.AsNoTracking()
+            join user in _dbContext.Users.AsNoTracking()
+                on participant.StudentUserId equals user.Id
+            where participant.MeetSessionId == session.Id
+            orderby participant.RequestedAtUtc
+            select new
+            {
+                participant.Id,
+                StudentName = user.UserName ?? user.Email ?? "Student",
+                participant.Status,
+                participant.CanUseMicrophone,
+                participant.CanUseCamera,
+                participant.CanShareScreen
+            }).ToListAsync(cancellationToken);
 
         var snapshot = new
         {
@@ -69,9 +73,9 @@ public sealed class MeetRealtimeService
             session.RecordingEnabled,
             session.RecordingStatus,
             recordingRetentionUntilUtc = session.RecordingRetentionUntilUtc,
-            pendingCount = session.Participants.Count(item => item.Status == "Pending"),
-            participantCount = session.Participants.Count(item => item.Status == "Admitted"),
-            participants = session.Participants
+            pendingCount = participants.Count(item => item.Status == "Pending"),
+            participantCount = participants.Count(item => item.Status == "Admitted"),
+            participants
         };
 
         await _hub.Clients.Group(MeetHub.SessionGroup(session.Id))
