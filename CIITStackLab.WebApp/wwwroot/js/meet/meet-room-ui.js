@@ -61,14 +61,78 @@ document.addEventListener("DOMContentLoaded", () => {
         });
     });
 
-    const toggle = room.querySelector("[data-meet-controls-toggle]");
-    const controlsBody = room.querySelector("[data-meet-controls-body]");
-    if (toggle && controlsBody) {
-        toggle.addEventListener("click", () => {
-            const expanded = toggle.getAttribute("aria-expanded") === "true";
-            toggle.setAttribute("aria-expanded", expanded ? "false" : "true");
-            controlsBody.hidden = expanded;
-            toggle.classList.toggle("is-collapsed", expanded);
+    const hostPanel = room.querySelector("[data-meet-controls-panel]");
+    if (isHostPlaceholder()) {
+        // Host controls are moved into focused glass popups below.
+    }
+
+    const hostPanel = room.querySelector("[data-meet-controls-panel]");
+    const isHost = room.dataset.isHost === "true";
+    const createPopup = (className, title, icon) => {
+        const backdrop = document.createElement("div");
+        backdrop.className = "ciit-meet-glass-backdrop " + className;
+        backdrop.hidden = true;
+        const panel = document.createElement("section");
+        panel.className = "ciit-meet-glass-popup";
+        panel.setAttribute("role", "dialog");
+        panel.setAttribute("aria-modal", "true");
+        const heading = document.createElement("header");
+        heading.className = "ciit-meet-glass-popup-heading";
+        const titleNode = document.createElement("h2");
+        titleNode.innerHTML = '<i class="bi ' + icon + '"></i> ' + title;
+        const close = document.createElement("button");
+        close.type = "button";
+        close.className = "ciit-meet-glass-close";
+        close.setAttribute("aria-label", "Close");
+        close.innerHTML = "&times;";
+        heading.append(titleNode, close);
+        const content = document.createElement("div");
+        content.className = "ciit-meet-glass-popup-content";
+        panel.append(heading, content);
+        backdrop.append(panel);
+        document.body.append(backdrop);
+        const hide = () => { backdrop.hidden = true; };
+        close.addEventListener("click", hide);
+        backdrop.addEventListener("click", event => { if (event.target === backdrop) hide(); });
+        return { backdrop, content, hide };
+    };
+
+    let settingsPopup;
+    let participantsPopup;
+    let pendingRequestsList;
+    if (isHost && hostPanel) {
+        const settingsButton = room.querySelector("[data-open-settings]");
+        const participantsButton = room.querySelector("[data-open-participants]");
+        const settings = hostPanel.querySelector(".ciit-meet-host-settings");
+        const participants = hostPanel.querySelector("[data-meet-participants-list]");
+        const panelHeading = hostPanel.querySelector(".ciit-meet-host-panel-heading");
+
+        settingsPopup = createPopup("ciit-meet-settings-backdrop", "Meeting settings", "bi-gear");
+        participantsPopup = createPopup("ciit-meet-participants-backdrop", "Participants", "bi-people");
+        if (panelHeading) settingsPopup.content.append(panelHeading);
+        if (settings) settingsPopup.content.append(settings);
+        if (participants) {
+            participantsPopup.content.append(participants);
+            pendingRequestsList = document.createElement("div");
+            pendingRequestsList.className = "ciit-meet-pending-requests";
+            pendingRequestsList.innerHTML = '<h3>Join requests <span data-meet-pending-total>0</span></h3><div data-meet-pending-list></div>';
+            settingsPopup.content.append(pendingRequestsList);
+            participants.querySelectorAll("[data-meet-participant-id]").forEach(row => {
+                if (row.dataset.meetParticipantStatus === "Pending") {
+                    pendingRequestsList.querySelector("[data-meet-pending-list]").append(row);
+                } else if (row.dataset.meetParticipantStatus !== "Admitted") {
+                    row.remove();
+                }
+            });
+        }
+        hostPanel.hidden = true;
+        settingsButton?.addEventListener("click", () => { settingsPopup.backdrop.hidden = false; });
+        participantsButton?.addEventListener("click", () => { participantsPopup.backdrop.hidden = false; });
+        document.addEventListener("keydown", event => {
+            if (event.key === "Escape") {
+                settingsPopup.backdrop.hidden = true;
+                participantsPopup.backdrop.hidden = true;
+            }
         });
     }
 
@@ -78,7 +142,6 @@ document.addEventListener("DOMContentLoaded", () => {
     }
 
     const sessionId = Number(room.dataset.sessionId);
-    const isHost = room.dataset.isHost === "true";
     const hubUrl = room.dataset.hubUrl;
     const connection = new signalR.HubConnectionBuilder()
         .withUrl(hubUrl)
@@ -133,15 +196,16 @@ document.addEventListener("DOMContentLoaded", () => {
 
         list.querySelectorAll("[data-meet-participant-id], [data-meet-no-participants]")
             .forEach(element => element.remove());
+        const admittedParticipants = participants.filter(item => item.status === "Admitted");
 
-        if (!participants.length) {
+        if (!admittedParticipants.length) {
             const empty = document.createElement("p");
             empty.dataset.meetNoParticipants = "true";
             empty.textContent = "No student has requested to join yet.";
             list.append(empty);
         }
 
-        participants.forEach(participant => {
+        admittedParticipants.forEach(participant => {
             const row = document.createElement("article");
             row.className = "ciit-meet-host-participant";
             row.dataset.meetParticipantId = participant.id;
@@ -202,7 +266,41 @@ document.addEventListener("DOMContentLoaded", () => {
 
             list.append(row);
         });
-        setText("[data-meet-participant-total]", participants.length);
+        setText("[data-meet-participant-total]", admittedParticipants.length);
+        setText("[data-meet-admitted-count]", admittedParticipants.length + (stateHostLive() ? 1 : 0));
+    };
+
+    const renderPendingRequests = participants => {
+        if (!isHost || !pendingRequestsList) return;
+        const list = pendingRequestsList.querySelector("[data-meet-pending-list]");
+        list.querySelectorAll("[data-meet-participant-id], [data-meet-no-requests]").forEach(item => item.remove());
+        const pending = participants.filter(item => item.status === "Pending");
+        setText("[data-meet-pending-total]", pending.length);
+        if (!pending.length) {
+            const empty = document.createElement("p");
+            empty.dataset.meetNoRequests = "true";
+            empty.textContent = "No pending join requests.";
+            list.append(empty);
+            return;
+        }
+        pending.forEach(participant => {
+            const row = document.createElement("article");
+            row.className = "ciit-meet-host-participant";
+            row.dataset.meetParticipantId = participant.id;
+            row.dataset.meetParticipantStatus = participant.status;
+            const identity = document.createElement("div");
+            const name = document.createElement("strong");
+            name.textContent = participant.studentName;
+            const status = document.createElement("small");
+            status.textContent = "Waiting for approval";
+            identity.append(name, status);
+            row.append(identity);
+            addActionButton(row, "Admit", "ciit-meet-host-secondary", () =>
+                postAction(room.querySelector("[data-meet-participants-list]").dataset.admitUrl, { id: participant.id, decision: "admit" }));
+            addActionButton(row, "Reject", "ciit-meet-host-danger", () =>
+                postAction(room.querySelector("[data-meet-participants-list]").dataset.admitUrl, { id: participant.id, decision: "reject" }));
+            list.append(row);
+        });
     };
 
     const updateRoom = (state) => {
@@ -276,6 +374,7 @@ document.addEventListener("DOMContentLoaded", () => {
         }
 
         renderParticipants(state.participants || []);
+        renderPendingRequests(state.participants || []);
     };
 
     connection.on("MeetRoomUpdated", updateRoom);
