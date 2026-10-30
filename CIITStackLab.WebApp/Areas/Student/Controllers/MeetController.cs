@@ -1,4 +1,5 @@
 using System.Security.Claims;
+using CIITStackLab.Domain.Entities;
 using CIITStackLab.Infrastructure.Persistence;
 using CIITStackLab.WebApp.Models;
 using Microsoft.AspNetCore.Authorization;
