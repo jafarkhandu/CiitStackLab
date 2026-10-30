@@ -1,14 +1,10 @@
-using CIITStackLab.Infrastructure.Persistence;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Migrations;
 
 #nullable disable
 
 namespace CIITStackLab.Infrastructure.Migrations;
 
-[DbContext(typeof(ApplicationDbContext))]
-[Migration("20261030180000_AddMeetLifecycleAndParticipants")]
 public partial class AddMeetLifecycleAndParticipants : Migration
 {
     protected override void Up(MigrationBuilder migrationBuilder)
