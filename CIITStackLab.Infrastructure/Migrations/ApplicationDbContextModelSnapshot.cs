@@ -1635,6 +1635,92 @@ namespace CIITStackLab.Infrastructure.Migrations
                     b.Navigation("MeetBatch");
                 });
 
+            modelBuilder.Entity("CIITStackLab.Domain.Entities.MeetSession", b =>
+            {
+                b.Property<int>("Id")
+                    .ValueGeneratedOnAdd()
+                    .HasColumnType("int")
+                    .HasColumnName("meet_session_id");
+
+                SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                b.Property<DateTime>("CreatedAtUtc")
+                    .HasColumnType("datetime2")
+                    .HasColumnName("created_at_utc");
+
+                b.Property<string>("CreatedByUserId")
+                    .IsRequired()
+                    .HasMaxLength(450)
+                    .HasColumnType("nvarchar(450)")
+                    .HasColumnName("created_by_user_id");
+
+                b.Property<string>("Description")
+                    .HasMaxLength(1000)
+                    .HasColumnType("nvarchar(1000)")
+                    .HasColumnName("description");
+
+                b.Property<int>("DurationMinutes")
+                    .HasColumnType("int")
+                    .HasColumnName("duration_minutes");
+
+                b.Property<int>("MeetBatchId")
+                    .HasColumnType("int")
+                    .HasColumnName("meet_batch_id");
+
+                b.Property<string>("RoomName")
+                    .IsRequired()
+                    .HasMaxLength(80)
+                    .HasColumnType("nvarchar(80)")
+                    .HasColumnName("room_name");
+
+                b.Property<DateTime>("StartsAtUtc")
+                    .HasColumnType("datetime2")
+                    .HasColumnName("starts_at_utc");
+
+                b.Property<string>("Status")
+                    .IsRequired()
+                    .HasMaxLength(20)
+                    .HasColumnType("nvarchar(20)")
+                    .HasColumnName("status");
+
+                b.Property<string>("Title")
+                    .IsRequired()
+                    .HasMaxLength(150)
+                    .HasColumnType("nvarchar(150)")
+                    .HasColumnName("title");
+
+                b.HasKey("Id");
+
+                b.HasIndex("CreatedByUserId")
+                    .HasDatabaseName("IX_meet_sessions_created_by");
+
+                b.HasIndex("MeetBatchId", "StartsAtUtc")
+                    .HasDatabaseName("IX_meet_sessions_batch_start");
+
+                b.HasIndex("RoomName")
+                    .IsUnique()
+                    .HasDatabaseName("UX_meet_sessions_room_name");
+
+                b.ToTable("tbl_meet_sessions", "erpsystem");
+            });
+
+            modelBuilder.Entity("CIITStackLab.Domain.Entities.MeetSession", b =>
+            {
+                b.HasOne("CIITStackLab.Domain.Entities.MeetBatch", "MeetBatch")
+                    .WithMany()
+                    .HasForeignKey("MeetBatchId")
+                    .OnDelete(DeleteBehavior.Cascade)
+                    .IsRequired();
+
+                b.HasOne("CIITStackLab.Infrastructure.Identity.ApplicationUser", null)
+                    .WithMany()
+                    .HasForeignKey("CreatedByUserId")
+                    .OnDelete(DeleteBehavior.NoAction)
+                    .IsRequired();
+
+                b.Navigation("MeetBatch");
+            });
+
 #pragma warning restore 612, 618
         }
     }
