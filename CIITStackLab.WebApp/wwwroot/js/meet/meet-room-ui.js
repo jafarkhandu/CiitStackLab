@@ -35,6 +35,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
     room.querySelectorAll("form[data-meet-ajax]").forEach(form => {
         form.addEventListener("submit", async event => {
+            if (event.defaultPrevented) return;
             event.preventDefault();
             if (form.dataset.submitting === "true") return;
 
