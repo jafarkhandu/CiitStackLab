@@ -92,6 +92,7 @@ public sealed class MeetRealtimeService
             await _hub.Clients.User(participant.StudentUserId)
                 .SendAsync("MeetMyParticipantStatus", new
                 {
+                    sessionId = session.Id,
                     status = participant.Status,
                     sessionStatus = session.Status
                 }, cancellationToken);
