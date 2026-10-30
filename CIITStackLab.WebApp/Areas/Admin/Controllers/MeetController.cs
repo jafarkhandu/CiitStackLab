@@ -164,12 +164,12 @@ public sealed class MeetController : Controller
         {
             var now = DateTime.UtcNow;
             session.Status = "Completed";
-            session.EndedAtUtc = session.StartedAtUtc!.Value.AddMinutes(session.DurationMinutes);
+            session.EndedAtUtc = now;
             if (session.RecordingStatus == "Recording")
             {
                 session.RecordingStatus = "Stopped";
                 session.RecordingEndedAtUtc = session.EndedAtUtc;
-                session.RecordingRetentionUntilUtc = session.EndedAtUtc.Value.AddDays(90);
+                session.RecordingRetentionUntilUtc = now.AddDays(90);
             }
 
             foreach (var participant in session.Participants.Where(x => x.Status is "Admitted" or "Pending"))
@@ -370,12 +370,13 @@ public sealed class MeetController : Controller
         foreach (var session in expired)
         {
             session.Status = "Completed";
-            session.EndedAtUtc = session.StartedAtUtc!.Value.AddMinutes(session.DurationMinutes);
+            var endedAt = session.StartedAtUtc!.Value.AddMinutes(session.DurationMinutes);
+            session.EndedAtUtc = endedAt;
             if (session.RecordingStatus == "Recording")
             {
                 session.RecordingStatus = "Stopped";
-                session.RecordingEndedAtUtc = now;
-                session.RecordingRetentionUntilUtc = now.AddDays(90);
+                session.RecordingEndedAtUtc = endedAt;
+                session.RecordingRetentionUntilUtc = endedAt.AddDays(90);
             }
 
             foreach (var participant in session.Participants.Where(x => x.Status is "Admitted" or "Pending"))
