@@ -136,6 +136,8 @@
                 <p>Please contact your admin if you believe this was a mistake.</p>
             </section>
         }
+        @if (Model.IsHost || Model.ParticipantStatus == "Admitted")
+        {
         <main class="ciit-meet-room-stage">
             <div class="ciit-meet-room-video-grid">
                 <article class="ciit-meet-video-tile ciit-meet-video-self">
@@ -182,6 +184,7 @@
             </div>
             <p class="ciit-meet-room-footnote"><i class="bi bi-info-circle"></i> Meeting interface preview · Camera, microphone and participant connections will be enabled with LiveKit.</p>
         </main>
+        }
     </div>
     <script src="~/js/meet/meet-room-ui.js" asp-append-version="true"></script>
 </body>
