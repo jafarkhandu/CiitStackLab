@@ -36,10 +36,6 @@
         ? null
         : currentItem?.Content;
     var learningProgress = Model.Progress;
-    if (User.IsInRole("Student") && learningProgress is not null)
-    {
-        ViewData["CourseProgressPercentage"] = Math.Clamp(learningProgress.Percentage, 0, 100);
-    }
     var completedContentIds = learningProgress?.CompletedContentIds?.ToHashSet() ?? new HashSet<int>();
     // Calculate each topic's completion state once for consistent display.
     var courseTopicProgress = Model.Topics.Select(topic =>
@@ -136,7 +132,7 @@
             box-shadow: 0 7px 18px rgba(22,75,150,.14);
         }
         #topicExamApplicationModal .modal-backdrop,
-        .modal-backdrop.show { opacity: .58; }
+        .modal-backdrop.show { opacity: .58; backdrop-filter: blur(5px); }
         @@keyframes ciitExamModalEnter {
             from { opacity: 0; transform: translateY(12px) scale(.985); }
             to { opacity: 1; transform: translateY(0) scale(1); }
@@ -287,11 +283,49 @@
 else if (currentContent is null && currentTopic is not null)
 {
     <section class="ciit-learning-page">
+        <header class="ciit-learning-header">
+            <div class="container">
+                <div class="ciit-learning-header-row">
+                    <div class="ciit-learning-course-intro">
+                        <div class="ciit-learning-pills">
+                            <span class="ciit-learning-badge">@Model.Category</span>
+                            <span class="ciit-learning-meta-pill">@Model.Level</span>
+                            <span class="ciit-learning-meta-pill">
+                                <i class="bi bi-clock me-1"></i>@Model.DurationHours.ToString("0.##") hrs
+                            </span>
+                            <span class="ciit-learning-meta-pill">
+                                <i class="bi bi-journal-bookmark me-1"></i>@Model.Topics.Sum(topic => topic.Chapters.Count) chapters
+                            </span>
+                        </div>
+                        <h1>@Model.Title</h1>
+                        <p>@Model.ShortDescription</p>
+                        @if (User.IsInRole("Student") && learningProgress is not null)
+                        {
+                            <div class="ciit-learning-course-progress" role="group" aria-label="Course completion progress">
+                                <div class="ciit-learning-course-progress-heading">
+                                    <span><i class="bi bi-graph-up-arrow me-2"></i>Your progress</span>
+                                    <strong>@courseProgressPercentage%</strong>
+                                </div>
+                                <div class="progress ciit-learning-course-progress-track"
+                                     role="progressbar"
+                                     aria-label="Course completion"
+                                     aria-valuenow="@courseProgressPercentage"
+                                     aria-valuemin="0"
+                                     aria-valuemax="100">
+                                    <div class="progress-bar" style="width: @courseProgressPercentage%"></div>
+                                </div>
+                                <small>@courseCompletedTopics of @courseTotalTopics topics completed</small>
+                            </div>
+                        }
+                    </div>
+                </div>
+            </div>
+        </header>
 
         <div class="container ciit-learning-shell">
             <partial name="_LearningPathSidebar" model="Model" />
 
-            <div class="ciit-learning-main" id="learn-main-content" tabindex="-1">
+            <main class="ciit-learning-main">
                 <div class="ciit-learning-panel-pager" aria-label="Learning sections">
                     <button type="button" data-learning-page="notes">1. Notes</button>
                     <button type="button" data-learning-page="content">2. Content</button>
@@ -311,10 +345,18 @@ else if (currentContent is null && currentTopic is not null)
                             <span class="ciit-learning-eyebrow">
                                 TOPIC @(Math.Max(0, Model.Topics.ToList().FindIndex(topic => topic.Id == currentTopic.Id)) + 1) OF @Math.Max(Model.Topics.Count, 1)
                             </span>
-                            <h1 class="ciit-learning-chapter-title">@CIITStackLab.WebApp.Helpers.LearningPagePresentation.FormatLearningTitle(currentChapter?.Title ?? currentTopic.Title)</h2>
+                            <h2 class="ciit-learning-chapter-title">@CIITStackLab.WebApp.Helpers.LearningPagePresentation.FormatLearningTitle(currentChapter?.Title ?? currentTopic.Title)</h2>
                         </div>
                     </div>
 
+                    <div class="ciit-learning-topic-step-progress"
+                         role="progressbar"
+                         aria-label="Topic position in course"
+                         aria-valuenow="@topicPositionProgress"
+                         aria-valuemin="0"
+                         aria-valuemax="100">
+                        <span style="width: @topicPositionProgress%"></span>
+                    </div>
 
                     <section class="ciit-learning-resource ciit-learning-notes-panel" data-learning-panel-content="notes">
                         <div class="ciit-learning-resource-title">
@@ -346,22 +388,31 @@ else if (currentContent is null && currentTopic is not null)
                                 <p>@(Model.CurrentChapterId.HasValue ? "Learning material linked to this chapter." : "Learning material linked to this topic.")</p>
                             </div>
                         </div>
-                        @foreach (var content in displayedContent)
+                        @{
+                            var displayedContent = Model.CurrentChapterId.HasValue && currentChapter is not null
+                                ? currentChapter.Contents
+                                : currentTopic.Contents;
+                        }
+                        @if (displayedContent.Count > 0)
                         {
-                            <article class="ciit-learning-assessment-question">
-                                @if (!string.IsNullOrWhiteSpace(content.Title))
-                                {
+                            @foreach (var content in displayedContent)
+                            {
+                                <article class="ciit-learning-assessment-question">
                                     <strong>@content.Title</strong>
-                                }
-                                @if (!string.IsNullOrWhiteSpace(content.Slides))
-                                {
-                                    <p>@content.Slides</p>
-                                }
-                                @if (!string.IsNullOrWhiteSpace(content.VideoName))
-                                {
-                                    <p><i class="bi bi-play-circle me-2"></i>@content.VideoName</p>
-                                }
-                            </article>
+                                    @if (!string.IsNullOrWhiteSpace(content.Slides))
+                                    {
+                                        <p>@content.Slides</p>
+                                    }
+                                    @if (!string.IsNullOrWhiteSpace(content.VideoName))
+                                    {
+                                        <p><i class="bi bi-play-circle me-2"></i>@content.VideoName</p>
+                                    }
+                                </article>
+                            }
+                        }
+                        else
+                        {
+                            <p class="ciit-learning-category-empty">This topic has notes and assessments but no separate video/slide lesson.</p>
                         }
                     </section>
 
@@ -500,7 +551,7 @@ else if (currentContent is null && currentTopic is not null)
                 </article>
 
                 <partial name="_LearningChapterActions" model="Model" />
-            </div>
+            </main>
         </div>
     </section>
 }
@@ -508,11 +559,52 @@ else if (currentContent is null && currentTopic is not null)
 else
 {
     <section class="ciit-learning-page">
+        <header class="ciit-learning-header">
+            <div class="container">
+                                <div class="ciit-learning-header-row">
+                    <div class="ciit-learning-course-intro">
+                        <div class="ciit-learning-pills">
+                            <span class="ciit-learning-badge">@Model.Category</span>
+                            <span class="ciit-learning-meta-pill">@Model.Level</span>
+                            <span class="ciit-learning-meta-pill">
+                                <i class="bi bi-clock me-1"></i>@Model.DurationHours.ToString("0.##") hrs
+                            </span>
+                            <span class="ciit-learning-meta-pill">
+                                <i class="bi bi-journal-bookmark me-1"></i>@Model.Topics.Sum(topic => topic.Chapters.Count) chapters
+                            </span>
+                        </div>
+
+                        <h1>@Model.Title</h1>
+                        <p>@Model.ShortDescription</p>
+
+                        @if (User.IsInRole("Student") && learningProgress is not null)
+                        {
+                            <div class="ciit-learning-course-progress" role="group" aria-label="Course completion progress">
+                                <div class="ciit-learning-course-progress-heading">
+                                    <span><i class="bi bi-graph-up-arrow me-2"></i>Your progress</span>
+                                    <strong>@courseProgressPercentage%</strong>
+                                </div>
+                                <div class="progress ciit-learning-course-progress-track"
+                                     role="progressbar"
+                                     aria-label="Course completion"
+                                     aria-valuenow="@courseProgressPercentage"
+                                     aria-valuemin="0"
+                                     aria-valuemax="100">
+                                    <div class="progress-bar" style="width: @courseProgressPercentage%"></div>
+                                </div>
+                                <small>@courseCompletedTopics of @courseTotalTopics topics completed</small>
+                            </div>
+                        }
+                    </div>
+
+                </div>
+            </div>
+        </header>
 
         <div class="container ciit-learning-shell">
             <partial name="_LearningPathSidebar" model="Model" />
 
-            <div class="ciit-learning-main" id="learn-main-content" tabindex="-1">
+            <main class="ciit-learning-main">
                 <div class="ciit-learning-panel-pager" aria-label="Learning sections">
                     <button type="button" data-learning-page="notes">1. Notes</button>
                     <button type="button" data-learning-page="content">2. Content</button>
@@ -531,11 +623,19 @@ else
                             <span class="ciit-learning-eyebrow">
                                 TOPIC @(Math.Max(0, Model.Topics.ToList().FindIndex(topic => topic.Id == currentTopic?.Id)) + 1) OF @Math.Max(Model.Topics.Count, 1)
                             </span>
-                            <h1 class="ciit-learning-chapter-title">@CIITStackLab.WebApp.Helpers.LearningPagePresentation.FormatLearningTitle(currentChapter?.Title ?? currentTopic?.Title ?? currentContent?.Title)</h2>
+                            <h2 class="ciit-learning-chapter-title">@CIITStackLab.WebApp.Helpers.LearningPagePresentation.FormatLearningTitle(currentChapter?.Title ?? currentTopic?.Title ?? currentContent?.Title)</h2>
                         </div>
 
                     </div>
 
+                    <div class="ciit-learning-topic-step-progress"
+                         role="progressbar"
+                         aria-label="Topic position in course"
+                         aria-valuenow="@topicPositionProgress"
+                         aria-valuemin="0"
+                         aria-valuemax="100">
+                        <span style="width: @topicPositionProgress%"></span>
+                    </div>
 
                     @if (TempData["LearningProgressMessage"] is string progressMessage)
                     {
@@ -567,36 +667,19 @@ else
                         }
                     </section>
 
-                    @if (!string.IsNullOrWhiteSpace(currentContent?.Title)
-                        || !string.IsNullOrWhiteSpace(currentContent?.VideoName)
-                        || !string.IsNullOrWhiteSpace(currentContent?.Slides))
-                    {
-                        <section class="ciit-learning-resource ciit-learning-content-overview"
-                                 data-learning-panel-content="content"
-                                 data-learning-content-combined="overview">
-                            <div class="ciit-learning-resource-title">
-                                <span class="ciit-learning-resource-icon"><i class="bi bi-lightbulb"></i></span>
-                                <div>
-                                    <h3>Lesson resources</h3>
-                                    <p>Resources available for this lesson.</p>
+                    <section class="ciit-learning-resource ciit-learning-content-overview" data-learning-panel-content="content" data-learning-content-combined="overview">
+                                <div class="ciit-learning-resource-title">
+                                    <span class="ciit-learning-resource-icon"><i class="bi bi-lightbulb"></i></span>
+                                    <div><h3>What you'll cover</h3><p>A quick overview of this lesson's learning resources.</p></div>
                                 </div>
-                            </div>
-                            <ul class="learn-resource-list">
-                                @if (!string.IsNullOrWhiteSpace(currentContent?.Title))
-                                {
-                                    <li><strong>Lesson:</strong> @currentContent.Title</li>
-                                }
-                                @if (!string.IsNullOrWhiteSpace(currentContent?.VideoName))
-                                {
-                                    <li><strong>Video:</strong> @currentContent.VideoName</li>
-                                }
-                                @if (!string.IsNullOrWhiteSpace(currentContent?.Slides))
-                                {
-                                    <li><strong>Slides:</strong> @currentContent.Slides</li>
-                                }
-                            </ul>
-                        </section>
-                    }
+                                <ul>
+                                    <li><strong>Lesson:</strong> @(currentContent?.Title ?? "Lesson")</li>
+                                    <li><strong>Video:</strong> @(string.IsNullOrWhiteSpace(currentContent?.VideoName) ? "Not provided for this lesson" : "Available — load it when you're ready")</li>
+                                    <li><strong>Slides:</strong> @(string.IsNullOrWhiteSpace(currentContent?.Slides) ? "Not provided for this lesson" : "Available as supplementary study material")</li>
+                                    <li><strong>Practice:</strong> Review the chapter assessment section after studying the notes and lesson resources.</li>
+                                    <li><strong>Suggested order:</strong> Notes → lesson content → chapter assessments.</li>
+                                </ul>
+                    </section>
 
                     @if (currentContent is not null && !string.IsNullOrWhiteSpace(currentContent.VideoName))
                     {
@@ -824,7 +907,7 @@ else
                 </article>
 
                 <partial name="_LearningChapterActions" model="Model" />
-            </div>
+            </main>
         </div>
     </section>
 }

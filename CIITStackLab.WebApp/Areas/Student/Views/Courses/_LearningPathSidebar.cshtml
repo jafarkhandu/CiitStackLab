@@ -6,111 +6,98 @@
     var currentTopic = topics.FirstOrDefault(topic => topic.Id == Model.CurrentTopicId)
         ?? topics.FirstOrDefault(topic =>
             topic.Contents.Any(content => currentContentId.HasValue && content.Id == currentContentId.Value)
-            || topic.Chapters.Any(chapter => chapter.Contents.Any(content => currentContentId.HasValue && content.Id == currentContentId.Value)));
-    var contentChapterId = currentContentId.HasValue
-        ? topics.SelectMany(topic => topic.Chapters).FirstOrDefault(chapter => chapter.Contents.Any(content => content.Id == currentContentId.Value))?.Id
+            || topic.Chapters.Any(chapter => chapter.Contents.Any(content =>
+                currentContentId.HasValue && content.Id == currentContentId.Value)));
+    var currentContentChapterId = currentContentId.HasValue
+        ? topics.SelectMany(topic => topic.Chapters)
+            .FirstOrDefault(chapter => chapter.Contents.Any(content => content.Id == currentContentId.Value))?.Id
         : (int?)null;
-    var selectedChapterId = Model.CurrentChapterId ?? contentChapterId;
-    var orderedChapters = currentTopic?.Chapters.OrderBy(chapter => chapter.SortOrder).ThenBy(chapter => chapter.Id).ToList()
-        ?? new List<CIITStackLab.Application.DTOs.CourseLearningChapterDto>();
-    var currentChapter = orderedChapters.FirstOrDefault(chapter => chapter.Id == selectedChapterId) ?? orderedChapters.FirstOrDefault();
+    var selectedChapterId = Model.CurrentChapterId ?? currentContentChapterId;
     var allowedTopicId = ViewBag.AllowedTopicId as int?;
-    var isLocked = User.IsInRole("Student") && allowedTopicId.HasValue && currentTopic is not null && currentTopic.Id != allowedTopicId.Value;
-    var topicContentIds = currentTopic is null ? new List<int>() :
-        currentTopic.Contents.Concat(currentTopic.Chapters.SelectMany(chapter => chapter.Contents)).Select(content => content.Id).Distinct().ToList();
-    var topicCompleted = topicContentIds.Count > 0 && topicContentIds.All(completedContentIds.Contains);
-    var completedCount = orderedChapters.Count(chapter => chapter.IsCompleted);
-    var totalCount = orderedChapters.Count;
-    var isFinalChapter = currentChapter is not null && (orderedChapters.Count <= 1 || orderedChapters[^1].Id == currentChapter.Id);
-    var canApplyForExam = User.IsInRole("Student") && Model.Progress is not null && currentTopic is not null
-        && currentChapter is not null && isFinalChapter && !currentChapter.IsCompleted && !isLocked;
+    var isCurrentTopicLocked = User.IsInRole("Student")
+        && allowedTopicId.HasValue
+        && currentTopic is not null
+        && currentTopic.Id != allowedTopicId.Value;
+    var currentTopicContentIds = currentTopic is null
+        ? new List<int>()
+        : currentTopic.Contents
+            .Concat(currentTopic.Chapters.SelectMany(chapter => chapter.Contents))
+            .Select(content => content.Id)
+            .Distinct()
+            .ToList();
+    var isCurrentTopicCompleted = currentTopicContentIds.Count > 0
+        && currentTopicContentIds.All(completedContentIds.Contains);
+    var completedChapterCount = currentTopic?.Chapters.Count(chapter => chapter.IsCompleted) ?? 0;
+    var totalChapterCount = currentTopic?.Chapters.Count ?? 0;
 }
-<aside class="ciit-learning-sidebar" aria-label="Your learning path">
-    <details class="learn-path-disclosure" data-learn-path-disclosure open>
-        <summary class="learn-path-mobile-summary">
-            <span>CHAPTERS &amp; SUBTOPICS</span>
-            <strong>@CIITStackLab.WebApp.Helpers.LearningPagePresentation.FormatLearningTitle(currentChapter?.Title ?? currentTopic?.Title ?? "Chapters")</strong>
-            <i class="bi bi-chevron-down" aria-hidden="true"></i>
-        </summary>
-        <div class="learn-path-content">
-            <div class="ciit-learning-sidebar-head">
-                <div>
-                    <span class="ciit-learning-eyebrow">YOUR LEARNING PATH</span>
-                    <h2>@(currentTopic is null ? "Chapters" : $"{currentTopic.Title} Chapters")</h2>
-                </div>
-                <div class="ciit-learning-current-topic-status">
-                    @if (topicCompleted)
-                    {
-                        <span class="ciit-learning-current-topic-completed" title="Topic completed" aria-label="Topic completed">
-                            <i class="bi bi-check-circle-fill" aria-hidden="true"></i>
-                        </span>
-                    }
-                    <span class="ciit-learning-chapter-progress-count">@completedCount / @totalCount done</span>
-                </div>
-            </div>
-            <div class="ciit-learning-sidebar-scroll">
-                @if (currentTopic is null)
-                {
-                    <p class="ciit-learning-current-topic-message">No active topic is available.</p>
-                }
-                else if (isLocked)
-                {
-                    <p class="ciit-learning-current-topic-message">
-                        <i class="bi bi-lock-fill" aria-hidden="true"></i>
-                        This topic is locked until you pass the current topic examination.
-                    </p>
-                }
-                else if (orderedChapters.Count == 0)
-                {
-                    <p class="ciit-learning-current-topic-message">No chapters are available for this topic yet.</p>
-                }
-                else
-                {
-                    <nav class="ciit-learning-current-chapters" aria-label="@($"{currentTopic.Title} chapters")">
-                        @for (var index = 0; index < orderedChapters.Count; index++)
-                        {
-                            var chapter = orderedChapters[index];
-                            var isCurrent = currentChapter?.Id == chapter.Id;
-                            <a class="ciit-learning-current-chapter-link @(isCurrent ? "is-current" : "")"
-                               asp-controller="Courses" asp-action="Learn"
-                               asp-route-id="@Model.Id" asp-route-topicId="@currentTopic.Id" asp-route-chapterId="@chapter.Id"
-                               aria-current="@(isCurrent ? "page" : null)">
-                                <span class="ciit-learning-current-chapter-number">@((index + 1).ToString("00"))</span>
-                                <span class="ciit-learning-current-chapter-title">
-                                    <strong>@CIITStackLab.WebApp.Helpers.LearningPagePresentation.FormatLearningTitle(chapter.Title)</strong>
-                                </span>
-                                @if (chapter.IsCompleted)
-                                {
-                                    <span class="ciit-learning-current-chapter-completed" title="Chapter completed" aria-label="Chapter completed">
-                                        <i class="bi bi-check-circle-fill" aria-hidden="true"></i>
-                                    </span>
-                                }
-                            </a>
-                            @if (isCurrent)
-                            {
-                                <nav class="ciit-learning-subtopics" data-learning-subtopics
-                                     aria-label="@($"{chapter.Title} sections")" hidden></nav>
-                            }
-                        }
-                    </nav>
-                }
-            </div>
-            @if (isFinalChapter && currentTopic is not null && Model.Progress is not null)
-            {
-                <div class="learn-exam-cta">
-                    <p>@(currentChapter?.IsCompleted == true
-                        ? "This chapter is complete. Continue through your examination workflow."
-                        : "Finished the notes? Apply for the chapter examination.")</p>
-                    @if (canApplyForExam)
-                    {
-                        <form asp-controller="Courses" asp-action="CompleteTopic"
-                              asp-route-id="@Model.Id" asp-route-topicId="@currentTopic.Id" method="post">
-                            @Html.AntiForgeryToken()
-                            <button type="submit" class="learn-btn learn-btn-solid">Apply for Examination</button>
-                        </form>
-                    }
-                </div>
-            }
+
+<aside class="ciit-learning-sidebar" aria-label="Current topic chapters">
+    <div class="ciit-learning-sidebar-head">
+        <div>
+            <span class="ciit-learning-eyebrow">YOUR LEARNING PATH</span>
+            <h2>@(currentTopic is null ? "Chapters" : $"{currentTopic.Title} Chapters")</h2>
         </div>
-    </details>
+        <div class="ciit-learning-current-topic-status">
+            @if (isCurrentTopicCompleted)
+            {
+                <span class="ciit-learning-current-topic-completed" title="Topic completed" aria-label="Topic completed">
+                    <i class="bi bi-check-circle-fill" aria-hidden="true"></i>
+                </span>
+            }
+            <span class="ciit-learning-chapter-progress-count">@completedChapterCount / @totalChapterCount done</span>
+        </div>
+    </div>
+
+    <div class="ciit-learning-sidebar-scroll">
+        @if (currentTopic is null)
+        {
+            <p class="ciit-learning-current-topic-message">No active topic is available.</p>
+        }
+        else if (isCurrentTopicLocked)
+        {
+            <p class="ciit-learning-current-topic-message">
+                <i class="bi bi-lock-fill" aria-hidden="true"></i>
+                This topic is locked until you pass the current topic examination.
+            </p>
+        }
+        else if (currentTopic.Chapters.Count == 0)
+        {
+            <p class="ciit-learning-current-topic-message">No chapters are available for this topic yet.</p>
+        }
+        else
+        {
+            <nav class="ciit-learning-current-chapters" aria-label="@($"{currentTopic.Title} chapters")">
+                @for (var chapterIndex = 0; chapterIndex < currentTopic.Chapters.Count; chapterIndex++)
+                {
+                    var chapter = currentTopic.Chapters[chapterIndex];
+                    var chapterIsCurrent = selectedChapterId == chapter.Id
+                        || (currentContentId.HasValue && chapter.Contents.Any(content => content.Id == currentContentId.Value));
+                    var chapterIsCompleted = chapter.IsCompleted;
+
+                    <a class="ciit-learning-current-chapter-link @(chapterIsCurrent ? "is-current" : "")"
+                       asp-controller="Courses"
+                       asp-action="Learn"
+                       asp-route-id="@Model.Id"
+                       asp-route-topicId="@currentTopic.Id"
+                       asp-route-chapterId="@chapter.Id"
+                       aria-current="@(chapterIsCurrent ? "page" : null)">
+                        <span class="ciit-learning-current-chapter-number">@((chapterIndex + 1).ToString("00"))</span>
+                        <span class="ciit-learning-current-chapter-title">
+                            <strong>@CIITStackLab.WebApp.Helpers.LearningPagePresentation.FormatLearningTitle(chapter.Title)</strong>
+                        </span>
+                        @if (chapterIsCompleted)
+                        {
+                            <span class="ciit-learning-current-chapter-completed" title="Chapter completed" aria-label="Chapter completed">
+                                <i class="bi bi-check-circle-fill" aria-hidden="true"></i>
+                            </span>
+                        }
+                        else if (chapterIsCurrent)
+                        {
+                            <span class="ciit-learning-current-chapter-current" aria-hidden="true"></span>
+                        }
+                    </a>
+                }
+            </nav>
+        }
+    </div>
 </aside>

@@ -1,84 +1,133 @@
 @model CIITStackLab.Application.DTOs.CourseLearningDto
 @{
     var topics = Model.Topics.ToList();
-    var chapterEntries = topics.SelectMany(topic => topic.Chapters.OrderBy(chapter => chapter.SortOrder)
-        .ThenBy(chapter => chapter.Id).Select(chapter => new { Topic = topic, Chapter = chapter })).ToList();
-    var contentId = Model.CurrentContentId;
+    var chapterEntries = topics.SelectMany(topic => topic.Chapters
+        .OrderBy(chapter => chapter.SortOrder)
+        .ThenBy(chapter => chapter.Id)
+        .Select(chapter => new { Topic = topic, Chapter = chapter }))
+        .ToList();
+
+    var currentContentId = Model.CurrentContentId;
     var currentChapter = Model.CurrentChapterId.HasValue
         ? chapterEntries.FirstOrDefault(entry => entry.Chapter.Id == Model.CurrentChapterId.Value)?.Chapter
-        : contentId.HasValue ? chapterEntries.FirstOrDefault(entry => entry.Chapter.Contents.Any(content => content.Id == contentId.Value))?.Chapter : null;
+        : currentContentId.HasValue
+            ? chapterEntries.FirstOrDefault(entry => entry.Chapter.Contents.Any(content => content.Id == currentContentId.Value))?.Chapter
+            : null;
     var currentTopic = topics.FirstOrDefault(topic => topic.Id == Model.CurrentTopicId)
-        ?? (currentChapter is not null ? topics.FirstOrDefault(topic => topic.Chapters.Any(chapter => chapter.Id == currentChapter.Id)) : null)
-        ?? topics.FirstOrDefault(topic => topic.Contents.Any(content => contentId.HasValue && content.Id == contentId.Value));
-    currentChapter ??= currentTopic?.Chapters.OrderBy(chapter => chapter.SortOrder).ThenBy(chapter => chapter.Id).FirstOrDefault();
-    var currentIndex = currentChapter is null ? -1 : chapterEntries.FindIndex(entry => entry.Chapter.Id == currentChapter.Id);
-    var previousEntry = currentIndex > 0 ? chapterEntries[currentIndex - 1] : null;
-    var nextEntry = currentIndex >= 0 && currentIndex < chapterEntries.Count - 1 ? chapterEntries[currentIndex + 1] : null;
+        ?? (currentChapter is not null
+            ? topics.FirstOrDefault(topic => topic.Chapters.Any(chapter => chapter.Id == currentChapter.Id))
+            : null)
+        ?? topics.FirstOrDefault(topic => topic.Contents.Any(content => currentContentId.HasValue && content.Id == currentContentId.Value));
+
+    currentChapter ??= currentTopic?.Chapters
+        .OrderBy(chapter => chapter.SortOrder)
+        .ThenBy(chapter => chapter.Id)
+        .FirstOrDefault();
+
+    var currentEntryIndex = currentChapter is null
+        ? -1
+        : chapterEntries.FindIndex(entry => entry.Chapter.Id == currentChapter.Id);
+    var previousEntry = currentEntryIndex > 0 ? chapterEntries[currentEntryIndex - 1] : null;
+    var nextEntry = currentEntryIndex >= 0 && currentEntryIndex < chapterEntries.Count - 1
+        ? chapterEntries[currentEntryIndex + 1]
+        : null;
     var allowedTopicId = ViewBag.AllowedTopicId as int?;
-    var previousLocked = User.IsInRole("Student") && allowedTopicId.HasValue && previousEntry is not null && previousEntry.Topic.Id != allowedTopicId.Value;
-    var nextLocked = User.IsInRole("Student") && allowedTopicId.HasValue && nextEntry is not null && nextEntry.Topic.Id != allowedTopicId.Value;
-    var orderedTopicChapters = currentTopic?.Chapters.OrderBy(chapter => chapter.SortOrder).ThenBy(chapter => chapter.Id).ToList()
-        ?? new List<CIITStackLab.Application.DTOs.CourseLearningChapterDto>();
-    var isFinalChapter = currentChapter is not null && (orderedTopicChapters.Count <= 1 || orderedTopicChapters[^1].Id == currentChapter.Id);
+    var previousIsLocked = User.IsInRole("Student")
+        && allowedTopicId.HasValue
+        && previousEntry is not null
+        && previousEntry.Topic.Id != allowedTopicId.Value;
+    var nextIsLocked = User.IsInRole("Student")
+        && allowedTopicId.HasValue
+        && nextEntry is not null
+        && nextEntry.Topic.Id != allowedTopicId.Value;
+    var topicChapters = currentTopic?.Chapters
+        .OrderBy(chapter => chapter.SortOrder)
+        .ThenBy(chapter => chapter.Id)
+        .ToList() ?? new List<CIITStackLab.Application.DTOs.CourseLearningChapterDto>();
+    var isFinalChapter = currentChapter is not null
+        && (topicChapters.Count <= 1 || topicChapters[^1].Id == currentChapter.Id);
 }
-<nav class="ciit-learning-bottom-actions" aria-label="Lesson actions and chapter navigation">
+
+<nav class="ciit-learning-bottom-actions" aria-label="Chapter navigation">
     <div class="ciit-learning-bottom-actions-start">
-        @if (previousEntry is not null && !previousLocked)
+        @if (previousEntry is not null && !previousIsLocked)
         {
-            <a class="ciit-learning-bottom-button learn-btn learn-btn-ghost" asp-controller="Courses" asp-action="Learn"
-               asp-route-id="@Model.Id" asp-route-topicId="@previousEntry.Topic.Id" asp-route-chapterId="@previousEntry.Chapter.Id">
-                <i class="bi bi-arrow-left" aria-hidden="true"></i><span>Previous</span>
+            <a class="ciit-learning-bottom-button ciit-learning-bottom-button-secondary"
+               asp-controller="Courses"
+               asp-action="Learn"
+               asp-route-id="@Model.Id"
+               asp-route-topicId="@previousEntry.Topic.Id"
+               asp-route-chapterId="@previousEntry.Chapter.Id">
+                <i class="bi bi-arrow-left" aria-hidden="true"></i>
+                Previous
             </a>
         }
         else
         {
-            <span class="ciit-learning-bottom-button learn-btn learn-btn-ghost is-disabled" aria-disabled="true">
-                <i class="bi bi-arrow-left" aria-hidden="true"></i><span>Previous</span>
+            <span class="ciit-learning-bottom-button ciit-learning-bottom-button-secondary is-disabled" aria-disabled="true">
+                <i class="bi bi-arrow-left" aria-hidden="true"></i>
+                Previous
             </span>
         }
     </div>
+
     <div class="ciit-learning-bottom-actions-end">
         @if (User.IsInRole("Student") && Model.Progress is not null && currentTopic is not null && currentChapter is not null)
         {
             if (currentChapter.IsCompleted)
             {
-                <span class="ciit-learning-bottom-button ciit-learning-bottom-button-completed learn-btn" role="status" aria-label="Chapter completed">
-                    <i class="bi bi-check-circle-fill" aria-hidden="true"></i><span>Completed</span>
+                <span class="ciit-learning-bottom-button ciit-learning-bottom-button-completed" role="status">
+                    <i class="bi bi-check-circle-fill" aria-hidden="true"></i>
+                    Completed
                 </span>
             }
-            else if (!isFinalChapter)
+            else if (isFinalChapter)
             {
-                <form asp-route="CompleteCourseChapter" asp-route-id="@Model.Id"
-                      asp-route-topicId="@currentTopic.Id" asp-route-chapterId="@currentChapter.Id" method="post">
+                <form asp-controller="Courses"
+                      asp-action="CompleteTopic"
+                      asp-route-id="@Model.Id"
+                      asp-route-topicId="@currentTopic.Id"
+                      method="post">
                     @Html.AntiForgeryToken()
-                    <button type="submit" class="ciit-learning-bottom-button learn-btn learn-btn-ghost"
-                            aria-label="Mark complete" title="Mark complete">
-                        <i class="bi bi-check2-circle" aria-hidden="true"></i><span class="learn-mark-label">Mark complete</span>
+                    <button type="submit" class="ciit-learning-bottom-button ciit-learning-bottom-button-primary">
+                        <i class="bi bi-calendar2-check" aria-hidden="true"></i>
+                        Apply for Examination
                     </button>
                 </form>
             }
             else
             {
-                <span class="ciit-learning-bottom-button learn-btn learn-btn-ghost is-disabled"
-                      aria-disabled="true" title="Use Apply for Examination in the learning path panel for the final chapter.">
-                    <i class="bi bi-check2-circle" aria-hidden="true"></i><span class="learn-mark-label">Mark complete</span>
-                </span>
+                <form asp-route="CompleteCourseChapter"
+                      asp-route-id="@Model.Id"
+                      asp-route-topicId="@currentTopic.Id"
+                      asp-route-chapterId="@currentChapter.Id"
+                      method="post">
+                    @Html.AntiForgeryToken()
+                    <button type="submit" class="ciit-learning-bottom-button ciit-learning-bottom-button-mark">
+                        <i class="bi bi-check2-circle" aria-hidden="true"></i>
+                        Mark as complete
+                    </button>
+                </form>
             }
         }
-    </div>
-    <div class="ciit-learning-bottom-actions-next">
-        @if (nextEntry is not null && !nextLocked)
+
+        @if (nextEntry is not null && !nextIsLocked)
         {
-            <a class="ciit-learning-bottom-button learn-btn learn-btn-solid" asp-controller="Courses" asp-action="Learn"
-               asp-route-id="@Model.Id" asp-route-topicId="@nextEntry.Topic.Id" asp-route-chapterId="@nextEntry.Chapter.Id">
-                <span>@(nextEntry.Topic.Id == currentTopic?.Id ? "Next chapter" : "Next topic")</span>
+            <a class="ciit-learning-bottom-button ciit-learning-bottom-button-primary"
+               asp-controller="Courses"
+               asp-action="Learn"
+               asp-route-id="@Model.Id"
+               asp-route-topicId="@nextEntry.Topic.Id"
+               asp-route-chapterId="@nextEntry.Chapter.Id">
+                @(nextEntry.Topic.Id == currentTopic?.Id ? "Next chapter" : "Next topic")
                 <i class="bi bi-arrow-right" aria-hidden="true"></i>
             </a>
         }
         else
         {
-            <span class="ciit-learning-bottom-button learn-btn learn-btn-solid is-disabled" aria-disabled="true">
-                <span>Next topic</span><i class="bi bi-arrow-right" aria-hidden="true"></i>
+            <span class="ciit-learning-bottom-button ciit-learning-bottom-button-primary is-disabled" aria-disabled="true">
+                Next topic
+                <i class="bi bi-arrow-right" aria-hidden="true"></i>
             </span>
         }
     </div>
