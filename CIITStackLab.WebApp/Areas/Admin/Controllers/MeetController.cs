@@ -31,19 +31,113 @@ public sealed class MeetController : Controller
             .ToListAsync(cancellationToken);
 
         var students = await GetActiveStudentsAsync(cancellationToken);
+        var sessions = await _dbContext.MeetSessions
+            .AsNoTracking()
+            .Include(x => x.MeetBatch)
+            .Where(x => !x.MeetBatch.IsArchived)
+            .OrderBy(x => x.StartsAtUtc)
+            .Select(x => new MeetSessionListItemViewModel
+            {
+                Id = x.Id,
+                MeetBatchId = x.MeetBatchId,
+                BatchName = x.MeetBatch.Name,
+                Title = x.Title,
+                Description = x.Description,
+                StartsAtUtc = x.StartsAtUtc,
+                DurationMinutes = x.DurationMinutes,
+                Status = x.Status
+            })
+            .ToListAsync(cancellationToken);
 
         return View(new MeetBatchIndexViewModel
         {
-            ActiveBatches = batches
-                .Where(x => !x.IsArchived)
-                .Select(MapBatch)
-                .ToList(),
-            ArchivedBatches = batches
-                .Where(x => x.IsArchived)
-                .Select(MapBatch)
-                .ToList(),
-            Students = students
+            ActiveBatches = batches.Where(x => !x.IsArchived).Select(MapBatch).ToList(),
+            ArchivedBatches = batches.Where(x => x.IsArchived).Select(MapBatch).ToList(),
+            Students = students,
+            Sessions = sessions
         });
+    }
+
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> CreateSession(
+        MeetSessionCreateViewModel model,
+        string meetingMode,
+        CancellationToken cancellationToken)
+    {
+        var title = model.Title?.Trim() ?? string.Empty;
+        var description = string.IsNullOrWhiteSpace(model.Description) ? null : model.Description.Trim();
+
+        if (title.Length == 0 || title.Length > 150 || description?.Length > 1000
+            || model.DurationMinutes is < 5 or > 480)
+        {
+            TempData["MeetBatchMessage"] = "Check the meeting title, description and duration.";
+            TempData["MeetBatchMessageType"] = "error";
+            return RedirectToAction(nameof(Index));
+        }
+
+        var batch = await _dbContext.MeetBatches
+            .Include(x => x.Members)
+            .SingleOrDefaultAsync(x => x.Id == model.MeetBatchId && !x.IsArchived, cancellationToken);
+
+        if (batch is null || batch.Members.Count == 0)
+        {
+            TempData["MeetBatchMessage"] = "Select an active batch that has assigned students.";
+            TempData["MeetBatchMessageType"] = "error";
+            return RedirectToAction(nameof(Index));
+        }
+
+        var creatorId = User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
+        if (string.IsNullOrWhiteSpace(creatorId))
+            return Forbid();
+
+        var isInstant = string.Equals(meetingMode, "instant", StringComparison.OrdinalIgnoreCase);
+        DateTime startsAtUtc;
+        if (isInstant)
+        {
+            startsAtUtc = DateTime.UtcNow;
+        }
+        else
+        {
+            if (!model.StartsAtLocal.HasValue)
+            {
+                TempData["MeetBatchMessage"] = "Choose a date and time for the scheduled meeting.";
+                TempData["MeetBatchMessageType"] = "error";
+                return RedirectToAction(nameof(Index));
+            }
+
+            var localStart = DateTime.SpecifyKind(model.StartsAtLocal.Value, DateTimeKind.Unspecified);
+            startsAtUtc = DateTime.SpecifyKind(
+                localStart.AddMinutes(model.ClientUtcOffsetMinutes),
+                DateTimeKind.Utc);
+
+            if (startsAtUtc <= DateTime.UtcNow.AddMinutes(1))
+            {
+                TempData["MeetBatchMessage"] = "Scheduled meeting time must be in the future.";
+                TempData["MeetBatchMessageType"] = "error";
+                return RedirectToAction(nameof(Index));
+            }
+        }
+
+        _dbContext.MeetSessions.Add(new MeetSession
+        {
+            MeetBatchId = batch.Id,
+            Title = title,
+            Description = description,
+            RoomName = $"ciit-{Guid.NewGuid():N}",
+            StartsAtUtc = startsAtUtc,
+            DurationMinutes = model.DurationMinutes,
+            Status = isInstant ? "Live" : "Scheduled",
+            CreatedByUserId = creatorId,
+            CreatedAtUtc = DateTime.UtcNow
+        });
+
+        await _dbContext.SaveChangesAsync(cancellationToken);
+        TempData["MeetBatchMessage"] = isInstant
+            ? "Instant meeting created. Live room is ready for the conferencing phase."
+            : "Meeting scheduled successfully.";
+        TempData["MeetBatchMessageType"] = "success";
+        return RedirectToAction(nameof(Index));
     }
 
     [HttpPost]
