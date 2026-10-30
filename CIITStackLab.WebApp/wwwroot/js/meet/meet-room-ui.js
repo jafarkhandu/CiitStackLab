@@ -262,7 +262,6 @@ document.addEventListener("DOMContentLoaded", () => {
             list.append(row);
         });
         setText("[data-meet-participant-total]", admittedParticipants.length);
-        setText("[data-meet-admitted-count]", admittedParticipants.length + (stateHostLive() ? 1 : 0));
     };
 
     const renderPendingRequests = participants => {
