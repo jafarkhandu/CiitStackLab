@@ -23,6 +23,7 @@ builder.Services.Configure<Microsoft.AspNetCore.Mvc.Razor.RazorViewEngineOptions
 });
 builder.Services.AddSignalR();
 builder.Services.AddScoped<ExamApplicationNotificationService>();
+builder.Services.AddScoped<MeetRealtimeService>();
 builder.Services.AddHostedService<MeetSessionLifecycleService>();
 builder.Services.AddInfrastructure(builder.Configuration);
 builder.Services.AddDistributedMemoryCache();
@@ -89,5 +90,6 @@ app.MapControllerRoute(
     pattern: "{controller=Home}/{action=Index}/{id?}");
 
 app.MapHub<ExamApplicationNotificationHub>("/hubs/exam-application-notifications");
+app.MapHub<MeetHub>("/hubs/meet");
 
 app.Run();
