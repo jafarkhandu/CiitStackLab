@@ -90,4 +90,42 @@ public sealed class MeetController : Controller
 
         return View(batch);
     }
+
+    [HttpGet]
+    public async Task<IActionResult> Room(int id, CancellationToken cancellationToken)
+    {
+        var studentId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+        if (string.IsNullOrWhiteSpace(studentId))
+            return Challenge();
+
+        var session = await _dbContext.MeetSessions
+            .AsNoTracking()
+            .Include(item => item.MeetBatch)
+            .Where(item => item.Id == id
+                && !item.MeetBatch.IsArchived
+                && item.MeetBatch.Members.Any(member => member.StudentUserId == studentId))
+            .Select(item => new MeetRoomViewModel
+            {
+                Id = item.Id,
+                Title = item.Title,
+                Description = item.Description,
+                BatchName = item.MeetBatch.Name,
+                BatchCode = item.MeetBatch.BatchCode,
+                StartsAtUtc = item.StartsAtUtc,
+                DurationMinutes = item.DurationMinutes,
+                Status = item.Status,
+                IsHost = false
+            })
+            .SingleOrDefaultAsync(cancellationToken);
+
+        if (session is null)
+            return NotFound();
+
+        ViewData["BatchId"] = await _dbContext.MeetSessions
+            .Where(item => item.Id == id)
+            .Select(item => item.MeetBatchId)
+            .SingleAsync(cancellationToken);
+
+        return View(session);
+    }
 }
