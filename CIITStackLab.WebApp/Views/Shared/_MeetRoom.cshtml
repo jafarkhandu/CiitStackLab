@@ -85,7 +85,7 @@
                             @Html.AntiForgeryToken()<input type="hidden" name="id" value="@Model.Id" /><input type="hidden" name="action" value="delete" />
                             <button type="submit" class="ciit-meet-host-danger">Clear recording metadata</button>
                         </form>
-                    </div>/div>
+                    </div>
                 </div>
                 <div class="ciit-meet-host-participants" data-meet-participants-list data-admit-url="@Url.Action("ReviewParticipant", "Meet", new { area = "Admin" })" data-remove-url="@Url.Action("RemoveParticipant", "Meet", new { area = "Admin" })" data-permissions-url="@Url.Action("UpdateParticipantPermissions", "Meet", new { area = "Admin" })">
                     <h2>Participants <span data-meet-participant-total>@Model.Participants.Count</span></h2>
