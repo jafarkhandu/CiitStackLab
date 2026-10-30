@@ -954,3 +954,101 @@ body.meet-modal-open { overflow:hidden; }
         justify-content: space-between;
     }
 }
+
+
+/* Compact session list and meeting-room preview entry points. */
+.meet-session-list-section {
+    margin-top: 28px;
+}
+
+.meet-session-list {
+    overflow: hidden;
+    border: 1px solid #e5eaf2;
+    border-radius: 15px;
+    padding: 4px 17px;
+    background: #fff;
+    box-shadow: 0 8px 24px rgba(15, 23, 42, .04);
+}
+
+.meet-session-list-item {
+    display: flex;
+    min-width: 0;
+    align-items: center;
+    gap: 13px;
+    padding: 13px 0;
+}
+
+.meet-session-list-item + .meet-session-list-item {
+    border-top: 1px solid #edf0f5;
+}
+
+.meet-session-list-icon {
+    display: grid;
+    width: 39px;
+    height: 39px;
+    flex: 0 0 39px;
+    place-items: center;
+    border: 1px solid #dbeafe;
+    border-radius: 12px;
+    background: #eff6ff;
+    color: #1769ff;
+}
+
+.meet-session-list-copy {
+    display: flex;
+    min-width: 0;
+    flex: 1;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.meet-session-list-copy strong {
+    overflow: hidden;
+    color: #263449;
+    font-size: 12px;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.meet-session-list-copy span {
+    color: #7b8798;
+    font-size: 10px;
+}
+
+.meet-session-status {
+    border: 1px solid #dbeafe;
+    border-radius: 30px;
+    padding: 5px 9px;
+    background: #eff6ff;
+    color: #2563eb;
+    font-size: 9px;
+    font-weight: 800;
+}
+
+.meet-session-list-item .meet-secondary-button {
+    flex: 0 0 auto;
+}
+
+.meet-session-list-empty {
+    border: 1px dashed #d7e1ee;
+    border-radius: 13px;
+    padding: 22px;
+    background: #fff;
+    color: #7b8798;
+    font-size: 12px;
+    text-align: center;
+}
+
+@media (max-width: 700px) {
+    .meet-session-list-item {
+        flex-wrap: wrap;
+    }
+
+    .meet-session-list-copy {
+        flex-basis: calc(100% - 55px);
+    }
+
+    .meet-session-status {
+        margin-left: 52px;
+    }
+}
