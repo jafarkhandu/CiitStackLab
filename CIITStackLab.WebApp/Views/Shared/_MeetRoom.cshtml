@@ -27,7 +27,7 @@
             <div class="ciit-meet-room-meta">
                 <span class="ciit-meet-room-status" data-meet-status><span class="ciit-meet-room-status-dot"></span><span data-meet-status-text>@Model.Status</span></span>
                 <span class="ciit-meet-room-duration"><i class="bi bi-clock"></i> @Model.DurationMinutes min</span>
-                <span class="ciit-meet-participant-count"><i class="bi bi-people-fill"></i> <span data-meet-admitted-count>@(Model.ParticipantCount + (Model.IsHost ? 1 : Model.ParticipantStatus == "Admitted" ? 1 : 0))</span></span>
+                <span class="ciit-meet-participant-count"><i class="bi bi-people-fill"></i> <span data-meet-admitted-count>@(Model.ParticipantCount + (Model.Status == "Live" && Model.IsHost ? 1 : Model.ParticipantStatus == "Admitted" ? 1 : 0))</span></span>
             </div>
         </header>
 
