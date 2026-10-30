@@ -26,6 +26,7 @@ public class ApplicationDbContext : IdentityDbContext<ApplicationUser>
     public DbSet<StudentLoginActivity> StudentLoginActivities => Set<StudentLoginActivity>();
     public DbSet<StudentLessonProgress> StudentLessonProgress => Set<StudentLessonProgress>();
     public DbSet<StudentAssessmentAttempt> StudentAssessmentAttempts => Set<StudentAssessmentAttempt>();
+    public DbSet<PracticeExamAttempt> PracticeExamAttempts => Set<PracticeExamAttempt>();
     public DbSet<StudentCoursePurchase> StudentCoursePurchases => Set<StudentCoursePurchase>();
     public DbSet<PaymentTransaction> PaymentTransactions => Set<PaymentTransaction>();
     public DbSet<TopicExamAttempt> TopicExamAttempts => Set<TopicExamAttempt>();
@@ -270,6 +271,24 @@ public class ApplicationDbContext : IdentityDbContext<ApplicationUser>
             entity.HasIndex(x => new { x.UserId, x.CourseId, x.ContentId, x.SubmittedAt })
                 .IsDescending(false, false, false, true)
                 .HasDatabaseName("IX_tblstudent_assessment_attempts_user_course_content_date");
+        });
+
+        modelBuilder.Entity<PracticeExamAttempt>(entity =>
+        {
+            entity.ToTable("tblstudent_practice_exam_attempts", ExistingSchema);
+            entity.HasKey(x => x.Id);
+            entity.Property(x => x.Id).HasColumnName("attempt_id").ValueGeneratedOnAdd();
+            entity.Property(x => x.UserId).HasColumnName("user_id").HasMaxLength(450).IsRequired();
+            entity.Property(x => x.CourseId).HasColumnName("course_id").IsRequired();
+            entity.Property(x => x.TopicId).HasColumnName("topic_id").IsRequired();
+            entity.Property(x => x.QuestionIdsJson).HasColumnName("question_ids_json").HasColumnType("nvarchar(max)").IsRequired();
+            entity.Property(x => x.AnswersJson).HasColumnName("answers_json").HasColumnType("nvarchar(max)").IsRequired();
+            entity.Property(x => x.Score).HasColumnName("score").HasDefaultValue(0).IsRequired();
+            entity.Property(x => x.TotalQuestions).HasColumnName("total_questions").IsRequired();
+            entity.Property(x => x.StartedAtUtc).HasColumnName("started_at_utc").HasColumnType("datetime2").IsRequired();
+            entity.Property(x => x.SubmittedAtUtc).HasColumnName("submitted_at_utc").HasColumnType("datetime2");
+            entity.HasIndex(x => new { x.UserId, x.CourseId, x.TopicId, x.StartedAtUtc })
+                .HasDatabaseName("IX_practice_exam_user_course_topic_started");
         });
 
         modelBuilder.Entity<StudentCoursePurchase>(entity =>
