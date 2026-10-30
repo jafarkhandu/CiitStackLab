@@ -1052,3 +1052,87 @@ body.meet-modal-open { overflow:hidden; }
         margin-left: 52px;
     }
 }
+
+
+
+/* Scrollable meeting history and attendance report modal. */
+.meet-session-list {
+    max-height: 440px;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    scrollbar-width: thin;
+    scrollbar-color: #b8c9e3 #f5f8fd;
+}
+.meet-session-list-item { padding: 16px 0; }
+.meet-session-list-item form { margin: 0; }
+.meet-session-list-item .meet-icon-button { width: 36px; height: 36px; }
+.meet-session-list-item .meet-secondary-button,
+.meet-session-list-item .meet-primary-button { min-height: 38px; width: auto; padding: 9px 15px; }
+
+.meet-history-modal-backdrop {
+    position: fixed;
+    z-index: 3100;
+    inset: 0;
+    display: none;
+    align-items: center;
+    justify-content: center;
+    padding: 22px;
+    background: rgba(15, 23, 42, .48);
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+}
+.meet-history-modal-backdrop.is-open { display: flex; }
+.meet-history-modal {
+    display: flex;
+    width: min(100%, 900px);
+    max-height: min(88vh, 850px);
+    flex-direction: column;
+    overflow: hidden;
+    border: 1px solid rgba(255,255,255,.9);
+    border-radius: 20px;
+    background: rgba(255,255,255,.97);
+    box-shadow: 0 28px 90px rgba(15,23,42,.25);
+}
+.meet-history-modal-header {
+    display:flex; align-items:center; justify-content:space-between; gap:16px;
+    padding:20px 24px; border-bottom:1px solid #e8edf5;
+}
+.meet-history-modal-header h2 { margin:5px 0 0; color:#172033; font-size:20px; }
+.meet-history-close {
+    width:38px;height:38px;border:1px solid #e2e8f0;border-radius:11px;
+    background:#f8fafc;color:#475569;font-size:24px;
+}
+.meet-history-modal-body { overflow-y:auto; padding:22px 24px 26px; }
+.meet-history-loading { padding:50px 12px; color:#64748b; text-align:center; }
+.meet-history-summary {
+    display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px;margin-bottom:20px;
+}
+.meet-history-stat {
+    border:1px solid #e3ebf7;border-radius:14px;padding:15px;
+    background:linear-gradient(145deg,#fff,#f5f9ff);
+}
+.meet-history-stat span { display:block;color:#718096;font-size:11px;font-weight:600; }
+.meet-history-stat strong { display:block;margin-top:6px;color:#175fe8;font-size:25px;line-height:1.2; }
+.meet-history-description { margin:0 0 18px;color:#64748b;font-size:13px;line-height:1.6; }
+.meet-history-students-heading { display:flex;align-items:center;justify-content:space-between;margin:20px 0 10px; }
+.meet-history-students-heading h3 { margin:0;color:#1e293b;font-size:15px; }
+.meet-history-student-list { max-height:290px;overflow-y:auto;border:1px solid #e7edf5;border-radius:13px;padding:4px 14px; }
+.meet-history-student {
+    display:flex;align-items:center;justify-content:space-between;gap:12px;padding:11px 0;
+}
+.meet-history-student + .meet-history-student { border-top:1px solid #edf1f6; }
+.meet-history-student strong,.meet-history-student small { display:block; }
+.meet-history-student strong { color:#263449;font-size:12px; }
+.meet-history-student small { margin-top:3px;color:#8491a3;font-size:10px; }
+.meet-history-attendance {
+    border-radius:30px;padding:5px 9px;font-size:10px;font-weight:800;white-space:nowrap;
+}
+.meet-history-attendance.is-attended { background:#e8f8ef;color:#16834c; }
+.meet-history-attendance.is-absent { background:#fff2e8;color:#b45309; }
+.meet-history-empty { padding:22px;text-align:center;color:#718096;font-size:12px; }
+@media(max-width:700px) {
+    .meet-history-modal-backdrop { padding:10px; }
+    .meet-history-modal { max-height:94vh;border-radius:15px; }
+    .meet-history-modal-header,.meet-history-modal-body { padding:17px; }
+    .meet-history-summary { grid-template-columns:repeat(2,minmax(0,1fr)); }
+}
