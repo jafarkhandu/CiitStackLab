@@ -14,6 +14,8 @@ public sealed class PracticeExamTakeViewModel
 
     public DateTime StartedAtUtc { get; init; }
 
+    public IReadOnlyDictionary<int, int> SavedAnswers { get; init; } = new Dictionary<int, int>();
+
     public IReadOnlyList<PracticeExamQuestionViewModel> Questions { get; init; } =
         Array.Empty<PracticeExamQuestionViewModel>();
 }
