@@ -55,7 +55,12 @@
                         <button type="submit" class="ciit-meet-host-secondary">Turn @(Model.WaitingRoomEnabled ? "off" : "on")</button>
                     </form>
                     <div class="ciit-meet-recording-settings">
-                        <span>Recording <strong>@Model.RecordingStatus</strong></span>
+                        <span>Recording <strong>@Model.RecordingStatus</strong>
+                            @if (Model.RecordingRetentionUntilUtc.HasValue)
+                            {
+                                <small>Retention until @Model.RecordingRetentionUntilUtc.Value.ToLocalTime().ToString("dd MMM yyyy")</small>
+                            }
+                        </span>
                         @if (!Model.RecordingEnabled)
                         {
                             <form asp-area="Admin" asp-controller="Meet" asp-action="SetRecording" method="post">
@@ -193,7 +198,7 @@
                     </form>
                 }
             </div>
-            <p class="ciit-meet-room-footnote"><i class="bi bi-info-circle"></i> Meeting interface preview · Camera, microphone and participant connections will be enabled with LiveKit.</p>
+            <p class="ciit-meet-room-footnote"><i class="bi bi-info-circle"></i> Meeting interface preview · Camera, microphone and participant connections will be enabled with LiveKit. Recording controls currently save settings and lifecycle metadata only; actual recording requires LiveKit integration.</p>
         </main>
         }
     </div>
