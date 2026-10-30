@@ -137,6 +137,21 @@ public sealed class CourseService
                 : 0m);
     }
 
+    public async Task<CourseDto?> GetLearningHeaderAsync(
+        int id,
+        CancellationToken cancellationToken = default)
+    {
+        var course = await _dbContext.Courses
+            .AsNoTracking()
+            .SingleOrDefaultAsync(
+                x => x.Id == id && x.Flag == 0,
+                cancellationToken);
+
+        // DynamicCourseService calculates duration from the topic rows it already loads.
+        // Avoid the additional duration aggregate used by the general course details flow.
+        return course is null ? null : Map(course, 0m);
+    }
+
     public async Task<CourseDetailsDto?> GetDetailsAsync(
         int id,
         CancellationToken cancellationToken = default)
