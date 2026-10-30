@@ -1,0 +1,67 @@
+@model IReadOnlyList<CIITStackLab.WebApp.Models.StudentMeetBatchListItemViewModel>
+
+@{
+    Layout = "~/Views/Shared/_CourseLayout.cshtml";
+    ViewData["Title"] = "Meet";
+}
+
+<section class="ciit-student-meet-page">
+    <header class="ciit-student-meet-hero">
+        <div class="ciit-student-meet-hero-copy">
+            <span class="ciit-student-meet-eyebrow"><i class="bi bi-camera-video-fill"></i> STUDENT MEET</span>
+            <h1>Your meetings,<br /><span>all in one place.</span></h1>
+            <p>View the batches your admin has assigned to you. Meeting sessions will be available here.</p>
+        </div>
+        <div class="ciit-student-meet-hero-art" aria-hidden="true">
+            <span class="ciit-meet-orbit ciit-meet-orbit-one"></span>
+            <span class="ciit-meet-orbit ciit-meet-orbit-two"></span>
+            <span class="ciit-meet-hero-icon"><i class="bi bi-camera-video-fill"></i></span>
+            <span class="ciit-meet-hero-dot"><i class="bi bi-person-video3"></i></span>
+        </div>
+    </header>
+
+    <div class="ciit-student-meet-section-heading">
+        <div>
+            <span class="ciit-student-meet-section-kicker">YOUR WORKSPACE</span>
+            <h2>My batches</h2>
+            <p>Only batches assigned to your student account are shown.</p>
+        </div>
+        <span class="ciit-student-meet-count"><strong>@Model.Count</strong> @(Model.Count == 1 ? "batch" : "batches")</span>
+    </div>
+
+    @if (Model.Count == 0)
+    {
+        <div class="ciit-student-meet-empty">
+            <span class="ciit-student-meet-empty-icon"><i class="bi bi-people"></i></span>
+            <h3>No batches assigned yet</h3>
+            <p>When your admin adds you to a meeting batch, it will appear here.</p>
+        </div>
+    }
+    else
+    {
+        <div class="ciit-student-meet-grid">
+            @foreach (var batch in Model)
+            {
+                <article class="ciit-student-meet-card">
+                    <div class="ciit-student-meet-card-top">
+                        <span class="ciit-student-meet-status"><span></span> Batch access active</span>
+                        <span class="ciit-student-meet-card-icon"><i class="bi bi-people-fill"></i></span>
+                    </div>
+                    <h3>@batch.Name</h3>
+                    <p class="ciit-student-meet-description">@(string.IsNullOrWhiteSpace(batch.Description) ? "Your assigned meeting batch." : batch.Description)</p>
+                    <div class="ciit-student-meet-card-meta">
+                        <span><i class="bi bi-upc-scan"></i> @batch.BatchCode</span>
+                        <span><i class="bi bi-people"></i> @batch.MemberCount participants</span>
+                    </div>
+                    <a asp-area="Student" asp-controller="Meet" asp-action="Details" asp-route-id="@batch.Id" class="ciit-student-meet-open">
+                        View batch <i class="bi bi-arrow-right"></i>
+                    </a>
+                </article>
+            }
+        </div>
+    }
+</section>
+
+@section Styles {
+    <link rel="stylesheet" href="~/css/student/student-meet.css" asp-append-version="true" />
+}
