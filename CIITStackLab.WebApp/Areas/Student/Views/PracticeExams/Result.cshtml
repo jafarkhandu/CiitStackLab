@@ -1,0 +1,46 @@
+@model CIITStackLab.WebApp.Models.PracticeExamResultViewModel
+@{
+    Layout = null;
+    ViewData["Title"] = "Practice Exam Result";
+}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Practice Exam Result - CIIT Stack Lab</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+    <style>
+        * { box-sizing:border-box; }
+        body { margin:0; min-height:100vh; display:grid; place-items:center; padding:22px; color:#14213d; font-family:"Plus Jakarta Sans",Inter,system-ui,sans-serif; background:radial-gradient(ellipse at 4% 0%,rgba(105,168,255,.18),transparent 34%),linear-gradient(135deg,#f7faff 0%,#edf4ff 48%,#f6f9ff 100%); }
+        .card { width:min(100%,560px); padding:clamp(26px,5vw,48px); border:1px solid rgba(255,255,255,.9); border-radius:26px; background:rgba(255,255,255,.82); box-shadow:0 22px 60px rgba(35,71,125,.1); text-align:center; backdrop-filter:blur(22px); }
+        .icon { width:66px; height:66px; margin:0 auto 18px; display:grid; place-items:center; border-radius:20px; color:#1769ff; background:#eaf2ff; font-size:30px; }
+        h1 { margin:0; font-size:26px; font-weight:800; letter-spacing:-.04em; }
+        .topic { margin:8px 0 25px; color:#64748b; font-size:13px; font-weight:600; }
+        .score { margin:0; font-size:clamp(46px,10vw,64px); font-weight:800; letter-spacing:-.06em; color:#1769ff; }
+        .score-label { margin:2px 0 20px; color:#64748b; font-size:12px; font-weight:700; }
+        .stats { display:flex; justify-content:center; gap:12px; margin:20px 0 28px; }
+        .stat { min-width:125px; padding:13px; border:1px solid #e5edf8; border-radius:14px; background:rgba(248,251,255,.9); }
+        .stat strong { display:block; font-size:20px; font-weight:800; }
+        .stat span { color:#64748b; font-size:10px; font-weight:800; text-transform:uppercase; letter-spacing:.07em; }
+        a { display:inline-block; padding:13px 22px; border-radius:12px; color:#fff; background:linear-gradient(135deg,#2582ff,#0753df); font-size:13px; font-weight:800; text-decoration:none; box-shadow:0 8px 18px rgba(23,105,255,.2); }
+        @@media(max-width:420px) { .stats { gap:8px; } .stat { min-width:0; flex:1; } }
+    </style>
+</head>
+<body>
+    <main class="card">
+        <div class="icon" aria-hidden="true">✓</div>
+        <h1>Practice Exam Completed</h1>
+        <p class="topic">@Model.CourseTitle · @Model.TopicTitle</p>
+        <p class="score">@Model.Percentage%</p>
+        <p class="score-label">Your practice score</p>
+        <div class="stats">
+            <div class="stat"><strong>@Model.Score / @Model.TotalQuestions</strong><span>Correct answers</span></div>
+            <div class="stat"><strong>@(Model.TotalQuestions - Model.Score)</strong><span>Incorrect / unanswered</span></div>
+        </div>
+        <a href="/Courses/PracticeAssessment">Back to Practice Exams</a>
+    </main>
+</body>
+</html>
