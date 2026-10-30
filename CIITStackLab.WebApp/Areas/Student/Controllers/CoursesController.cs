@@ -555,24 +555,15 @@ public class CoursesController : Controller
             return Challenge();
         }
 
-        var accessibleCourseIds = await _coursePurchaseService.GetAccessibleCourseIdsAsync(
-            userId,
-            cancellationToken);
-        var accessibleCourseIdSet = accessibleCourseIds.ToHashSet();
         var publishedCourses = await _courseService.GetPublishedAsync(cancellationToken);
-        var accessibleCourses = publishedCourses
-            .Where(course => accessibleCourseIdSet.Contains(course.Id))
-            .OrderBy(course => course.Title)
-            .ToList();
-
         var coursesWithTopics = new List<CourseLearningDto>();
 
-        foreach (var accessibleCourse in accessibleCourses)
+        foreach (var publishedCourse in publishedCourses.OrderBy(course => course.Title))
         {
             cancellationToken.ThrowIfCancellationRequested();
 
             var course = await _courseService.GetLearningAsync(
-                accessibleCourse.Id,
+                publishedCourse.Id,
                 null,
                 cancellationToken);
 
