@@ -1,0 +1,88 @@
+@model CIITStackLab.WebApp.Models.MeetRoomViewModel
+
+<section class="ciit-meet-room-page">
+    <header class="ciit-meet-room-header">
+        <a href="@(Model.IsHost ? Url.Action("Index", "Meet", new { area = "Admin" }) : Url.Action("Details", "Meet", new { area = "Student", id = ViewData["BatchId"] }))" class="ciit-meet-room-back">
+            <i class="bi bi-arrow-left"></i> Back
+        </a>
+        <div class="ciit-meet-room-heading">
+            <span class="ciit-meet-room-eyebrow"><i class="bi bi-camera-video-fill"></i> CIIT MEET ROOM · UI PREVIEW</span>
+            <h1>@Model.Title</h1>
+            <p>@Model.BatchName <span>·</span> @Model.BatchCode</p>
+        </div>
+        <div class="ciit-meet-room-status">
+            <span class="ciit-meet-room-status-dot"></span>
+            @Model.Status
+        </div>
+    </header>
+
+    <div class="ciit-meet-room-notice" role="status">
+        <i class="bi bi-info-circle"></i>
+        <span>This is the meeting interface preview. Live camera, microphone, screen sharing and participant connections will be enabled during LiveKit integration.</span>
+    </div>
+
+    <div class="ciit-meet-room-workspace">
+        <main class="ciit-meet-room-stage">
+            <div class="ciit-meet-room-stage-top">
+                <div>
+                    <span class="ciit-meet-room-stage-label">MEETING ROOM</span>
+                    <strong>@Model.BatchName</strong>
+                </div>
+                <span class="ciit-meet-room-duration"><i class="bi bi-clock"></i> @Model.DurationMinutes min</span>
+            </div>
+
+            <div class="ciit-meet-room-video-grid">
+                <article class="ciit-meet-video-tile ciit-meet-video-self">
+                    <div class="ciit-meet-video-placeholder">
+                        <span class="ciit-meet-avatar">@(Model.IsHost ? "A" : "S")</span>
+                        <strong>Your preview</strong>
+                        <small>Camera will appear here</small>
+                    </div>
+                    <span class="ciit-meet-video-name"><i class="bi bi-mic-mute"></i> You</span>
+                    <span class="ciit-meet-video-you">YOU</span>
+                </article>
+                <article class="ciit-meet-video-tile ciit-meet-video-empty">
+                    <div class="ciit-meet-video-placeholder">
+                        <span class="ciit-meet-avatar ciit-meet-avatar-muted"><i class="bi bi-person-plus"></i></span>
+                        <strong>Waiting for participants</strong>
+                        <small>Other attendees will appear here</small>
+                    </div>
+                </article>
+            </div>
+
+            <div class="ciit-meet-room-controls" aria-label="Meeting controls">
+                <button type="button" class="ciit-meet-control" data-room-toggle="mic" aria-pressed="false">
+                    <i class="bi bi-mic-mute"></i><span>Unmute</span>
+                </button>
+                <button type="button" class="ciit-meet-control" data-room-toggle="camera" aria-pressed="false">
+                    <i class="bi bi-camera-video-off"></i><span>Start video</span>
+                </button>
+                <button type="button" class="ciit-meet-control" data-room-toggle="share" aria-pressed="false">
+                    <i class="bi bi-display"></i><span>Share screen</span>
+                </button>
+                <a class="ciit-meet-leave-button" href="@(Model.IsHost ? Url.Action("Index", "Meet", new { area = "Admin" }) : Url.Action("Details", "Meet", new { area = "Student", id = ViewData["BatchId"] }))">
+                    <i class="bi bi-telephone-x-fill"></i><span>Leave preview</span>
+                </a>
+            </div>
+        </main>
+
+        <aside class="ciit-meet-room-sidebar">
+            <div class="ciit-meet-room-sidebar-heading">
+                <div><span class="ciit-meet-room-stage-label">MEETING SPACE</span><h2>Participants</h2></div>
+                <span class="ciit-meet-participant-count">1</span>
+            </div>
+            <div class="ciit-meet-participant">
+                <span class="ciit-meet-participant-avatar">@(Model.IsHost ? "A" : "S")</span>
+                <span><strong>You (@(Model.IsHost ? "Host" : "Student"))</strong><small>In this preview</small></span>
+                <i class="bi bi-mic-mute"></i>
+            </div>
+            <div class="ciit-meet-room-sidebar-divider"></div>
+            <div class="ciit-meet-chat-heading"><i class="bi bi-chat-left-text"></i><h2>Meeting chat</h2></div>
+            <div class="ciit-meet-chat-preview">
+                <span class="ciit-meet-chat-icon"><i class="bi bi-chat-dots"></i></span>
+                <strong>Chat will be available soon</strong>
+                <p>Real-time messages will be enabled with the conferencing integration.</p>
+            </div>
+        </aside>
+    </div>
+</section>
