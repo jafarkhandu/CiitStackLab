@@ -106,6 +106,7 @@ public sealed class MeetController : Controller
             WaitingRoomEnabled = session.WaitingRoomEnabled,
             RecordingEnabled = session.RecordingEnabled,
             RecordingStatus = session.RecordingStatus,
+            RecordingRetentionUntilUtc = session.RecordingRetentionUntilUtc,
             ParticipantCount = participants.Count(x => x.Status == "Admitted"),
             Participants = participants
         });
