@@ -166,6 +166,12 @@
             <p>The host has ended this meeting. You can safely leave this page.</p>
             <a class="ciit-meet-host-secondary" href="@(Model.IsHost ? Url.Action("Index", "Meet", new { area = "Admin" }) : Url.Action("Index", "Meet", new { area = "Student" }))">Back to meetings</a>
         </section>
+        <section class="ciit-meet-ended-screen" data-meet-ended-screen hidden>
+            <span class="ciit-meet-waiting-icon"><i class="bi bi-check2-circle"></i></span>
+            <h2>Meeting has ended</h2>
+            <p>The host has ended this meeting. You can safely leave this page.</p>
+            <a class="ciit-meet-host-secondary" href="@(Model.IsHost ? Url.Action("Index", "Meet", new { area = "Admin" }) : Url.Action("Index", "Meet", new { area = "Student" }))">Back to meetings</a>
+        </section>
         <main class="ciit-meet-room-stage" data-meet-room-stage hidden="@(!Model.IsHost && Model.ParticipantStatus != "Admitted")">
             <div class="ciit-meet-room-video-grid">
                 <article class="ciit-meet-video-tile ciit-meet-video-self">
