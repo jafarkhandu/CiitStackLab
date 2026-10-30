@@ -67,3 +67,20 @@ html,body{width:100%;min-height:100%;margin:0}
 .ciit-meet-room-controls form{margin:0}
 .ciit-meet-room-controls form button{cursor:pointer}
 @media(max-width:700px){.ciit-meet-host-panel{padding:12px}.ciit-meet-host-panel-heading,.ciit-meet-host-settings{align-items:flex-start;flex-direction:column}.ciit-meet-recording-settings{flex-wrap:wrap}}
+
+.ciit-meet-host-panel-actions{display:flex;align-items:center;gap:10px}
+.ciit-meet-host-panel-actions form{margin:0}
+.ciit-meet-controls-toggle{display:flex;min-width:42px;height:34px;align-items:center;justify-content:center;gap:7px;border:1px solid #46566b;border-radius:9px;padding:0 9px;background:#263447;color:#dce9fb;cursor:pointer;transition:background .18s,border-color .18s}
+.ciit-meet-controls-toggle:hover{border-color:#7394bd;background:#30435b}
+.ciit-meet-controls-toggle>i{font-size:12px;transition:transform .2s}
+.ciit-meet-controls-toggle.is-collapsed>i{transform:rotate(180deg)}
+.ciit-meet-pending-count{display:grid;min-width:19px;height:19px;place-items:center;border-radius:20px;padding:0 5px;background:#43546b;color:#dce9f8;font-size:9px;font-weight:800}
+.ciit-meet-pending-count.has-pending{background:#b93848;color:#fff;box-shadow:0 0 0 3px rgba(185,56,72,.15)}
+.ciit-meet-host-panel-body{overflow:hidden;max-height:1200px;opacity:1;transition:max-height .24s ease,opacity .2s ease}
+.ciit-meet-host-panel-body[hidden]{display:block;max-height:0;opacity:0;pointer-events:none}
+.ciit-meet-ended-screen{display:flex;min-height:42vh;align-items:center;justify-content:center;flex-direction:column;gap:12px;text-align:center;color:#e8edf5}
+.ciit-meet-ended-screen h2{margin:0;font-size:20px}
+.ciit-meet-ended-screen p{margin:0;color:#9aa9bb;font-size:12px}
+.ciit-meet-ended-screen[hidden],.ciit-meet-room-stage[hidden],.ciit-meet-waiting-screen[hidden]{display:none}
+.ciit-meet-room-status [data-meet-status-text]{color:inherit}
+@media(max-width:700px){.ciit-meet-host-panel-actions{width:100%;justify-content:flex-end}.ciit-meet-host-panel-heading{width:100%}}
