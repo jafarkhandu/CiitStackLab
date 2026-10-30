@@ -16,7 +16,7 @@
 <body class="ciit-meet-body">
     <div class="ciit-meet-room-page">
         <header class="ciit-meet-room-header">
-            <a href="@(Model.IsHost ? Url.Action("Index", "Meet", new { area = "Admin" }) : Url.Action("Details", "Meet", new { area = "Student", id = ViewData["BatchId"] }))" class="ciit-meet-room-back" aria-label="Back to meetings">
+            <a href="@(Model.IsHost ? Url.Action("Index", "Meet", new { area = "Admin" }) : Url.Action("Index", "Meet", new { area = "Student" }))" class="ciit-meet-room-back" aria-label="Back to meetings">
                 <i class="bi bi-arrow-left"></i>
             </a>
             <div class="ciit-meet-room-heading">
@@ -61,7 +61,7 @@
                 <button type="button" class="ciit-meet-control" data-room-toggle="share" aria-pressed="false">
                     <i class="bi bi-display"></i><span>Share screen</span>
                 </button>
-                <a class="ciit-meet-leave-button" href="@(Model.IsHost ? Url.Action("Index", "Meet", new { area = "Admin" }) : Url.Action("Details", "Meet", new { area = "Student", id = ViewData["BatchId"] }))">
+                <a class="ciit-meet-leave-button" href="@(Model.IsHost ? Url.Action("Index", "Meet", new { area = "Admin" }) : Url.Action("Index", "Meet", new { area = "Student" }))">
                     <i class="bi bi-telephone-x-fill"></i><span>Leave meeting</span>
                 </a>
             </div>
