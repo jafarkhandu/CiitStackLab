@@ -442,11 +442,31 @@ public sealed class TopicExaminationService : ITopicExaminationService
             .Select(cm => cm.TopicId)
             .Distinct()
             .ToListAsync(cancellationToken);
-        foreach (var topicId in topicIds)
+
+        if (topicIds.Count == 0)
         {
-            if (!await HasPassedTopicAsync(userId, courseId, topicId, cancellationToken))
-                return topicId;
+            return null;
         }
+
+        var passedTopicIds = await _db.TopicExamAttempts
+            .AsNoTracking()
+            .Where(attempt => attempt.UserId == userId
+                && attempt.CourseId == courseId
+                && attempt.Passed
+                && attempt.Status == "Passed"
+                && topicIds.Contains(attempt.TopicId))
+            .Select(attempt => attempt.TopicId)
+            .Distinct()
+            .ToListAsync(cancellationToken);
+
+        var passedTopicIdSet = passedTopicIds.ToHashSet();
+        var firstUnpassedTopicId = topicIds.FirstOrDefault(topicId => !passedTopicIdSet.Contains(topicId));
+
+        if (firstUnpassedTopicId > 0)
+        {
+            return firstUnpassedTopicId;
+        }
+
         return topicIds.LastOrDefault() is var last && last > 0 ? last : null;
     }
 
