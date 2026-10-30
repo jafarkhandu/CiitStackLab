@@ -47,14 +47,16 @@ document.addEventListener("DOMContentLoaded", () => {
 
         // Ignore stale Scheduled snapshots for the same session after a Live
         // event has already been received. Completed/Cancelled remain terminal.
-        if (!isLive && state.status === "Scheduled"
-            && knownLiveSessionId === Number(state.sessionId)) {
+        // A session's terminal state may only remove the matching Join action.
+        // Delayed updates from older/different sessions must not affect the live one.
+        if (knownLiveSessionId && knownLiveSessionId !== Number(state.sessionId)) {
             return;
         }
 
-        // Do not let updates for another session replace the current live action.
-        if (!isLive && knownLiveSessionId
-            && knownLiveSessionId !== Number(state.sessionId)) {
+        // A Scheduled snapshot for the same session can be stale when it arrives
+        // after the Live event (including during the initial hub snapshot).
+        if (!isLive && state.status === "Scheduled"
+            && knownLiveSessionId === Number(state.sessionId)) {
             return;
         }
 
