@@ -61,6 +61,8 @@ public sealed class MeetController : Controller
     [HttpGet]
     public async Task<IActionResult> Room(int id, CancellationToken cancellationToken)
     {
+        await CompleteExpiredSessionsAsync(cancellationToken);
+
         var session = await _dbContext.MeetSessions
             .AsNoTracking()
             .Include(item => item.MeetBatch)
@@ -68,6 +70,22 @@ public sealed class MeetController : Controller
 
         if (session is null || session.MeetBatch.IsArchived)
             return NotFound();
+
+        var participants = await (
+            from participant in _dbContext.MeetSessionParticipants.AsNoTracking()
+            join user in _dbContext.Users.AsNoTracking()
+                on participant.StudentUserId equals user.Id
+            where participant.MeetSessionId == id
+            orderby participant.RequestedAtUtc
+            select new MeetRoomParticipantViewModel
+            {
+                Id = participant.Id,
+                StudentName = user.UserName ?? user.Email ?? "Student",
+                Status = participant.Status,
+                CanUseMicrophone = participant.CanUseMicrophone,
+                CanUseCamera = participant.CanUseCamera,
+                CanShareScreen = participant.CanShareScreen
+            }).ToListAsync(cancellationToken);
 
         return View(new MeetRoomViewModel
         {
@@ -79,8 +97,258 @@ public sealed class MeetController : Controller
             StartsAtUtc = session.StartsAtUtc,
             DurationMinutes = session.DurationMinutes,
             Status = session.Status,
-            IsHost = true
+            IsHost = true,
+            WaitingRoomEnabled = session.WaitingRoomEnabled,
+            RecordingEnabled = session.RecordingEnabled,
+            RecordingStatus = session.RecordingStatus,
+            ParticipantCount = participants.Count(x => x.Status == "Admitted"),
+            Participants = participants
         });
+    }
+
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> Start(int id, CancellationToken cancellationToken)
+    {
+        var session = await _dbContext.MeetSessions
+            .Include(x => x.MeetBatch)
+            .SingleOrDefaultAsync(x => x.Id == id, cancellationToken);
+
+        if (session is null || session.MeetBatch.IsArchived)
+            return NotFound();
+
+        if (session.Status != "Scheduled")
+            return RedirectWithMessage("Only scheduled meetings can be started.", false);
+
+        var now = DateTime.UtcNow;
+        var anotherLiveMeeting = await _dbContext.MeetSessions.AnyAsync(
+            x => x.MeetBatchId == session.MeetBatchId
+                && x.Id != session.Id
+                && x.Status == "Live"
+                && x.StartedAtUtc.HasValue
+                && x.StartedAtUtc.Value.AddMinutes(x.DurationMinutes) > now,
+            cancellationToken);
+
+        if (anotherLiveMeeting)
+            return RedirectWithMessage("Another meeting is already live for this batch.", false);
+
+        session.Status = "Live";
+        session.StartsAtUtc = now;
+        session.StartedAtUtc = now;
+        await _dbContext.SaveChangesAsync(cancellationToken);
+
+        return RedirectToAction(nameof(Room), new { id });
+    }
+
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> End(int id, CancellationToken cancellationToken)
+    {
+        var session = await _dbContext.MeetSessions
+            .Include(x => x.Participants)
+            .SingleOrDefaultAsync(x => x.Id == id, cancellationToken);
+
+        if (session is null)
+            return NotFound();
+
+        if (session.Status == "Live")
+        {
+            var now = DateTime.UtcNow;
+            session.Status = "Completed";
+            session.EndedAtUtc = now;
+            if (session.RecordingStatus == "Recording")
+            {
+                session.RecordingStatus = "Stopped";
+                session.RecordingEndedAtUtc = now;
+                session.RecordingRetentionUntilUtc = now.AddDays(90);
+            }
+
+            foreach (var participant in session.Participants.Where(x => x.Status == "Admitted"))
+            {
+                participant.Status = "Left";
+                participant.LeftAtUtc = now;
+            }
+
+            await _dbContext.SaveChangesAsync(cancellationToken);
+        }
+
+        return RedirectToAction(nameof(Index));
+    }
+
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> Cancel(int id, CancellationToken cancellationToken)
+    {
+        var session = await _dbContext.MeetSessions
+            .SingleOrDefaultAsync(x => x.Id == id, cancellationToken);
+
+        if (session is null)
+            return NotFound();
+
+        if (session.Status != "Scheduled")
+            return RedirectWithMessage("Only scheduled meetings can be cancelled.", false);
+
+        session.Status = "Cancelled";
+        session.CancelledAtUtc = DateTime.UtcNow;
+        await _dbContext.SaveChangesAsync(cancellationToken);
+
+        return RedirectWithMessage("Meeting cancelled.", true);
+    }
+
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> SetWaitingRoom(int id, bool enabled, CancellationToken cancellationToken)
+    {
+        var session = await _dbContext.MeetSessions
+            .Include(x => x.Participants)
+            .SingleOrDefaultAsync(x => x.Id == id, cancellationToken);
+
+        if (session is null)
+            return NotFound();
+
+        session.WaitingRoomEnabled = enabled;
+        if (!enabled)
+        {
+            var now = DateTime.UtcNow;
+            foreach (var participant in session.Participants.Where(x => x.Status == "Pending"))
+            {
+                participant.Status = "Admitted";
+                participant.AdmittedAtUtc = now;
+            }
+        }
+
+        await _dbContext.SaveChangesAsync(cancellationToken);
+        return RedirectToAction(nameof(Room), new { id });
+    }
+
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> ReviewParticipant(int id, string decision, CancellationToken cancellationToken)
+    {
+        var participant = await _dbContext.MeetSessionParticipants
+            .Include(x => x.MeetSession)
+            .SingleOrDefaultAsync(x => x.Id == id, cancellationToken);
+
+        if (participant is null)
+            return NotFound();
+
+        if (participant.Status != "Pending" || participant.MeetSession.Status != "Live")
+            return RedirectToAction(nameof(Room), new { id = participant.MeetSessionId });
+
+        if (string.Equals(decision, "admit", StringComparison.OrdinalIgnoreCase))
+        {
+            participant.Status = "Admitted";
+            participant.AdmittedAtUtc = DateTime.UtcNow;
+        }
+        else if (string.Equals(decision, "reject", StringComparison.OrdinalIgnoreCase))
+        {
+            participant.Status = "Rejected";
+        }
+        else
+        {
+            return BadRequest();
+        }
+
+        await _dbContext.SaveChangesAsync(cancellationToken);
+        return RedirectToAction(nameof(Room), new { id = participant.MeetSessionId });
+    }
+
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> UpdateParticipantPermissions(
+        int id,
+        bool canUseMicrophone,
+        bool canUseCamera,
+        bool canShareScreen,
+        CancellationToken cancellationToken)
+    {
+        var participant = await _dbContext.MeetSessionParticipants
+            .SingleOrDefaultAsync(x => x.Id == id, cancellationToken);
+
+        if (participant is null)
+            return NotFound();
+
+        participant.CanUseMicrophone = canUseMicrophone;
+        participant.CanUseCamera = canUseCamera;
+        participant.CanShareScreen = canShareScreen;
+        await _dbContext.SaveChangesAsync(cancellationToken);
+
+        return RedirectToAction(nameof(Room), new { id = participant.MeetSessionId });
+    }
+
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> SetRecording(int id, string action, CancellationToken cancellationToken)
+    {
+        var session = await _dbContext.MeetSessions
+            .SingleOrDefaultAsync(x => x.Id == id, cancellationToken);
+
+        if (session is null)
+            return NotFound();
+
+        var now = DateTime.UtcNow;
+        switch (action?.ToLowerInvariant())
+        {
+            case "enable" when session.Status is "Scheduled" or "Live":
+                session.RecordingEnabled = true;
+                if (session.RecordingStatus == "Disabled")
+                    session.RecordingStatus = "Ready";
+                break;
+            case "disable" when session.RecordingStatus != "Recording":
+                session.RecordingEnabled = false;
+                session.RecordingStatus = "Disabled";
+                break;
+            case "start" when session.Status == "Live" && session.RecordingEnabled
+                && session.RecordingStatus is "Ready" or "Stopped":
+                session.RecordingStatus = "Recording";
+                session.RecordingStartedAtUtc = now;
+                session.RecordingEndedAtUtc = null;
+                session.RecordingRetentionUntilUtc = null;
+                session.RecordingDeletedAtUtc = null;
+                break;
+            case "stop" when session.RecordingStatus == "Recording":
+                session.RecordingStatus = "Stopped";
+                session.RecordingEndedAtUtc = now;
+                session.RecordingRetentionUntilUtc = now.AddDays(90);
+                break;
+            default:
+                return RedirectWithMessage("Recording action is not valid for the current meeting state.", false);
+        }
+
+        await _dbContext.SaveChangesAsync(cancellationToken);
+        return RedirectToAction(nameof(Room), new { id });
+    }
+
+    private async Task CompleteExpiredSessionsAsync(CancellationToken cancellationToken)
+    {
+        var now = DateTime.UtcNow;
+        var expired = await _dbContext.MeetSessions
+            .Include(x => x.Participants)
+            .Where(x => x.Status == "Live"
+                && x.StartedAtUtc.HasValue
+                && x.StartedAtUtc.Value.AddMinutes(x.DurationMinutes) <= now)
+            .ToListAsync(cancellationToken);
+
+        foreach (var session in expired)
+        {
+            session.Status = "Completed";
+            session.EndedAtUtc = now;
+            if (session.RecordingStatus == "Recording")
+            {
+                session.RecordingStatus = "Stopped";
+                session.RecordingEndedAtUtc = now;
+                session.RecordingRetentionUntilUtc = now.AddDays(90);
+            }
+
+            foreach (var participant in session.Participants.Where(x => x.Status == "Admitted"))
+            {
+                participant.Status = "Left";
+                participant.LeftAtUtc = now;
+            }
+        }
+
+        if (expired.Count > 0)
+            await _dbContext.SaveChangesAsync(cancellationToken);
     }
 
     [HttpPost]
@@ -154,6 +422,10 @@ public sealed class MeetController : Controller
             StartsAtUtc = startsAtUtc,
             DurationMinutes = model.DurationMinutes,
             Status = isInstant ? "Live" : "Scheduled",
+            StartedAtUtc = isInstant ? DateTime.UtcNow : null,
+            WaitingRoomEnabled = true,
+            RecordingEnabled = false,
+            RecordingStatus = "Disabled",
             CreatedByUserId = creatorId,
             CreatedAtUtc = DateTime.UtcNow
         });
