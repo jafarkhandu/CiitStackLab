@@ -55,9 +55,13 @@
                     </div>
                     @if (batch.LiveSessionId.HasValue)
                     {
-                        <a asp-area="Student" asp-controller="Meet" asp-action="Room" asp-route-id="@batch.LiveSessionId.Value" class="ciit-student-meet-open ciit-student-meet-join">
-                            <i class="bi bi-camera-video-fill"></i> Join Meet <i class="bi bi-arrow-up-right"></i>
-                        </a>
+                        <form asp-area="Student" asp-controller="Meet" asp-action="Join" method="post" class="ciit-student-meet-join-form">
+                            @Html.AntiForgeryToken()
+                            <input type="hidden" name="id" value="@batch.LiveSessionId.Value" />
+                            <button type="submit" class="ciit-student-meet-open ciit-student-meet-join">
+                                <i class="bi bi-camera-video-fill"></i> Join Meet <i class="bi bi-arrow-up-right"></i>
+                            </button>
+                        </form>
                     }
                     else
                     {
