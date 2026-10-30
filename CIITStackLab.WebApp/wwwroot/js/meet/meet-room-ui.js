@@ -51,7 +51,7 @@ document.addEventListener("DOMContentLoaded", () => {
                     headers: { "X-Requested-With": "XMLHttpRequest" }
                 });
                 if (!response.ok) throw new Error("Unable to update the meeting.");
-                if (submit) submit.disabled = false;
+                if (submit && !submit.hasAttribute("data-meet-end-button")) submit.disabled = false;
             } catch (error) {
                 console.error(error);
                 if (submit) submit.disabled = false;
