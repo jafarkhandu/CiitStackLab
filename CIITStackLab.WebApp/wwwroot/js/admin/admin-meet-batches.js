@@ -16,6 +16,63 @@ document.addEventListener("DOMContentLoaded", () => {
         if (modalContent) modalContent.replaceChildren();
     };
 
+    const configureMeetingModal = (batchId, batchName) => {
+        const template = document.getElementById("meetSessionTemplate");
+        if (!template || !modalContent) return;
+
+        modalTitle.textContent = "Create meeting";
+        modalContent.innerHTML = template.innerHTML;
+        const form = modalContent.querySelector(".meet-session-modal-form");
+        const batchIdInput = form?.querySelector("#modalSessionBatchId");
+        const batchNameLabel = form?.querySelector("#modalSessionBatchName");
+        const offsetInput = form?.querySelector("#modalClientUtcOffset");
+        const startInput = form?.querySelector("#modalSessionStart");
+        const scheduleField = form?.querySelector(".meet-schedule-field");
+        const modeInput = form?.querySelector("#modalMeetingMode");
+        const submitButton = form?.querySelector(".meet-session-submit");
+
+        if (!form || !batchIdInput || !batchNameLabel || !offsetInput || !startInput || !scheduleField || !modeInput || !submitButton) return;
+
+        batchIdInput.value = batchId;
+        batchNameLabel.textContent = batchName;
+        offsetInput.value = new Date().getTimezoneOffset().toString();
+
+        const setMode = (mode) => {
+            const scheduled = mode === "scheduled";
+            modeInput.value = mode;
+            scheduleField.hidden = !scheduled;
+            startInput.disabled = !scheduled;
+            startInput.required = scheduled;
+
+            if (scheduled) {
+                const now = new Date();
+                now.setMinutes(now.getMinutes() + 2);
+                now.setSeconds(0, 0);
+                const localValue = new Date(now.getTime() - now.getTimezoneOffset() * 60000)
+                    .toISOString()
+                    .slice(0, 16);
+                startInput.min = localValue;
+            }
+
+            form.querySelectorAll("[data-meeting-tab]").forEach((tab) => {
+                const active = tab.dataset.meetingTab === mode;
+                tab.classList.toggle("is-active", active);
+                tab.setAttribute("aria-selected", active ? "true" : "false");
+            });
+
+            submitButton.innerHTML = scheduled
+                ? '<i class="bi bi-calendar-check"></i> Schedule meeting'
+                : '<i class="bi bi-camera-video-fill"></i> Start instant meeting';
+        };
+
+        form.querySelectorAll("[data-meeting-tab]").forEach((tab) => {
+            tab.addEventListener("click", () => setMode(tab.dataset.meetingTab));
+        });
+
+        setMode("instant");
+        openModal();
+    };
+
     const wireModalContent = () => {
         const search = modalContent?.querySelector("#meetStudentSearch");
         const picker = modalContent?.querySelector("#meetStudentPicker");
@@ -69,6 +126,14 @@ document.addEventListener("DOMContentLoaded", () => {
     });
 
     document.addEventListener("click", async (event) => {
+        const meetingCard = event.target.closest("[data-open-meeting-modal]");
+        const clickedControl = event.target.closest("a, button, form, input, select, textarea");
+
+        if (meetingCard && !clickedControl) {
+            configureMeetingModal(meetingCard.dataset.batchId, meetingCard.dataset.batchName);
+            return;
+        }
+
         const manageButton = event.target.closest("[data-open-manage-modal]");
 
         if (manageButton) {
@@ -100,6 +165,11 @@ document.addEventListener("DOMContentLoaded", () => {
 
     document.addEventListener("keydown", (event) => {
         if (event.key === "Escape") closeModal();
+
+        if ((event.key === "Enter" || event.key === " ") && event.target.matches("[data-open-meeting-modal]")) {
+            event.preventDefault();
+            configureMeetingModal(event.target.dataset.batchId, event.target.dataset.batchName);
+        }
     });
 
     document.querySelectorAll(".meet-alert-close").forEach((button) => {
