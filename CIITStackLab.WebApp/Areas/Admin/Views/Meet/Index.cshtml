@@ -27,120 +27,19 @@
         </div>
     }
 
-    <section class="meet-panel" style="margin-top:24px;">
-        <div class="meet-section-heading">
-            <div>
-                <span class="ciit-admin-eyebrow">Meeting sessions</span>
-                <h2>Create a meeting</h2>
-                <p>Start an instant session or schedule it for an active batch.</p>
-            </div>
-        </div>
-        @if (Model.ActiveBatches.Count == 0)
-        {
-            <p class="meet-empty-state">Create an active batch and assign students before scheduling a meeting.</p>
-        }
-        else
-        {
-            <form asp-area="Admin" asp-controller="Meet" asp-action="CreateSession" method="post" class="meet-modal-form" id="meetSessionForm">
-                @Html.AntiForgeryToken()
-                <div class="meet-form-field">
-                    <label for="sessionTitle">Meeting title</label>
-                    <input id="sessionTitle" name="Title" type="text" maxlength="150" required placeholder="e.g. Weekly doubt session" />
-                </div>
-                <div class="meet-form-field">
-                    <label for="sessionDescription">Description <span>(optional)</span></label>
-                    <textarea id="sessionDescription" name="Description" rows="2" maxlength="1000" placeholder="Meeting agenda or instructions"></textarea>
-                </div>
-                <div class="meet-form-field">
-                    <label for="sessionBatch">Batch</label>
-                    <select id="sessionBatch" name="MeetBatchId" required>
-                        <option value="">Select active batch</option>
-                        @foreach (var batch in Model.ActiveBatches)
-                        {
-                            <option value="@batch.Id">@batch.Name (@batch.MemberCount students)</option>
-                        }
-                    </select>
-                </div>
-                <div class="meet-form-field">
-                    <label for="sessionDuration">Duration</label>
-                    <select id="sessionDuration" name="DurationMinutes">
-                        <option value="30">30 minutes</option>
-                        <option value="45">45 minutes</option>
-                        <option value="60" selected>60 minutes</option>
-                        <option value="90">90 minutes</option>
-                        <option value="120">2 hours</option>
-                        <option value="240">4 hours</option>
-                        <option value="480">8 hours</option>
-                    </select>
-                </div>
-                <div class="meet-form-field">
-                    <label for="sessionStart">Schedule date and time <span>(required only for scheduled meetings)</span></label>
-                    <input id="sessionStart" name="StartsAtLocal" type="datetime-local" />
-                    <input id="clientUtcOffset" name="ClientUtcOffsetMinutes" type="hidden" value="0" />
-                </div>
-                <div class="meet-modal-feedback" role="alert" hidden></div>
-                <div class="meet-batch-actions">
-                    <button type="submit" name="meetingMode" value="instant" class="meet-primary-button">
-                        <i class="bi bi-camera-video-fill"></i> Start instant meeting
-                    </button>
-                    <button type="submit" name="meetingMode" value="scheduled" class="meet-secondary-button">
-                        <i class="bi bi-calendar-plus"></i> Schedule meeting
-                    </button>
-                </div>
-            </form>
-        }
-    </section>
-
-    <section class="meet-batch-list-section" style="margin-top:28px;">
-        <div class="meet-section-heading">
-            <div>
-                <span class="ciit-admin-eyebrow">Batch calendar</span>
-                <h2>Meetings</h2>
-            </div>
-            <span class="meet-count-pill">@Model.Sessions.Count sessions</span>
-        </div>
-        @if (Model.Sessions.Count == 0)
-        {
-            <div class="meet-empty-state">
-                <i class="bi bi-camera-video"></i>
-                <h3>No meetings yet</h3>
-                <p>Instant and scheduled meetings will appear here.</p>
-            </div>
-        }
-        else
-        {
-            <div class="meet-archived-list">
-                @foreach (var session in Model.Sessions)
-                {
-                    <div class="meet-archived-item">
-                        <div>
-                            <strong>@session.Title</strong>
-                            <span>@session.BatchName · @session.StartsAtUtc.ToLocalTime().ToString("dd MMM yyyy, hh:mm tt") · @session.DurationMinutes min</span>
-                        </div>
-                        <span class="meet-archived-label">@session.Status</span>
-                    </div>
-                }
-            </div>
-        }
-    </section>
-
     <div class="meet-batch-layout">
-        <section class="meet-create-launch">
-            <div class="meet-panel-icon"><i class="bi bi-people-fill"></i></div>
-            <h2>Create batch</h2>
-            <p>Choose a name and add registered students.</p>
-            <button type="button" class="meet-primary-button" data-open-create-modal>
-                <i class="bi bi-plus-lg"></i> Create batch
-            </button>
-        </section>
-
         <section class="meet-batch-list-section">
-            <div class="meet-section-heading">
+            <div class="meet-section-heading meet-active-batches-heading">
                 <div>
                     <span class="ciit-admin-eyebrow">Your workspace</span>
                     <h2>Active batches</h2>
                 </div>
-                <span class="meet-count-pill">@Model.ActiveBatches.Count batches</span>
+                <div class="meet-active-batches-actions">
+                    <span class="meet-count-pill">@Model.ActiveBatches.Count batches</span>
+                    <button type="button" class="meet-primary-button" data-open-create-modal>
+                        <i class="bi bi-plus-lg"></i> Create batch
+                    </button>
+                </div>
             </div>
 
             @if (Model.ActiveBatches.Count == 0)
@@ -156,7 +55,7 @@
                 <div class="meet-batch-grid">
                     @foreach (var batch in Model.ActiveBatches)
                     {
-                        <article class="meet-batch-card">
+                        <article class="meet-batch-card meet-batch-meeting-trigger" role="button" tabindex="0" data-open-meeting-modal data-batch-id="@batch.Id" data-batch-name="@batch.Name" aria-label="Create a meeting for @batch.Name">
                             <div class="meet-batch-card-top">
                                 <span class="meet-batch-status"><span></span> Active</span>
                                 <span class="meet-batch-code">@batch.BatchCode</span>
@@ -226,6 +125,45 @@
     </section>
 </div>
 
+<template id="meetSessionTemplate">
+    <form action="@Url.Action("CreateSession", "Meet", new { area = "Admin" })" method="post" class="meet-modal-form meet-session-modal-form">
+        @Html.AntiForgeryToken()
+        <input type="hidden" name="MeetBatchId" id="modalSessionBatchId" />
+        <input type="hidden" name="ClientUtcOffsetMinutes" id="modalClientUtcOffset" value="0" />
+        <input type="hidden" name="meetingMode" id="modalMeetingMode" value="instant" />
+        <div class="meet-selected-batch">
+            <span>Selected batch</span>
+            <strong id="modalSessionBatchName"></strong>
+        </div>
+        <div class="meet-session-tabs" role="tablist" aria-label="Meeting type">
+            <button type="button" class="is-active" role="tab" aria-selected="true" data-meeting-tab="instant"><i class="bi bi-camera-video"></i> Instant meeting</button>
+            <button type="button" role="tab" aria-selected="false" data-meeting-tab="scheduled"><i class="bi bi-calendar-event"></i> Schedule</button>
+        </div>
+        <div class="meet-form-field">
+            <label for="modalSessionTitle">Meeting title</label>
+            <input id="modalSessionTitle" name="Title" type="text" maxlength="150" required placeholder="e.g. Weekly doubt session" />
+        </div>
+        <div class="meet-form-field">
+            <label for="modalSessionDescription">Description <span>(optional)</span></label>
+            <textarea id="modalSessionDescription" name="Description" rows="3" maxlength="1000" placeholder="Meeting agenda or instructions"></textarea>
+        </div>
+        <div class="meet-form-field">
+            <label for="modalSessionDuration">Duration</label>
+            <select id="modalSessionDuration" name="DurationMinutes">
+                <option value="30">30 minutes</option><option value="45">45 minutes</option>
+                <option value="60" selected>60 minutes</option><option value="90">90 minutes</option>
+                <option value="120">2 hours</option><option value="240">4 hours</option><option value="480">8 hours</option>
+            </select>
+        </div>
+        <div class="meet-form-field meet-schedule-field" hidden>
+            <label for="modalSessionStart">Schedule date and time</label>
+            <input id="modalSessionStart" name="StartsAtLocal" type="datetime-local" disabled />
+        </div>
+        <div class="meet-modal-feedback" role="alert" hidden></div>
+        <button type="submit" class="meet-primary-button meet-session-submit"><i class="bi bi-camera-video-fill"></i> Start instant meeting</button>
+    </form>
+</template>
+
 <template id="meetCreateTemplate">
     <form action="@Url.Action("Create", "Meet", new { area = "Admin" })" method="post" class="meet-modal-form">
         @Html.AntiForgeryToken()
@@ -272,22 +210,5 @@
     <link rel="stylesheet" href="~/css/admin/admin-meet-batches.css" asp-append-version="true" />
 }
 @section Scripts {
-    <script>
-        (() => {
-            const form = document.getElementById('meetSessionForm');
-            const offset = document.getElementById('clientUtcOffset');
-            if (!form || !offset) return;
-            offset.value = new Date().getTimezoneOffset().toString();
-            form.addEventListener('submit', event => {
-                const start = document.getElementById('sessionStart');
-                if (event.submitter?.value === 'scheduled' && !start.value) {
-                    event.preventDefault();
-                    start.setCustomValidity('Choose a date and time for the scheduled meeting.');
-                    start.reportValidity();
-                    start.addEventListener('input', () => start.setCustomValidity(''), { once: true });
-                }
-            });
-        })();
-    </script>
     <script src="~/js/admin/admin-meet-batches.js" asp-append-version="true"></script>
 }
