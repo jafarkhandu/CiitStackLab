@@ -115,7 +115,11 @@ public sealed class DynamicCourseService : ICourseService
 
         var topicIds = topicData.Select(x => x.TopicId).ToList();
 
-        var contentRows = topicIds.Count == 0
+        var loadAllTopicDetails = !topicId.HasValue && !contentId.HasValue;
+
+        // Load the shared lesson/chapter rows once. The previous two queries read the
+        // same active lesson records with overlapping metadata.
+        var lessonRows = topicIds.Count == 0
             ? []
             : await _dbContext.Lessons
                 .AsNoTracking()
@@ -131,9 +135,25 @@ public sealed class DynamicCourseService : ICourseService
                     NoteId = (int?)lesson.Id,
                     lesson.Title,
                     lesson.Slides,
-                    lesson.VideoName
+                    lesson.VideoName,
+                    ChapterId = lesson.Id.ToString(),
+                    HtmlContent = loadAllTopicDetails ? lesson.HtmlContent : null,
+                    HasNotes = lesson.HtmlContent != null && lesson.HtmlContent.Trim() != "",
+                    SortOrder = lesson.Id
                 })
                 .ToListAsync(cancellationToken);
+
+        var contentRows = lessonRows
+            .Select(lesson => new
+            {
+                lesson.Id,
+                lesson.TopicId,
+                lesson.NoteId,
+                lesson.Title,
+                lesson.Slides,
+                lesson.VideoName
+            })
+            .ToList();
 
         var currentContentRow = contentId.HasValue
             ? contentRows.FirstOrDefault(content => content.Id == contentId.Value)
@@ -142,30 +162,20 @@ public sealed class DynamicCourseService : ICourseService
             ?? currentContentRow?.TopicId
             ?? topicData.FirstOrDefault()?.TopicId;
 
-        var loadAllTopicDetails = !topicId.HasValue && !contentId.HasValue;
-
         // Keep only note metadata for all chapters; loading every chapter's rich HTML on
         // every refresh can dominate response time for courses with large notes.
-        var chapterRows = topicIds.Count == 0
-            ? []
-            : await _dbContext.Lessons
-                .AsNoTracking()
-                .Where(content => content.TopicId.HasValue
-                    && topicIds.Contains(content.TopicId.Value)
-                    && content.Flag == 0)
-                .OrderBy(content => content.TopicId)
-                .ThenBy(content => content.Id)
-                .Select(content => new
-                {
-                    content.Id,
-                    TopicId = content.TopicId!.Value,
-                    ChapterId = content.Id.ToString(),
-                    content.Title,
-                    HtmlContent = loadAllTopicDetails ? content.HtmlContent : null,
-                    HasNotes = content.HtmlContent != null && content.HtmlContent.Trim() != "",
-                    SortOrder = content.Id
-                })
-                .ToListAsync(cancellationToken);
+        var chapterRows = lessonRows
+            .Select(lesson => new
+            {
+                lesson.Id,
+                TopicId = lesson.TopicId!.Value,
+                lesson.ChapterId,
+                lesson.Title,
+                lesson.HtmlContent,
+                lesson.HasNotes,
+                lesson.SortOrder
+            })
+            .ToList();
 
         var selectedChapterId = chapterId
             ?? currentContentRow?.NoteId
