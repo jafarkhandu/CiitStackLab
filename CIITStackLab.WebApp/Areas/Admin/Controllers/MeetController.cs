@@ -24,6 +24,8 @@ public sealed class MeetController : Controller
     [HttpGet]
     public async Task<IActionResult> Index(CancellationToken cancellationToken)
     {
+        await CompleteExpiredSessionsAsync(cancellationToken);
+
         var batches = await _dbContext.MeetBatches
             .AsNoTracking()
             .Include(x => x.Members)
@@ -45,7 +47,10 @@ public sealed class MeetController : Controller
                 Description = x.Description,
                 StartsAtUtc = x.StartsAtUtc,
                 DurationMinutes = x.DurationMinutes,
-                Status = x.Status
+                Status = x.Status,
+                StartedAtUtc = x.StartedAtUtc,
+                EndedAtUtc = x.EndedAtUtc,
+                CancelledAtUtc = x.CancelledAtUtc
             })
             .ToListAsync(cancellationToken);
 
