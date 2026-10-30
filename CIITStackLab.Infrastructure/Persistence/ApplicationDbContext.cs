@@ -287,8 +287,10 @@ public class ApplicationDbContext : IdentityDbContext<ApplicationUser>
             entity.Property(x => x.TotalQuestions).HasColumnName("total_questions").IsRequired();
             entity.Property(x => x.StartedAtUtc).HasColumnName("started_at_utc").HasColumnType("datetime2").IsRequired();
             entity.Property(x => x.SubmittedAtUtc).HasColumnName("submitted_at_utc").HasColumnType("datetime2");
-            entity.HasIndex(x => new { x.UserId, x.CourseId, x.TopicId, x.StartedAtUtc })
-                .HasDatabaseName("IX_practice_exam_user_course_topic_started");
+            entity.HasIndex(x => new { x.UserId, x.CourseId, x.TopicId })
+                .IsUnique()
+                .HasFilter("[submitted_at_utc] IS NULL")
+                .HasDatabaseName("UX_practice_exam_one_active_attempt");
         });
 
         modelBuilder.Entity<StudentCoursePurchase>(entity =>
