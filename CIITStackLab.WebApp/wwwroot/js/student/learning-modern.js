@@ -100,6 +100,67 @@
                 display: block !important;
             }
 
+            /* Keep the Learn sidebar toggle compact and visually attached to the sidebar edge. */
+            .ciit-learning-mode .ciit-learning-global-sidebar-toggle {
+                width: 36px;
+                height: 36px;
+                top: 108px;
+                left: 230px;
+                border: 1px solid rgba(187, 210, 244, .96);
+                border-radius: 12px;
+                background: rgba(255,255,255,.96);
+                color: #185bd8;
+                box-shadow: 0 7px 18px rgba(28,73,141,.13), 0 1px 3px rgba(20,50,90,.08);
+                -webkit-backdrop-filter: blur(12px) saturate(150%);
+                backdrop-filter: blur(12px) saturate(150%);
+                transition: left .22s ease, border-color .18s ease, box-shadow .18s ease, transform .18s ease;
+            }
+            .ciit-learning-mode .ciit-learning-global-sidebar-toggle:hover {
+                border-color: rgba(123,168,244,.95);
+                box-shadow: 0 10px 22px rgba(28,73,141,.17), 0 2px 5px rgba(20,50,90,.08);
+                transform: translateY(-1px);
+            }
+            .ciit-learning-mode .ciit-learning-global-sidebar-toggle:active { transform: scale(.96); }
+            .ciit-learning-mode .ciit-learning-global-sidebar-toggle:focus-visible {
+                outline: 3px solid rgba(23,105,255,.32);
+                outline-offset: 3px;
+            }
+            .ciit-learning-mode.ciit-learning-global-sidebar-collapsed .ciit-learning-global-sidebar-toggle {
+                left: 10px;
+            }
+
+            /* Chapter subtopics are generated from the visible note headings. */
+            .ciit-learning-mode .ciit-learning-chapter-subtopics {
+                display: grid;
+                gap: 2px;
+                margin: 2px 0 6px 44px;
+                padding-left: 12px;
+                border-left: 1px solid rgba(194, 214, 242, .9);
+            }
+            .ciit-learning-mode .ciit-learning-chapter-subtopic {
+                display: block;
+                padding: 3px 6px;
+                border-radius: 6px;
+                color: #7183a0;
+                font-size: .70rem;
+                line-height: 1.45;
+                text-decoration: none;
+                transition: color .15s ease, background .15s ease;
+            }
+            .ciit-learning-mode .ciit-learning-chapter-subtopic:hover,
+            .ciit-learning-mode .ciit-learning-chapter-subtopic:focus-visible {
+                color: #145fe8;
+                background: rgba(238,246,255,.9);
+                outline: none;
+            }
+            .ciit-learning-mode .ciit-learning-chapter-subtopic-index {
+                color: #8da0bc;
+                margin-right: 3px;
+            }
+            @media (max-width: 1199.98px) {
+                .ciit-learning-mode .ciit-learning-global-sidebar-toggle { display: none !important; }
+            }
+
             @media (min-width: 1200px) {
                 .ciit-learning-mode .ciit-course-environment-workspace { gap: 16px; }
                 .ciit-learning-mode .ciit-course-global-sidebar { width: 100%; }
@@ -177,6 +238,57 @@
         restoreSidebarState();
     }
 
+    function syncChapterSubtopics() {
+        const sidebar = document.querySelector('.ciit-learning-sidebar');
+        const currentChapterLink = sidebar?.querySelector('.ciit-learning-current-chapter-link.is-current');
+        const notesContent = document.querySelector('.ciit-learning-notes-content');
+        if (!sidebar || !currentChapterLink || !notesContent) return;
+
+        sidebar.querySelector('.ciit-learning-chapter-subtopics')?.remove();
+
+        const headings = Array.from(notesContent.querySelectorAll('h2, h3, h4'))
+            .filter(heading => heading.textContent?.trim());
+        if (!headings.length) return;
+
+        const list = document.createElement('div');
+        list.className = 'ciit-learning-chapter-subtopics';
+        list.setAttribute('aria-label', 'Chapter subtopics');
+
+        headings.forEach(function (heading, index) {
+            const link = document.createElement('a');
+            link.className = 'ciit-learning-chapter-subtopic';
+            link.href = `#ciit-note-subtopic-${index}`;
+            link.dataset.subtopicIndex = String(index);
+            link.innerHTML = `<span class="ciit-learning-chapter-subtopic-index">${index + 1}.</span>`;
+            link.append(document.createTextNode(heading.textContent.trim()));
+            list.appendChild(link);
+        });
+
+        currentChapterLink.insertAdjacentElement('afterend', list);
+    }
+
+    function initChapterSubtopicNavigation() {
+        if (document.documentElement.dataset.ciitLearningSubtopicNav === 'true') return;
+        document.documentElement.dataset.ciitLearningSubtopicNav = 'true';
+
+        document.addEventListener('click', function (event) {
+            const link = event.target.closest('.ciit-learning-chapter-subtopic');
+            if (!link) return;
+
+            const index = Number(link.dataset.subtopicIndex);
+            const headings = document.querySelectorAll('.ciit-learning-notes-content h2, .ciit-learning-notes-content h3, .ciit-learning-notes-content h4');
+            const heading = Number.isInteger(index) ? headings[index] : null;
+            if (!heading) return;
+
+            event.preventDefault();
+            heading.scrollIntoView({
+                behavior: window.matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth',
+                block: 'start'
+            });
+            history.replaceState(null, '', `${window.location.pathname}${window.location.search}#ciit-note-subtopic-${index}`);
+        });
+    }
+
     function enhanceLearningShell() {
         const learningPage = document.querySelector('.ciit-learning-page');
         if (!learningPage) return;
@@ -214,6 +326,8 @@
             if (description) description.textContent = 'Video, slides and supporting material for this topic.';
             notesPanel.appendChild(contentPanel);
         }
+
+        syncChapterSubtopics();
 
         const assessmentLink = document.querySelector('[data-learning-assessment-link]');
         const learningPathLink = document.querySelector('.ciit-course-global-nav a.active');
@@ -314,6 +428,7 @@
         ensureReferenceStyles();
         restoreSidebarState();
         initSidebarToggle();
+        initChapterSubtopicNavigation();
         enhanceLearningShell();
         initChapterNavigation();
     }
