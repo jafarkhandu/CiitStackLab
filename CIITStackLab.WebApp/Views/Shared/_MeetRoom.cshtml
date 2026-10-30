@@ -160,7 +160,7 @@
                 <p>Please contact your admin if you believe this was a mistake.</p>
             </section>
         }
-        <section class="ciit-meet-ended-screen" data-meet-ended-screen hidden>
+        <section class="ciit-meet-ended-screen" data-meet-ended-screen hidden="@(Model.Status != "Completed" && Model.Status != "Cancelled")">
             <span class="ciit-meet-waiting-icon"><i class="bi bi-check2-circle"></i></span>
             <h2>Meeting has ended</h2>
             <p>The host has ended this meeting. You can safely leave this page.</p>
