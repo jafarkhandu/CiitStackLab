@@ -137,10 +137,43 @@ document.addEventListener("DOMContentLoaded", () => {
             });
         }
 
-        const link = card.querySelector("a");
-        if (link) {
-            link.textContent = state.status === "Live" ? "Open live room" : "Details";
-            link.className = state.status === "Live" ? "meet-primary-button" : "meet-secondary-button";
+        card.querySelectorAll("[data-meet-session-view-action], [data-meet-session-details], [data-meet-session-delete]")
+            .forEach(element => element.remove());
+
+        if (state.status === "Live") {
+            const link = document.createElement("a");
+            link.href = "/Admin/Meet/Room/" + state.sessionId;
+            link.className = "meet-primary-button";
+            link.dataset.meetSessionViewAction = "";
+            link.textContent = "Open live room";
+            card.append(link);
+        } else {
+            const details = document.createElement("button");
+            details.type = "button";
+            details.className = "meet-secondary-button";
+            details.dataset.meetSessionViewAction = "";
+            details.dataset.meetSessionDetails = "";
+            details.dataset.detailsUrl = "/Admin/Meet/SessionDetails/" + state.sessionId;
+            details.textContent = "Details";
+            card.append(details);
+
+            if (state.status === "Completed" || state.status === "Cancelled") {
+                const form = document.createElement("form");
+                form.method = "post";
+                form.action = "/Admin/Meet/DeleteSession";
+                form.dataset.meetSessionDelete = "";
+                form.dataset.meetAjax = "";
+                addHidden(form, "__RequestVerificationToken", token());
+                addHidden(form, "id", state.sessionId);
+                const remove = document.createElement("button");
+                remove.type = "submit";
+                remove.className = "meet-icon-button";
+                remove.title = "Delete meeting history";
+                remove.setAttribute("aria-label", "Delete meeting history");
+                remove.innerHTML = '<i class="bi bi-trash"></i>';
+                form.append(remove);
+                card.append(form);
+            }
         }
     };
 
