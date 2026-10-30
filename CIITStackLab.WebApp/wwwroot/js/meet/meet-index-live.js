@@ -75,21 +75,19 @@ document.addEventListener("DOMContentLoaded", () => {
     };
 
     const updateAdminSession = state => {
-        const list = adminRoot.querySelector("[data-meet-admin-session-list]");
-        if (!list) return;
-
-        let card = list.querySelector('[data-meet-session-id="' + state.sessionId + '"]');
+        let list = adminRoot.querySelector("[data-meet-admin-session-list]");
+        let card = list?.querySelector('[data-meet-session-id="' + state.sessionId + '"]');
         if (!card) {
             const empty = adminRoot.querySelector(".meet-session-list-empty");
             if (empty) empty.remove();
             const listSection = adminRoot.querySelector(".meet-session-list-section");
             if (!listSection) return;
-            let targetList = listSection.querySelector("[data-meet-admin-session-list]");
-            if (!targetList) {
-                targetList = document.createElement("div");
-                targetList.className = "meet-session-list";
-                targetList.dataset.meetAdminSessionList = "";
-                listSection.append(targetList);
+            list = listSection.querySelector("[data-meet-admin-session-list]");
+            if (!list) {
+                list = document.createElement("div");
+                list.className = "meet-session-list";
+                list.dataset.meetAdminSessionList = "";
+                listSection.append(list);
             }
             card = document.createElement("article");
             card.className = "meet-session-list-item";
@@ -111,7 +109,7 @@ document.addEventListener("DOMContentLoaded", () => {
             link.href = "/Admin/Meet/Room/" + state.sessionId;
             link.textContent = "Details";
             card.append(icon, copy, status, link);
-            targetList.prepend(card);
+            list.prepend(card);
         }
 
         const status = card.querySelector("[data-meet-session-status]");
