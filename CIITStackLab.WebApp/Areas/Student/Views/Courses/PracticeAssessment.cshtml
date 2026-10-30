@@ -4,6 +4,7 @@
     Layout = "_CourseLayout";
     ViewData["Title"] = "Practice Assessment";
     var totalTopics = Model.Sum(course => course.Topics.Count);
+    var practiceMessage = TempData["PracticeExamMessage"] as string;
 }
 
 @section Styles {
@@ -39,11 +40,15 @@
     <div class="container-fluid px-3 px-lg-4">
         <main class="ciit-course-experience-main">
             <section class="ciit-course-experience-card ciit-course-curriculum-section">
+                @if (!string.IsNullOrWhiteSpace(practiceMessage))
+                {
+                    <div class="alert alert-info py-2 mb-3" role="status">@practiceMessage</div>
+                }
                 <div class="ciit-course-experience-card-header">
                     <div>
                         <span class="ciit-course-experience-eyebrow" style="background:#eef5ff;color:#1769ff;">Practice assessment</span>
                         <h2 class="mt-2">Choose a Topic</h2>
-                        <p>Browse topics from all your accessible courses to find the assessment you want to practise.</p>
+                        <p>Practice for free across topics from all published courses. This exam is separate from the Learning Path and course purchase.</p>
                     </div>
                     <div class="ciit-course-curriculum-header-tools">
                         <span class="ciit-course-topic-count"><i class="bi bi-journal-check"></i><span data-topic-total>@totalTopics Topics</span></span>
@@ -57,7 +62,7 @@
 
                 @if (totalTopics == 0)
                 {
-                    <div class="ciit-practice-empty">No topics are available in your accessible courses yet.</div>
+                    <div class="ciit-practice-empty">No published topics are available for practice yet.</div>
                 }
                 else
                 {
@@ -103,14 +108,14 @@
                                             _ => "bi bi-code-slash"
                                         };
                                         <a class="ciit-course-topic-card"
-                                           asp-controller="Courses"
-                                           asp-action="Learn"
-                                           asp-route-id="@course.Id"
+                                           asp-controller="PracticeExams"
+                                           asp-action="Start"
+                                           asp-route-courseId="@course.Id"
                                            asp-route-topicId="@topic.Id"
                                            data-practice-topic
                                            data-topic-title="@topic.Title"
                                            data-course-title="@course.Title"
-                                           aria-label="Practise assessment for @topic.Title in @course.Title">
+                                           aria-label="Start free practice exam for @topic.Title in @course.Title">
                                             <div class="ciit-course-topic-card-top">
                                                 <span class="ciit-course-topic-logo" aria-hidden="true"><i class="@topicLogoClass"></i></span>
                                             </div>
