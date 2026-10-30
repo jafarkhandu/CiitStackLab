@@ -86,6 +86,37 @@
         </section>
     </div>
 
+    <section class="meet-session-list-section">
+        <div class="meet-section-heading">
+            <div>
+                <span class="ciit-admin-eyebrow">Meeting workspace</span>
+                <h2>Meeting sessions</h2>
+            </div>
+            <span class="meet-count-pill">@Model.Sessions.Count sessions</span>
+        </div>
+        @if (Model.Sessions.Count == 0)
+        {
+            <p class="meet-session-list-empty">Your created meetings will appear here.</p>
+        }
+        else
+        {
+            <div class="meet-session-list">
+                @foreach (var session in Model.Sessions)
+                {
+                    <article class="meet-session-list-item">
+                        <div class="meet-session-list-icon"><i class="bi bi-camera-video"></i></div>
+                        <div class="meet-session-list-copy">
+                            <strong>@session.Title</strong>
+                            <span>@session.BatchName · @session.StartsAtUtc.ToLocalTime().ToString("dd MMM yyyy, hh:mm tt") · @session.DurationMinutes min</span>
+                        </div>
+                        <span class="meet-session-status">@session.Status</span>
+                        <a asp-area="Admin" asp-controller="Meet" asp-action="Room" asp-route-id="@session.Id" class="meet-secondary-button">Open room <i class="bi bi-arrow-up-right"></i></a>
+                    </article>
+                }
+            </div>
+        }
+    </section>
+
     @if (Model.ArchivedBatches.Count > 0)
     {
         <section class="meet-archive-section">
