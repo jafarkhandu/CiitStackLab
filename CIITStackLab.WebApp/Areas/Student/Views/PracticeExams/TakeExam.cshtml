@@ -103,10 +103,10 @@
                             <section class="question @(index == 0 ? "active" : string.Empty)" data-question-index="@index" data-question-id="@question.QuestionId">
                                 <h2 class="prompt">@question.Question</h2>
                                 <div class="options">
-                                    <label class="option"><input type="radio" name="question-@question.QuestionId" value="1" /><span>@question.Option1</span></label>
-                                    <label class="option"><input type="radio" name="question-@question.QuestionId" value="2" /><span>@question.Option2</span></label>
-                                    <label class="option"><input type="radio" name="question-@question.QuestionId" value="3" /><span>@question.Option3</span></label>
-                                    <label class="option"><input type="radio" name="question-@question.QuestionId" value="4" /><span>@question.Option4</span></label>
+                                    <label class="option"><input type="radio" name="question-@question.QuestionId" value="1" @(Model.SavedAnswers.TryGetValue(question.QuestionId, out var savedOption1) && savedOption1 == 1 ? "checked" : null) /><span>@question.Option1</span></label>
+                                    <label class="option"><input type="radio" name="question-@question.QuestionId" value="2" @(Model.SavedAnswers.TryGetValue(question.QuestionId, out var savedOption2) && savedOption2 == 2 ? "checked" : null) /><span>@question.Option2</span></label>
+                                    <label class="option"><input type="radio" name="question-@question.QuestionId" value="3" @(Model.SavedAnswers.TryGetValue(question.QuestionId, out var savedOption3) && savedOption3 == 3 ? "checked" : null) /><span>@question.Option3</span></label>
+                                    <label class="option"><input type="radio" name="question-@question.QuestionId" value="4" @(Model.SavedAnswers.TryGetValue(question.QuestionId, out var savedOption4) && savedOption4 == 4 ? "checked" : null) /><span>@question.Option4</span></label>
                                 </div>
                             </section>
                         }
