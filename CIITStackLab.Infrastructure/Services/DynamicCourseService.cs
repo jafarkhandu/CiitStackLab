@@ -884,8 +884,8 @@ public sealed class DynamicCourseService : ICourseService
         int? NoteId,
         int? ContentId,
         bool IsSelectedTopic,
-        string? QuestionTitle,
-        string? QuestionDescription);
+        string QuestionTitle,
+        string QuestionDescription);
 
     private sealed record QuestionReference(
         int Id,
