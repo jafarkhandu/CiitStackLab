@@ -3,7 +3,6 @@ using System;
 using CIITStackLab.Infrastructure.Persistence;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
-using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Metadata;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
@@ -1721,6 +1720,11 @@ namespace CIITStackLab.Infrastructure.Migrations
                     .IsRequired();
 
                 b.Navigation("MeetBatch");
+            });
+
+            modelBuilder.Entity("CIITStackLab.Domain.Entities.MeetBatch", b =>
+            {
+                b.Navigation("Sessions");
             });
 
 #pragma warning restore 612, 618
