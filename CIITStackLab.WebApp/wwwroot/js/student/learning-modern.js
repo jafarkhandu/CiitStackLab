@@ -1,15 +1,6 @@
 (function () {
     function ensureReferenceStyles() {
-        const styleId = 'ciit-learn-reference-styles';
-        if (document.getElementById(styleId)) {
-            return;
-        }
-
-        const stylesheet = document.createElement('link');
-        stylesheet.id = styleId;
-        stylesheet.rel = 'stylesheet';
-        stylesheet.href = '/css/student/learn-reference.css?v=f50c37d';
-        document.head.appendChild(stylesheet);
+        // Reference styling is now loaded statically by the Learn page layout.
     }
 
     function initModernLearningPage() {
