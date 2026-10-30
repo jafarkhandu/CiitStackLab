@@ -82,13 +82,17 @@ public sealed class MeetHub : Hub
             })
             .ToListAsync(Context.ConnectionAborted);
 
-        // A batch card can display only one active action. Prefer its live
-        // meeting so a different scheduled session cannot hide the Join button.
+        // A batch card can display only one action. Choose exactly one valid
+        // live session when present; otherwise show the nearest upcoming session.
+        // The same ordering is used by the server-rendered Student Meet page.
         var preferredSessions = currentSessions
             .GroupBy(session => session.batchId)
             .Select(group => group
                 .OrderByDescending(session => session.Status == "Live")
-                .ThenBy(session => session.startsAtUtc)
+                .ThenByDescending(session => session.Status == "Live"
+                    ? session.startedAtUtc
+                    : session.startsAtUtc)
+                .ThenByDescending(session => session.sessionId)
                 .First());
 
         foreach (var session in preferredSessions)
