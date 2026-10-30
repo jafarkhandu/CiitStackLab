@@ -199,7 +199,7 @@ document.addEventListener("DOMContentLoaded", () => {
         if (!admittedParticipants.length) {
             const empty = document.createElement("p");
             empty.dataset.meetNoParticipants = "true";
-            empty.textContent = "No student has requested to join yet.";
+            empty.textContent = "No admitted participants yet.";
             list.append(empty);
         }
 
@@ -217,12 +217,7 @@ document.addEventListener("DOMContentLoaded", () => {
             identity.append(name, status);
             row.append(identity);
 
-            if (participant.status === "Pending") {
-                addActionButton(row, "Admit", "ciit-meet-host-secondary", () =>
-                    postAction(list.dataset.admitUrl, { id: participant.id, decision: "admit" }));
-                addActionButton(row, "Reject", "ciit-meet-host-danger", () =>
-                    postAction(list.dataset.admitUrl, { id: participant.id, decision: "reject" }));
-            } else if (participant.status === "Admitted") {
+            if (participant.status === "Admitted") {
                 const permissions = document.createElement("div");
                 permissions.className = "ciit-meet-permission-form";
                 const settings = [
