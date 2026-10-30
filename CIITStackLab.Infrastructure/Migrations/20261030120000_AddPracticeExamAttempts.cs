@@ -41,6 +41,12 @@ public partial class AddPracticeExamAttempts : Migration
             columns: new[] { "user_id", "course_id", "topic_id" },
             unique: true,
             filter: "[submitted_at_utc] IS NULL");
+
+        migrationBuilder.CreateIndex(
+            name: "IX_practice_exam_user_course_topic_started",
+            schema: "erpsystem",
+            table: "tblstudent_practice_exam_attempts",
+            columns: new[] { "user_id", "course_id", "topic_id", "started_at_utc" });
     }
 
     protected override void Down(MigrationBuilder migrationBuilder)
