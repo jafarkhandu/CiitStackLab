@@ -1,16 +1,8 @@
 @model CIITStackLab.WebApp.Models.MeetRoomViewModel
 
 @{
-    Layout = "~/Views/Shared/_CourseLayout.cshtml";
+    Layout = null;
     ViewData["Title"] = "Meeting Room";
 }
 
 @await Html.PartialAsync("~/Views/Shared/_MeetRoom.cshtml", Model)
-
-@section Styles {
-    <link rel="stylesheet" href="~/css/meet/meet-room.css" asp-append-version="true" />
-}
-
-@section Scripts {
-    <script src="~/js/meet/meet-room-ui.js" asp-append-version="true"></script>
-}
