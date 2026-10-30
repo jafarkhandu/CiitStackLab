@@ -34,35 +34,93 @@
             -webkit-appearance: none;
         }
         .ciit-practice-modal {
-            width: min(92vw, 540px);
-            max-width: 540px;
+            width: min(92vw, 590px);
+            max-width: 590px;
+            max-height: min(88vh, 760px);
             padding: 0;
-            border: 1px solid rgba(255,255,255,.95);
-            border-radius: 22px;
-            color: #13284b;
-            background: #fff;
-            box-shadow: 0 28px 90px rgba(20, 45, 84, .24);
+            overflow: auto;
+            border: 1px solid rgba(255, 255, 255, .72);
+            border-radius: 25px;
+            color: #17345d;
+            background: linear-gradient(135deg, rgba(255, 255, 255, .78), rgba(232, 243, 255, .58));
+            box-shadow: 0 28px 90px rgba(20, 45, 84, .28), inset 0 1px 0 rgba(255, 255, 255, .9);
+            -webkit-backdrop-filter: blur(28px) saturate(155%);
+            backdrop-filter: blur(28px) saturate(155%);
         }
         .ciit-practice-modal::backdrop {
-            background: rgba(15, 31, 56, .48);
-            backdrop-filter: blur(5px);
+            background: rgba(19, 42, 73, .38);
+            -webkit-backdrop-filter: blur(9px);
+            backdrop-filter: blur(9px);
         }
-        .ciit-practice-modal-content { padding: clamp(22px, 4vw, 32px); }
+        .ciit-practice-modal form { margin: 0; }
+        .ciit-practice-modal-content {
+            position: relative;
+            padding: clamp(22px, 4vw, 34px);
+            background: radial-gradient(circle at 100% 0, rgba(255, 255, 255, .62), transparent 42%);
+        }
         .ciit-practice-modal-header { display:flex; align-items:flex-start; justify-content:space-between; gap:16px; }
-        .ciit-practice-modal-eyebrow { color:#1769ff; font-size:.7rem; font-weight:800; letter-spacing:.1em; text-transform:uppercase; }
-        .ciit-practice-modal h2 { margin:7px 0 5px; color:#13284b; font-size:1.35rem; font-weight:800; }
-        .ciit-practice-modal-subtitle { margin:0; color:#7183a0; font-size:.88rem; }
-        .ciit-practice-modal-close { width:34px; height:34px; flex:0 0 34px; border:1px solid #e2eaf5; border-radius:10px; color:#64748b; background:#f7faff; font-size:1.15rem; line-height:1; }
-        .ciit-practice-modal-stats { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:10px; margin:22px 0; }
-        .ciit-practice-modal-stat { padding:14px; border:1px solid #e4edf9; border-radius:13px; background:#f7faff; }
-        .ciit-practice-modal-stat strong { display:block; color:#1769ff; font-size:1.2rem; font-weight:800; }
-        .ciit-practice-modal-stat span { color:#7183a0; font-size:.72rem; font-weight:700; }
-        .ciit-practice-modal-rules { margin:0; padding-left:19px; color:#526783; font-size:.82rem; line-height:1.75; }
-        .ciit-practice-modal-actions { display:flex; justify-content:flex-end; gap:10px; margin-top:25px; }
-        .ciit-practice-modal-actions button { min-height:42px; padding:0 17px; border:0; border-radius:11px; font-size:.82rem; font-weight:800; }
-        .ciit-practice-modal-cancel { color:#526783; background:#edf3fb; }
-        .ciit-practice-modal-start { color:#fff; background:linear-gradient(135deg,#2582ff,#0753df); box-shadow:0 7px 16px rgba(23,105,255,.2); }
-        @@media(max-width:420px) { .ciit-practice-modal-stats { gap:7px; } .ciit-practice-modal-stat { padding:11px; } }
+        .ciit-practice-modal-eyebrow {
+            display: inline-flex;
+            align-items: center;
+            padding: 7px 11px;
+            border: 1px solid rgba(255, 255, 255, .72);
+            border-radius: 999px;
+            color: #1769d2;
+            background: rgba(255, 255, 255, .48);
+            box-shadow: 0 4px 14px rgba(40, 91, 153, .08), inset 0 1px 0 rgba(255, 255, 255, .9);
+            font-size: .68rem;
+            font-weight: 850;
+            letter-spacing: .09em;
+            text-transform: uppercase;
+        }
+        .ciit-practice-modal h2 { margin:10px 0 5px; color:#15345e; font-size:1.5rem; font-weight:850; letter-spacing:-.03em; }
+        .ciit-practice-modal-subtitle { margin:0; color:#617b9d; font-size:.88rem; }
+        .ciit-practice-modal-close {
+            width:36px;
+            height:36px;
+            flex:0 0 36px;
+            border:1px solid rgba(255, 255, 255, .85);
+            border-radius:12px;
+            color:#547092;
+            background:rgba(255, 255, 255, .48);
+            box-shadow:0 5px 16px rgba(35, 75, 125, .08), inset 0 1px 0 #fff;
+            font-size:1.15rem;
+            line-height:1;
+        }
+        .ciit-practice-modal-stats { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:12px; margin:22px 0 16px; }
+        .ciit-practice-modal-stat {
+            padding:16px;
+            border:1px solid rgba(255, 255, 255, .82);
+            border-radius:16px;
+            background:rgba(255, 255, 255, .43);
+            box-shadow:0 8px 22px rgba(40, 83, 137, .07), inset 0 1px 0 rgba(255, 255, 255, .92);
+        }
+        .ciit-practice-modal-stat strong { display:block; color:#1769df; font-size:1.22rem; font-weight:850; }
+        .ciit-practice-modal-stat span { color:#657e9e; font-size:.73rem; font-weight:700; }
+        .ciit-practice-modal-info {
+            padding:17px 18px;
+            border:1px solid rgba(255, 255, 255, .82);
+            border-radius:17px;
+            background:rgba(255, 255, 255, .38);
+            box-shadow:0 8px 24px rgba(40, 83, 137, .06), inset 0 1px 0 rgba(255, 255, 255, .92);
+        }
+        .ciit-practice-modal-info h3 { display:flex; align-items:center; gap:9px; margin:0 0 13px; color:#24466f; font-size:.9rem; font-weight:850; }
+        .ciit-practice-modal-info h3 i { color:#2478e8; font-size:1rem; }
+        .ciit-practice-modal-points { display:grid; gap:11px; margin:0; padding:0; list-style:none; }
+        .ciit-practice-modal-points li { display:flex; align-items:flex-start; gap:10px; color:#526d8e; font-size:.81rem; line-height:1.5; }
+        .ciit-practice-modal-points li i { margin-top:2px; color:#2682d9; font-size:.95rem; }
+        .ciit-practice-modal-actions { display:flex; justify-content:flex-end; gap:10px; margin-top:23px; }
+        .ciit-practice-modal-actions button { min-height:43px; padding:0 18px; border:1px solid transparent; border-radius:12px; font-size:.82rem; font-weight:800; transition:transform .18s ease, box-shadow .18s ease; }
+        .ciit-practice-modal-actions button:hover { transform:translateY(-1px); }
+        .ciit-practice-modal-cancel { color:#526d8e; border-color:rgba(255,255,255,.8) !important; background:rgba(255,255,255,.52); box-shadow:0 5px 15px rgba(40,83,137,.06), inset 0 1px 0 #fff; }
+        .ciit-practice-modal-start { color:#fff; background:linear-gradient(135deg,#3694ff,#075be8); box-shadow:0 9px 22px rgba(23,105,255,.28), inset 0 1px 0 rgba(255,255,255,.38); }
+        @@media(max-width:420px) {
+            .ciit-practice-modal { border-radius:20px; }
+            .ciit-practice-modal-stats { gap:8px; }
+            .ciit-practice-modal-stat { padding:12px; }
+            .ciit-practice-modal-info { padding:14px; }
+            .ciit-practice-modal-actions button { flex:1; padding:0 10px; }
+        }
         .ciit-practice-assessment-page [hidden] { display:none !important; }
         .ciit-practice-empty { padding:40px 20px; border:1px solid #e2e9f3; border-radius:16px; background:rgba(255,255,255,.86); color:#7183a0; text-align:center; }
         @@media(max-width:1399.98px){.ciit-practice-assessment-page .ciit-course-curriculum-list{grid-template-columns:repeat(5,minmax(0,1fr));}}
@@ -197,13 +255,15 @@
                     <span>Questions per attempt</span>
                 </div>
             </div>
-            <ul class="ciit-practice-modal-rules">
-                <li>Your answers are saved automatically while you practice.</li>
-                <li>Unseen questions are given priority in each new attempt.</li>
-                <li>When needed, up to 5 previously attempted questions can repeat in one exam.</li>
-                <li>Each question can be repeated up to 5 times after its first appearance.</li>
-                <li>The exam submits automatically when the timer ends. Unanswered questions count as incorrect.</li>
-            </ul>
+            <section class="ciit-practice-modal-info" aria-labelledby="practice-exam-info-title">
+                <h3 id="practice-exam-info-title"><i class="bi bi-lightbulb" aria-hidden="true"></i> What to expect</h3>
+                <ul class="ciit-practice-modal-points">
+                    <li><i class="bi bi-check-circle-fill" aria-hidden="true"></i><span>Answer multiple-choice questions based on the selected topic.</span></li>
+                    <li><i class="bi bi-journal-text" aria-hidden="true"></i><span>Questions are drawn from the published course learning content.</span></li>
+                    <li><i class="bi bi-cloud-check-fill" aria-hidden="true"></i><span>Your answers are saved automatically while you practice.</span></li>
+                    <li><i class="bi bi-graph-up-arrow" aria-hidden="true"></i><span>Review your score and correct answers after submitting the exam.</span></li>
+                </ul>
+            </section>
             <div class="ciit-practice-modal-actions">
                 <button class="ciit-practice-modal-cancel" type="button" data-close-practice-modal>Cancel</button>
                 <button class="ciit-practice-modal-start" type="submit">Start Practice Exam</button>
