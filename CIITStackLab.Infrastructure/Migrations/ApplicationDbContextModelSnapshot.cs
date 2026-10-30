@@ -1616,7 +1616,6 @@ namespace CIITStackLab.Infrastructure.Migrations
                         .OnDelete(DeleteBehavior.NoAction)
                         .IsRequired();
 
-                    b.Navigation("Members");
                 });
 
             modelBuilder.Entity("CIITStackLab.Domain.Entities.MeetBatchMember", b =>
