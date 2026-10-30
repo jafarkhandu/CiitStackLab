@@ -78,8 +78,15 @@ public sealed class PracticeExamsController : Controller
         {
             if (now >= activeAttempt.StartedAtUtc.AddMinutes(ExamDurationMinutes))
             {
+                var expiredQuestionIds = DeserializeQuestionIds(activeAttempt.QuestionIdsJson);
+                var savedAnswers = NormalizeAnswers(activeAttempt.AnswersJson, expiredQuestionIds);
+                activeAttempt.AnswersJson = JsonSerializer.Serialize(savedAnswers);
+                activeAttempt.TotalQuestions = expiredQuestionIds.Count;
+                activeAttempt.Score = await CalculateScoreAsync(
+                    expiredQuestionIds,
+                    savedAnswers,
+                    cancellationToken);
                 activeAttempt.SubmittedAtUtc = activeAttempt.StartedAtUtc.AddMinutes(ExamDurationMinutes);
-                activeAttempt.Score = 0;
                 await _dbContext.SaveChangesAsync(cancellationToken);
                 return RedirectToAction(nameof(Result), new { attemptId = activeAttempt.Id });
             }
@@ -216,6 +223,41 @@ public sealed class PracticeExamsController : Controller
         });
     }
 
+    [HttpPost("/PracticeExams/SaveAnswers/{attemptId:int}")]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> SaveAnswers(
+        int attemptId,
+        string? answersJson,
+        CancellationToken cancellationToken)
+    {
+        var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+        if (string.IsNullOrWhiteSpace(userId))
+        {
+            return Unauthorized();
+        }
+
+        var attempt = await _dbContext.PracticeExamAttempts
+            .SingleOrDefaultAsync(item => item.Id == attemptId && item.UserId == userId, cancellationToken);
+
+        if (attempt is null)
+        {
+            return NotFound();
+        }
+
+        if (attempt.SubmittedAtUtc.HasValue
+            || DateTime.UtcNow >= attempt.StartedAtUtc.AddMinutes(ExamDurationMinutes))
+        {
+            return StatusCode(StatusCodes.Status409Conflict);
+        }
+
+        var questionIds = DeserializeQuestionIds(attempt.QuestionIdsJson);
+        var answers = NormalizeAnswers(answersJson, questionIds);
+        attempt.AnswersJson = JsonSerializer.Serialize(answers);
+        await _dbContext.SaveChangesAsync(cancellationToken);
+
+        return NoContent();
+    }
+
     [HttpPost("/PracticeExams/Submit/{attemptId:int}")]
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> Submit(
@@ -242,36 +284,15 @@ public sealed class PracticeExamsController : Controller
             return RedirectToAction(nameof(Result), new { attemptId });
         }
 
-        Dictionary<int, int> submittedAnswers;
-        try
-        {
-            submittedAnswers = string.IsNullOrWhiteSpace(answersJson)
-                ? new Dictionary<int, int>()
-                : JsonSerializer.Deserialize<Dictionary<int, int>>(answersJson)
-                    ?? new Dictionary<int, int>();
-        }
-        catch (JsonException)
-        {
-            submittedAnswers = new Dictionary<int, int>();
-        }
-
         var selectedQuestionIds = DeserializeQuestionIds(attempt.QuestionIdsJson);
-        var allowedQuestionIds = selectedQuestionIds.ToHashSet();
-        submittedAnswers = submittedAnswers
-            .Where(answer => allowedQuestionIds.Contains(answer.Key)
-                && answer.Value is >= 1 and <= 4)
-            .ToDictionary(answer => answer.Key, answer => answer.Value);
-
-        var correctAnswers = await _dbContext.ContentQuestions
-            .AsNoTracking()
-            .Where(question => selectedQuestionIds.Contains(question.Id))
-            .Select(question => new { question.Id, question.CorrectOptionNumber })
-            .ToDictionaryAsync(question => question.Id, question => question.CorrectOptionNumber, cancellationToken);
-
-        var score = selectedQuestionIds.Count(questionId =>
-            submittedAnswers.TryGetValue(questionId, out var selectedOption)
-            && correctAnswers.TryGetValue(questionId, out var correctOption)
-            && correctOption == selectedOption);
+        var isWithinDeadline = DateTime.UtcNow < attempt.StartedAtUtc.AddMinutes(ExamDurationMinutes);
+        var submittedAnswers = NormalizeAnswers(
+            isWithinDeadline ? answersJson : attempt.AnswersJson,
+            selectedQuestionIds);
+        var score = await CalculateScoreAsync(
+            selectedQuestionIds,
+            submittedAnswers,
+            cancellationToken);
 
         attempt.AnswersJson = JsonSerializer.Serialize(submittedAnswers);
         attempt.Score = score;
@@ -380,6 +401,50 @@ public sealed class PracticeExamsController : Controller
                 })
                 .ToList()
         });
+    }
+
+    private static Dictionary<int, int> NormalizeAnswers(
+        string? answersJson,
+        IReadOnlyCollection<int> selectedQuestionIds)
+    {
+        Dictionary<int, int> answers;
+        try
+        {
+            answers = string.IsNullOrWhiteSpace(answersJson)
+                ? new Dictionary<int, int>()
+                : JsonSerializer.Deserialize<Dictionary<int, int>>(answersJson)
+                    ?? new Dictionary<int, int>();
+        }
+        catch (JsonException)
+        {
+            answers = new Dictionary<int, int>();
+        }
+
+        var allowedQuestionIds = selectedQuestionIds.ToHashSet();
+        return answers
+            .Where(answer => allowedQuestionIds.Contains(answer.Key)
+                && answer.Value is >= 1 and <= 4)
+            .ToDictionary(answer => answer.Key, answer => answer.Value);
+    }
+
+    private async Task<int> CalculateScoreAsync(
+        IReadOnlyCollection<int> selectedQuestionIds,
+        IReadOnlyDictionary<int, int> answers,
+        CancellationToken cancellationToken)
+    {
+        var correctAnswers = await _dbContext.ContentQuestions
+            .AsNoTracking()
+            .Where(question => selectedQuestionIds.Contains(question.Id))
+            .Select(question => new { question.Id, question.CorrectOptionNumber })
+            .ToDictionaryAsync(
+                question => question.Id,
+                question => question.CorrectOptionNumber,
+                cancellationToken);
+
+        return selectedQuestionIds.Count(questionId =>
+            answers.TryGetValue(questionId, out var selectedOption)
+            && correctAnswers.TryGetValue(questionId, out var correctOption)
+            && correctOption == selectedOption);
     }
 
     private static List<int> DeserializeQuestionIds(string? questionIdsJson)
