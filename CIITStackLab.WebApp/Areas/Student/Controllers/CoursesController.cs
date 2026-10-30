@@ -825,7 +825,13 @@ public class CoursesController : Controller
             }
         }
 
-        var course = await _courseService.GetLearningAsync(id, contentId, cancellationToken, topicId, chapterId);
+        var course = await _courseService.GetLearningAsync(
+            id,
+            contentId,
+            cancellationToken,
+            topicId,
+            chapterId,
+            includeAssessmentData: false);
 
         if (course is null)
         {
