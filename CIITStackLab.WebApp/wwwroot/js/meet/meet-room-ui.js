@@ -230,6 +230,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
     connection.on("MeetRoomUpdated", updateRoom);
     connection.on("MeetMyParticipantStatus", update => {
+        if (update.sessionId !== sessionId) return;
         room.dataset.participantStatus = update.status;
         if (update.sessionStatus !== "Live" && update.sessionStatus !== "Scheduled") {
             const stage = room.querySelector("[data-meet-room-stage]");
