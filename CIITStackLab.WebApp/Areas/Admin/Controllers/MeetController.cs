@@ -81,8 +81,9 @@ public sealed class MeetController : Controller
 
         foreach (var studentId in validStudentIds)
         {
-            batch.Members.Add(new MeetBatchMember
+            _dbContext.MeetBatchMembers.Add(new MeetBatchMember
             {
+                MeetBatch = batch,
                 StudentUserId = studentId,
                 AddedAtUtc = now
             });
@@ -141,9 +142,9 @@ public sealed class MeetController : Controller
         if (!ModelState.IsValid || string.IsNullOrWhiteSpace(model.Name))
             return await ReturnDetailsWithErrorAsync(batch.Id, "Please check the batch name and description.", cancellationToken);
 
-        var selectedIds = model.SelectedStudentIds
+        var selectedIds = (model.SelectedStudentIds ?? [])
             .Where(x => !string.IsNullOrWhiteSpace(x))
-            .Distinct()
+            .Distinct(StringComparer.Ordinal)
             .ToList();
 
         var validStudentIds = await GetValidStudentIdsAsync(selectedIds, cancellationToken);
@@ -155,24 +156,30 @@ public sealed class MeetController : Controller
         batch.UpdatedAtUtc = DateTime.UtcNow;
 
         var selectedSet = validStudentIds.ToHashSet(StringComparer.Ordinal);
-        var removedMembers = batch.Members
-            .Where(x => !selectedSet.Contains(x.StudentUserId))
+        var existingMembers = batch.Members.ToList();
+        var existingSet = existingMembers
+            .Select(member => member.StudentUserId)
+            .ToHashSet(StringComparer.Ordinal);
+
+        var removedMembers = existingMembers
+            .Where(member => !selectedSet.Contains(member.StudentUserId))
             .ToList();
 
         _dbContext.MeetBatchMembers.RemoveRange(removedMembers);
 
-        var existingSet = batch.Members
-            .Select(x => x.StudentUserId)
-            .ToHashSet(StringComparer.Ordinal);
-
-        foreach (var studentId in validStudentIds.Where(x => !existingSet.Contains(x)))
-        {
-            batch.Members.Add(new MeetBatchMember
+        var now = DateTime.UtcNow;
+        var newMembers = validStudentIds
+            .Where(studentId => !existingSet.Contains(studentId))
+            .Select(studentId => new MeetBatchMember
             {
+                MeetBatchId = batch.Id,
                 StudentUserId = studentId,
-                AddedAtUtc = DateTime.UtcNow
-            });
-        }
+                AddedAtUtc = now
+            })
+            .ToList();
+
+        if (newMembers.Count > 0)
+            _dbContext.MeetBatchMembers.AddRange(newMembers);
 
         await _dbContext.SaveChangesAsync(cancellationToken);
         return RedirectWithMessage("Batch details and members updated successfully.", true, nameof(Details), batch.Id);
