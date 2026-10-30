@@ -68,6 +68,13 @@
                         }
                         else
                         {
+                            @if (Model.RecordingStatus == "Stopped")
+                            {
+                                <form asp-area="Admin" asp-controller="Meet" asp-action="SetRecording" method="post" onsubmit="return confirm('Mark this recording as deleted?');">
+                                    @Html.AntiForgeryToken()<input type="hidden" name="id" value="@Model.Id" /><input type="hidden" name="action" value="delete" />
+                                    <button type="submit" class="ciit-meet-host-danger">Delete recording</button>
+                                </form>
+                            }
                             <form asp-area="Admin" asp-controller="Meet" asp-action="SetRecording" method="post">
                                 @Html.AntiForgeryToken()<input type="hidden" name="id" value="@Model.Id" /><input type="hidden" name="action" value="start" />
                                 <button type="submit" class="ciit-meet-host-secondary" @(Model.Status != "Live" ? "disabled" : null)>Start recording</button>
