@@ -1,6 +1,8 @@
 (function () {
     'use strict';
 
+    let subtopicObserver = null;
+
     function copyText(text) {
         if (navigator.clipboard && window.isSecureContext) {
             return navigator.clipboard.writeText(text);
@@ -78,6 +80,11 @@
     }
 
     function buildSubtopics() {
+        if (subtopicObserver) {
+            subtopicObserver.disconnect();
+            subtopicObserver = null;
+        }
+
         const notes = getNotesRoot();
         const activeChapter = document.querySelector('.ciit-learning-current-chapter-link.is-current');
         const sidebar = document.querySelector('.ciit-learning-sidebar');
@@ -140,7 +147,7 @@
         }
 
         const links = Array.from(list.querySelectorAll('[data-subtopic-target]'));
-        const observer = new IntersectionObserver(function (entries) {
+        subtopicObserver = new IntersectionObserver(function (entries) {
             entries.forEach(function (entry) {
                 if (!entry.isIntersecting) {
                     return;
@@ -157,7 +164,7 @@
         });
 
         headings.forEach(function (heading) {
-            observer.observe(heading);
+            subtopicObserver.observe(heading);
         });
     }
 
@@ -180,7 +187,7 @@
     function initResponsiveChapterPanel() {
         const sidebar = document.querySelector('.ciit-learning-sidebar');
         const head = sidebar?.querySelector('.ciit-learning-sidebar-head');
-        if (!sidebar || !head) {
+        if (!sidebar || !head || head.dataset.responsiveToggleInitialized === 'true') {
             return;
         }
 
@@ -189,6 +196,7 @@
             return;
         }
 
+        head.dataset.responsiveToggleInitialized = 'true';
         head.setAttribute('role', 'button');
         head.setAttribute('tabindex', '0');
         head.setAttribute('aria-expanded', 'false');
@@ -218,6 +226,10 @@
         buildSubtopics();
         initResponsiveChapterPanel();
     }
+
+    // Chapter switching replaces the Learn shell without reloading the document.
+    // Rebuild chapter subtopics and attach enhancements to the newly-rendered content.
+    window.addEventListener('ciit:learning-shell-updated', init);
 
     if (document.readyState === 'loading') {
         document.addEventListener('DOMContentLoaded', init, { once: true });
