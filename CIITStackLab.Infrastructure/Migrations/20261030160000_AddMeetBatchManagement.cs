@@ -1,12 +1,9 @@
-using CIITStackLab.Infrastructure.Persistence;
-using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Migrations;
 
 #nullable disable
 
 namespace CIITStackLab.Infrastructure.Migrations;
 
-[DbContext(typeof(ApplicationDbContext))]
 [Migration("20261030160000_AddMeetBatchManagement")]
 public partial class AddMeetBatchManagement : Migration
 {
