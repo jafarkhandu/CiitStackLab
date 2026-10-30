@@ -109,6 +109,10 @@ document.addEventListener("DOMContentLoaded", () => {
     root.addEventListener("submit", async event => {
         const form = event.target.closest("form[data-meet-session-delete]");
         if (!form || event.defaultPrevented) return;
+        if (!window.confirm("Permanently delete this meeting history and its attendance records?")) {
+            event.preventDefault();
+            return;
+        }
         event.preventDefault();
         const button = form.querySelector('[type="submit"]');
         if (button) button.disabled = true;
