@@ -198,23 +198,23 @@ document.addEventListener("DOMContentLoaded", () => {
         const endedScreen = room.querySelector("[data-meet-ended-screen]");
 
         if (!isHost) {
-            const self = state.participants.find(item => item.status === "Pending" || item.status === "Admitted");
+            const selfStatus = room.dataset.participantStatus;
             if (state.status !== "Live" && state.status !== "Scheduled") {
                 if (stage) stage.hidden = true;
                 if (waitingScreen) waitingScreen.hidden = true;
                 if (endedScreen) endedScreen.hidden = false;
-            } else if (self?.status === "Admitted") {
+            } else if (selfStatus === "Admitted") {
                 if (stage) stage.hidden = false;
                 if (waitingScreen) waitingScreen.hidden = true;
                 if (rejectedScreen) rejectedScreen.hidden = true;
-            } else if (self?.status === "Rejected" || self?.status === "Removed") {
+            } else if (selfStatus === "Rejected" || selfStatus === "Removed") {
                 if (stage) stage.hidden = true;
                 if (waitingScreen) waitingScreen.hidden = false;
-                if (waitingTitle) waitingTitle.textContent = self.status === "Removed"
+                if (waitingTitle) waitingTitle.textContent = selfStatus === "Removed"
                     ? "You were removed from this meeting"
                     : "Join request was declined";
                 if (waitingMessage) waitingMessage.textContent = "Please contact your admin if you need access.";
-            } else if (self?.status === "Pending") {
+            } else if (selfStatus === "Pending") {
                 if (stage) stage.hidden = true;
                 if (waitingScreen) waitingScreen.hidden = false;
             }
@@ -229,6 +229,35 @@ document.addEventListener("DOMContentLoaded", () => {
     };
 
     connection.on("MeetRoomUpdated", updateRoom);
+    connection.on("MeetMyParticipantStatus", update => {
+        room.dataset.participantStatus = update.status;
+        if (update.sessionStatus !== "Live" && update.sessionStatus !== "Scheduled") {
+            const stage = room.querySelector("[data-meet-room-stage]");
+            const waiting = room.querySelector("[data-meet-waiting-screen]");
+            const ended = room.querySelector("[data-meet-ended-screen]");
+            if (stage) stage.hidden = true;
+            if (waiting) waiting.hidden = true;
+            if (ended) ended.hidden = false;
+            return;
+        }
+        if (update.status === "Admitted") {
+            const stage = room.querySelector("[data-meet-room-stage]");
+            const waiting = room.querySelector("[data-meet-waiting-screen]");
+            const rejected = room.querySelector("[data-meet-rejected-screen]");
+            if (stage) stage.hidden = false;
+            if (waiting) waiting.hidden = true;
+            if (rejected) rejected.hidden = true;
+        } else if (update.status === "Rejected" || update.status === "Removed") {
+            const stage = room.querySelector("[data-meet-room-stage]");
+            const waiting = room.querySelector("[data-meet-waiting-screen]");
+            const title = room.querySelector("[data-meet-waiting-title]");
+            const message = room.querySelector("[data-meet-waiting-message]");
+            if (stage) stage.hidden = true;
+            if (waiting) waiting.hidden = false;
+            if (title) title.textContent = update.status === "Removed" ? "You were removed from this meeting" : "Join request was declined";
+            if (message) message.textContent = "Please contact your admin if you need access.";
+        }
+    });
     connection.onreconnected(async () => {
         await connection.invoke("JoinMeetingRoom", sessionId);
     });
