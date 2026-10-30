@@ -104,7 +104,10 @@ document.addEventListener("DOMContentLoaded", () => {
 
         settingsPopup = createPopup("ciit-meet-settings-backdrop", "Meeting settings", "bi-gear");
         participantsPopup = createPopup("ciit-meet-participants-backdrop", "Participants", "bi-people");
-        if (panelHeading) settingsPopup.content.append(panelHeading);
+        if (panelHeading) {
+            panelHeading.querySelector("[data-meet-controls-toggle]")?.remove();
+            settingsPopup.content.append(panelHeading);
+        }
         if (settings) settingsPopup.content.append(settings);
         if (participants) {
             participantsPopup.content.append(participants);
