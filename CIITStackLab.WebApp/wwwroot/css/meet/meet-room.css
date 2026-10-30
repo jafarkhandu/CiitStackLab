@@ -158,3 +158,8 @@ html,body{width:100%;min-height:100%;margin:0}
     .ciit-meet-glass-popup-content { padding:15px; }
     .ciit-meet-glass-popup .ciit-meet-host-participant { align-items:flex-start; }
 }
+
+
+.ciit-meet-header-action .ciit-meet-pending-count { min-width:19px;height:19px;display:inline-flex;align-items:center;justify-content:center;padding:0 5px;font-size:9px; }
+.ciit-meet-participants-backdrop .ciit-meet-glass-popup-content { max-height:min(70vh,560px); }
+.ciit-meet-participants-backdrop .ciit-meet-host-participants { max-height:490px;overflow-y:auto;scrollbar-width:thin;scrollbar-color:rgba(148,183,226,.45) transparent; }
