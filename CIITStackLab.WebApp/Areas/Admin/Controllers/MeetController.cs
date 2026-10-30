@@ -118,10 +118,14 @@ public sealed class MeetController : Controller
     {
         var session = await _dbContext.MeetSessions
             .Include(x => x.MeetBatch)
+            .ThenInclude(x => x.Members)
             .SingleOrDefaultAsync(x => x.Id == id, cancellationToken);
 
         if (session is null || session.MeetBatch.IsArchived)
             return NotFound();
+
+        if (session.MeetBatch.Members.Count == 0)
+            return RedirectWithMessage("Assign at least one active student before starting this meeting.", false);
 
         if (session.Status != "Scheduled")
             return RedirectWithMessage("Only scheduled meetings can be started.", false);
@@ -160,12 +164,12 @@ public sealed class MeetController : Controller
         {
             var now = DateTime.UtcNow;
             session.Status = "Completed";
-            session.EndedAtUtc = now;
+            session.EndedAtUtc = session.StartedAtUtc!.Value.AddMinutes(session.DurationMinutes);
             if (session.RecordingStatus == "Recording")
             {
                 session.RecordingStatus = "Stopped";
-                session.RecordingEndedAtUtc = now;
-                session.RecordingRetentionUntilUtc = now.AddDays(90);
+                session.RecordingEndedAtUtc = session.EndedAtUtc;
+                session.RecordingRetentionUntilUtc = session.EndedAtUtc.Value.AddDays(90);
             }
 
             foreach (var participant in session.Participants.Where(x => x.Status is "Admitted" or "Pending"))
@@ -237,7 +241,10 @@ public sealed class MeetController : Controller
         if (participant is null)
             return NotFound();
 
-        if (participant.Status != "Pending" || participant.MeetSession.Status != "Live")
+        if (participant.Status != "Pending"
+            || participant.MeetSession.Status != "Live"
+            || !participant.MeetSession.StartedAtUtc.HasValue
+            || participant.MeetSession.StartedAtUtc.Value.AddMinutes(participant.MeetSession.DurationMinutes) <= DateTime.UtcNow)
             return RedirectToAction(nameof(Room), new { id = participant.MeetSessionId });
 
         if (string.Equals(decision, "admit", StringComparison.OrdinalIgnoreCase))
@@ -333,8 +340,8 @@ public sealed class MeetController : Controller
                 break;
             case "stop" when session.RecordingStatus == "Recording":
                 session.RecordingStatus = "Stopped";
-                session.RecordingEndedAtUtc = now;
-                session.RecordingRetentionUntilUtc = now.AddDays(90);
+                session.RecordingEndedAtUtc = session.EndedAtUtc;
+                session.RecordingRetentionUntilUtc = session.EndedAtUtc.Value.AddDays(90);
                 break;
             case "delete" when session.RecordingStatus == "Stopped":
                 session.RecordingStatus = "Deleted";
@@ -363,7 +370,7 @@ public sealed class MeetController : Controller
         foreach (var session in expired)
         {
             session.Status = "Completed";
-            session.EndedAtUtc = now;
+            session.EndedAtUtc = session.StartedAtUtc!.Value.AddMinutes(session.DurationMinutes);
             if (session.RecordingStatus == "Recording")
             {
                 session.RecordingStatus = "Stopped";
@@ -371,7 +378,7 @@ public sealed class MeetController : Controller
                 session.RecordingRetentionUntilUtc = now.AddDays(90);
             }
 
-            foreach (var participant in session.Participants.Where(x => x.Status == "Admitted"))
+            foreach (var participant in session.Participants.Where(x => x.Status is "Admitted" or "Pending"))
             {
                 participant.Status = "Left";
                 participant.LeftAtUtc = now;
