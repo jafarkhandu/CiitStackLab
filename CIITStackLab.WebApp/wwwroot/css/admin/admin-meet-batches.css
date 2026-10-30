@@ -1136,3 +1136,12 @@ body.meet-modal-open { overflow:hidden; }
     .meet-history-modal-header,.meet-history-modal-body { padding:17px; }
     .meet-history-summary { grid-template-columns:repeat(2,minmax(0,1fr)); }
 }
+
+
+.meet-history-summary { grid-template-columns:repeat(5,minmax(0,1fr)); }
+.meet-history-analytics { margin:-5px 0 18px;border:1px solid #e3ebf7;border-radius:13px;padding:14px 16px;background:#f8fbff; }
+.meet-history-analytics-heading { display:flex;justify-content:space-between;gap:12px;margin-bottom:9px;color:#475569;font-size:11px; }
+.meet-history-analytics-heading span { color:#1769ff;font-weight:800; }
+.meet-history-progress { height:9px;overflow:hidden;border-radius:20px;background:#e6edf7; }
+.meet-history-progress span { display:block;height:100%;border-radius:inherit;background:linear-gradient(90deg,#2563eb,#60a5fa);transition:width .25s ease; }
+@media(max-width:700px) { .meet-history-summary { grid-template-columns:repeat(2,minmax(0,1fr)); } }
