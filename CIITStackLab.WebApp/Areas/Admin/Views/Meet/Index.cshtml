@@ -1,0 +1,159 @@
+@model CIITStackLab.WebApp.Models.MeetBatchIndexViewModel
+
+@{
+    ViewData["Title"] = "Meet Batches";
+    var message = TempData["MeetBatchMessage"] as string;
+    var messageType = TempData["MeetBatchMessageType"] as string;
+}
+
+<section class="ciit-admin-page meet-batches-page">
+    <div class="meet-page-header">
+        <div>
+            <span class="ciit-admin-eyebrow">Meet Management</span>
+            <h1>Batch Management</h1>
+            <p>Create meeting batches and manage registered student access.</p>
+        </div>
+        <div class="meet-header-count">
+            <strong>@Model.ActiveBatches.Count</strong>
+            <span>Active batches</span>
+        </div>
+    </div>
+
+    @if (!string.IsNullOrWhiteSpace(message))
+    {
+        <div class="meet-alert @(messageType == "success" ? "is-success" : "is-error")" role="alert">
+            <span>@message</span>
+            <button type="button" class="meet-alert-close" aria-label="Close message">&times;</button>
+        </div>
+    }
+
+    <div class="meet-batch-layout">
+        <section class="meet-panel meet-create-panel">
+            <div class="meet-panel-heading">
+                <div class="meet-panel-icon"><i class="bi bi-people-fill"></i></div>
+                <div>
+                    <h2>Create batch</h2>
+                    <p>Choose a name and add registered students.</p>
+                </div>
+            </div>
+
+            <form asp-area="Admin" asp-controller="Meet" asp-action="Create" method="post">
+                @Html.AntiForgeryToken()
+                <div class="meet-form-field">
+                    <label for="batchName">Batch name</label>
+                    <input id="batchName" name="name" type="text" maxlength="100" required placeholder="e.g. Full Stack - Morning" />
+                </div>
+                <div class="meet-form-field">
+                    <label for="batchDescription">Description <span>(optional)</span></label>
+                    <textarea id="batchDescription" name="description" rows="3" maxlength="500" placeholder="Add a short description"></textarea>
+                </div>
+                <div class="meet-form-field">
+                    <div class="meet-student-picker-heading">
+                        <label>Assign students</label>
+                        <span>@Model.Students.Count available</span>
+                    </div>
+                    <input class="meet-student-search" id="meetStudentSearch" type="search" placeholder="Search students..." autocomplete="off" />
+                    <div class="meet-student-picker" id="meetStudentPicker">
+                        @if (Model.Students.Count == 0)
+                        {
+                            <p class="meet-no-students">No active registered students are available.</p>
+                        }
+                        @foreach (var student in Model.Students)
+                        {
+                            <label class="meet-student-option" data-search="@($"{student.UserName} {student.Email}".ToLowerInvariant())">
+                                <input type="checkbox" name="studentIds" value="@student.Id" />
+                                <span class="meet-student-option-copy">
+                                    <strong>@student.UserName</strong>
+                                    <small>@(string.IsNullOrWhiteSpace(student.Email) ? "No email available" : student.Email)</small>
+                                </span>
+                            </label>
+                        }
+                    </div>
+                </div>
+                <button type="submit" class="meet-primary-button">
+                    <i class="bi bi-plus-lg"></i>
+                    Create batch
+                </button>
+            </form>
+        </section>
+
+        <section class="meet-batch-list-section">
+            <div class="meet-section-heading">
+                <div>
+                    <span class="ciit-admin-eyebrow">Your workspace</span>
+                    <h2>Active batches</h2>
+                </div>
+                <span class="meet-count-pill">@Model.ActiveBatches.Count batches</span>
+            </div>
+
+            @if (Model.ActiveBatches.Count == 0)
+            {
+                <div class="meet-empty-state">
+                    <i class="bi bi-people"></i>
+                    <h3>No batches created yet</h3>
+                    <p>Create your first batch to start organizing meeting participants.</p>
+                </div>
+            }
+            else
+            {
+                <div class="meet-batch-grid">
+                    @foreach (var batch in Model.ActiveBatches)
+                    {
+                        <article class="meet-batch-card">
+                            <div class="meet-batch-card-top">
+                                <span class="meet-batch-status"><span></span> Active</span>
+                                <span class="meet-batch-code">@batch.BatchCode</span>
+                            </div>
+                            <h3>@batch.Name</h3>
+                            <p class="meet-batch-description">@(string.IsNullOrWhiteSpace(batch.Description) ? "No description added." : batch.Description)</p>
+                            <div class="meet-batch-meta">
+                                <span><i class="bi bi-people"></i> @batch.MemberCount students</span>
+                                <span><i class="bi bi-calendar3"></i> @batch.CreatedAtUtc.ToLocalTime().ToString("dd MMM yyyy")</span>
+                            </div>
+                            <div class="meet-batch-actions">
+                                <a asp-area="Admin" asp-controller="Meet" asp-action="Details" asp-route-id="@batch.Id" class="meet-secondary-button">Manage batch <i class="bi bi-arrow-right"></i></a>
+                                <form asp-area="Admin" asp-controller="Meet" asp-action="Archive" method="post" onsubmit="return confirm('Move this batch to archive?');">
+                                    @Html.AntiForgeryToken()
+                                    <input type="hidden" name="id" value="@batch.Id" />
+                                    <button type="submit" class="meet-icon-button" title="Archive batch" aria-label="Archive @batch.Name"><i class="bi bi-archive"></i></button>
+                                </form>
+                            </div>
+                        </article>
+                    }
+                </div>
+            }
+        </section>
+    </div>
+
+    @if (Model.ArchivedBatches.Count > 0)
+    {
+        <section class="meet-archive-section">
+            <div class="meet-section-heading">
+                <div>
+                    <span class="ciit-admin-eyebrow">Stored batches</span>
+                    <h2>Archived batches</h2>
+                </div>
+                <span class="meet-count-pill">@Model.ArchivedBatches.Count archived</span>
+            </div>
+            <div class="meet-archived-list">
+                @foreach (var batch in Model.ArchivedBatches)
+                {
+                    <div class="meet-archived-item">
+                        <div>
+                            <strong>@batch.Name</strong>
+                            <span>@batch.BatchCode · @batch.MemberCount students</span>
+                        </div>
+                        <span class="meet-archived-label">Archived</span>
+                    </div>
+                }
+            </div>
+        </section>
+    }
+</section>
+
+@section Styles {
+    <link rel="stylesheet" href="~/css/admin/admin-meet-batches.css" asp-append-version="true" />
+}
+@section Scripts {
+    <script src="~/js/admin/admin-meet-batches.js" asp-append-version="true"></script>
+}
