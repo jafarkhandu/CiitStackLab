@@ -226,8 +226,6 @@ document.addEventListener("DOMContentLoaded", () => {
         }
 
         renderParticipants(state.participants || []);
-        room.dataset.participantStatus = (state.participants || [])
-            .find(item => item.status === "Pending" || item.status === "Admitted")?.status || "";
     };
 
     connection.on("MeetRoomUpdated", updateRoom);
