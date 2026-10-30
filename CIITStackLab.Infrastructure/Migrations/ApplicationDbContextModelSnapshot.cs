@@ -632,54 +632,7 @@ namespace CIITStackLab.Infrastructure.Migrations
                     b.ToTable("tblpayment_transactions", "erpsystem");
                 });
 
-            modelBuilder.Entity("CIITStackLab.Domain.Entities.StudentAssessmentAttempt", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("int")
-                        .HasColumnName("attempt_id");
-
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
-
-                    b.Property<string>("AnswersJson")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)")
-                        .HasColumnName("answers_json");
-
-                    b.Property<int?>("ContentId")
-                        .HasColumnType("int")
-                        .HasColumnName("content_id");
-
-                    b.Property<int>("CourseId")
-                        .HasColumnType("int")
-                        .HasColumnName("course_id");
-
-                    b.Property<int>("Score")
-                        .HasColumnType("int")
-                        .HasColumnName("score");
-
-                    b.Property<DateTime>("SubmittedAt")
-                        .HasColumnType("datetime2")
-                        .HasColumnName("submitted_at");
-
-                    b.Property<int>("TotalQuestions")
-                        .HasColumnType("int")
-                        .HasColumnName("total_questions");
-
-                    b.Property<string>("UserId")
-                        .IsRequired()
-                        .HasMaxLength(450)
-                        .HasColumnType("nvarchar(450)")
-                        .HasColumnName("user_id");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("UserId", "CourseId", "ContentId", "SubmittedAt")
-                        .IsDescending(false, false, false, true)
-                        .HasDatabaseName("IX_tblstudent_assessment_attempts_user_course_content_date");
-
-                    b.ToTable("tblstudent_assessment_attempts", "erpsystem");
-                });
+);
 
             modelBuilder.Entity("CIITStackLab.Domain.Entities.PracticeExamAttempt", b =>
                 {

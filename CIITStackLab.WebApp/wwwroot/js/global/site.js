@@ -862,19 +862,9 @@ document.addEventListener("DOMContentLoaded", function () {
             );
         });
 
-        // MCQs, interview answers and practice programs each get their own short
-        // pages while remaining inside the same chapter assessment card.
+        // Interview answers and practice programs each get their own short pages
+        // while remaining inside the same chapter assessment card.
         document.querySelectorAll(".ciit-learning-chapter-assessment").forEach(function (assessment) {
-            const mcqSection = assessment.querySelector("#chapter-mcqs-" + assessment.id.replace("chapter-assessment-", ""));
-            if (mcqSection) {
-                paginateItems(
-                    mcqSection,
-                    Array.from(mcqSection.querySelectorAll(":scope > .ciit-learning-assessment-question")),
-                    5,
-                    "MCQ pages"
-                );
-            }
-
             assessment.querySelectorAll(".ciit-learning-assessment-subsection").forEach(function (subsection) {
                 paginateItems(
                     subsection,
@@ -882,37 +872,6 @@ document.addEventListener("DOMContentLoaded", function () {
                     5,
                     subsection.querySelector("h5")?.textContent?.trim() + " pages"
                 );
-            });
-        });
-
-        // The graded quiz is also paginated. Validate all questions before POST,
-        // including questions currently on hidden pages.
-        document.querySelectorAll(".ciit-assessment-form").forEach(function (form) {
-            const questions = Array.from(form.querySelectorAll(":scope > .ciit-learning-question"));
-            const pagination = paginateItems(form, questions, 5, "Knowledge check pages");
-            if (!pagination) return;
-
-            form.querySelectorAll('input[type="radio"][required]').forEach(function (input) {
-                input.removeAttribute("required");
-            });
-
-            form.addEventListener("submit", function (event) {
-                const unanswered = questions.find(function (question) {
-                    return !question.querySelector('input[type="radio"]:checked');
-                });
-                if (!unanswered) return;
-
-                event.preventDefault();
-                const pages = Array.from(form.querySelectorAll(":scope > [data-learning-subpage]"));
-                const pageIndex = pages.findIndex(function (page) {
-                    return page.contains(unanswered);
-                });
-                if (pageIndex >= 0) pagination.showPage(pageIndex);
-                unanswered.scrollIntoView({ behavior: "smooth", block: "center" });
-                unanswered.classList.add("ciit-learning-question-unanswered");
-                window.setTimeout(function () {
-                    unanswered.classList.remove("ciit-learning-question-unanswered");
-                }, 1800);
             });
         });
 
