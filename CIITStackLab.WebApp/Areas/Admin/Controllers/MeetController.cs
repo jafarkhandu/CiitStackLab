@@ -115,7 +115,77 @@ public sealed class MeetController : Controller
         });
     }
 
+        [HttpGet]
+    public async Task<IActionResult> SessionDetails(int id, CancellationToken cancellationToken)
+    {
+        var session = await _dbContext.MeetSessions.AsNoTracking()
+            .Include(item => item.MeetBatch)
+            .SingleOrDefaultAsync(item => item.Id == id, cancellationToken);
+        if (session is null) return NotFound();
+
+        var members = await (
+            from member in _dbContext.MeetBatchMembers.AsNoTracking()
+            join user in _dbContext.Users.AsNoTracking() on member.StudentUserId equals user.Id
+            where member.MeetBatchId == session.MeetBatchId
+            orderby user.UserName
+            select new { user.Id, Name = user.UserName ?? user.Email ?? "Student", user.Email }
+        ).ToListAsync(cancellationToken);
+
+        var participants = await _dbContext.MeetSessionParticipants.AsNoTracking()
+            .Where(item => item.MeetSessionId == id)
+            .ToDictionaryAsync(item => item.StudentUserId, cancellationToken);
+
+        var attendance = members.Select(member =>
+        {
+            participants.TryGetValue(member.Id, out var participant);
+            return new
+            {
+                member.Name,
+                member.Email,
+                Attended = participant?.Status is "Admitted" or "Left",
+                Status = participant?.Status ?? "Not joined"
+            };
+        }).ToList();
+
+        var runtimeEnd = session.EndedAtUtc ?? (session.Status == "Live" ? DateTime.UtcNow : (DateTime?)null);
+        var runtimeMinutes = session.StartedAtUtc.HasValue && runtimeEnd.HasValue
+            ? Math.Max(0, (int)Math.Round((runtimeEnd.Value - session.StartedAtUtc.Value).TotalMinutes))
+            : 0;
+
+        return Json(new
+        {
+            session.Id, session.Title, session.Description, BatchName = session.MeetBatch.Name,
+            session.Status, session.DurationMinutes, session.StartsAtUtc, session.StartedAtUtc,
+            session.EndedAtUtc, RuntimeMinutes = runtimeMinutes, TotalStudents = members.Count,
+            AttendedStudents = attendance.Count(item => item.Attended),
+            NotAttendedStudents = attendance.Count(item => !item.Attended),
+            Students = attendance
+        });
+    }
+
     [HttpPost]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> DeleteSession(int id, CancellationToken cancellationToken)
+    {
+        var session = await _dbContext.MeetSessions
+            .SingleOrDefaultAsync(item => item.Id == id, cancellationToken);
+        if (session is null) return NotFound();
+        if (session.Status is "Live" or "Scheduled")
+            return BadRequest("Only completed or cancelled meeting history can be deleted.");
+
+        var participants = await _dbContext.MeetSessionParticipants
+            .Where(item => item.MeetSessionId == id)
+            .ToListAsync(cancellationToken);
+        _dbContext.MeetSessionParticipants.RemoveRange(participants);
+        _dbContext.MeetSessions.Remove(session);
+        await _dbContext.SaveChangesAsync(cancellationToken);
+
+        return Request.Headers.XRequestedWith == "XMLHttpRequest"
+            ? Json(new { success = true, sessionId = id })
+            : RedirectToAction(nameof(Index));
+    }
+
+[HttpPost]
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> Start(int id, CancellationToken cancellationToken)
     {
