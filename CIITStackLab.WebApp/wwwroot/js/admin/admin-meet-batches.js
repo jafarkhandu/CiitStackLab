@@ -70,6 +70,37 @@ document.addEventListener("DOMContentLoaded", () => {
         });
 
         setMode("instant");
+        form.addEventListener("submit", async event => {
+            event.preventDefault();
+
+            const feedback = form.querySelector(".meet-modal-feedback");
+            submitButton.disabled = true;
+            if (feedback) {
+                feedback.hidden = true;
+                feedback.textContent = "";
+            }
+
+            try {
+                const response = await fetch(form.action, {
+                    method: "POST",
+                    body: new FormData(form),
+                    headers: { "X-Requested-With": "XMLHttpRequest" }
+                });
+                const result = await response.json();
+
+                if (!response.ok || !result.success) {
+                    throw new Error(result.message || "Unable to create this meeting.");
+                }
+
+                closeModal();
+            } catch (error) {
+                if (feedback) {
+                    feedback.textContent = error.message;
+                    feedback.hidden = false;
+                }
+                submitButton.disabled = false;
+            }
+        });
         openModal();
     };
 
