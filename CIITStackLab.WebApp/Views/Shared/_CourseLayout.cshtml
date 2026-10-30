@@ -82,6 +82,7 @@
     @if (isLearnPage)
     {
         <link rel="stylesheet" href="~/css/student/learning-modern.css" asp-append-version="true" />
+        <link rel="stylesheet" href="~/css/student/learn-glass.css" asp-append-version="true" />
     }
 </head>
 <body class="ciit-course-environment-body @(isLearnPage ? "ciit-learning-mode" : "")">
@@ -329,6 +330,7 @@
     @if (isLearnPage)
     {
         <script defer src="~/js/student/learning-modern.js" asp-append-version="true"></script>
+        <script defer src="~/js/student/learn-glass.js" asp-append-version="true"></script>
     }
     @await RenderSectionAsync("Scripts", required: false)
 </body>
