@@ -680,6 +680,54 @@ namespace CIITStackLab.Infrastructure.Migrations
                         .HasColumnType("datetime2")
                         .HasColumnName("starts_at_utc");
 
+                    b.Property<DateTime?>("StartedAtUtc")
+                        .HasColumnType("datetime2")
+                        .HasColumnName("started_at_utc");
+
+                    b.Property<DateTime?>("EndedAtUtc")
+                        .HasColumnType("datetime2")
+                        .HasColumnName("ended_at_utc");
+
+                    b.Property<DateTime?>("CancelledAtUtc")
+                        .HasColumnType("datetime2")
+                        .HasColumnName("cancelled_at_utc");
+
+                    b.Property<bool>("WaitingRoomEnabled")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("bit")
+                        .HasDefaultValue(true)
+                        .HasColumnName("waiting_room_enabled");
+
+                    b.Property<bool>("RecordingEnabled")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("bit")
+                        .HasDefaultValue(false)
+                        .HasColumnName("recording_enabled");
+
+                    b.Property<string>("RecordingStatus")
+                        .IsRequired()
+                        .ValueGeneratedOnAdd()
+                        .HasMaxLength(20)
+                        .HasColumnType("nvarchar(20)")
+                        .HasDefaultValue("Disabled")
+                        .HasColumnName("recording_status");
+
+                    b.Property<DateTime?>("RecordingStartedAtUtc")
+                        .HasColumnType("datetime2")
+                        .HasColumnName("recording_started_at_utc");
+
+                    b.Property<DateTime?>("RecordingEndedAtUtc")
+                        .HasColumnType("datetime2")
+                        .HasColumnName("recording_ended_at_utc");
+
+                    b.Property<DateTime?>("RecordingRetentionUntilUtc")
+                        .HasColumnType("datetime2")
+                        .HasColumnName("recording_retention_until_utc");
+
+                    b.Property<DateTime?>("RecordingDeletedAtUtc")
+                        .HasColumnType("datetime2")
+                        .HasColumnName("recording_deleted_at_utc");
+
                     b.Property<string>("Status")
                         .IsRequired()
                         .HasMaxLength(20)
@@ -705,6 +753,75 @@ namespace CIITStackLab.Infrastructure.Migrations
                         .HasDatabaseName("IX_meet_sessions_batch_start");
 
                     b.ToTable("tbl_meet_sessions", "erpsystem");
+                });
+
+            modelBuilder.Entity("CIITStackLab.Domain.Entities.MeetSessionParticipant", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int")
+                        .HasColumnName("meet_session_participant_id");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<bool>("CanUseMicrophone")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("bit")
+                        .HasDefaultValue(true)
+                        .HasColumnName("can_use_microphone");
+
+                    b.Property<bool>("CanUseCamera")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("bit")
+                        .HasDefaultValue(true)
+                        .HasColumnName("can_use_camera");
+
+                    b.Property<bool>("CanShareScreen")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("bit")
+                        .HasDefaultValue(false)
+                        .HasColumnName("can_share_screen");
+
+                    b.Property<DateTime?>("AdmittedAtUtc")
+                        .HasColumnType("datetime2")
+                        .HasColumnName("admitted_at_utc");
+
+                    b.Property<DateTime?>("LeftAtUtc")
+                        .HasColumnType("datetime2")
+                        .HasColumnName("left_at_utc");
+
+                    b.Property<DateTime>("RequestedAtUtc")
+                        .HasColumnType("datetime2")
+                        .HasColumnName("requested_at_utc");
+
+                    b.Property<int>("MeetSessionId")
+                        .HasColumnType("int")
+                        .HasColumnName("meet_session_id");
+
+                    b.Property<string>("StudentUserId")
+                        .IsRequired()
+                        .HasMaxLength(450)
+                        .HasColumnType("nvarchar(450)")
+                        .HasColumnName("student_user_id");
+
+                    b.Property<string>("Status")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("nvarchar(20)")
+                        .HasColumnName("status");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("StudentUserId");
+
+                    b.HasIndex("MeetSessionId", "Status")
+                        .HasDatabaseName("IX_meet_session_participants_session_status");
+
+                    b.HasIndex("MeetSessionId", "StudentUserId")
+                        .IsUnique()
+                        .HasDatabaseName("UX_meet_session_participants_session_student");
+
+                    b.ToTable("tbl_meet_session_participants", "erpsystem");
                 });
 
             modelBuilder.Entity("CIITStackLab.Domain.Entities.PaymentTransaction", b =>
@@ -1604,6 +1721,23 @@ namespace CIITStackLab.Infrastructure.Migrations
                     b.Navigation("MeetBatch");
                 });
 
+            modelBuilder.Entity("CIITStackLab.Domain.Entities.MeetSessionParticipant", b =>
+                {
+                    b.HasOne("CIITStackLab.Domain.Entities.MeetSession", "MeetSession")
+                        .WithMany("Participants")
+                        .HasForeignKey("MeetSessionId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("CIITStackLab.Infrastructure.Identity.ApplicationUser", null)
+                        .WithMany()
+                        .HasForeignKey("StudentUserId")
+                        .OnDelete(DeleteBehavior.NoAction)
+                        .IsRequired();
+
+                    b.Navigation("MeetSession");
+                });
+
             modelBuilder.Entity("CIITStackLab.Domain.Entities.MeetSession", b =>
                 {
                     b.HasOne("CIITStackLab.Infrastructure.Identity.ApplicationUser", null)
@@ -1717,6 +1851,11 @@ namespace CIITStackLab.Infrastructure.Migrations
                     b.Navigation("Members");
 
                     b.Navigation("Sessions");
+                });
+
+            modelBuilder.Entity("CIITStackLab.Domain.Entities.MeetSession", b =>
+                {
+                    b.Navigation("Participants");
                 });
 
             modelBuilder.Entity("CIITStackLab.Domain.Entities.Topic", b =>
