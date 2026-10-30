@@ -694,7 +694,8 @@ namespace CIITStackLab.Infrastructure.Migrations
 
                     b.HasKey("Id");
 
-                    b.HasIndex("CreatedByUserId");
+                    b.HasIndex("CreatedByUserId")
+                        .HasDatabaseName("IX_meet_sessions_created_by");
 
                     b.HasIndex("RoomName")
                         .IsUnique()
