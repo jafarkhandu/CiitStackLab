@@ -5,7 +5,7 @@
     ViewData["Title"] = "Meet";
 }
 
-<section class="ciit-student-meet-page">
+<section class="ciit-student-meet-page" data-meet-student-index data-hub-url="/hubs/meet">
     <header class="ciit-student-meet-hero">
         <div class="ciit-student-meet-hero-copy">
             <span class="ciit-student-meet-eyebrow"><i class="bi bi-camera-video-fill"></i> STUDENT MEET</span>
@@ -39,10 +39,10 @@
     }
     else
     {
-        <div class="ciit-student-meet-grid">
+        <div class="ciit-student-meet-grid" data-meet-student-batch-list>
             @foreach (var batch in Model)
             {
-                <article class="ciit-student-meet-card">
+                <article class="ciit-student-meet-card" data-meet-batch-id="@batch.Id">
                     <div class="ciit-student-meet-card-top">
                         <span class="ciit-student-meet-status"><span></span> Batch access active</span>
                         <span class="ciit-student-meet-card-icon"><i class="bi bi-people-fill"></i></span>
@@ -96,3 +96,7 @@
 @section Styles {
     <link rel="stylesheet" href="~/css/student/student-meet.css" asp-append-version="true" />
 }
+
+<div hidden data-meet-antiforgery>@Html.AntiForgeryToken()</div>
+<script src="https://cdn.jsdelivr.net/npm/@microsoft/signalr@10.0.0/dist/browser/signalr.min.js"></script>
+<script src="~/js/meet/meet-index-live.js" asp-append-version="true"></script>
