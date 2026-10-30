@@ -48,6 +48,15 @@ public sealed class MeetController : Controller
                     .OrderByDescending(session => session.StartsAtUtc)
                     .Select(session => (int?)session.Id)
                     .FirstOrDefault(),
+                UpcomingSession = batch.Sessions
+                    .Where(session => session.Status == "Scheduled" && session.StartsAtUtc > now)
+                    .OrderBy(session => session.StartsAtUtc)
+                    .Select(session => new StudentMeetUpcomingSessionViewModel
+                    {
+                        Title = session.Title,
+                        StartsAtUtc = session.StartsAtUtc
+                    })
+                    .FirstOrDefault(),
                 RecentSessions = batch.Sessions
                     .Where(session => session.Status == "Completed" || session.Status == "Cancelled")
                     .OrderByDescending(session => session.EndedAtUtc ?? session.CancelledAtUtc ?? session.StartedAtUtc ?? session.StartsAtUtc)
