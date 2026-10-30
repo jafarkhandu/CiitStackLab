@@ -15,10 +15,12 @@ namespace CIITStackLab.WebApp.Areas.Admin.Controllers;
 public sealed class MeetController : Controller
 {
     private readonly ApplicationDbContext _dbContext;
+    private readonly MeetRealtimeService _meetRealtime;
 
-    public MeetController(ApplicationDbContext dbContext)
+    public MeetController(ApplicationDbContext dbContext, MeetRealtimeService meetRealtime)
     {
         _dbContext = dbContext;
+        _meetRealtime = meetRealtime;
     }
 
     [HttpGet]
@@ -145,6 +147,7 @@ public sealed class MeetController : Controller
         session.Status = "Live";
         session.StartedAtUtc = now;
         await _dbContext.SaveChangesAsync(cancellationToken);
+        await _meetRealtime.PublishSessionUpdateAsync(id, cancellationToken);
 
         return RedirectToAction(nameof(Room), new { id });
     }
@@ -179,6 +182,7 @@ public sealed class MeetController : Controller
             }
 
             await _dbContext.SaveChangesAsync(cancellationToken);
+            await _meetRealtime.PublishSessionUpdateAsync(id, cancellationToken);
         }
 
         return RedirectToAction(nameof(Index));
@@ -200,6 +204,7 @@ public sealed class MeetController : Controller
         session.Status = "Cancelled";
         session.CancelledAtUtc = DateTime.UtcNow;
         await _dbContext.SaveChangesAsync(cancellationToken);
+        await _meetRealtime.PublishSessionUpdateAsync(id, cancellationToken);
 
         return RedirectWithMessage("Meeting cancelled.", true);
     }
@@ -227,6 +232,7 @@ public sealed class MeetController : Controller
         }
 
         await _dbContext.SaveChangesAsync(cancellationToken);
+        await _meetRealtime.PublishSessionUpdateAsync(id, cancellationToken);
         return RedirectToAction(nameof(Room), new { id });
     }
 
@@ -262,6 +268,7 @@ public sealed class MeetController : Controller
         }
 
         await _dbContext.SaveChangesAsync(cancellationToken);
+        await _meetRealtime.PublishSessionUpdateAsync(participant.MeetSessionId, cancellationToken);
         return RedirectToAction(nameof(Room), new { id = participant.MeetSessionId });
     }
 
@@ -280,6 +287,7 @@ public sealed class MeetController : Controller
             participant.Status = "Removed";
             participant.LeftAtUtc = DateTime.UtcNow;
             await _dbContext.SaveChangesAsync(cancellationToken);
+            await _meetRealtime.PublishSessionUpdateAsync(participant.MeetSessionId, cancellationToken);
         }
 
         return RedirectToAction(nameof(Room), new { id = participant.MeetSessionId });
@@ -304,6 +312,7 @@ public sealed class MeetController : Controller
         participant.CanUseCamera = canUseCamera;
         participant.CanShareScreen = canShareScreen;
         await _dbContext.SaveChangesAsync(cancellationToken);
+        await _meetRealtime.PublishSessionUpdateAsync(participant.MeetSessionId, cancellationToken);
 
         return RedirectToAction(nameof(Room), new { id = participant.MeetSessionId });
     }
@@ -354,6 +363,7 @@ public sealed class MeetController : Controller
         }
 
         await _dbContext.SaveChangesAsync(cancellationToken);
+        await _meetRealtime.PublishSessionUpdateAsync(id, cancellationToken);
         return RedirectToAction(nameof(Room), new { id });
     }
 
@@ -487,6 +497,7 @@ public sealed class MeetController : Controller
         });
 
         await _dbContext.SaveChangesAsync(cancellationToken);
+        await _meetRealtime.PublishSessionUpdateAsync(session.Id, cancellationToken);
         TempData["MeetBatchMessage"] = isInstant
             ? "Instant meeting created. Live room is ready for the conferencing phase."
             : "Meeting scheduled successfully.";
