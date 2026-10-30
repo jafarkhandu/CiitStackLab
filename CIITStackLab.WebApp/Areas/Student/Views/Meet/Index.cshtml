@@ -69,6 +69,14 @@
                             <i class="bi bi-hourglass-split"></i> Waiting for admin to start
                         </div>
                     }
+                    @if (batch.UpcomingSession is not null)
+                    {
+                        <div class="ciit-student-meet-upcoming">
+                            <span>UPCOMING MEETING</span>
+                            <strong>@batch.UpcomingSession.Title</strong>
+                            <small>@batch.UpcomingSession.StartsAtUtc.ToLocalTime().ToString("dd MMM yyyy, hh:mm tt")</small>
+                        </div>
+                    }
                     @if (batch.RecentSessions.Count > 0)
                     {
                         <div class="ciit-student-meet-history">
