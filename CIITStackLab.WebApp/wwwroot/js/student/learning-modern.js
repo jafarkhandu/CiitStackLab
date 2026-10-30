@@ -1,6 +1,134 @@
 (function () {
     function ensureReferenceStyles() {
-        // Reference styling is now loaded statically by the Learn page layout.
+        const styleId = 'ciit-learning-layout-fixes';
+        if (document.getElementById(styleId)) {
+            return;
+        }
+
+        const style = document.createElement('style');
+        style.id = styleId;
+        style.textContent = `
+            .ciit-learning-mode .ciit-learning-main-card {
+                width: 100%;
+                max-width: 780px;
+                margin: 0 auto;
+                padding: 32px 44px 36px;
+                border-radius: 22px;
+                background: rgba(255, 255, 255, .88);
+                backdrop-filter: none;
+                -webkit-backdrop-filter: none;
+            }
+
+            .ciit-learning-mode .ciit-learning-resource-title {
+                display: none;
+            }
+
+            .ciit-learning-mode .ciit-learning-notes-panel,
+            .ciit-learning-mode .ciit-learning-notes-content {
+                margin: 0;
+                padding: 0;
+                border: 0;
+                border-radius: 0;
+                background: transparent;
+                box-shadow: none;
+            }
+
+            .ciit-learning-mode .ciit-learning-lesson-heading {
+                margin: 0 0 8px;
+            }
+
+            .ciit-learning-mode .ciit-learning-lesson-heading .ciit-learning-eyebrow {
+                margin-bottom: 4px;
+            }
+
+            .ciit-learning-mode .ciit-learning-lesson-heading .ciit-learning-chapter-title {
+                margin: 0;
+                font-size: 32px;
+                line-height: 1.2;
+                font-weight: 800;
+                letter-spacing: -.7px;
+            }
+
+            .ciit-learning-mode .ciit-learning-topic-step-progress {
+                display: none;
+            }
+
+            .ciit-learning-mode .ciit-learning-notes-content h2,
+            .ciit-learning-mode .ciit-learning-notes-content h3,
+            .ciit-learning-mode .ciit-learning-notes-content h4 {
+                scroll-margin-top: 98px;
+            }
+
+            .ciit-learning-mode .ciit-learning-page {
+                scroll-behavior: smooth;
+            }
+
+            @media (min-width: 1200px) {
+                .ciit-learning-mode .ciit-learning-shell {
+                    display: grid !important;
+                    grid-template-columns: minmax(0, 1fr) 310px !important;
+                    grid-template-areas: "main sidebar";
+                    width: min(1110px, 100%) !important;
+                    max-width: 1110px !important;
+                    margin-right: auto;
+                    margin-left: auto;
+                }
+
+                .ciit-learning-mode .ciit-learning-main {
+                    grid-area: main;
+                    display: flex;
+                    justify-content: center;
+                    min-width: 0;
+                }
+
+                .ciit-learning-mode .ciit-learning-shell > .ciit-learning-sidebar {
+                    grid-area: sidebar;
+                    width: 310px;
+                }
+            }
+
+            @media (min-width: 992px) and (max-width: 1199.98px) {
+                .ciit-learning-mode .ciit-learning-shell {
+                    display: grid !important;
+                    grid-template-columns: minmax(0, 1fr) !important;
+                    grid-template-areas: "main" "sidebar";
+                    width: 100% !important;
+                    max-width: 780px !important;
+                    margin-right: auto;
+                    margin-left: auto;
+                }
+
+                .ciit-learning-mode .ciit-learning-main {
+                    grid-area: main;
+                }
+
+                .ciit-learning-mode .ciit-learning-shell > .ciit-learning-sidebar {
+                    grid-area: sidebar;
+                    position: static !important;
+                    width: 100%;
+                    height: auto !important;
+                    max-height: 42vh !important;
+                }
+            }
+
+            @media (max-width: 991.98px) {
+                .ciit-learning-mode .ciit-learning-shell > .ciit-learning-sidebar {
+                    grid-area: sidebar;
+                }
+
+                .ciit-learning-mode .ciit-learning-main {
+                    grid-area: main;
+                }
+            }
+
+            @media (prefers-reduced-motion: reduce) {
+                .ciit-learning-mode .ciit-learning-page {
+                    scroll-behavior: auto;
+                }
+            }
+        `;
+
+        document.head.appendChild(style);
     }
 
     function initModernLearningPage() {
@@ -117,7 +245,10 @@
             }
 
             const assessmentTarget = learningPage.querySelector('[id^="lesson-assessment-"]');
-            assessmentTarget?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            assessmentTarget?.scrollIntoView({
+                behavior: window.matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth',
+                block: 'start'
+            });
         };
 
         if (assessmentLink) {
