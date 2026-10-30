@@ -278,6 +278,7 @@
             history.pushState({ ciitLearningChapter: true }, '', href);
             document.title = nextDocument.title || document.title;
             enhanceLearningShell();
+            window.dispatchEvent(new Event('ciit:learning-shell-updated'));
             syncSidebarToggle();
             window.scrollTo({ top: 0, behavior: window.matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth' });
         } catch (error) {
