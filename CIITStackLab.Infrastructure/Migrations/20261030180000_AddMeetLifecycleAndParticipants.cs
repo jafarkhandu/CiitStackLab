@@ -83,6 +83,11 @@ public partial class AddMeetLifecycleAndParticipants : Migration
             type: "datetime2",
             nullable: true);
 
+        migrationBuilder.Sql(
+            "UPDATE [erpsystem].[tbl_meet_sessions] " +
+            "SET [started_at_utc] = [starts_at_utc] " +
+            "WHERE [status] = N'Live' AND [started_at_utc] IS NULL;");
+
         migrationBuilder.CreateTable(
             name: "tbl_meet_session_participants",
             schema: "erpsystem",
