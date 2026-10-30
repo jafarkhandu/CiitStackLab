@@ -24,7 +24,8 @@ public sealed class PracticeExamsController : Controller
         _dbContext = dbContext;
     }
 
-    [HttpGet("/PracticeExams/Start/{courseId:int}/{topicId:int}")]
+    [HttpPost("/PracticeExams/Start")]
+    [ValidateAntiForgeryToken]
     public async Task<IActionResult> Start(
         int courseId,
         int topicId,
