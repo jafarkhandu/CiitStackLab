@@ -9,11 +9,16 @@ public sealed class MeetRealtimeService
 {
     private readonly ApplicationDbContext _dbContext;
     private readonly IHubContext<MeetHub> _hub;
+    private readonly ILogger<MeetRealtimeService> _logger;
 
-    public MeetRealtimeService(ApplicationDbContext dbContext, IHubContext<MeetHub> hub)
+    public MeetRealtimeService(
+        ApplicationDbContext dbContext,
+        IHubContext<MeetHub> hub,
+        ILogger<MeetRealtimeService> logger)
     {
         _dbContext = dbContext;
         _hub = hub;
+        _logger = logger;
     }
 
     public async Task PublishSessionUpdateAsync(int sessionId, CancellationToken cancellationToken = default)
@@ -87,24 +92,38 @@ public sealed class MeetRealtimeService
             }).ToList()
         };
 
-        foreach (var participant in participants)
+        try
         {
-            await _hub.Clients.User(participant.StudentUserId)
-                .SendAsync("MeetMyParticipantStatus", new
-                {
-                    sessionId = session.Id,
-                    status = participant.Status,
-                    sessionStatus = session.Status
-                }, cancellationToken);
+            foreach (var participant in participants)
+            {
+                await _hub.Clients.User(participant.StudentUserId)
+                    .SendAsync("MeetMyParticipantStatus", new
+                    {
+                        sessionId = session.Id,
+                        status = participant.Status,
+                        sessionStatus = session.Status
+                    }, cancellationToken);
+            }
+
+            await _hub.Clients.Group(MeetHub.SessionGroup(session.Id))
+                .SendAsync("MeetRoomUpdated", snapshot, cancellationToken);
+
+            await _hub.Clients.Group(MeetHub.BatchGroup(session.MeetBatchId))
+                .SendAsync("MeetBatchUpdated", snapshot, cancellationToken);
+
+            await _hub.Clients.Group(MeetHub.AdminGroup)
+                .SendAsync("MeetAdminUpdated", snapshot, cancellationToken);
         }
-
-        await _hub.Clients.Group(MeetHub.SessionGroup(session.Id))
-            .SendAsync("MeetRoomUpdated", snapshot, cancellationToken);
-
-        await _hub.Clients.Group(MeetHub.BatchGroup(session.MeetBatchId))
-            .SendAsync("MeetBatchUpdated", snapshot, cancellationToken);
-
-        await _hub.Clients.Group(MeetHub.AdminGroup)
-            .SendAsync("MeetAdminUpdated", snapshot, cancellationToken);
+        catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
+        {
+            throw;
+        }
+        catch (Exception exception)
+        {
+            _logger.LogWarning(
+                exception,
+                "Live Meet update delivery failed for session {MeetSessionId}. The saved meeting state remains available on the next page load.",
+                session.Id);
+        }
     }
 }
