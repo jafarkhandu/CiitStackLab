@@ -47,7 +47,18 @@ public sealed class MeetController : Controller
                         && session.StartedAtUtc.Value.AddMinutes(session.DurationMinutes) > now)
                     .OrderByDescending(session => session.StartsAtUtc)
                     .Select(session => (int?)session.Id)
-                    .FirstOrDefault()
+                    .FirstOrDefault(),
+                RecentSessions = batch.Sessions
+                    .Where(session => session.Status == "Completed" || session.Status == "Cancelled")
+                    .OrderByDescending(session => session.EndedAtUtc ?? session.CancelledAtUtc ?? session.StartedAtUtc ?? session.StartsAtUtc)
+                    .Take(3)
+                    .Select(session => new StudentMeetSessionHistoryViewModel
+                    {
+                        Title = session.Title,
+                        Status = session.Status,
+                        SessionDateUtc = session.EndedAtUtc ?? session.CancelledAtUtc ?? session.StartedAtUtc ?? session.StartsAtUtc
+                    })
+                    .ToList()
             })
             .ToListAsync(cancellationToken);
 
