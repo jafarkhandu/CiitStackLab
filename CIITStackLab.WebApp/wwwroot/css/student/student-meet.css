@@ -558,3 +558,8 @@
 .ciit-student-meet-history small{flex:0 0 auto;color:#8a98ad;font-size:8px;text-align:right}
 .ciit-student-meet-card{height:auto;min-height:218px}
 .ciit-student-meet-waiting{margin-top:auto}
+
+.ciit-student-meet-upcoming{display:grid;gap:3px;margin-top:9px;border:1px solid rgba(147,197,253,.42);border-radius:9px;padding:8px 9px;background:rgba(235,244,255,.72)}
+.ciit-student-meet-upcoming span{color:#3475ed;font-size:8px;font-weight:800;letter-spacing:.1em}
+.ciit-student-meet-upcoming strong{overflow:hidden;color:#3d5272;font-size:10px;text-overflow:ellipsis;white-space:nowrap}
+.ciit-student-meet-upcoming small{color:#8190a5;font-size:9px}
