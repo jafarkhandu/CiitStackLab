@@ -70,7 +70,7 @@ public sealed class MeetController : Controller
                     .Where(member => member.StudentUserId == studentId)
                     .Select(member => (DateTime?)member.AddedAtUtc)
                     .FirstOrDefault(),
-                Sessions = item.MeetSessions
+                Sessions = item.Sessions
                     .OrderBy(session => session.StartsAtUtc)
                     .Select(session => new StudentMeetSessionViewModel
                     {
