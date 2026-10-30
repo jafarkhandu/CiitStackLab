@@ -80,14 +80,21 @@ public sealed class PracticeExamsController : Controller
             {
                 var expiredQuestionIds = DeserializeQuestionIds(activeAttempt.QuestionIdsJson);
                 var savedAnswers = NormalizeAnswers(activeAttempt.AnswersJson, expiredQuestionIds);
-                activeAttempt.AnswersJson = JsonSerializer.Serialize(savedAnswers);
-                activeAttempt.TotalQuestions = expiredQuestionIds.Count;
-                activeAttempt.Score = await CalculateScoreAsync(
+                var expiredScore = await CalculateScoreAsync(
                     expiredQuestionIds,
                     savedAnswers,
                     cancellationToken);
-                activeAttempt.SubmittedAtUtc = activeAttempt.StartedAtUtc.AddMinutes(ExamDurationMinutes);
-                await _dbContext.SaveChangesAsync(cancellationToken);
+                await _dbContext.PracticeExamAttempts
+                    .Where(attempt => attempt.Id == activeAttempt.Id
+                        && attempt.UserId == userId
+                        && attempt.SubmittedAtUtc == null)
+                    .ExecuteUpdateAsync(
+                        setters => setters
+                            .SetProperty(attempt => attempt.AnswersJson, JsonSerializer.Serialize(savedAnswers))
+                            .SetProperty(attempt => attempt.TotalQuestions, expiredQuestionIds.Count)
+                            .SetProperty(attempt => attempt.Score, expiredScore)
+                            .SetProperty(attempt => attempt.SubmittedAtUtc, activeAttempt.StartedAtUtc.AddMinutes(ExamDurationMinutes)),
+                        cancellationToken);
                 return RedirectToAction(nameof(Result), new { attemptId = activeAttempt.Id });
             }
 
