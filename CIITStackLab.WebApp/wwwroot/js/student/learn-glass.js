@@ -109,6 +109,8 @@
                 heading.id = createSubtopicId(heading, index + 1);
             }
 
+            heading.style.scrollMarginTop = '98px';
+
             const link = document.createElement('a');
             link.className = 'ciit-learning-subtopic-link';
             link.href = '#' + heading.id;
@@ -117,7 +119,11 @@
 
             link.addEventListener('click', function (event) {
                 event.preventDefault();
-                heading.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+                heading.scrollIntoView({
+                    behavior: prefersReducedMotion ? 'auto' : 'smooth',
+                    block: 'start'
+                });
                 history.replaceState(null, '', window.location.pathname + window.location.search + '#' + heading.id);
             });
 
@@ -146,7 +152,7 @@
             });
         }, {
             root: null,
-            rootMargin: '-96px 0px -60% 0px',
+            rootMargin: '-98px 0px -60% 0px',
             threshold: 0
         });
 
