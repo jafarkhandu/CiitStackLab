@@ -388,6 +388,7 @@ public sealed class PracticeExamsController : Controller
             CourseTitle = courseTitle,
             TopicTitle = topicTitle,
             StartedAtUtc = attempt.StartedAtUtc,
+            SavedAnswers = NormalizeAnswers(attempt.AnswersJson, questionIds),
             Questions = questions
                 .OrderBy(question => order.GetValueOrDefault(question.Id, int.MaxValue))
                 .Select(question => new PracticeExamQuestionViewModel
