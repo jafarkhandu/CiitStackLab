@@ -37,8 +37,9 @@ document.addEventListener("DOMContentLoaded", () => {
         [
             ["Status", data.status],
             ["Actual runtime", data.runtimeMinutes + " min"],
-            ["Batch strength", data.totalStudents],
-            ["Attended", data.attendedStudents]
+            ["Total participants", data.totalStudents],
+            ["Attended", data.attendedStudents],
+            ["Not attended", data.notAttendedStudents]
         ].forEach(([label, value]) => {
             const stat = document.createElement("div");
             stat.className = "meet-history-stat";
@@ -47,6 +48,23 @@ document.addEventListener("DOMContentLoaded", () => {
             summary.append(stat);
         });
         content.append(summary);
+
+        const attendancePercent = data.totalStudents > 0
+            ? Math.round((data.attendedStudents / data.totalStudents) * 100)
+            : 0;
+        const analytics = document.createElement("div");
+        analytics.className = "meet-history-analytics";
+        const analyticsHeading = document.createElement("div");
+        analyticsHeading.className = "meet-history-analytics-heading";
+        addText(analyticsHeading, "strong", "", "Attendance rate");
+        addText(analyticsHeading, "span", "", attendancePercent + "%");
+        const track = document.createElement("div");
+        track.className = "meet-history-progress";
+        const fill = document.createElement("span");
+        fill.style.width = attendancePercent + "%";
+        track.append(fill);
+        analytics.append(analyticsHeading, track);
+        content.append(analytics);
 
         const dates = document.createElement("p");
         dates.className = "meet-history-description";
