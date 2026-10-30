@@ -13,10 +13,12 @@ namespace CIITStackLab.WebApp.Areas.Student.Controllers;
 public sealed class MeetController : Controller
 {
     private readonly ApplicationDbContext _dbContext;
+    private readonly MeetRealtimeService _meetRealtime;
 
-    public MeetController(ApplicationDbContext dbContext)
+    public MeetController(ApplicationDbContext dbContext, MeetRealtimeService meetRealtime)
     {
         _dbContext = dbContext;
+        _meetRealtime = meetRealtime;
     }
 
     [HttpGet]
@@ -125,6 +127,7 @@ public sealed class MeetController : Controller
         }
 
         await _dbContext.SaveChangesAsync(cancellationToken);
+        await _meetRealtime.PublishSessionUpdateAsync(id, cancellationToken);
         return RedirectToAction(nameof(Room), new { id });
     }
 
@@ -205,6 +208,7 @@ public sealed class MeetController : Controller
             participant.Status = "Left";
             participant.LeftAtUtc = DateTime.UtcNow;
             await _dbContext.SaveChangesAsync(cancellationToken);
+            await _meetRealtime.PublishSessionUpdateAsync(id, cancellationToken);
         }
 
         return RedirectToAction(nameof(Index));
