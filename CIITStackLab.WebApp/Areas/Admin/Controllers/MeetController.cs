@@ -315,6 +315,12 @@ public sealed class MeetController : Controller
                 session.RecordingEndedAtUtc = now;
                 session.RecordingRetentionUntilUtc = now.AddDays(90);
                 break;
+            case "delete" when session.RecordingStatus == "Stopped":
+                session.RecordingStatus = "Deleted";
+                session.RecordingDeletedAtUtc = now;
+                session.RecordingRetentionUntilUtc = null;
+                session.RecordingEnabled = false;
+                break;
             default:
                 return RedirectWithMessage("Recording action is not valid for the current meeting state.", false);
         }
