@@ -17,7 +17,6 @@ public class CoursesController : Controller
 {
     private readonly ICourseService _courseService;
     private readonly IStudentProgressService _studentProgressService;
-    private readonly ICourseAssessmentService _courseAssessmentService;
     private readonly CoursePurchaseService _coursePurchaseService;
     private readonly IMuxVideoService _muxVideoService;
     private readonly ApplicationDbContext _dbContext;
@@ -31,7 +30,6 @@ public class CoursesController : Controller
     public CoursesController(
         ICourseService courseService,
         IStudentProgressService studentProgressService,
-        ICourseAssessmentService courseAssessmentService,
         CoursePurchaseService coursePurchaseService,
         IMuxVideoService muxVideoService,
         ApplicationDbContext dbContext,
@@ -44,7 +42,6 @@ public class CoursesController : Controller
     {
         _courseService = courseService;
         _studentProgressService = studentProgressService;
-        _courseAssessmentService = courseAssessmentService;
         _coursePurchaseService = coursePurchaseService;
         _muxVideoService = muxVideoService;
         _dbContext = dbContext;
@@ -667,52 +664,6 @@ public class CoursesController : Controller
             cancellationToken);
 
         return View("CourseHome", course);
-    }
-
-    [HttpGet("Courses/Curriculum/{id:int}")]
-    [Authorize(Roles = "Student")]
-    public async Task<IActionResult> Curriculum(
-        int id,
-        CancellationToken cancellationToken)
-    {
-        if (id <= 0)
-        {
-            return NotFound();
-        }
-
-        var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
-
-        if (string.IsNullOrWhiteSpace(userId))
-        {
-            return Challenge();
-        }
-
-        var hasAccess = TempData.Peek($"DemoPayment:{id}") is not null
-            || await _coursePurchaseService.CanAccessCourseAsync(
-                userId,
-                id,
-                cancellationToken);
-
-        if (!hasAccess)
-        {
-            TempData["CoursePaymentMessage"] =
-                "Payment is required before this paid course can be opened.";
-            return RedirectToAction(nameof(Details), new { id });
-        }
-
-        var course = await _courseService.GetLearningAsync(id, null, cancellationToken);
-
-        if (course is null)
-        {
-            return NotFound();
-        }
-
-        course.Progress = await _studentProgressService.GetProgressAsync(
-            userId,
-            id,
-            cancellationToken);
-
-        return View(course);
     }
 
     [HttpGet("Courses/Learn/{id:int}")]
@@ -1424,106 +1375,4 @@ public class CoursesController : Controller
             cancellationToken);
     }
 
-    [HttpPost("Courses/Learn/{id:int}/Assessment/{contentId:int}")]
-    [HttpPost("Courses/Learn/{id:int}/TopicAssessment/{topicId:int}")]
-    [Authorize(Roles = "Student")]
-    [ValidateAntiForgeryToken]
-    public async Task<IActionResult> SubmitAssessment(
-        int id,
-        int? contentId,
-        int? topicId,
-        [FromForm] List<AssessmentAnswerDto> answers,
-        CancellationToken cancellationToken)
-    {
-        if (id <= 0
-            || (contentId is null && topicId is null)
-            || contentId is <= 0
-            || topicId is <= 0)
-        {
-            return NotFound();
-        }
-
-        var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
-
-        if (string.IsNullOrWhiteSpace(userId))
-        {
-            return Unauthorized();
-        }
-
-        var hasDemoAccess = TempData.Peek($"DemoPayment:{id}") is not null;
-        var hasCourseAccess = hasDemoAccess
-            || await _coursePurchaseService.CanAccessCourseAsync(
-                userId,
-                id,
-                cancellationToken);
-
-        if (!hasCourseAccess)
-        {
-            TempData["CoursePaymentMessage"] =
-                "Payment is required before a paid-course assessment can be submitted.";
-            return RedirectToAction(nameof(Details), new { id });
-        }
-
-        var outcome = await _courseAssessmentService.SubmitAsync(
-            userId,
-            id,
-            contentId,
-            topicId,
-            answers ?? new List<AssessmentAnswerDto>(),
-            cancellationToken);
-
-        if (!outcome.Succeeded || outcome.Result is null)
-        {
-            TempData["AssessmentError"] = outcome.ErrorMessage
-                ?? "The assessment could not be submitted. Please try again.";
-
-            return RedirectToAction(nameof(Learn), new { id, contentId, topicId });
-        }
-
-        return RedirectToAction(
-            nameof(AssessmentResult),
-            new { id, attemptId = outcome.Result.Id });
-    }
-
-    [HttpGet("Courses/Learn/{id:int}/AssessmentResult/{attemptId:int}")]
-    [Authorize(Roles = "Student")]
-    [ResponseCache(Duration = 0, Location = ResponseCacheLocation.None, NoStore = true)]
-    public async Task<IActionResult> AssessmentResult(
-        int id,
-        int attemptId,
-        CancellationToken cancellationToken)
-    {
-        if (id <= 0 || attemptId <= 0)
-        {
-            return NotFound();
-        }
-
-        var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
-
-        if (string.IsNullOrWhiteSpace(userId))
-        {
-            return Unauthorized();
-        }
-
-        var hasDemoAccess = TempData.Peek($"DemoPayment:{id}") is not null;
-        var hasCourseAccess = hasDemoAccess
-            || await _coursePurchaseService.CanAccessCourseAsync(
-                userId,
-                id,
-                cancellationToken);
-
-        if (!hasCourseAccess)
-        {
-            return Forbid();
-        }
-
-        var attempt = await _courseAssessmentService.GetAttemptAsync(
-            userId,
-            id,
-            attemptId,
-            cancellationToken);
-
-        return attempt is null ? NotFound() : View(attempt);
-    }
 }
-
