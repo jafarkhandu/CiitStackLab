@@ -632,7 +632,6 @@ namespace CIITStackLab.Infrastructure.Migrations
                     b.ToTable("tblpayment_transactions", "erpsystem");
                 });
 
-);
 
             modelBuilder.Entity("CIITStackLab.Domain.Entities.PracticeExamAttempt", b =>
                 {
