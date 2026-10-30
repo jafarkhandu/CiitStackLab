@@ -381,29 +381,54 @@
 /* The divider toggle remains reachable after the main navigation is hidden. */
 .ciit-learning-mode .ciit-learning-global-sidebar-toggle {
     position: fixed;
-    top: 105px;
-    left: 230px;
+    top: 104px;
+    left: 227px;
     z-index: 1060;
     display: inline-grid;
-    width: 34px;
-    height: 36px;
+    width: 40px;
+    height: 40px;
     place-items: center;
     padding: 0;
-    border: 1px solid rgba(206, 224, 251, .98);
-    border-radius: 10px;
-    background: rgba(250, 252, 255, .96);
-    color: #2166db;
-    box-shadow: 0 5px 15px rgba(34, 75, 139, .1), inset 0 1px 0 #fff;
-    -webkit-backdrop-filter: blur(18px) saturate(160%);
-    backdrop-filter: blur(18px) saturate(160%);
+    border: 1px solid rgba(193, 216, 250, .96);
+    border-radius: 13px;
+    background: linear-gradient(145deg, rgba(255, 255, 255, .99), rgba(239, 246, 255, .97));
+    color: #185bd8;
+    box-shadow:
+        0 8px 22px rgba(28, 73, 141, .14),
+        0 1px 3px rgba(20, 50, 90, .08),
+        inset 0 1px 0 rgba(255, 255, 255, .98);
+    -webkit-backdrop-filter: blur(16px) saturate(160%);
+    backdrop-filter: blur(16px) saturate(160%);
     cursor: pointer;
-    transition: left .22s ease, background .18s ease, box-shadow .18s ease, transform .18s ease;
+    transition:
+        left .22s ease,
+        border-color .18s ease,
+        background .18s ease,
+        box-shadow .18s ease,
+        transform .18s ease;
+}
+
+.ciit-learning-mode .ciit-learning-global-sidebar-toggle i {
+    font-size: 1rem;
+    line-height: 1;
+    transition: transform .18s ease;
 }
 
 .ciit-learning-mode .ciit-learning-global-sidebar-toggle:hover {
-    border-color: rgba(112, 163, 255, .82);
+    border-color: rgba(123, 168, 244, .95);
     background: #fff;
-    box-shadow: 0 9px 22px rgba(34, 75, 139, .16), inset 0 1px 0 #fff;
+    box-shadow:
+        0 11px 26px rgba(28, 73, 141, .18),
+        0 2px 5px rgba(20, 50, 90, .08),
+        inset 0 1px 0 #fff;
+    transform: translateY(-1px);
+}
+
+.ciit-learning-mode .ciit-learning-global-sidebar-toggle:active {
+    transform: translateY(0) scale(.96);
+}
+
+.ciit-learning-mode .ciit-learning-global-sidebar-toggle:hover i {
     transform: translateX(-1px);
 }
 
