@@ -131,7 +131,7 @@
                         }
                         @if (session.Status == "Live")
                         {
-                            <a asp-area="Admin" asp-controller="Meet" asp-action="Room" asp-route-id="@session.Id" class="meet-primary-button">Open live room</a>
+                            <a asp-area="Admin" asp-controller="Meet" asp-action="Room" asp-route-id="@session.Id" class="meet-primary-button" data-meet-session-view-action>Open live room</a>
                         }
                         else
                         {
