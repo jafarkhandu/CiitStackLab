@@ -48,7 +48,8 @@ public sealed class MeetController : Controller
                         && session.StartedAtUtc.HasValue
                         && session.StartedAtUtc.Value <= now
                         && session.StartedAtUtc.Value.AddMinutes(session.DurationMinutes) > now)
-                    .OrderByDescending(session => session.StartsAtUtc)
+                    .OrderByDescending(session => session.StartedAtUtc)
+                    .ThenByDescending(session => session.Id)
                     .Select(session => (int?)session.Id)
                     .FirstOrDefault(),
                 UpcomingSession = batch.Sessions
