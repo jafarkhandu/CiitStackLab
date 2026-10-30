@@ -30,6 +30,14 @@ document.addEventListener("DOMContentLoaded", () => {
             && state.startedAtUtc
             && new Date(state.startedAtUtc).getTime() + state.durationMinutes * 60000 > Date.now();
 
+        // Ignore updates for another scheduled/cancelled session while this
+        // batch already has a different live meeting with a visible Join action.
+        const visibleSessionId = joinForm?.querySelector('input[name="id"]')?.value;
+        if (!isLive && joinForm && visibleSessionId
+            && Number(visibleSessionId) !== Number(state.sessionId)) {
+            return;
+        }
+
         if (isLive) {
             if (!joinForm) {
                 joinForm = document.createElement("form");
