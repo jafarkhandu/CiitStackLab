@@ -1721,6 +1721,11 @@ namespace CIITStackLab.Infrastructure.Migrations
                 b.Navigation("MeetBatch");
             });
 
+            modelBuilder.Entity("CIITStackLab.Domain.Entities.MeetBatch", b =>
+            {
+                b.Navigation("Sessions");
+            });
+
 #pragma warning restore 612, 618
         }
     }
