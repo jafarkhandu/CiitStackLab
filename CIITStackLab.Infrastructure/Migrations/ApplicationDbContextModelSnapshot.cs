@@ -734,8 +734,10 @@ namespace CIITStackLab.Infrastructure.Migrations
 
                     b.HasKey("Id");
 
-                    b.HasIndex("UserId", "CourseId", "TopicId", "StartedAtUtc")
-                        .HasDatabaseName("IX_practice_exam_user_course_topic_started");
+                    b.HasIndex("UserId", "CourseId", "TopicId")
+                        .IsUnique()
+                        .HasFilter("[submitted_at_utc] IS NULL")
+                        .HasDatabaseName("UX_practice_exam_one_active_attempt");
 
                     b.ToTable("tblstudent_practice_exam_attempts", "erpsystem");
                 });
