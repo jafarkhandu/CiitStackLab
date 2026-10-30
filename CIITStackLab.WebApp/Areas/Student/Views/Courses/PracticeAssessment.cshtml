@@ -2,7 +2,7 @@
 
 @{
     Layout = "_CourseLayout";
-    ViewData["Title"] = "Practice Assessment";
+    ViewData["Title"] = "Practice Exams";
     var totalTopics = Model.Sum(course => course.Topics.Count);
     var practiceMessage = TempData["PracticeExamMessage"] as string;
 }
@@ -46,7 +46,7 @@
                 }
                 <div class="ciit-course-experience-card-header">
                     <div>
-                        <span class="ciit-course-experience-eyebrow" style="background:#eef5ff;color:#1769ff;">Practice assessment</span>
+                        <span class="ciit-course-experience-eyebrow" style="background:#eef5ff;color:#1769ff;">Practice Exam</span>
                         <h2 class="mt-2">Choose a Topic</h2>
                         <p>Practice for free across topics from all published courses. This exam is separate from the Learning Path and course purchase.</p>
                     </div>
