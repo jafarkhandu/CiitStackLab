@@ -6,10 +6,6 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>@Model.Title - CIIT Meet</title>
-    @if (!Model.IsHost && Model.ParticipantStatus == "Pending")
-    {
-        <meta http-equiv="refresh" content="8" />
-    }
     <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" />
     <link rel="preconnect" href="https://fonts.googleapis.com" />
@@ -18,7 +14,7 @@
     <link rel="stylesheet" href="~/css/meet/meet-room.css" asp-append-version="true" />
 </head>
 <body class="ciit-meet-body">
-    <div class="ciit-meet-room-page">
+    <div class="ciit-meet-room-page" data-meet-room data-session-id="@Model.Id" data-is-host="@Model.IsHost.ToString().ToLowerInvariant()" data-participant-status="@Model.ParticipantStatus" data-hub-url="/hubs/meet" data-room-url="@Url.Action("Room", "Meet", new { area = Model.IsHost ? "Admin" : "Student", id = Model.Id })">
         <header class="ciit-meet-room-header">
             <a href="@(Model.IsHost ? Url.Action("Index", "Meet", new { area = "Admin" }) : Url.Action("Index", "Meet", new { area = "Student" }))" class="ciit-meet-room-back" aria-label="Back to meetings">
                 <i class="bi bi-arrow-left"></i>
@@ -37,15 +33,23 @@
 
         @if (Model.IsHost)
         {
-            <section class="ciit-meet-host-panel">
+            <section class="ciit-meet-host-panel" data-meet-controls-panel>
                 <div class="ciit-meet-host-panel-heading">
                     <div><strong>Meeting controls</strong><span>Manage access, participants and recording</span></div>
-                    <form asp-area="Admin" asp-controller="Meet" asp-action="End" method="post" onsubmit="return confirm('End this meeting for everyone?');">
-                        @Html.AntiForgeryToken()
-                        <input type="hidden" name="id" value="@Model.Id" />
-                        <button type="submit" class="ciit-meet-host-danger" @(Model.Status != "Live" ? "disabled" : null)>End meeting</button>
-                    </form>
+                    <div class="ciit-meet-host-panel-actions">
+                        <button type="button" class="ciit-meet-controls-toggle" data-meet-controls-toggle aria-expanded="true" aria-controls="meetControlsBody">
+                            <span class="ciit-meet-pending-count" data-meet-pending-count>@Model.Participants.Count(item => item.Status == "Pending")</span>
+                            <i class="bi bi-chevron-up"></i>
+                            <span class="visually-hidden">Toggle meeting controls</span>
+                        </button>
+                        <form asp-area="Admin" asp-controller="Meet" asp-action="End" method="post" onsubmit="return confirm('End this meeting for everyone?');">
+                            @Html.AntiForgeryToken()
+                            <input type="hidden" name="id" value="@Model.Id" />
+                            <button type="submit" class="ciit-meet-host-danger" data-meet-end-button @(Model.Status != "Live" ? "disabled" : null)>End meeting</button>
+                        </form>
+                    </div>
                 </div>
+                <div class="ciit-meet-host-panel-body" id="meetControlsBody" data-meet-controls-body>
                 <div class="ciit-meet-host-settings">
                     <form asp-area="Admin" asp-controller="Meet" asp-action="SetWaitingRoom" method="post">
                         @Html.AntiForgeryToken()
@@ -134,15 +138,15 @@
                         </article>
                     }
                 </div>
+                </div>
             </section>
         }
         else if (Model.ParticipantStatus == "Pending")
         {
-            <section class="ciit-meet-waiting-screen">
+            <section class="ciit-meet-waiting-screen" data-meet-waiting-screen>
                 <span class="ciit-meet-waiting-icon"><i class="bi bi-hourglass-split"></i></span>
-                <h2>Waiting for the host to admit you</h2>
-                <p>Your join request has been sent. Keep this page open; it will update after the host admits you.</p>
-                <button type="button" class="ciit-meet-host-secondary" onclick="window.location.reload()">Check admission status</button>
+                <h2 data-meet-waiting-title>Waiting for the host to admit you</h2>
+                <p data-meet-waiting-message>Your join request has been sent. Keep this page open; it will update after the host admits you.</p>
                 <form asp-area="Student" asp-controller="Meet" asp-action="Leave" method="post">
                     @Html.AntiForgeryToken()<input type="hidden" name="id" value="@Model.Id" />
                     <button type="submit" class="ciit-meet-host-danger">Cancel request</button>
@@ -151,14 +155,12 @@
         }
         else if (Model.ParticipantStatus == "Rejected")
         {
-            <section class="ciit-meet-waiting-screen">
+            <section class="ciit-meet-waiting-screen" data-meet-rejected-screen>
                 <h2>Join request was declined</h2>
                 <p>Please contact your admin if you believe this was a mistake.</p>
             </section>
         }
-        @if (Model.IsHost || Model.ParticipantStatus == "Admitted")
-        {
-        <main class="ciit-meet-room-stage">
+        <main class="ciit-meet-room-stage" data-meet-room-stage hidden="@(!Model.IsHost && Model.ParticipantStatus != "Admitted")">
             <div class="ciit-meet-room-video-grid">
                 <article class="ciit-meet-video-tile ciit-meet-video-self">
                     <div class="ciit-meet-video-placeholder">
@@ -204,8 +206,8 @@
             </div>
             <p class="ciit-meet-room-footnote"><i class="bi bi-info-circle"></i> Meeting interface preview · Camera, microphone and participant connections will be enabled with LiveKit. Recording controls currently save settings and lifecycle metadata only; actual recording requires LiveKit integration.</p>
         </main>
-        }
     </div>
+    <script src="https://cdn.jsdelivr.net/npm/@microsoft/signalr@10.0.0/dist/browser/signalr.min.js"></script>
     <script src="~/js/meet/meet-room-ui.js" asp-append-version="true"></script>
 </body>
 </html>
