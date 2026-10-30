@@ -51,53 +51,41 @@
                 </div>
                 <div class="ciit-meet-host-panel-body" id="meetControlsBody" data-meet-controls-body>
                 <div class="ciit-meet-host-settings">
-                    <form asp-area="Admin" asp-controller="Meet" asp-action="SetWaitingRoom" method="post">
+                    <form data-meet-ajax asp-area="Admin" asp-controller="Meet" asp-action="SetWaitingRoom" method="post" data-meet-waiting-room-form>
                         @Html.AntiForgeryToken()
                         <input type="hidden" name="id" value="@Model.Id" />
                         <input type="hidden" name="enabled" value="@(!Model.WaitingRoomEnabled)" />
                         <span>Waiting room <strong data-meet-waiting-room-state>@(Model.WaitingRoomEnabled ? "On" : "Off")</strong></span>
                         <button type="submit" class="ciit-meet-host-secondary">Turn @(Model.WaitingRoomEnabled ? "off" : "on")</button>
                     </form>
-                    <div class="ciit-meet-recording-settings">
+                    <div class="ciit-meet-recording-settings" data-meet-recording-controls>
                         <span>Recording <strong data-meet-recording-status>@Model.RecordingStatus</strong>
                             @if (Model.RecordingRetentionUntilUtc.HasValue)
                             {
                                 <small>Retention until @Model.RecordingRetentionUntilUtc.Value.ToLocalTime().ToString("dd MMM yyyy")</small>
                             }
                         </span>
-                        @if (!Model.RecordingEnabled)
-                        {
-                            <form asp-area="Admin" asp-controller="Meet" asp-action="SetRecording" method="post">
-                                @Html.AntiForgeryToken()<input type="hidden" name="id" value="@Model.Id" /><input type="hidden" name="action" value="enable" />
-                                <button type="submit" class="ciit-meet-host-secondary">Enable</button>
-                            </form>
-                        }
-                        else if (Model.RecordingStatus == "Recording")
-                        {
-                            <form asp-area="Admin" asp-controller="Meet" asp-action="SetRecording" method="post">
-                                @Html.AntiForgeryToken()<input type="hidden" name="id" value="@Model.Id" /><input type="hidden" name="action" value="stop" />
-                                <button type="submit" class="ciit-meet-host-secondary">Stop recording</button>
-                            </form>
-                        }
-                        else
-                        {
-                            @if (Model.RecordingStatus == "Stopped")
-                            {
-                                <form asp-area="Admin" asp-controller="Meet" asp-action="SetRecording" method="post" onsubmit="return confirm('Mark this recording as deleted?');">
-                                    @Html.AntiForgeryToken()<input type="hidden" name="id" value="@Model.Id" /><input type="hidden" name="action" value="delete" />
-                                    <button type="submit" class="ciit-meet-host-danger">Clear recording metadata</button>
-                                </form>
-                            }
-                            <form asp-area="Admin" asp-controller="Meet" asp-action="SetRecording" method="post">
-                                @Html.AntiForgeryToken()<input type="hidden" name="id" value="@Model.Id" /><input type="hidden" name="action" value="start" />
-                                <button type="submit" class="ciit-meet-host-secondary" @(Model.Status != "Live" ? "disabled" : null)>Start recording</button>
-                            </form>
-                            <form asp-area="Admin" asp-controller="Meet" asp-action="SetRecording" method="post">
-                                @Html.AntiForgeryToken()<input type="hidden" name="id" value="@Model.Id" /><input type="hidden" name="action" value="disable" />
-                                <button type="submit" class="ciit-meet-host-secondary">Disable</button>
-                            </form>
-                        }
-                    </div>
+                        <form data-meet-ajax asp-area="Admin" asp-controller="Meet" asp-action="SetRecording" method="post" data-recording-action="enable" hidden="@Model.RecordingEnabled">
+                            @Html.AntiForgeryToken()<input type="hidden" name="id" value="@Model.Id" /><input type="hidden" name="action" value="enable" />
+                            <button type="submit" class="ciit-meet-host-secondary">Enable</button>
+                        </form>
+                        <form data-meet-ajax asp-area="Admin" asp-controller="Meet" asp-action="SetRecording" method="post" data-recording-action="stop" hidden="@(Model.RecordingStatus != "Recording")">
+                            @Html.AntiForgeryToken()<input type="hidden" name="id" value="@Model.Id" /><input type="hidden" name="action" value="stop" />
+                            <button type="submit" class="ciit-meet-host-secondary">Stop recording</button>
+                        </form>
+                        <form data-meet-ajax asp-area="Admin" asp-controller="Meet" asp-action="SetRecording" method="post" data-recording-action="start" hidden="@(!Model.RecordingEnabled || Model.Status != "Live" || (Model.RecordingStatus != "Ready" && Model.RecordingStatus != "Stopped"))">
+                            @Html.AntiForgeryToken()<input type="hidden" name="id" value="@Model.Id" /><input type="hidden" name="action" value="start" />
+                            <button type="submit" class="ciit-meet-host-secondary">Start recording</button>
+                        </form>
+                        <form data-meet-ajax asp-area="Admin" asp-controller="Meet" asp-action="SetRecording" method="post" data-recording-action="disable" hidden="@(!Model.RecordingEnabled || Model.RecordingStatus == "Recording")">
+                            @Html.AntiForgeryToken()<input type="hidden" name="id" value="@Model.Id" /><input type="hidden" name="action" value="disable" />
+                            <button type="submit" class="ciit-meet-host-secondary">Disable</button>
+                        </form>
+                        <form data-meet-ajax asp-area="Admin" asp-controller="Meet" asp-action="SetRecording" method="post" data-recording-action="delete" onsubmit="return confirm('Mark this recording as deleted?');" hidden="@(Model.RecordingStatus != "Stopped")">
+                            @Html.AntiForgeryToken()<input type="hidden" name="id" value="@Model.Id" /><input type="hidden" name="action" value="delete" />
+                            <button type="submit" class="ciit-meet-host-danger">Clear recording metadata</button>
+                        </form>
+                    </div>/div>
                 </div>
                 <div class="ciit-meet-host-participants" data-meet-participants-list data-admit-url="@Url.Action("ReviewParticipant", "Meet", new { area = "Admin" })" data-remove-url="@Url.Action("RemoveParticipant", "Meet", new { area = "Admin" })" data-permissions-url="@Url.Action("UpdateParticipantPermissions", "Meet", new { area = "Admin" })">
                     <h2>Participants <span data-meet-participant-total>@Model.Participants.Count</span></h2>
@@ -111,18 +99,18 @@
                             <div><strong>@participant.StudentName</strong><small>@participant.Status</small></div>
                             @if (participant.Status == "Pending")
                             {
-                                <form asp-area="Admin" asp-controller="Meet" asp-action="ReviewParticipant" method="post">
+                                <form data-meet-ajax asp-area="Admin" asp-controller="Meet" asp-action="ReviewParticipant" method="post">
                                     @Html.AntiForgeryToken()<input type="hidden" name="id" value="@participant.Id" /><input type="hidden" name="decision" value="admit" />
                                     <button type="submit" class="ciit-meet-host-secondary">Admit</button>
                                 </form>
-                                <form asp-area="Admin" asp-controller="Meet" asp-action="ReviewParticipant" method="post">
+                                <form data-meet-ajax asp-area="Admin" asp-controller="Meet" asp-action="ReviewParticipant" method="post">
                                     @Html.AntiForgeryToken()<input type="hidden" name="id" value="@participant.Id" /><input type="hidden" name="decision" value="reject" />
                                     <button type="submit" class="ciit-meet-host-danger">Reject</button>
                                 </form>
                             }
                             @if (participant.Status == "Admitted")
                             {
-                                <form asp-area="Admin" asp-controller="Meet" asp-action="UpdateParticipantPermissions" method="post" class="ciit-meet-permission-form">
+                                <form data-meet-ajax asp-area="Admin" asp-controller="Meet" asp-action="UpdateParticipantPermissions" method="post" class="ciit-meet-permission-form">
                                     @Html.AntiForgeryToken()
                                     <input type="hidden" name="id" value="@participant.Id" />
                                     <label><input type="checkbox" name="canUseMicrophone" value="true" checked="@participant.CanUseMicrophone" /> Mic</label>
@@ -130,7 +118,7 @@
                                     <label><input type="checkbox" name="canShareScreen" value="true" checked="@participant.CanShareScreen" /> Share</label>
                                     <button type="submit" class="ciit-meet-host-secondary">Save permissions</button>
                                 </form>
-                                <form asp-area="Admin" asp-controller="Meet" asp-action="RemoveParticipant" method="post" onsubmit="return confirm('Remove this participant from the meeting?');">
+                                <form data-meet-ajax asp-area="Admin" asp-controller="Meet" asp-action="RemoveParticipant" method="post" onsubmit="return confirm('Remove this participant from the meeting?');">
                                     @Html.AntiForgeryToken()<input type="hidden" name="id" value="@participant.Id" />
                                     <button type="submit" class="ciit-meet-host-danger">Remove</button>
                                 </form>
