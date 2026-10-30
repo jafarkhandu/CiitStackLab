@@ -77,16 +77,7 @@
                             <small>@batch.UpcomingSession.StartsAtUtc.ToLocalTime().ToString("dd MMM yyyy, hh:mm tt")</small>
                         </div>
                     }
-                    @if (batch.RecentSessions.Count > 0)
-                    {
-                        <div class="ciit-student-meet-history">
-                            <span>RECENT MEETINGS</span>
-                            @foreach (var pastSession in batch.RecentSessions)
-                            {
-                                <div><strong>@pastSession.Title</strong><small>@pastSession.Status · @pastSession.SessionDateUtc.ToLocalTime().ToString("dd MMM yyyy, hh:mm tt")</small></div>
-                            }
-                        </div>
-                    }
+
                 </article>
             }
         </div>
