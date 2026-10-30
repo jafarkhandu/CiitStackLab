@@ -135,7 +135,22 @@
                         }
                         else
                         {
-                            <a asp-area="Admin" asp-controller="Meet" asp-action="Room" asp-route-id="@session.Id" class="meet-secondary-button">Details</a>
+                            <button type="button" class="meet-secondary-button" data-meet-session-details
+                                    data-details-url="@Url.Action("SessionDetails", "Meet", new { area = "Admin", id = session.Id })">
+                                Details
+                            </button>
+                            @if (session.Status is "Completed" or "Cancelled")
+                            {
+                                <form asp-area="Admin" asp-controller="Meet" asp-action="DeleteSession" method="post"
+                                      data-meet-session-delete data-meet-ajax
+                                      onsubmit="return confirm('Permanently delete this meeting history and its attendance records?');">
+                                    @Html.AntiForgeryToken()
+                                    <input type="hidden" name="id" value="@session.Id" />
+                                    <button type="submit" class="meet-icon-button" title="Delete meeting history" aria-label="Delete @session.Title history">
+                                        <i class="bi bi-trash"></i>
+                                    </button>
+                                </form>
+                            }
                         }
                     </article>
                 }
@@ -168,6 +183,18 @@
         </section>
     }
 </section>
+<div class="meet-history-modal-backdrop" data-meet-history-modal aria-hidden="true">
+    <section class="meet-history-modal" role="dialog" aria-modal="true" aria-labelledby="meetHistoryTitle">
+        <header class="meet-history-modal-header">
+            <div><span class="ciit-admin-eyebrow">Meeting report</span><h2 id="meetHistoryTitle">Meeting details</h2></div>
+            <button type="button" class="meet-history-close" data-close-history aria-label="Close">&times;</button>
+        </header>
+        <div class="meet-history-modal-body" data-meet-history-content>
+            <p class="meet-history-loading">Loading meeting details…</p>
+        </div>
+    </section>
+</div>
+<div hidden data-meet-antiforgery>@Html.AntiForgeryToken()</div>
 <script src="https://cdn.jsdelivr.net/npm/@@microsoft/signalr@10.0.0/dist/browser/signalr.min.js"></script>
 <script src="~/js/meet/meet-index-live.js" asp-append-version="true"></script>
 
