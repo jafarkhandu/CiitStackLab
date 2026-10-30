@@ -12,4 +12,5 @@ public sealed class MeetBatch
     public DateTime UpdatedAtUtc { get; set; }
 
     public ICollection<MeetBatchMember> Members { get; set; } = new List<MeetBatchMember>();
+    public ICollection<MeetSession> Sessions { get; set; } = new List<MeetSession>();
 }
