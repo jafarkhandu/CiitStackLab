@@ -25,9 +25,9 @@
                 <p>@Model.BatchName <span>·</span> @Model.BatchCode</p>
             </div>
             <div class="ciit-meet-room-meta">
-                <span class="ciit-meet-room-status"><span class="ciit-meet-room-status-dot"></span>@Model.Status</span>
+                <span class="ciit-meet-room-status" data-meet-status><span class="ciit-meet-room-status-dot"></span><span data-meet-status-text>@Model.Status</span></span>
                 <span class="ciit-meet-room-duration"><i class="bi bi-clock"></i> @Model.DurationMinutes min</span>
-                <span class="ciit-meet-participant-count"><i class="bi bi-people-fill"></i> 1</span>
+                <span class="ciit-meet-participant-count"><i class="bi bi-people-fill"></i> <span data-meet-admitted-count>@(Model.ParticipantCount + (Model.IsHost ? 1 : Model.ParticipantStatus == "Admitted" ? 1 : 0))</span></span>
             </div>
         </header>
 
@@ -99,15 +99,15 @@
                         }
                     </div>
                 </div>
-                <div class="ciit-meet-host-participants">
-                    <h2>Participants <span>@Model.Participants.Count</span></h2>
+                <div class="ciit-meet-host-participants" data-meet-participants-list data-admit-url="@Url.Action("ReviewParticipant", "Meet", new { area = "Admin" })" data-remove-url="@Url.Action("RemoveParticipant", "Meet", new { area = "Admin" })" data-permissions-url="@Url.Action("UpdateParticipantPermissions", "Meet", new { area = "Admin" })">
+                    <h2>Participants <span data-meet-participant-total>@Model.Participants.Count</span></h2>
                     @if (Model.Participants.Count == 0)
                     {
                         <p>No student has requested to join yet.</p>
                     }
                     @foreach (var participant in Model.Participants)
                     {
-                        <article class="ciit-meet-host-participant">
+                        <article class="ciit-meet-host-participant" data-meet-participant-id="@participant.Id" data-meet-participant-status="@participant.Status">
                             <div><strong>@participant.StudentName</strong><small>@participant.Status</small></div>
                             @if (participant.Status == "Pending")
                             {
@@ -160,6 +160,12 @@
                 <p>Please contact your admin if you believe this was a mistake.</p>
             </section>
         }
+        <section class="ciit-meet-ended-screen" data-meet-ended-screen hidden>
+            <span class="ciit-meet-waiting-icon"><i class="bi bi-check2-circle"></i></span>
+            <h2>Meeting has ended</h2>
+            <p>The host has ended this meeting. You can safely leave this page.</p>
+            <a class="ciit-meet-host-secondary" href="@(Model.IsHost ? Url.Action("Index", "Meet", new { area = "Admin" }) : Url.Action("Index", "Meet", new { area = "Student" }))">Back to meetings</a>
+        </section>
         <main class="ciit-meet-room-stage" data-meet-room-stage hidden="@(!Model.IsHost && Model.ParticipantStatus != "Admitted")">
             <div class="ciit-meet-room-video-grid">
                 <article class="ciit-meet-video-tile ciit-meet-video-self">
