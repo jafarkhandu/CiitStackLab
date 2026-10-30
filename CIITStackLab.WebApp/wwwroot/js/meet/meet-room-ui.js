@@ -62,11 +62,6 @@ document.addEventListener("DOMContentLoaded", () => {
     });
 
     const hostPanel = room.querySelector("[data-meet-controls-panel]");
-    if (isHostPlaceholder()) {
-        // Host controls are moved into focused glass popups below.
-    }
-
-    const hostPanel = room.querySelector("[data-meet-controls-panel]");
     const isHost = room.dataset.isHost === "true";
     const createPopup = (className, title, icon) => {
         const backdrop = document.createElement("div");
