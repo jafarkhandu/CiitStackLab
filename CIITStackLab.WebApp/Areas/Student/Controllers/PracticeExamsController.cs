@@ -266,25 +266,36 @@ public sealed class PracticeExamsController : Controller
         }
 
         var attempt = await _dbContext.PracticeExamAttempts
-            .SingleOrDefaultAsync(item => item.Id == attemptId && item.UserId == userId, cancellationToken);
+            .AsNoTracking()
+            .Where(item => item.Id == attemptId && item.UserId == userId)
+            .Select(item => new { item.QuestionIdsJson, item.StartedAtUtc })
+            .SingleOrDefaultAsync(cancellationToken);
 
         if (attempt is null)
         {
             return NotFound();
         }
 
-        if (attempt.SubmittedAtUtc.HasValue
-            || DateTime.UtcNow >= attempt.StartedAtUtc.AddMinutes(ExamDurationMinutes))
+        var now = DateTime.UtcNow;
+        if (now >= attempt.StartedAtUtc.AddMinutes(ExamDurationMinutes))
         {
             return StatusCode(StatusCodes.Status409Conflict);
         }
 
         var questionIds = DeserializeQuestionIds(attempt.QuestionIdsJson);
         var answers = NormalizeAnswers(answersJson, questionIds);
-        attempt.AnswersJson = JsonSerializer.Serialize(answers);
-        await _dbContext.SaveChangesAsync(cancellationToken);
+        var affectedRows = await _dbContext.PracticeExamAttempts
+            .Where(item => item.Id == attemptId
+                && item.UserId == userId
+                && item.SubmittedAtUtc == null
+                && item.StartedAtUtc > now.AddMinutes(-ExamDurationMinutes))
+            .ExecuteUpdateAsync(
+                setters => setters.SetProperty(item => item.AnswersJson, JsonSerializer.Serialize(answers)),
+                cancellationToken);
 
-        return NoContent();
+        return affectedRows == 1
+            ? NoContent()
+            : StatusCode(StatusCodes.Status409Conflict);
     }
 
     [HttpPost("/PracticeExams/Submit/{attemptId:int}")]
@@ -323,11 +334,23 @@ public sealed class PracticeExamsController : Controller
             submittedAnswers,
             cancellationToken);
 
-        attempt.AnswersJson = JsonSerializer.Serialize(submittedAnswers);
-        attempt.Score = score;
-        attempt.TotalQuestions = selectedQuestionIds.Count;
-        attempt.SubmittedAtUtc = DateTime.UtcNow;
-        await _dbContext.SaveChangesAsync(cancellationToken);
+        var submittedAtUtc = DateTime.UtcNow;
+        var updatedRows = await _dbContext.PracticeExamAttempts
+            .Where(item => item.Id == attemptId
+                && item.UserId == userId
+                && item.SubmittedAtUtc == null)
+            .ExecuteUpdateAsync(
+                setters => setters
+                    .SetProperty(item => item.AnswersJson, JsonSerializer.Serialize(submittedAnswers))
+                    .SetProperty(item => item.Score, score)
+                    .SetProperty(item => item.TotalQuestions, selectedQuestionIds.Count)
+                    .SetProperty(item => item.SubmittedAtUtc, submittedAtUtc),
+                cancellationToken);
+
+        if (updatedRows == 0)
+        {
+            return RedirectToAction(nameof(Result), new { attemptId });
+        }
 
         return RedirectToAction(nameof(Result), new { attemptId });
     }
