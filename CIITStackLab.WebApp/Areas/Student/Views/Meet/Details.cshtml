@@ -1,0 +1,58 @@
+@model CIITStackLab.WebApp.Models.StudentMeetBatchDetailsViewModel
+
+@{
+    Layout = "~/Views/Shared/_CourseLayout.cshtml";
+    ViewData["Title"] = "Meet Batch";
+}
+
+<section class="ciit-student-meet-page">
+    <a asp-area="Student" asp-controller="Meet" asp-action="Index" class="ciit-student-meet-back">
+        <i class="bi bi-arrow-left"></i> Back to my batches
+    </a>
+
+    <header class="ciit-student-meet-detail-hero">
+        <div>
+            <span class="ciit-student-meet-eyebrow"><i class="bi bi-people-fill"></i> YOUR ASSIGNED BATCH</span>
+            <h1>@Model.Name</h1>
+            <p>@(string.IsNullOrWhiteSpace(Model.Description) ? "You have access to this meeting batch." : Model.Description)</p>
+            <span class="ciit-student-meet-status"><span></span> Your access is active</span>
+        </div>
+        <div class="ciit-student-meet-code">
+            <span>BATCH CODE</span>
+            <strong>@Model.BatchCode</strong>
+        </div>
+    </header>
+
+    <div class="ciit-student-meet-detail-grid">
+        <article class="ciit-student-meet-info-card">
+            <span class="ciit-student-meet-info-icon"><i class="bi bi-people"></i></span>
+            <div><strong>@Model.MemberCount</strong><span>Batch participants</span></div>
+        </article>
+        <article class="ciit-student-meet-info-card">
+            <span class="ciit-student-meet-info-icon"><i class="bi bi-calendar-check"></i></span>
+            <div>
+                <strong>@(Model.JoinedAtUtc?.ToLocalTime().ToString("dd MMM yyyy") ?? "—")</strong>
+                <span>Added to this batch</span>
+            </div>
+        </article>
+    </div>
+
+    <section class="ciit-student-meet-sessions">
+        <div class="ciit-student-meet-section-heading">
+            <div>
+                <span class="ciit-student-meet-section-kicker">LIVE CLASSROOM</span>
+                <h2>Meeting sessions</h2>
+                <p>Scheduled and live meetings for this batch will appear here.</p>
+            </div>
+        </div>
+        <div class="ciit-student-meet-empty ciit-student-meet-session-empty">
+            <span class="ciit-student-meet-empty-icon"><i class="bi bi-camera-video"></i></span>
+            <h3>No meeting sessions available</h3>
+            <p>Your admin has not scheduled or started a meeting for this batch yet. Check back here when a session is announced.</p>
+        </div>
+    </section>
+</section>
+
+@section Styles {
+    <link rel="stylesheet" href="~/css/student/student-meet.css" asp-append-version="true" />
+}
