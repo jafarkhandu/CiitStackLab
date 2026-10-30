@@ -69,7 +69,19 @@ public sealed class MeetController : Controller
                 JoinedAtUtc = item.Members
                     .Where(member => member.StudentUserId == studentId)
                     .Select(member => (DateTime?)member.AddedAtUtc)
-                    .FirstOrDefault()
+                    .FirstOrDefault(),
+                Sessions = item.MeetSessions
+                    .OrderBy(session => session.StartsAtUtc)
+                    .Select(session => new StudentMeetSessionViewModel
+                    {
+                        Id = session.Id,
+                        Title = session.Title,
+                        Description = session.Description,
+                        StartsAtUtc = session.StartsAtUtc,
+                        DurationMinutes = session.DurationMinutes,
+                        Status = session.Status
+                    })
+                    .ToList()
             })
             .SingleOrDefaultAsync(cancellationToken);
 
