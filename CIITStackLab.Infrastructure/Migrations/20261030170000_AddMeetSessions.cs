@@ -4,7 +4,6 @@ using Microsoft.EntityFrameworkCore.Migrations;
 
 namespace CIITStackLab.Infrastructure.Migrations;
 
-[Migration("20261030170000_AddMeetSessions")]
 public partial class AddMeetSessions : Migration
 {
     protected override void Up(MigrationBuilder migrationBuilder)
