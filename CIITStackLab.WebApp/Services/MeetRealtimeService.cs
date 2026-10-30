@@ -51,6 +51,7 @@ public sealed class MeetRealtimeService
             select new
             {
                 participant.Id,
+                participant.StudentUserId,
                 StudentName = user.UserName ?? user.Email ?? "Student",
                 participant.Status,
                 participant.CanUseMicrophone,
@@ -75,8 +76,26 @@ public sealed class MeetRealtimeService
             recordingRetentionUntilUtc = session.RecordingRetentionUntilUtc,
             pendingCount = participants.Count(item => item.Status == "Pending"),
             participantCount = participants.Count(item => item.Status == "Admitted"),
-            participants
+            participants = participants.Select(item => new
+            {
+                item.Id,
+                item.StudentName,
+                item.Status,
+                item.CanUseMicrophone,
+                item.CanUseCamera,
+                item.CanShareScreen
+            }).ToList()
         };
+
+        foreach (var participant in participants)
+        {
+            await _hub.Clients.User(participant.StudentUserId)
+                .SendAsync("MeetMyParticipantStatus", new
+                {
+                    status = participant.Status,
+                    sessionStatus = session.Status
+                }, cancellationToken);
+        }
 
         await _hub.Clients.Group(MeetHub.SessionGroup(session.Id))
             .SendAsync("MeetRoomUpdated", snapshot, cancellationToken);
