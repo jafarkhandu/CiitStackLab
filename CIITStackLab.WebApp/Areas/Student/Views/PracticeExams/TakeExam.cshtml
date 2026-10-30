@@ -1,0 +1,228 @@
+@model CIITStackLab.WebApp.Models.PracticeExamTakeViewModel
+@{
+    Layout = null;
+    ViewData["Title"] = "Practice Exam";
+    var deadlineUtc = Model.StartedAtUtc.AddMinutes(30);
+}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="color-scheme" content="light" />
+    <title>Practice Exam - CIIT Stack Lab</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+    <style>
+        :root {
+            --ink: #14213d;
+            --muted: #64748b;
+            --blue: #1769ff;
+            --surface: rgba(255,255,255,.8);
+            --shadow: 0 22px 60px rgba(35,71,125,.09);
+        }
+        * { box-sizing: border-box; }
+        body {
+            margin: 0; min-height: 100vh; color: var(--ink);
+            font-family: "Plus Jakarta Sans", Inter, system-ui, sans-serif;
+            background:
+                radial-gradient(ellipse at 4% 0%, rgba(105,168,255,.18), transparent 34%),
+                radial-gradient(ellipse at 96% 24%, rgba(112,224,223,.12), transparent 31%),
+                linear-gradient(135deg,#f7faff 0%,#edf4ff 48%,#f6f9ff 100%);
+        }
+        button { font: inherit; cursor: pointer; }
+        .shell { max-width: 1500px; margin: 0 auto; padding: 28px clamp(14px,3vw,42px) 42px; }
+        .topbar { display:flex; align-items:center; justify-content:space-between; gap:18px; margin-bottom:22px; }
+        .heading h1 { margin:0; font-size:clamp(20px,2.4vw,29px); font-weight:800; letter-spacing:-.04em; }
+        .heading p { margin:5px 0 0; color:var(--muted); font-size:13px; font-weight:600; }
+        .timer { min-width:170px; padding:12px 18px; border:1px solid rgba(248,113,113,.28); border-radius:18px; background:rgba(255,245,245,.86); color:#dc2626; box-shadow:0 10px 30px rgba(220,38,38,.06); }
+        .timer span { display:block; color:#a33d46; font-size:10px; font-weight:800; text-transform:uppercase; letter-spacing:.1em; }
+        .timer strong { display:block; font-size:25px; line-height:1.25; font-variant-numeric:tabular-nums; }
+        .grid { display:grid; grid-template-columns:minmax(0,1.7fr) minmax(290px,.75fr); gap:20px; align-items:start; }
+        .glass { border:1px solid rgba(255,255,255,.9); border-radius:24px; background:var(--surface); box-shadow:var(--shadow); backdrop-filter:blur(22px); -webkit-backdrop-filter:blur(22px); }
+        .question-card { min-height:480px; padding:clamp(20px,3vw,36px); }
+        .question-meta { display:flex; justify-content:space-between; gap:12px; color:var(--muted); font-size:12px; font-weight:800; }
+        .question { display:none; }
+        .question.active { display:block; }
+        .prompt { margin:28px 0 22px; font-size:clamp(18px,2vw,24px); line-height:1.55; font-weight:800; white-space:pre-wrap; }
+        .options { display:grid; gap:12px; }
+        .option { display:flex; align-items:flex-start; gap:12px; padding:15px 16px; border:1px solid rgba(148,163,184,.28); border-radius:15px; background:rgba(255,255,255,.7); cursor:pointer; transition:.15s ease; }
+        .option:hover { border-color:#8bb5ff; background:#f5f9ff; }
+        .option input { margin:4px 0 0; accent-color:var(--blue); }
+        .option span { line-height:1.5; font-size:14px; font-weight:600; white-space:pre-wrap; }
+        .nav { display:flex; align-items:center; justify-content:space-between; gap:12px; margin-top:30px; }
+        .btn { border:0; border-radius:12px; padding:12px 20px; font-size:13px; font-weight:800; }
+        .btn.secondary { color:#315077; background:#e9f1fc; }
+        .btn.primary { color:white; background:linear-gradient(135deg,#2582ff,#0753df); box-shadow:0 8px 18px rgba(23,105,255,.2); }
+        .btn:disabled { opacity:.4; cursor:not-allowed; }
+        .side { padding:22px; }
+        .side h2 { margin:0 0 5px; font-size:16px; font-weight:800; }
+        .side p { margin:0 0 18px; color:var(--muted); font-size:12px; }
+        .palette { display:grid; grid-template-columns:repeat(5,minmax(0,1fr)); gap:8px; }
+        .palette button { min-height:39px; border:1px solid rgba(148,163,184,.35); border-radius:10px; color:#475569; background:rgba(255,255,255,.7); font-size:12px; font-weight:800; }
+        .palette button.current { color:#fff; background:linear-gradient(135deg,#2582ff,#0753df); border-color:#1769ff; }
+        .palette button.answered:not(.current) { color:#047857; border-color:#6ee7b7; background:#d8faeb; }
+        .legend { display:grid; gap:8px; margin-top:20px; color:var(--muted); font-size:11px; font-weight:700; }
+        .legend span { display:flex; align-items:center; gap:8px; }
+        .dot { width:9px; height:9px; border-radius:50%; background:#cbd5e1; }
+        .dot.done { background:#10b981; }
+        .progress { height:6px; margin-top:18px; overflow:hidden; border-radius:99px; background:#e5edf8; }
+        .progress div { height:100%; width:0; border-radius:inherit; background:#1769ff; transition:width .2s ease; }
+        .footnote { margin:16px 0 0; color:#7183a0; font-size:11px; line-height:1.6; }
+        @@media(max-width:900px) { .grid { grid-template-columns:1fr; } .side { order:-1; } .palette { grid-template-columns:repeat(10,minmax(0,1fr)); } }
+        @@media(max-width:560px) { .shell { padding:16px 12px 28px; } .topbar { align-items:flex-start; flex-direction:column; } .timer { width:100%; } .question-card { min-height:0; padding:20px 16px; border-radius:18px; } .side { padding:18px; border-radius:18px; } .palette { grid-template-columns:repeat(5,minmax(0,1fr)); } .nav .btn { padding:11px 14px; } }
+    </style>
+</head>
+<body>
+    <div class="shell">
+        <header class="topbar">
+            <div class="heading">
+                <h1>Practice Exam</h1>
+                <p>@Model.CourseTitle <span aria-hidden="true">·</span> @Model.TopicTitle <span aria-hidden="true">·</span> @Model.Questions.Count questions</p>
+            </div>
+            <div class="timer" role="timer" aria-live="off">
+                <span>Time remaining</span>
+                <strong id="exam-timer">30:00</strong>
+            </div>
+        </header>
+
+        <form id="practice-exam-form" method="post" action="/PracticeExams/Submit/@Model.AttemptId">
+            @Html.AntiForgeryToken()
+            <input type="hidden" id="answers-json" name="answersJson" value="{}" />
+            <div class="grid">
+                <main class="glass question-card">
+                    <div class="question-meta">
+                        <span id="question-count">Question 1 of @Model.Questions.Count</span>
+                        <span id="answered-count">0 answered</span>
+                    </div>
+                    <div id="question-stack">
+                        @for (var index = 0; index < Model.Questions.Count; index++)
+                        {
+                            var question = Model.Questions[index];
+                            <section class="question @(index == 0 ? "active" : string.Empty)" data-question-index="@index" data-question-id="@question.QuestionId">
+                                <h2 class="prompt">@question.Question</h2>
+                                <div class="options">
+                                    <label class="option"><input type="radio" name="question-@question.QuestionId" value="1" /><span>@question.Option1</span></label>
+                                    <label class="option"><input type="radio" name="question-@question.QuestionId" value="2" /><span>@question.Option2</span></label>
+                                    <label class="option"><input type="radio" name="question-@question.QuestionId" value="3" /><span>@question.Option3</span></label>
+                                    <label class="option"><input type="radio" name="question-@question.QuestionId" value="4" /><span>@question.Option4</span></label>
+                                </div>
+                            </section>
+                        }
+                    </div>
+                    <div class="nav">
+                        <button class="btn secondary" id="previous-question" type="button" disabled>Previous</button>
+                        <button class="btn primary" id="next-question" type="button">Next question</button>
+                        <button class="btn primary" id="submit-exam" type="button" style="display:none">Submit exam</button>
+                    </div>
+                </main>
+
+                <aside class="glass side">
+                    <h2>Question palette</h2>
+                    <p>Choose any question to move directly to it.</p>
+                    <div class="palette" id="question-palette">
+                        @for (var index = 0; index < Model.Questions.Count; index++)
+                        {
+                            <button type="button" data-palette-index="@index" class="@(index == 0 ? "current" : string.Empty)">@(index + 1)</button>
+                        }
+                    </div>
+                    <div class="progress"><div id="answer-progress"></div></div>
+                    <div class="legend">
+                        <span><i class="dot done"></i> Answered</span>
+                        <span><i class="dot"></i> Not answered</span>
+                    </div>
+                    <p class="footnote">This is a free practice exam. Your result is calculated securely after submission. Unanswered questions count as incorrect.</p>
+                </aside>
+            </div>
+        </form>
+    </div>
+
+    <script>
+        (() => {
+            const form = document.getElementById('practice-exam-form');
+            const questions = Array.from(document.querySelectorAll('[data-question-index]'));
+            const paletteButtons = Array.from(document.querySelectorAll('[data-palette-index]'));
+            const previousButton = document.getElementById('previous-question');
+            const nextButton = document.getElementById('next-question');
+            const submitButton = document.getElementById('submit-exam');
+            const timerLabel = document.getElementById('exam-timer');
+            const answerCount = document.getElementById('answered-count');
+            const progress = document.getElementById('answer-progress');
+            const answersField = document.getElementById('answers-json');
+            const deadline = new Date('@deadlineUtc.ToString("O")').getTime();
+            let currentIndex = 0;
+            let autoSubmitting = false;
+            let submitted = false;
+
+            const answers = () => {
+                const result = {};
+                questions.forEach(question => {
+                    const selected = question.querySelector('input[type="radio"]:checked');
+                    if (selected) result[question.dataset.questionId] = Number(selected.value);
+                });
+                return result;
+            };
+
+            const refreshStatus = () => {
+                const selected = answers();
+                const count = Object.keys(selected).length;
+                answerCount.textContent = count + ' answered';
+                progress.style.width = (questions.length ? count * 100 / questions.length : 0) + '%';
+                paletteButtons.forEach((button, index) => {
+                    const question = questions[index];
+                    const hasAnswer = !!question.querySelector('input[type="radio"]:checked');
+                    button.classList.toggle('answered', hasAnswer);
+                });
+            };
+
+            const showQuestion = index => {
+                currentIndex = Math.max(0, Math.min(index, questions.length - 1));
+                questions.forEach((question, questionIndex) => question.classList.toggle('active', questionIndex === currentIndex));
+                paletteButtons.forEach((button, buttonIndex) => button.classList.toggle('current', buttonIndex === currentIndex));
+                document.getElementById('question-count').textContent = 'Question ' + (currentIndex + 1) + ' of ' + questions.length;
+                previousButton.disabled = currentIndex === 0;
+                nextButton.style.display = currentIndex === questions.length - 1 ? 'none' : '';
+                submitButton.style.display = currentIndex === questions.length - 1 ? '' : 'none';
+            };
+
+            const submitExam = confirmBeforeSubmit => {
+                if (submitted) return;
+                if (confirmBeforeSubmit && !window.confirm('Submit your practice exam now? Unanswered questions will count as incorrect.')) return;
+                submitted = true;
+                answersField.value = JSON.stringify(answers());
+                form.requestSubmit();
+            };
+
+            previousButton.addEventListener('click', () => showQuestion(currentIndex - 1));
+            nextButton.addEventListener('click', () => showQuestion(currentIndex + 1));
+            submitButton.addEventListener('click', () => submitExam(true));
+            paletteButtons.forEach(button => button.addEventListener('click', () => showQuestion(Number(button.dataset.paletteIndex))));
+            questions.forEach(question => question.addEventListener('change', refreshStatus));
+
+            const updateTimer = () => {
+                const remaining = Math.max(0, Math.floor((deadline - Date.now()) / 1000));
+                const minutes = Math.floor(remaining / 60).toString().padStart(2, '0');
+                const seconds = (remaining % 60).toString().padStart(2, '0');
+                timerLabel.textContent = minutes + ':' + seconds;
+                if (remaining <= 0) {
+                    autoSubmitting = true;
+                    submitExam(false);
+                }
+            };
+
+            form.addEventListener('submit', event => {
+                if (!submitted) {
+                    event.preventDefault();
+                    submitExam(!autoSubmitting);
+                }
+            });
+
+            showQuestion(0);
+            refreshStatus();
+            updateTimer();
+            window.setInterval(updateTimer, 1000);
+        })();
+    </script>
+</body>
+</html>
