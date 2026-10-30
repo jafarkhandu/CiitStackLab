@@ -145,7 +145,7 @@ public sealed class MeetController : Controller
             : model.Description.Trim();
 
         if (!ModelState.IsValid || string.IsNullOrWhiteSpace(model.Name))
-            return UpdateResponse("Please check the batch name and description.", false);
+            return UpdateResponse("Please check the batch name and description.", false, batch.Id);
 
         var selectedIds = (model.SelectedStudentIds ?? [])
             .Where(x => !string.IsNullOrWhiteSpace(x))
@@ -154,7 +154,7 @@ public sealed class MeetController : Controller
 
         var validStudentIds = await GetValidStudentIdsAsync(selectedIds, cancellationToken);
         if (validStudentIds.Count != selectedIds.Count)
-            return UpdateResponse("One or more selected accounts are not active Student accounts. Please refresh and try again.", false);
+            return UpdateResponse("One or more selected accounts are not active Student accounts. Please refresh and try again.", false, batch.Id);
 
         batch.Name = model.Name;
         batch.Description = model.Description;
@@ -187,7 +187,7 @@ public sealed class MeetController : Controller
             _dbContext.MeetBatchMembers.AddRange(newMembers);
 
         await _dbContext.SaveChangesAsync(cancellationToken);
-        return UpdateResponse("Batch details and members updated successfully.", true);
+        return UpdateResponse("Batch details and members updated successfully.", true, batch.Id);
     }
 
     [HttpPost]
@@ -278,12 +278,12 @@ public sealed class MeetController : Controller
         return RedirectWithMessage(message, succeeded);
     }
 
-    private IActionResult UpdateResponse(string message, bool succeeded)
+    private IActionResult UpdateResponse(string message, bool succeeded, int batchId)
     {
         if (Request.Headers.XRequestedWith == "XMLHttpRequest")
             return Json(new { success = succeeded, message });
 
-        return RedirectWithMessage(message, succeeded, nameof(Details));
+        return RedirectWithMessage(message, succeeded, nameof(Details), batchId);
     }
 
     private async Task<IActionResult> ReturnDetailsWithErrorAsync(
