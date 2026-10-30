@@ -84,16 +84,18 @@ public sealed class PracticeExamsController : Controller
                     expiredQuestionIds,
                     savedAnswers,
                     cancellationToken);
+                var serializedExpiredAnswers = JsonSerializer.Serialize(savedAnswers);
+                var expiredAtUtc = activeAttempt.StartedAtUtc.AddMinutes(ExamDurationMinutes);
                 await _dbContext.PracticeExamAttempts
                     .Where(attempt => attempt.Id == activeAttempt.Id
                         && attempt.UserId == userId
                         && attempt.SubmittedAtUtc == null)
                     .ExecuteUpdateAsync(
                         setters => setters
-                            .SetProperty(attempt => attempt.AnswersJson, JsonSerializer.Serialize(savedAnswers))
+                            .SetProperty(attempt => attempt.AnswersJson, serializedExpiredAnswers)
                             .SetProperty(attempt => attempt.TotalQuestions, expiredQuestionIds.Count)
                             .SetProperty(attempt => attempt.Score, expiredScore)
-                            .SetProperty(attempt => attempt.SubmittedAtUtc, activeAttempt.StartedAtUtc.AddMinutes(ExamDurationMinutes)),
+                            .SetProperty(attempt => attempt.SubmittedAtUtc, expiredAtUtc),
                         cancellationToken);
                 return RedirectToAction(nameof(Result), new { attemptId = activeAttempt.Id });
             }
@@ -291,13 +293,14 @@ public sealed class PracticeExamsController : Controller
 
         var questionIds = DeserializeQuestionIds(attempt.QuestionIdsJson);
         var answers = NormalizeAnswers(answersJson, questionIds);
+        var serializedAnswers = JsonSerializer.Serialize(answers);
         var affectedRows = await _dbContext.PracticeExamAttempts
             .Where(item => item.Id == attemptId
                 && item.UserId == userId
                 && item.SubmittedAtUtc == null
                 && item.StartedAtUtc > now.AddMinutes(-ExamDurationMinutes))
             .ExecuteUpdateAsync(
-                setters => setters.SetProperty(item => item.AnswersJson, JsonSerializer.Serialize(answers)),
+                setters => setters.SetProperty(item => item.AnswersJson, serializedAnswers),
                 cancellationToken);
 
         return affectedRows == 1
@@ -342,13 +345,14 @@ public sealed class PracticeExamsController : Controller
             cancellationToken);
 
         var submittedAtUtc = DateTime.UtcNow;
+        var serializedSubmittedAnswers = JsonSerializer.Serialize(submittedAnswers);
         var updatedRows = await _dbContext.PracticeExamAttempts
             .Where(item => item.Id == attemptId
                 && item.UserId == userId
                 && item.SubmittedAtUtc == null)
             .ExecuteUpdateAsync(
                 setters => setters
-                    .SetProperty(item => item.AnswersJson, JsonSerializer.Serialize(submittedAnswers))
+                    .SetProperty(item => item.AnswersJson, serializedSubmittedAnswers)
                     .SetProperty(item => item.Score, score)
                     .SetProperty(item => item.TotalQuestions, selectedQuestionIds.Count)
                     .SetProperty(item => item.SubmittedAtUtc, submittedAtUtc),
