@@ -478,6 +478,7 @@ public class ApplicationDbContext : IdentityDbContext<ApplicationUser>
             entity.Property(x => x.Status).HasColumnName("status").HasMaxLength(20).IsRequired();
             entity.Property(x => x.CreatedByUserId).HasColumnName("created_by_user_id").HasMaxLength(450).IsRequired();
             entity.Property(x => x.CreatedAtUtc).HasColumnName("created_at_utc").HasColumnType("datetime2").IsRequired();
+            entity.HasIndex(x => x.CreatedByUserId).HasDatabaseName("IX_meet_sessions_created_by");
             entity.HasIndex(x => x.RoomName).IsUnique().HasDatabaseName("UX_meet_sessions_room_name");
             entity.HasIndex(x => new { x.MeetBatchId, x.StartsAtUtc }).HasDatabaseName("IX_meet_sessions_batch_start");
             entity.HasOne(x => x.MeetBatch).WithMany(x => x.Sessions).HasForeignKey(x => x.MeetBatchId).OnDelete(DeleteBehavior.Cascade);
