@@ -45,11 +45,37 @@
                 <p>Scheduled and live meetings for this batch will appear here.</p>
             </div>
         </div>
-        <div class="ciit-student-meet-empty ciit-student-meet-session-empty">
-            <span class="ciit-student-meet-empty-icon"><i class="bi bi-camera-video"></i></span>
-            <h3>No meeting sessions available</h3>
-            <p>Your admin has not scheduled or started a meeting for this batch yet. Check back here when a session is announced.</p>
-        </div>
+        @if (Model.Sessions.Count == 0)
+        {
+            <div class="ciit-student-meet-empty ciit-student-meet-session-empty">
+                <span class="ciit-student-meet-empty-icon"><i class="bi bi-camera-video"></i></span>
+                <h3>No meeting sessions available</h3>
+                <p>Your admin has not scheduled or started a meeting for this batch yet. Check back here when a session is announced.</p>
+            </div>
+        }
+        else
+        {
+            <div class="ciit-student-meet-grid">
+                @foreach (var session in Model.Sessions)
+                {
+                    <article class="ciit-student-meet-card">
+                        <div class="ciit-student-meet-card-top">
+                            <span class="ciit-student-meet-status"><span></span> @session.Status</span>
+                            <span>@session.DurationMinutes min</span>
+                        </div>
+                        <h3>@session.Title</h3>
+                        <p>@(string.IsNullOrWhiteSpace(session.Description) ? "Meeting session for your batch." : session.Description)</p>
+                        <div class="ciit-student-meet-meta">
+                            <span><i class="bi bi-calendar-event"></i> @session.StartsAtUtc.ToLocalTime().ToString("dd MMM yyyy, hh:mm tt")</span>
+                        </div>
+                        @if (session.Status == "Live")
+                        {
+                            <span class="ciit-student-meet-join-disabled">Live room access will be enabled in the conferencing phase.</span>
+                        }
+                    </article>
+                }
+            </div>
+        }
     </section>
 </section>
 
