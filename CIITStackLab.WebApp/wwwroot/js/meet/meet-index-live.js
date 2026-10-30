@@ -159,6 +159,7 @@ document.addEventListener("DOMContentLoaded", () => {
                     headers: { "X-Requested-With": "XMLHttpRequest" }
                 });
                 if (!response.ok) throw new Error("Unable to update this meeting.");
+                if (button) button.disabled = false;
             } catch (error) {
                 console.error(error);
                 if (button) button.disabled = false;
