@@ -138,7 +138,6 @@ public sealed class MeetController : Controller
             return RedirectWithMessage("Another meeting is already live for this batch.", false);
 
         session.Status = "Live";
-        session.StartsAtUtc = now;
         session.StartedAtUtc = now;
         await _dbContext.SaveChangesAsync(cancellationToken);
 
