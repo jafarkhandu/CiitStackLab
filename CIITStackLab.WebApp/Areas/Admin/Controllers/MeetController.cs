@@ -69,7 +69,8 @@ public sealed class MeetController : Controller
         var description = string.IsNullOrWhiteSpace(model.Description) ? null : model.Description.Trim();
 
         if (title.Length == 0 || title.Length > 150 || description?.Length > 1000
-            || model.DurationMinutes is < 5 or > 480)
+            || model.DurationMinutes is < 5 or > 480
+            || model.ClientUtcOffsetMinutes is < -840 or > 840)
         {
             TempData["MeetBatchMessage"] = "Check the meeting title, description and duration.";
             TempData["MeetBatchMessageType"] = "error";
