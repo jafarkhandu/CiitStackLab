@@ -114,6 +114,28 @@ document.addEventListener("DOMContentLoaded", () => {
 
         const status = card.querySelector("[data-meet-session-status]");
         if (status) status.textContent = state.status;
+
+        card.querySelectorAll("[data-meet-session-action]").forEach(element => element.remove());
+        if (state.status === "Scheduled") {
+            [
+                ["Start now", "/Admin/Meet/Start"],
+                ["Cancel", "/Admin/Meet/Cancel"]
+            ].forEach(([label, action]) => {
+                const form = document.createElement("form");
+                form.method = "post";
+                form.action = action;
+                form.dataset.meetSessionAction = "";
+                addHidden(form, "__RequestVerificationToken", token());
+                addHidden(form, "id", state.sessionId);
+                const button = document.createElement("button");
+                button.type = "submit";
+                button.className = label === "Start now" ? "meet-primary-button" : "meet-secondary-button";
+                button.textContent = label;
+                form.append(button);
+                card.append(form);
+            });
+        }
+
         const link = card.querySelector("a");
         if (link) {
             link.textContent = state.status === "Live" ? "Open live room" : "Details";
