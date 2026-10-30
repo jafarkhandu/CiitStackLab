@@ -110,7 +110,7 @@ public sealed class MeetController : Controller
             participant.AdmittedAtUtc = session.WaitingRoomEnabled ? null : now;
             participant.LeftAtUtc = null;
         }
-        else if (participant.Status == "Rejected")
+        else if (participant.Status is "Rejected" or "Removed")
         {
             return RedirectToAction(nameof(Index));
         }
@@ -158,7 +158,7 @@ public sealed class MeetController : Controller
         var participant = await _dbContext.MeetSessionParticipants
             .SingleOrDefaultAsync(x => x.MeetSessionId == id && x.StudentUserId == studentId, cancellationToken);
 
-        if (participant is null || participant.Status is "Left" or "Rejected")
+        if (participant is null || participant.Status is "Left" or "Rejected" or "Removed")
             return NotFound();
 
         return View(new MeetRoomViewModel
