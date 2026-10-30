@@ -27,7 +27,19 @@
             <div class="ciit-meet-room-meta">
                 <span class="ciit-meet-room-status" data-meet-status><span class="ciit-meet-room-status-dot"></span><span data-meet-status-text>@Model.Status</span></span>
                 <span class="ciit-meet-room-duration"><i class="bi bi-clock"></i> @Model.DurationMinutes min</span>
-                <span class="ciit-meet-participant-count"><i class="bi bi-people-fill"></i> <span data-meet-admitted-count>@(Model.ParticipantCount + (Model.Status == "Live" && Model.IsHost ? 1 : Model.ParticipantStatus == "Admitted" ? 1 : 0))</span></span>
+                @if (Model.IsHost)
+                {
+                    <button type="button" class="ciit-meet-header-action" data-open-participants aria-label="Open participants">
+                        <i class="bi bi-people-fill"></i><span data-meet-admitted-count>@(Model.ParticipantCount + (Model.Status == "Live" ? 1 : 0))</span>
+                    </button>
+                    <button type="button" class="ciit-meet-header-action" data-open-settings aria-label="Meeting settings">
+                        <i class="bi bi-gear-fill"></i>
+                    </button>
+                }
+                else
+                {
+                    <span class="ciit-meet-participant-count"><i class="bi bi-people-fill"></i> <span data-meet-admitted-count>@(Model.ParticipantCount + (Model.ParticipantStatus == "Admitted" ? 1 : 0))</span></span>
+                }
             </div>
         </header>
 
