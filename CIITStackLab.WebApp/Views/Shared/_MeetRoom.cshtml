@@ -31,6 +31,111 @@
             </div>
         </header>
 
+        @if (Model.IsHost)
+        {
+            <section class="ciit-meet-host-panel">
+                <div class="ciit-meet-host-panel-heading">
+                    <div><strong>Meeting controls</strong><span>Manage access, participants and recording</span></div>
+                    <form asp-area="Admin" asp-controller="Meet" asp-action="End" method="post" onsubmit="return confirm('End this meeting for everyone?');">
+                        @Html.AntiForgeryToken()
+                        <input type="hidden" name="id" value="@Model.Id" />
+                        <button type="submit" class="ciit-meet-host-danger" @(Model.Status != "Live" ? "disabled" : null)>End meeting</button>
+                    </form>
+                </div>
+                <div class="ciit-meet-host-settings">
+                    <form asp-area="Admin" asp-controller="Meet" asp-action="SetWaitingRoom" method="post">
+                        @Html.AntiForgeryToken()
+                        <input type="hidden" name="id" value="@Model.Id" />
+                        <input type="hidden" name="enabled" value="@(!Model.WaitingRoomEnabled)" />
+                        <span>Waiting room <strong>@(Model.WaitingRoomEnabled ? "On" : "Off")</strong></span>
+                        <button type="submit" class="ciit-meet-host-secondary">Turn @(Model.WaitingRoomEnabled ? "off" : "on")</button>
+                    </form>
+                    <div class="ciit-meet-recording-settings">
+                        <span>Recording <strong>@Model.RecordingStatus</strong></span>
+                        @if (!Model.RecordingEnabled)
+                        {
+                            <form asp-area="Admin" asp-controller="Meet" asp-action="SetRecording" method="post">
+                                @Html.AntiForgeryToken()<input type="hidden" name="id" value="@Model.Id" /><input type="hidden" name="action" value="enable" />
+                                <button type="submit" class="ciit-meet-host-secondary">Enable</button>
+                            </form>
+                        }
+                        else if (Model.RecordingStatus == "Recording")
+                        {
+                            <form asp-area="Admin" asp-controller="Meet" asp-action="SetRecording" method="post">
+                                @Html.AntiForgeryToken()<input type="hidden" name="id" value="@Model.Id" /><input type="hidden" name="action" value="stop" />
+                                <button type="submit" class="ciit-meet-host-secondary">Stop recording</button>
+                            </form>
+                        }
+                        else
+                        {
+                            <form asp-area="Admin" asp-controller="Meet" asp-action="SetRecording" method="post">
+                                @Html.AntiForgeryToken()<input type="hidden" name="id" value="@Model.Id" /><input type="hidden" name="action" value="start" />
+                                <button type="submit" class="ciit-meet-host-secondary" @(Model.Status != "Live" ? "disabled" : null)>Start recording</button>
+                            </form>
+                            <form asp-area="Admin" asp-controller="Meet" asp-action="SetRecording" method="post">
+                                @Html.AntiForgeryToken()<input type="hidden" name="id" value="@Model.Id" /><input type="hidden" name="action" value="disable" />
+                                <button type="submit" class="ciit-meet-host-secondary">Disable</button>
+                            </form>
+                        }
+                    </div>
+                </div>
+                <div class="ciit-meet-host-participants">
+                    <h2>Participants <span>@Model.Participants.Count</span></h2>
+                    @if (Model.Participants.Count == 0)
+                    {
+                        <p>No student has requested to join yet.</p>
+                    }
+                    @foreach (var participant in Model.Participants)
+                    {
+                        <article class="ciit-meet-host-participant">
+                            <div><strong>@participant.StudentName</strong><small>@participant.Status</small></div>
+                            @if (participant.Status == "Pending")
+                            {
+                                <form asp-area="Admin" asp-controller="Meet" asp-action="ReviewParticipant" method="post">
+                                    @Html.AntiForgeryToken()<input type="hidden" name="id" value="@participant.Id" /><input type="hidden" name="decision" value="admit" />
+                                    <button type="submit" class="ciit-meet-host-secondary">Admit</button>
+                                </form>
+                                <form asp-area="Admin" asp-controller="Meet" asp-action="ReviewParticipant" method="post">
+                                    @Html.AntiForgeryToken()<input type="hidden" name="id" value="@participant.Id" /><input type="hidden" name="decision" value="reject" />
+                                    <button type="submit" class="ciit-meet-host-danger">Reject</button>
+                                </form>
+                            }
+                            @if (participant.Status == "Admitted")
+                            {
+                                <form asp-area="Admin" asp-controller="Meet" asp-action="UpdateParticipantPermissions" method="post" class="ciit-meet-permission-form">
+                                    @Html.AntiForgeryToken()
+                                    <input type="hidden" name="id" value="@participant.Id" />
+                                    <label><input type="checkbox" name="canUseMicrophone" value="true" checked="@participant.CanUseMicrophone" /> Mic</label>
+                                    <label><input type="checkbox" name="canUseCamera" value="true" checked="@participant.CanUseCamera" /> Camera</label>
+                                    <label><input type="checkbox" name="canShareScreen" value="true" checked="@participant.CanShareScreen" /> Share</label>
+                                    <button type="submit" class="ciit-meet-host-secondary">Save permissions</button>
+                                </form>
+                            }
+                        </article>
+                    }
+                </div>
+            </section>
+        }
+        else if (Model.ParticipantStatus == "Pending")
+        {
+            <section class="ciit-meet-waiting-screen">
+                <span class="ciit-meet-waiting-icon"><i class="bi bi-hourglass-split"></i></span>
+                <h2>Waiting for the host to admit you</h2>
+                <p>Your join request has been sent. Keep this page open; it will update after the host admits you.</p>
+                <button type="button" class="ciit-meet-host-secondary" onclick="window.location.reload()">Check admission status</button>
+                <form asp-area="Student" asp-controller="Meet" asp-action="Leave" method="post">
+                    @Html.AntiForgeryToken()<input type="hidden" name="id" value="@Model.Id" />
+                    <button type="submit" class="ciit-meet-host-danger">Cancel request</button>
+                </form>
+            </section>
+        }
+        else if (Model.ParticipantStatus == "Rejected")
+        {
+            <section class="ciit-meet-waiting-screen">
+                <h2>Join request was declined</h2>
+                <p>Please contact your admin if you believe this was a mistake.</p>
+            </section>
+        }
         <main class="ciit-meet-room-stage">
             <div class="ciit-meet-room-video-grid">
                 <article class="ciit-meet-video-tile ciit-meet-video-self">
@@ -61,9 +166,19 @@
                 <button type="button" class="ciit-meet-control" data-room-toggle="share" aria-pressed="false">
                     <i class="bi bi-display"></i><span>Share screen</span>
                 </button>
-                <a class="ciit-meet-leave-button" href="@(Model.IsHost ? Url.Action("Index", "Meet", new { area = "Admin" }) : Url.Action("Index", "Meet", new { area = "Student" }))">
-                    <i class="bi bi-telephone-x-fill"></i><span>Leave meeting</span>
-                </a>
+                @if (Model.IsHost)
+                {
+                    <a class="ciit-meet-leave-button" href="@Url.Action("Index", "Meet", new { area = "Admin" })">
+                        <i class="bi bi-telephone-x-fill"></i><span>Leave room</span>
+                    </a>
+                }
+                else
+                {
+                    <form asp-area="Student" asp-controller="Meet" asp-action="Leave" method="post">
+                        @Html.AntiForgeryToken()<input type="hidden" name="id" value="@Model.Id" />
+                        <button type="submit" class="ciit-meet-leave-button"><i class="bi bi-telephone-x-fill"></i><span>Leave meeting</span></button>
+                    </form>
+                }
             </div>
             <p class="ciit-meet-room-footnote"><i class="bi bi-info-circle"></i> Meeting interface preview · Camera, microphone and participant connections will be enabled with LiveKit.</p>
         </main>
