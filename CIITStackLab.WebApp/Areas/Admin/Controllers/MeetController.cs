@@ -142,7 +142,7 @@ public sealed class MeetController : Controller
             {
                 member.Name,
                 member.Email,
-                Attended = participant?.Status is "Admitted" or "Left",
+                Attended = participant?.AdmittedAtUtc.HasValue == true,
                 Status = participant?.Status ?? "Not joined"
             };
         }).ToList();
