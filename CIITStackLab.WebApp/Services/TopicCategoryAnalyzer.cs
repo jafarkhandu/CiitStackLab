@@ -45,6 +45,50 @@ public static class TopicCategoryAnalyzer
         return $"Specialized: {ToDisplayTitle(topicTitle!)}";
     }
 
+    /// <summary>
+    /// Resolves the technology icon used by topic cards from the same normalized
+    /// topic title used by the category analyzer. Keeping this mapping here prevents
+    /// course views from maintaining a second, divergent icon resolver.
+    /// </summary>
+    public static string GetIconClass(string? topicTitle)
+    {
+        var title = Normalize(topicTitle);
+        if (title.Length == 0)
+        {
+            return "bi bi-code-slash";
+        }
+
+        return title switch
+        {
+            var value when value.Contains("html") => "devicon-html5-plain colored",
+            var value when value.Contains("css") => "devicon-css3-plain colored",
+            var value when value.Contains("javascript") || value == "js" => "devicon-javascript-plain colored",
+            var value when value.Contains("jquery") => "devicon-jquery-plain colored",
+            var value when value.Contains("bootstrap") => "devicon-bootstrap-plain colored",
+            var value when value.Contains("react") => "devicon-react-original colored",
+            var value when value.Contains("typescript") => "devicon-typescript-plain colored",
+            var value when value.Contains("angular") => "devicon-angularjs-plain colored",
+            var value when value.Contains("node") => "devicon-nodejs-plain colored",
+            var value when value.Contains("python") => "devicon-python-plain colored",
+            var value when value.Contains("oracle") || value.Contains("pl/sql") => "devicon-oracle-original colored",
+            var value when value.Contains("mysql") => "devicon-mysql-original colored",
+            var value when value.Contains("mongodb") || value.Contains("mongo db") => "devicon-mongodb-plain colored",
+            var value when value.Contains("sql server") || value.Contains("mssql") => "devicon-microsoftsqlserver-plain colored",
+            var value when value.Contains("hibernate") => "devicon-hibernate-plain colored",
+            var value when value.Contains("spring") => "devicon-spring-original colored",
+            var value when value.Contains("java") || value.Contains("jdbc") || value.Contains("jsp") || value.Contains("servlet") => "devicon-java-plain colored",
+            var value when value.Contains("jenkins") => "devicon-jenkins-plain colored",
+            var value when value.Contains("azure") => "devicon-azure-plain colored",
+            var value when value.Contains("aws") || value.Contains("amazon web services") => "devicon-amazonwebservices-plain-wordmark colored",
+            var value when value.Contains("docker") => "devicon-docker-plain colored",
+            var value when value.Contains("github") => "devicon-github-original colored",
+            var value when value.Contains("git") => "devicon-git-plain colored",
+            var value when value.Contains("c#") || value.Contains(".net") => "devicon-dotnetcore-plain colored",
+            var value when value.Contains("sql") || value.Contains("database") => "bi bi-database",
+            _ => "bi bi-code-slash"
+        };
+    }
+
     private static bool ContainsPhrase(string title, string keyword)
     {
         if (keyword.Length <= 3 && keyword.All(char.IsLetterOrDigit))
