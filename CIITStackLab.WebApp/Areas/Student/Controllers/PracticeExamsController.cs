@@ -201,7 +201,36 @@ public sealed class PracticeExamsController : Controller
         };
 
         _dbContext.PracticeExamAttempts.Add(attempt);
-        await _dbContext.SaveChangesAsync(cancellationToken);
+        try
+        {
+            await _dbContext.SaveChangesAsync(cancellationToken);
+        }
+        catch (DbUpdateException)
+        {
+            _dbContext.Entry(attempt).State = EntityState.Detached;
+            var concurrentlyCreatedAttempt = await _dbContext.PracticeExamAttempts
+                .FirstOrDefaultAsync(item => item.UserId == userId
+                    && item.CourseId == courseId
+                    && item.TopicId == topicId
+                    && item.SubmittedAtUtc == null,
+                    cancellationToken);
+
+            if (concurrentlyCreatedAttempt is null)
+            {
+                throw;
+            }
+
+            if (DateTime.UtcNow >= concurrentlyCreatedAttempt.StartedAtUtc.AddMinutes(ExamDurationMinutes))
+            {
+                return RedirectToAction(nameof(Start), new { courseId, topicId });
+            }
+
+            return await RenderAttemptAsync(
+                concurrentlyCreatedAttempt,
+                course.Title,
+                topic.Title,
+                cancellationToken);
+        }
 
         return View("TakeExam", new PracticeExamTakeViewModel
         {
