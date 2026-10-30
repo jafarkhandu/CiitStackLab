@@ -92,10 +92,9 @@
             return;
         }
 
-        const existing = activeChapter.nextElementSibling;
-        if (existing && existing.matches('[data-learning-subtopics]')) {
+        sidebar.querySelectorAll('[data-learning-subtopics], .ciit-learning-chapter-subtopics').forEach(function (existing) {
             existing.remove();
-        }
+        });
 
         const headings = Array.from(notes.querySelectorAll('h2, h3')).filter(function (heading) {
             return !heading.closest('.ciit-learning-resource-title')

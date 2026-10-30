@@ -69,29 +69,10 @@
         : currentContent?.NoteId is int currentNoteId
             ? orderedChapters.FirstOrDefault(chapter => chapter.Id == currentNoteId)
             : currentTopic?.Chapters.FirstOrDefault();
-    IEnumerable<CIITStackLab.Application.DTOs.CourseLearningChapterDto> displayedChapters =
-        currentTopic?.Chapters ?? Array.Empty<CIITStackLab.Application.DTOs.CourseLearningChapterDto>();
-    if (Model.CurrentChapterId.HasValue && currentChapter is not null)
-    {
-        displayedChapters = new[] { currentChapter };
-    }
     var currentChapterIndex = currentChapter is not null
         ? orderedChapters.FindIndex(chapter => chapter.Id == currentChapter.Id)
         : 0;
     if (currentChapterIndex < 0) currentChapterIndex = 0;
-    var topicAssessmentQuestions = currentTopic is null
-        ? new List<CIITStackLab.Application.DTOs.ContentQuestionDto>()
-        : Model.CurrentChapterId.HasValue && currentChapter is not null
-            ? currentChapter.Contents
-                .SelectMany(content => content.Questions)
-                .Concat(currentChapter.Questions)
-                .DistinctBy(question => question.Id)
-                .ToList()
-            : currentTopic.Contents
-                .SelectMany(content => content.Questions)
-                .Concat(currentTopic.Chapters.SelectMany(chapter => chapter.Questions))
-                .DistinctBy(question => question.Id)
-                .ToList();
 
 
 
@@ -329,7 +310,6 @@ else if (currentContent is null && currentTopic is not null)
                 <div class="ciit-learning-panel-pager" aria-label="Learning sections">
                     <button type="button" data-learning-page="notes">1. Notes</button>
                     <button type="button" data-learning-page="content">2. Content</button>
-                    <button type="button" data-learning-page="assessment">3. Assessments</button>
                 </div>
                 <article class="ciit-learning-main-card">
                                         <nav class="ciit-learning-breadcrumb" aria-label="Breadcrumb">
@@ -412,142 +392,11 @@ else if (currentContent is null && currentTopic is not null)
                         }
                         else
                         {
-                            <p class="ciit-learning-category-empty">This topic has notes and assessments but no separate video/slide lesson.</p>
+                            <p class="ciit-learning-category-empty">This topic has notes but no separate video/slide lesson.</p>
                         }
                     </section>
 
-                    <section class="ciit-learning-resource ciit-learning-all-assessments" data-learning-panel-content="assessment">
-                        <div class="ciit-learning-resource-title">
-                            <span class="ciit-learning-resource-icon"><i class="bi bi-patch-check"></i></span>
-                            <div><h3>Chapter Assessments</h3><p>MCQs, interview questions and practice programs for this topic.</p></div>
-                        </div>
-                        @foreach (var chapter in displayedChapters)
-                        {
-                            <section class="ciit-learning-chapter-assessment" id="chapter-assessment-@chapter.Id">
-                                <h4>@CIITStackLab.WebApp.Helpers.LearningPagePresentation.FormatLearningTitle(chapter.Title)</h4>
-                                @if (Model.CurrentChapterId.HasValue
-                                    ? chapter.Id == Model.CurrentChapterId.Value
-                                    : chapter.Id == currentTopic.Chapters.First().Id)
-                                {
-                                    <section class="ciit-learning-assessment-subsection" id="chapter-mcqs-@chapter.Id">
-                                        <h5>MCQs</h5>
-                                        @if (topicAssessmentQuestions.Count == 0)
-                                        {
-                                            <p class="ciit-learning-category-empty">No MCQs have been added to this topic yet.</p>
-                                        }
-                                        else
-                                        {
-                                            <section id="lesson-assessment-@currentTopic.Id" class="ciit-learning-resource ciit-learning-assessment-section">
-                                                <div class="ciit-learning-resource-title">
-                                                    <span class="ciit-learning-resource-icon"><i class="bi bi-patch-check"></i></span>
-                                                    <div>
-                                                        <h3>Knowledge check</h3>
-                                                        <p>Your answers are evaluated securely when you submit.</p>
-                                                    </div>
-                                                    <span class="ciit-learning-question-count">
-                                                        @topicAssessmentQuestions.Count question@(topicAssessmentQuestions.Count == 1 ? "" : "s")
-                                                    </span>
-                                                </div>
-                                                @if (TempData["AssessmentError"] is string assessmentError)
-                                                {
-                                                    <div class="alert alert-warning ciit-assessment-error" role="alert">
-                                                        <i class="bi bi-exclamation-triangle-fill me-2"></i>@assessmentError
-                                                    </div>
-                                                }
-                                                @if (User.IsInRole("Student"))
-                                                {
-                                                    <form asp-controller="Courses"
-                                                          asp-action="SubmitAssessment"
-                                                          asp-route-id="@Model.Id"
-                                                          asp-route-topicId="@currentTopic.Id"
-                                                          method="post"
-                                                          class="ciit-assessment-form">
-                                                        @for (var i = 0; i < topicAssessmentQuestions.Count; i++)
-                                                        {
-                                                            var question = topicAssessmentQuestions[i];
-                                                            <input type="hidden" name="answers[@i].QuestionId" value="@question.Id" />
-                                                            <div class="ciit-learning-question">
-                                                                <strong class="ciit-learning-question-title">
-                                                                    <span>@(i + 1)</span>
-                                                                    @question.Question
-                                                                </strong>
-                                                                <div class="ciit-learning-options">
-                                                                    @for (var optionIndex = 0; optionIndex < question.Options.Count; optionIndex++)
-                                                                    {
-                                                                        var option = question.Options[optionIndex];
-                                                                        if (!string.IsNullOrWhiteSpace(option))
-                                                                        {
-                                                                            <label>
-                                                                                <input type="radio" name="answers[@i].SelectedOptionNumber" value="@(optionIndex + 1)" required />
-                                                                                <span class="ciit-learning-option-letter">@((char)('A' + optionIndex))</span>
-                                                                                <span>@option</span>
-                                                                            </label>
-                                                                        }
-                                                                    }
-                                                                </div>
-                                                            </div>
-                                                        }
-                                                        <div class="ciit-assessment-submit-row">
-                                                            <p><i class="bi bi-shield-check me-2"></i>Correct answers stay hidden until after submission.</p>
-                                                            <button type="submit" class="btn btn-primary">
-                                                                <i class="bi bi-send-check me-2"></i>Submit assessment
-                                                            </button>
-                                                        </div>
-                                                    </form>
-                                                }
-                                                else
-                                                {
-                                                    <div class="ciit-assessment-signin">
-                                                        <div>
-                                                            <strong>Ready to test your knowledge?</strong>
-                                                            <p>Sign in with your student account to submit answers and save your result.</p>
-                                                        </div>
-                                                        <a asp-controller="Account" asp-action="Login" class="btn btn-primary">
-                                                            <i class="bi bi-box-arrow-in-right me-2"></i>Student sign in
-                                                        </a>
-                                                    </div>
-                                                }
-                                            </section>
-                                        }
-                                    </section>
-                                }
-                                <section class="ciit-learning-assessment-subsection" id="chapter-interview-@chapter.Id">
-                                    <h5>Interview Questions</h5>
-                                    @if (chapter.InterviewQuestions.Count == 0)
-                                    {
-                                        <p class="ciit-learning-category-empty">No interview questions have been added to this chapter yet.</p>
-                                    }
-                                    @foreach (var question in chapter.InterviewQuestions)
-                                    {
-                                        <article class="ciit-learning-assessment-question">
-                                            <strong>@question.Question</strong>
-                                            @if (!string.IsNullOrWhiteSpace(question.Answer))
-                                            {
-                                                <p>@question.Answer</p>
-                                            }
-                                        </article>
-                                    }
-                                </section>
-                                <section class="ciit-learning-assessment-subsection" id="chapter-practice-@chapter.Id">
-                                    <h5>Practice Programs</h5>
-                                    @if (chapter.PracticeQuestions.Count == 0)
-                                    {
-                                        <p class="ciit-learning-category-empty">No practice programs have been added to this chapter yet.</p>
-                                    }
-                                    @foreach (var question in chapter.PracticeQuestions)
-                                    {
-                                        <article class="ciit-learning-assessment-question">
-                                            <strong>@question.QuestionTitle</strong>
-                                            @if (!string.IsNullOrWhiteSpace(question.QuestionDescription))
-                                            {
-                                                <p>@question.QuestionDescription</p>
-                                            }
-                                        </article>
-                                    }
-                                </section>
-                            </section>
-                        }
-                    </section>
+                    
                 </article>
 
                 <partial name="_LearningChapterActions" model="Model" />
@@ -608,7 +457,6 @@ else
                 <div class="ciit-learning-panel-pager" aria-label="Learning sections">
                     <button type="button" data-learning-page="notes">1. Notes</button>
                     <button type="button" data-learning-page="content">2. Content</button>
-                    <button type="button" data-learning-page="assessment">3. Assessments</button>
                 </div>
                 <article class="ciit-learning-main-card">
                                         <nav class="ciit-learning-breadcrumb" aria-label="Breadcrumb">
@@ -772,138 +620,7 @@ else
                         </section>
                     }
 
-                    <section class="ciit-learning-resource ciit-learning-all-assessments" data-learning-panel-content="assessment">
-                        <div class="ciit-learning-resource-title">
-                            <span class="ciit-learning-resource-icon"><i class="bi bi-patch-check"></i></span>
-                            <div><h3>Chapter Assessments</h3><p>MCQs, interview questions and practice programs for this chapter.</p></div>
-                        </div>
-                        @if (currentChapter is not null)
-                        {
-                                var assessmentChapter = currentChapter;
-                                <section class="ciit-learning-chapter-assessment" id="chapter-assessment-@assessmentChapter.Id">
-                                    <h4>@CIITStackLab.WebApp.Helpers.LearningPagePresentation.FormatLearningTitle(assessmentChapter.Title)</h4>
-
-
-                                    <section id="chapter-mcqs-@assessmentChapter.Id" class="ciit-learning-assessment-subsection">
-                                        <h5>MCQs</h5>
-                                        @if (topicAssessmentQuestions.Count == 0)
-                                        {
-                                            <p class="ciit-learning-category-empty">No MCQs have been added to this topic yet.</p>
-                                        }
-                                        else
-                                        {
-                                            <section id="lesson-assessment" class="ciit-learning-resource ciit-learning-assessment-section">
-                                                <div class="ciit-learning-resource-title">
-                                                    <span class="ciit-learning-resource-icon"><i class="bi bi-patch-check"></i></span>
-                                                    <div>
-                                                        <h3>Knowledge check</h3>
-                                                        <p>Your answers are evaluated securely when you submit.</p>
-                                                    </div>
-                                                    <span class="ciit-learning-question-count">
-                                                        @topicAssessmentQuestions.Count question@(topicAssessmentQuestions.Count == 1 ? "" : "s")
-                                                    </span>
-                                                </div>
-                                                @if (TempData["AssessmentError"] is string assessmentError)
-                                                {
-                                                    <div class="alert alert-warning ciit-assessment-error" role="alert">
-                                                        <i class="bi bi-exclamation-triangle-fill me-2"></i>@assessmentError
-                                                    </div>
-                                                }
-                                                @if (User.IsInRole("Student"))
-                                                {
-                                                    <form asp-controller="Courses"
-                                                          asp-action="SubmitAssessment"
-                                                          asp-route-id="@Model.Id"
-                                                          asp-route-topicId="@currentTopic!.Id"
-                                                          method="post"
-                                                          class="ciit-assessment-form">
-                                                        @for (var i = 0; i < topicAssessmentQuestions.Count; i++)
-                                                        {
-                                                            var question = topicAssessmentQuestions[i];
-                                                            <input type="hidden" name="answers[@i].QuestionId" value="@question.Id" />
-                                                            <div class="ciit-learning-question">
-                                                                <strong class="ciit-learning-question-title">
-                                                                    <span>@(i + 1)</span>
-                                                                    @question.Question
-                                                                </strong>
-                                                                <div class="ciit-learning-options">
-                                                                    @for (var optionIndex = 0; optionIndex < question.Options.Count; optionIndex++)
-                                                                    {
-                                                                        var option = question.Options[optionIndex];
-                                                                        if (!string.IsNullOrWhiteSpace(option))
-                                                                        {
-                                                                            <label>
-                                                                                <input type="radio" name="answers[@i].SelectedOptionNumber" value="@(optionIndex + 1)" required />
-                                                                                <span class="ciit-learning-option-letter">@((char)('A' + optionIndex))</span>
-                                                                                <span>@option</span>
-                                                                            </label>
-                                                                        }
-                                                                    }
-                                                                </div>
-                                                            </div>
-                                                        }
-                                                        <div class="ciit-assessment-submit-row">
-                                                            <p><i class="bi bi-shield-check me-2"></i>Correct answers stay hidden until after submission.</p>
-                                                            <button type="submit" class="btn btn-primary">
-                                                                <i class="bi bi-send-check me-2"></i>Submit assessment
-                                                            </button>
-                                                        </div>
-                                                    </form>
-                                                }
-                                                else
-                                                {
-                                                    <div class="ciit-assessment-signin">
-                                                        <div>
-                                                            <strong>Ready to test your knowledge?</strong>
-                                                            <p>Sign in with your student account to submit answers and save your result.</p>
-                                                        </div>
-                                                        <a asp-controller="Account" asp-action="Login" class="btn btn-primary">
-                                                            <i class="bi bi-box-arrow-in-right me-2"></i>Student sign in
-                                                        </a>
-                                                    </div>
-                                                }
-                                            </section>
-                                        }
-                                    </section>
-                                    <section id="chapter-interview-@assessmentChapter.Id" class="ciit-learning-assessment-subsection">
-                                        <h5>Interview Questions</h5>
-                                        @if (assessmentChapter.InterviewQuestions.Count == 0)
-                                        {
-                                            <p class="ciit-learning-category-empty">No interview questions are linked to this chapter yet.</p>
-                                        }
-                                        else
-                                        {
-                                            @for (var qi = 0; qi < assessmentChapter.InterviewQuestions.Count; qi++)
-                                            {
-                                                var q = assessmentChapter.InterviewQuestions[qi];
-                                                <article class="ciit-learning-assessment-question">
-                                                    <strong>@(qi + 1). @q.Question</strong>
-                                                    @if (!string.IsNullOrWhiteSpace(q.Answer)) { <p>@q.Answer</p> }
-                                                </article>
-                                            }
-                                        }
-                                    </section>
-                                    <section id="chapter-practice-@assessmentChapter.Id" class="ciit-learning-assessment-subsection">
-                                        <h5>Practice Programs</h5>
-                                        @if (assessmentChapter.PracticeQuestions.Count == 0)
-                                        {
-                                            <p class="ciit-learning-category-empty">No practice programs are linked to this chapter yet.</p>
-                                        }
-                                        else
-                                        {
-                                            @for (var qi = 0; qi < assessmentChapter.PracticeQuestions.Count; qi++)
-                                            {
-                                                var q = assessmentChapter.PracticeQuestions[qi];
-                                                <article class="ciit-learning-assessment-question">
-                                                    <strong>@(qi + 1). @q.QuestionTitle</strong>
-                                                    <div class="ciit-practice-import-description">@q.QuestionDescription</div>
-                                                </article>
-                                            }
-                                        }
-                                    </section>
-                                </section>
-                        }
-                    </section>
+                    
                 </article>
 
                 <partial name="_LearningChapterActions" model="Model" />

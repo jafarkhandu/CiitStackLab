@@ -930,7 +930,9 @@ document.addEventListener("DOMContentLoaded", function () {
             });
         });
 
-        const validPanels = ["notes", "content", "assessment"];
+        const validPanels = panelContents
+            .map(function (panel) { return panel.dataset.learningPanelContent; })
+            .filter(Boolean);
         const initialPanel = validPanels.includes(savedLearningState.panel)
             ? savedLearningState.panel
             : "notes";
