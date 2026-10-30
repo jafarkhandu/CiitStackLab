@@ -12,6 +12,16 @@ document.addEventListener("DOMContentLoaded", () => {
     const token = () => document.querySelector('[data-meet-antiforgery] input[name="__RequestVerificationToken"]')
         ?.value || document.querySelector('input[name="__RequestVerificationToken"]')?.value || "";
 
+    // Track the live session independently from DOM rendering so a stale
+    // Scheduled snapshot can never undo a newer Live event for the same batch.
+    const liveSessionByBatch = new Map();
+    if (studentRoot) {
+        studentRoot.querySelectorAll("[data-meet-batch-id]").forEach(card => {
+            const id = card.querySelector('.ciit-student-meet-join-form input[name="id"]')?.value;
+            if (id) liveSessionByBatch.set(Number(card.dataset.meetBatchId), Number(id));
+        });
+    }
+
     const addHidden = (form, name, value) => {
         const input = document.createElement("input");
         input.type = "hidden";
@@ -33,12 +43,23 @@ document.addEventListener("DOMContentLoaded", () => {
         // Ignore updates for another scheduled/cancelled session while this
         // batch already has a different live meeting with a visible Join action.
         const visibleSessionId = joinForm?.querySelector('input[name="id"]')?.value;
-        if (!isLive && joinForm && visibleSessionId
-            && Number(visibleSessionId) !== Number(state.sessionId)) {
+        const knownLiveSessionId = liveSessionByBatch.get(Number(state.batchId));
+
+        // Ignore stale Scheduled snapshots for the same session after a Live
+        // event has already been received. Completed/Cancelled remain terminal.
+        if (!isLive && state.status === "Scheduled"
+            && knownLiveSessionId === Number(state.sessionId)) {
+            return;
+        }
+
+        // Do not let updates for another session replace the current live action.
+        if (!isLive && knownLiveSessionId
+            && knownLiveSessionId !== Number(state.sessionId)) {
             return;
         }
 
         if (isLive) {
+            liveSessionByBatch.set(Number(state.batchId), Number(state.sessionId));
             if (!joinForm) {
                 joinForm = document.createElement("form");
                 joinForm.method = "post";
@@ -58,6 +79,9 @@ document.addEventListener("DOMContentLoaded", () => {
                 if (id) id.value = state.sessionId;
             }
         } else if (joinForm) {
+            if (state.status === "Completed" || state.status === "Cancelled") {
+                liveSessionByBatch.delete(Number(state.batchId));
+            }
             joinForm.remove();
             if (!waiting) {
                 waiting = document.createElement("div");
