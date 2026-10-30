@@ -1570,8 +1570,6 @@ namespace CIITStackLab.Infrastructure.Migrations
                     b.HasIndex("CreatedByUserId")
                         .HasDatabaseName("IX_meet_batches_created_by");
 
-                    b.Navigation("Sessions");
-
                     b.ToTable("tbl_meet_batches", "erpsystem");
                 });
 
