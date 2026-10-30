@@ -181,6 +181,8 @@ document.addEventListener("DOMContentLoaded", () => {
         if (state.sessionId !== sessionId) return;
 
         setText("[data-meet-status-text]", state.status);
+        setText("[data-meet-waiting-room-state]", state.waitingRoomEnabled ? "On" : "Off");
+        setText("[data-meet-recording-status]", state.recordingStatus);
         setText("[data-meet-pending-count]", state.pendingCount);
         setText("[data-meet-admitted-count]", state.participantCount + (isHost ? 1 : 0));
 
