@@ -80,10 +80,9 @@ document.addEventListener("DOMContentLoaded", () => {
                 const id = joinForm.querySelector('input[name="id"]');
                 if (id) id.value = state.sessionId;
             }
-        } else if (joinForm) {
-            if (state.status === "Completed" || state.status === "Cancelled") {
-                liveSessionByBatch.delete(Number(state.batchId));
-            }
+        } else if (joinForm
+            && (state.status === "Completed" || state.status === "Cancelled")) {
+            liveSessionByBatch.delete(Number(state.batchId));
             joinForm.remove();
             if (!waiting) {
                 waiting = document.createElement("div");
