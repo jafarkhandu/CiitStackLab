@@ -60,17 +60,7 @@ public sealed class MeetController : Controller
                         StartsAtUtc = session.StartsAtUtc
                     })
                     .FirstOrDefault(),
-                RecentSessions = batch.Sessions
-                    .Where(session => session.Status == "Completed" || session.Status == "Cancelled")
-                    .OrderByDescending(session => session.EndedAtUtc ?? session.CancelledAtUtc ?? session.StartedAtUtc ?? session.StartsAtUtc)
-                    .Take(3)
-                    .Select(session => new StudentMeetSessionHistoryViewModel
-                    {
-                        Title = session.Title,
-                        Status = session.Status,
-                        SessionDateUtc = session.EndedAtUtc ?? session.CancelledAtUtc ?? session.StartedAtUtc ?? session.StartsAtUtc
-                    })
-                    .ToList()
+
             })
             .ToListAsync(cancellationToken);
 
