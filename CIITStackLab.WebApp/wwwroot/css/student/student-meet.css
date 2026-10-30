@@ -548,3 +548,13 @@
     font-size: 10px;
     font-weight: 700;
 }
+
+.ciit-student-meet-join-form{display:flex;min-width:0;margin-top:auto}
+.ciit-student-meet-join-form .ciit-student-meet-open{width:100%;cursor:pointer;font-family:inherit}
+.ciit-student-meet-history{display:grid;gap:7px;margin-top:10px;border-top:1px solid rgba(148,163,184,.2);padding-top:9px}
+.ciit-student-meet-history>span{color:#8291a7;font-size:8px;font-weight:800;letter-spacing:.12em}
+.ciit-student-meet-history>div{display:flex;align-items:flex-start;justify-content:space-between;gap:8px}
+.ciit-student-meet-history strong{overflow:hidden;color:#50627d;font-size:9px;font-weight:700;text-overflow:ellipsis;white-space:nowrap}
+.ciit-student-meet-history small{flex:0 0 auto;color:#8a98ad;font-size:8px;text-align:right}
+.ciit-student-meet-card{height:auto;min-height:218px}
+.ciit-student-meet-waiting{margin-top:auto}
