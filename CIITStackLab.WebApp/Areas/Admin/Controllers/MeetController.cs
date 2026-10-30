@@ -59,14 +59,14 @@ public sealed class MeetController : Controller
         studentIds = studentIds?.Where(x => !string.IsNullOrWhiteSpace(x)).Distinct().ToList() ?? [];
 
         if (string.IsNullOrWhiteSpace(name) || name.Length > 100)
-            return RedirectWithMessage("Enter a batch name (maximum 100 characters).", false);
+            return CreateResponse("Enter a batch name (maximum 100 characters).", false);
 
         if (description?.Length > 500)
-            return RedirectWithMessage("Description cannot exceed 500 characters.", false);
+            return CreateResponse("Description cannot exceed 500 characters.", false);
 
         var validStudentIds = await GetValidStudentIdsAsync(studentIds, cancellationToken);
         if (validStudentIds.Count != studentIds.Count)
-            return RedirectWithMessage("One or more selected accounts are not active Student accounts. Please refresh and try again.", false);
+            return CreateResponse("One or more selected accounts are not active Student accounts. Please refresh and try again.", false);
 
         var now = DateTime.UtcNow;
         var batch = new MeetBatch
@@ -92,7 +92,7 @@ public sealed class MeetController : Controller
         _dbContext.MeetBatches.Add(batch);
         await _dbContext.SaveChangesAsync(cancellationToken);
 
-        return RedirectWithMessage("Meet batch created successfully.", true);
+        return CreateResponse("Meet batch created successfully.", true);
     }
 
     [HttpGet]
@@ -108,7 +108,7 @@ public sealed class MeetController : Controller
 
         var students = await GetActiveStudentsAsync(cancellationToken);
 
-        return View(new MeetBatchDetailsViewModel
+        var model = new MeetBatchDetailsViewModel
         {
             Id = batch.Id,
             Name = batch.Name,
@@ -118,7 +118,12 @@ public sealed class MeetController : Controller
             CreatedAtUtc = batch.CreatedAtUtc,
             Students = students,
             SelectedStudentIds = batch.Members.Select(x => x.StudentUserId).ToList()
-        });
+        };
+
+        if (Request.Headers.XRequestedWith == "XMLHttpRequest")
+            return PartialView("_DetailsModal", model);
+
+        return View(model);
     }
 
     [HttpPost]
@@ -140,7 +145,7 @@ public sealed class MeetController : Controller
             : model.Description.Trim();
 
         if (!ModelState.IsValid || string.IsNullOrWhiteSpace(model.Name))
-            return await ReturnDetailsWithErrorAsync(batch.Id, "Please check the batch name and description.", cancellationToken);
+            return UpdateResponse("Please check the batch name and description.", false);
 
         var selectedIds = (model.SelectedStudentIds ?? [])
             .Where(x => !string.IsNullOrWhiteSpace(x))
@@ -149,7 +154,7 @@ public sealed class MeetController : Controller
 
         var validStudentIds = await GetValidStudentIdsAsync(selectedIds, cancellationToken);
         if (validStudentIds.Count != selectedIds.Count)
-            return await ReturnDetailsWithErrorAsync(batch.Id, "One or more selected accounts are not active Student accounts. Please refresh and try again.", cancellationToken);
+            return UpdateResponse("One or more selected accounts are not active Student accounts. Please refresh and try again.", false);
 
         batch.Name = model.Name;
         batch.Description = model.Description;
@@ -182,7 +187,7 @@ public sealed class MeetController : Controller
             _dbContext.MeetBatchMembers.AddRange(newMembers);
 
         await _dbContext.SaveChangesAsync(cancellationToken);
-        return RedirectWithMessage("Batch details and members updated successfully.", true, nameof(Details), batch.Id);
+        return UpdateResponse("Batch details and members updated successfully.", true);
     }
 
     [HttpPost]
@@ -263,6 +268,22 @@ public sealed class MeetController : Controller
         }
 
         throw new InvalidOperationException("A unique Meet batch code could not be generated.");
+    }
+
+    private IActionResult CreateResponse(string message, bool succeeded)
+    {
+        if (Request.Headers.XRequestedWith == "XMLHttpRequest")
+            return Json(new { success = succeeded, message });
+
+        return RedirectWithMessage(message, succeeded);
+    }
+
+    private IActionResult UpdateResponse(string message, bool succeeded)
+    {
+        if (Request.Headers.XRequestedWith == "XMLHttpRequest")
+            return Json(new { success = succeeded, message });
+
+        return RedirectWithMessage(message, succeeded, nameof(Details));
     }
 
     private async Task<IActionResult> ReturnDetailsWithErrorAsync(
