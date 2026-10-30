@@ -35,10 +35,12 @@ public partial class AddPracticeExamAttempts : Migration
             });
 
         migrationBuilder.CreateIndex(
-            name: "IX_practice_exam_user_course_topic_started",
+            name: "UX_practice_exam_one_active_attempt",
             schema: "erpsystem",
             table: "tblstudent_practice_exam_attempts",
-            columns: new[] { "user_id", "course_id", "topic_id", "started_at_utc" });
+            columns: new[] { "user_id", "course_id", "topic_id" },
+            unique: true,
+            filter: "[submitted_at_utc] IS NULL");
     }
 
     protected override void Down(MigrationBuilder migrationBuilder)
