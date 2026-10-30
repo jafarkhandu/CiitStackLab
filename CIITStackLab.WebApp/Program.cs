@@ -23,6 +23,7 @@ builder.Services.Configure<Microsoft.AspNetCore.Mvc.Razor.RazorViewEngineOptions
 });
 builder.Services.AddSignalR();
 builder.Services.AddScoped<ExamApplicationNotificationService>();
+builder.Services.AddHostedService<MeetSessionLifecycleService>();
 builder.Services.AddInfrastructure(builder.Configuration);
 builder.Services.AddDistributedMemoryCache();
 builder.Services.AddSession(options =>
