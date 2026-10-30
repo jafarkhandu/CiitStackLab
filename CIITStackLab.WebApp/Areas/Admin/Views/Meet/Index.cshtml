@@ -142,8 +142,7 @@
                             @if (session.Status is "Completed" or "Cancelled")
                             {
                                 <form asp-area="Admin" asp-controller="Meet" asp-action="DeleteSession" method="post"
-                                      data-meet-session-delete data-meet-ajax
-                                      onsubmit="return confirm('Permanently delete this meeting history and its attendance records?');">
+                                      data-meet-session-delete data-meet-ajax>
                                     @Html.AntiForgeryToken()
                                     <input type="hidden" name="id" value="@session.Id" />
                                     <button type="submit" class="meet-icon-button" title="Delete meeting history" aria-label="Delete @session.Title history">
