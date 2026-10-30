@@ -27,6 +27,42 @@
         .ciit-practice-course-heading span { color:#7183a0; font-size:.78rem; font-weight:700; white-space:nowrap; }
         .ciit-practice-assessment-page .ciit-course-curriculum-list { display:grid; grid-template-columns:repeat(6,minmax(0,1fr)); gap:12px; }
         .ciit-practice-assessment-page .ciit-course-topic-card { aspect-ratio:1/1; }
+        .ciit-practice-assessment-page .ciit-practice-topic-button {
+            font: inherit;
+            cursor: pointer;
+            appearance: none;
+            -webkit-appearance: none;
+        }
+        .ciit-practice-modal {
+            width: min(92vw, 540px);
+            max-width: 540px;
+            padding: 0;
+            border: 1px solid rgba(255,255,255,.95);
+            border-radius: 22px;
+            color: #13284b;
+            background: #fff;
+            box-shadow: 0 28px 90px rgba(20, 45, 84, .24);
+        }
+        .ciit-practice-modal::backdrop {
+            background: rgba(15, 31, 56, .48);
+            backdrop-filter: blur(5px);
+        }
+        .ciit-practice-modal-content { padding: clamp(22px, 4vw, 32px); }
+        .ciit-practice-modal-header { display:flex; align-items:flex-start; justify-content:space-between; gap:16px; }
+        .ciit-practice-modal-eyebrow { color:#1769ff; font-size:.7rem; font-weight:800; letter-spacing:.1em; text-transform:uppercase; }
+        .ciit-practice-modal h2 { margin:7px 0 5px; color:#13284b; font-size:1.35rem; font-weight:800; }
+        .ciit-practice-modal-subtitle { margin:0; color:#7183a0; font-size:.88rem; }
+        .ciit-practice-modal-close { width:34px; height:34px; flex:0 0 34px; border:1px solid #e2eaf5; border-radius:10px; color:#64748b; background:#f7faff; font-size:1.15rem; line-height:1; }
+        .ciit-practice-modal-stats { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:10px; margin:22px 0; }
+        .ciit-practice-modal-stat { padding:14px; border:1px solid #e4edf9; border-radius:13px; background:#f7faff; }
+        .ciit-practice-modal-stat strong { display:block; color:#1769ff; font-size:1.2rem; font-weight:800; }
+        .ciit-practice-modal-stat span { color:#7183a0; font-size:.72rem; font-weight:700; }
+        .ciit-practice-modal-rules { margin:0; padding-left:19px; color:#526783; font-size:.82rem; line-height:1.75; }
+        .ciit-practice-modal-actions { display:flex; justify-content:flex-end; gap:10px; margin-top:25px; }
+        .ciit-practice-modal-actions button { min-height:42px; padding:0 17px; border:0; border-radius:11px; font-size:.82rem; font-weight:800; }
+        .ciit-practice-modal-cancel { color:#526783; background:#edf3fb; }
+        .ciit-practice-modal-start { color:#fff; background:linear-gradient(135deg,#2582ff,#0753df); box-shadow:0 7px 16px rgba(23,105,255,.2); }
+        @@media(max-width:420px) { .ciit-practice-modal-stats { gap:7px; } .ciit-practice-modal-stat { padding:11px; } }
         .ciit-practice-assessment-page [hidden] { display:none !important; }
         .ciit-practice-empty { padding:40px 20px; border:1px solid #e2e9f3; border-radius:16px; background:rgba(255,255,255,.86); color:#7183a0; text-align:center; }
         @@media(max-width:1399.98px){.ciit-practice-assessment-page .ciit-course-curriculum-list{grid-template-columns:repeat(5,minmax(0,1fr));}}
@@ -107,15 +143,14 @@
                                             var title when title.Contains("sql") || title.Contains("database") => "bi bi-database",
                                             _ => "bi bi-code-slash"
                                         };
-                                        <a class="ciit-course-topic-card"
-                                           asp-controller="PracticeExams"
-                                           asp-action="Start"
-                                           asp-route-courseId="@course.Id"
-                                           asp-route-topicId="@topic.Id"
-                                           data-practice-topic
-                                           data-topic-title="@topic.Title"
-                                           data-course-title="@course.Title"
-                                           aria-label="Start free practice exam for @topic.Title in @course.Title">
+                                        <button class="ciit-course-topic-card ciit-practice-topic-button"
+                                                type="button"
+                                                data-practice-topic
+                                                data-course-id="@course.Id"
+                                                data-topic-id="@topic.Id"
+                                                data-topic-title="@topic.Title"
+                                                data-course-title="@course.Title"
+                                                aria-label="View practice exam details for @topic.Title in @course.Title">
                                             <div class="ciit-course-topic-card-top">
                                                 <span class="ciit-course-topic-logo" aria-hidden="true"><i class="@topicLogoClass"></i></span>
                                             </div>
@@ -125,7 +160,7 @@
                                                     <small>@topic.Chapters.Count chapter@(topic.Chapters.Count == 1 ? "" : "s")</small>
                                                 </span>
                                             </div>
-                                        </a>
+                                        </button>
                                     }
                                 </div>
                             </section>
@@ -138,6 +173,45 @@
     </div>
 </section>
 
+<dialog class="ciit-practice-modal" id="practice-exam-modal" aria-labelledby="practice-exam-modal-title">
+    <form method="post" action="/PracticeExams/Start" id="practice-exam-start-form">
+        @Html.AntiForgeryToken()
+        <input type="hidden" name="courseId" id="practice-exam-course-id" />
+        <input type="hidden" name="topicId" id="practice-exam-topic-id" />
+        <div class="ciit-practice-modal-content">
+            <div class="ciit-practice-modal-header">
+                <div>
+                    <span class="ciit-practice-modal-eyebrow">Free Practice Exam</span>
+                    <h2 id="practice-exam-modal-title">Ready to practice?</h2>
+                    <p class="ciit-practice-modal-subtitle" id="practice-exam-modal-course"></p>
+                </div>
+                <button class="ciit-practice-modal-close" type="button" data-close-practice-modal aria-label="Close dialog">&times;</button>
+            </div>
+            <div class="ciit-practice-modal-stats">
+                <div class="ciit-practice-modal-stat">
+                    <strong>30 minutes</strong>
+                    <span>Time limit</span>
+                </div>
+                <div class="ciit-practice-modal-stat">
+                    <strong>Up to 20</strong>
+                    <span>Questions per attempt</span>
+                </div>
+            </div>
+            <ul class="ciit-practice-modal-rules">
+                <li>Your answers are saved automatically while you practice.</li>
+                <li>Unseen questions are given priority in each new attempt.</li>
+                <li>When needed, up to 5 previously attempted questions can repeat in one exam.</li>
+                <li>Each question can be repeated up to 5 times after its first appearance.</li>
+                <li>The exam submits automatically when the timer ends. Unanswered questions count as incorrect.</li>
+            </ul>
+            <div class="ciit-practice-modal-actions">
+                <button class="ciit-practice-modal-cancel" type="button" data-close-practice-modal>Cancel</button>
+                <button class="ciit-practice-modal-start" type="submit">Start Practice Exam</button>
+            </div>
+        </div>
+    </form>
+</dialog>
+
 @section Scripts {
     <script>
         (() => {
@@ -145,6 +219,31 @@
             const courseSections = Array.from(document.querySelectorAll('[data-practice-course]'));
             const noResults = document.querySelector('[data-practice-no-results]');
             const totalLabel = document.querySelector('[data-topic-total]');
+            const practiceModal = document.getElementById('practice-exam-modal');
+            const courseIdInput = document.getElementById('practice-exam-course-id');
+            const topicIdInput = document.getElementById('practice-exam-topic-id');
+            const modalTitle = document.getElementById('practice-exam-modal-title');
+            const modalCourse = document.getElementById('practice-exam-modal-course');
+
+            document.querySelectorAll('[data-practice-topic]').forEach(topicButton => {
+                topicButton.addEventListener('click', () => {
+                    courseIdInput.value = topicButton.dataset.courseId || '';
+                    topicIdInput.value = topicButton.dataset.topicId || '';
+                    modalTitle.textContent = topicButton.dataset.topicTitle || 'Practice Exam';
+                    modalCourse.textContent = topicButton.dataset.courseTitle || '';
+                    practiceModal.showModal();
+                });
+            });
+
+            document.querySelectorAll('[data-close-practice-modal]').forEach(closeButton => {
+                closeButton.addEventListener('click', () => practiceModal.close());
+            });
+
+            practiceModal.addEventListener('click', event => {
+                if (event.target === practiceModal) {
+                    practiceModal.close();
+                }
+            });
 
             if (!searchInput) return;
 
