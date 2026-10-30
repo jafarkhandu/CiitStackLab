@@ -148,6 +148,7 @@ document.addEventListener("DOMContentLoaded", () => {
         adminRoot.addEventListener("submit", async event => {
             const form = event.target.closest("form[data-meet-ajax]");
             if (!form) return;
+            if (event.defaultPrevented) return;
             event.preventDefault();
             const button = form.querySelector('[type="submit"]');
             if (button) button.disabled = true;
