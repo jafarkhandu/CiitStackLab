@@ -62,30 +62,94 @@ public sealed class MeetController : Controller
         var now = DateTime.UtcNow;
         var session = await _dbContext.MeetSessions
             .AsNoTracking()
-            .Include(item => item.MeetBatch)
             .Where(item => item.Id == id
                 && item.Status == "Live"
-                && item.StartsAtUtc <= now
-                && item.StartsAtUtc.AddMinutes(item.DurationMinutes) > now
+                && item.StartedAtUtc.HasValue
+                && item.StartedAtUtc.Value.AddMinutes(item.DurationMinutes) > now
                 && !item.MeetBatch.IsArchived
                 && item.MeetBatch.Members.Any(member => member.StudentUserId == studentId))
-            .Select(item => new MeetRoomViewModel
+            .Select(item => new
             {
-                Id = item.Id,
-                Title = item.Title,
-                Description = item.Description,
+                item.Id,
+                item.MeetBatchId,
+                item.Title,
+                item.Description,
                 BatchName = item.MeetBatch.Name,
                 BatchCode = item.MeetBatch.BatchCode,
-                StartsAtUtc = item.StartsAtUtc,
-                DurationMinutes = item.DurationMinutes,
-                Status = item.Status,
-                IsHost = false
+                item.StartsAtUtc,
+                item.DurationMinutes,
+                item.Status,
+                item.WaitingRoomEnabled,
+                item.RecordingEnabled,
+                item.RecordingStatus
             })
             .SingleOrDefaultAsync(cancellationToken);
 
         if (session is null)
             return NotFound();
 
-        return View(session);
+        var participant = await _dbContext.MeetSessionParticipants
+            .SingleOrDefaultAsync(x => x.MeetSessionId == id && x.StudentUserId == studentId, cancellationToken);
+
+        if (participant is null)
+        {
+            participant = new MeetSessionParticipant
+            {
+                MeetSessionId = id,
+                StudentUserId = studentId,
+                Status = session.WaitingRoomEnabled ? "Pending" : "Admitted",
+                RequestedAtUtc = now,
+                AdmittedAtUtc = session.WaitingRoomEnabled ? null : now
+            };
+            _dbContext.MeetSessionParticipants.Add(participant);
+        }
+        else if (participant.Status == "Left")
+        {
+            participant.Status = session.WaitingRoomEnabled ? "Pending" : "Admitted";
+            participant.RequestedAtUtc = now;
+            participant.AdmittedAtUtc = session.WaitingRoomEnabled ? null : now;
+            participant.LeftAtUtc = null;
+        }
+
+        await _dbContext.SaveChangesAsync(cancellationToken);
+
+        return View(new MeetRoomViewModel
+        {
+            Id = session.Id,
+            Title = session.Title,
+            Description = session.Description,
+            BatchName = session.BatchName,
+            BatchCode = session.BatchCode,
+            StartsAtUtc = session.StartsAtUtc,
+            DurationMinutes = session.DurationMinutes,
+            Status = session.Status,
+            IsHost = false,
+            WaitingRoomEnabled = session.WaitingRoomEnabled,
+            ParticipantStatus = participant.Status,
+            RecordingEnabled = session.RecordingEnabled,
+            RecordingStatus = session.RecordingStatus
+        });
     }
-}
+
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> Leave(int id, CancellationToken cancellationToken)
+    {
+        var studentId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+        if (string.IsNullOrWhiteSpace(studentId))
+            return Challenge();
+
+        var participant = await _dbContext.MeetSessionParticipants
+            .Include(x => x.MeetSession)
+            .SingleOrDefaultAsync(x => x.MeetSessionId == id && x.StudentUserId == studentId, cancellationToken);
+
+        if (participant is not null && participant.Status is "Pending" or "Admitted")
+        {
+            participant.Status = "Left";
+            participant.LeftAtUtc = DateTime.UtcNow;
+            await _dbContext.SaveChangesAsync(cancellationToken);
+        }
+
+        return RedirectToAction(nameof(Index));
+    }
+}}
