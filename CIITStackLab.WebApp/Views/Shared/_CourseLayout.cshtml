@@ -251,6 +251,13 @@
                             <i class="bi bi-shield-check"></i><span>Examinations</span>
                         </a>
                     }
+                    @if (User.IsInRole("Student"))
+                    {
+                        <a class="@(currentController.Equals("Meet", StringComparison.OrdinalIgnoreCase) ? "active" : "")"
+                           asp-area="Student" asp-controller="Meet" asp-action="Index">
+                            <i class="bi bi-camera-video"></i><span>Meet</span>
+                        </a>
+                    }
                     <a class="@(currentController.Equals("Account", StringComparison.OrdinalIgnoreCase) && currentAction.Equals("Profile", StringComparison.OrdinalIgnoreCase) ? "active" : "")"
                        asp-controller="Account" asp-action="Profile">
                         <i class="bi bi-person-circle"></i><span>My Profile</span>
