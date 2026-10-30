@@ -7,6 +7,7 @@ public sealed class MeetBatchIndexViewModel
     public IReadOnlyList<MeetBatchListItemViewModel> ActiveBatches { get; init; } = [];
     public IReadOnlyList<MeetBatchListItemViewModel> ArchivedBatches { get; init; } = [];
     public IReadOnlyList<MeetStudentOptionViewModel> Students { get; init; } = [];
+    public IReadOnlyList<MeetSessionListItemViewModel> Sessions { get; init; } = [];
 }
 
 public sealed class MeetBatchListItemViewModel
