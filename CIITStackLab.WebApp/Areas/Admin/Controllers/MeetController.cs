@@ -425,6 +425,23 @@ public sealed class MeetController : Controller
             return Forbid();
 
         var isInstant = string.Equals(meetingMode, "instant", StringComparison.OrdinalIgnoreCase);
+        if (isInstant)
+        {
+            var now = DateTime.UtcNow;
+            var hasActiveMeeting = await _dbContext.MeetSessions.AnyAsync(
+                session => session.MeetBatchId == batch.Id
+                    && session.Status == "Live"
+                    && session.StartedAtUtc.HasValue
+                    && session.StartedAtUtc.Value.AddMinutes(session.DurationMinutes) > now,
+                cancellationToken);
+
+            if (hasActiveMeeting)
+            {
+                TempData["MeetBatchMessage"] = "This batch already has an active meeting.";
+                TempData["MeetBatchMessageType"] = "error";
+                return RedirectToAction(nameof(Index));
+            }
+        }
         DateTime startsAtUtc;
         if (isInstant)
         {
