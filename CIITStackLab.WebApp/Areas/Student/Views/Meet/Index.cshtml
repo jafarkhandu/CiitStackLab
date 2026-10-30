@@ -65,6 +65,16 @@
                             <i class="bi bi-hourglass-split"></i> Waiting for admin to start
                         </div>
                     }
+                    @if (batch.RecentSessions.Count > 0)
+                    {
+                        <div class="ciit-student-meet-history">
+                            <span>RECENT MEETINGS</span>
+                            @foreach (var pastSession in batch.RecentSessions)
+                            {
+                                <div><strong>@pastSession.Title</strong><small>@pastSession.Status · @pastSession.SessionDateUtc.ToLocalTime().ToString("dd MMM yyyy, hh:mm tt")</small></div>
+                            }
+                        </div>
+                    }
                 </article>
             }
         </div>
