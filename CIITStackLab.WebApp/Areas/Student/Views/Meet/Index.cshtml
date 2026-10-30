@@ -10,7 +10,7 @@
         <div class="ciit-student-meet-hero-copy">
             <span class="ciit-student-meet-eyebrow"><i class="bi bi-camera-video-fill"></i> STUDENT MEET</span>
             <h1>Your meetings,<br /><span>all in one place.</span></h1>
-            <p>View the batches your admin has assigned to you. Meeting sessions will be available here.</p>
+            <p>Your assigned batches are shown here. Join a meeting as soon as your admin starts it.</p>
         </div>
         <div class="ciit-student-meet-hero-art" aria-hidden="true">
             <span class="ciit-meet-orbit ciit-meet-orbit-one"></span>
@@ -24,7 +24,7 @@
         <div>
             <span class="ciit-student-meet-section-kicker">YOUR WORKSPACE</span>
             <h2>My batches</h2>
-            <p>Only batches assigned to your student account are shown.</p>
+            <p>Join directly from your batch card when a meeting is live.</p>
         </div>
         <span class="ciit-student-meet-count"><strong>@Model.Count</strong> @(Model.Count == 1 ? "batch" : "batches")</span>
     </div>
@@ -53,9 +53,18 @@
                         <span><i class="bi bi-upc-scan"></i> @batch.BatchCode</span>
                         <span><i class="bi bi-people"></i> @batch.MemberCount participants</span>
                     </div>
-                    <a asp-area="Student" asp-controller="Meet" asp-action="Details" asp-route-id="@batch.Id" class="ciit-student-meet-open">
-                        View batch <i class="bi bi-arrow-right"></i>
-                    </a>
+                    @if (batch.LiveSessionId.HasValue)
+                    {
+                        <a asp-area="Student" asp-controller="Meet" asp-action="Room" asp-route-id="@batch.LiveSessionId.Value" class="ciit-student-meet-open ciit-student-meet-join">
+                            <i class="bi bi-camera-video-fill"></i> Join Meet <i class="bi bi-arrow-up-right"></i>
+                        </a>
+                    }
+                    else
+                    {
+                        <div class="ciit-student-meet-waiting">
+                            <i class="bi bi-hourglass-split"></i> Waiting for admin to start
+                        </div>
+                    }
                 </article>
             }
         </div>
