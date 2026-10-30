@@ -350,8 +350,8 @@ public sealed class MeetController : Controller
                 break;
             case "stop" when session.RecordingStatus == "Recording":
                 session.RecordingStatus = "Stopped";
-                session.RecordingEndedAtUtc = session.EndedAtUtc;
-                session.RecordingRetentionUntilUtc = session.EndedAtUtc.Value.AddDays(90);
+                session.RecordingEndedAtUtc = now;
+                session.RecordingRetentionUntilUtc = now.AddDays(90);
                 break;
             case "delete" when session.RecordingStatus == "Stopped":
                 session.RecordingStatus = "Deleted";
@@ -398,7 +398,11 @@ public sealed class MeetController : Controller
         }
 
         if (expired.Count > 0)
+        {
             await _dbContext.SaveChangesAsync(cancellationToken);
+            foreach (var session in expired)
+                await _meetRealtime.PublishSessionUpdateAsync(session.Id, cancellationToken);
+        }
     }
 
     [HttpPost]
