@@ -42,8 +42,9 @@ public sealed class MeetController : Controller
                 CreatedAtUtc = batch.CreatedAtUtc,
                 LiveSessionId = batch.Sessions
                     .Where(session => session.Status == "Live"
-                        && session.StartsAtUtc <= now
-                        && session.StartsAtUtc.AddMinutes(session.DurationMinutes) > now)
+                        && session.StartedAtUtc.HasValue
+                        && session.StartedAtUtc.Value <= now
+                        && session.StartedAtUtc.Value.AddMinutes(session.DurationMinutes) > now)
                     .OrderByDescending(session => session.StartsAtUtc)
                     .Select(session => (int?)session.Id)
                     .FirstOrDefault()
