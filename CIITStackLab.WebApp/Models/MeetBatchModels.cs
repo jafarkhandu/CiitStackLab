@@ -73,5 +73,8 @@ public sealed class MeetSessionListItemViewModel
     public DateTime StartsAtUtc { get; init; }
     public int DurationMinutes { get; init; }
     public string Status { get; init; } = string.Empty;
+    public DateTime? StartedAtUtc { get; init; }
+    public DateTime? EndedAtUtc { get; init; }
+    public DateTime? CancelledAtUtc { get; init; }
 }
 
