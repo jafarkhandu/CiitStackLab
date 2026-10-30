@@ -25,6 +25,7 @@ public sealed class MeetController : Controller
         if (string.IsNullOrWhiteSpace(studentId))
             return Challenge();
 
+        var now = DateTime.UtcNow;
         var batches = await _dbContext.MeetBatches
             .AsNoTracking()
             .Where(batch => !batch.IsArchived
@@ -37,58 +38,18 @@ public sealed class MeetController : Controller
                 Description = batch.Description,
                 BatchCode = batch.BatchCode,
                 MemberCount = batch.Members.Count,
-                CreatedAtUtc = batch.CreatedAtUtc
+                CreatedAtUtc = batch.CreatedAtUtc,
+                LiveSessionId = batch.Sessions
+                    .Where(session => session.Status == "Live"
+                        && session.StartsAtUtc <= now
+                        && session.StartsAtUtc.AddMinutes(session.DurationMinutes) > now)
+                    .OrderByDescending(session => session.StartsAtUtc)
+                    .Select(session => (int?)session.Id)
+                    .FirstOrDefault()
             })
             .ToListAsync(cancellationToken);
 
         return View(batches);
-    }
-
-    [HttpGet]
-    public async Task<IActionResult> Details(int id, CancellationToken cancellationToken)
-    {
-        if (id <= 0)
-            return NotFound();
-
-        var studentId = User.FindFirstValue(ClaimTypes.NameIdentifier);
-        if (string.IsNullOrWhiteSpace(studentId))
-            return Challenge();
-
-        var batch = await _dbContext.MeetBatches
-            .AsNoTracking()
-            .Where(item => item.Id == id
-                && !item.IsArchived
-                && item.Members.Any(member => member.StudentUserId == studentId))
-            .Select(item => new StudentMeetBatchDetailsViewModel
-            {
-                Id = item.Id,
-                Name = item.Name,
-                Description = item.Description,
-                BatchCode = item.BatchCode,
-                MemberCount = item.Members.Count,
-                JoinedAtUtc = item.Members
-                    .Where(member => member.StudentUserId == studentId)
-                    .Select(member => (DateTime?)member.AddedAtUtc)
-                    .FirstOrDefault(),
-                Sessions = item.Sessions
-                    .OrderBy(session => session.StartsAtUtc)
-                    .Select(session => new StudentMeetSessionViewModel
-                    {
-                        Id = session.Id,
-                        Title = session.Title,
-                        Description = session.Description,
-                        StartsAtUtc = session.StartsAtUtc,
-                        DurationMinutes = session.DurationMinutes,
-                        Status = session.Status
-                    })
-                    .ToList()
-            })
-            .SingleOrDefaultAsync(cancellationToken);
-
-        if (batch is null)
-            return NotFound();
-
-        return View(batch);
     }
 
     [HttpGet]
@@ -98,10 +59,14 @@ public sealed class MeetController : Controller
         if (string.IsNullOrWhiteSpace(studentId))
             return Challenge();
 
+        var now = DateTime.UtcNow;
         var session = await _dbContext.MeetSessions
             .AsNoTracking()
             .Include(item => item.MeetBatch)
             .Where(item => item.Id == id
+                && item.Status == "Live"
+                && item.StartsAtUtc <= now
+                && item.StartsAtUtc.AddMinutes(item.DurationMinutes) > now
                 && !item.MeetBatch.IsArchived
                 && item.MeetBatch.Members.Any(member => member.StudentUserId == studentId))
             .Select(item => new MeetRoomViewModel
@@ -120,11 +85,6 @@ public sealed class MeetController : Controller
 
         if (session is null)
             return NotFound();
-
-        ViewData["BatchId"] = await _dbContext.MeetSessions
-            .Where(item => item.Id == id)
-            .Select(item => item.MeetBatchId)
-            .SingleAsync(cancellationToken);
 
         return View(session);
     }
