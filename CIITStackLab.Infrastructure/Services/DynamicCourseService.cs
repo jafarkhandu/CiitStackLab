@@ -77,7 +77,7 @@ public sealed class DynamicCourseService : ICourseService
         int? topicId = null,
         int? chapterId = null)
     {
-        var course = await _inner.GetByIdAsync(id, cancellationToken);
+        var course = await _inner.GetLearningHeaderAsync(id, cancellationToken);
         if (course is null)
         {
             return null;
