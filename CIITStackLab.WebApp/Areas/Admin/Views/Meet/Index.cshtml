@@ -1,0 +1,300 @@
+@model CIITStackLab.WebApp.Models.MeetBatchIndexViewModel
+
+@{
+    ViewData["Title"] = "Meet Batches";
+    var message = TempData["MeetBatchMessage"] as string;
+    var messageType = TempData["MeetBatchMessageType"] as string;
+}
+
+<section class="ciit-admin-page meet-batches-page" data-meet-admin-index data-hub-url="/hubs/meet">
+    <div class="meet-page-header">
+        <div>
+            <span class="ciit-admin-eyebrow">Meet Management</span>
+            <h1>Batch Management</h1>
+            <p>Create meeting batches and manage registered student access.</p>
+        </div>
+        <div class="meet-header-count">
+            <strong>@Model.ActiveBatches.Count</strong>
+            <span>Active batches</span>
+        </div>
+    </div>
+
+    @if (!string.IsNullOrWhiteSpace(message))
+    {
+        <div class="meet-alert @(messageType == "success" ? "is-success" : "is-error")" role="alert">
+            <span>@message</span>
+            <button type="button" class="meet-alert-close" aria-label="Close message">&times;</button>
+        </div>
+    }
+
+    <div class="meet-batch-layout">
+        <section class="meet-batch-list-section">
+            <div class="meet-section-heading meet-active-batches-heading">
+                <div>
+                    <span class="ciit-admin-eyebrow">Your workspace</span>
+                    <h2>Active batches</h2>
+                </div>
+                <div class="meet-active-batches-actions">
+                    <span class="meet-count-pill">@Model.ActiveBatches.Count batches</span>
+                    <button type="button" class="meet-primary-button" data-open-create-modal>
+                        <i class="bi bi-plus-lg"></i> Create batch
+                    </button>
+                </div>
+            </div>
+
+            @if (Model.ActiveBatches.Count == 0)
+            {
+                <div class="meet-empty-state">
+                    <i class="bi bi-people"></i>
+                    <h3>No batches created yet</h3>
+                    <p>Create your first batch to start organizing meeting participants.</p>
+                </div>
+            }
+            else
+            {
+                <div class="meet-batch-grid">
+                    @foreach (var batch in Model.ActiveBatches)
+                    {
+                        <article class="meet-batch-card meet-batch-meeting-trigger" role="button" tabindex="0" data-open-meeting-modal data-batch-id="@batch.Id" data-batch-name="@batch.Name" aria-label="Create a meeting for @batch.Name">
+                            <div class="meet-batch-card-top">
+                                <span class="meet-batch-status"><span></span> Active</span>
+                                <span class="meet-batch-code">@batch.BatchCode</span>
+                            </div>
+                            <h3>@batch.Name</h3>
+                            <p class="meet-batch-description">@(string.IsNullOrWhiteSpace(batch.Description) ? "No description added." : batch.Description)</p>
+                            <div class="meet-batch-meta">
+                                <span><i class="bi bi-people"></i> @batch.MemberCount students</span>
+                                <span><i class="bi bi-calendar3"></i> @batch.CreatedAtUtc.ToLocalTime().ToString("dd MMM yyyy")</span>
+                            </div>
+                            <div class="meet-batch-actions">
+                                <a href="@Url.Action("Details", "Meet", new { area = "Admin", id = batch.Id })"
+                                   class="meet-secondary-button"
+                                   data-open-manage-modal
+                                   data-url="@Url.Action("Details", "Meet", new { area = "Admin", id = batch.Id })">
+                                    Manage batch <i class="bi bi-arrow-right"></i>
+                                </a>
+                                <form asp-area="Admin" asp-controller="Meet" asp-action="Archive" method="post" onsubmit="return confirm('Move this batch to archive?');">
+                                    @Html.AntiForgeryToken()
+                                    <input type="hidden" name="id" value="@batch.Id" />
+                                    <button type="submit" class="meet-icon-button" title="Archive batch" aria-label="Archive @batch.Name"><i class="bi bi-archive"></i></button>
+                                </form>
+                            </div>
+                        </article>
+                    }
+                </div>
+            }
+        </section>
+    </div>
+
+    <section class="meet-session-list-section">
+        <div class="meet-section-heading">
+            <div>
+                <span class="ciit-admin-eyebrow">Meeting workspace</span>
+                <h2>Meeting sessions</h2>
+            </div>
+            <span class="meet-count-pill">@Model.Sessions.Count sessions</span>
+        </div>
+        @if (Model.Sessions.Count == 0)
+        {
+            <p class="meet-session-list-empty">Your created meetings will appear here.</p>
+        }
+        else
+        {
+            <div class="meet-session-list" data-meet-admin-session-list>
+                @foreach (var session in Model.Sessions)
+                {
+                    <article class="meet-session-list-item" data-meet-session-id="@session.Id" data-meet-batch-id="@session.MeetBatchId">
+                        <div class="meet-session-list-icon"><i class="bi bi-camera-video"></i></div>
+                        <div class="meet-session-list-copy">
+                            <strong>@session.Title</strong>
+                            <span>@session.BatchName · @session.StartsAtUtc.ToLocalTime().ToString("dd MMM yyyy, hh:mm tt") · @session.DurationMinutes min</span>
+                            @if (session.EndedAtUtc.HasValue)
+                            {
+                                <small>Ended @session.EndedAtUtc.Value.ToLocalTime().ToString("dd MMM yyyy, hh:mm tt")</small>
+                            }
+                            else if (session.CancelledAtUtc.HasValue)
+                            {
+                                <small>Cancelled @session.CancelledAtUtc.Value.ToLocalTime().ToString("dd MMM yyyy, hh:mm tt")</small>
+                            }
+                        </div>
+                        <span class="meet-session-status" data-meet-session-status>@session.Status</span>
+                        @if (session.Status == "Scheduled")
+                        {
+                            <form asp-area="Admin" asp-controller="Meet" asp-action="Start" method="post" data-meet-session-action data-meet-ajax>
+                                @Html.AntiForgeryToken()<input type="hidden" name="id" value="@session.Id" />
+                                <button type="submit" class="meet-primary-button">Start now</button>
+                            </form>
+                            <form asp-area="Admin" asp-controller="Meet" asp-action="Cancel" method="post" data-meet-session-action data-meet-ajax onsubmit="return confirm('Cancel this scheduled meeting?');">
+                                @Html.AntiForgeryToken()<input type="hidden" name="id" value="@session.Id" />
+                                <button type="submit" class="meet-secondary-button">Cancel</button>
+                            </form>
+                        }
+                        @if (session.Status == "Live")
+                        {
+                            <a asp-area="Admin" asp-controller="Meet" asp-action="Room" asp-route-id="@session.Id" class="meet-primary-button" data-meet-session-view-action>Open live room</a>
+                        }
+                        else
+                        {
+                            <button type="button" class="meet-secondary-button" data-meet-session-details
+                                    data-details-url="@Url.Action("SessionDetails", "Meet", new { area = "Admin", id = session.Id })">
+                                Details
+                            </button>
+                            @if (session.Status is "Completed" or "Cancelled")
+                            {
+                                <form asp-area="Admin" asp-controller="Meet" asp-action="DeleteSession" method="post"
+                                      data-meet-session-delete data-meet-ajax>
+                                    @Html.AntiForgeryToken()
+                                    <input type="hidden" name="id" value="@session.Id" />
+                                    <button type="submit" class="meet-icon-button" title="Delete meeting history" aria-label="Delete @session.Title history">
+                                        <i class="bi bi-trash"></i>
+                                    </button>
+                                </form>
+                            }
+                        }
+                    </article>
+                }
+            </div>
+        }
+    </section>
+
+    @if (Model.ArchivedBatches.Count > 0)
+    {
+        <section class="meet-archive-section">
+            <div class="meet-section-heading">
+                <div>
+                    <span class="ciit-admin-eyebrow">Stored batches</span>
+                    <h2>Archived batches</h2>
+                </div>
+                <span class="meet-count-pill">@Model.ArchivedBatches.Count archived</span>
+            </div>
+            <div class="meet-archived-list">
+                @foreach (var batch in Model.ArchivedBatches)
+                {
+                    <div class="meet-archived-item">
+                        <div>
+                            <strong>@batch.Name</strong>
+                            <span>@batch.BatchCode · @batch.MemberCount students</span>
+                        </div>
+                        <span class="meet-archived-label">Archived</span>
+                    </div>
+                }
+            </div>
+        </section>
+    }
+</section>
+<div class="meet-history-modal-backdrop" data-meet-history-modal aria-hidden="true">
+    <section class="meet-history-modal" role="dialog" aria-modal="true" aria-labelledby="meetHistoryTitle">
+        <header class="meet-history-modal-header">
+            <div><span class="ciit-admin-eyebrow">Meeting report</span><h2 id="meetHistoryTitle">Meeting details</h2></div>
+            <button type="button" class="meet-history-close" data-close-history aria-label="Close">&times;</button>
+        </header>
+        <div class="meet-history-modal-body" data-meet-history-content>
+            <p class="meet-history-loading">Loading meeting details…</p>
+        </div>
+    </section>
+</div>
+<div hidden data-meet-antiforgery>@Html.AntiForgeryToken()</div>
+<script src="https://cdn.jsdelivr.net/npm/@@microsoft/signalr@10.0.0/dist/browser/signalr.min.js"></script>
+<script src="~/js/meet/meet-index-live.js" asp-append-version="true"></script>
+<script src="~/js/meet/meet-history.js" asp-append-version="true"></script>
+
+<div class="meet-modal-backdrop" id="meetModal" aria-hidden="true">
+    <section class="meet-modal" role="dialog" aria-modal="true" aria-labelledby="meetModalTitle">
+        <div class="meet-modal-header">
+            <div>
+                <span class="ciit-admin-eyebrow">Meet Management</span>
+                <h2 id="meetModalTitle">Create batch</h2>
+            </div>
+            <button type="button" class="meet-modal-close" data-close-meet-modal aria-label="Close">&times;</button>
+        </div>
+        <div class="meet-modal-content" id="meetModalContent"></div>
+    </section>
+</div>
+
+<template id="meetSessionTemplate">
+    <form action="@Url.Action("CreateSession", "Meet", new { area = "Admin" })" method="post" class="meet-modal-form meet-session-modal-form">
+        @Html.AntiForgeryToken()
+        <input type="hidden" name="MeetBatchId" id="modalSessionBatchId" />
+        <input type="hidden" name="ClientUtcOffsetMinutes" id="modalClientUtcOffset" value="0" />
+        <input type="hidden" name="meetingMode" id="modalMeetingMode" value="instant" />
+        <div class="meet-selected-batch">
+            <span>Selected batch</span>
+            <strong id="modalSessionBatchName"></strong>
+        </div>
+        <div class="meet-session-tabs" role="tablist" aria-label="Meeting type">
+            <button type="button" class="is-active" role="tab" aria-selected="true" data-meeting-tab="instant"><i class="bi bi-camera-video"></i> Instant meeting</button>
+            <button type="button" role="tab" aria-selected="false" data-meeting-tab="scheduled"><i class="bi bi-calendar-event"></i> Schedule</button>
+        </div>
+        <div class="meet-form-field">
+            <label for="modalSessionTitle">Meeting title</label>
+            <input id="modalSessionTitle" name="Title" type="text" maxlength="150" required placeholder="e.g. Weekly doubt session" />
+        </div>
+        <div class="meet-form-field">
+            <label for="modalSessionDescription">Description <span>(optional)</span></label>
+            <textarea id="modalSessionDescription" name="Description" rows="3" maxlength="1000" placeholder="Meeting agenda or instructions"></textarea>
+        </div>
+        <div class="meet-form-field">
+            <label for="modalSessionDuration">Duration</label>
+            <select id="modalSessionDuration" name="DurationMinutes">
+                <option value="30">30 minutes</option><option value="45">45 minutes</option>
+                <option value="60" selected>60 minutes</option><option value="90">90 minutes</option>
+                <option value="120">2 hours</option><option value="240">4 hours</option><option value="480">8 hours</option>
+            </select>
+        </div>
+        <div class="meet-form-field meet-schedule-field" hidden>
+            <label for="modalSessionStart">Schedule date and time</label>
+            <input id="modalSessionStart" name="StartsAtLocal" type="datetime-local" disabled />
+        </div>
+        <div class="meet-modal-feedback" role="alert" hidden></div>
+        <button type="submit" class="meet-primary-button meet-session-submit"><i class="bi bi-camera-video-fill"></i> Start instant meeting</button>
+    </form>
+</template>
+
+<template id="meetCreateTemplate">
+    <form action="@Url.Action("Create", "Meet", new { area = "Admin" })" method="post" class="meet-modal-form">
+        @Html.AntiForgeryToken()
+        <div class="meet-form-field">
+            <label for="batchName">Batch name</label>
+            <input id="batchName" name="name" type="text" maxlength="100" required placeholder="e.g. Full Stack - Morning" />
+        </div>
+        <div class="meet-form-field">
+            <label for="batchDescription">Description <span>(optional)</span></label>
+            <textarea id="batchDescription" name="description" rows="3" maxlength="500" placeholder="Add a short description"></textarea>
+        </div>
+        <div class="meet-form-field">
+            <div class="meet-student-picker-heading">
+                <label>Assign students</label>
+                <span>@Model.Students.Count available</span>
+            </div>
+            <input class="meet-student-search" id="meetStudentSearch" type="search" placeholder="Search students..." autocomplete="off" />
+            <div class="meet-student-picker" id="meetStudentPicker">
+                @if (Model.Students.Count == 0)
+                {
+                    <p class="meet-no-students">No active registered students are available.</p>
+                }
+                @foreach (var student in Model.Students)
+                {
+                    <label class="meet-student-option" data-search="@(string.Join(" ", new[] { student.UserName, student.Email }).ToLowerInvariant())">
+                        <input type="checkbox" name="studentIds" value="@student.Id" />
+                        <span class="meet-student-option-copy">
+                            <strong>@student.UserName</strong>
+                            <small>@(string.IsNullOrWhiteSpace(student.Email) ? "No email available" : student.Email)</small>
+                        </span>
+                    </label>
+                }
+            </div>
+        </div>
+        <div class="meet-modal-feedback" role="alert" hidden></div>
+        <button type="submit" class="meet-primary-button">
+            <i class="bi bi-plus-lg"></i>
+            Create batch
+        </button>
+    </form>
+</template>
+
+@section Styles {
+    <link rel="stylesheet" href="~/css/admin/admin-meet-batches.css" asp-append-version="true" />
+}
+@section Scripts {
+    <script src="~/js/admin/admin-meet-batches.js" asp-append-version="true"></script>
+}

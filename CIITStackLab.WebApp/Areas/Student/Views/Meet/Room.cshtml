@@ -1,0 +1,8 @@
+@model CIITStackLab.WebApp.Models.MeetRoomViewModel
+
+@{
+    Layout = null;
+    ViewData["Title"] = "Meeting Room";
+}
+
+@await Html.PartialAsync("~/Views/Shared/_MeetRoom.cshtml", Model)

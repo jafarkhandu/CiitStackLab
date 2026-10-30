@@ -1,0 +1,165 @@
+*{box-sizing:border-box}
+html,body{width:100%;min-height:100%;margin:0}
+.ciit-meet-body{min-height:100vh;overflow:hidden;background:#101318;color:#f8fafc;font-family:"Plus Jakarta Sans",sans-serif}
+.ciit-meet-room-page{display:flex;width:100%;height:100vh;min-height:560px;flex-direction:column;padding:18px 24px 14px;background:radial-gradient(ellipse at 50% -25%,#273448 0,transparent 55%),#101318}
+.ciit-meet-room-header{display:flex;min-height:64px;align-items:center;gap:15px;padding:0 4px 14px}
+.ciit-meet-room-back{display:grid;width:40px;height:40px;flex:0 0 40px;place-items:center;border:1px solid #343c49;border-radius:50%;color:#dbe4f0;text-decoration:none;transition:.2s}
+.ciit-meet-room-back:hover{background:#293241;color:#fff}
+.ciit-meet-room-heading{min-width:0;flex:1}
+.ciit-meet-room-eyebrow{color:#91a4c0;font-size:9px;font-weight:800;letter-spacing:.16em}
+.ciit-meet-preview-tag{margin-left:7px;border:1px solid #475569;border-radius:4px;padding:2px 5px;color:#a8b8ce;font-size:8px;letter-spacing:.08em}
+.ciit-meet-room-heading h1{overflow:hidden;margin:4px 0 2px;color:#f8fafc;font-size:16px;font-weight:700;text-overflow:ellipsis;white-space:nowrap}
+.ciit-meet-room-heading p{margin:0;color:#94a3b8;font-size:10px}
+.ciit-meet-room-heading p span{padding:0 5px;color:#64748b}
+.ciit-meet-room-meta{display:flex;align-items:center;gap:14px}
+.ciit-meet-room-status{display:inline-flex;align-items:center;gap:7px;border:1px solid #3c4654;border-radius:30px;padding:7px 10px;background:#202833;color:#d4deeb;font-size:10px;font-weight:700}
+.ciit-meet-room-status-dot{width:7px;height:7px;border-radius:50%;background:#34d399;box-shadow:0 0 0 3px rgba(52,211,153,.13)}
+.ciit-meet-room-duration{color:#a6b2c2;font-size:10px;white-space:nowrap}
+.ciit-meet-participant-count{display:inline-flex;align-items:center;gap:7px;border:1px solid #394352;border-radius:8px;padding:8px 11px;background:#202833;color:#dce6f3;font-size:11px}
+.ciit-meet-room-stage{display:flex;width:100%;min-height:0;flex:1;align-items:center;flex-direction:column;justify-content:center}
+.ciit-meet-room-video-grid{display:grid;width:100%;max-width:1500px;min-height:0;flex:1;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
+.ciit-meet-video-tile{position:relative;display:grid;min-width:0;min-height:0;overflow:hidden;place-items:center;border:1px solid #394453;border-radius:12px;background:radial-gradient(ellipse at 50% 45%,#273344 0,#1b222c 65%,#171c24 100%)}
+.ciit-meet-video-empty{background:radial-gradient(ellipse at 50% 45%,#222c39 0,#191f28 72%)}
+.ciit-meet-video-placeholder{display:flex;align-items:center;flex-direction:column;gap:10px;text-align:center}
+.ciit-meet-avatar{display:grid;width:76px;height:76px;place-items:center;border:1px solid #43536a;border-radius:50%;background:linear-gradient(145deg,#344967,#24354b);color:#e5efff;font-size:29px;font-weight:700;box-shadow:0 12px 35px rgba(0,0,0,.22)}
+.ciit-meet-avatar-muted{background:#252e3a;color:#aab8c9}
+.ciit-meet-video-placeholder strong{color:#f1f5f9;font-size:13px;font-weight:600}
+.ciit-meet-video-placeholder small{color:#94a3b8;font-size:10px}
+.ciit-meet-video-name{position:absolute;bottom:14px;left:14px;display:flex;align-items:center;gap:7px;border:1px solid #46505e;border-radius:7px;padding:7px 10px;background:rgba(13,17,23,.72);color:#e2e8f0;font-size:10px;backdrop-filter:blur(10px)}
+.ciit-meet-video-you{position:absolute;top:14px;right:14px;border-radius:5px;padding:5px 7px;background:#263c58;color:#c8dcf7;font-size:8px;font-weight:800;letter-spacing:.1em}
+.ciit-meet-room-controls{display:flex;align-items:center;justify-content:center;gap:12px;padding:17px 0 9px}
+.ciit-meet-control,.ciit-meet-leave-button{display:flex;min-width:76px;min-height:58px;align-items:center;justify-content:center;flex-direction:column;gap:5px;border:1px solid #424b58;border-radius:12px;background:#252c36;color:#e5eaf1;font-family:inherit;font-size:9px;font-weight:600;text-decoration:none;transition:background .18s,border-color .18s}
+.ciit-meet-control i,.ciit-meet-leave-button i{font-size:18px}
+.ciit-meet-control:hover,.ciit-meet-control.is-active{border-color:#71839a;background:#354254;color:#fff}
+.ciit-meet-leave-button{min-width:112px;border-color:#a83b48;background:#b93848;color:#fff}
+.ciit-meet-leave-button:hover{background:#d04455;color:#fff}
+.ciit-meet-room-footnote{margin:0;color:#758397;font-size:9px;text-align:center}
+.ciit-meet-room-footnote i{margin-right:5px}
+@media(max-width:700px){.ciit-meet-body{overflow:auto}.ciit-meet-room-page{height:auto;min-height:100vh;padding:12px}.ciit-meet-room-header{gap:9px}.ciit-meet-room-meta{gap:6px}.ciit-meet-room-status{font-size:0}.ciit-meet-room-status-dot{width:8px;height:8px}.ciit-meet-room-duration{display:none}.ciit-meet-room-video-grid{min-height:65vh;grid-template-columns:1fr;grid-template-rows:repeat(2,minmax(230px,1fr))}.ciit-meet-room-controls{position:sticky;bottom:0;gap:7px;padding:12px 0;background:linear-gradient(transparent,#101318 25%)}.ciit-meet-control{min-width:0;flex:1}.ciit-meet-leave-button{min-width:0;flex:1}.ciit-meet-room-footnote{padding-bottom:8px}}
+@media(max-width:420px){.ciit-meet-room-heading h1{font-size:13px}.ciit-meet-participant-count{padding:7px}.ciit-meet-room-header{align-items:flex-start}.ciit-meet-room-meta{padding-top:3px}.ciit-meet-room-controls{gap:5px}.ciit-meet-control,.ciit-meet-leave-button{font-size:8px}}
+
+.ciit-meet-host-panel{width:100%;max-width:1500px;margin:10px auto 16px;border:1px solid #394453;border-radius:13px;padding:16px;background:#1b222c;color:#e8edf5}
+.ciit-meet-host-panel-heading,.ciit-meet-host-settings,.ciit-meet-recording-settings,.ciit-meet-host-participant{display:flex;align-items:center;justify-content:space-between;gap:12px}
+.ciit-meet-host-panel-heading>div,.ciit-meet-host-participant>div{display:flex;flex-direction:column;gap:4px}
+.ciit-meet-host-panel-heading strong,.ciit-meet-host-participants h2{color:#f8fafc;font-size:14px;font-weight:700}
+.ciit-meet-host-panel-heading span,.ciit-meet-host-participant small{color:#94a3b8;font-size:10px}
+.ciit-meet-host-settings{flex-wrap:wrap;margin:14px 0;padding:12px 0;border-top:1px solid #35404e;border-bottom:1px solid #35404e}
+.ciit-meet-host-settings form,.ciit-meet-recording-settings{display:flex;align-items:center;gap:10px}
+.ciit-meet-host-settings span,.ciit-meet-recording-settings span{color:#aebaca;font-size:11px}
+.ciit-meet-host-settings strong,.ciit-meet-recording-settings strong{margin-left:5px;color:#e8edf5}
+.ciit-meet-host-secondary,.ciit-meet-host-danger{border:1px solid #46566b;border-radius:8px;padding:7px 11px;background:#2b394b;color:#eaf1fb;font-size:10px;font-weight:700}
+.ciit-meet-host-danger{border-color:#9f3946;background:#8f2d3b;color:#fff}
+.ciit-meet-host-secondary:disabled,.ciit-meet-host-danger:disabled{opacity:.45;cursor:not-allowed}
+.ciit-meet-host-participants h2{display:flex;align-items:center;gap:8px;margin:0 0 10px}
+.ciit-meet-host-participants h2 span{border-radius:20px;padding:3px 8px;background:#2a3c55;color:#c9ddfb;font-size:10px}
+.ciit-meet-host-participants>p{color:#94a3b8;font-size:11px}
+.ciit-meet-host-participant{justify-content:flex-start;flex-wrap:wrap;border-top:1px solid #303b49;padding:10px 0}
+.ciit-meet-host-participant>div{min-width:130px;flex:1}
+.ciit-meet-host-participant strong{color:#e8edf5;font-size:11px}
+.ciit-meet-permission-form{display:flex;align-items:center;flex-wrap:wrap;gap:9px}
+.ciit-meet-permission-form label{color:#cbd5e1;font-size:10px}
+.ciit-meet-permission-form input{accent-color:#3b82f6}
+.ciit-meet-waiting-screen{display:flex;min-height:45vh;align-items:center;justify-content:center;flex-direction:column;gap:12px;text-align:center;color:#e8edf5}
+.ciit-meet-waiting-screen h2{margin:0;font-size:20px}
+.ciit-meet-waiting-screen p{max-width:440px;margin:0;color:#9aa9bb;font-size:12px;line-height:1.7}
+.ciit-meet-waiting-screen form{margin:0}
+.ciit-meet-waiting-icon{display:grid;width:62px;height:62px;place-items:center;border:1px solid #455a76;border-radius:18px;background:#24354b;color:#8fb8f8;font-size:25px}
+.ciit-meet-room-controls form{margin:0}
+.ciit-meet-room-controls form button{cursor:pointer}
+@media(max-width:700px){.ciit-meet-host-panel{padding:12px}.ciit-meet-host-panel-heading,.ciit-meet-host-settings{align-items:flex-start;flex-direction:column}.ciit-meet-recording-settings{flex-wrap:wrap}}
+
+.ciit-meet-host-panel-actions{display:flex;align-items:center;gap:10px}
+.ciit-meet-host-panel-actions form{margin:0}
+.ciit-meet-controls-toggle{display:flex;min-width:42px;height:34px;align-items:center;justify-content:center;gap:7px;border:1px solid #46566b;border-radius:9px;padding:0 9px;background:#263447;color:#dce9fb;cursor:pointer;transition:background .18s,border-color .18s}
+.ciit-meet-controls-toggle:hover{border-color:#7394bd;background:#30435b}
+.ciit-meet-controls-toggle>i{font-size:12px;transition:transform .2s}
+.ciit-meet-controls-toggle.is-collapsed>i{transform:rotate(180deg)}
+.ciit-meet-pending-count{display:grid;min-width:19px;height:19px;place-items:center;border-radius:20px;padding:0 5px;background:#43546b;color:#dce9f8;font-size:9px;font-weight:800}
+.ciit-meet-pending-count.has-pending{background:#b93848;color:#fff;box-shadow:0 0 0 3px rgba(185,56,72,.15)}
+.ciit-meet-host-panel-body{overflow:hidden;max-height:1200px;opacity:1;transition:max-height .24s ease,opacity .2s ease}
+.ciit-meet-host-panel-body[hidden]{display:block;max-height:0;opacity:0;pointer-events:none}
+.ciit-meet-ended-screen{display:flex;min-height:42vh;align-items:center;justify-content:center;flex-direction:column;gap:12px;text-align:center;color:#e8edf5}
+.ciit-meet-ended-screen h2{margin:0;font-size:20px}
+.ciit-meet-ended-screen p{margin:0;color:#9aa9bb;font-size:12px}
+.ciit-meet-ended-screen[hidden],.ciit-meet-room-stage[hidden],.ciit-meet-waiting-screen[hidden]{display:none}
+.ciit-meet-room-status [data-meet-status-text]{color:inherit}
+@media(max-width:700px){.ciit-meet-host-panel-actions{width:100%;justify-content:flex-end}.ciit-meet-host-panel-heading{width:100%}}
+
+
+
+/* Host-only transparent glass popups for settings and participant roster. */
+.ciit-meet-header-action {
+    display:inline-flex;min-width:48px;height:42px;align-items:center;justify-content:center;gap:9px;
+    border:1px solid rgba(148,163,184,.24);border-radius:13px;padding:0 13px;
+    background:rgba(40,54,73,.72);color:#eaf2fc;font-size:13px;font-weight:800;
+    transition:background .18s ease,border-color .18s ease,transform .18s ease;
+}
+.ciit-meet-header-action:hover { border-color:rgba(120,170,255,.55);background:rgba(59,130,246,.18);transform:translateY(-1px); }
+.ciit-meet-header-action i { color:#9fc5ff;font-size:16px; }
+.ciit-meet-host-panel[hidden] { display:none!important; }
+.ciit-meet-glass-backdrop[hidden] { display:none!important; }
+.ciit-meet-glass-backdrop {
+    position:fixed;z-index:5000;inset:0;display:flex;align-items:center;justify-content:center;
+    padding:22px;background:rgba(3,8,18,.48);backdrop-filter:blur(13px);-webkit-backdrop-filter:blur(13px);
+}
+.ciit-meet-glass-popup {
+    display:flex;width:min(100%,680px);max-height:min(86vh,760px);flex-direction:column;overflow:hidden;
+    border:1px solid rgba(205,225,255,.2);border-radius:22px;
+    background:linear-gradient(145deg,rgba(39,54,76,.88),rgba(17,27,42,.91));
+    box-shadow:0 28px 100px rgba(0,0,0,.48),inset 0 1px 0 rgba(255,255,255,.08);
+    color:#eaf2fc;
+}
+.ciit-meet-glass-popup-heading {
+    display:flex;align-items:center;justify-content:space-between;gap:16px;
+    padding:19px 22px;border-bottom:1px solid rgba(190,211,239,.13);
+}
+.ciit-meet-glass-popup-heading h2 { margin:0;color:#f2f7ff;font-size:16px;font-weight:800; }
+.ciit-meet-glass-popup-heading h2 i { margin-right:8px;color:#8dbaff; }
+.ciit-meet-glass-close {
+    width:36px;height:36px;border:1px solid rgba(190,211,239,.18);border-radius:11px;
+    background:rgba(255,255,255,.06);color:#dce9f8;font-size:23px;
+}
+.ciit-meet-glass-popup-content { overflow-y:auto;padding:18px 22px 22px;overscroll-behavior:contain;scrollbar-width:thin;scrollbar-color:rgba(148,183,226,.45) transparent; }
+.ciit-meet-glass-popup .ciit-meet-host-panel-heading { display:flex;align-items:center;justify-content:flex-end;gap:12px;margin:0 0 16px;padding:0;border:0; }
+.ciit-meet-glass-popup .ciit-meet-host-panel-heading > div:first-child { display:none; }
+.ciit-meet-glass-popup .ciit-meet-host-settings { display:flex;flex-direction:column;gap:13px; }
+.ciit-meet-glass-popup .ciit-meet-host-settings > form,
+.ciit-meet-glass-popup .ciit-meet-recording-settings {
+    display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;
+    border:1px solid rgba(190,211,239,.13);border-radius:14px;padding:13px 15px;
+    background:rgba(255,255,255,.045);color:#b8c9df;font-size:12px;
+}
+.ciit-meet-glass-popup .ciit-meet-host-settings strong,
+.ciit-meet-glass-popup .ciit-meet-recording-settings strong { color:#f0f6ff; }
+.ciit-meet-glass-popup .ciit-meet-host-participants { margin:0;padding:0;border:0;background:transparent; }
+.ciit-meet-glass-popup .ciit-meet-host-participants h2,
+.ciit-meet-pending-requests h3 {
+    display:flex;align-items:center;gap:9px;margin:0 0 12px;color:#f1f6ff;font-size:14px;font-weight:800;
+}
+.ciit-meet-glass-popup .ciit-meet-host-participants h2 span,
+.ciit-meet-pending-requests h3 span {
+    border-radius:30px;padding:3px 8px;background:rgba(59,130,246,.2);color:#a8ccff;font-size:10px;
+}
+.ciit-meet-glass-popup .ciit-meet-host-participant {
+    display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;
+    margin:0;padding:13px 0;border-bottom:1px solid rgba(190,211,239,.12);
+}
+.ciit-meet-glass-popup .ciit-meet-host-participant > div:first-child { min-width:120px; }
+.ciit-meet-glass-popup .ciit-meet-host-participant strong { color:#edf4ff;font-size:12px; }
+.ciit-meet-glass-popup .ciit-meet-host-participant small { display:block;margin-top:4px;color:#9db1ca;font-size:10px; }
+.ciit-meet-pending-requests { margin-top:18px;border-top:1px solid rgba(190,211,239,.13);padding-top:17px; }
+.ciit-meet-pending-requests [data-meet-pending-list] { max-height:230px;overflow-y:auto; }
+.ciit-meet-glass-popup .ciit-meet-permission-form { gap:10px; }
+.ciit-meet-glass-popup .ciit-meet-host-secondary,
+.ciit-meet-glass-popup .ciit-meet-host-danger { min-height:34px;padding:7px 11px; }
+@media(max-width:650px) {
+    .ciit-meet-glass-backdrop { padding:10px; }
+    .ciit-meet-glass-popup { max-height:94vh;border-radius:17px; }
+    .ciit-meet-glass-popup-content { padding:15px; }
+    .ciit-meet-glass-popup .ciit-meet-host-participant { align-items:flex-start; }
+}
+
+
+.ciit-meet-header-action .ciit-meet-pending-count { min-width:19px;height:19px;display:inline-flex;align-items:center;justify-content:center;padding:0 5px;font-size:9px; }
+.ciit-meet-participants-backdrop .ciit-meet-glass-popup-content { max-height:min(70vh,560px); }
+.ciit-meet-participants-backdrop .ciit-meet-host-participants { max-height:490px;overflow-y:auto;scrollbar-width:thin;scrollbar-color:rgba(148,183,226,.45) transparent; }

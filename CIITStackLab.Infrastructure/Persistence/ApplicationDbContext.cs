@@ -31,6 +31,10 @@ public class ApplicationDbContext : IdentityDbContext<ApplicationUser>
     public DbSet<TopicExamAttempt> TopicExamAttempts => Set<TopicExamAttempt>();
     public DbSet<TopicExamSecurityEvent> TopicExamSecurityEvents => Set<TopicExamSecurityEvent>();
     public DbSet<ExamApplicationNotification> ExamApplicationNotifications => Set<ExamApplicationNotification>();
+    public DbSet<MeetBatch> MeetBatches => Set<MeetBatch>();
+    public DbSet<MeetBatchMember> MeetBatchMembers => Set<MeetBatchMember>();
+    public DbSet<MeetSession> MeetSessions => Set<MeetSession>();
+    public DbSet<MeetSessionParticipant> MeetSessionParticipants => Set<MeetSessionParticipant>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -429,5 +433,89 @@ public class ApplicationDbContext : IdentityDbContext<ApplicationUser>
             entity.Property(x => x.IpAddress).HasColumnName("ip_address");
             entity.Property(x => x.Flag).HasColumnName("flag");
         });
+
+        modelBuilder.Entity<MeetBatch>(entity =>
+        {
+            entity.ToTable("tbl_meet_batches", ExistingSchema);
+            entity.HasKey(x => x.Id);
+            entity.Property(x => x.Id).HasColumnName("meet_batch_id").ValueGeneratedOnAdd();
+            entity.Property(x => x.Name).HasColumnName("name").HasMaxLength(100).IsRequired();
+            entity.Property(x => x.Description).HasColumnName("description").HasMaxLength(500);
+            entity.Property(x => x.BatchCode).HasColumnName("batch_code").HasMaxLength(20).IsRequired();
+            entity.Property(x => x.IsArchived).HasColumnName("is_archived").HasDefaultValue(false).IsRequired();
+            entity.Property(x => x.CreatedByUserId).HasColumnName("created_by_user_id").HasMaxLength(450).IsRequired();
+            entity.Property(x => x.CreatedAtUtc).HasColumnName("created_at_utc").HasColumnType("datetime2").IsRequired();
+            entity.Property(x => x.UpdatedAtUtc).HasColumnName("updated_at_utc").HasColumnType("datetime2").IsRequired();
+            entity.HasIndex(x => x.BatchCode).IsUnique().HasDatabaseName("UX_meet_batches_batch_code");
+            entity.HasIndex(x => x.CreatedByUserId).HasDatabaseName("IX_meet_batches_created_by");
+            entity.HasOne<ApplicationUser>().WithMany().HasForeignKey(x => x.CreatedByUserId).OnDelete(DeleteBehavior.NoAction);
+            entity.HasMany(x => x.Members).WithOne(x => x.MeetBatch).HasForeignKey(x => x.MeetBatchId).OnDelete(DeleteBehavior.Cascade);
+        });
+
+        modelBuilder.Entity<MeetBatchMember>(entity =>
+        {
+            entity.ToTable("tbl_meet_batch_members", ExistingSchema);
+            entity.HasKey(x => x.Id);
+            entity.Property(x => x.Id).HasColumnName("meet_batch_member_id").ValueGeneratedOnAdd();
+            entity.Property(x => x.MeetBatchId).HasColumnName("meet_batch_id").IsRequired();
+            entity.Property(x => x.StudentUserId).HasColumnName("student_user_id").HasMaxLength(450).IsRequired();
+            entity.Property(x => x.AddedAtUtc).HasColumnName("added_at_utc").HasColumnType("datetime2").IsRequired();
+            entity.HasIndex(x => new { x.MeetBatchId, x.StudentUserId }).IsUnique().HasDatabaseName("UX_meet_batch_members_batch_student");
+            entity.HasIndex(x => x.StudentUserId).HasDatabaseName("IX_meet_batch_members_student");
+            entity.HasOne<ApplicationUser>().WithMany().HasForeignKey(x => x.StudentUserId).OnDelete(DeleteBehavior.NoAction);
+        });
+
+        modelBuilder.Entity<MeetSession>(entity =>
+        {
+            entity.ToTable("tbl_meet_sessions", ExistingSchema);
+            entity.HasKey(x => x.Id);
+            entity.Property(x => x.Id).HasColumnName("meet_session_id").ValueGeneratedOnAdd();
+            entity.Property(x => x.MeetBatchId).HasColumnName("meet_batch_id").IsRequired();
+            entity.Property(x => x.Title).HasColumnName("title").HasMaxLength(150).IsRequired();
+            entity.Property(x => x.Description).HasColumnName("description").HasMaxLength(1000);
+            entity.Property(x => x.RoomName).HasColumnName("room_name").HasMaxLength(80).IsRequired();
+            entity.Property(x => x.StartsAtUtc).HasColumnName("starts_at_utc").HasColumnType("datetime2").IsRequired();
+            entity.Property(x => x.DurationMinutes).HasColumnName("duration_minutes").IsRequired();
+            entity.Property(x => x.Status).HasColumnName("status").HasMaxLength(20).IsRequired();
+            entity.Property(x => x.CreatedByUserId).HasColumnName("created_by_user_id").HasMaxLength(450).IsRequired();
+            entity.Property(x => x.CreatedAtUtc).HasColumnName("created_at_utc").HasColumnType("datetime2").IsRequired();
+            entity.Property(x => x.StartedAtUtc).HasColumnName("started_at_utc").HasColumnType("datetime2");
+            entity.Property(x => x.EndedAtUtc).HasColumnName("ended_at_utc").HasColumnType("datetime2");
+            entity.Property(x => x.CancelledAtUtc).HasColumnName("cancelled_at_utc").HasColumnType("datetime2");
+            entity.Property(x => x.WaitingRoomEnabled).HasColumnName("waiting_room_enabled").HasDefaultValue(true).IsRequired();
+            entity.Property(x => x.RecordingEnabled).HasColumnName("recording_enabled").HasDefaultValue(false).IsRequired();
+            entity.Property(x => x.RecordingStatus).HasColumnName("recording_status").HasMaxLength(20).HasDefaultValue("Disabled").IsRequired();
+            entity.Property(x => x.RecordingStartedAtUtc).HasColumnName("recording_started_at_utc").HasColumnType("datetime2");
+            entity.Property(x => x.RecordingEndedAtUtc).HasColumnName("recording_ended_at_utc").HasColumnType("datetime2");
+            entity.Property(x => x.RecordingRetentionUntilUtc).HasColumnName("recording_retention_until_utc").HasColumnType("datetime2");
+            entity.Property(x => x.RecordingDeletedAtUtc).HasColumnName("recording_deleted_at_utc").HasColumnType("datetime2");
+            entity.HasIndex(x => x.CreatedByUserId).HasDatabaseName("IX_meet_sessions_created_by");
+            entity.HasIndex(x => x.RoomName).IsUnique().HasDatabaseName("UX_meet_sessions_room_name");
+            entity.HasIndex(x => new { x.MeetBatchId, x.StartsAtUtc }).HasDatabaseName("IX_meet_sessions_batch_start");
+            entity.HasOne(x => x.MeetBatch).WithMany(x => x.Sessions).HasForeignKey(x => x.MeetBatchId).OnDelete(DeleteBehavior.Cascade);
+            entity.HasOne<ApplicationUser>().WithMany().HasForeignKey(x => x.CreatedByUserId).OnDelete(DeleteBehavior.NoAction);
+        });
+
+
+        modelBuilder.Entity<MeetSessionParticipant>(entity =>
+        {
+            entity.ToTable("tbl_meet_session_participants", ExistingSchema);
+            entity.HasKey(x => x.Id);
+            entity.Property(x => x.Id).HasColumnName("meet_session_participant_id").ValueGeneratedOnAdd();
+            entity.Property(x => x.MeetSessionId).HasColumnName("meet_session_id").IsRequired();
+            entity.Property(x => x.StudentUserId).HasColumnName("student_user_id").HasMaxLength(450).IsRequired();
+            entity.Property(x => x.Status).HasColumnName("status").HasMaxLength(20).IsRequired();
+            entity.Property(x => x.RequestedAtUtc).HasColumnName("requested_at_utc").HasColumnType("datetime2").IsRequired();
+            entity.Property(x => x.AdmittedAtUtc).HasColumnName("admitted_at_utc").HasColumnType("datetime2");
+            entity.Property(x => x.LeftAtUtc).HasColumnName("left_at_utc").HasColumnType("datetime2");
+            entity.Property(x => x.CanUseMicrophone).HasColumnName("can_use_microphone").HasDefaultValue(true).IsRequired();
+            entity.Property(x => x.CanUseCamera).HasColumnName("can_use_camera").HasDefaultValue(true).IsRequired();
+            entity.Property(x => x.CanShareScreen).HasColumnName("can_share_screen").HasDefaultValue(false).IsRequired();
+            entity.HasIndex(x => new { x.MeetSessionId, x.StudentUserId }).IsUnique().HasDatabaseName("UX_meet_session_participants_session_student");
+            entity.HasIndex(x => new { x.MeetSessionId, x.Status }).HasDatabaseName("IX_meet_session_participants_session_status");
+            entity.HasOne(x => x.MeetSession).WithMany(x => x.Participants).HasForeignKey(x => x.MeetSessionId).OnDelete(DeleteBehavior.Cascade);
+            entity.HasOne<ApplicationUser>().WithMany().HasForeignKey(x => x.StudentUserId).OnDelete(DeleteBehavior.NoAction);
+        });
+
     }
 }

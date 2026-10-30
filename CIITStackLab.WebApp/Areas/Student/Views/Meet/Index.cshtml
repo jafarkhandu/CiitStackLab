@@ -1,0 +1,93 @@
+@model IReadOnlyList<CIITStackLab.WebApp.Models.StudentMeetBatchListItemViewModel>
+
+@{
+    Layout = "~/Views/Shared/_CourseLayout.cshtml";
+    ViewData["Title"] = "Meet";
+}
+
+<section class="ciit-student-meet-page" data-meet-student-index data-hub-url="/hubs/meet">
+    <header class="ciit-student-meet-hero">
+        <div class="ciit-student-meet-hero-copy">
+            <span class="ciit-student-meet-eyebrow"><i class="bi bi-camera-video-fill"></i> STUDENT MEET</span>
+            <h1>Your meetings,<br /><span>all in one place.</span></h1>
+            <p>Your assigned batches are shown here. Join a meeting as soon as your admin starts it.</p>
+        </div>
+        <div class="ciit-student-meet-hero-art" aria-hidden="true">
+            <span class="ciit-meet-orbit ciit-meet-orbit-one"></span>
+            <span class="ciit-meet-orbit ciit-meet-orbit-two"></span>
+            <span class="ciit-meet-hero-icon"><i class="bi bi-camera-video-fill"></i></span>
+            <span class="ciit-meet-hero-dot"><i class="bi bi-person-video3"></i></span>
+        </div>
+    </header>
+
+    <div class="ciit-student-meet-section-heading">
+        <div>
+            <span class="ciit-student-meet-section-kicker">YOUR WORKSPACE</span>
+            <h2>My batches</h2>
+            <p>Join directly from your batch card when a meeting is live.</p>
+        </div>
+        <span class="ciit-student-meet-count"><strong>@Model.Count</strong> @(Model.Count == 1 ? "batch" : "batches")</span>
+    </div>
+
+    @if (Model.Count == 0)
+    {
+        <div class="ciit-student-meet-empty">
+            <span class="ciit-student-meet-empty-icon"><i class="bi bi-people"></i></span>
+            <h3>No batches assigned yet</h3>
+            <p>When your admin adds you to a meeting batch, it will appear here.</p>
+        </div>
+    }
+    else
+    {
+        <div class="ciit-student-meet-grid" data-meet-student-batch-list>
+            @foreach (var batch in Model)
+            {
+                <article class="ciit-student-meet-card" data-meet-batch-id="@batch.Id">
+                    <div class="ciit-student-meet-card-top">
+                        <span class="ciit-student-meet-status"><span></span> Batch access active</span>
+                        <span class="ciit-student-meet-card-icon"><i class="bi bi-people-fill"></i></span>
+                    </div>
+                    <h3>@batch.Name</h3>
+                    <p class="ciit-student-meet-description">@(string.IsNullOrWhiteSpace(batch.Description) ? "Your assigned meeting batch." : batch.Description)</p>
+                    <div class="ciit-student-meet-card-meta">
+                        <span><i class="bi bi-upc-scan"></i> @batch.BatchCode</span>
+                        <span><i class="bi bi-people"></i> @batch.MemberCount participants</span>
+                    </div>
+                    @if (batch.LiveSessionId.HasValue)
+                    {
+                        <form asp-area="Student" asp-controller="Meet" asp-action="Join" method="post" class="ciit-student-meet-join-form">
+                            @Html.AntiForgeryToken()
+                            <input type="hidden" name="id" value="@batch.LiveSessionId.Value" />
+                            <button type="submit" class="ciit-student-meet-open ciit-student-meet-join">
+                                <i class="bi bi-camera-video-fill"></i> Join Meet <i class="bi bi-arrow-up-right"></i>
+                            </button>
+                        </form>
+                    }
+                    else
+                    {
+                        <div class="ciit-student-meet-waiting">
+                            <i class="bi bi-hourglass-split"></i> Waiting for admin to start
+                        </div>
+                    }
+                    @if (batch.UpcomingSession is not null)
+                    {
+                        <div class="ciit-student-meet-upcoming">
+                            <span>UPCOMING MEETING</span>
+                            <strong>@batch.UpcomingSession.Title</strong>
+                            <small>@batch.UpcomingSession.StartsAtUtc.ToLocalTime().ToString("dd MMM yyyy, hh:mm tt")</small>
+                        </div>
+                    }
+
+                </article>
+            }
+        </div>
+    }
+</section>
+
+@section Styles {
+    <link rel="stylesheet" href="~/css/student/student-meet.css" asp-append-version="true" />
+}
+
+<div hidden data-meet-antiforgery>@Html.AntiForgeryToken()</div>
+<script src="https://cdn.jsdelivr.net/npm/@@microsoft/signalr@10.0.0/dist/browser/signalr.min.js"></script>
+<script src="~/js/meet/meet-index-live.js" asp-append-version="true"></script>

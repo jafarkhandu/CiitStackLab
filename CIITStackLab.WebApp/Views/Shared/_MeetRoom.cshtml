@@ -1,0 +1,227 @@
+@model CIITStackLab.WebApp.Models.MeetRoomViewModel
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>@Model.Title - CIIT Meet</title>
+    <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="anonymous" />
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+    <link rel="stylesheet" href="~/css/meet/meet-room.css" asp-append-version="true" />
+</head>
+<body class="ciit-meet-body">
+    <div class="ciit-meet-room-page" data-meet-room data-session-id="@Model.Id" data-is-host="@Model.IsHost.ToString().ToLowerInvariant()" data-participant-status="@Model.ParticipantStatus" data-hub-url="/hubs/meet" data-room-url="@Url.Action("Room", "Meet", new { area = Model.IsHost ? "Admin" : "Student", id = Model.Id })">
+        <header class="ciit-meet-room-header">
+            <a href="@(Model.IsHost ? Url.Action("Index", "Meet", new { area = "Admin" }) : Url.Action("Index", "Meet", new { area = "Student" }))" class="ciit-meet-room-back" aria-label="Back to meetings">
+                <i class="bi bi-arrow-left"></i>
+            </a>
+            <div class="ciit-meet-room-heading">
+                <span class="ciit-meet-room-eyebrow">CIIT MEET <span class="ciit-meet-preview-tag">PREVIEW</span></span>
+                <h1>@Model.Title</h1>
+                <p>@Model.BatchName <span>·</span> @Model.BatchCode</p>
+            </div>
+            <div class="ciit-meet-room-meta">
+                <span class="ciit-meet-room-status" data-meet-status><span class="ciit-meet-room-status-dot"></span><span data-meet-status-text>@Model.Status</span></span>
+                <span class="ciit-meet-room-duration"><i class="bi bi-clock"></i> @Model.DurationMinutes min</span>
+                @if (Model.IsHost)
+                {
+                    <button type="button" class="ciit-meet-header-action" data-open-participants aria-label="Open participants">
+                        <i class="bi bi-people-fill"></i><span data-meet-admitted-count>@(Model.ParticipantCount + (Model.Status == "Live" ? 1 : 0))</span>
+                    </button>
+                    <button type="button" class="ciit-meet-header-action" data-open-settings aria-label="Meeting settings">
+                        <i class="bi bi-gear-fill"></i><span class="ciit-meet-pending-count" data-meet-pending-count>@Model.Participants.Count(item => item.Status == "Pending")</span>
+                    </button>
+                }
+                else
+                {
+                    <span class="ciit-meet-participant-count"><i class="bi bi-people-fill"></i> <span data-meet-admitted-count>@(Model.ParticipantCount + (Model.ParticipantStatus == "Admitted" ? 1 : 0))</span></span>
+                }
+            </div>
+        </header>
+
+        @if (Model.IsHost)
+        {
+            <section class="ciit-meet-host-panel" data-meet-controls-panel>
+                <div class="ciit-meet-host-panel-heading">
+                    <div><strong>Meeting controls</strong><span>Manage access, participants and recording</span></div>
+                    <div class="ciit-meet-host-panel-actions">
+                        <button type="button" class="ciit-meet-controls-toggle" data-meet-controls-toggle aria-expanded="true" aria-controls="meetControlsBody">
+                            <span class="ciit-meet-pending-count" data-meet-pending-count>@Model.Participants.Count(item => item.Status == "Pending")</span>
+                            <i class="bi bi-chevron-up"></i>
+                            <span class="visually-hidden">Toggle meeting controls</span>
+                        </button>
+                        <form data-meet-ajax asp-area="Admin" asp-controller="Meet" asp-action="End" method="post" onsubmit="return confirm('End this meeting for everyone?');">
+                            @Html.AntiForgeryToken()
+                            <input type="hidden" name="id" value="@Model.Id" />
+                            <button type="submit" class="ciit-meet-host-danger" data-meet-end-button @(Model.Status != "Live" ? "disabled" : null)>End meeting</button>
+                        </form>
+                    </div>
+                </div>
+                <div class="ciit-meet-host-panel-body" id="meetControlsBody" data-meet-controls-body>
+                <div class="ciit-meet-host-settings">
+                    <form data-meet-ajax asp-area="Admin" asp-controller="Meet" asp-action="SetWaitingRoom" method="post" data-meet-waiting-room-form>
+                        @Html.AntiForgeryToken()
+                        <input type="hidden" name="id" value="@Model.Id" />
+                        <input type="hidden" name="enabled" value="@(!Model.WaitingRoomEnabled)" />
+                        <span>Waiting room <strong data-meet-waiting-room-state>@(Model.WaitingRoomEnabled ? "On" : "Off")</strong></span>
+                        <button type="submit" class="ciit-meet-host-secondary">Turn @(Model.WaitingRoomEnabled ? "off" : "on")</button>
+                    </form>
+                    <div class="ciit-meet-recording-settings" data-meet-recording-controls>
+                        <span>Recording <strong data-meet-recording-status>@Model.RecordingStatus</strong>
+                            @if (Model.RecordingRetentionUntilUtc.HasValue)
+                            {
+                                <small>Retention until @Model.RecordingRetentionUntilUtc.Value.ToLocalTime().ToString("dd MMM yyyy")</small>
+                            }
+                        </span>
+                        <form data-meet-ajax asp-area="Admin" asp-controller="Meet" asp-action="SetRecording" method="post" data-recording-action="enable" hidden="@Model.RecordingEnabled">
+                            @Html.AntiForgeryToken()<input type="hidden" name="id" value="@Model.Id" /><input type="hidden" name="action" value="enable" />
+                            <button type="submit" class="ciit-meet-host-secondary">Enable</button>
+                        </form>
+                        <form data-meet-ajax asp-area="Admin" asp-controller="Meet" asp-action="SetRecording" method="post" data-recording-action="stop" hidden="@(Model.RecordingStatus != "Recording")">
+                            @Html.AntiForgeryToken()<input type="hidden" name="id" value="@Model.Id" /><input type="hidden" name="action" value="stop" />
+                            <button type="submit" class="ciit-meet-host-secondary">Stop recording</button>
+                        </form>
+                        <form data-meet-ajax asp-area="Admin" asp-controller="Meet" asp-action="SetRecording" method="post" data-recording-action="start" hidden="@(!Model.RecordingEnabled || Model.Status != "Live" || (Model.RecordingStatus != "Ready" && Model.RecordingStatus != "Stopped"))">
+                            @Html.AntiForgeryToken()<input type="hidden" name="id" value="@Model.Id" /><input type="hidden" name="action" value="start" />
+                            <button type="submit" class="ciit-meet-host-secondary">Start recording</button>
+                        </form>
+                        <form data-meet-ajax asp-area="Admin" asp-controller="Meet" asp-action="SetRecording" method="post" data-recording-action="disable" hidden="@(!Model.RecordingEnabled || Model.RecordingStatus == "Recording")">
+                            @Html.AntiForgeryToken()<input type="hidden" name="id" value="@Model.Id" /><input type="hidden" name="action" value="disable" />
+                            <button type="submit" class="ciit-meet-host-secondary">Disable</button>
+                        </form>
+                        <form data-meet-ajax asp-area="Admin" asp-controller="Meet" asp-action="SetRecording" method="post" data-recording-action="delete" onsubmit="return confirm('Mark this recording as deleted?');" hidden="@(Model.RecordingStatus != "Stopped")">
+                            @Html.AntiForgeryToken()<input type="hidden" name="id" value="@Model.Id" /><input type="hidden" name="action" value="delete" />
+                            <button type="submit" class="ciit-meet-host-danger">Clear recording metadata</button>
+                        </form>
+                    </div>
+                </div>
+                <div class="ciit-meet-host-participants" data-meet-participants-list data-admit-url="@Url.Action("ReviewParticipant", "Meet", new { area = "Admin" })" data-remove-url="@Url.Action("RemoveParticipant", "Meet", new { area = "Admin" })" data-permissions-url="@Url.Action("UpdateParticipantPermissions", "Meet", new { area = "Admin" })">
+                    <h2>Participants <span data-meet-participant-total>@Model.Participants.Count</span></h2>
+                    @if (Model.Participants.Count == 0)
+                    {
+                        <p data-meet-no-participants>No student has requested to join yet.</p>
+                    }
+                    @foreach (var participant in Model.Participants)
+                    {
+                        <article class="ciit-meet-host-participant" data-meet-participant-id="@participant.Id" data-meet-participant-status="@participant.Status">
+                            <div><strong>@participant.StudentName</strong><small>@participant.Status</small></div>
+                            @if (participant.Status == "Pending")
+                            {
+                                <form data-meet-ajax asp-area="Admin" asp-controller="Meet" asp-action="ReviewParticipant" method="post">
+                                    @Html.AntiForgeryToken()<input type="hidden" name="id" value="@participant.Id" /><input type="hidden" name="decision" value="admit" />
+                                    <button type="submit" class="ciit-meet-host-secondary">Admit</button>
+                                </form>
+                                <form data-meet-ajax asp-area="Admin" asp-controller="Meet" asp-action="ReviewParticipant" method="post">
+                                    @Html.AntiForgeryToken()<input type="hidden" name="id" value="@participant.Id" /><input type="hidden" name="decision" value="reject" />
+                                    <button type="submit" class="ciit-meet-host-danger">Reject</button>
+                                </form>
+                            }
+                            @if (participant.Status == "Admitted")
+                            {
+                                <form data-meet-ajax asp-area="Admin" asp-controller="Meet" asp-action="UpdateParticipantPermissions" method="post" class="ciit-meet-permission-form">
+                                    @Html.AntiForgeryToken()
+                                    <input type="hidden" name="id" value="@participant.Id" />
+                                    <label><input type="checkbox" name="canUseMicrophone" value="true" checked="@participant.CanUseMicrophone" /> Mic</label>
+                                    <label><input type="checkbox" name="canUseCamera" value="true" checked="@participant.CanUseCamera" /> Camera</label>
+                                    <label><input type="checkbox" name="canShareScreen" value="true" checked="@participant.CanShareScreen" /> Share</label>
+                                    <button type="submit" class="ciit-meet-host-secondary">Save permissions</button>
+                                </form>
+                                <form data-meet-ajax asp-area="Admin" asp-controller="Meet" asp-action="RemoveParticipant" method="post" onsubmit="return confirm('Remove this participant from the meeting?');">
+                                    @Html.AntiForgeryToken()<input type="hidden" name="id" value="@participant.Id" />
+                                    <button type="submit" class="ciit-meet-host-danger">Remove</button>
+                                </form>
+                            }
+                        </article>
+                    }
+                </div>
+                </div>
+            </section>
+        }
+        else if (Model.ParticipantStatus == "Pending")
+        {
+            <section class="ciit-meet-waiting-screen" data-meet-waiting-screen>
+                <span class="ciit-meet-waiting-icon"><i class="bi bi-hourglass-split"></i></span>
+                <h2 data-meet-waiting-title>Waiting for the host to admit you</h2>
+                <p data-meet-waiting-message>Your join request has been sent. Keep this page open; it will update after the host admits you.</p>
+                <form asp-area="Student" asp-controller="Meet" asp-action="Leave" method="post">
+                    @Html.AntiForgeryToken()<input type="hidden" name="id" value="@Model.Id" />
+                    <button type="submit" class="ciit-meet-host-danger">Cancel request</button>
+                </form>
+            </section>
+        }
+        else if (Model.ParticipantStatus == "Rejected")
+        {
+            <section class="ciit-meet-waiting-screen" data-meet-rejected-screen>
+                <h2>Join request was declined</h2>
+                <p>Please contact your admin if you believe this was a mistake.</p>
+            </section>
+        }
+        @if (!Model.IsHost && Model.ParticipantStatus != "Pending")
+        {
+            <section class="ciit-meet-waiting-screen" data-meet-waiting-screen hidden>
+                <span class="ciit-meet-waiting-icon"><i class="bi bi-hourglass-split"></i></span>
+                <h2 data-meet-waiting-title>Waiting for the host</h2>
+                <p data-meet-waiting-message>Your meeting access status will appear here.</p>
+            </section>
+        }
+        <section class="ciit-meet-ended-screen" data-meet-ended-screen hidden="@(Model.Status != "Completed" && Model.Status != "Cancelled")">
+            <span class="ciit-meet-waiting-icon"><i class="bi bi-check2-circle"></i></span>
+            <h2>Meeting has ended</h2>
+            <p>The host has ended this meeting. You can safely leave this page.</p>
+            <a class="ciit-meet-host-secondary" href="@(Model.IsHost ? Url.Action("Index", "Meet", new { area = "Admin" }) : Url.Action("Index", "Meet", new { area = "Student" }))">Back to meetings</a>
+        </section>
+        <main class="ciit-meet-room-stage" data-meet-room-stage hidden="@((Model.IsHost && Model.Status != "Live") || (!Model.IsHost && Model.ParticipantStatus != "Admitted"))">
+            <div class="ciit-meet-room-video-grid">
+                <article class="ciit-meet-video-tile ciit-meet-video-self">
+                    <div class="ciit-meet-video-placeholder">
+                        <span class="ciit-meet-avatar">@(Model.IsHost ? "A" : "S")</span>
+                        <strong>You</strong>
+                        <small>Your camera preview will appear here</small>
+                    </div>
+                    <span class="ciit-meet-video-name"><i class="bi bi-mic-mute"></i> You (@(Model.IsHost ? "Host" : "Student"))</span>
+                    <span class="ciit-meet-video-you">YOU</span>
+                </article>
+                <article class="ciit-meet-video-tile ciit-meet-video-empty">
+                    <div class="ciit-meet-video-placeholder">
+                        <span class="ciit-meet-avatar ciit-meet-avatar-muted"><i class="bi bi-people"></i></span>
+                        <strong>Waiting for others to join</strong>
+                        <small>Participants will appear here</small>
+                    </div>
+                </article>
+            </div>
+
+            <div class="ciit-meet-room-controls" aria-label="Meeting controls">
+                <button type="button" class="ciit-meet-control" data-room-toggle="mic" aria-pressed="false">
+                    <i class="bi bi-mic-mute"></i><span>Unmute</span>
+                </button>
+                <button type="button" class="ciit-meet-control" data-room-toggle="camera" aria-pressed="false">
+                    <i class="bi bi-camera-video-off"></i><span>Start video</span>
+                </button>
+                <button type="button" class="ciit-meet-control" data-room-toggle="share" aria-pressed="false">
+                    <i class="bi bi-display"></i><span>Share screen</span>
+                </button>
+                @if (Model.IsHost)
+                {
+                    <a class="ciit-meet-leave-button" href="@Url.Action("Index", "Meet", new { area = "Admin" })">
+                        <i class="bi bi-telephone-x-fill"></i><span>Leave room</span>
+                    </a>
+                }
+                else
+                {
+                    <form asp-area="Student" asp-controller="Meet" asp-action="Leave" method="post">
+                        @Html.AntiForgeryToken()<input type="hidden" name="id" value="@Model.Id" />
+                        <button type="submit" class="ciit-meet-leave-button"><i class="bi bi-telephone-x-fill"></i><span>Leave meeting</span></button>
+                    </form>
+                }
+            </div>
+            <p class="ciit-meet-room-footnote"><i class="bi bi-info-circle"></i> Meeting interface preview · Camera, microphone and participant connections will be enabled with LiveKit. Recording controls currently save settings and lifecycle metadata only; actual recording requires LiveKit integration.</p>
+        </main>
+    </div>
+    <script src="https://cdn.jsdelivr.net/npm/@@microsoft/signalr@10.0.0/dist/browser/signalr.min.js"></script>
+    <script src="~/js/meet/meet-room-ui.js" asp-append-version="true"></script>
+</body>
+</html>

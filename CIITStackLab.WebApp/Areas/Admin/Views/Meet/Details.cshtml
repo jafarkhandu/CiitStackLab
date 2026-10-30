@@ -1,0 +1,92 @@
+@model CIITStackLab.WebApp.Models.MeetBatchDetailsViewModel
+
+@{
+    ViewData["Title"] = "Manage Meet Batch";
+    var message = TempData["MeetBatchMessage"] as string;
+    var messageType = TempData["MeetBatchMessageType"] as string;
+    var selectedIds = Model.SelectedStudentIds.ToHashSet(StringComparer.Ordinal);
+}
+
+<section class="ciit-admin-page meet-batches-page">
+    <div class="meet-page-header">
+        <div>
+            <a asp-area="Admin" asp-controller="Meet" asp-action="Index" class="meet-back-link"><i class="bi bi-arrow-left"></i> Back to batches</a>
+            <span class="ciit-admin-eyebrow">Batch Management</span>
+            <h1>Manage batch</h1>
+            <p>Update batch details and control which students are assigned.</p>
+        </div>
+        <div class="meet-header-count">
+            <strong>@Model.SelectedStudentIds.Count</strong>
+            <span>Assigned students</span>
+        </div>
+    </div>
+
+    @if (!string.IsNullOrWhiteSpace(message))
+    {
+        <div class="meet-alert @(messageType == "success" ? "is-success" : "is-error")" role="alert">
+            <span>@message</span>
+            <button type="button" class="meet-alert-close" aria-label="Close message">&times;</button>
+        </div>
+    }
+
+    <section class="meet-panel meet-details-panel">
+        <div class="meet-details-code">
+            <span>Batch code</span>
+            <strong>@Model.BatchCode</strong>
+        </div>
+
+        <form asp-area="Admin" asp-controller="Meet" asp-action="Update" method="post">
+            @Html.AntiForgeryToken()
+            <input type="hidden" asp-for="Id" />
+            <div class="meet-form-field">
+                <label asp-for="Name">Batch name</label>
+                <input asp-for="Name" maxlength="100" required />
+                <span asp-validation-for="Name" class="text-danger"></span>
+            </div>
+            <div class="meet-form-field">
+                <label asp-for="Description">Description</label>
+                <textarea asp-for="Description" rows="3" maxlength="500"></textarea>
+                <span asp-validation-for="Description" class="text-danger"></span>
+            </div>
+            <div class="meet-form-field">
+                <div class="meet-student-picker-heading">
+                    <label>Assigned students</label>
+                    <span>@Model.Students.Count active students available</span>
+                </div>
+                <input class="meet-student-search" id="meetStudentSearch" type="search" placeholder="Search students..." autocomplete="off" />
+                <div class="meet-student-picker meet-student-picker-large" id="meetStudentPicker">
+                    @if (Model.Students.Count == 0)
+                    {
+                        <p class="meet-no-students">No active registered students are available.</p>
+                    }
+                    @foreach (var student in Model.Students)
+                    {
+                        <label class="meet-student-option" data-search="@($"{student.UserName} {student.Email}".ToLowerInvariant())">
+                            <input type="checkbox" name="SelectedStudentIds" value="@student.Id" checked="@selectedIds.Contains(student.Id)" />
+                            <span class="meet-student-option-copy">
+                                <strong>@student.UserName</strong>
+                                <small>@(string.IsNullOrWhiteSpace(student.Email) ? "No email available" : student.Email)</small>
+                            </span>
+                            @if (selectedIds.Contains(student.Id))
+                            {
+                                <span class="meet-assigned-tag">Assigned</span>
+                            }
+                        </label>
+                    }
+                </div>
+            </div>
+            <div class="meet-details-footer">
+                <span>Created @Model.CreatedAtUtc.ToLocalTime().ToString("dd MMM yyyy, hh:mm tt")</span>
+                <button type="submit" class="meet-primary-button"><i class="bi bi-check2"></i> Save changes</button>
+            </div>
+        </form>
+    </section>
+</section>
+
+@section Styles {
+    <link rel="stylesheet" href="~/css/admin/admin-meet-batches.css" asp-append-version="true" />
+}
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+    <script src="~/js/admin/admin-meet-batches.js" asp-append-version="true"></script>
+}

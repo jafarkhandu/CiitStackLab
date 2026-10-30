@@ -1,0 +1,249 @@
+document.addEventListener("DOMContentLoaded", () => {
+    const adminRoot = document.querySelector("[data-meet-admin-index]");
+    const studentRoot = document.querySelector("[data-meet-student-index]");
+    const root = adminRoot || studentRoot;
+    if (!root || !window.signalR) return;
+
+    const connection = new signalR.HubConnectionBuilder()
+        .withUrl(root.dataset.hubUrl)
+        .withAutomaticReconnect()
+        .build();
+
+    const token = () => document.querySelector('[data-meet-antiforgery] input[name="__RequestVerificationToken"]')
+        ?.value || document.querySelector('input[name="__RequestVerificationToken"]')?.value || "";
+
+    // Track the live session independently from DOM rendering so a stale
+    // Scheduled snapshot can never undo a newer Live event for the same batch.
+    const liveSessionByBatch = new Map();
+    if (studentRoot) {
+        studentRoot.querySelectorAll("[data-meet-batch-id]").forEach(card => {
+            const id = card.querySelector('.ciit-student-meet-join-form input[name="id"]')?.value;
+            if (id) liveSessionByBatch.set(Number(card.dataset.meetBatchId), Number(id));
+        });
+    }
+
+    const addHidden = (form, name, value) => {
+        const input = document.createElement("input");
+        input.type = "hidden";
+        input.name = name;
+        input.value = String(value);
+        form.append(input);
+    };
+
+    const updateStudentBatch = state => {
+        const card = studentRoot.querySelector('[data-meet-batch-id="' + state.batchId + '"]');
+        if (!card) return;
+
+        let joinForm = card.querySelector(".ciit-student-meet-join-form");
+        let waiting = card.querySelector(".ciit-student-meet-waiting");
+        const isLive = state.status === "Live"
+            && state.startedAtUtc
+            && new Date(state.startedAtUtc).getTime() + state.durationMinutes * 60000 > Date.now();
+
+        // Ignore updates for another scheduled/cancelled session while this
+        // batch already has a different live meeting with a visible Join action.
+        const visibleSessionId = joinForm?.querySelector('input[name="id"]')?.value;
+        const knownLiveSessionId = liveSessionByBatch.get(Number(state.batchId));
+
+        // Ignore stale Scheduled snapshots for the same session after a Live
+        // event has already been received. Completed/Cancelled remain terminal.
+        // A session's terminal state may only remove the matching Join action.
+        // Delayed updates from older/different sessions must not affect the live one.
+        if (knownLiveSessionId && knownLiveSessionId !== Number(state.sessionId)) {
+            return;
+        }
+
+        // A Scheduled snapshot for the same session can be stale when it arrives
+        // after the Live event (including during the initial hub snapshot).
+        if (!isLive && state.status === "Scheduled"
+            && knownLiveSessionId === Number(state.sessionId)) {
+            return;
+        }
+
+        if (isLive) {
+            liveSessionByBatch.set(Number(state.batchId), Number(state.sessionId));
+            if (!joinForm) {
+                joinForm = document.createElement("form");
+                joinForm.method = "post";
+                joinForm.action = "/Student/Meet/Join";
+                joinForm.className = "ciit-student-meet-join-form";
+                addHidden(joinForm, "__RequestVerificationToken", token());
+                addHidden(joinForm, "id", state.sessionId);
+                const button = document.createElement("button");
+                button.type = "submit";
+                button.className = "ciit-student-meet-open ciit-student-meet-join";
+                button.textContent = "Join Meet";
+                joinForm.append(button);
+                if (waiting) waiting.replaceWith(joinForm);
+                else card.append(joinForm);
+            } else {
+                const id = joinForm.querySelector('input[name="id"]');
+                if (id) id.value = state.sessionId;
+            }
+        } else if (joinForm
+            && (state.status === "Completed" || state.status === "Cancelled")) {
+            liveSessionByBatch.delete(Number(state.batchId));
+            joinForm.remove();
+            if (!waiting) {
+                waiting = document.createElement("div");
+                waiting.className = "ciit-student-meet-waiting";
+                waiting.innerHTML = '<i class="bi bi-hourglass-split"></i> Waiting for admin to start';
+                card.append(waiting);
+            }
+        }
+
+        let upcoming = card.querySelector(".ciit-student-meet-upcoming");
+        if (state.status === "Scheduled") {
+            if (!upcoming) {
+                upcoming = document.createElement("div");
+                upcoming.className = "ciit-student-meet-upcoming";
+                upcoming.innerHTML = "<span>UPCOMING MEETING</span><strong></strong><small></small>";
+                card.append(upcoming);
+            }
+            upcoming.querySelector("strong").textContent = state.title;
+            upcoming.querySelector("small").textContent = new Date(state.startsAtUtc).toLocaleString();
+        } else if (upcoming && (state.status === "Cancelled" || state.status === "Live")) {
+            upcoming.remove();
+        }
+    };
+
+    const updateAdminSession = state => {
+        let list = adminRoot.querySelector("[data-meet-admin-session-list]");
+        let card = list?.querySelector('[data-meet-session-id="' + state.sessionId + '"]');
+        if (!card) {
+            const empty = adminRoot.querySelector(".meet-session-list-empty");
+            if (empty) empty.remove();
+            const listSection = adminRoot.querySelector(".meet-session-list-section");
+            if (!listSection) return;
+            list = listSection.querySelector("[data-meet-admin-session-list]");
+            if (!list) {
+                list = document.createElement("div");
+                list.className = "meet-session-list";
+                list.dataset.meetAdminSessionList = "";
+                listSection.append(list);
+            }
+            card = document.createElement("article");
+            card.className = "meet-session-list-item";
+            card.dataset.meetSessionId = state.sessionId;
+            card.dataset.meetBatchId = state.batchId;
+            const icon = document.createElement("div");
+            icon.className = "meet-session-list-icon";
+            icon.innerHTML = '<i class="bi bi-camera-video"></i>';
+            const copy = document.createElement("div");
+            copy.className = "meet-session-list-copy";
+            const title = document.createElement("strong");
+            title.textContent = state.title;
+            copy.append(title);
+            const status = document.createElement("span");
+            status.className = "meet-session-status";
+            status.dataset.meetSessionStatus = "";
+            const link = document.createElement("a");
+            link.className = "meet-secondary-button";
+            link.dataset.meetSessionViewAction = "";
+            link.href = "/Admin/Meet/Room/" + state.sessionId;
+            link.textContent = "Details";
+            card.append(icon, copy, status, link);
+            list.prepend(card);
+        }
+
+        const status = card.querySelector("[data-meet-session-status]");
+        if (status) status.textContent = state.status;
+
+        card.querySelectorAll("[data-meet-session-action]").forEach(element => element.remove());
+        if (state.status === "Scheduled") {
+            [
+                ["Start now", "/Admin/Meet/Start"],
+                ["Cancel", "/Admin/Meet/Cancel"]
+            ].forEach(([label, action]) => {
+                const form = document.createElement("form");
+                form.method = "post";
+                form.action = action;
+                form.dataset.meetSessionAction = "";
+                form.dataset.meetAjax = "";
+                addHidden(form, "__RequestVerificationToken", token());
+                addHidden(form, "id", state.sessionId);
+                const button = document.createElement("button");
+                button.type = "submit";
+                button.className = label === "Start now" ? "meet-primary-button" : "meet-secondary-button";
+                button.textContent = label;
+                form.append(button);
+                card.append(form);
+            });
+        }
+
+        card.querySelectorAll("[data-meet-session-view-action], [data-meet-session-details], [data-meet-session-delete]")
+            .forEach(element => element.remove());
+
+        if (state.status === "Live") {
+            const link = document.createElement("a");
+            link.href = "/Admin/Meet/Room/" + state.sessionId;
+            link.className = "meet-primary-button";
+            link.dataset.meetSessionViewAction = "";
+            link.textContent = "Open live room";
+            card.append(link);
+        } else {
+            const details = document.createElement("button");
+            details.type = "button";
+            details.className = "meet-secondary-button";
+            details.dataset.meetSessionViewAction = "";
+            details.dataset.meetSessionDetails = "";
+            details.dataset.detailsUrl = "/Admin/Meet/SessionDetails/" + state.sessionId;
+            details.textContent = "Details";
+            card.append(details);
+
+            if (state.status === "Completed" || state.status === "Cancelled") {
+                const form = document.createElement("form");
+                form.method = "post";
+                form.action = "/Admin/Meet/DeleteSession";
+                form.dataset.meetSessionDelete = "";
+                form.dataset.meetAjax = "";
+                addHidden(form, "__RequestVerificationToken", token());
+                addHidden(form, "id", state.sessionId);
+                const remove = document.createElement("button");
+                remove.type = "submit";
+                remove.className = "meet-icon-button";
+                remove.title = "Delete meeting history";
+                remove.setAttribute("aria-label", "Delete meeting history");
+                remove.innerHTML = '<i class="bi bi-trash"></i>';
+                form.append(remove);
+                card.append(form);
+            }
+        }
+    };
+
+    if (adminRoot) {
+        adminRoot.addEventListener("submit", async event => {
+            const form = event.target.closest("form[data-meet-ajax]");
+            if (!form) return;
+            if (event.defaultPrevented) return;
+            event.preventDefault();
+            const button = form.querySelector('[type="submit"]');
+            if (button) button.disabled = true;
+            try {
+                const response = await fetch(form.action, {
+                    method: "POST",
+                    body: new FormData(form),
+                    credentials: "same-origin",
+                    headers: { "X-Requested-With": "XMLHttpRequest" }
+                });
+                if (!response.ok) throw new Error("Unable to update this meeting.");
+                if (button) button.disabled = false;
+            } catch (error) {
+                console.error(error);
+                if (button) button.disabled = false;
+            }
+        });
+    }
+
+    const handleUpdate = state => {
+        if (adminRoot) updateAdminSession(state);
+        if (studentRoot) updateStudentBatch(state);
+    };
+
+    connection.on("MeetAdminUpdated", handleUpdate);
+    connection.on("MeetBatchUpdated", handleUpdate);
+
+    const joinGroup = () => connection.invoke(adminRoot ? "JoinAdminUpdates" : "JoinMyBatchUpdates");
+    connection.onreconnected(joinGroup);
+    connection.start().then(joinGroup).catch(error => console.error("Meet dashboard live connection failed:", error));
+});
