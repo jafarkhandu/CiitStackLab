@@ -81,7 +81,7 @@
                             {
                                 <form asp-area="Admin" asp-controller="Meet" asp-action="SetRecording" method="post" onsubmit="return confirm('Mark this recording as deleted?');">
                                     @Html.AntiForgeryToken()<input type="hidden" name="id" value="@Model.Id" /><input type="hidden" name="action" value="delete" />
-                                    <button type="submit" class="ciit-meet-host-danger">Delete recording</button>
+                                    <button type="submit" class="ciit-meet-host-danger">Clear recording metadata</button>
                                 </form>
                             }
                             <form asp-area="Admin" asp-controller="Meet" asp-action="SetRecording" method="post">
@@ -125,6 +125,10 @@
                                     <label><input type="checkbox" name="canUseCamera" value="true" checked="@participant.CanUseCamera" /> Camera</label>
                                     <label><input type="checkbox" name="canShareScreen" value="true" checked="@participant.CanShareScreen" /> Share</label>
                                     <button type="submit" class="ciit-meet-host-secondary">Save permissions</button>
+                                </form>
+                                <form asp-area="Admin" asp-controller="Meet" asp-action="RemoveParticipant" method="post" onsubmit="return confirm('Remove this participant from the meeting?');">
+                                    @Html.AntiForgeryToken()<input type="hidden" name="id" value="@participant.Id" />
+                                    <button type="submit" class="ciit-meet-host-danger">Remove</button>
                                 </form>
                             }
                         </article>
