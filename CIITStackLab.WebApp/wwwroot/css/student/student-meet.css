@@ -437,3 +437,80 @@
         transform: none;
     }
 }
+
+
+/* Final compact sizing: keep batch tiles small instead of stretching them square. */
+.ciit-student-meet-grid {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 13px;
+}
+
+.ciit-student-meet-card {
+    min-height: 0;
+    height: 218px;
+    aspect-ratio: auto;
+    justify-content: flex-start;
+    border-radius: 17px;
+    padding: 14px;
+}
+
+.ciit-student-meet-card-top {
+    min-height: 34px;
+}
+
+.ciit-student-meet-card-icon {
+    width: 34px;
+    height: 34px;
+    border-radius: 11px;
+    font-size: 15px;
+}
+
+.ciit-student-meet-card h3 {
+    margin: 10px 0 3px;
+    font-size: 14px;
+    line-height: 1.35;
+}
+
+.ciit-student-meet-description {
+    min-height: 0;
+    max-height: 32px;
+    overflow: hidden;
+    font-size: 10px;
+    line-height: 1.5;
+}
+
+.ciit-student-meet-card-meta {
+    gap: 5px;
+    margin: 10px 0;
+    font-size: 9px;
+}
+
+.ciit-student-meet-open {
+    min-height: 33px;
+    margin-top: auto;
+    padding: 0 10px;
+    border-radius: 9px;
+    font-size: 10px;
+}
+
+@media (max-width: 1200px) {
+    .ciit-student-meet-grid {
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+    }
+}
+
+@media (max-width: 900px) {
+    .ciit-student-meet-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+}
+
+@media (max-width: 540px) {
+    .ciit-student-meet-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .ciit-student-meet-card {
+        height: 205px;
+    }
+}
