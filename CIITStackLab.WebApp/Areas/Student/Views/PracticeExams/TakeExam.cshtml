@@ -154,6 +154,7 @@
             let currentIndex = 0;
             let autoSubmitting = false;
             let submitted = false;
+            let saveQueue = Promise.resolve();
 
             const answers = () => {
                 const result = {};
@@ -186,10 +187,26 @@
                 submitButton.style.display = currentIndex === questions.length - 1 ? '' : 'none';
             };
 
-            const submitExam = confirmBeforeSubmit => {
+            const queueAnswerSave = () => {
+                const token = form.querySelector('input[name="__RequestVerificationToken"]').value;
+                const payload = new URLSearchParams();
+                payload.append('answersJson', JSON.stringify(answers()));
+                payload.append('__RequestVerificationToken', token);
+                saveQueue = saveQueue
+                    .then(() => fetch('/PracticeExams/SaveAnswers/@Model.AttemptId', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8' },
+                        body: payload.toString(),
+                        credentials: 'same-origin'
+                    }))
+                    .catch(() => null);
+            };
+
+            const submitExam = async confirmBeforeSubmit => {
                 if (submitted) return;
                 if (confirmBeforeSubmit && !window.confirm('Submit your practice exam now? Unanswered questions will count as incorrect.')) return;
                 submitted = true;
+                await saveQueue;
                 answersField.value = JSON.stringify(answers());
                 form.requestSubmit();
             };
@@ -198,7 +215,10 @@
             nextButton.addEventListener('click', () => showQuestion(currentIndex + 1));
             submitButton.addEventListener('click', () => submitExam(true));
             paletteButtons.forEach(button => button.addEventListener('click', () => showQuestion(Number(button.dataset.paletteIndex))));
-            questions.forEach(question => question.addEventListener('change', refreshStatus));
+            questions.forEach(question => question.addEventListener('change', () => {
+                refreshStatus();
+                queueAnswerSave();
+            }));
 
             const updateTimer = () => {
                 const remaining = Math.max(0, Math.floor((deadline - Date.now()) / 1000));
@@ -207,14 +227,14 @@
                 timerLabel.textContent = minutes + ':' + seconds;
                 if (remaining <= 0) {
                     autoSubmitting = true;
-                    submitExam(false);
+                    void submitExam(false);
                 }
             };
 
             form.addEventListener('submit', event => {
                 if (!submitted) {
                     event.preventDefault();
-                    submitExam(!autoSubmitting);
+                    void submitExam(!autoSubmitting);
                 }
             });
 
