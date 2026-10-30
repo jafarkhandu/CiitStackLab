@@ -40,5 +40,5 @@ public sealed class MeetBatchDetailsViewModel
     public bool IsArchived { get; init; }
     public DateTime CreatedAtUtc { get; init; }
     public IReadOnlyList<MeetStudentOptionViewModel> Students { get; init; } = [];
-    public IReadOnlyList<string> SelectedStudentIds { get; set; } = [];
+    public List<string> SelectedStudentIds { get; set; } = [];
 }
