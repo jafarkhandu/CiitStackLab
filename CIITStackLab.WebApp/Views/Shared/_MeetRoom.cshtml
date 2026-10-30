@@ -55,11 +55,11 @@
                         @Html.AntiForgeryToken()
                         <input type="hidden" name="id" value="@Model.Id" />
                         <input type="hidden" name="enabled" value="@(!Model.WaitingRoomEnabled)" />
-                        <span>Waiting room <strong>@(Model.WaitingRoomEnabled ? "On" : "Off")</strong></span>
+                        <span>Waiting room <strong data-meet-waiting-room-state>@(Model.WaitingRoomEnabled ? "On" : "Off")</strong></span>
                         <button type="submit" class="ciit-meet-host-secondary">Turn @(Model.WaitingRoomEnabled ? "off" : "on")</button>
                     </form>
                     <div class="ciit-meet-recording-settings">
-                        <span>Recording <strong>@Model.RecordingStatus</strong>
+                        <span>Recording <strong data-meet-recording-status>@Model.RecordingStatus</strong>
                             @if (Model.RecordingRetentionUntilUtc.HasValue)
                             {
                                 <small>Retention until @Model.RecordingRetentionUntilUtc.Value.ToLocalTime().ToString("dd MMM yyyy")</small>
@@ -103,7 +103,7 @@
                     <h2>Participants <span data-meet-participant-total>@Model.Participants.Count</span></h2>
                     @if (Model.Participants.Count == 0)
                     {
-                        <p>No student has requested to join yet.</p>
+                        <p data-meet-no-participants>No student has requested to join yet.</p>
                     }
                     @foreach (var participant in Model.Participants)
                     {
