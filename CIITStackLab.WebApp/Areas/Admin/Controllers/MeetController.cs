@@ -58,6 +58,31 @@ public sealed class MeetController : Controller
         });
     }
 
+    [HttpGet]
+    public async Task<IActionResult> Room(int id, CancellationToken cancellationToken)
+    {
+        var session = await _dbContext.MeetSessions
+            .AsNoTracking()
+            .Include(item => item.MeetBatch)
+            .SingleOrDefaultAsync(item => item.Id == id, cancellationToken);
+
+        if (session is null || session.MeetBatch.IsArchived)
+            return NotFound();
+
+        return View(new MeetRoomViewModel
+        {
+            Id = session.Id,
+            Title = session.Title,
+            Description = session.Description,
+            BatchName = session.MeetBatch.Name,
+            BatchCode = session.MeetBatch.BatchCode,
+            StartsAtUtc = session.StartsAtUtc,
+            DurationMinutes = session.DurationMinutes,
+            Status = session.Status,
+            IsHost = true
+        });
+    }
+
     [HttpPost]
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> CreateSession(
