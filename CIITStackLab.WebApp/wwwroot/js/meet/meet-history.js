@@ -129,7 +129,7 @@ document.addEventListener("DOMContentLoaded", () => {
             if (button) button.disabled = false;
             window.alert(error.message);
         }
-    });
+    }, true);
 
     modal.querySelector("[data-close-history]")?.addEventListener("click", close);
     modal.addEventListener("click", event => { if (event.target === modal) close(); });
