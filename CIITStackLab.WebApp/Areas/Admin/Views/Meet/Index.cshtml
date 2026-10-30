@@ -272,5 +272,22 @@
     <link rel="stylesheet" href="~/css/admin/admin-meet-batches.css" asp-append-version="true" />
 }
 @section Scripts {
+    <script>
+        (() => {
+            const form = document.getElementById('meetSessionForm');
+            const offset = document.getElementById('clientUtcOffset');
+            if (!form || !offset) return;
+            offset.value = new Date().getTimezoneOffset().toString();
+            form.addEventListener('submit', event => {
+                const start = document.getElementById('sessionStart');
+                if (event.submitter?.value === 'scheduled' && !start.value) {
+                    event.preventDefault();
+                    start.setCustomValidity('Choose a date and time for the scheduled meeting.');
+                    start.reportValidity();
+                    start.addEventListener('input', () => start.setCustomValidity(''), { once: true });
+                }
+            });
+        })();
+    </script>
     <script src="~/js/admin/admin-meet-batches.js" asp-append-version="true"></script>
 }
