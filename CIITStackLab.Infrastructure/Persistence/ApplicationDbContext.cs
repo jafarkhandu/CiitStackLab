@@ -33,6 +33,7 @@ public class ApplicationDbContext : IdentityDbContext<ApplicationUser>
     public DbSet<ExamApplicationNotification> ExamApplicationNotifications => Set<ExamApplicationNotification>();
     public DbSet<MeetBatch> MeetBatches => Set<MeetBatch>();
     public DbSet<MeetBatchMember> MeetBatchMembers => Set<MeetBatchMember>();
+    public DbSet<MeetSession> MeetSessions => Set<MeetSession>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -461,6 +462,26 @@ public class ApplicationDbContext : IdentityDbContext<ApplicationUser>
             entity.HasIndex(x => new { x.MeetBatchId, x.StudentUserId }).IsUnique().HasDatabaseName("UX_meet_batch_members_batch_student");
             entity.HasIndex(x => x.StudentUserId).HasDatabaseName("IX_meet_batch_members_student");
             entity.HasOne<ApplicationUser>().WithMany().HasForeignKey(x => x.StudentUserId).OnDelete(DeleteBehavior.NoAction);
+        });
+
+        modelBuilder.Entity<MeetSession>(entity =>
+        {
+            entity.ToTable("tbl_meet_sessions", ExistingSchema);
+            entity.HasKey(x => x.Id);
+            entity.Property(x => x.Id).HasColumnName("meet_session_id").ValueGeneratedOnAdd();
+            entity.Property(x => x.MeetBatchId).HasColumnName("meet_batch_id").IsRequired();
+            entity.Property(x => x.Title).HasColumnName("title").HasMaxLength(150).IsRequired();
+            entity.Property(x => x.Description).HasColumnName("description").HasMaxLength(1000);
+            entity.Property(x => x.RoomName).HasColumnName("room_name").HasMaxLength(80).IsRequired();
+            entity.Property(x => x.StartsAtUtc).HasColumnName("starts_at_utc").HasColumnType("datetime2").IsRequired();
+            entity.Property(x => x.DurationMinutes).HasColumnName("duration_minutes").IsRequired();
+            entity.Property(x => x.Status).HasColumnName("status").HasMaxLength(20).IsRequired();
+            entity.Property(x => x.CreatedByUserId).HasColumnName("created_by_user_id").HasMaxLength(450).IsRequired();
+            entity.Property(x => x.CreatedAtUtc).HasColumnName("created_at_utc").HasColumnType("datetime2").IsRequired();
+            entity.HasIndex(x => x.RoomName).IsUnique().HasDatabaseName("UX_meet_sessions_room_name");
+            entity.HasIndex(x => new { x.MeetBatchId, x.StartsAtUtc }).HasDatabaseName("IX_meet_sessions_batch_start");
+            entity.HasOne(x => x.MeetBatch).WithMany().HasForeignKey(x => x.MeetBatchId).OnDelete(DeleteBehavior.Cascade);
+            entity.HasOne<ApplicationUser>().WithMany().HasForeignKey(x => x.CreatedByUserId).OnDelete(DeleteBehavior.NoAction);
         });
 
 
