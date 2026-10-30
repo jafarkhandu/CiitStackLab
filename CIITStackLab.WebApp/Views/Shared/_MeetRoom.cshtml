@@ -160,6 +160,14 @@
                 <p>Please contact your admin if you believe this was a mistake.</p>
             </section>
         }
+        @if (!Model.IsHost && Model.ParticipantStatus != "Pending")
+        {
+            <section class="ciit-meet-waiting-screen" data-meet-waiting-screen hidden>
+                <span class="ciit-meet-waiting-icon"><i class="bi bi-hourglass-split"></i></span>
+                <h2 data-meet-waiting-title>Waiting for the host</h2>
+                <p data-meet-waiting-message>Your meeting access status will appear here.</p>
+            </section>
+        }
         <section class="ciit-meet-ended-screen" data-meet-ended-screen hidden="@(Model.Status != "Completed" && Model.Status != "Cancelled")">
             <span class="ciit-meet-waiting-icon"><i class="bi bi-check2-circle"></i></span>
             <h2>Meeting has ended</h2>
