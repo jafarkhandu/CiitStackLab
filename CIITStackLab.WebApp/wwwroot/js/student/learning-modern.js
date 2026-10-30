@@ -8,70 +8,206 @@
         const style = document.createElement('style');
         style.id = styleId;
         style.textContent = `
+            .ciit-learning-mode .ciit-learning-shell {
+                width: 100%;
+                max-width: none;
+                margin: 0;
+                padding-inline: 0;
+            }
+
+            .ciit-learning-mode .ciit-learning-main {
+                min-width: 0;
+                width: 100%;
+            }
+
             .ciit-learning-mode .ciit-learning-main-card {
                 width: 100%;
-                max-width: 780px;
+                max-width: 1080px;
                 margin: 0 auto;
-                padding: 32px 44px 36px;
+                padding: 36px 56px 40px;
                 border-radius: 22px;
                 background: rgba(255, 255, 255, .88);
                 backdrop-filter: none;
                 -webkit-backdrop-filter: none;
             }
 
-            .ciit-learning-mode .ciit-learning-resource-title {
-                display: none;
-            }
-
+            .ciit-learning-mode .ciit-learning-resource,
             .ciit-learning-mode .ciit-learning-notes-panel,
             .ciit-learning-mode .ciit-learning-notes-content {
                 margin: 0;
                 padding: 0;
                 border: 0;
                 border-radius: 0;
+                background: none;
+                box-shadow: none;
+            }
+
+            .ciit-learning-mode .ciit-learning-resource-title {
+                display: none;
+            }
+
+            .ciit-learning-mode .ciit-learning-main-card::before,
+            .ciit-learning-mode .ciit-learning-lesson-heading::before,
+            .ciit-learning-mode .ciit-learning-lesson-heading::after {
+                display: none;
+                content: none;
+            }
+
+            .ciit-learning-mode .ciit-learning-lesson-heading {
+                margin: 0;
+                padding: 0;
+                border: 0;
                 background: transparent;
                 box-shadow: none;
             }
 
-            .ciit-learning-mode .ciit-learning-lesson-heading {
-                margin: 0 0 8px;
+            .ciit-learning-mode .ciit-learning-breadcrumb {
+                margin: 0 0 12px;
+                color: var(--ciit-learn-muted);
+                font-size: 13px;
+                line-height: 1.4;
+                font-weight: 500;
+            }
+
+            .ciit-learning-mode .ciit-learning-breadcrumb a {
+                color: inherit;
+                text-decoration: none;
+            }
+
+            .ciit-learning-mode .ciit-learning-breadcrumb a:hover {
+                text-decoration: underline;
             }
 
             .ciit-learning-mode .ciit-learning-lesson-heading .ciit-learning-eyebrow {
-                margin-bottom: 4px;
+                margin: 0 0 6px;
+                color: var(--ciit-learn-blue);
+                font-size: 12px;
+                line-height: 1.4;
             }
 
             .ciit-learning-mode .ciit-learning-lesson-heading .ciit-learning-chapter-title {
-                margin: 0;
+                margin: 0 0 20px;
+                color: var(--ciit-learn-ink);
                 font-size: 32px;
                 line-height: 1.2;
                 font-weight: 800;
                 letter-spacing: -.7px;
             }
 
-            .ciit-learning-mode .ciit-learning-topic-step-progress {
+            .ciit-learning-mode .ciit-learning-topic-step-progress,
+            .ciit-learning-mode .ciit-learning-lesson-heading .ciit-learning-topic-progress {
                 display: none;
+            }
+
+            .ciit-learning-mode .ciit-learning-notes-content {
+                max-width: none;
+                color: var(--ciit-learn-text);
+                font-size: 16px;
+                line-height: 1.7;
+            }
+
+            .ciit-learning-mode .ciit-learning-notes-content p,
+            .ciit-learning-mode .ciit-learning-notes-content ul,
+            .ciit-learning-mode .ciit-learning-notes-content ol {
+                margin-top: 0;
+                margin-bottom: 12px;
+            }
+
+            .ciit-learning-mode .ciit-learning-notes-content li {
+                margin-bottom: 4px;
             }
 
             .ciit-learning-mode .ciit-learning-notes-content h2,
             .ciit-learning-mode .ciit-learning-notes-content h3,
             .ciit-learning-mode .ciit-learning-notes-content h4 {
+                max-width: none;
+                color: var(--ciit-learn-ink);
+                border-top: 0;
+                border-bottom: 0;
+                box-shadow: none;
                 scroll-margin-top: 98px;
             }
 
-            html:has(.ciit-learning-mode) {
-                scroll-behavior: smooth;
+            .ciit-learning-mode .ciit-learning-notes-content h2 {
+                margin: 28px 0 10px;
+                padding-top: 0;
+                font-size: 22px;
+                line-height: 1.35;
+            }
+
+            .ciit-learning-mode .ciit-learning-notes-content > h2:first-child,
+            .ciit-learning-mode .ciit-learning-notes-content > *:first-child + h2 {
+                margin-top: 20px;
+            }
+
+            .ciit-learning-mode .ciit-learning-notes-content h3 {
+                margin: 24px 0 8px;
+                font-size: 18px;
+                line-height: 1.4;
+            }
+
+            .ciit-learning-mode .ciit-learning-notes-content h4 {
+                margin: 20px 0 8px;
+            }
+
+            .ciit-learning-mode .ciit-learning-notes-content a {
+                text-decoration: none;
+            }
+
+            .ciit-learning-mode .ciit-learning-notes-content a:hover {
+                text-decoration: underline;
+            }
+
+            .ciit-learning-mode .ciit-learning-notes-content pre {
+                margin: 20px 0;
+                border-top: 0;
+                border-bottom: 0;
+                box-shadow: none;
+            }
+
+            .ciit-learning-mode .ciit-learning-sidebar {
+                max-height: none;
+                height: auto;
+            }
+
+            .ciit-learning-mode .ciit-learning-sidebar-head {
+                margin-bottom: 12px;
+                padding: 0;
+                background: transparent;
+                border: 0;
+                box-shadow: none;
+            }
+
+            .ciit-learning-mode .ciit-learning-current-chapters {
+                gap: 8px;
+            }
+
+            .ciit-learning-mode .ciit-learning-subtopics {
+                gap: 2px;
+            }
+
+            .ciit-learning-mode .ciit-learning-exam-apply {
+                margin-top: 16px;
             }
 
             @media (min-width: 1200px) {
+                .ciit-learning-mode .ciit-course-environment-workspace {
+                    gap: 16px;
+                }
+
+                .ciit-learning-mode .ciit-course-global-sidebar {
+                    height: auto;
+                    min-height: 0;
+                    align-self: start;
+                }
+
                 .ciit-learning-mode .ciit-learning-shell {
-                    display: grid !important;
-                    grid-template-columns: minmax(0, 1fr) 310px !important;
+                    display: grid;
+                    grid-template-columns: minmax(0, 1fr) 330px;
                     grid-template-areas: "main sidebar";
-                    width: min(1110px, 100%) !important;
-                    max-width: 1110px !important;
-                    margin-right: auto;
-                    margin-left: auto;
+                    align-items: start;
+                    justify-content: stretch;
+                    gap: 16px;
                 }
 
                 .ciit-learning-mode .ciit-learning-main {
@@ -83,53 +219,53 @@
 
                 .ciit-learning-mode .ciit-learning-shell > .ciit-learning-sidebar {
                     grid-area: sidebar;
-                    width: 310px;
+                    width: 330px;
                 }
             }
 
-            @media (min-width: 992px) and (max-width: 1199.98px) {
+            @media (min-width: 768px) and (max-width: 1199.98px) {
                 .ciit-learning-mode .ciit-learning-shell {
-                    display: grid !important;
-                    grid-template-columns: minmax(0, 1fr) !important;
-                    grid-template-areas: "main" "sidebar";
-                    width: 100% !important;
-                    max-width: 780px !important;
-                    margin-right: auto;
-                    margin-left: auto;
-                }
-
-                .ciit-learning-mode .ciit-learning-main {
-                    grid-area: main;
+                    display: grid;
+                    grid-template-columns: minmax(0, 1fr);
+                    grid-template-areas: "sidebar" "main";
+                    width: 100%;
+                    max-width: none;
+                    gap: 16px;
                 }
 
                 .ciit-learning-mode .ciit-learning-shell > .ciit-learning-sidebar {
                     grid-area: sidebar;
-                    position: static !important;
+                    position: relative;
+                    top: auto;
                     width: 100%;
-                    height: auto !important;
-                    max-height: 42vh !important;
+                    max-height: none;
+                }
+
+                .ciit-learning-mode .ciit-learning-main {
+                    grid-area: main;
                 }
 
                 .ciit-learning-mode .ciit-learning-main-card {
-                    padding: 28px 32px;
-                }
-            }
-
-            @media (max-width: 991.98px) {
-                .ciit-learning-mode .ciit-learning-shell > .ciit-learning-sidebar {
-                    grid-area: sidebar;
-                }
-
-                .ciit-learning-mode .ciit-learning-main {
-                    grid-area: main;
+                    max-width: 1080px;
+                    padding: 32px 40px 36px;
                 }
             }
 
             @media (max-width: 767.98px) {
                 .ciit-learning-mode .ciit-learning-main-card {
-                    padding: 22px 18px 26px;
+                    max-width: none;
+                    padding: 24px 20px 30px;
                     border-radius: 18px;
                 }
+
+                .ciit-learning-mode .ciit-learning-notes-content {
+                    font-size: 16px;
+                    line-height: 1.7;
+                }
+            }
+
+            html:has(.ciit-learning-mode) {
+                scroll-behavior: smooth;
             }
 
             @media (prefers-reduced-motion: reduce) {
