@@ -50,6 +50,7 @@ document.addEventListener("DOMContentLoaded", () => {
                     headers: { "X-Requested-With": "XMLHttpRequest" }
                 });
                 if (!response.ok) throw new Error("Unable to update the meeting.");
+                if (submit) submit.disabled = false;
             } catch (error) {
                 console.error(error);
                 if (submit) submit.disabled = false;
@@ -209,6 +210,28 @@ document.addEventListener("DOMContentLoaded", () => {
         setText("[data-meet-status-text]", state.status);
         setText("[data-meet-waiting-room-state]", state.waitingRoomEnabled ? "On" : "Off");
         setText("[data-meet-recording-status]", state.recordingStatus);
+        const waitingRoomForm = room.querySelector("[data-meet-waiting-room-form]");
+        if (waitingRoomForm) {
+            const enabledInput = waitingRoomForm.querySelector('input[name="enabled"]');
+            const button = waitingRoomForm.querySelector('[type="submit"]');
+            if (enabledInput) enabledInput.value = String(!state.waitingRoomEnabled);
+            if (button) button.textContent = state.waitingRoomEnabled ? "Turn off" : "Turn on";
+        }
+        const recordingControls = room.querySelector("[data-meet-recording-controls]");
+        if (recordingControls) {
+            const actions = {
+                enable: !state.recordingEnabled,
+                stop: state.recordingStatus === "Recording",
+                start: state.recordingEnabled && state.status === "Live"
+                    && (state.recordingStatus === "Ready" || state.recordingStatus === "Stopped"),
+                disable: state.recordingEnabled && state.recordingStatus !== "Recording",
+                delete: state.recordingStatus === "Stopped"
+            };
+            Object.entries(actions).forEach(([action, visible]) => {
+                const form = recordingControls.querySelector('[data-recording-action="' + action + '"]');
+                if (form) form.hidden = !visible;
+            });
+        }
         setText("[data-meet-pending-count]", state.pendingCount);
         setText("[data-meet-admitted-count]", state.participantCount + (isHost && state.status === "Live" ? 1 : 0));
 
