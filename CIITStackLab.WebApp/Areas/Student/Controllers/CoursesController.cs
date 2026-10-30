@@ -746,12 +746,9 @@ public class CoursesController : Controller
             }
 
             topicId = chapterTopicId.Value;
-            contentId = await _dbContext.Lessons
-                .AsNoTracking()
-                .Where(lesson => lesson.Id == chapterId.Value && lesson.Flag == 0)
-                .OrderBy(lesson => lesson.Id)
-                .Select(lesson => (int?)lesson.Id)
-                .FirstOrDefaultAsync(cancellationToken);
+            // The lookup above already confirms this active chapter belongs to the course.
+            // Its ID is also the learning content ID, so avoid querying the same row again.
+            contentId = chapterId.Value;
         }
 
         if (!chapterId.HasValue
