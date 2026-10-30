@@ -1570,6 +1570,8 @@ namespace CIITStackLab.Infrastructure.Migrations
                     b.HasIndex("CreatedByUserId")
                         .HasDatabaseName("IX_meet_batches_created_by");
 
+                    b.Navigation("Sessions");
+
                     b.ToTable("tbl_meet_batches", "erpsystem");
                 });
 
@@ -1707,7 +1709,7 @@ namespace CIITStackLab.Infrastructure.Migrations
             modelBuilder.Entity("CIITStackLab.Domain.Entities.MeetSession", b =>
             {
                 b.HasOne("CIITStackLab.Domain.Entities.MeetBatch", "MeetBatch")
-                    .WithMany()
+                    .WithMany("Sessions")
                     .HasForeignKey("MeetBatchId")
                     .OnDelete(DeleteBehavior.Cascade)
                     .IsRequired();
