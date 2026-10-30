@@ -203,11 +203,12 @@
 
                 .ciit-learning-mode .ciit-learning-shell {
                     display: grid;
-                    grid-template-columns: minmax(0, 1fr) 330px;
+                    grid-template-columns: minmax(0, 1fr) 330px !important;
                     grid-template-areas: "main sidebar";
                     align-items: start;
                     justify-content: stretch;
-                    gap: 16px;
+                    gap: 16px !important;
+                    padding: 14px 16px 40px !important;
                 }
 
                 .ciit-learning-mode .ciit-learning-main {
@@ -215,6 +216,7 @@
                     display: flex;
                     justify-content: center;
                     min-width: 0;
+                    max-width: none;
                 }
 
                 .ciit-learning-mode .ciit-learning-shell > .ciit-learning-sidebar {
@@ -334,8 +336,6 @@
             headerDescription.textContent = topicEyebrow.textContent.trim().replace(/\s+/g, ' ');
         }
 
-        // Notes are the primary learning surface. Remove the legacy section pager entirely
-        // so the lesson flows directly from the module title into the exam action and notes.
         panelPager?.remove();
 
         const contentButton = document.querySelector('[data-learning-page="content"]');
@@ -365,9 +365,6 @@
 
             notesPanel.appendChild(contentPanel);
         }
-
-        // The Learn sidebar is scoped to the selected topic and shows only its chapter links.
-        // Topic switching stays in the existing learning flow; the sidebar avoids cross-topic clutter.
 
         const assessmentLink = document.querySelector('[data-learning-assessment-link]');
         const learningPathLink = document.querySelector('.ciit-course-global-nav a.active');
