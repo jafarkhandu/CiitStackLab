@@ -184,7 +184,7 @@ document.addEventListener("DOMContentLoaded", () => {
         setText("[data-meet-waiting-room-state]", state.waitingRoomEnabled ? "On" : "Off");
         setText("[data-meet-recording-status]", state.recordingStatus);
         setText("[data-meet-pending-count]", state.pendingCount);
-        setText("[data-meet-admitted-count]", state.participantCount + (isHost ? 1 : 0));
+        setText("[data-meet-admitted-count]", state.participantCount + (isHost && state.status === "Live" ? 1 : 0));
 
         const badge = room.querySelector("[data-meet-pending-count]");
         if (badge) badge.classList.toggle("has-pending", state.pendingCount > 0);
