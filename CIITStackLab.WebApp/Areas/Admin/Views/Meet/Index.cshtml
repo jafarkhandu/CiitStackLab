@@ -6,7 +6,7 @@
     var messageType = TempData["MeetBatchMessageType"] as string;
 }
 
-<section class="ciit-admin-page meet-batches-page">
+<section class="ciit-admin-page meet-batches-page" data-meet-admin-index data-hub-url="/hubs/meet">
     <div class="meet-page-header">
         <div>
             <span class="ciit-admin-eyebrow">Meet Management</span>
@@ -100,10 +100,10 @@
         }
         else
         {
-            <div class="meet-session-list">
+            <div class="meet-session-list" data-meet-admin-session-list>
                 @foreach (var session in Model.Sessions)
                 {
-                    <article class="meet-session-list-item">
+                    <article class="meet-session-list-item" data-meet-session-id="@session.Id" data-meet-batch-id="@session.MeetBatchId">
                         <div class="meet-session-list-icon"><i class="bi bi-camera-video"></i></div>
                         <div class="meet-session-list-copy">
                             <strong>@session.Title</strong>
@@ -117,7 +117,7 @@
                                 <small>Cancelled @session.CancelledAtUtc.Value.ToLocalTime().ToString("dd MMM yyyy, hh:mm tt")</small>
                             }
                         </div>
-                        <span class="meet-session-status">@session.Status</span>
+                        <span class="meet-session-status" data-meet-session-status>@session.Status</span>
                         @if (session.Status == "Scheduled")
                         {
                             <form asp-area="Admin" asp-controller="Meet" asp-action="Start" method="post">
@@ -168,6 +168,8 @@
         </section>
     }
 </section>
+<script src="https://cdn.jsdelivr.net/npm/@microsoft/signalr@10.0.0/dist/browser/signalr.min.js"></script>
+<script src="~/js/meet/meet-index-live.js" asp-append-version="true"></script>
 
 <div class="meet-modal-backdrop" id="meetModal" aria-hidden="true">
     <section class="meet-modal" role="dialog" aria-modal="true" aria-labelledby="meetModalTitle">
