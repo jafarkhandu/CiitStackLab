@@ -66,7 +66,10 @@ public sealed class MeetHub : Hub
             .AsNoTracking()
             .Where(session => batchIds.Contains(session.MeetBatchId)
                 && !session.MeetBatch.IsArchived
-                && (session.Status == "Live" || session.Status == "Scheduled"))
+                && ((session.Status == "Live"
+                        && session.StartedAtUtc.HasValue
+                        && session.StartedAtUtc.Value.AddMinutes(session.DurationMinutes) > now)
+                    || (session.Status == "Scheduled" && session.StartsAtUtc > now)))
             .Select(session => new
             {
                 sessionId = session.Id,
@@ -79,15 +82,17 @@ public sealed class MeetHub : Hub
             })
             .ToListAsync(Context.ConnectionAborted);
 
-        foreach (var session in currentSessions)
-        {
-            if (session.Status == "Live"
-                && (!session.startedAtUtc.HasValue
-                    || session.startedAtUtc.Value.AddMinutes(session.DurationMinutes) <= now))
-                continue;
+        // A batch card can display only one active action. Prefer its live
+        // meeting so a different scheduled session cannot hide the Join button.
+        var preferredSessions = currentSessions
+            .GroupBy(session => session.batchId)
+            .Select(group => group
+                .OrderByDescending(session => session.Status == "Live")
+                .ThenBy(session => session.startsAtUtc)
+                .First());
 
+        foreach (var session in preferredSessions)
             await Clients.Caller.SendAsync("MeetBatchUpdated", session, Context.ConnectionAborted);
-        }
     }
 
     public async Task JoinMeetingRoom(int sessionId)
