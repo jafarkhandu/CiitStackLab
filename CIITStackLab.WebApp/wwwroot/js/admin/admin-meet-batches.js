@@ -72,6 +72,7 @@ document.addEventListener("DOMContentLoaded", () => {
         const manageButton = event.target.closest("[data-open-manage-modal]");
 
         if (manageButton) {
+            event.preventDefault();
             modalTitle.textContent = "Manage batch";
             modalContent.innerHTML = '<div class="meet-modal-loading">Loading batch details...</div>';
             openModal();
