@@ -115,7 +115,7 @@ public sealed class MeetController : Controller
         });
     }
 
-        [HttpGet]
+    [HttpGet]
     public async Task<IActionResult> SessionDetails(int id, CancellationToken cancellationToken)
     {
         var session = await _dbContext.MeetSessions.AsNoTracking()
@@ -185,7 +185,7 @@ public sealed class MeetController : Controller
             : RedirectToAction(nameof(Index));
     }
 
-[HttpPost]
+    [HttpPost]
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> Start(int id, CancellationToken cancellationToken)
     {
