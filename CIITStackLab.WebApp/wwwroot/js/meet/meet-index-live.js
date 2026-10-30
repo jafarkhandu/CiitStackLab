@@ -106,6 +106,7 @@ document.addEventListener("DOMContentLoaded", () => {
             status.dataset.meetSessionStatus = "";
             const link = document.createElement("a");
             link.className = "meet-secondary-button";
+            link.dataset.meetSessionViewAction = "";
             link.href = "/Admin/Meet/Room/" + state.sessionId;
             link.textContent = "Details";
             card.append(icon, copy, status, link);
