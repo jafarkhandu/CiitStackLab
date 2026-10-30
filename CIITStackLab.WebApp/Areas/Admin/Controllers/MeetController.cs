@@ -168,7 +168,7 @@ public sealed class MeetController : Controller
                 session.RecordingRetentionUntilUtc = now.AddDays(90);
             }
 
-            foreach (var participant in session.Participants.Where(x => x.Status == "Admitted"))
+            foreach (var participant in session.Participants.Where(x => x.Status is "Admitted" or "Pending"))
             {
                 participant.Status = "Left";
                 participant.LeftAtUtc = now;
@@ -260,6 +260,26 @@ public sealed class MeetController : Controller
 
     [HttpPost]
     [ValidateAntiForgeryToken]
+    public async Task<IActionResult> RemoveParticipant(int id, CancellationToken cancellationToken)
+    {
+        var participant = await _dbContext.MeetSessionParticipants
+            .SingleOrDefaultAsync(x => x.Id == id, cancellationToken);
+
+        if (participant is null)
+            return NotFound();
+
+        if (participant.Status == "Admitted" || participant.Status == "Pending")
+        {
+            participant.Status = "Removed";
+            participant.LeftAtUtc = DateTime.UtcNow;
+            await _dbContext.SaveChangesAsync(cancellationToken);
+        }
+
+        return RedirectToAction(nameof(Room), new { id = participant.MeetSessionId });
+    }
+
+    [HttpPost]
+    [ValidateAntiForgeryToken]
     public async Task<IActionResult> UpdateParticipantPermissions(
         int id,
         bool canUseMicrophone,
@@ -296,7 +316,7 @@ public sealed class MeetController : Controller
         {
             case "enable" when session.Status is "Scheduled" or "Live":
                 session.RecordingEnabled = true;
-                if (session.RecordingStatus == "Disabled")
+                if (session.RecordingStatus is "Disabled" or "Deleted")
                     session.RecordingStatus = "Ready";
                 break;
             case "disable" when session.RecordingStatus != "Recording":
