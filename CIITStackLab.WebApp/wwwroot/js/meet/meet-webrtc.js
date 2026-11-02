@@ -126,6 +126,41 @@ document.addEventListener("DOMContentLoaded", () => {
         return Math.sqrt(sum / meter.data.length);
     };
 
+    const updateActiveSpeaker = () => {
+        if (pinnedTile) return;
+        let loudestTile = null;
+        let loudestLevel = 0.035;
+        const localLevel = readAudioLevel(localAudioMeter);
+        if (localLevel > loudestLevel) {
+            loudestLevel = localLevel;
+            loudestTile = selfTile;
+        }
+        peers.forEach((peer, peerId) => {
+            const level = readAudioLevel(audioMeters.get(peerId));
+            if (level > loudestLevel) {
+                loudestLevel = level;
+                loudestTile = peer.tile.tile;
+            }
+        });
+        if (activeSpeakerTile === loudestTile) return;
+        activeSpeakerTile?.classList.remove("ciit-meet-video-active-speaker");
+        activeSpeakerTile = loudestTile;
+        activeSpeakerTile?.classList.add("ciit-meet-video-active-speaker");
+    };
+
+    window.setInterval(updateActiveSpeaker, 180);
+
+    if (selfTile && !selfTile.querySelector(".ciit-meet-video-pin")) {
+        const selfPin = document.createElement("button");
+        selfPin.type = "button";
+        selfPin.className = "ciit-meet-video-pin";
+        selfPin.setAttribute("aria-label", "Pin your tile");
+        selfPin.setAttribute("aria-pressed", "false");
+        selfPin.innerHTML = '<i class="bi bi-pin-angle"></i>';
+        selfPin.addEventListener("click", () => togglePinnedTile(selfTile, selfPin));
+        selfTile.append(selfPin);
+    }
+
     const addLocalTracksToPeer = (peer) => {
         localStream.getTracks().forEach(track => {
             if (!peer.connection.getSenders().some(sender => sender.track?.id === track.id)) {
@@ -334,6 +369,7 @@ document.addEventListener("DOMContentLoaded", () => {
         });
         stream.getTracks().forEach(track => {
             localStream.addTrack(track);
+            if (track.kind === "audio") localAudioMeter = createAudioMeter(localStream);
             peers.forEach(peer => {
                 const sender = peer.connection.getSenders().find(item => item.track === null && item.transport?.state !== "closed");
                 if (sender) {
