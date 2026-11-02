@@ -461,15 +461,22 @@ document.addEventListener("DOMContentLoaded", () => {
             if (message) message.textContent = "Please contact your admin if you need access.";
         }
     });
+    let lastRoomJoinAt = 0;
     const rejoinRoomForFreshState = () => {
-        if (connection.state === signalR.HubConnectionState.Connected) {
-            connection.invoke("JoinMeetingRoom", sessionId)
-                .catch(error => console.warn("Meet room state refresh failed:", error));
-        }
+        if (connection.state !== signalR.HubConnectionState.Connected
+            || Date.now() - lastRoomJoinAt < 2000) return;
+
+        lastRoomJoinAt = Date.now();
+        connection.invoke("JoinMeetingRoom", sessionId)
+            .catch(error => {
+                lastRoomJoinAt = 0;
+                console.warn("Meet room state refresh failed:", error);
+            });
     };
 
     connection.onreconnected(async () => {
         await connection.invoke("JoinMeetingRoom", sessionId);
+        lastRoomJoinAt = Date.now();
     });
     window.addEventListener("pageshow", rejoinRoomForFreshState);
     document.addEventListener("visibilitychange", () => {
@@ -478,7 +485,10 @@ document.addEventListener("DOMContentLoaded", () => {
 
     window.ciitMeetSignalRConnection = connection;
     window.ciitMeetSignalRReady = connection.start()
-        .then(() => connection.invoke("JoinMeetingRoom", sessionId))
+        .then(async () => {
+            await connection.invoke("JoinMeetingRoom", sessionId);
+            lastRoomJoinAt = Date.now();
+        })
         .catch(error => {
             console.error("Meet live connection failed:", error);
             throw error;
