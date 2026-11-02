@@ -144,8 +144,13 @@ public sealed class MeetHub : Hub
             }
         }
 
-        await Groups.AddToGroupAsync(Context.ConnectionId, SessionGroup(sessionId), Context.ConnectionAborted);
         if (isAdmin)
+        {
             await Groups.AddToGroupAsync(Context.ConnectionId, AdminSessionGroup(sessionId), Context.ConnectionAborted);
+        }
+        else
+        {
+            await Groups.AddToGroupAsync(Context.ConnectionId, SessionGroup(sessionId), Context.ConnectionAborted);
+        }
     }
 }
