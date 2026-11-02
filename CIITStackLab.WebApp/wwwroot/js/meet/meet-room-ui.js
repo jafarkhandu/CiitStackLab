@@ -391,6 +391,10 @@ document.addEventListener("DOMContentLoaded", () => {
 
         renderParticipants(state.participants || []);
         renderPendingRequests(state.participants || []);
+        (state.participants || []).forEach(participant => {
+            const row = document.querySelector('[data-meet-participant-id="' + participant.id + '"]');
+            if (row) row.dataset.meetParticipantStatus = participant.status;
+        });
     };
 
     const showMeetToast = notification => {
