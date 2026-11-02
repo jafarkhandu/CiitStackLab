@@ -123,7 +123,10 @@ public sealed class MeetRealtimeService
                     {
                         sessionId = session.Id,
                         status = participant.Status,
-                        sessionStatus = session.Status
+                        sessionStatus = session.Status,
+                        canUseMicrophone = participant.CanUseMicrophone,
+                        canUseCamera = participant.CanUseCamera,
+                        canShareScreen = participant.CanShareScreen
                     }, cancellationToken);
             }
 
