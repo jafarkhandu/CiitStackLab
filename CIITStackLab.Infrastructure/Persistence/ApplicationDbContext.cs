@@ -489,6 +489,7 @@ public class ApplicationDbContext : IdentityDbContext<ApplicationUser>
             entity.Property(x => x.RecordingEndedAtUtc).HasColumnName("recording_ended_at_utc").HasColumnType("datetime2");
             entity.Property(x => x.RecordingRetentionUntilUtc).HasColumnName("recording_retention_until_utc").HasColumnType("datetime2");
             entity.Property(x => x.RecordingDeletedAtUtc).HasColumnName("recording_deleted_at_utc").HasColumnType("datetime2");
+            entity.Property(x => x.ReminderSentAtUtc).HasColumnName("reminder_sent_at_utc").HasColumnType("datetime2");
             entity.HasIndex(x => x.CreatedByUserId).HasDatabaseName("IX_meet_sessions_created_by");
             entity.HasIndex(x => x.RoomName).IsUnique().HasDatabaseName("UX_meet_sessions_room_name");
             entity.HasIndex(x => new { x.MeetBatchId, x.StartsAtUtc }).HasDatabaseName("IX_meet_sessions_batch_start");
