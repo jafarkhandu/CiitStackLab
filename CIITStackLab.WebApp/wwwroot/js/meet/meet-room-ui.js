@@ -369,7 +369,7 @@ document.addEventListener("DOMContentLoaded", () => {
         renderPendingRequests(state.participants || []);
     };
 
-    connection.on("MeetToast", notification => {
+    const showMeetToast = notification => {
         const containerId = "ciit-meet-toast-container";
         let container = document.getElementById(containerId);
         if (!container) {
@@ -406,12 +406,21 @@ document.addEventListener("DOMContentLoaded", () => {
             toast.style.transform = "translateY(-8px)";
             window.setTimeout(() => toast.remove(), 220);
         }, 5000);
-    });
+    };
+
+    connection.on("MeetToast", showMeetToast);
 
     connection.on("MeetRoomUpdated", updateRoom);
     connection.on("MeetMyParticipantStatus", update => {
         if (update.sessionId !== sessionId) return;
+        const previousStatus = room.dataset.participantStatus;
         room.dataset.participantStatus = update.status;
+        if (previousStatus !== update.status) {
+            if (update.status === "Admitted") showMeetToast({ title: "Access approved", message: "The host admitted you to the meeting.", type: "success" });
+            else if (update.status === "Rejected") showMeetToast({ title: "Join request declined", message: "The host declined your request.", type: "warning" });
+            else if (update.status === "Removed") showMeetToast({ title: "Removed from meeting", message: "The host removed you from this meeting.", type: "error" });
+            else if (update.sessionStatus !== "Live" && update.sessionStatus !== "Scheduled") showMeetToast({ title: "Meeting ended", message: "This meeting is no longer live.", type: "info" });
+        }
         if (update.sessionStatus !== "Live" && update.sessionStatus !== "Scheduled") {
             const stage = room.querySelector("[data-meet-room-stage]");
             const waiting = room.querySelector("[data-meet-waiting-screen]");
