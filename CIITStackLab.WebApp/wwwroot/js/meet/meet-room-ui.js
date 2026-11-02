@@ -191,7 +191,17 @@ document.addEventListener("DOMContentLoaded", () => {
             },
             body
         });
-        if (!response.ok) throw new Error("Meeting action failed.");
+        if (!response.ok) {
+            const detail = await response.text().catch(() => "");
+            throw new Error(detail || "Meeting action failed.");
+        }
+
+        // Re-request the authoritative server snapshot after roster actions.
+        // This keeps the admitted list, pending requests, counts and permissions
+        // in sync even when a redirected MVC response contains no JSON payload.
+        if (connection.state === signalR.HubConnectionState.Connected) {
+            await connection.invoke("JoinMeetingRoom", sessionId);
+        }
     };
 
     const addActionButton = (row, label, className, action) => {
