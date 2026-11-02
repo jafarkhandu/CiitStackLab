@@ -728,6 +728,10 @@ namespace CIITStackLab.Infrastructure.Migrations
                         .HasColumnType("datetime2")
                         .HasColumnName("recording_deleted_at_utc");
 
+                    b.Property<DateTime?>("ReminderSentAtUtc")
+                        .HasColumnType("datetime2")
+                        .HasColumnName("reminder_sent_at_utc");
+
                     b.Property<string>("Status")
                         .IsRequired()
                         .HasMaxLength(20)
