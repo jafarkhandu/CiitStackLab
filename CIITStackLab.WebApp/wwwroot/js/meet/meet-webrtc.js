@@ -232,6 +232,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
         const placeholder = document.createElement("div");
         placeholder.className = "ciit-meet-video-placeholder";
+        placeholder.hidden = false;
         const avatar = document.createElement("span");
         avatar.className = "ciit-meet-avatar ciit-meet-avatar-muted";
         avatar.textContent = "P";
@@ -253,7 +254,11 @@ document.addEventListener("DOMContentLoaded", () => {
         pin.innerHTML = '<i class="bi bi-pin-angle"></i>';
         pin.addEventListener("click", () => togglePinnedTile(tile, pin));
 
-        tile.append(video, placeholder, name, pin);
+        const label = document.createElement("span");
+        label.className = "ciit-meet-video-name";
+        label.textContent = displayName;
+
+        tile.append(video, placeholder, label, name, pin);
         grid.append(tile);
         if (waitingTile) waitingTile.hidden = true;
         return { tile, video, placeholder, pin };
