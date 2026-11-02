@@ -42,7 +42,9 @@ document.addEventListener("DOMContentLoaded", () => {
 
     document.addEventListener("submit", async event => {
         const form = event.target.closest("form[data-meet-ajax]");
-        if (!form || !room.contains(form) || event.defaultPrevented) return;
+        if (!form || !room.contains(form)
+            || form.querySelector("[data-meet-end-button]")
+            || event.defaultPrevented) return;
 
         event.preventDefault();
         event.stopImmediatePropagation();
@@ -60,8 +62,7 @@ document.addEventListener("DOMContentLoaded", () => {
                 headers: { "X-Requested-With": "XMLHttpRequest" }
             });
             if (!response.ok) throw new Error("Meeting control update failed (" + response.status + ").");
-            const html = await response.text();
-            syncControlsFromResponse(html);
+            syncControlsFromResponse(await response.text());
         } catch (error) {
             console.error("Meet control action failed:", error);
         } finally {
