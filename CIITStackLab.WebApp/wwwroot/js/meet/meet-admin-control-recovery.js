@@ -74,6 +74,13 @@ document.addEventListener("DOMContentLoaded", () => {
         if (!form || form.querySelector("[data-meet-end-button]")
             || event.defaultPrevented) return;
 
+        if (form.dataset.recordingAction === "delete"
+            && !window.confirm("Mark this recording as deleted?")) {
+            event.preventDefault();
+            event.stopImmediatePropagation();
+            return;
+        }
+
         event.preventDefault();
         event.stopImmediatePropagation();
         if (form.dataset.submitting === "true") return;
