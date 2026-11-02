@@ -200,7 +200,8 @@ document.addEventListener("DOMContentLoaded", () => {
 
     const applyParticipantStreamState = peer => {
         const videoTrack = peer.remoteStream?.getVideoTracks().find(track => track.readyState === "live");
-        const cameraActive = Boolean(videoTrack && videoTrack.enabled && !videoTrack.muted);
+        const cameraActive = peer.cameraEnabled !== false
+            && Boolean(videoTrack && videoTrack.enabled && !videoTrack.muted);
         peer.tile.video.hidden = !cameraActive;
         peer.tile.placeholder.hidden = cameraActive;
         const detail = peer.tile.placeholder.querySelector("small");
@@ -257,6 +258,10 @@ document.addEventListener("DOMContentLoaded", () => {
         const label = document.createElement("span");
         label.className = "ciit-meet-video-name";
         label.textContent = displayName;
+        const micState = document.createElement("i");
+        micState.className = "bi bi-mic-fill";
+        micState.dataset.peerMicState = "true";
+        name.append(micState);
 
         tile.append(video, placeholder, label, name, pin);
         grid.append(tile);
@@ -328,6 +333,9 @@ document.addEventListener("DOMContentLoaded", () => {
             connection: pc,
             tile: createRemoteTile(peerId, displayName),
             senders: { audio: null, video: null },
+            cameraEnabled: true,
+            micEnabled: true,
+            screenSharing: false,
             initDataChannelCreated: false,
             polite: String(connection.connectionId) > String(peerId),
             makingOffer: false,
