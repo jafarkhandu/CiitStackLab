@@ -18,7 +18,7 @@ document.addEventListener("DOMContentLoaded", () => {
                     ? ["bi-camera-video-fill", "Stop video"]
                     : ["bi-camera-video-off", "Start video"],
                 share: active
-                    ? ["bi-display-fill", "Sharing (preview)"]
+                    ? ["bi-display-fill", "Starting screen share…"]
                     : ["bi-display", "Share screen"]
             };
 
