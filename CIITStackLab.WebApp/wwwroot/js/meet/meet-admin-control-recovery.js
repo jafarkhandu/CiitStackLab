@@ -58,8 +58,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
     document.addEventListener("submit", async event => {
         const form = event.target.closest("form[data-meet-ajax]");
-        if (!form || !room.contains(form)
-            || form.querySelector("[data-meet-end-button]")
+        if (!form || form.querySelector("[data-meet-end-button]")
             || event.defaultPrevented) return;
 
         event.preventDefault();
