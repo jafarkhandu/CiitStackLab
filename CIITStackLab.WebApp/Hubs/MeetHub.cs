@@ -319,6 +319,26 @@ public sealed class MeetHub : Hub
         }, Context.ConnectionAborted);
     }
 
+    public async Task BroadcastPeerMediaState(int sessionId, string mediaKind, bool enabled)
+    {
+        if (mediaKind is not ("mic" or "camera" or "share"))
+            throw new HubException("Invalid media state.");
+
+        await EnsurePeerAccessAsync(sessionId);
+        if (!PeerSessions.TryGetValue(Context.ConnectionId, out var mappedSessionId)
+            || mappedSessionId != sessionId)
+            return;
+
+        await Clients.GroupExcept(PeerGroup(sessionId), new[] { Context.ConnectionId })
+            .SendAsync("MeetPeerMediaState", new
+            {
+                sessionId,
+                connectionId = Context.ConnectionId,
+                mediaKind,
+                enabled
+            }, Context.ConnectionAborted);
+    }
+
     public async Task LeavePeerRoom(int sessionId)
     {
         if (PeerSessions.TryGetValue(Context.ConnectionId, out var mappedSessionId)
