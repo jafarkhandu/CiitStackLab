@@ -124,15 +124,50 @@ document.addEventListener("DOMContentLoaded", () => {
         const name = document.createElement("span");
         name.className = "ciit-meet-video-name";
         name.textContent = "Participant";
-        tile.append(video, placeholder, name);
+
+        const pin = document.createElement("button");
+        pin.type = "button";
+        pin.className = "ciit-meet-video-pin";
+        pin.setAttribute("aria-label", "Pin participant");
+        pin.setAttribute("aria-pressed", "false");
+        pin.innerHTML = '<i class="bi bi-pin-angle"></i>';
+        pin.addEventListener("click", () => togglePinnedTile(tile, pin));
+
+        tile.append(video, placeholder, name, pin);
         grid.append(tile);
         if (waitingTile) waitingTile.hidden = true;
-        return { tile, video, placeholder };
+        return { tile, video, placeholder, pin };
+    };
+
+    let pinnedTile = null;
+    const togglePinnedTile = (tile, button) => {
+        if (pinnedTile === tile) {
+            pinnedTile = null;
+            tile.classList.remove("ciit-meet-video-pinned");
+            button?.setAttribute("aria-pressed", "false");
+            button?.setAttribute("aria-label", "Pin participant");
+            grid.classList.remove("has-pinned-tile");
+        } else {
+            grid.querySelectorAll(".ciit-meet-video-pinned").forEach(item => item.classList.remove("ciit-meet-video-pinned"));
+            grid.querySelectorAll(".ciit-meet-video-pin[aria-pressed='true']").forEach(item => {
+                item.setAttribute("aria-pressed", "false");
+                item.setAttribute("aria-label", "Pin participant");
+            });
+            pinnedTile = tile;
+            tile.classList.add("ciit-meet-video-pinned");
+            button?.setAttribute("aria-pressed", "true");
+            button?.setAttribute("aria-label", "Unpin participant");
+            grid.classList.add("has-pinned-tile");
+        }
     };
 
     const removePeer = peerId => {
         const peer = peers.get(peerId);
         if (!peer) return;
+        if (pinnedTile === peer.tile.tile) {
+            pinnedTile = null;
+            grid.classList.remove("has-pinned-tile");
+        }
         peer.connection.ontrack = null;
         peer.connection.onicecandidate = null;
         peer.connection.onnegotiationneeded = null;
