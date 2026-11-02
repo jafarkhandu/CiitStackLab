@@ -278,6 +278,7 @@ document.addEventListener("DOMContentLoaded", () => {
             connection: pc,
             tile: createRemoteTile(peerId, displayName),
             senders: { audio: null, video: null },
+            initDataChannelCreated: false,
             polite: String(connection.connectionId) > String(peerId),
             makingOffer: false,
             ignoreOffer: false,
@@ -564,9 +565,9 @@ document.addEventListener("DOMContentLoaded", () => {
             const peer = createPeer(peerId, displayName);
             if (peer) {
                 addLocalTracksToPeer(peer);
-                if (localStream.getTracks().length === 0
-                    && !peer.connection.getDataChannels?.().length) {
+                if (localStream.getTracks().length === 0 && !peer.initDataChannelCreated) {
                     peer.connection.createDataChannel("ciit-meet-peer-init");
+                    peer.initDataChannelCreated = true;
                 }
             }
         });
