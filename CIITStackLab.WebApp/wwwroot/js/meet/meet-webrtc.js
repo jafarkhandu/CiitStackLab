@@ -301,12 +301,18 @@ document.addEventListener("DOMContentLoaded", () => {
             if (event.track.kind === "audio" && !audioMeters.has(peerId)) {
                 audioMeters.set(peerId, createAudioMeter(stream));
             }
-            event.track.onmute = () => {
-                peer.tile.placeholder.hidden = false;
-            };
-            event.track.onunmute = () => {
-                peer.tile.placeholder.hidden = true;
-            };
+            if (event.track.kind === "video") {
+                const refreshRemoteVideoState = () => {
+                    const activeVideoTrack = stream.getVideoTracks().some(track => track.readyState === "live" && track.enabled && !track.muted);
+                    peer.tile.video.hidden = !activeVideoTrack;
+                    peer.tile.placeholder.hidden = activeVideoTrack;
+                    peer.tile.tile.classList.toggle("ciit-meet-camera-off", !activeVideoTrack);
+                };
+                event.track.onmute = refreshRemoteVideoState;
+                event.track.onunmute = refreshRemoteVideoState;
+                event.track.onended = refreshRemoteVideoState;
+                refreshRemoteVideoState();
+            }
         };
 
         pc.onnegotiationneeded = async () => {
@@ -409,7 +415,8 @@ document.addEventListener("DOMContentLoaded", () => {
             const restoredTrack = localStream.getTracks().find(item => item.kind === mediaKind && item.readyState === "live");
             if (restoredTrack) restoredTrack.enabled = true;
         } else if (track) {
-            // Stop the actual device track instead of leaving it allocated and disabled.
+            // Detach and stop the capture track. Replacing with a black frame would
+            // falsely imply camera is still active; the remote video element receives track mute/end.
             peers.forEach(peer => {
                 const sender = peer.senders[mediaKind];
                 if (sender?.track?.id === track.id) {
