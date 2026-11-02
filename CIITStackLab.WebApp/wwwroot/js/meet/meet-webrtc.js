@@ -203,6 +203,8 @@ document.addEventListener("DOMContentLoaded", () => {
         const cameraActive = Boolean(videoTrack && videoTrack.enabled && !videoTrack.muted);
         peer.tile.video.hidden = !cameraActive;
         peer.tile.placeholder.hidden = cameraActive;
+        const detail = peer.tile.placeholder.querySelector("small");
+        if (detail) detail.textContent = cameraActive ? "" : "Camera is off";
         peer.tile.tile.classList.toggle("ciit-meet-camera-off", !cameraActive);
     };
 
