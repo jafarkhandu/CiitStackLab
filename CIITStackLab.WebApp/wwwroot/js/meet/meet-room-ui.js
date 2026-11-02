@@ -310,6 +310,7 @@ document.addEventListener("DOMContentLoaded", () => {
         }
         const recordingControls = document.querySelector("[data-meet-recording-controls]");
         if (recordingControls) {
+            recordingControls.dataset.recordingEnabled = String(state.recordingEnabled);
             const actions = {
                 enable: !state.recordingEnabled,
                 stop: state.recordingStatus === "Recording",
