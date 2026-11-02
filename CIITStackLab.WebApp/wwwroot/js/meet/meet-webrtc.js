@@ -452,7 +452,7 @@ document.addEventListener("DOMContentLoaded", () => {
             screenStream = null;
             const cameraTrack = localStream.getVideoTracks().find(track => track.readyState === "live");
             peers.forEach(peer => {
-                const sender = peer.connection.getSenders().find(item => item.track?.kind === "video");
+                const sender = peer.senders.video;
                 if (sender) sender.replaceTrack(cameraTrack || null).catch(error => console.error(error));
             });
             setToggleVisual(shareButton, "share", false);
@@ -471,9 +471,9 @@ document.addEventListener("DOMContentLoaded", () => {
             screenStream = await navigator.mediaDevices.getDisplayMedia({ video: true, audio: false });
             const screenTrack = screenStream.getVideoTracks()[0];
             peers.forEach(peer => {
-                const sender = peer.connection.getSenders().find(item => item.track?.kind === "video");
+                const sender = peer.senders.video;
                 if (sender) sender.replaceTrack(screenTrack).catch(error => console.error(error));
-                else peer.connection.addTrack(screenTrack, screenStream);
+                else peer.senders.video = peer.connection.addTrack(screenTrack, screenStream);
             });
             if (localVideo) {
                 localVideo.srcObject = screenStream;
@@ -494,8 +494,8 @@ document.addEventListener("DOMContentLoaded", () => {
                 screenStream = null;
                 const cameraTrack = localStream.getVideoTracks().find(track => track.readyState === "live");
                 peers.forEach(peer => {
-                    const sender = peer.connection.getSenders().find(item => item.track?.kind === "video");
-                    if (sender) sender.replaceTrack(cameraTrack || null).catch(error => console.error(error));
+                    const sender = peer.senders.video;
+                if (sender) sender.replaceTrack(cameraTrack || null).catch(error => console.error(error));
                 });
                 updateLocalPreview();
             };
@@ -538,8 +538,8 @@ document.addEventListener("DOMContentLoaded", () => {
                 setToggleVisual(shareButton, "share", false);
                 const cameraTrack = localStream.getVideoTracks().find(track => track.readyState === "live");
                 peers.forEach(peer => {
-                    const sender = peer.connection.getSenders().find(item => item.track?.kind === "video");
-                    if (sender) sender.replaceTrack(cameraTrack || null).catch(error => console.error(error));
+                    const sender = peer.senders.video;
+                if (sender) sender.replaceTrack(cameraTrack || null).catch(error => console.error(error));
                 });
                 updateLocalPreview();
             }
