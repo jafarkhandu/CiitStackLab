@@ -455,7 +455,18 @@ document.addEventListener("DOMContentLoaded", () => {
         if (enabled) {
             await requestMedia(mediaKind);
             const restoredTrack = localStream.getTracks().find(item => item.kind === mediaKind && item.readyState === "live");
-            if (restoredTrack) restoredTrack.enabled = true;
+            if (restoredTrack) {
+                restoredTrack.enabled = true;
+                if (mediaKind === "video") {
+                    peers.forEach(peer => {
+                        const sender = peer.senders.video;
+                        if (sender && sender.track !== restoredTrack) {
+                            sender.replaceTrack(restoredTrack).catch(error => console.warn("Camera track restore failed:", error));
+                        }
+                        applyParticipantStreamState(peer);
+                    });
+                }
+            }
         } else if (track) {
             // Detach and stop the capture track. Replacing with a black frame would
             // falsely imply camera is still active; the remote video element receives track mute/end.
