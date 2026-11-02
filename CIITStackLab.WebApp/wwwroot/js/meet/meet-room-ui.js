@@ -44,9 +44,10 @@ document.addEventListener("DOMContentLoaded", () => {
             if (submit) submit.disabled = true;
 
             try {
+                const formData = new FormData(form);
                 const response = await fetch(form.action, {
                     method: "POST",
-                    body: new FormData(form),
+                    body: formData,
                     credentials: "same-origin",
                     headers: { "X-Requested-With": "XMLHttpRequest" }
                 });
