@@ -461,8 +461,19 @@ document.addEventListener("DOMContentLoaded", () => {
             if (message) message.textContent = "Please contact your admin if you need access.";
         }
     });
+    const rejoinRoomForFreshState = () => {
+        if (connection.state === signalR.HubConnectionState.Connected) {
+            connection.invoke("JoinMeetingRoom", sessionId)
+                .catch(error => console.warn("Meet room state refresh failed:", error));
+        }
+    };
+
     connection.onreconnected(async () => {
         await connection.invoke("JoinMeetingRoom", sessionId);
+    });
+    window.addEventListener("pageshow", rejoinRoomForFreshState);
+    document.addEventListener("visibilitychange", () => {
+        if (!document.hidden) rejoinRoomForFreshState();
     });
 
     window.ciitMeetSignalRConnection = connection;
