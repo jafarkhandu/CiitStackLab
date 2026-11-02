@@ -22,6 +22,7 @@ public sealed class MeetSession
     public DateTime? RecordingEndedAtUtc { get; set; }
     public DateTime? RecordingRetentionUntilUtc { get; set; }
     public DateTime? RecordingDeletedAtUtc { get; set; }
+    public DateTime? ReminderSentAtUtc { get; set; }
 
     public MeetBatch MeetBatch { get; set; } = null!;
     public ICollection<MeetSessionParticipant> Participants { get; set; } = new List<MeetSessionParticipant>();
