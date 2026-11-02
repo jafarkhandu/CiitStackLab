@@ -204,3 +204,13 @@ html,body{width:100%;min-height:100%;margin:0}
 .ciit-meet-room-video-grid.has-pinned-tile .ciit-meet-video-active-speaker:not(.ciit-meet-video-pinned){grid-column:auto;grid-row:2;min-height:104px;max-height:132px}
 .ciit-meet-video-remote .ciit-meet-video-name{max-width:calc(100% - 28px);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 @media(max-width:700px){.ciit-meet-room-video-grid.has-pinned-tile .ciit-meet-video-pinned{min-height:50vh}.ciit-meet-room-video-grid.has-pinned-tile .ciit-meet-video-tile:not(.ciit-meet-video-pinned){min-height:90px;max-height:110px}}
+
+/* Screen-share tiles prioritize legible shared content over camera-style cropping. */
+.ciit-meet-video-tile.ciit-meet-screen-sharing{background:#080b10}
+.ciit-meet-video-tile.ciit-meet-screen-sharing video{object-fit:contain;background:#080b10}
+.ciit-meet-video-tile.ciit-meet-screen-sharing .ciit-meet-video-placeholder{display:none}
+
+/* Keep pinned tiles visually distinct without distorting the filmstrip. */
+.ciit-meet-video-tile.ciit-meet-video-pinned{position:relative;z-index:1;border-color:#78a9f5;box-shadow:0 0 0 2px rgba(120,169,245,.2),0 20px 48px rgba(0,0,0,.28)}
+.ciit-meet-video-pin{transition:background .16s ease,border-color .16s ease,transform .16s ease}
+.ciit-meet-video-pin:hover{transform:translateY(-1px)}
