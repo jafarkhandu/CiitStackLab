@@ -415,6 +415,7 @@ document.addEventListener("DOMContentLoaded", () => {
         if (update.sessionId !== sessionId) return;
         const previousStatus = room.dataset.participantStatus;
         room.dataset.participantStatus = update.status;
+        window.ciitMeetApplyMediaPermissions?.(update);
         if (update.status === "Admitted" && previousStatus !== "Admitted") {
             connection.invoke("JoinMeetingRoom", sessionId)
                 .catch(error => console.error("Meet peer room admission failed:", error));
