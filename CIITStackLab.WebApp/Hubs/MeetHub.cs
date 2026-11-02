@@ -17,6 +17,7 @@ public sealed class MeetHub : Hub
     }
 
     public static string SessionGroup(int sessionId) => $"meet-session-{sessionId}";
+    public static string AdminSessionGroup(int sessionId) => $"meet-session-admins-{sessionId}";
     public static string BatchGroup(int batchId) => $"meet-batch-{batchId}";
     public const string AdminGroup = "meet-admins";
 
@@ -144,5 +145,7 @@ public sealed class MeetHub : Hub
         }
 
         await Groups.AddToGroupAsync(Context.ConnectionId, SessionGroup(sessionId), Context.ConnectionAborted);
+        if (isAdmin)
+            await Groups.AddToGroupAsync(Context.ConnectionId, AdminSessionGroup(sessionId), Context.ConnectionAborted);
     }
 }
