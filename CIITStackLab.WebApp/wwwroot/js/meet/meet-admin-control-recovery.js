@@ -8,7 +8,7 @@ document.addEventListener("DOMContentLoaded", () => {
         if (!sourceRoom) throw new Error("Could not load the latest meeting controls.");
 
         const sourceWaitingForm = sourceRoom.querySelector("[data-meet-waiting-room-form]");
-        const targetWaitingForm = room.querySelector("[data-meet-waiting-room-form]");
+        const targetWaitingForm = document.querySelector("[data-meet-waiting-room-form]");
         if (sourceWaitingForm && targetWaitingForm) {
             const sourceState = sourceWaitingForm.querySelector("[data-meet-waiting-room-state]");
             const targetState = targetWaitingForm.querySelector("[data-meet-waiting-room-state]");
@@ -23,7 +23,7 @@ document.addEventListener("DOMContentLoaded", () => {
         }
 
         const sourceRecording = sourceRoom.querySelector("[data-meet-recording-controls]");
-        const targetRecording = room.querySelector("[data-meet-recording-controls]");
+        const targetRecording = document.querySelector("[data-meet-recording-controls]");
         if (sourceRecording && targetRecording) {
             const sourceStatus = sourceRecording.querySelector("[data-meet-recording-status]");
             const targetStatus = targetRecording.querySelector("[data-meet-recording-status]");
