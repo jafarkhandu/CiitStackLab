@@ -71,6 +71,7 @@
                         <button type="submit" class="ciit-meet-host-secondary">Turn @(Model.WaitingRoomEnabled ? "off" : "on")</button>
                     </form>
                     <div class="ciit-meet-recording-settings" data-meet-recording-controls data-recording-enabled="@Model.RecordingEnabled.ToString().ToLowerInvariant()">
+                        <small class="ciit-meet-recording-disclaimer">Recording controls currently manage meeting recording state and metadata; media capture is not configured.</small>
                         <span>Recording <strong data-meet-recording-status>@Model.RecordingStatus</strong>
                             @if (Model.RecordingRetentionUntilUtc.HasValue)
                             {
