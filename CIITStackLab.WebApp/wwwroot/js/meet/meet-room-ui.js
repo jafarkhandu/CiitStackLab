@@ -147,7 +147,7 @@ document.addEventListener("DOMContentLoaded", () => {
         .build();
 
     const setText = (selector, value) => {
-        const element = room.querySelector(selector);
+        const element = document.querySelector(selector);
         if (element) element.textContent = String(value);
     };
 
@@ -189,7 +189,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
     const renderParticipants = (participants) => {
         if (!isHost) return;
-        const list = room.querySelector("[data-meet-participants-list]");
+        const list = document.querySelector("[data-meet-participants-list]");
         if (!list) return;
 
         list.querySelectorAll("[data-meet-participant-id], [data-meet-no-participants]")
@@ -301,14 +301,14 @@ document.addEventListener("DOMContentLoaded", () => {
         setText("[data-meet-status-text]", state.status);
         setText("[data-meet-waiting-room-state]", state.waitingRoomEnabled ? "On" : "Off");
         setText("[data-meet-recording-status]", state.recordingStatus);
-        const waitingRoomForm = room.querySelector("[data-meet-waiting-room-form]");
+        const waitingRoomForm = document.querySelector("[data-meet-waiting-room-form]");
         if (waitingRoomForm) {
             const enabledInput = waitingRoomForm.querySelector('input[name="enabled"]');
             const button = waitingRoomForm.querySelector('[type="submit"]');
             if (enabledInput) enabledInput.value = String(!state.waitingRoomEnabled);
             if (button) button.textContent = state.waitingRoomEnabled ? "Turn off" : "Turn on";
         }
-        const recordingControls = room.querySelector("[data-meet-recording-controls]");
+        const recordingControls = document.querySelector("[data-meet-recording-controls]");
         if (recordingControls) {
             const actions = {
                 enable: !state.recordingEnabled,
