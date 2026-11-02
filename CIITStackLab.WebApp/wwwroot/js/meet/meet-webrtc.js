@@ -259,7 +259,14 @@ document.addEventListener("DOMContentLoaded", () => {
         });
         stream.getTracks().forEach(track => {
             localStream.addTrack(track);
-            peers.forEach(peer => peer.connection.addTrack(track, localStream));
+            peers.forEach(peer => {
+                const sender = peer.connection.getSenders().find(item => item.track === null && item.transport?.state !== "closed");
+                if (sender) {
+                    sender.replaceTrack(track).catch(error => console.warn("Device track attach failed:", error));
+                } else {
+                    peer.connection.addTrack(track, localStream);
+                }
+            });
         });
         updateLocalPreview();
     };
