@@ -509,7 +509,7 @@ document.addEventListener("DOMContentLoaded", () => {
                 const cameraTrack = localStream.getVideoTracks().find(track => track.readyState === "live");
                 peers.forEach(peer => {
                     const sender = peer.senders.video;
-                if (sender) sender.replaceTrack(cameraTrack || null).catch(error => console.error(error));
+                    if (sender) sender.replaceTrack(cameraTrack || null).catch(error => console.error(error));
                 });
                 updateLocalPreview();
             };
@@ -550,7 +550,7 @@ document.addEventListener("DOMContentLoaded", () => {
                 const cameraTrack = localStream.getVideoTracks().find(track => track.readyState === "live");
                 peers.forEach(peer => {
                     const sender = peer.senders.video;
-                if (sender) sender.replaceTrack(cameraTrack || null).catch(error => console.error(error));
+                    if (sender) sender.replaceTrack(cameraTrack || null).catch(error => console.error(error));
                 });
                 updateLocalPreview();
             }
