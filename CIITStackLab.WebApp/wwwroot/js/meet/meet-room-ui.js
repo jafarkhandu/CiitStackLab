@@ -222,7 +222,8 @@ document.addEventListener("DOMContentLoaded", () => {
         const admittedList = list.querySelector("[data-meet-admitted-list]");
         const targetList = admittedList || list;
 
-        targetList.querySelectorAll("[data-meet-participant-id], [data-meet-no-participants]")
+        list.querySelectorAll("[data-meet-no-participants]").forEach(element => element.remove());
+        targetList.querySelectorAll("[data-meet-participant-id]")
             .forEach(element => element.remove());
         const admittedParticipants = participants.filter(item => item.status === "Admitted");
 
