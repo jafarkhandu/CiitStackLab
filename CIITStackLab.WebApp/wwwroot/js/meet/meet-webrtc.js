@@ -231,21 +231,20 @@ document.addEventListener("DOMContentLoaded", () => {
         const video = document.createElement("video");
         video.autoplay = true;
         video.playsInline = true;
-        video.muted = true;
+        video.muted = false;
         video.setAttribute("aria-label", "Meeting participant video");
         video.addEventListener("loadedmetadata", () => video.play().catch(() => {}));
 
         const placeholder = document.createElement("div");
         placeholder.className = "ciit-meet-video-placeholder";
-        placeholder.hidden = false;
         const avatar = document.createElement("span");
         avatar.className = "ciit-meet-avatar ciit-meet-avatar-muted";
-        avatar.textContent = "P";
-        const label = document.createElement("strong");
-        label.textContent = "Meeting participant";
+        avatar.textContent = (displayName || "P").trim().charAt(0).toUpperCase();
+        const participantLabel = document.createElement("strong");
+        participantLabel.textContent = displayName;
         const detail = document.createElement("small");
         detail.textContent = "Camera is off";
-        placeholder.append(avatar, label, detail);
+        placeholder.append(avatar, participantLabel, detail);
 
         const pin = document.createElement("button");
         pin.type = "button";
@@ -255,15 +254,14 @@ document.addEventListener("DOMContentLoaded", () => {
         pin.innerHTML = '<i class="bi bi-pin-angle"></i>';
         pin.addEventListener("click", () => togglePinnedTile(tile, pin));
 
-        const label = document.createElement("span");
-        label.className = "ciit-meet-video-name";
-        label.textContent = displayName;
+        const nameBadge = document.createElement("span");
+        nameBadge.className = "ciit-meet-video-name";
         const micState = document.createElement("i");
         micState.className = "bi bi-mic-fill";
         micState.dataset.peerMicState = "true";
-        name.append(micState);
+        nameBadge.append(document.createTextNode(displayName + " "), micState);
 
-        tile.append(video, placeholder, label, name, pin);
+        tile.append(video, placeholder, nameBadge, pin);
         grid.append(tile);
         if (waitingTile) waitingTile.hidden = true;
         return { tile, video, placeholder, pin };
