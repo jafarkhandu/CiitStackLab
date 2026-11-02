@@ -176,6 +176,10 @@ document.addEventListener("DOMContentLoaded", () => {
         button.className = className;
         button.textContent = label;
         button.addEventListener("click", async () => {
+            if (label === "Remove" && !window.confirm("Remove this participant from the meeting?")) {
+                return;
+            }
+
             button.disabled = true;
             try {
                 await action();
