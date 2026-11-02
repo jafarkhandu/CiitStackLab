@@ -215,12 +215,14 @@ public sealed class MeetHub : Hub
 
         await EnsurePeerAccessAsync(sessionId);
 
+        // Reconnects and peer teardown can race with in-flight SDP/ICE messages.
+        // A stale connection ID is not a meeting access failure; safely drop that signal.
         if (!PeerSessions.TryGetValue(Context.ConnectionId, out var senderSessionId)
             || senderSessionId != sessionId
             || !PeerSessions.TryGetValue(targetConnectionId, out var targetSessionId)
             || targetSessionId != sessionId)
         {
-            throw new HubException("Peer is not connected to this meeting.");
+            return;
         }
 
         await Clients.Client(targetConnectionId).SendAsync("MeetWebRtcSignal", new
