@@ -288,9 +288,9 @@ document.addEventListener("DOMContentLoaded", () => {
             identity.append(name, status);
             row.append(identity);
             addActionButton(row, "Admit", "ciit-meet-host-secondary", () =>
-                postAction(room.querySelector("[data-meet-participants-list]").dataset.admitUrl, { id: participant.id, decision: "admit" }));
+                postAction(document.querySelector("[data-meet-participants-list]").dataset.admitUrl, { id: participant.id, decision: "admit" }));
             addActionButton(row, "Reject", "ciit-meet-host-danger", () =>
-                postAction(room.querySelector("[data-meet-participants-list]").dataset.admitUrl, { id: participant.id, decision: "reject" }));
+                postAction(document.querySelector("[data-meet-participants-list]").dataset.admitUrl, { id: participant.id, decision: "reject" }));
             list.append(row);
         });
     };
