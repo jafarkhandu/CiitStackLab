@@ -281,10 +281,17 @@ document.addEventListener("DOMContentLoaded", () => {
                 localVideo.hidden = false;
                 if (localPlaceholder) localPlaceholder.hidden = true;
             }
+            const shareLabel = shareButton.querySelector("span");
+            const shareIcon = shareButton.querySelector("i");
+            if (shareLabel) shareLabel.textContent = "Sharing screen";
+            if (shareIcon) shareIcon.className = "bi bi-display-fill";
             screenTrack.onended = () => {
                 shareButton.setAttribute("aria-pressed", "false");
                 shareButton.classList.remove("is-active");
-                shareButton.querySelector("span").textContent = "Share screen";
+                const shareLabel = shareButton.querySelector("span");
+                const shareIcon = shareButton.querySelector("i");
+                if (shareLabel) shareLabel.textContent = "Share screen";
+                if (shareIcon) shareIcon.className = "bi bi-display";
                 screenStream = null;
                 const cameraTrack = localStream.getVideoTracks().find(track => track.readyState === "live");
                 peers.forEach(peer => {
@@ -296,6 +303,13 @@ document.addEventListener("DOMContentLoaded", () => {
         } catch (error) {
             shareButton.setAttribute("aria-pressed", "false");
             shareButton.classList.remove("is-active");
+            const shareLabel = shareButton.querySelector("span");
+            const shareIcon = shareButton.querySelector("i");
+            if (shareLabel) shareLabel.textContent = "Share screen";
+            if (shareIcon) shareIcon.className = "bi bi-display";
+            screenStream?.getTracks().forEach(track => track.stop());
+            screenStream = null;
+            updateLocalPreview();
             toast("Screen share failed", error.message || "Screen sharing permission was not granted.");
         }
     });
