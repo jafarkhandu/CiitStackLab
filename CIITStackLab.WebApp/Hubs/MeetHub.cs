@@ -12,6 +12,7 @@ public sealed class MeetHub : Hub
 {
     private readonly ApplicationDbContext _dbContext;
     private static readonly ConcurrentDictionary<string, int> PeerSessions = new();
+    private static readonly ConcurrentDictionary<string, string> PeerDisplayNames = new();
 
     public MeetHub(ApplicationDbContext dbContext)
     {
@@ -261,14 +262,30 @@ public sealed class MeetHub : Hub
             await Groups.AddToGroupAsync(Context.ConnectionId, PeerGroup(sessionId), Context.ConnectionAborted);
             PeerSessions[Context.ConnectionId] = sessionId;
 
-            var existingPeerIds = PeerSessions
+            var displayName = isAdmin
+                ? "Host"
+                : await _dbContext.Users.AsNoTracking()
+                    .Where(user => user.Id == Context.UserIdentifier)
+                    .Select(user => user.UserName ?? user.Email ?? "Student")
+                    .SingleOrDefaultAsync(Context.ConnectionAborted) ?? "Student";
+            PeerDisplayNames[Context.ConnectionId] = displayName;
+
+            var existingPeers = PeerSessions
                 .Where(pair => pair.Value == sessionId && pair.Key != Context.ConnectionId)
-                .Select(pair => pair.Key)
+                .Select(pair => new
+                {
+                    connectionId = pair.Key,
+                    displayName = PeerDisplayNames.TryGetValue(pair.Key, out var name) ? name : "Participant"
+                })
                 .ToArray();
 
-            await Clients.Caller.SendAsync("MeetExistingPeers", existingPeerIds, Context.ConnectionAborted);
+            await Clients.Caller.SendAsync("MeetExistingPeers", existingPeers, Context.ConnectionAborted);
             await Clients.GroupExcept(PeerGroup(sessionId), new[] { Context.ConnectionId })
-                .SendAsync("MeetPeerJoined", Context.ConnectionId, Context.ConnectionAborted);
+                .SendAsync("MeetPeerJoined", new
+                {
+                    connectionId = Context.ConnectionId,
+                    displayName
+                }, Context.ConnectionAborted);
         }
     } 
 
@@ -308,6 +325,7 @@ public sealed class MeetHub : Hub
             && mappedSessionId == sessionId)
         {
             PeerSessions.TryRemove(Context.ConnectionId, out _);
+            PeerDisplayNames.TryRemove(Context.ConnectionId, out _);
             await Groups.RemoveFromGroupAsync(Context.ConnectionId, PeerGroup(sessionId), Context.ConnectionAborted);
             await Clients.Group(PeerGroup(sessionId)).SendAsync("MeetPeerLeft", Context.ConnectionId, Context.ConnectionAborted);
         }
@@ -360,6 +378,7 @@ public sealed class MeetHub : Hub
     {
         if (PeerSessions.TryRemove(Context.ConnectionId, out var sessionId))
         {
+            PeerDisplayNames.TryRemove(Context.ConnectionId, out _);
             await Clients.Group(PeerGroup(sessionId)).SendAsync("MeetPeerLeft", Context.ConnectionId);
         }
 
