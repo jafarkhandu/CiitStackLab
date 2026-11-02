@@ -64,7 +64,7 @@ public sealed class MeetRealtimeService
                 participant.CanShareScreen
             }).ToListAsync(cancellationToken);
 
-        var snapshot = new
+        var adminSnapshot = new
         {
             sessionId = session.Id,
             batchId = session.MeetBatchId,
@@ -92,6 +92,28 @@ public sealed class MeetRealtimeService
             }).ToList()
         };
 
+        // Students receive room state and aggregate counts only. Participant names,
+        // statuses, and host-controlled permissions are restricted to admin connections.
+        var studentSnapshot = new
+        {
+            adminSnapshot.sessionId,
+            adminSnapshot.batchId,
+            adminSnapshot.Title,
+            adminSnapshot.Status,
+            adminSnapshot.startsAtUtc,
+            adminSnapshot.startedAtUtc,
+            adminSnapshot.endedAtUtc,
+            adminSnapshot.cancelledAtUtc,
+            adminSnapshot.DurationMinutes,
+            adminSnapshot.WaitingRoomEnabled,
+            adminSnapshot.RecordingEnabled,
+            adminSnapshot.RecordingStatus,
+            adminSnapshot.recordingRetentionUntilUtc,
+            adminSnapshot.pendingCount,
+            adminSnapshot.participantCount,
+            participants = Array.Empty<object>()
+        };
+
         try
         {
             foreach (var participant in participants)
@@ -106,13 +128,16 @@ public sealed class MeetRealtimeService
             }
 
             await _hub.Clients.Group(MeetHub.SessionGroup(session.Id))
-                .SendAsync("MeetRoomUpdated", snapshot, cancellationToken);
+                .SendAsync("MeetRoomUpdated", studentSnapshot, cancellationToken);
 
             await _hub.Clients.Group(MeetHub.BatchGroup(session.MeetBatchId))
-                .SendAsync("MeetBatchUpdated", snapshot, cancellationToken);
+                .SendAsync("MeetBatchUpdated", studentSnapshot, cancellationToken);
 
             await _hub.Clients.Group(MeetHub.AdminGroup)
-                .SendAsync("MeetAdminUpdated", snapshot, cancellationToken);
+                .SendAsync("MeetAdminUpdated", adminSnapshot, cancellationToken);
+
+            await _hub.Clients.Group(MeetHub.AdminSessionGroup(session.Id))
+                .SendAsync("MeetRoomUpdated", adminSnapshot, cancellationToken);
         }
         catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
         {
