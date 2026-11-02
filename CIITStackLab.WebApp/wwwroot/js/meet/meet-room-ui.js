@@ -50,10 +50,15 @@ document.addEventListener("DOMContentLoaded", () => {
                     credentials: "same-origin",
                     headers: { "X-Requested-With": "XMLHttpRequest" }
                 });
-                if (!response.ok) throw new Error("Unable to update the meeting.");
+                if (!response.ok) {
+                    const detail = await response.text().catch(() => "");
+                    throw new Error(detail || "Unable to update the meeting.");
+                }
                 if (submit && !submit.hasAttribute("data-meet-end-button")) submit.disabled = false;
+                window.showMeetToast?.({ title: "Meeting updated", message: "The change was saved successfully.", type: "success" });
             } catch (error) {
                 console.error(error);
+                window.showMeetToast?.({ title: "Action failed", message: error.message || "Unable to update the meeting.", type: "error" });
                 if (submit) submit.disabled = false;
             } finally {
                 form.dataset.submitting = "false";
