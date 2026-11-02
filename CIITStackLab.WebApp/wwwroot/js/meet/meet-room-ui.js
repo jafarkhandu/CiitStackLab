@@ -415,6 +415,13 @@ document.addEventListener("DOMContentLoaded", () => {
         if (update.sessionId !== sessionId) return;
         const previousStatus = room.dataset.participantStatus;
         room.dataset.participantStatus = update.status;
+        if (update.status === "Admitted" && previousStatus !== "Admitted") {
+            connection.invoke("JoinMeetingRoom", sessionId)
+                .catch(error => console.error("Meet peer room admission failed:", error));
+        } else if (update.status === "Rejected" || update.status === "Removed"
+            || (update.sessionStatus !== "Live" && update.sessionStatus !== "Scheduled")) {
+            window.ciitMeetWebRtcCleanup?.();
+        }
         if (previousStatus !== update.status) {
             if (update.status === "Admitted") showMeetToast({ title: "Access approved", message: "The host admitted you to the meeting.", type: "success" });
             else if (update.status === "Rejected") showMeetToast({ title: "Join request declined", message: "The host declined your request.", type: "warning" });
@@ -452,7 +459,11 @@ document.addEventListener("DOMContentLoaded", () => {
         await connection.invoke("JoinMeetingRoom", sessionId);
     });
 
-    connection.start()
+    window.ciitMeetSignalRConnection = connection;
+    window.ciitMeetSignalRReady = connection.start()
         .then(() => connection.invoke("JoinMeetingRoom", sessionId))
-        .catch(error => console.error("Meet live connection failed:", error));
+        .catch(error => {
+            console.error("Meet live connection failed:", error);
+            throw error;
+        });
 });
