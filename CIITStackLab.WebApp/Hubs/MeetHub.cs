@@ -159,11 +159,33 @@ public sealed class MeetHub : Hub
         var isActive = session.Status == "Live"
             && session.StartedAtUtc.HasValue
             && session.StartedAtUtc.Value.AddMinutes(session.DurationMinutes) > DateTime.UtcNow;
-        var isAdmittedStudent = isAdmin || (isActive && await _dbContext.MeetSessionParticipants
+        var participantAccess = isAdmin ? null : await _dbContext.MeetSessionParticipants
             .AsNoTracking()
-            .AnyAsync(participant => participant.MeetSessionId == sessionId
+            .Where(participant => participant.MeetSessionId == sessionId
                 && participant.StudentUserId == Context.UserIdentifier
-                && participant.Status == "Admitted", Context.ConnectionAborted));
+                && (participant.Status == "Pending" || participant.Status == "Admitted"))
+            .Select(participant => new
+            {
+                participant.Status,
+                participant.CanUseMicrophone,
+                participant.CanUseCamera,
+                participant.CanShareScreen
+            })
+            .SingleOrDefaultAsync(Context.ConnectionAborted);
+        var isAdmittedStudent = isAdmin || (isActive && participantAccess?.Status == "Admitted");
+
+        if (!isAdmin && participantAccess is not null)
+        {
+            await Clients.Caller.SendAsync("MeetMyParticipantStatus", new
+            {
+                sessionId,
+                status = participantAccess.Status,
+                sessionStatus = session.Status,
+                canUseMicrophone = participantAccess.CanUseMicrophone,
+                canUseCamera = participantAccess.CanUseCamera,
+                canShareScreen = participantAccess.CanShareScreen
+            }, Context.ConnectionAborted);
+        }
 
         if (isActive && isAdmittedStudent)
         {
