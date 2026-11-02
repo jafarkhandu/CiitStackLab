@@ -86,7 +86,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
     const updateLocalPreview = () => {
         if (!localVideo) return;
-        const hasVideo = localStream.getVideoTracks().some(track => track.readyState === "live");
+        const hasVideo = localStream.getVideoTracks().some(track => track.readyState === "live" && track.enabled);
         localVideo.srcObject = hasVideo ? localStream : null;
         localVideo.hidden = !hasVideo;
         if (localPlaceholder) localPlaceholder.hidden = hasVideo;
