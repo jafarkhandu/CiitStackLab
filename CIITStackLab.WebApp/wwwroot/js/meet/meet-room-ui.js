@@ -306,6 +306,7 @@ document.addEventListener("DOMContentLoaded", () => {
             list.append(empty);
             return;
         }
+        list.querySelector("[data-meet-no-requests]")?.remove();
         pending.forEach(participant => {
             const row = document.createElement("article");
             row.className = "ciit-meet-host-participant";
