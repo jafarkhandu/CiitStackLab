@@ -433,20 +433,18 @@ document.addEventListener("DOMContentLoaded", () => {
         if (isHost || room.dataset.participantStatus === "Admitted") {
             // Peer membership is authenticated server-side by JoinMeetingRoom.
             updateLocalPreview();
-            if (!isHost) {
-                const saved = readMediaPreferences();
-                for (const type of ["mic", "camera"]) {
-                    if (!saved[type] || !mediaPermissions[type]) continue;
-                    const button = type === "mic" ? micButton : cameraButton;
-                    setToggleVisual(button, type, true);
-                    try {
-                        await setTrackEnabled(type, true);
-                    } catch (error) {
-                        setToggleVisual(button, type, false);
-                        saveMediaPreference(type, false);
-                        toast(type === "mic" ? "Microphone restore failed" : "Camera restore failed",
-                            error.message || "Allow device access in your browser.");
-                    }
+            const saved = readMediaPreferences();
+            for (const type of ["mic", "camera"]) {
+                if (!saved[type] || !mediaPermissions[type]) continue;
+                const button = type === "mic" ? micButton : cameraButton;
+                setToggleVisual(button, type, true);
+                try {
+                    await setTrackEnabled(type, true);
+                } catch (error) {
+                    setToggleVisual(button, type, false);
+                    saveMediaPreference(type, false);
+                    toast(type === "mic" ? "Microphone restore failed" : "Camera restore failed",
+                        error.message || "Allow device access in your browser.");
                 }
             }
         }
