@@ -111,17 +111,29 @@ document.addEventListener("DOMContentLoaded", () => {
         if (settings) settingsPopup.content.append(settings);
         if (participants) {
             participantsPopup.content.append(participants);
-            pendingRequestsList = document.createElement("div");
+            pendingRequestsList = document.createElement("section");
             pendingRequestsList.className = "ciit-meet-pending-requests";
             pendingRequestsList.innerHTML = '<h3>Join requests <span data-meet-pending-total>0</span></h3><div data-meet-pending-list></div>';
-            settingsPopup.content.append(pendingRequestsList);
+            participantsPopup.content.prepend(pendingRequestsList);
+
+            const admittedRoster = document.createElement("section");
+            admittedRoster.className = "ciit-meet-admitted-roster";
+            admittedRoster.innerHTML = '<h3>Admitted participants</h3><div data-meet-admitted-list></div>';
+            const oldHeading = participants.querySelector("h2");
+            if (oldHeading) oldHeading.replaceWith(admittedRoster.querySelector("h3"));
+            participants.querySelector("[data-meet-no-participants]")?.remove();
+
+            const roster = admittedRoster.querySelector("[data-meet-admitted-list]");
             participants.querySelectorAll("[data-meet-participant-id]").forEach(row => {
                 if (row.dataset.meetParticipantStatus === "Pending") {
                     pendingRequestsList.querySelector("[data-meet-pending-list]").append(row);
-                } else if (row.dataset.meetParticipantStatus !== "Admitted") {
+                } else if (row.dataset.meetParticipantStatus === "Admitted") {
+                    roster.append(row);
+                } else {
                     row.remove();
                 }
             });
+            participants.append(admittedRoster);
         }
         hostPanel.hidden = true;
         settingsButton?.addEventListener("click", () => { settingsPopup.backdrop.hidden = false; });
@@ -195,8 +207,10 @@ document.addEventListener("DOMContentLoaded", () => {
         if (!isHost) return;
         const list = document.querySelector("[data-meet-participants-list]");
         if (!list) return;
+        const admittedList = list.querySelector("[data-meet-admitted-list]");
+        const targetList = admittedList || list;
 
-        list.querySelectorAll("[data-meet-participant-id], [data-meet-no-participants]")
+        targetList.querySelectorAll("[data-meet-participant-id], [data-meet-no-participants]")
             .forEach(element => element.remove());
         const admittedParticipants = participants.filter(item => item.status === "Admitted");
 
@@ -261,7 +275,7 @@ document.addEventListener("DOMContentLoaded", () => {
                     postAction(list.dataset.removeUrl, { id: participant.id }));
             }
 
-            list.append(row);
+            targetList.append(row);
         });
         setText("[data-meet-participant-total]", admittedParticipants.length);
     };
