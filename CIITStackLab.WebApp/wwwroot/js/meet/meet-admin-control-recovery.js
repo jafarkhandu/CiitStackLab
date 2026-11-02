@@ -101,6 +101,28 @@ document.addEventListener("DOMContentLoaded", () => {
             // MVC actions redirect after persistence; query the room page itself
             // to obtain the authoritative updated controls.
             await refreshControls();
+
+            const recordingAction = form.dataset.recordingAction;
+            const waitingRoomEnabled = form.querySelector('input[name="enabled"]')?.value === "true";
+            const successMessage = recordingAction
+                ? ({
+                    enable: "Recording has been enabled.",
+                    start: "Recording status is now Recording.",
+                    stop: "Recording status is now Stopped.",
+                    disable: "Recording has been disabled.",
+                    delete: "Recording metadata has been marked deleted."
+                }[recordingAction] || "Recording setting updated.")
+                : form.matches("[data-meet-waiting-room-form]")
+                    ? (waitingRoomEnabled ? "Waiting room is now on." : "Waiting room is now off.")
+                    : "Meeting setting updated.";
+
+            if (typeof window.showMeetToast === "function") {
+                window.showMeetToast({
+                    title: "Meeting setting updated",
+                    message: successMessage,
+                    type: "success"
+                });
+            }
         } catch (error) {
             console.error("Meet control action failed:", error);
             if (typeof window.showMeetToast === "function") {
