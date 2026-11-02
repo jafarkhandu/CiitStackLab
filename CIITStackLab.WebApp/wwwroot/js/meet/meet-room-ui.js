@@ -369,6 +369,45 @@ document.addEventListener("DOMContentLoaded", () => {
         renderPendingRequests(state.participants || []);
     };
 
+    connection.on("MeetToast", notification => {
+        const containerId = "ciit-meet-toast-container";
+        let container = document.getElementById(containerId);
+        if (!container) {
+            container = document.createElement("div");
+            container.id = containerId;
+            container.setAttribute("aria-live", "polite");
+            container.setAttribute("aria-atomic", "false");
+            container.style.cssText = "position:fixed;top:20px;right:20px;z-index:10000;display:flex;flex-direction:column;gap:10px;width:min(360px,calc(100vw - 32px));";
+            document.body.append(container);
+        }
+
+        const toast = document.createElement("div");
+        const type = ["success", "warning", "error"].includes(notification?.type) ? notification.type : "info";
+        toast.style.cssText = "background:rgba(20,25,38,.94);color:#fff;border:1px solid rgba(255,255,255,.18);border-left:4px solid " +
+            (type === "success" ? "#38bdf8" : type === "warning" ? "#fbbf24" : type === "error" ? "#fb7185" : "#818cf8") +
+            ";border-radius:12px;padding:12px 14px;box-shadow:0 12px 32px rgba(0,0,0,.24);backdrop-filter:blur(12px);font:500 13px/1.45 system-ui,sans-serif;animation:ciitMeetToastIn .2s ease-out;";
+        const heading = document.createElement("strong");
+        heading.textContent = notification?.title || "Meet notification";
+        heading.style.cssText = "display:block;font-size:14px;margin-bottom:3px;";
+        const message = document.createElement("div");
+        message.textContent = notification?.message || "";
+        toast.append(heading, message);
+        container.append(toast);
+
+        if (!document.getElementById("ciit-meet-toast-animation")) {
+            const style = document.createElement("style");
+            style.id = "ciit-meet-toast-animation";
+            style.textContent = "@keyframes ciitMeetToastIn{from{opacity:0;transform:translateY(-8px)}to{opacity:1;transform:translateY(0)}}";
+            document.head.append(style);
+        }
+        window.setTimeout(() => {
+            toast.style.transition = "opacity .2s ease,transform .2s ease";
+            toast.style.opacity = "0";
+            toast.style.transform = "translateY(-8px)";
+            window.setTimeout(() => toast.remove(), 220);
+        }, 5000);
+    });
+
     connection.on("MeetRoomUpdated", updateRoom);
     connection.on("MeetMyParticipantStatus", update => {
         if (update.sessionId !== sessionId) return;
