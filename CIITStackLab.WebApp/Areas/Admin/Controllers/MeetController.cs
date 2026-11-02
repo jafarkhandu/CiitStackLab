@@ -353,10 +353,25 @@ public sealed class MeetController : Controller
         if (participant is null)
             return NotFound();
 
-        if (participant.Status == "Admitted" || participant.Status == "Pending")
+        var now = DateTime.UtcNow;
+        var session = await _dbContext.MeetSessions
+            .AsNoTracking()
+            .SingleOrDefaultAsync(item => item.Id == participant.MeetSessionId, cancellationToken);
+
+        if (session is null)
+            return NotFound();
+
+        if (session.Status != "Live"
+            || !session.StartedAtUtc.HasValue
+            || session.StartedAtUtc.Value.AddMinutes(session.DurationMinutes) <= now)
+        {
+            return BadRequest("Participants can only be removed from an active meeting.");
+        }
+
+        if (participant.Status is "Admitted" or "Pending")
         {
             participant.Status = "Removed";
-            participant.LeftAtUtc = DateTime.UtcNow;
+            participant.LeftAtUtc = now;
             await _dbContext.SaveChangesAsync(cancellationToken);
             await _meetRealtime.PublishSessionUpdateAsync(participant.MeetSessionId, cancellationToken);
         }
@@ -374,10 +389,20 @@ public sealed class MeetController : Controller
         CancellationToken cancellationToken)
     {
         var participant = await _dbContext.MeetSessionParticipants
+            .Include(x => x.MeetSession)
             .SingleOrDefaultAsync(x => x.Id == id, cancellationToken);
 
         if (participant is null)
             return NotFound();
+
+        var now = DateTime.UtcNow;
+        if (participant.Status != "Admitted"
+            || participant.MeetSession.Status != "Live"
+            || !participant.MeetSession.StartedAtUtc.HasValue
+            || participant.MeetSession.StartedAtUtc.Value.AddMinutes(participant.MeetSession.DurationMinutes) <= now)
+        {
+            return BadRequest("Permissions can only be changed for admitted participants in an active meeting.");
+        }
 
         participant.CanUseMicrophone = canUseMicrophone;
         participant.CanUseCamera = canUseCamera;
