@@ -126,7 +126,13 @@ document.addEventListener("DOMContentLoaded", () => {
             admittedRoster.className = "ciit-meet-admitted-roster";
             admittedRoster.innerHTML = '<h3>Admitted participants</h3><div data-meet-admitted-list></div>';
             const oldHeading = participants.querySelector("h2");
-            if (oldHeading) oldHeading.replaceWith(admittedRoster.querySelector("h3"));
+            const admittedHeading = admittedRoster.querySelector("h3");
+            if (oldHeading) {
+                const count = oldHeading.querySelector("span");
+                if (count) count.dataset.meetParticipantTotal = "true";
+                admittedHeading.append(count || document.createTextNode(" "));
+                oldHeading.replaceWith(admittedHeading);
+            }
             participants.querySelector("[data-meet-no-participants]")?.remove();
 
             const roster = admittedRoster.querySelector("[data-meet-admitted-list]");
