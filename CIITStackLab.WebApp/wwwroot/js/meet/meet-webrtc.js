@@ -242,10 +242,6 @@ document.addEventListener("DOMContentLoaded", () => {
         detail.textContent = "Camera is off";
         placeholder.append(avatar, label, detail);
 
-        const name = document.createElement("span");
-        name.className = "ciit-meet-video-name";
-        name.textContent = displayName;
-
         const pin = document.createElement("button");
         pin.type = "button";
         pin.className = "ciit-meet-video-pin";
