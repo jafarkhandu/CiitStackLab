@@ -451,6 +451,11 @@ document.addEventListener("DOMContentLoaded", () => {
         updateLocalPreview();
     };
 
+    const publishPeerMediaState = (mediaKind, enabled) => {
+        connection.invoke("BroadcastPeerMediaState", sessionId, mediaKind, enabled)
+            .catch(error => console.warn("Meet media state notification failed:", error));
+    };
+
     const setTrackEnabled = async (kind, enabled) => {
         const mediaKind = kind === "mic" ? "audio" : "video";
         if (enabled && !mediaPermissions[kind]) {
@@ -493,6 +498,7 @@ document.addEventListener("DOMContentLoaded", () => {
         saveMediaPreference(kind, enabled);
         updateLocalPreview();
         updateSelfMicIndicator();
+        publishPeerMediaState(kind === "mic" ? "mic" : "camera", enabled);
     };
 
     const updateSelfMicIndicator = () => {
@@ -643,6 +649,25 @@ document.addEventListener("DOMContentLoaded", () => {
         createPeer(peerId, displayName);
     });
     connection.on("MeetPeerLeft", removePeer);
+    connection.on("MeetPeerMediaState", state => {
+        if (!state || Number(state.sessionId) !== sessionId || !state.connectionId) return;
+        const peer = peers.get(state.connectionId);
+        if (!peer) return;
+
+        if (state.mediaKind === "camera") {
+            peer.cameraEnabled = state.enabled === true;
+            applyParticipantStreamState(peer);
+        } else if (state.mediaKind === "mic") {
+            peer.micEnabled = state.enabled === true;
+            const indicator = peer.tile.tile.querySelector("[data-peer-mic-state]");
+            if (indicator) {
+                indicator.className = "bi " + (peer.micEnabled ? "bi-mic-fill" : "bi-mic-mute");
+            }
+        } else if (state.mediaKind === "share") {
+            peer.screenSharing = state.enabled === true;
+            peer.tile.tile.classList.toggle("ciit-meet-screen-sharing", peer.screenSharing);
+        }
+    });
     connection.on("MeetWebRtcSignal", handleSignal);
 
     connection.onreconnected(() => {
