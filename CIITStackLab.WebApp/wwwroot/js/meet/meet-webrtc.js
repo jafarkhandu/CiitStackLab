@@ -23,6 +23,49 @@ document.addEventListener("DOMContentLoaded", () => {
     const micButton = room.querySelector('[data-room-toggle="mic"]');
     const cameraButton = room.querySelector('[data-room-toggle="camera"]');
     const shareButton = room.querySelector('[data-room-toggle="share"]');
+    const mediaPermissions = {
+        mic: true,
+        camera: true,
+        share: true
+    };
+    const preferenceKey = "ciit-meet-media-" + sessionId;
+
+    const setToggleVisual = (button, type, active) => {
+        if (!button) return;
+        button.setAttribute("aria-pressed", active ? "true" : "false");
+        button.classList.toggle("is-active", active);
+        const icon = button.querySelector("i");
+        const label = button.querySelector("span");
+        const states = {
+            mic: active ? ["bi-mic-fill", "Mute"] : ["bi-mic-mute", "Unmute"],
+            camera: active ? ["bi-camera-video-fill", "Stop video"] : ["bi-camera-video-off", "Start video"],
+            share: active ? ["bi-display-fill", "Sharing screen"] : ["bi-display", "Share screen"]
+        };
+        if (icon) icon.className = "bi " + states[type][0];
+        if (label) label.textContent = states[type][1];
+    };
+
+    const readMediaPreferences = () => {
+        try {
+            const saved = JSON.parse(sessionStorage.getItem(preferenceKey) || "{}");
+            return {
+                mic: saved.mic === true,
+                camera: saved.camera === true
+            };
+        } catch {
+            return { mic: false, camera: false };
+        }
+    };
+
+    const saveMediaPreference = (type, enabled) => {
+        try {
+            const saved = readMediaPreferences();
+            saved[type] = enabled;
+            sessionStorage.setItem(preferenceKey, JSON.stringify(saved));
+        } catch {
+            // Device controls remain usable when browser storage is unavailable.
+        }
+    };
 
     if (!localVideo && selfTile) {
         localVideo = document.createElement("video");
@@ -223,11 +266,15 @@ document.addEventListener("DOMContentLoaded", () => {
 
     const setTrackEnabled = async (kind, enabled) => {
         const mediaKind = kind === "mic" ? "audio" : "video";
+        if (enabled && !mediaPermissions[kind]) {
+            throw new Error("The host has disabled this device for you.");
+        }
         if (enabled) {
             await requestMedia(mediaKind);
         }
         const track = localStream.getTracks().find(item => item.kind === mediaKind && item.readyState === "live");
         if (track) track.enabled = enabled;
+        saveMediaPreference(kind, enabled);
         updateLocalPreview();
     };
 
@@ -254,8 +301,8 @@ document.addEventListener("DOMContentLoaded", () => {
     });
 
     shareButton?.addEventListener("click", async () => {
-        const sharing = shareButton.getAttribute("aria-pressed") === "true";
-        if (sharing) {
+        const sharing = shareButton.getAttribute("aria-pressed") !== "true";
+        if (!sharing) {
             screenStream?.getTracks().forEach(track => track.stop());
             screenStream = null;
             const cameraTrack = localStream.getVideoTracks().find(track => track.readyState === "live");
@@ -263,7 +310,14 @@ document.addEventListener("DOMContentLoaded", () => {
                 const sender = peer.connection.getSenders().find(item => item.track?.kind === "video");
                 if (sender) sender.replaceTrack(cameraTrack || null).catch(error => console.error(error));
             });
+            setToggleVisual(shareButton, "share", false);
             updateLocalPreview();
+            return;
+        }
+
+        if (!mediaPermissions.share) {
+            setToggleVisual(shareButton, "share", false);
+            toast("Screen sharing disabled", "The host has disabled screen sharing for you.");
             return;
         }
 
@@ -301,18 +355,51 @@ document.addEventListener("DOMContentLoaded", () => {
                 updateLocalPreview();
             };
         } catch (error) {
-            shareButton.setAttribute("aria-pressed", "false");
-            shareButton.classList.remove("is-active");
-            const shareLabel = shareButton.querySelector("span");
-            const shareIcon = shareButton.querySelector("i");
-            if (shareLabel) shareLabel.textContent = "Share screen";
-            if (shareIcon) shareIcon.className = "bi bi-display";
+            setToggleVisual(shareButton, "share", false);
             screenStream?.getTracks().forEach(track => track.stop());
             screenStream = null;
             updateLocalPreview();
             toast("Screen share failed", error.message || "Screen sharing permission was not granted.");
         }
     });
+
+    window.ciitMeetApplyMediaPermissions = update => {
+        if (!update || room.dataset.isHost === "true") return;
+
+        ["mic", "camera", "share"].forEach(type => {
+            const property = type === "mic" ? "canUseMicrophone"
+                : type === "camera" ? "canUseCamera"
+                    : "canShareScreen";
+            if (typeof update[property] !== "boolean") return;
+            mediaPermissions[type] = update[property];
+
+            const button = type === "mic" ? micButton
+                : type === "camera" ? cameraButton
+                    : shareButton;
+            if (button) button.disabled = !mediaPermissions[type];
+
+            if (!mediaPermissions[type] && type !== "share") {
+                const mediaKind = type === "mic" ? "audio" : "video";
+                const track = localStream.getTracks().find(item => item.kind === mediaKind);
+                if (track) track.enabled = false;
+                setToggleVisual(button, type, false);
+                saveMediaPreference(type, false);
+                updateLocalPreview();
+            }
+
+            if (!mediaPermissions.share && screenStream) {
+                screenStream.getTracks().forEach(track => track.stop());
+                screenStream = null;
+                setToggleVisual(shareButton, "share", false);
+                const cameraTrack = localStream.getVideoTracks().find(track => track.readyState === "live");
+                peers.forEach(peer => {
+                    const sender = peer.connection.getSenders().find(item => item.track?.kind === "video");
+                    if (sender) sender.replaceTrack(cameraTrack || null).catch(error => console.error(error));
+                });
+                updateLocalPreview();
+            }
+        });
+    };
 
     connection.on("MeetExistingPeers", peerIds => {
         (peerIds || []).forEach(peerId => {
@@ -341,11 +428,27 @@ document.addEventListener("DOMContentLoaded", () => {
     };
     window.addEventListener("pagehide", window.ciitMeetWebRtcCleanup);
 
-    window.ciitMeetSignalRReady?.then(() => {
+    window.ciitMeetSignalRReady?.then(async () => {
         if (stage.hidden) return;
         if (isHost || room.dataset.participantStatus === "Admitted") {
             // Peer membership is authenticated server-side by JoinMeetingRoom.
             updateLocalPreview();
+            if (!isHost) {
+                const saved = readMediaPreferences();
+                for (const type of ["mic", "camera"]) {
+                    if (!saved[type] || !mediaPermissions[type]) continue;
+                    const button = type === "mic" ? micButton : cameraButton;
+                    setToggleVisual(button, type, true);
+                    try {
+                        await setTrackEnabled(type, true);
+                    } catch (error) {
+                        setToggleVisual(button, type, false);
+                        saveMediaPreference(type, false);
+                        toast(type === "mic" ? "Microphone restore failed" : "Camera restore failed",
+                            error.message || "Allow device access in your browser.");
+                    }
+                }
+            }
         }
     }).catch(error => console.error("Meet WebRTC startup failed:", error));
 });
