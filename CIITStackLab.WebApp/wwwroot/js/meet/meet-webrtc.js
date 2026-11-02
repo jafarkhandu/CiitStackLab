@@ -283,8 +283,8 @@ document.addEventListener("DOMContentLoaded", () => {
         try {
             await setTrackEnabled("mic", enabled);
         } catch (error) {
-            micButton.setAttribute("aria-pressed", "false");
-            micButton.classList.remove("is-active");
+            setToggleVisual(micButton, "mic", false);
+            saveMediaPreference("mic", false);
             toast("Microphone access failed", error.message || "Allow microphone permission in your browser.");
         }
     });
@@ -294,14 +294,14 @@ document.addEventListener("DOMContentLoaded", () => {
         try {
             await setTrackEnabled("camera", enabled);
         } catch (error) {
-            cameraButton.setAttribute("aria-pressed", "false");
-            cameraButton.classList.remove("is-active");
+            setToggleVisual(cameraButton, "camera", false);
+            saveMediaPreference("camera", false);
             toast("Camera access failed", error.message || "Allow camera permission in your browser.");
         }
     });
 
     shareButton?.addEventListener("click", async () => {
-        const sharing = shareButton.getAttribute("aria-pressed") !== "true";
+        const sharing = shareButton.getAttribute("aria-pressed") === "true";
         if (!sharing) {
             screenStream?.getTracks().forEach(track => track.stop());
             screenStream = null;
