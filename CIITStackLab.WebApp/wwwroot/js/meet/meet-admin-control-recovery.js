@@ -2,13 +2,13 @@ document.addEventListener("DOMContentLoaded", () => {
     const room = document.querySelector("[data-meet-room]");
     if (!room || room.dataset.isHost !== "true") return;
 
-    const syncControlsFromResponse = html => {
+    const syncControlsFromRoomHtml = html => {
         const parsed = new DOMParser().parseFromString(html, "text/html");
         const sourceRoom = parsed.querySelector("[data-meet-room]");
-        if (!sourceRoom) return;
+        if (!sourceRoom) throw new Error("Could not load the latest meeting controls.");
 
         const sourceWaitingForm = sourceRoom.querySelector("[data-meet-waiting-room-form]");
-        const targetWaitingForm = document.querySelector("[data-meet-waiting-room-form]");
+        const targetWaitingForm = room.querySelector("[data-meet-waiting-room-form]");
         if (sourceWaitingForm && targetWaitingForm) {
             const sourceState = sourceWaitingForm.querySelector("[data-meet-waiting-room-state]");
             const targetState = targetWaitingForm.querySelector("[data-meet-waiting-room-state]");
@@ -16,13 +16,14 @@ document.addEventListener("DOMContentLoaded", () => {
             const targetEnabled = targetWaitingForm.querySelector('input[name="enabled"]');
             const sourceButton = sourceWaitingForm.querySelector('[type="submit"]');
             const targetButton = targetWaitingForm.querySelector('[type="submit"]');
+
             if (sourceState && targetState) targetState.textContent = sourceState.textContent;
             if (sourceEnabled && targetEnabled) targetEnabled.value = sourceEnabled.value;
             if (sourceButton && targetButton) targetButton.textContent = sourceButton.textContent;
         }
 
         const sourceRecording = sourceRoom.querySelector("[data-meet-recording-controls]");
-        const targetRecording = document.querySelector("[data-meet-recording-controls]");
+        const targetRecording = room.querySelector("[data-meet-recording-controls]");
         if (sourceRecording && targetRecording) {
             const sourceStatus = sourceRecording.querySelector("[data-meet-recording-status]");
             const targetStatus = targetRecording.querySelector("[data-meet-recording-status]");
@@ -40,9 +41,26 @@ document.addEventListener("DOMContentLoaded", () => {
         if (sourceStatusText && targetStatusText) targetStatusText.textContent = sourceStatusText.textContent;
     };
 
+    const refreshControls = async () => {
+        const roomUrl = room.dataset.roomUrl;
+        if (!roomUrl) throw new Error("Meeting room refresh URL is missing.");
+
+        const response = await fetch(roomUrl, {
+            method: "GET",
+            cache: "no-store",
+            credentials: "same-origin",
+            headers: { "X-Requested-With": "XMLHttpRequest" }
+        });
+        if (!response.ok) throw new Error("Could not refresh meeting controls (" + response.status + ").");
+
+        syncControlsFromRoomHtml(await response.text());
+    };
+
     document.addEventListener("submit", async event => {
         const form = event.target.closest("form[data-meet-ajax]");
-        if (!form || form.querySelector("[data-meet-end-button]") || event.defaultPrevented) return;
+        if (!form || !room.contains(form)
+            || form.querySelector("[data-meet-end-button]")
+            || event.defaultPrevented) return;
 
         event.preventDefault();
         event.stopImmediatePropagation();
@@ -60,7 +78,10 @@ document.addEventListener("DOMContentLoaded", () => {
                 headers: { "X-Requested-With": "XMLHttpRequest" }
             });
             if (!response.ok) throw new Error("Meeting control update failed (" + response.status + ").");
-            syncControlsFromResponse(await response.text());
+
+            // MVC actions redirect after persistence; query the room page itself
+            // to obtain the authoritative updated controls.
+            await refreshControls();
         } catch (error) {
             console.error("Meet control action failed:", error);
         } finally {
