@@ -269,13 +269,31 @@ document.addEventListener("DOMContentLoaded", () => {
         if (enabled && !mediaPermissions[kind]) {
             throw new Error("The host has disabled this device for you.");
         }
+
+        const track = localStream.getTracks().find(item => item.kind === mediaKind && item.readyState === "live");
         if (enabled) {
             await requestMedia(mediaKind);
+            const restoredTrack = localStream.getTracks().find(item => item.kind === mediaKind && item.readyState === "live");
+            if (restoredTrack) restoredTrack.enabled = true;
+        } else if (track) {
+            // Stop the actual device track instead of leaving it allocated and disabled.
+            peers.forEach(peer => {
+                const sender = peer.connection.getSenders().find(item => item.track?.id === track.id);
+                if (sender) sender.replaceTrack(null).catch(error => console.warn("Device track detach failed:", error));
+            });
+            localStream.removeTrack(track);
+            track.stop();
         }
-        const track = localStream.getTracks().find(item => item.kind === mediaKind && item.readyState === "live");
-        if (track) track.enabled = enabled;
+
         saveMediaPreference(kind, enabled);
         updateLocalPreview();
+        updateSelfMicIndicator();
+    };
+
+    const updateSelfMicIndicator = () => {
+        const indicator = selfTile?.querySelector(".ciit-meet-video-name i");
+        const micTrack = localStream.getAudioTracks().find(track => track.readyState === "live" && track.enabled);
+        if (indicator) indicator.className = "bi " + (micTrack ? "bi-mic-fill" : "bi-mic-mute");
     };
 
     micButton?.addEventListener("click", async () => {
