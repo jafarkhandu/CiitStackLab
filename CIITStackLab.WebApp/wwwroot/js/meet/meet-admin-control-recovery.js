@@ -27,12 +27,25 @@ document.addEventListener("DOMContentLoaded", () => {
         if (sourceRecording && targetRecording) {
             const sourceStatus = sourceRecording.querySelector("[data-meet-recording-status]");
             const targetStatus = targetRecording.querySelector("[data-meet-recording-status]");
-            if (sourceStatus && targetStatus) targetStatus.textContent = sourceStatus.textContent;
+            const recordingStatus = sourceStatus?.textContent.trim() || "";
+            const recordingEnabled = sourceRecording.dataset.recordingEnabled === "true";
 
-            ["enable", "stop", "start", "disable", "delete"].forEach(action => {
-                const sourceForm = sourceRecording.querySelector('[data-recording-action="' + action + '"]');
+            if (sourceStatus && targetStatus) targetStatus.textContent = recordingStatus;
+            targetRecording.dataset.recordingEnabled = String(recordingEnabled);
+
+            const actions = {
+                enable: !recordingEnabled,
+                stop: recordingStatus === "Recording",
+                start: recordingEnabled
+                    && sourceRoom.querySelector("[data-meet-status-text]")?.textContent.trim() === "Live"
+                    && (recordingStatus === "Ready" || recordingStatus === "Stopped"),
+                disable: recordingEnabled && recordingStatus !== "Recording",
+                delete: recordingStatus === "Stopped"
+            };
+
+            Object.entries(actions).forEach(([action, visible]) => {
                 const targetForm = targetRecording.querySelector('[data-recording-action="' + action + '"]');
-                if (sourceForm && targetForm) targetForm.hidden = sourceForm.hidden;
+                if (targetForm) targetForm.hidden = !visible;
             });
         }
 
