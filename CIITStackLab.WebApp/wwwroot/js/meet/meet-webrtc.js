@@ -200,7 +200,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
     const applyParticipantStreamState = peer => {
         const videoTrack = peer.remoteStream?.getVideoTracks().find(track => track.readyState === "live");
-        const cameraActive = peer.cameraEnabled !== false
+        const cameraActive = (peer.screenSharing === true || peer.cameraEnabled !== false)
             && Boolean(videoTrack && videoTrack.enabled && !videoTrack.muted);
         peer.tile.video.hidden = !cameraActive;
         peer.tile.placeholder.hidden = cameraActive;
