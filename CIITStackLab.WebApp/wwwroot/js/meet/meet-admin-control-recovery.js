@@ -96,6 +96,13 @@ document.addEventListener("DOMContentLoaded", () => {
             await refreshControls();
         } catch (error) {
             console.error("Meet control action failed:", error);
+            if (typeof window.showMeetToast === "function") {
+                window.showMeetToast({
+                    title: "Meeting control failed",
+                    message: error.message || "The setting could not be updated. Please try again.",
+                    type: "error"
+                });
+            }
         } finally {
             form.dataset.submitting = "false";
             if (button) button.disabled = false;
