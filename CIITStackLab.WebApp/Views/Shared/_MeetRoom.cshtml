@@ -70,7 +70,7 @@
                         <span>Waiting room <strong data-meet-waiting-room-state>@(Model.WaitingRoomEnabled ? "On" : "Off")</strong></span>
                         <button type="submit" class="ciit-meet-host-secondary">Turn @(Model.WaitingRoomEnabled ? "off" : "on")</button>
                     </form>
-                    <div class="ciit-meet-recording-settings" data-meet-recording-controls>
+                    <div class="ciit-meet-recording-settings" data-meet-recording-controls data-recording-enabled="@Model.RecordingEnabled.ToString().ToLowerInvariant()">
                         <span>Recording <strong data-meet-recording-status>@Model.RecordingStatus</strong>
                             @if (Model.RecordingRetentionUntilUtc.HasValue)
                             {
