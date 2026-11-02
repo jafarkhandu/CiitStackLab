@@ -228,7 +228,9 @@ document.addEventListener("DOMContentLoaded", () => {
         const video = document.createElement("video");
         video.autoplay = true;
         video.playsInline = true;
+        video.muted = true;
         video.setAttribute("aria-label", "Meeting participant video");
+        video.addEventListener("loadedmetadata", () => video.play().catch(() => {}));
 
         const placeholder = document.createElement("div");
         placeholder.className = "ciit-meet-video-placeholder";
@@ -346,6 +348,7 @@ document.addEventListener("DOMContentLoaded", () => {
                 peer.remoteStream.addTrack(event.track);
             }
             peer.tile.video.srcObject = peer.remoteStream;
+            peer.tile.video.play().catch(() => {});
             if (event.track.kind === "audio" && !audioMeters.has(peerId)) {
                 audioMeters.set(peerId, createAudioMeter(stream));
             }
