@@ -666,6 +666,12 @@ document.addEventListener("DOMContentLoaded", () => {
         if (state.mediaKind === "camera") {
             peer.cameraEnabled = state.enabled === true;
             applyParticipantStreamState(peer);
+            if (!peer.cameraEnabled) {
+                peer.tile.video.pause();
+                peer.tile.video.srcObject = peer.remoteStream || null;
+            } else if (peer.tile.video.srcObject) {
+                peer.tile.video.play().catch(() => {});
+            }
         } else if (state.mediaKind === "mic") {
             peer.micEnabled = state.enabled === true;
             const indicator = peer.tile.tile.querySelector("[data-peer-mic-state]");
@@ -675,11 +681,7 @@ document.addEventListener("DOMContentLoaded", () => {
         } else if (state.mediaKind === "share") {
             peer.screenSharing = state.enabled === true;
             peer.tile.tile.classList.toggle("ciit-meet-screen-sharing", peer.screenSharing);
-            if (!peer.screenSharing) applyParticipantStreamState(peer);
-            else {
-                peer.tile.video.hidden = false;
-                peer.tile.placeholder.hidden = true;
-            }
+            applyParticipantStreamState(peer);
         }
     });
     connection.on("MeetWebRtcSignal", handleSignal);
