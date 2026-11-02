@@ -62,13 +62,58 @@ document.addEventListener("DOMContentLoaded", () => {
         }
     };
 
+    // Reconcile only the batch action controls against the server-rendered page.
+    // This uses the same view-model logic as a manual refresh without reloading
+    // the student's page or disturbing the current scroll position.
+    const refreshActionsFromServer = async () => {
+        const response = await fetch(window.location.pathname + window.location.search, {
+            method: "GET",
+            cache: "no-store",
+            credentials: "same-origin",
+            headers: { "X-Requested-With": "XMLHttpRequest" }
+        });
+        if (!response.ok) {
+            throw new Error("Unable to refresh live Meet actions (" + response.status + ").");
+        }
+
+        const html = await response.text();
+        const parsed = new DOMParser().parseFromString(html, "text/html");
+        const sourceRoot = parsed.querySelector("[data-meet-student-index]");
+        if (!sourceRoot) throw new Error("Student Meet dashboard was not found in the refresh response.");
+
+        root.querySelectorAll("[data-meet-batch-id]").forEach(card => {
+            const batchId = card.dataset.meetBatchId;
+            const sourceCard = sourceRoot.querySelector('[data-meet-batch-id="' + batchId + '"]');
+            if (!sourceCard) return;
+
+            const sourceAction = sourceCard.querySelector(".ciit-student-meet-join-form, .ciit-student-meet-waiting");
+            const currentAction = card.querySelector(".ciit-student-meet-join-form, .ciit-student-meet-waiting");
+            if (!sourceAction) {
+                currentAction?.remove();
+                return;
+            }
+
+            const actionCopy = sourceAction.cloneNode(true);
+            if (currentAction) {
+                currentAction.replaceWith(actionCopy);
+            } else {
+                const meta = card.querySelector(".ciit-student-meet-card-meta");
+                if (meta) meta.insertAdjacentElement("afterend", actionCopy);
+                else card.append(actionCopy);
+            }
+        });
+    };
+
     connection.on("MeetBatchUpdated", refreshBatchAction);
     connection.on("MeetToast", notification => {
         if (notification?.title === "Meeting is live") {
-            // Re-fetch the server's current batch/session snapshot in case the
-            // toast arrived but the corresponding card update was missed.
+            // Query the current hub snapshot and server-rendered card state.
+            // The latter is authoritative for the Join form and antiforgery token.
             connection.invoke("JoinMyBatchUpdates")
-                .catch(error => console.error("Meet live action refresh failed:", error));
+                .catch(error => console.error("Meet live hub snapshot refresh failed:", error));
+
+            refreshActionsFromServer()
+                .catch(error => console.error("Meet live card action refresh failed:", error));
         }
     });
 
