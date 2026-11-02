@@ -410,6 +410,10 @@ document.addEventListener("DOMContentLoaded", () => {
             });
             localStream.removeTrack(track);
             track.stop();
+            if (mediaKind === "audio" && localAudioMeter) {
+                localAudioMeter.source.disconnect();
+                localAudioMeter = null;
+            }
         }
 
         saveMediaPreference(kind, enabled);
@@ -568,7 +572,11 @@ document.addEventListener("DOMContentLoaded", () => {
     window.ciitMeetWebRtcCleanup = () => {
         screenStream?.getTracks().forEach(track => track.stop());
         localStream.getTracks().forEach(track => track.stop());
+        localAudioMeter?.source.disconnect();
+        localAudioMeter = null;
         peers.forEach((peer, peerId) => removePeer(peerId));
+        audioContext?.close().catch(() => {});
+        audioContext = null;
         connection.invoke("LeavePeerRoom", sessionId).catch(() => {});
     };
     window.addEventListener("pagehide", window.ciitMeetWebRtcCleanup);
