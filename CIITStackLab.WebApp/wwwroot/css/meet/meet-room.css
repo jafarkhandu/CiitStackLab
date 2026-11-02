@@ -163,3 +163,25 @@ html,body{width:100%;min-height:100%;margin:0}
 .ciit-meet-header-action .ciit-meet-pending-count { min-width:19px;height:19px;display:inline-flex;align-items:center;justify-content:center;padding:0 5px;font-size:9px; }
 .ciit-meet-participants-backdrop .ciit-meet-glass-popup-content { max-height:min(70vh,560px); }
 .ciit-meet-participants-backdrop .ciit-meet-host-participants { max-height:490px;overflow-y:auto;scrollbar-width:thin;scrollbar-color:rgba(148,183,226,.45) transparent; }
+
+/* Native peer-to-peer WebRTC video tiles. */
+.ciit-meet-video-tile video {
+    position:absolute;
+    inset:0;
+    width:100%;
+    height:100%;
+    object-fit:contain;
+    background:#080b10;
+}
+.ciit-meet-video-tile video[hidden],
+.ciit-meet-video-placeholder[hidden] {
+    display:none!important;
+}
+.ciit-meet-video-remote video {
+    object-fit:cover;
+}
+.ciit-meet-video-remote .ciit-meet-video-placeholder {
+    position:absolute;
+    inset:0;
+    justify-content:center;
+}
