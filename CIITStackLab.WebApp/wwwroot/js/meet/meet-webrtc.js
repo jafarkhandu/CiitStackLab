@@ -544,6 +544,7 @@ document.addEventListener("DOMContentLoaded", () => {
         if (!sharing) {
             screenStream?.getTracks().forEach(track => track.stop());
             screenStream = null;
+            publishPeerMediaState("share", false);
             const cameraTrack = localStream.getVideoTracks().find(track => track.readyState === "live");
             peers.forEach(peer => {
                 const sender = peer.senders.video;
@@ -564,6 +565,7 @@ document.addEventListener("DOMContentLoaded", () => {
             if (!navigator.mediaDevices?.getDisplayMedia) throw new Error("Screen sharing is not supported in this browser.");
             screenStream = await navigator.mediaDevices.getDisplayMedia({ video: true, audio: false });
             const screenTrack = screenStream.getVideoTracks()[0];
+            publishPeerMediaState("share", true);
             peers.forEach(peer => {
                 const sender = peer.senders.video;
                 if (sender) sender.replaceTrack(screenTrack).catch(error => console.error(error));
@@ -586,6 +588,7 @@ document.addEventListener("DOMContentLoaded", () => {
                 if (shareLabel) shareLabel.textContent = "Share screen";
                 if (shareIcon) shareIcon.className = "bi bi-display";
                 screenStream = null;
+                publishPeerMediaState("share", false);
                 const cameraTrack = localStream.getVideoTracks().find(track => track.readyState === "live");
                 peers.forEach(peer => {
                     const sender = peer.senders.video;
@@ -674,6 +677,11 @@ document.addEventListener("DOMContentLoaded", () => {
         } else if (state.mediaKind === "share") {
             peer.screenSharing = state.enabled === true;
             peer.tile.tile.classList.toggle("ciit-meet-screen-sharing", peer.screenSharing);
+            if (!peer.screenSharing) applyParticipantStreamState(peer);
+            else {
+                peer.tile.video.hidden = false;
+                peer.tile.placeholder.hidden = true;
+            }
         }
     });
     connection.on("MeetWebRtcSignal", handleSignal);
