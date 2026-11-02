@@ -32,6 +32,42 @@ document.addEventListener("DOMContentLoaded", () => {
         camera: true,
         share: true
     };
+
+    const applyMediaPermissions = update => {
+        if (!update || Number(update.sessionId) !== sessionId) return;
+        const next = {
+            mic: update.canUseMicrophone !== false,
+            camera: update.canUseCamera !== false,
+            share: update.canShareScreen !== false
+        };
+        Object.assign(mediaPermissions, next);
+        const controls = [
+            ["mic", micButton],
+            ["camera", cameraButton],
+            ["share", shareButton]
+        ];
+        controls.forEach(([kind, button]) => {
+            if (button) {
+                button.disabled = !mediaPermissions[kind];
+                button.title = mediaPermissions[kind] ? "" : "The host disabled this control.";
+            }
+        });
+        ["mic", "camera"].forEach(kind => {
+            if (!mediaPermissions[kind]) {
+                setTrackEnabled(kind, false).catch(error => console.warn("Device permission cleanup failed:", error));
+                setToggleVisual(kind === "mic" ? micButton : cameraButton, kind, false);
+                saveMediaPreference(kind, false);
+            }
+        });
+        if (!mediaPermissions.share && screenStream) {
+            screenStream.getTracks().forEach(track => track.stop());
+            screenStream = null;
+            setToggleVisual(shareButton, "share", false);
+        }
+    };
+    window.ciitMeetApplyMediaPermissions = applyMediaPermissions;
+
+    connection.on("MeetMyParticipantStatus", applyMediaPermissions);
     const preferenceKey = "ciit-meet-media-" + sessionId;
 
     const setToggleVisual = (button, type, active) => {
