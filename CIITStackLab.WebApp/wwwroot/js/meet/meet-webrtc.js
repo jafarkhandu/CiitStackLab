@@ -163,8 +163,14 @@ document.addEventListener("DOMContentLoaded", () => {
 
     const addLocalTracksToPeer = (peer) => {
         localStream.getTracks().forEach(track => {
-            if (!peer.connection.getSenders().some(sender => sender.track?.id === track.id)) {
-                peer.connection.addTrack(track, localStream);
+            const kind = track.kind;
+            const existing = peer.senders[kind];
+            if (existing?.track?.id === track.id) return;
+
+            if (existing && existing.track === null) {
+                existing.replaceTrack(track).catch(error => console.warn("Local track attach failed:", error));
+            } else {
+                peer.senders[kind] = peer.connection.addTrack(track, localStream);
             }
         });
     };
@@ -264,6 +270,7 @@ document.addEventListener("DOMContentLoaded", () => {
         const peer = {
             connection: pc,
             tile: createRemoteTile(peerId),
+            senders: { audio: null, video: null },
             polite: String(connection.connectionId) > String(peerId),
             makingOffer: false,
             ignoreOffer: false,
@@ -371,11 +378,11 @@ document.addEventListener("DOMContentLoaded", () => {
             localStream.addTrack(track);
             if (track.kind === "audio") localAudioMeter = createAudioMeter(localStream);
             peers.forEach(peer => {
-                const sender = peer.connection.getSenders().find(item => item.track === null && item.transport?.state !== "closed");
-                if (sender) {
+                const sender = peer.senders[mediaKind];
+                if (sender && sender.track === null) {
                     sender.replaceTrack(track).catch(error => console.warn("Device track attach failed:", error));
                 } else {
-                    peer.connection.addTrack(track, localStream);
+                    peer.senders[mediaKind] = peer.connection.addTrack(track, localStream);
                 }
             });
         });
@@ -396,8 +403,10 @@ document.addEventListener("DOMContentLoaded", () => {
         } else if (track) {
             // Stop the actual device track instead of leaving it allocated and disabled.
             peers.forEach(peer => {
-                const sender = peer.connection.getSenders().find(item => item.track?.id === track.id);
-                if (sender) sender.replaceTrack(null).catch(error => console.warn("Device track detach failed:", error));
+                const sender = peer.senders[mediaKind];
+                if (sender?.track?.id === track.id) {
+                    sender.replaceTrack(null).catch(error => console.warn("Device track detach failed:", error));
+                }
             });
             localStream.removeTrack(track);
             track.stop();
