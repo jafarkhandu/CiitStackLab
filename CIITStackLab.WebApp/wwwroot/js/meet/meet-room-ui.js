@@ -340,6 +340,20 @@ document.addEventListener("DOMContentLoaded", () => {
     const updateRoom = (state) => {
         if (state.sessionId !== sessionId) return;
 
+        const pendingBadge = room.querySelector("[data-meet-pending-count]");
+        const previousPendingCount = Number(pendingBadge?.textContent || 0);
+        const nextPendingCount = Number(state.pendingCount || 0);
+        if (isHost && nextPendingCount > previousPendingCount) {
+            const addedRequests = nextPendingCount - previousPendingCount;
+            showMeetToast({
+                title: addedRequests === 1 ? "New join request" : "New join requests",
+                message: addedRequests === 1
+                    ? "A student is waiting for admission."
+                    : addedRequests + " students are waiting for admission.",
+                type: "info"
+            });
+        }
+
         setText("[data-meet-status-text]", state.status);
         setText("[data-meet-waiting-room-state]", state.waitingRoomEnabled ? "On" : "Off");
         setText("[data-meet-recording-status]", state.recordingStatus);
