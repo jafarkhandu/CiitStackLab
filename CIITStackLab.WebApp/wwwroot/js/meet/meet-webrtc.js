@@ -32,6 +32,7 @@ document.addEventListener("DOMContentLoaded", () => {
         camera: true,
         share: true
     };
+    let requestMedia;
 
     const applyMediaPermissions = update => {
         if (!update || Number(update.sessionId) !== sessionId) return;
@@ -412,7 +413,7 @@ document.addEventListener("DOMContentLoaded", () => {
         }
     };
 
-    const requestMedia = async kind => {
+    requestMedia = async kind => {
         const hasTrack = localStream.getTracks().some(track => track.kind === kind && track.readyState === "live");
         if (hasTrack) return;
         if (!navigator.mediaDevices?.getUserMedia) {
