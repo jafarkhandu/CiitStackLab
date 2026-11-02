@@ -198,6 +198,14 @@ document.addEventListener("DOMContentLoaded", () => {
         selfTile.append(selfPin);
     }
 
+    const applyParticipantStreamState = peer => {
+        const videoTrack = peer.remoteStream?.getVideoTracks().find(track => track.readyState === "live");
+        const cameraActive = Boolean(videoTrack && videoTrack.enabled && !videoTrack.muted);
+        peer.tile.video.hidden = !cameraActive;
+        peer.tile.placeholder.hidden = cameraActive;
+        peer.tile.tile.classList.toggle("ciit-meet-camera-off", !cameraActive);
+    };
+
     const addLocalTracksToPeer = (peer) => {
         localStream.getTracks().forEach(track => {
             const kind = track.kind;
@@ -332,19 +340,16 @@ document.addEventListener("DOMContentLoaded", () => {
 
         pc.ontrack = event => {
             const stream = event.streams[0] || new MediaStream([event.track]);
-            peer.tile.video.srcObject = stream;
-            peer.tile.video.hidden = false;
-            peer.tile.placeholder.hidden = true;
+            if (!peer.remoteStream) peer.remoteStream = new MediaStream();
+            if (!peer.remoteStream.getTracks().some(track => track.id === event.track.id)) {
+                peer.remoteStream.addTrack(event.track);
+            }
+            peer.tile.video.srcObject = peer.remoteStream;
             if (event.track.kind === "audio" && !audioMeters.has(peerId)) {
                 audioMeters.set(peerId, createAudioMeter(stream));
             }
             if (event.track.kind === "video") {
-                const refreshRemoteVideoState = () => {
-                    const activeVideoTrack = stream.getVideoTracks().some(track => track.readyState === "live" && track.enabled && !track.muted);
-                    peer.tile.video.hidden = !activeVideoTrack;
-                    peer.tile.placeholder.hidden = activeVideoTrack;
-                    peer.tile.tile.classList.toggle("ciit-meet-camera-off", !activeVideoTrack);
-                };
+                const refreshRemoteVideoState = () => applyParticipantStreamState(peer);
                 event.track.onmute = refreshRemoteVideoState;
                 event.track.onunmute = refreshRemoteVideoState;
                 event.track.onended = refreshRemoteVideoState;
