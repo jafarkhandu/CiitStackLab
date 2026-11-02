@@ -1,3 +1,4 @@
+using System.Collections.Concurrent;
 using System.Security.Claims;
 using CIITStackLab.Infrastructure.Persistence;
 using Microsoft.AspNetCore.Authorization;
@@ -10,6 +11,7 @@ namespace CIITStackLab.WebApp.Hubs;
 public sealed class MeetHub : Hub
 {
     private readonly ApplicationDbContext _dbContext;
+    private static readonly ConcurrentDictionary<string, int> PeerSessions = new();
 
     public MeetHub(ApplicationDbContext dbContext)
     {
@@ -17,8 +19,10 @@ public sealed class MeetHub : Hub
     }
 
     public static string SessionGroup(int sessionId) => $"meet-session-{sessionId}";
+    public static string AdminSessionGroup(int sessionId) => $"meet-session-admins-{sessionId}";
     public static string BatchGroup(int batchId) => $"meet-batch-{batchId}";
     public const string AdminGroup = "meet-admins";
+    public static string PeerGroup(int sessionId) => $"meet-session-peers-{sessionId}";
 
     public async Task JoinAdminUpdates()
     {
@@ -143,6 +147,130 @@ public sealed class MeetHub : Hub
             }
         }
 
-        await Groups.AddToGroupAsync(Context.ConnectionId, SessionGroup(sessionId), Context.ConnectionAborted);
+        if (isAdmin)
+        {
+            await Groups.AddToGroupAsync(Context.ConnectionId, AdminSessionGroup(sessionId), Context.ConnectionAborted);
+        }
+        else
+        {
+            await Groups.AddToGroupAsync(Context.ConnectionId, SessionGroup(sessionId), Context.ConnectionAborted);
+        }
+
+        var isActive = session.Status == "Live"
+            && session.StartedAtUtc.HasValue
+            && session.StartedAtUtc.Value.AddMinutes(session.DurationMinutes) > DateTime.UtcNow;
+        var isAdmittedStudent = isAdmin || (isActive && await _dbContext.MeetSessionParticipants
+            .AsNoTracking()
+            .AnyAsync(participant => participant.MeetSessionId == sessionId
+                && participant.StudentUserId == Context.UserIdentifier
+                && participant.Status == "Admitted", Context.ConnectionAborted));
+
+        if (isActive && isAdmittedStudent)
+        {
+            await EnsurePeerAccessAsync(sessionId);
+            await Groups.AddToGroupAsync(Context.ConnectionId, PeerGroup(sessionId), Context.ConnectionAborted);
+            PeerSessions[Context.ConnectionId] = sessionId;
+
+            var existingPeerIds = PeerSessions
+                .Where(pair => pair.Value == sessionId && pair.Key != Context.ConnectionId)
+                .Select(pair => pair.Key)
+                .ToArray();
+
+            await Clients.Caller.SendAsync("MeetExistingPeers", existingPeerIds, Context.ConnectionAborted);
+            await Clients.GroupExcept(PeerGroup(sessionId), new[] { Context.ConnectionId })
+                .SendAsync("MeetPeerJoined", Context.ConnectionId, Context.ConnectionAborted);
+        }
+    } 
+
+    public async Task RelayWebRtcSignal(int sessionId, string targetConnectionId, string signalType, object signalData)
+    {
+        if (string.IsNullOrWhiteSpace(targetConnectionId)
+            || targetConnectionId.Length > 128
+            || signalType is not ("Offer" or "Answer" or "IceCandidate"))
+        {
+            throw new HubException("Invalid WebRTC signal.");
+        }
+
+        await EnsurePeerAccessAsync(sessionId);
+
+        if (!PeerSessions.TryGetValue(Context.ConnectionId, out var senderSessionId)
+            || senderSessionId != sessionId
+            || !PeerSessions.TryGetValue(targetConnectionId, out var targetSessionId)
+            || targetSessionId != sessionId)
+        {
+            throw new HubException("Peer is not connected to this meeting.");
+        }
+
+        await Clients.Client(targetConnectionId).SendAsync("MeetWebRtcSignal", new
+        {
+            sessionId,
+            senderConnectionId = Context.ConnectionId,
+            signalType,
+            signalData
+        }, Context.ConnectionAborted);
+    }
+
+    public async Task LeavePeerRoom(int sessionId)
+    {
+        if (PeerSessions.TryGetValue(Context.ConnectionId, out var mappedSessionId)
+            && mappedSessionId == sessionId)
+        {
+            PeerSessions.TryRemove(Context.ConnectionId, out _);
+            await Groups.RemoveFromGroupAsync(Context.ConnectionId, PeerGroup(sessionId), Context.ConnectionAborted);
+            await Clients.Group(PeerGroup(sessionId)).SendAsync("MeetPeerLeft", Context.ConnectionId, Context.ConnectionAborted);
+        }
+    }
+
+    private async Task EnsurePeerAccessAsync(int sessionId)
+    {
+        var now = DateTime.UtcNow;
+        var session = await _dbContext.MeetSessions
+            .AsNoTracking()
+            .Where(item => item.Id == sessionId && !item.MeetBatch.IsArchived)
+            .Select(item => new
+            {
+                item.MeetBatchId,
+                item.Status,
+                item.StartedAtUtc,
+                item.DurationMinutes
+            })
+            .SingleOrDefaultAsync(Context.ConnectionAborted);
+
+        if (session is null
+            || session.Status != "Live"
+            || !session.StartedAtUtc.HasValue
+            || session.StartedAtUtc.Value.AddMinutes(session.DurationMinutes) <= now)
+        {
+            throw new HubException("Meeting is not active.");
+        }
+
+        if (Context.User!.IsInRole("Admin") || Context.User.IsInRole("Super User"))
+            return;
+
+        var studentId = Context.UserIdentifier;
+        if (string.IsNullOrWhiteSpace(studentId)
+            || !Context.User.IsInRole("Student")
+            || !await _dbContext.MeetBatchMembers.AsNoTracking().AnyAsync(
+                member => member.MeetBatchId == session.MeetBatchId
+                    && member.StudentUserId == studentId,
+                Context.ConnectionAborted)
+            || !await _dbContext.MeetSessionParticipants.AsNoTracking().AnyAsync(
+                participant => participant.MeetSessionId == sessionId
+                    && participant.StudentUserId == studentId
+                    && participant.Status == "Admitted",
+                Context.ConnectionAborted))
+        {
+            throw new HubException("You are not admitted to this meeting.");
+        }
+    }
+
+    public override async Task OnDisconnectedAsync(Exception? exception)
+    {
+        if (PeerSessions.TryRemove(Context.ConnectionId, out var sessionId))
+        {
+            await Clients.Group(PeerGroup(sessionId)).SendAsync("MeetPeerLeft", Context.ConnectionId);
+        }
+
+        await base.OnDisconnectedAsync(exception);
     }
 }

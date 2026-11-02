@@ -369,10 +369,65 @@ document.addEventListener("DOMContentLoaded", () => {
         renderPendingRequests(state.participants || []);
     };
 
+    const showMeetToast = notification => {
+        const containerId = "ciit-meet-toast-container";
+        let container = document.getElementById(containerId);
+        if (!container) {
+            container = document.createElement("div");
+            container.id = containerId;
+            container.setAttribute("aria-live", "polite");
+            container.setAttribute("aria-atomic", "false");
+            container.style.cssText = "position:fixed;top:20px;right:20px;z-index:10000;display:flex;flex-direction:column;gap:10px;width:min(360px,calc(100vw - 32px));";
+            document.body.append(container);
+        }
+
+        const toast = document.createElement("div");
+        const type = ["success", "warning", "error"].includes(notification?.type) ? notification.type : "info";
+        toast.style.cssText = "background:rgba(20,25,38,.94);color:#fff;border:1px solid rgba(255,255,255,.18);border-left:4px solid " +
+            (type === "success" ? "#38bdf8" : type === "warning" ? "#fbbf24" : type === "error" ? "#fb7185" : "#818cf8") +
+            ";border-radius:12px;padding:12px 14px;box-shadow:0 12px 32px rgba(0,0,0,.24);backdrop-filter:blur(12px);font:500 13px/1.45 system-ui,sans-serif;animation:ciitMeetToastIn .2s ease-out;";
+        const heading = document.createElement("strong");
+        heading.textContent = notification?.title || "Meet notification";
+        heading.style.cssText = "display:block;font-size:14px;margin-bottom:3px;";
+        const message = document.createElement("div");
+        message.textContent = notification?.message || "";
+        toast.append(heading, message);
+        container.append(toast);
+
+        if (!document.getElementById("ciit-meet-toast-animation")) {
+            const style = document.createElement("style");
+            style.id = "ciit-meet-toast-animation";
+            style.textContent = "@keyframes ciitMeetToastIn{from{opacity:0;transform:translateY(-8px)}to{opacity:1;transform:translateY(0)}}";
+            document.head.append(style);
+        }
+        window.setTimeout(() => {
+            toast.style.transition = "opacity .2s ease,transform .2s ease";
+            toast.style.opacity = "0";
+            toast.style.transform = "translateY(-8px)";
+            window.setTimeout(() => toast.remove(), 220);
+        }, 5000);
+    };
+
+    connection.on("MeetToast", showMeetToast);
+
     connection.on("MeetRoomUpdated", updateRoom);
     connection.on("MeetMyParticipantStatus", update => {
         if (update.sessionId !== sessionId) return;
+        const previousStatus = room.dataset.participantStatus;
         room.dataset.participantStatus = update.status;
+        if (update.status === "Admitted" && previousStatus !== "Admitted") {
+            connection.invoke("JoinMeetingRoom", sessionId)
+                .catch(error => console.error("Meet peer room admission failed:", error));
+        } else if (update.status === "Rejected" || update.status === "Removed"
+            || (update.sessionStatus !== "Live" && update.sessionStatus !== "Scheduled")) {
+            window.ciitMeetWebRtcCleanup?.();
+        }
+        if (previousStatus !== update.status) {
+            if (update.status === "Admitted") showMeetToast({ title: "Access approved", message: "The host admitted you to the meeting.", type: "success" });
+            else if (update.status === "Rejected") showMeetToast({ title: "Join request declined", message: "The host declined your request.", type: "warning" });
+            else if (update.status === "Removed") showMeetToast({ title: "Removed from meeting", message: "The host removed you from this meeting.", type: "error" });
+            else if (update.sessionStatus !== "Live" && update.sessionStatus !== "Scheduled") showMeetToast({ title: "Meeting ended", message: "This meeting is no longer live.", type: "info" });
+        }
         if (update.sessionStatus !== "Live" && update.sessionStatus !== "Scheduled") {
             const stage = room.querySelector("[data-meet-room-stage]");
             const waiting = room.querySelector("[data-meet-waiting-screen]");
@@ -404,7 +459,11 @@ document.addEventListener("DOMContentLoaded", () => {
         await connection.invoke("JoinMeetingRoom", sessionId);
     });
 
-    connection.start()
+    window.ciitMeetSignalRConnection = connection;
+    window.ciitMeetSignalRReady = connection.start()
         .then(() => connection.invoke("JoinMeetingRoom", sessionId))
-        .catch(error => console.error("Meet live connection failed:", error));
+        .catch(error => {
+            console.error("Meet live connection failed:", error);
+            throw error;
+        });
 });

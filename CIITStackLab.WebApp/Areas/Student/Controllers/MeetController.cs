@@ -15,11 +15,13 @@ public sealed class MeetController : Controller
 {
     private readonly ApplicationDbContext _dbContext;
     private readonly MeetRealtimeService _meetRealtime;
+    private readonly MeetNotificationService _notifications;
 
-    public MeetController(ApplicationDbContext dbContext, MeetRealtimeService meetRealtime)
+    public MeetController(ApplicationDbContext dbContext, MeetRealtimeService meetRealtime, MeetNotificationService notifications)
     {
         _dbContext = dbContext;
         _meetRealtime = meetRealtime;
+        _notifications = notifications;
     }
 
     [HttpGet]
@@ -120,6 +122,7 @@ public sealed class MeetController : Controller
 
         await _dbContext.SaveChangesAsync(cancellationToken);
         await _meetRealtime.PublishSessionUpdateAsync(id, cancellationToken);
+        await _notifications.NotifySessionAdminsAsync(id, "Join request received", "A student has requested to join the meeting.", "info", cancellationToken);
         return RedirectToAction(nameof(Room), new { id });
     }
 

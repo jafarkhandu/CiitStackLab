@@ -240,6 +240,34 @@ document.addEventListener("DOMContentLoaded", () => {
         if (studentRoot) updateStudentBatch(state);
     };
 
+    connection.on("MeetToast", notification => {
+        let container = document.getElementById("ciit-meet-toast-container");
+        if (!container) {
+            container = document.createElement("div");
+            container.id = "ciit-meet-toast-container";
+            container.setAttribute("aria-live", "polite");
+            container.style.cssText = "position:fixed;top:20px;right:20px;z-index:10000;display:flex;flex-direction:column;gap:10px;width:min(360px,calc(100vw - 32px));";
+            document.body.append(container);
+        }
+
+        const toast = document.createElement("div");
+        const type = ["success", "warning", "error"].includes(notification?.type) ? notification.type : "info";
+        const border = type === "success" ? "#38bdf8" : type === "warning" ? "#fbbf24" : type === "error" ? "#fb7185" : "#818cf8";
+        toast.style.cssText = "background:rgba(20,25,38,.94);color:#fff;border:1px solid rgba(255,255,255,.18);border-left:4px solid " + border + ";border-radius:12px;padding:12px 14px;box-shadow:0 12px 32px rgba(0,0,0,.24);backdrop-filter:blur(12px);font:500 13px/1.45 system-ui,sans-serif;";
+        const title = document.createElement("strong");
+        title.textContent = notification?.title || "Meet notification";
+        title.style.cssText = "display:block;font-size:14px;margin-bottom:3px;";
+        const message = document.createElement("div");
+        message.textContent = notification?.message || "";
+        toast.append(title, message);
+        container.append(toast);
+        window.setTimeout(() => {
+            toast.style.transition = "opacity .2s ease";
+            toast.style.opacity = "0";
+            window.setTimeout(() => toast.remove(), 220);
+        }, 5000);
+    });
+
     connection.on("MeetAdminUpdated", handleUpdate);
     connection.on("MeetBatchUpdated", handleUpdate);
 

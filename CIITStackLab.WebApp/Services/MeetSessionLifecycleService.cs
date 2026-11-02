@@ -10,13 +10,16 @@ public sealed class MeetSessionLifecycleService : BackgroundService
 {
     private readonly IServiceScopeFactory _scopeFactory;
     private readonly ILogger<MeetSessionLifecycleService> _logger;
+    private readonly MeetNotificationService _notifications;
 
     public MeetSessionLifecycleService(
         IServiceScopeFactory scopeFactory,
-        ILogger<MeetSessionLifecycleService> logger)
+        ILogger<MeetSessionLifecycleService> logger,
+        MeetNotificationService notifications)
     {
         _scopeFactory = scopeFactory;
         _logger = logger;
+        _notifications = notifications;
     }
 
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
@@ -45,6 +48,27 @@ public sealed class MeetSessionLifecycleService : BackgroundService
         await using var scope = _scopeFactory.CreateAsyncScope();
         var dbContext = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
         var now = DateTime.UtcNow;
+
+        var reminderSessions = await dbContext.MeetSessions
+            .Include(session => session.MeetBatch)
+            .Where(session => session.Status == "Scheduled"
+                && !session.MeetBatch.IsArchived
+                && session.ReminderSentAtUtc == null
+                && session.StartsAtUtc > now
+                && session.StartsAtUtc <= now.AddMinutes(10))
+            .ToListAsync(cancellationToken);
+
+        foreach (var session in reminderSessions)
+        {
+            var minutesUntilStart = Math.Max(1, (int)Math.Ceiling((session.StartsAtUtc - now).TotalMinutes));
+            var message = $"Meeting \"{session.Title}\" starts in {minutesUntilStart} minute(s).";
+            await _notifications.NotifyBatchAsync(session.MeetBatchId, "Meet reminder", message, "warning", cancellationToken);
+            await _notifications.NotifyAdminsAsync("Upcoming Meet", $"{message} Batch: {session.MeetBatch.Name}", cancellationToken);
+            session.ReminderSentAtUtc = now;
+        }
+
+        if (reminderSessions.Count > 0)
+            await dbContext.SaveChangesAsync(cancellationToken);
 
         var expiredSessions = await dbContext.MeetSessions
             .Include(session => session.Participants)

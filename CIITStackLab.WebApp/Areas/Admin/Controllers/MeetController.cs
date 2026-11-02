@@ -17,11 +17,13 @@ public sealed class MeetController : Controller
 {
     private readonly ApplicationDbContext _dbContext;
     private readonly MeetRealtimeService _meetRealtime;
+    private readonly MeetNotificationService _notifications;
 
-    public MeetController(ApplicationDbContext dbContext, MeetRealtimeService meetRealtime)
+    public MeetController(ApplicationDbContext dbContext, MeetRealtimeService meetRealtime, MeetNotificationService notifications)
     {
         _dbContext = dbContext;
         _meetRealtime = meetRealtime;
+        _notifications = notifications;
     }
 
     [HttpGet]
@@ -219,6 +221,8 @@ public sealed class MeetController : Controller
         session.StartedAtUtc = now;
         await _dbContext.SaveChangesAsync(cancellationToken);
         await _meetRealtime.PublishSessionUpdateAsync(id, cancellationToken);
+        await _notifications.NotifyBatchAsync(session.MeetBatchId, "Meeting is live", $"{session.Title} has started. Join now.", "success", cancellationToken);
+        await _notifications.NotifySessionAdminsAsync(id, "Meeting started", $"{session.Title} is now live.", "success", cancellationToken);
 
         return RedirectToAction(nameof(Room), new { id });
     }
@@ -254,6 +258,8 @@ public sealed class MeetController : Controller
 
             await _dbContext.SaveChangesAsync(cancellationToken);
             await _meetRealtime.PublishSessionUpdateAsync(id, cancellationToken);
+            await _notifications.NotifyBatchAsync(session.MeetBatchId, "Meeting ended", $"{session.Title} has ended.", "info", cancellationToken);
+            await _notifications.NotifySessionAdminsAsync(id, "Meeting ended", $"{session.Title} has ended.", "info", cancellationToken);
         }
 
         return RedirectToAction(nameof(Index));
@@ -276,6 +282,7 @@ public sealed class MeetController : Controller
         session.CancelledAtUtc = DateTime.UtcNow;
         await _dbContext.SaveChangesAsync(cancellationToken);
         await _meetRealtime.PublishSessionUpdateAsync(id, cancellationToken);
+        await _notifications.NotifyBatchAsync(session.MeetBatchId, "Meeting cancelled", $"{session.Title} has been cancelled.", "warning", cancellationToken);
 
         return RedirectWithMessage("Meeting cancelled.", true);
     }
@@ -340,6 +347,14 @@ public sealed class MeetController : Controller
 
         await _dbContext.SaveChangesAsync(cancellationToken);
         await _meetRealtime.PublishSessionUpdateAsync(participant.MeetSessionId, cancellationToken);
+        var admitted = string.Equals(decision, "admit", StringComparison.OrdinalIgnoreCase);
+        await _notifications.NotifyStudentAsync(participant.StudentUserId,
+            admitted ? "Join request approved" : "Join request declined",
+            admitted ? $"You have been admitted to {participant.MeetSession.Title}." : $"Your request to join {participant.MeetSession.Title} was declined.",
+            admitted ? "success" : "warning", cancellationToken);
+        await _notifications.NotifySessionAdminsAsync(participant.MeetSessionId,
+            admitted ? "Participant admitted" : "Participant rejected",
+            admitted ? "A student was admitted to the meeting." : "A join request was rejected.", "info", cancellationToken);
         return RedirectToAction(nameof(Room), new { id = participant.MeetSessionId });
     }
 
@@ -353,10 +368,25 @@ public sealed class MeetController : Controller
         if (participant is null)
             return NotFound();
 
-        if (participant.Status == "Admitted" || participant.Status == "Pending")
+        var now = DateTime.UtcNow;
+        var session = await _dbContext.MeetSessions
+            .AsNoTracking()
+            .SingleOrDefaultAsync(item => item.Id == participant.MeetSessionId, cancellationToken);
+
+        if (session is null)
+            return NotFound();
+
+        if (session.Status != "Live"
+            || !session.StartedAtUtc.HasValue
+            || session.StartedAtUtc.Value.AddMinutes(session.DurationMinutes) <= now)
+        {
+            return BadRequest("Participants can only be removed from an active meeting.");
+        }
+
+        if (participant.Status is "Admitted" or "Pending")
         {
             participant.Status = "Removed";
-            participant.LeftAtUtc = DateTime.UtcNow;
+            participant.LeftAtUtc = now;
             await _dbContext.SaveChangesAsync(cancellationToken);
             await _meetRealtime.PublishSessionUpdateAsync(participant.MeetSessionId, cancellationToken);
         }
@@ -374,10 +404,20 @@ public sealed class MeetController : Controller
         CancellationToken cancellationToken)
     {
         var participant = await _dbContext.MeetSessionParticipants
+            .Include(x => x.MeetSession)
             .SingleOrDefaultAsync(x => x.Id == id, cancellationToken);
 
         if (participant is null)
             return NotFound();
+
+        var now = DateTime.UtcNow;
+        if (participant.Status != "Admitted"
+            || participant.MeetSession.Status != "Live"
+            || !participant.MeetSession.StartedAtUtc.HasValue
+            || participant.MeetSession.StartedAtUtc.Value.AddMinutes(participant.MeetSession.DurationMinutes) <= now)
+        {
+            return BadRequest("Permissions can only be changed for admitted participants in an active meeting.");
+        }
 
         participant.CanUseMicrophone = canUseMicrophone;
         participant.CanUseCamera = canUseCamera;
@@ -564,6 +604,12 @@ public sealed class MeetController : Controller
 
         await _dbContext.SaveChangesAsync(cancellationToken);
         await _meetRealtime.PublishSessionUpdateAsync(session.Id, cancellationToken);
+        await _notifications.NotifyBatchAsync(session.MeetBatchId,
+            isInstant ? "Meeting is live" : "Meeting scheduled",
+            isInstant ? $"{session.Title} has started. Join now." : $"{session.Title} is scheduled for {session.StartsAtUtc.ToLocalTime():dd MMM, hh:mm tt}.",
+            isInstant ? "success" : "info", cancellationToken);
+        await _notifications.NotifyAdminsAsync(isInstant ? "Meet started" : "Meet scheduled",
+            $"{session.Title} — batch {batch.Name}.", cancellationToken);
         var successMessage = isInstant
             ? "Instant meeting created successfully."
             : "Meeting scheduled successfully.";
