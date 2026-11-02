@@ -175,7 +175,7 @@ document.addEventListener("DOMContentLoaded", () => {
         });
     };
 
-    const createRemoteTile = peerId => {
+    const createRemoteTile = (peerId, displayName = "Participant") => {
         const tile = document.createElement("article");
         tile.className = "ciit-meet-video-tile ciit-meet-video-remote";
         tile.dataset.peerConnectionId = peerId;
@@ -198,7 +198,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
         const name = document.createElement("span");
         name.className = "ciit-meet-video-name";
-        name.textContent = "Participant";
+        name.textContent = displayName;
 
         const pin = document.createElement("button");
         pin.type = "button";
@@ -260,16 +260,23 @@ document.addEventListener("DOMContentLoaded", () => {
     const sendSignal = (peerId, signalType, signalData) =>
         connection.invoke("RelayWebRtcSignal", sessionId, peerId, signalType, signalData);
 
-    const createPeer = peerId => {
+    const createPeer = (peerId, displayName = "Participant") => {
         if (!peerId || peerId === connection.connectionId) return null;
-        if (peers.has(peerId)) return peers.get(peerId);
+        if (peers.has(peerId)) {
+            const existing = peers.get(peerId);
+            if (displayName && displayName !== "Participant") {
+                const label = existing.tile.tile.querySelector(".ciit-meet-video-name");
+                if (label) label.textContent = displayName;
+            }
+            return existing;
+        }
 
         const pc = new RTCPeerConnection({
             iceServers: []
         });
         const peer = {
             connection: pc,
-            tile: createRemoteTile(peerId),
+            tile: createRemoteTile(peerId, displayName),
             senders: { audio: null, video: null },
             polite: String(connection.connectionId) > String(peerId),
             makingOffer: false,
@@ -550,18 +557,25 @@ document.addEventListener("DOMContentLoaded", () => {
         });
     };
 
-    connection.on("MeetExistingPeers", peerIds => {
-        (peerIds || []).forEach(peerId => {
-            const peer = createPeer(peerId);
+    connection.on("MeetExistingPeers", peerInfos => {
+        (peerInfos || []).forEach(peerInfo => {
+            const peerId = typeof peerInfo === "string" ? peerInfo : peerInfo?.connectionId;
+            const displayName = typeof peerInfo === "string" ? "Participant" : peerInfo?.displayName || "Participant";
+            const peer = createPeer(peerId, displayName);
             if (peer) {
                 addLocalTracksToPeer(peer);
-                if (localStream.getTracks().length === 0) {
+                if (localStream.getTracks().length === 0
+                    && !peer.connection.getDataChannels?.().length) {
                     peer.connection.createDataChannel("ciit-meet-peer-init");
                 }
             }
         });
     });
-    connection.on("MeetPeerJoined", peerId => createPeer(peerId));
+    connection.on("MeetPeerJoined", peerInfo => {
+        const peerId = typeof peerInfo === "string" ? peerInfo : peerInfo?.connectionId;
+        const displayName = typeof peerInfo === "string" ? "Participant" : peerInfo?.displayName || "Participant";
+        createPeer(peerId, displayName);
+    });
     connection.on("MeetPeerLeft", removePeer);
     connection.on("MeetWebRtcSignal", handleSignal);
 
