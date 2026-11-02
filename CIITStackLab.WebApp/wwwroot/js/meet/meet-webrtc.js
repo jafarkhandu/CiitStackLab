@@ -13,6 +13,10 @@ document.addEventListener("DOMContentLoaded", () => {
     }
 
     const peers = new Map();
+    const audioMeters = new Map();
+    let audioContext = null;
+    let localAudioMeter = null;
+    let activeSpeakerTile = null;
     let localStream = new MediaStream();
     let screenStream = null;
     let localVideo = grid.querySelector(".ciit-meet-video-self video");
@@ -90,6 +94,36 @@ document.addEventListener("DOMContentLoaded", () => {
         localVideo.srcObject = hasVideo ? localStream : null;
         localVideo.hidden = !hasVideo;
         if (localPlaceholder) localPlaceholder.hidden = hasVideo;
+    };
+
+    const ensureAudioContext = () => {
+        if (!audioContext) {
+            const AudioContextType = window.AudioContext || window.webkitAudioContext;
+            if (AudioContextType) audioContext = new AudioContextType();
+        }
+        if (audioContext?.state === "suspended") audioContext.resume().catch(() => {});
+        return audioContext;
+    };
+
+    const createAudioMeter = stream => {
+        const context = ensureAudioContext();
+        if (!context) return null;
+        const source = context.createMediaStreamSource(stream);
+        const analyser = context.createAnalyser();
+        analyser.fftSize = 512;
+        source.connect(analyser);
+        return { source, analyser, data: new Uint8Array(analyser.fftSize) };
+    };
+
+    const readAudioLevel = meter => {
+        if (!meter) return 0;
+        meter.analyser.getByteTimeDomainData(meter.data);
+        let sum = 0;
+        for (const value of meter.data) {
+            const normalized = (value - 128) / 128;
+            sum += normalized * normalized;
+        }
+        return Math.sqrt(sum / meter.data.length);
     };
 
     const addLocalTracksToPeer = (peer) => {
@@ -172,6 +206,9 @@ document.addEventListener("DOMContentLoaded", () => {
         peer.connection.onicecandidate = null;
         peer.connection.onnegotiationneeded = null;
         peer.connection.close();
+        const meter = audioMeters.get(peerId);
+        meter?.source.disconnect();
+        audioMeters.delete(peerId);
         peer.tile.tile.remove();
         peers.delete(peerId);
         if (grid.querySelectorAll(".ciit-meet-video-remote").length === 0 && waitingTile) {
@@ -211,6 +248,9 @@ document.addEventListener("DOMContentLoaded", () => {
             peer.tile.video.srcObject = stream;
             peer.tile.video.hidden = false;
             peer.tile.placeholder.hidden = true;
+            if (event.track.kind === "audio" && !audioMeters.has(peerId)) {
+                audioMeters.set(peerId, createAudioMeter(stream));
+            }
             event.track.onmute = () => {
                 peer.tile.placeholder.hidden = false;
             };
