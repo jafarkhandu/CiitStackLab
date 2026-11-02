@@ -150,6 +150,74 @@ public sealed class MeetHub : Hub
         if (isAdmin)
         {
             await Groups.AddToGroupAsync(Context.ConnectionId, AdminSessionGroup(sessionId), Context.ConnectionAborted);
+
+            var adminSession = await _dbContext.MeetSessions
+                .AsNoTracking()
+                .Where(item => item.Id == sessionId)
+                .Select(item => new
+                {
+                    item.Id,
+                    item.MeetBatchId,
+                    item.Title,
+                    item.Status,
+                    item.StartsAtUtc,
+                    item.StartedAtUtc,
+                    item.EndedAtUtc,
+                    item.CancelledAtUtc,
+                    item.DurationMinutes,
+                    item.WaitingRoomEnabled,
+                    item.RecordingEnabled,
+                    item.RecordingStatus,
+                    item.RecordingRetentionUntilUtc
+                })
+                .SingleAsync(Context.ConnectionAborted);
+
+            var adminParticipants = await (
+                from participant in _dbContext.MeetSessionParticipants.AsNoTracking()
+                join user in _dbContext.Users.AsNoTracking() on participant.StudentUserId equals user.Id
+                where participant.MeetSessionId == sessionId
+                orderby participant.RequestedAtUtc
+                select new
+                {
+                    participant.Id,
+                    StudentName = user.UserName ?? user.Email ?? "Student",
+                    participant.Status,
+                    participant.CanUseMicrophone,
+                    participant.CanUseCamera,
+                    participant.CanShareScreen
+                }).ToListAsync(Context.ConnectionAborted);
+
+            await Clients.Caller.SendAsync("MeetRoomUpdated", new
+            {
+                sessionId = adminSession.Id,
+                batchId = adminSession.MeetBatchId,
+                adminSession.Title,
+                adminSession.Status,
+                startsAtUtc = adminSession.StartsAtUtc,
+                startedAtUtc = adminSession.StartedAtUtc,
+                endedAtUtc = adminSession.EndedAtUtc,
+                cancelledAtUtc = adminSession.CancelledAtUtc,
+                adminSession.DurationMinutes,
+                adminSession.WaitingRoomEnabled,
+                adminSession.RecordingEnabled,
+                adminSession.RecordingStatus,
+                recordingRetentionUntilUtc = adminSession.RecordingRetentionUntilUtc,
+                pendingCount = adminParticipants.Count(item => item.Status == "Pending"),
+                participantCount = adminParticipants.Count(item => item.Status == "Admitted"),
+                participants = adminParticipants
+            }, Context.ConnectionAborted);
+
+            var pendingCount = adminParticipants.Count(item => item.Status == "Pending");
+            if (pendingCount > 0 && adminSession.Status == "Live")
+            {
+                await Clients.Caller.SendAsync("MeetToast", new
+                {
+                    title = "Join requests waiting",
+                    message = $"{pendingCount} student(s) are waiting for your approval.",
+                    type = "info",
+                    createdAtUtc = DateTime.UtcNow
+                }, Context.ConnectionAborted);
+            }
         }
         else
         {
