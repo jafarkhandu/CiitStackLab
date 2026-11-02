@@ -386,11 +386,11 @@ document.addEventListener("DOMContentLoaded", () => {
             localStream.addTrack(track);
             if (track.kind === "audio") localAudioMeter = createAudioMeter(localStream);
             peers.forEach(peer => {
-                const sender = peer.senders[mediaKind];
+                const sender = peer.senders[kind];
                 if (sender && sender.track === null) {
                     sender.replaceTrack(track).catch(error => console.warn("Device track attach failed:", error));
                 } else {
-                    peer.senders[mediaKind] = peer.connection.addTrack(track, localStream);
+                    peer.senders[kind] = peer.connection.addTrack(track, localStream);
                 }
             });
         });
@@ -440,6 +440,7 @@ document.addEventListener("DOMContentLoaded", () => {
         try {
             await setTrackEnabled("mic", enabled);
         } catch (error) {
+            await setTrackEnabled("mic", false).catch(() => {});
             setToggleVisual(micButton, "mic", false);
             saveMediaPreference("mic", false);
             toast("Microphone access failed", error.message || "Allow microphone permission in your browser.");
@@ -451,6 +452,7 @@ document.addEventListener("DOMContentLoaded", () => {
         try {
             await setTrackEnabled("camera", enabled);
         } catch (error) {
+            await setTrackEnabled("camera", false).catch(() => {});
             setToggleVisual(cameraButton, "camera", false);
             saveMediaPreference("camera", false);
             toast("Camera access failed", error.message || "Allow camera permission in your browser.");
@@ -537,11 +539,8 @@ document.addEventListener("DOMContentLoaded", () => {
 
             if (!mediaPermissions[type] && type !== "share") {
                 const mediaKind = type === "mic" ? "audio" : "video";
-                const track = localStream.getTracks().find(item => item.kind === mediaKind);
-                if (track) track.enabled = false;
                 setToggleVisual(button, type, false);
-                saveMediaPreference(type, false);
-                updateLocalPreview();
+                setTrackEnabled(type, false).catch(error => console.warn("Host device permission cleanup failed:", error));
             }
 
             if (!mediaPermissions.share && screenStream) {
