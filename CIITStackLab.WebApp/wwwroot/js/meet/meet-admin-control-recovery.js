@@ -23,6 +23,23 @@ document.addEventListener("DOMContentLoaded", () => {
         }
 
 
+        // Keep the host chat toggle's state and next submitted value in sync
+        // with the server-rendered room snapshot after each AJAX update.
+        const sourceChatForm = sourceRoom.querySelector("[data-meet-chat-enabled-form]");
+        const targetChatForm = room.querySelector("[data-meet-chat-enabled-form]");
+        if (sourceChatForm && targetChatForm) {
+            const sourceChatState = sourceChatForm.querySelector("[data-meet-chat-state]");
+            const targetChatState = targetChatForm.querySelector("[data-meet-chat-state]");
+            const sourceEnabledInput = sourceChatForm.querySelector('input[name="enabled"]');
+            const targetEnabledInput = targetChatForm.querySelector('input[name="enabled"]');
+            const sourceChatButton = sourceChatForm.querySelector("[data-meet-chat-toggle-submit]");
+            const targetChatButton = targetChatForm.querySelector("[data-meet-chat-toggle-submit]");
+
+            if (sourceChatState && targetChatState) targetChatState.textContent = sourceChatState.textContent;
+            if (sourceEnabledInput && targetEnabledInput) targetEnabledInput.value = sourceEnabledInput.value;
+            if (sourceChatButton && targetChatButton) targetChatButton.textContent = sourceChatButton.textContent;
+        }
+
         const sourceStatusText = sourceRoom.querySelector("[data-meet-status-text]");
         const targetStatusText = room.querySelector("[data-meet-status-text]");
         if (sourceStatusText && targetStatusText) targetStatusText.textContent = sourceStatusText.textContent;
@@ -77,6 +94,20 @@ document.addEventListener("DOMContentLoaded", () => {
                 throw new Error(message || "Meeting control update failed (" + response.status + ").");
             }
 
+
+            // Apply the authoritative JSON result immediately for the chat toggle.
+            // The recovery handler runs in capture phase and prevents the normal
+            // room-ui.js submit handler from processing this form.
+            if (form.matches("[data-meet-chat-enabled-form]")) {
+                const result = await response.clone().json().catch(() => null);
+                if (result?.success && typeof result.chatEnabled === "boolean") {
+                    window.ciitMeetSetChatEnabled?.(result.chatEnabled);
+                    const liveConnection = window.ciitMeetSignalRConnection;
+                    if (liveConnection?.state === "Connected") {
+                        await liveConnection.invoke("JoinChatRoom", Number(room.dataset.sessionId));
+                    }
+                }
+            }
 
             // Refresh the server-rendered snapshot when available; retain the
             // just-applied JSON state if this secondary refresh transiently fails.
