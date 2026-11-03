@@ -136,3 +136,149 @@ document.addEventListener("DOMContentLoaded", function () {
         }
     });
 });
+
+
+/* ==================== DASHBOARD QUICK ACTIONS ==================== */
+document.addEventListener("DOMContentLoaded", function () {
+    const statGrid = document.querySelector(".ciit-admin-stat-grid");
+    const modal = document.getElementById("ciitDashboardModal");
+    const modalBody = document.getElementById("ciitDashboardModalBody");
+    const modalTitle = document.getElementById("ciitDashboardModalTitle");
+    const modalSummary = document.getElementById("ciitDashboardModalSummary");
+
+    if (!statGrid || !modal || !modalBody || !modalTitle || !modalSummary || document.getElementById("ciitDashboardQuickActions")) {
+        return;
+    }
+
+    const actions = [
+        { title: "Add Course", description: "Create a new course", icon: "bi-journal-plus", url: "/Admin/Courses" },
+        { title: "Add Topic", description: "Create a learning topic", icon: "bi-diagram-3", url: "/Admin/Topics" },
+        { title: "Add Content", description: "Create a lesson or content", icon: "bi-file-earmark-plus", url: "/Admin/Content/Create" },
+        { title: "Add MCQ", description: "Create an assessment question", icon: "bi-ui-checks", url: "/Admin/Assessments/CreateMcq" },
+        { title: "Add Interview Question", description: "Add an interview question", icon: "bi-chat-square-text", url: "/Admin/Assessments/CreateInterviewQuestion" },
+        { title: "Add Practice Program", description: "Create a practice program", icon: "bi-code-square", url: "/Admin/Assessments/CreatePracticeProgram" }
+    ];
+
+    const style = document.createElement("style");
+    style.textContent = `
+        .ciit-dashboard-quick-actions {
+            display: grid;
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+            gap: 10px;
+            padding: 16px 0 2px;
+        }
+
+        .ciit-dashboard-quick-action {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            min-width: 0;
+            padding: 13px 14px;
+            border: 1px solid #e5eaf2;
+            border-radius: 14px;
+            background: #fff;
+            color: #172033;
+            text-decoration: none;
+            transition: border-color .18s ease, background .18s ease, transform .18s ease, box-shadow .18s ease;
+        }
+
+        .ciit-dashboard-quick-action:hover,
+        .ciit-dashboard-quick-action:focus-visible {
+            border-color: #b8d0fb;
+            background: #f8fbff;
+            box-shadow: 0 8px 20px rgba(23, 105, 255, .08);
+            transform: translateY(-1px);
+            color: #172033;
+            outline: none;
+        }
+
+        .ciit-dashboard-quick-action i {
+            width: 38px;
+            height: 38px;
+            flex: 0 0 38px;
+            display: grid;
+            place-items: center;
+            border-radius: 11px;
+            background: #eef4ff;
+            color: #1769ff;
+            font-size: 1rem;
+        }
+
+        .ciit-dashboard-quick-action strong {
+            display: block;
+            font-size: .8rem;
+            font-weight: 800;
+        }
+
+        .ciit-dashboard-quick-action span {
+            display: block;
+            margin-top: 3px;
+            color: #718096;
+            font-size: .68rem;
+            line-height: 1.35;
+        }
+
+        .ciit-dashboard-modal-dialog.ciit-dashboard-modal-dialog--quick {
+            width: min(620px, 100%);
+        }
+
+        @media (max-width: 520px) {
+            .ciit-dashboard-quick-actions {
+                grid-template-columns: 1fr;
+            }
+        }
+    `;
+    document.head.appendChild(style);
+
+    const card = document.createElement("article");
+    card.id = "ciitDashboardQuickActions";
+    card.className = "ciit-admin-stat-card";
+    card.setAttribute("tabindex", "0");
+    card.setAttribute("role", "button");
+    card.setAttribute("aria-label", "Open quick actions");
+    card.innerHTML = `
+        <div class="ciit-admin-stat-icon"><i class="bi bi-plus-circle"></i></div>
+        <div class="ciit-admin-stat-copy">
+            <span>Quick Actions</span>
+            <strong>Add New</strong>
+        </div>
+    `;
+    statGrid.appendChild(card);
+
+    const closeQuickActions = function () {
+        modal.classList.remove("ciit-dashboard-modal--quick");
+        modal.querySelector(".ciit-dashboard-modal-dialog")?.classList.remove("ciit-dashboard-modal-dialog--quick");
+    };
+
+    const openQuickActions = function () {
+        modalTitle.textContent = "Quick Actions";
+        modalSummary.textContent = "Choose what you want to add to the learning platform.";
+        modalBody.innerHTML = `
+            <div class="ciit-dashboard-quick-actions">
+                ${actions.map(function (action) {
+                    return `<a class="ciit-dashboard-quick-action" href="${action.url}">
+                        <i class="bi ${action.icon}"></i>
+                        <span><strong>${action.title}</strong>${action.description}</span>
+                    </a>`;
+                }).join("")}
+            </div>
+        `;
+        modal.querySelector(".ciit-dashboard-modal-dialog")?.classList.add("ciit-dashboard-modal-dialog--quick");
+        modal.hidden = false;
+        document.body.classList.add("ciit-dashboard-modal-open");
+        modal.querySelector(".ciit-dashboard-modal-close")?.focus();
+    };
+
+    card.addEventListener("click", openQuickActions);
+    card.addEventListener("keydown", function (event) {
+        if (event.key !== "Enter" && event.key !== " ") {
+            return;
+        }
+        event.preventDefault();
+        openQuickActions();
+    });
+
+    modal.querySelectorAll("[data-dashboard-modal-close]").forEach(function (button) {
+        button.addEventListener("click", closeQuickActions);
+    });
+});
