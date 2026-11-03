@@ -191,13 +191,14 @@ document.addEventListener("DOMContentLoaded", () => {
             credentials: "same-origin",
             headers: {
                 "Content-Type": "application/x-www-form-urlencoded; charset=UTF-8",
-                "RequestVerificationToken": getToken()
+                "RequestVerificationToken": getToken(),
+                "X-Requested-With": "XMLHttpRequest"
             },
             body
         });
         if (!response.ok) {
             const detail = await response.text().catch(() => "");
-            throw new Error(detail || "Meeting action failed.");
+            throw new Error(detail || "Meeting action failed (" + response.status + ").");
         }
 
         // Re-request the authoritative server snapshot after roster actions.
@@ -221,8 +222,24 @@ document.addEventListener("DOMContentLoaded", () => {
             button.disabled = true;
             try {
                 await action();
+                if (label === "Admit" || label === "Reject" || label === "Remove") {
+                    showMeetToast({
+                        title: label === "Admit" ? "Participant admitted"
+                            : label === "Reject" ? "Join request rejected"
+                                : "Participant removed",
+                        message: label === "Admit" ? "The student has been admitted to the meeting."
+                            : label === "Reject" ? "The join request was rejected."
+                                : "The participant was removed from the meeting.",
+                        type: "success"
+                    });
+                }
             } catch (error) {
                 console.error(error);
+                showMeetToast({
+                    title: "Participant action failed",
+                    message: error.message || "The action could not be completed. Please retry.",
+                    type: "error"
+                });
                 button.disabled = false;
             }
         });
