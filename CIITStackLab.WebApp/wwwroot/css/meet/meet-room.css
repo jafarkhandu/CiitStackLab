@@ -347,3 +347,34 @@ html,body{width:100%;min-height:100%;margin:0}
 /* Make the ended-meeting navigation consistently readable and tappable for both roles. */
 .ciit-meet-ended-screen a.ciit-meet-host-secondary{display:inline-flex;align-items:center;justify-content:center;min-height:36px;padding:8px 14px;color:#eaf1fb;text-decoration:none;cursor:pointer}
 .ciit-meet-ended-screen a.ciit-meet-host-secondary:hover{border-color:#7394bd;background:#354254;color:#fff}
+
+/* Keep participant permission controls grouped horizontally for a scannable roster. */
+.ciit-meet-glass-popup .ciit-meet-permission-form {
+    display: flex;
+    align-items: center;
+    justify-content: flex-start;
+    flex-wrap: nowrap;
+    gap: 12px;
+    min-width: 0;
+}
+.ciit-meet-glass-popup .ciit-meet-permission-form label {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    margin: 0;
+    white-space: nowrap;
+}
+.ciit-meet-glass-popup .ciit-meet-permission-form input[type="checkbox"] {
+    flex: 0 0 auto;
+    margin: 0;
+}
+.ciit-meet-glass-popup .ciit-meet-permission-form button {
+    flex: 0 0 auto;
+    white-space: nowrap;
+}
+@media (max-width: 650px) {
+    .ciit-meet-glass-popup .ciit-meet-permission-form {
+        gap: 8px;
+        flex-wrap: wrap;
+    }
+}
