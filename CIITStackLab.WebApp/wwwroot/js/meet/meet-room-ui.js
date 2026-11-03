@@ -56,6 +56,13 @@ document.addEventListener("DOMContentLoaded", () => {
                     throw new Error(detail || "Unable to update the meeting.");
                 }
 
+                if (form.matches("[data-meet-chat-enabled-form]")) {
+                    const result = await response.json();
+                    if (result?.success && typeof result.chatEnabled === "boolean") {
+                        window.ciitMeetSetChatEnabled?.(result.chatEnabled);
+                    }
+                }
+
                 const endingMeeting = submit?.hasAttribute("data-meet-end-button") === true;
                 if (room.dataset.isHost === "true"
                     && window.ciitMeetSignalRConnection?.state === "Connected") {
@@ -646,7 +653,16 @@ document.addEventListener("DOMContentLoaded", () => {
     const handButton = room.querySelector("[data-meet-raise-hand]");
     let chatEnabled = room.dataset.chatEnabled !== "false";
     let handRaised = false;
+    let unreadChatCount = 0;
     let chatJoined = false;
+    const unreadBadge = room.querySelector("[data-meet-chat-unread]");
+    const selfRaisedHand = room.querySelector("[data-meet-self-raised-hand]");
+
+    const renderUnreadChatCount = () => {
+        if (!unreadBadge) return;
+        unreadBadge.textContent = unreadChatCount > 99 ? "99+" : String(unreadChatCount);
+        unreadBadge.hidden = unreadChatCount === 0;
+    };
 
     if (!connection || !chatPanel || !chatFeed || !chatForm || !chatInput || !chatSend) return;
 
@@ -674,6 +690,7 @@ document.addEventListener("DOMContentLoaded", () => {
             if (stateLabel) stateLabel.textContent = chatEnabled ? "On" : "Off";
         }
     };
+    window.ciitMeetSetChatEnabled = setChatEnabled;
 
     const showFeatureToast = (title, message, accent = "#8b9cff") => {
         let container = document.getElementById("ciit-meet-toast-container");
@@ -709,7 +726,12 @@ document.addEventListener("DOMContentLoaded", () => {
         if (empty) empty.remove();
 
         const article = document.createElement("article");
-        article.className = "ciit-meet-chat-message";
+        const isOwnMessage = item.userId && item.userId === room.dataset.userId;
+        article.className = "ciit-meet-chat-message" + (isOwnMessage ? " is-own" : "");
+        if (!isOwnMessage && chatPanel.hidden) {
+            unreadChatCount += 1;
+            renderUnreadChatCount();
+        }
 
         const meta = document.createElement("div");
         meta.className = "ciit-meet-chat-message-meta";
@@ -751,6 +773,8 @@ document.addEventListener("DOMContentLoaded", () => {
             chatToggle.classList.toggle("is-active", open);
         }
         if (open) {
+            unreadChatCount = 0;
+            renderUnreadChatCount();
             chatInput.focus();
             chatFeed.scrollTop = chatFeed.scrollHeight;
         }
@@ -789,6 +813,7 @@ document.addEventListener("DOMContentLoaded", () => {
             handRaised = nextRaised;
             handButton.setAttribute("aria-pressed", String(handRaised));
             handButton.classList.toggle("is-active", handRaised);
+            if (selfRaisedHand) selfRaisedHand.hidden = !handRaised;
             const label = handButton.querySelector("span");
             const icon = handButton.querySelector("i");
             if (label) label.textContent = handRaised ? "Lower hand" : "Raise hand";
@@ -826,11 +851,17 @@ document.addEventListener("DOMContentLoaded", () => {
             handRaised = Boolean(state.raised);
             handButton.setAttribute("aria-pressed", String(handRaised));
             handButton.classList.toggle("is-active", handRaised);
+            if (selfRaisedHand) selfRaisedHand.hidden = !handRaised;
             const label = handButton.querySelector("span");
             const icon = handButton.querySelector("i");
             if (label) label.textContent = handRaised ? "Lower hand" : "Raise hand";
             if (icon) icon.className = handRaised ? "bi bi-hand-index" : "bi bi-hand";
         }
+        room.querySelectorAll("[data-peer-display-name]").forEach(tile => {
+            if (tile.dataset.peerDisplayName !== state.displayName) return;
+            const badge = tile.querySelector(".ciit-meet-raised-hand-remote");
+            if (badge) badge.hidden = !state.raised;
+        });
         if (state.raised) {
             showFeatureToast("Raised hand", (state.displayName || "A participant") + " has raised the hand", "#f4bf5f");
         }
@@ -841,6 +872,7 @@ document.addEventListener("DOMContentLoaded", () => {
         handRaised = snapshot.raisedHands.some(hand => hand.userId === room.dataset.userId);
         handButton.setAttribute("aria-pressed", String(handRaised));
         handButton.classList.toggle("is-active", handRaised);
+        if (selfRaisedHand) selfRaisedHand.hidden = !handRaised;
         const label = handButton.querySelector("span");
         const icon = handButton.querySelector("i");
         if (label) label.textContent = handRaised ? "Lower hand" : "Raise hand";
