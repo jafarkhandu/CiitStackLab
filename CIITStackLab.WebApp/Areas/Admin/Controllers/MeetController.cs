@@ -339,12 +339,13 @@ public sealed class MeetController : Controller
             || participant.MeetSession.StartedAtUtc.Value > now
             || sessionEndUtc <= now)
         {
-            var message = $"Meeting access rejected. Status={participant.MeetSession.Status}; " +
-                $"StartedAtUtc={participant.MeetSession.StartedAtUtc?.ToString("O") ?? "null"}; " +
-                $"DurationMinutes={participant.MeetSession.DurationMinutes}; " +
-                $"EndsAtUtc={sessionEndUtc?.ToString("O") ?? "null"}; UtcNow={now:O}.";
+            participant.Status = "Left";
+            participant.LeftAtUtc = now;
+            await _dbContext.SaveChangesAsync(cancellationToken);
+            await _meetRealtime.PublishSessionUpdateAsync(participant.MeetSessionId, cancellationToken);
+
             return Request.Headers.XRequestedWith == "XMLHttpRequest"
-                ? BadRequest(message)
+                ? Json(new { success = true, participantId = participant.Id, status = participant.Status, message = "Meeting has ended; the request is no longer active." })
                 : RedirectToAction(nameof(Room), new { id = participant.MeetSessionId });
         }
 
