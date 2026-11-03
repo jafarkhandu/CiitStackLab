@@ -558,7 +558,7 @@ public sealed class MeetHub : Hub
             }
         }
 
-        if (PeerSessions.TryRemove(Context.ConnectionId, out var sessionId))(Context.ConnectionId, out var sessionId))
+        if (PeerSessions.TryRemove(Context.ConnectionId, out var sessionId))
         {
             PeerDisplayNames.TryRemove(Context.ConnectionId, out _);
             await Clients.Group(PeerGroup(sessionId)).SendAsync("MeetPeerLeft", Context.ConnectionId);
