@@ -483,12 +483,6 @@ public class ApplicationDbContext : IdentityDbContext<ApplicationUser>
             entity.Property(x => x.EndedAtUtc).HasColumnName("ended_at_utc").HasColumnType("datetime2");
             entity.Property(x => x.CancelledAtUtc).HasColumnName("cancelled_at_utc").HasColumnType("datetime2");
             entity.Property(x => x.WaitingRoomEnabled).HasColumnName("waiting_room_enabled").HasDefaultValue(true).IsRequired();
-            entity.Property(x => x.RecordingEnabled).HasColumnName("recording_enabled").HasDefaultValue(false).IsRequired();
-            entity.Property(x => x.RecordingStatus).HasColumnName("recording_status").HasMaxLength(20).HasDefaultValue("Disabled").IsRequired();
-            entity.Property(x => x.RecordingStartedAtUtc).HasColumnName("recording_started_at_utc").HasColumnType("datetime2");
-            entity.Property(x => x.RecordingEndedAtUtc).HasColumnName("recording_ended_at_utc").HasColumnType("datetime2");
-            entity.Property(x => x.RecordingRetentionUntilUtc).HasColumnName("recording_retention_until_utc").HasColumnType("datetime2");
-            entity.Property(x => x.RecordingDeletedAtUtc).HasColumnName("recording_deleted_at_utc").HasColumnType("datetime2");
             entity.Property(x => x.ReminderSentAtUtc).HasColumnName("reminder_sent_at_utc").HasColumnType("datetime2");
             entity.HasIndex(x => x.CreatedByUserId).HasDatabaseName("IX_meet_sessions_created_by");
             entity.HasIndex(x => x.RoomName).IsUnique().HasDatabaseName("UX_meet_sessions_room_name");
