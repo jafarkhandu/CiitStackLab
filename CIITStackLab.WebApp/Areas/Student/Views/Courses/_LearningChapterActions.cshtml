@@ -31,6 +31,14 @@
     var nextEntry = currentEntryIndex >= 0 && currentEntryIndex < chapterEntries.Count - 1
         ? chapterEntries[currentEntryIndex + 1]
         : null;
+    var topicChapters = currentTopic?.Chapters
+        .OrderBy(chapter => chapter.SortOrder)
+        .ThenBy(chapter => chapter.Id)
+        .ToList();
+    var isFinalChapter = currentChapter is not null
+        && topicChapters is not null
+        && topicChapters.Count > 0
+        && topicChapters[^1].Id == currentChapter.Id;
     var allowedTopicId = ViewBag.AllowedTopicId as int?;
     var previousIsLocked = User.IsInRole("Student")
         && allowedTopicId.HasValue
@@ -70,7 +78,7 @@
              && Model.Progress is not null
              && currentTopic is not null
              && currentChapter is not null
-             && currentEntryIndex == chapterEntries.Count - 1)
+             && isFinalChapter)
         {
             <form asp-controller="Courses"
                   asp-action="CompleteTopic"
@@ -93,12 +101,6 @@
         }
         else if (User.IsInRole("Student") && Model.Progress is not null && currentTopic is not null && currentChapter is not null)
         {
-            var topicChapters = currentTopic.Chapters
-                .OrderBy(chapter => chapter.SortOrder)
-                .ThenBy(chapter => chapter.Id)
-                .ToList();
-            var isFinalChapter = topicChapters.Count <= 1 || topicChapters[^1].Id == currentChapter.Id;
-
             @if (!isFinalChapter)
             {
                 <form asp-route="CompleteCourseChapter"
@@ -115,7 +117,7 @@
             }
         }
 
-        @if (nextEntry is not null && !nextIsLocked)
+        @if (!isFinalChapter && nextEntry is not null && !nextIsLocked)
         {
             <a class="ciit-learning-bottom-button ciit-learning-bottom-button-primary"
                asp-controller="Courses"
