@@ -211,7 +211,8 @@ document.addEventListener("DOMContentLoaded", () => {
         });
         if (!response.ok) {
             const detail = await response.text().catch(() => "");
-            throw new Error(detail || "Meeting action failed (" + response.status + ").");
+            const message = detail.replace(/<[^>]*>/g, " ").replace(/\\s+/g, " ").trim();
+            throw new Error(message || "Meeting action failed (" + response.status + ").");
         }
 
         // Re-request the authoritative server snapshot after roster actions.
