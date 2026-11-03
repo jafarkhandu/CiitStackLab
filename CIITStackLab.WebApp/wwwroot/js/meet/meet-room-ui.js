@@ -772,7 +772,7 @@ document.addEventListener("DOMContentLoaded", () => {
         } catch (error) {
             showFeatureToast("Message not sent", error.message || "Unable to send this message.", "#fb7185");
         } finally {
-            chatSend.disabled = !chatEnabled;
+            chatSend.disabled = !chatEnabled || !chatJoined;
         }
     });
 
