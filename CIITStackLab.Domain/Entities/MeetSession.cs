@@ -16,6 +16,7 @@ public sealed class MeetSession
     public DateTime? EndedAtUtc { get; set; }
     public DateTime? CancelledAtUtc { get; set; }
     public bool WaitingRoomEnabled { get; set; } = true;
+    public bool ChatEnabled { get; set; } = true;
     public DateTime? ReminderSentAtUtc { get; set; }
 
     public MeetBatch MeetBatch { get; set; } = null!;
