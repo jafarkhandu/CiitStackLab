@@ -186,6 +186,12 @@ document.addEventListener("DOMContentLoaded", () => {
     });
 
     const sessionId = Number(room.dataset.sessionId);
+    // The pending-count badge is removed when the host panel is moved into
+    // the participants popup. Keep a persistent baseline so room snapshots
+    // cannot repeatedly announce the same waiting students.
+    let lastPendingCount = Number(room.querySelector("[data-meet-pending-count]")?.textContent
+        || room.querySelectorAll('[data-meet-participant-status="Pending"]').length
+        || 0);
     const hubUrl = room.dataset.hubUrl;
     const connection = new signalR.HubConnectionBuilder()
         .withUrl(hubUrl)
@@ -406,8 +412,7 @@ document.addEventListener("DOMContentLoaded", () => {
     const updateRoom = (state) => {
         if (state.sessionId !== sessionId) return;
 
-        const pendingBadge = room.querySelector("[data-meet-pending-count]");
-        const previousPendingCount = Number(pendingBadge?.textContent || 0);
+        const previousPendingCount = lastPendingCount;
         const nextPendingCount = Number(state.pendingCount || 0);
         if (isHost && nextPendingCount > previousPendingCount) {
             const addedRequests = nextPendingCount - previousPendingCount;
@@ -431,6 +436,7 @@ document.addEventListener("DOMContentLoaded", () => {
             if (button) button.textContent = state.waitingRoomEnabled ? "Turn off" : "Turn on";
         }
 
+        lastPendingCount = nextPendingCount;
         setText("[data-meet-pending-count]", state.pendingCount);
         setText("[data-meet-admitted-count]", state.participantCount + (isHost && state.status === "Live" ? 1 : 0));
 
