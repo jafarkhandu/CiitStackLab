@@ -211,7 +211,14 @@ document.addEventListener("DOMContentLoaded", () => {
         });
         if (!response.ok) {
             const detail = await response.text().catch(() => "");
-            const message = detail.replace(/<[^>]*>/g, " ").replace(/\\s+/g, " ").trim();
+            let message = detail;
+            try {
+                const payload = JSON.parse(detail);
+                message = payload.message || payload.title || detail;
+            } catch {
+                message = detail;
+            }
+            message = message.replace(/<[^>]*>/g, " ").replace(/\\s+/g, " ").trim();
             throw new Error(message || "Meeting action failed (" + response.status + ").");
         }
 
