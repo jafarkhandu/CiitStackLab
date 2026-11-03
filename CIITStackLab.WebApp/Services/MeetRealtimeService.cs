@@ -38,9 +38,6 @@ public sealed class MeetRealtimeService
                 item.CancelledAtUtc,
                 item.DurationMinutes,
                 item.WaitingRoomEnabled,
-                item.RecordingEnabled,
-                item.RecordingStatus,
-                item.RecordingRetentionUntilUtc
             })
             .SingleOrDefaultAsync(cancellationToken);
 
@@ -76,9 +73,6 @@ public sealed class MeetRealtimeService
             cancelledAtUtc = session.CancelledAtUtc,
             session.DurationMinutes,
             session.WaitingRoomEnabled,
-            session.RecordingEnabled,
-            session.RecordingStatus,
-            recordingRetentionUntilUtc = session.RecordingRetentionUntilUtc,
             pendingCount = participants.Count(item => item.Status == "Pending"),
             participantCount = participants.Count(item => item.Status == "Admitted"),
             participants = participants.Select(item => new
@@ -106,9 +100,6 @@ public sealed class MeetRealtimeService
             adminSnapshot.cancelledAtUtc,
             adminSnapshot.DurationMinutes,
             adminSnapshot.WaitingRoomEnabled,
-            adminSnapshot.RecordingEnabled,
-            adminSnapshot.RecordingStatus,
-            adminSnapshot.recordingRetentionUntilUtc,
             adminSnapshot.pendingCount,
             adminSnapshot.participantCount,
             participants = Array.Empty<object>()
