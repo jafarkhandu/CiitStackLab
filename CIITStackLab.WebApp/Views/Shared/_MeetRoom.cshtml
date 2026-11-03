@@ -47,7 +47,7 @@
         {
             <section class="ciit-meet-host-panel" data-meet-controls-panel>
                 <div class="ciit-meet-host-panel-heading">
-                    <div><strong>Meeting controls</strong><span>Manage access, participants and recording</span></div>
+                    <div><strong>Meeting controls</strong><span>Manage access and participants</span></div>
                     <div class="ciit-meet-host-panel-actions">
                         <button type="button" class="ciit-meet-controls-toggle" data-meet-controls-toggle aria-expanded="true" aria-controls="meetControlsBody">
                             <span class="ciit-meet-pending-count" data-meet-pending-count>@Model.Participants.Count(item => item.Status == "Pending")</span>
@@ -70,36 +70,6 @@
                         <span>Waiting room <strong data-meet-waiting-room-state>@(Model.WaitingRoomEnabled ? "On" : "Off")</strong></span>
                         <button type="submit" class="ciit-meet-host-secondary">Turn @(Model.WaitingRoomEnabled ? "off" : "on")</button>
                     </form>
-                    <div class="ciit-meet-recording-settings" data-meet-recording-controls data-recording-enabled="@Model.RecordingEnabled.ToString().ToLowerInvariant()">
-                        <small class="ciit-meet-recording-disclaimer">Recording captures the meeting video and audio in the host browser and saves the WebM file to the server.</small>
-                        <span>Recording <strong data-meet-recording-status>@Model.RecordingStatus</strong>
-                            @if (Model.RecordingRetentionUntilUtc.HasValue)
-                            {
-                                <small>Retention until @Model.RecordingRetentionUntilUtc.Value.ToLocalTime().ToString("dd MMM yyyy")</small>
-                            }
-                        </span>
-                        <form data-meet-ajax asp-area="Admin" asp-controller="Meet" asp-action="SetRecording" method="post" data-recording-action="enable" hidden="@Model.RecordingEnabled">
-                            @Html.AntiForgeryToken()<input type="hidden" name="id" value="@Model.Id" /><input type="hidden" name="action" value="enable" />
-                            <button type="submit" class="ciit-meet-host-secondary">Enable</button>
-                        </form>
-                        <form data-meet-ajax asp-area="Admin" asp-controller="Meet" asp-action="SetRecording" method="post" data-recording-action="stop" hidden="@(Model.RecordingStatus != "Recording")">
-                            @Html.AntiForgeryToken()<input type="hidden" name="id" value="@Model.Id" /><input type="hidden" name="action" value="stop" />
-                            <button type="submit" class="ciit-meet-host-secondary">Stop recording</button>
-                        </form>
-                        <form data-meet-ajax asp-area="Admin" asp-controller="Meet" asp-action="SetRecording" method="post" data-recording-action="start" hidden="@(!Model.RecordingEnabled || Model.Status != "Live" || (Model.RecordingStatus != "Ready" && Model.RecordingStatus != "Stopped"))">
-                            @Html.AntiForgeryToken()<input type="hidden" name="id" value="@Model.Id" /><input type="hidden" name="action" value="start" />
-                            <button type="submit" class="ciit-meet-host-secondary">Start recording</button>
-                        </form>
-                        <form data-meet-ajax asp-area="Admin" asp-controller="Meet" asp-action="SetRecording" method="post" data-recording-action="disable" hidden="@(!Model.RecordingEnabled || Model.RecordingStatus == "Recording")">
-                            @Html.AntiForgeryToken()<input type="hidden" name="id" value="@Model.Id" /><input type="hidden" name="action" value="disable" />
-                            <button type="submit" class="ciit-meet-host-secondary">Disable</button>
-                        </form>
-                        <form data-meet-ajax asp-area="Admin" asp-controller="Meet" asp-action="SetRecording" method="post" data-recording-action="delete" onsubmit="return confirm('Mark this recording as deleted?');" hidden="@(Model.RecordingStatus != "Stopped")">
-                            @Html.AntiForgeryToken()<input type="hidden" name="id" value="@Model.Id" /><input type="hidden" name="action" value="delete" />
-                            <button type="submit" class="ciit-meet-host-danger">Clear recording metadata</button>
-                        </form>
-                        <a data-meet-recording-download asp-area="Admin" asp-controller="Meet" asp-action="DownloadRecording" asp-route-id="@Model.Id" class="ciit-meet-host-secondary" hidden="@(Model.RecordingStatus != "Stopped")">Download recording</a>
-                    </div>
                 </div>
                 <div class="ciit-meet-host-participants" data-meet-participants-list data-admit-url="@Url.Action("ReviewParticipant", "Meet", new { area = "Admin" })" data-remove-url="@Url.Action("RemoveParticipant", "Meet", new { area = "Admin" })" data-permissions-url="@Url.Action("UpdateParticipantPermissions", "Meet", new { area = "Admin" })">
                     <h2>Participants <span data-meet-participant-total>@Model.Participants.Count</span></h2>
@@ -228,7 +198,7 @@
                     </form>
                 }
             </div>
-            <p class="ciit-meet-room-footnote"><i class="bi bi-info-circle"></i> Audio and video connect peer-to-peer using WebRTC. SignalR handles meeting signaling. Meeting audio/video is captured and saved as a WebM recording.</p>
+            <p class="ciit-meet-room-footnote"><i class="bi bi-info-circle"></i> Audio and video connect peer-to-peer using WebRTC. SignalR handles meeting signaling. </p>
         </main>
     </div>
     <script src="https://cdn.jsdelivr.net/npm/@@microsoft/signalr@10.0.0/dist/browser/signalr.min.js"></script>
