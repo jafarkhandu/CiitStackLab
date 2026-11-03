@@ -96,9 +96,20 @@ document.addEventListener("DOMContentLoaded", () => {
                 credentials: "same-origin",
                 headers: { "X-Requested-With": "XMLHttpRequest" }
             });
-            if (!response.ok) throw new Error("Meeting control update failed (" + response.status + ").");
+            if (!response.ok) {
+                const detail = await response.text().catch(() => "");
+                let message = detail;
+                try {
+                    const payload = JSON.parse(detail);
+                    message = payload.message || payload.title || detail;
+                } catch {
+                    message = detail;
+                }
+                message = message.replace(/<[^>]*>/g, " ").replace(/\\s+/g, " ").trim();
+                throw new Error(message || "Meeting control update failed (" + response.status + ").");
+            }
 
-            // MVC actions redirect after persistence; query the room page itself
+            // Query the room page itself after persistence
             // to obtain the authoritative updated controls.
             await refreshControls();
 
