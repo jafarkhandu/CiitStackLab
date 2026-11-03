@@ -192,19 +192,28 @@ document.addEventListener("DOMContentLoaded", () => {
         if (element) element.textContent = String(value);
     };
 
-    const getToken = () => room.querySelector('input[name="__RequestVerificationToken"]')?.value || "";
+    const getToken = () => {
+        const tokenInput = Array.from(document.querySelectorAll('input[name="__RequestVerificationToken"]'))
+            .find(input => typeof input.value === "string" && input.value.trim().length > 0);
+        return tokenInput?.value.trim() || "";
+    };
 
     const postAction = async (url, values) => {
+        const token = getToken();
+        if (!token) {
+            throw new Error("Security token is missing. Refresh the meeting page and try again.");
+        }
+
         const body = new URLSearchParams({
             ...values,
-            __RequestVerificationToken: getToken()
+            __RequestVerificationToken: token
         });
         const response = await fetch(url, {
             method: "POST",
             credentials: "same-origin",
             headers: {
                 "Content-Type": "application/x-www-form-urlencoded; charset=UTF-8",
-                "RequestVerificationToken": getToken(),
+                "RequestVerificationToken": token,
                 "X-Requested-With": "XMLHttpRequest"
             },
             body
