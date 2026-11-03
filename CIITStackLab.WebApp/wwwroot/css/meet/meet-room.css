@@ -382,3 +382,23 @@ html,body{width:100%;min-height:100%;margin:0}
  .ciit-meet-glass-popup .ciit-meet-permission-form { flex-wrap:wrap; }
  .ciit-meet-glass-popup .ciit-meet-permission-form button { flex-basis:100%; margin-left:0; }
 }
+
+/* Meeting settings now live in the participants popup; pinned mode maximizes the shared stage. */
+.ciit-meet-host-end-menu{display:flex;align-items:center;gap:4px;position:relative}
+.ciit-meet-host-leave-link{min-height:42px;min-width:105px;flex-direction:row;padding:0 12px;gap:7px}
+.ciit-meet-host-end-toggle{display:grid;width:38px;height:42px;place-items:center;border:1px solid #a83b48;border-radius:10px;background:#8f2d3b;color:#fff;cursor:pointer}
+.ciit-meet-host-end-toggle[aria-expanded="true"] i{transform:rotate(180deg)}
+.ciit-meet-host-end-menu form{position:absolute;right:0;top:calc(100% + 8px);z-index:20}
+.ciit-meet-host-end-menu form[hidden]{display:none!important}
+.ciit-meet-host-end-menu form button{white-space:nowrap}
+.ciit-meet-host-participants .ciit-meet-host-settings{margin:0 0 15px;padding:12px;border:1px solid rgba(190,211,239,.13);border-radius:12px;background:rgba(255,255,255,.035)}
+.ciit-meet-glass-popup .ciit-meet-host-settings{flex-direction:row;align-items:center;justify-content:space-between}
+.ciit-meet-room-page:has(.ciit-meet-room-video-grid.has-pinned-tile) .ciit-meet-room-header,
+.ciit-meet-room-page:has(.ciit-meet-room-video-grid.has-pinned-tile) .ciit-meet-room-controls,
+.ciit-meet-room-page:has(.ciit-meet-room-video-grid.has-pinned-tile) .ciit-meet-room-footnote{display:none!important}
+.ciit-meet-room-page:has(.ciit-meet-room-video-grid.has-pinned-tile){padding:8px;height:100vh;min-height:0}
+.ciit-meet-room-page:has(.ciit-meet-room-video-grid.has-pinned-tile) .ciit-meet-room-stage{width:100%;height:100%;min-height:0;flex:1}
+.ciit-meet-room-video-grid.has-pinned-tile{grid-template-columns:minmax(0,1fr)!important;grid-template-rows:minmax(0,1fr) auto!important;grid-auto-flow:row!important;align-content:stretch!important;justify-items:stretch!important;overflow:hidden!important;gap:8px!important;padding:0!important}
+.ciit-meet-room-video-grid.has-pinned-tile .ciit-meet-video-pinned{width:100%!important;max-width:100%!important;height:100%!important;min-height:0!important;max-height:none!important;aspect-ratio:auto!important;grid-row:1!important;grid-column:1/-1!important}
+.ciit-meet-room-video-grid.has-pinned-tile .ciit-meet-video-tile:not(.ciit-meet-video-pinned){grid-row:2!important;min-height:78px!important;max-height:96px!important;max-width:150px!important;aspect-ratio:1!important}
+@media(max-width:700px){.ciit-meet-room-page:has(.ciit-meet-room-video-grid.has-pinned-tile){padding:5px}.ciit-meet-room-video-grid.has-pinned-tile .ciit-meet-video-pinned{min-height:0!important}}
