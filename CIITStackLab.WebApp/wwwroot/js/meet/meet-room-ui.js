@@ -256,6 +256,17 @@ document.addEventListener("DOMContentLoaded", () => {
                 }
             } catch (error) {
                 console.error(error);
+
+                // An action can race with meeting completion. Refresh the
+                // authoritative participant roster to clear stale requests.
+                if (connection.state === signalR.HubConnectionState.Connected) {
+                    try {
+                        await connection.invoke("JoinMeetingRoom", sessionId);
+                    } catch (refreshError) {
+                        console.warn("Participant roster refresh failed:", refreshError);
+                    }
+                }
+
                 showMeetToast({
                     title: "Participant action failed",
                     message: error.message || "The action could not be completed. Please retry.",
