@@ -292,7 +292,7 @@ public sealed class MeetHub : Hub
 
         if (isActive && isAdmittedStudent)
         {
-            await EnsurePeerAccessAsync(sessionId);
+            if (!await EnsurePeerAccessAsync(sessionId)) return;
             await Groups.AddToGroupAsync(Context.ConnectionId, PeerGroup(sessionId), Context.ConnectionAborted);
             PeerSessions[Context.ConnectionId] = sessionId;
 
@@ -332,7 +332,7 @@ public sealed class MeetHub : Hub
             throw new HubException("Invalid WebRTC signal.");
         }
 
-        await EnsurePeerAccessAsync(sessionId);
+        if (!await EnsurePeerAccessAsync(sessionId)) return;
 
         // Reconnects and peer teardown can race with in-flight SDP/ICE messages.
         // A stale connection ID is not a meeting access failure; safely drop that signal.
@@ -358,7 +358,7 @@ public sealed class MeetHub : Hub
         if (mediaKind is not ("mic" or "camera" or "share"))
             throw new HubException("Invalid media state.");
 
-        await EnsurePeerAccessAsync(sessionId);
+        if (!await EnsurePeerAccessAsync(sessionId)) return;
         if (!PeerSessions.TryGetValue(Context.ConnectionId, out var mappedSessionId)
             || mappedSessionId != sessionId)
             return;
@@ -385,7 +385,7 @@ public sealed class MeetHub : Hub
         }
     }
 
-    private async Task EnsurePeerAccessAsync(int sessionId)
+    private async Task<bool> EnsurePeerAccessAsync(int sessionId)
     {
         var now = DateTime.UtcNow;
         var session = await _dbContext.MeetSessions
@@ -405,11 +405,11 @@ public sealed class MeetHub : Hub
             || !session.StartedAtUtc.HasValue
             || session.StartedAtUtc.Value.AddMinutes(session.DurationMinutes) <= now)
         {
-            throw new HubException("Meeting is not active.");
+            return false;
         }
 
         if (Context.User!.IsInRole("Admin") || Context.User.IsInRole("Super User"))
-            return;
+            return true;
 
         var studentId = Context.UserIdentifier;
         if (string.IsNullOrWhiteSpace(studentId)
@@ -426,6 +426,8 @@ public sealed class MeetHub : Hub
         {
             throw new HubException("You are not admitted to this meeting.");
         }
+
+        return true;
     }
 
     public override async Task OnDisconnectedAsync(Exception? exception)
