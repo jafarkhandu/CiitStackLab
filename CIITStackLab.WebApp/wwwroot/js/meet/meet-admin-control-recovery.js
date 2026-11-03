@@ -109,9 +109,40 @@ document.addEventListener("DOMContentLoaded", () => {
                 throw new Error(message || "Meeting control update failed (" + response.status + ").");
             }
 
-            // Query the room page itself after persistence
-            // to obtain the authoritative updated controls.
-            await refreshControls();
+            // Apply the persisted recording state returned by the controller immediately.
+            const recordingAction = form.dataset.recordingAction;
+            if (recordingAction && response.headers.get("content-type")?.includes("application/json")) {
+                const result = await response.json();
+                if (result.success === false) throw new Error(result.message || "Recording setting was rejected.");
+                const targetRecording = document.querySelector("[data-meet-recording-controls]");
+                if (targetRecording) {
+                    targetRecording.dataset.recordingEnabled = String(result.recordingEnabled);
+                    const targetStatus = targetRecording.querySelector("[data-meet-recording-status]");
+                    if (targetStatus) targetStatus.textContent = result.recordingStatus || "";
+                    const enabled = Boolean(result.recordingEnabled);
+                    const status = result.recordingStatus || "";
+                    const isLive = room.querySelector("[data-meet-status-text]")?.textContent.trim() === "Live";
+                    const actions = {
+                        enable: !enabled,
+                        stop: status === "Recording",
+                        start: enabled && isLive && (status === "Ready" || status === "Stopped"),
+                        disable: enabled && status !== "Recording",
+                        delete: status === "Stopped"
+                    };
+                    Object.entries(actions).forEach(([action, visible]) => {
+                        const targetForm = targetRecording.querySelector('[data-recording-action="' + action + '"]');
+                        if (targetForm) targetForm.hidden = !visible;
+                    });
+                }
+            }
+
+            // Refresh the server-rendered snapshot when available; retain the
+            // just-applied JSON state if this secondary refresh transiently fails.
+            try {
+                await refreshControls();
+            } catch (refreshError) {
+                console.warn("Meeting controls HTML refresh failed after successful save:", refreshError);
+            }
 
             // Review/admit/reject/remove and permission actions must also refresh
             // the server-authoritative participant snapshot in the live popup.
