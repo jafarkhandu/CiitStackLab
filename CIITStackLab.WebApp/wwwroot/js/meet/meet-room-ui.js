@@ -137,7 +137,7 @@ document.addEventListener("DOMContentLoaded", () => {
             pendingRequestsList = document.createElement("section");
             pendingRequestsList.className = "ciit-meet-pending-requests";
             pendingRequestsList.innerHTML = '<h3>Join requests <span data-meet-pending-total>0</span></h3><div data-meet-pending-list></div>';
-            participantsPopup.content.prepend(pendingRequestsList);
+            settingsPopup.content.append(pendingRequestsList);
 
             const admittedRoster = document.createElement("section");
             admittedRoster.className = "ciit-meet-admitted-roster";
