@@ -102,6 +102,12 @@ document.addEventListener("DOMContentLoaded", () => {
             // to obtain the authoritative updated controls.
             await refreshControls();
 
+            // Review/admit/reject/remove and permission actions must also refresh
+            // the server-authoritative participant snapshot in the live popup.
+            if (window.ciitMeetSignalRConnection?.state === "Connected") {
+                await window.ciitMeetSignalRConnection.invoke("JoinMeetingRoom", Number(room.dataset.sessionId));
+            }
+
             const recordingAction = form.dataset.recordingAction;
             const waitingRoomEnabled = form.querySelector('input[name="enabled"]')?.value === "true";
             const successMessage = recordingAction
