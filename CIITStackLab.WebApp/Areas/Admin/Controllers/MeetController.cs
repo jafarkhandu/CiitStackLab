@@ -331,12 +331,20 @@ public sealed class MeetController : Controller
                 : RedirectToAction(nameof(Room), new { id = participant.MeetSessionId });
 
         var now = DateTime.UtcNow;
+        var sessionEndUtc = participant.MeetSession.StartedAtUtc?.AddMinutes(participant.MeetSession.DurationMinutes);
         if (participant.MeetSession.Status != "Live"
             || !participant.MeetSession.StartedAtUtc.HasValue
-            || participant.MeetSession.StartedAtUtc.Value.AddMinutes(participant.MeetSession.DurationMinutes) <= now)
+            || participant.MeetSession.StartedAtUtc.Value > now
+            || sessionEndUtc <= now)
+        {
+            var message = $"Meeting access rejected. Status={participant.MeetSession.Status}; " +
+                $"StartedAtUtc={participant.MeetSession.StartedAtUtc?.ToString("O") ?? "null"}; " +
+                $"DurationMinutes={participant.MeetSession.DurationMinutes}; " +
+                $"EndsAtUtc={sessionEndUtc?.ToString("O") ?? "null"}; UtcNow={now:O}.";
             return Request.Headers.XRequestedWith == "XMLHttpRequest"
-                ? BadRequest("The meeting is no longer active. You cannot admit or reject this request.")
+                ? BadRequest(message)
                 : RedirectToAction(nameof(Room), new { id = participant.MeetSessionId });
+        }
 
         if (string.Equals(decision, "admit", StringComparison.OrdinalIgnoreCase))
         {
