@@ -626,3 +626,237 @@ document.addEventListener("DOMContentLoaded", () => {
             throw error;
         });
 });
+
+
+document.addEventListener("DOMContentLoaded", () => {
+    const room = document.querySelector("[data-meet-room]");
+    if (!room) return;
+
+    const sessionId = Number(room.dataset.sessionId);
+    const isHost = room.dataset.isHost === "true";
+    const connection = window.ciitMeetSignalRConnection;
+    const chatPanel = room.querySelector("[data-meet-chat-panel]");
+    const chatToggle = room.querySelector("[data-meet-chat-toggle]");
+    const chatClose = room.querySelector("[data-meet-chat-close]");
+    const chatFeed = room.querySelector("[data-meet-chat-messages]");
+    const chatForm = room.querySelector("[data-meet-chat-compose]");
+    const chatInput = room.querySelector("[data-meet-chat-input]");
+    const chatSend = room.querySelector("[data-meet-chat-send]");
+    const chatStatus = room.querySelector("[data-meet-chat-status]");
+    const handButton = room.querySelector("[data-meet-raise-hand]");
+    let chatEnabled = room.dataset.chatEnabled !== "false";
+    let handRaised = false;
+    let chatJoined = false;
+
+    if (!connection || !chatPanel || !chatFeed || !chatForm || !chatInput || !chatSend) return;
+
+    const setChatEnabled = enabled => {
+        chatEnabled = Boolean(enabled);
+        room.dataset.chatEnabled = String(chatEnabled);
+        chatInput.disabled = !chatEnabled;
+        chatSend.disabled = !chatEnabled;
+        if (chatStatus) {
+            chatStatus.classList.toggle("is-disabled", !chatEnabled);
+            chatStatus.innerHTML = chatEnabled
+                ? '<i class="bi bi-shield-check"></i> Everyone in this meeting can see messages'
+                : '<i class="bi bi-shield-lock"></i> Chat is disabled by the host';
+        }
+        if (!chatEnabled) chatInput.placeholder = "Chat is disabled by the host";
+        else chatInput.placeholder = "Message everyone…";
+
+        const settingForm = room.querySelector("[data-meet-chat-enabled-form]");
+        if (settingForm) {
+            const enabledInput = settingForm.querySelector('input[name="enabled"]');
+            const button = settingForm.querySelector("[data-meet-chat-toggle-submit]");
+            const stateLabel = settingForm.querySelector("[data-meet-chat-state]");
+            if (enabledInput) enabledInput.value = String(!chatEnabled);
+            if (button) button.textContent = chatEnabled ? "Disable chat" : "Enable chat";
+            if (stateLabel) stateLabel.textContent = chatEnabled ? "On" : "Off";
+        }
+    };
+
+    const showFeatureToast = (title, message, accent = "#8b9cff") => {
+        let container = document.getElementById("ciit-meet-toast-container");
+        if (!container) {
+            container = document.createElement("div");
+            container.id = "ciit-meet-toast-container";
+            container.setAttribute("aria-live", "polite");
+            container.style.cssText = "position:fixed;top:20px;right:20px;z-index:10000;display:flex;flex-direction:column;gap:10px;width:min(360px,calc(100vw - 32px));";
+            document.body.append(container);
+        }
+
+        const toast = document.createElement("div");
+        toast.style.cssText = "background:linear-gradient(145deg,rgba(35,49,70,.94),rgba(13,20,32,.92));color:#f3f7ff;border:1px solid rgba(177,202,238,.2);border-left:3px solid " + accent + ";border-radius:14px;padding:12px 15px;box-shadow:0 16px 42px rgba(0,0,0,.38);backdrop-filter:blur(22px);font:500 12px/1.45 system-ui,sans-serif;";
+        const heading = document.createElement("strong");
+        heading.textContent = title;
+        heading.style.cssText = "display:block;font-size:13px;margin-bottom:3px;";
+        const body = document.createElement("div");
+        body.textContent = message;
+        toast.append(heading, body);
+        container.append(toast);
+        window.setTimeout(() => {
+            toast.style.transition = "opacity .22s ease,transform .22s ease";
+            toast.style.opacity = "0";
+            toast.style.transform = "translateY(-7px)";
+            window.setTimeout(() => toast.remove(), 240);
+        }, 4200);
+    };
+
+    const appendChatMessage = item => {
+        if (!item || item.sessionId !== sessionId) return;
+
+        const empty = chatFeed.querySelector(".ciit-meet-chat-empty");
+        if (empty) empty.remove();
+
+        const article = document.createElement("article");
+        article.className = "ciit-meet-chat-message";
+
+        const meta = document.createElement("div");
+        meta.className = "ciit-meet-chat-message-meta";
+        const sender = document.createElement("span");
+        sender.textContent = item.displayName || "Participant";
+        const time = document.createElement("time");
+        const sentAt = item.sentAtUtc ? new Date(item.sentAtUtc) : new Date();
+        time.dateTime = sentAt.toISOString();
+        time.textContent = sentAt.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
+        meta.append(sender, time);
+
+        const bubble = document.createElement("div");
+        bubble.className = "ciit-meet-chat-bubble";
+        bubble.textContent = item.message || "";
+        article.append(meta, bubble);
+        chatFeed.append(article);
+
+        while (chatFeed.children.length > 100) chatFeed.firstElementChild?.remove();
+        chatFeed.scrollTop = chatFeed.scrollHeight;
+    };
+
+    const joinChat = async () => {
+        if (chatJoined || connection.state !== "Connected") return;
+        if (!isHost && room.dataset.participantStatus !== "Admitted") return;
+        try {
+            await connection.invoke("JoinChatRoom", sessionId);
+            chatJoined = true;
+        } catch (error) {
+            console.warn("Meet group chat join failed:", error);
+        }
+    };
+
+    const toggleChat = open => {
+        chatPanel.hidden = !open;
+        if (chatToggle) {
+            chatToggle.setAttribute("aria-pressed", String(open));
+            chatToggle.classList.toggle("is-active", open);
+        }
+        if (open) {
+            chatInput.focus();
+            chatFeed.scrollTop = chatFeed.scrollHeight;
+        }
+    };
+
+    chatToggle?.addEventListener("click", () => toggleChat(chatPanel.hidden));
+    chatClose?.addEventListener("click", () => toggleChat(false));
+
+    chatForm.addEventListener("submit", async event => {
+        event.preventDefault();
+        const message = chatInput.value.trim();
+        if (!message || !chatEnabled || message.length > 1000 || chatSend.disabled) return;
+
+        chatSend.disabled = true;
+        try {
+            await connection.invoke("SendChatMessage", sessionId, message);
+            chatInput.value = "";
+            chatInput.style.height = "auto";
+        } catch (error) {
+            showFeatureToast("Message not sent", error.message || "Unable to send this message.", "#fb7185");
+        } finally {
+            chatSend.disabled = !chatEnabled;
+        }
+    });
+
+    chatInput.addEventListener("input", () => {
+        chatInput.style.height = "auto";
+        chatInput.style.height = Math.min(chatInput.scrollHeight, 100) + "px";
+    });
+
+    handButton?.addEventListener("click", async () => {
+        const nextRaised = !handRaised;
+        handButton.disabled = true;
+        try {
+            await connection.invoke("RaiseHand", sessionId, nextRaised);
+            handRaised = nextRaised;
+            handButton.setAttribute("aria-pressed", String(handRaised));
+            handButton.classList.toggle("is-active", handRaised);
+            const label = handButton.querySelector("span");
+            const icon = handButton.querySelector("i");
+            if (label) label.textContent = handRaised ? "Lower hand" : "Raise hand";
+            if (icon) icon.className = handRaised ? "bi bi-hand-index" : "bi bi-hand";
+        } catch (error) {
+            showFeatureToast("Raise hand failed", error.message || "Unable to update your hand.", "#fb7185");
+        } finally {
+            handButton.disabled = false;
+        }
+    });
+
+    connection.on("MeetChatEnabledState", state => {
+        if (state?.sessionId !== sessionId) return;
+        setChatEnabled(state.enabled);
+    });
+
+    connection.on("MeetChatHistory", messages => {
+        if (!Array.isArray(messages)) return;
+        chatFeed.replaceChildren();
+        if (!messages.length) {
+            const empty = document.createElement("div");
+            empty.className = "ciit-meet-chat-empty";
+            empty.textContent = "No messages yet. Start the conversation with everyone.";
+            chatFeed.append(empty);
+            return;
+        }
+        messages.forEach(appendChatMessage);
+    });
+
+    connection.on("MeetChatMessage", appendChatMessage);
+
+    connection.on("MeetHandRaised", state => {
+        if (state?.sessionId !== sessionId) return;
+        if (handButton && state.userId === room.dataset.userId) {
+            handRaised = Boolean(state.raised);
+            handButton.setAttribute("aria-pressed", String(handRaised));
+            handButton.classList.toggle("is-active", handRaised);
+            const label = handButton.querySelector("span");
+            const icon = handButton.querySelector("i");
+            if (label) label.textContent = handRaised ? "Lower hand" : "Raise hand";
+            if (icon) icon.className = handRaised ? "bi bi-hand-index" : "bi bi-hand";
+        }
+        if (state.raised) {
+            showFeatureToast("Raised hand", (state.displayName || "A participant") + " has raised the hand", "#f4bf5f");
+        }
+    });
+
+    connection.on("MeetHandSnapshot", snapshot => {
+        if (snapshot?.sessionId !== sessionId || !handButton || !Array.isArray(snapshot.raisedHands)) return;
+        handRaised = snapshot.raisedHands.some(hand => hand.userId === room.dataset.userId);
+        handButton.setAttribute("aria-pressed", String(handRaised));
+        handButton.classList.toggle("is-active", handRaised);
+        const label = handButton.querySelector("span");
+        const icon = handButton.querySelector("i");
+        if (label) label.textContent = handRaised ? "Lower hand" : "Raise hand";
+        if (icon) icon.className = handRaised ? "bi bi-hand-index" : "bi bi-hand";
+    });
+
+    connection.on("MeetMyParticipantStatus", state => {
+        if (state?.sessionId !== sessionId) return;
+        if (state.status === "Admitted") joinChat();
+    });
+
+    connection.onreconnected(() => {
+        chatJoined = false;
+        joinChat();
+    });
+
+    setChatEnabled(chatEnabled);
+    if (isHost || room.dataset.participantStatus === "Admitted") {
+        window.ciitMeetSignalRReady?.then(joinChat).catch(error => console.warn("Meet chat readiness failed:", error));
+    }
+});
