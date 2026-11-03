@@ -201,9 +201,6 @@ public sealed class MeetHub : Hub
                     item.CancelledAtUtc,
                     item.DurationMinutes,
                     item.WaitingRoomEnabled,
-                    item.RecordingEnabled,
-                    item.RecordingStatus,
-                    item.RecordingRetentionUntilUtc
                 })
                 .SingleAsync(Context.ConnectionAborted);
 
@@ -234,9 +231,6 @@ public sealed class MeetHub : Hub
                 cancelledAtUtc = adminSession.CancelledAtUtc,
                 adminSession.DurationMinutes,
                 adminSession.WaitingRoomEnabled,
-                adminSession.RecordingEnabled,
-                adminSession.RecordingStatus,
-                recordingRetentionUntilUtc = adminSession.RecordingRetentionUntilUtc,
                 pendingCount = adminParticipants.Count(item => item.Status == "Pending"),
                 participantCount = adminParticipants.Count(item => item.Status == "Admitted"),
                 participants = adminParticipants
