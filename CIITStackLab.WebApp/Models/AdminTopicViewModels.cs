@@ -24,4 +24,7 @@ public sealed class AdminTopicFormModel
 
     [Range(typeof(decimal), "0.5", "1666.67", ErrorMessage = "Duration must be between 0.5 and 1666.67 hours.")]
     public decimal? DurationHours { get; set; }
+
+    public bool LogoConfirmed { get; set; }
+    public string? ConfirmedLogoClass { get; set; }
 }
