@@ -278,3 +278,67 @@ html,body{width:100%;min-height:100%;margin:0}
         max-height: 108px;
     }
 }
+
+
+/* Meeting layout correction: square pinned stage with compact square participant tiles. */
+.ciit-meet-room-video-grid.has-pinned-tile {
+    grid-template-columns: repeat(auto-fit, minmax(124px, 1fr));
+    grid-template-rows: auto auto;
+    grid-auto-flow: row;
+    align-content: start;
+    justify-items: center;
+    overflow-y: auto;
+    padding: 4px 0 8px;
+}
+.ciit-meet-room-video-grid.has-pinned-tile .ciit-meet-video-pinned {
+    grid-column: 1 / -1;
+    grid-row: 1;
+    width: min(68vh, 100%);
+    max-width: min(68vh, 100%);
+    height: auto;
+    min-height: 0;
+    aspect-ratio: 1 / 1;
+    justify-self: center;
+}
+.ciit-meet-room-video-grid.has-pinned-tile .ciit-meet-video-tile:not(.ciit-meet-video-pinned) {
+    grid-row: 2;
+    grid-column: auto;
+    width: 100%;
+    min-width: 0;
+    max-width: 168px;
+    min-height: 0;
+    max-height: none;
+    aspect-ratio: 1 / 1;
+    justify-self: center;
+}
+.ciit-meet-room-video-grid.has-pinned-tile .ciit-meet-video-tile:not(.ciit-meet-video-pinned) .ciit-meet-video-placeholder {
+    gap: 6px;
+}
+.ciit-meet-room-video-grid.has-pinned-tile .ciit-meet-video-tile:not(.ciit-meet-video-pinned) .ciit-meet-avatar {
+    width: 52px;
+    height: 52px;
+    font-size: 20px;
+}
+.ciit-meet-room-video-grid.has-pinned-tile .ciit-meet-video-tile:not(.ciit-meet-video-pinned) .ciit-meet-video-name {
+    bottom: 6px;
+    left: 6px;
+    padding: 4px 6px;
+    font-size: 9px;
+}
+@media (max-width: 700px) {
+    .ciit-meet-room-video-grid.has-pinned-tile {
+        grid-template-columns: repeat(auto-fit, minmax(104px, 1fr));
+        grid-template-rows: auto auto;
+    }
+    .ciit-meet-room-video-grid.has-pinned-tile .ciit-meet-video-pinned {
+        width: min(56vh, 100%);
+        max-width: min(56vh, 100%);
+        min-height: 0;
+        aspect-ratio: 1 / 1;
+    }
+    .ciit-meet-room-video-grid.has-pinned-tile .ciit-meet-video-tile:not(.ciit-meet-video-pinned) {
+        min-height: 0;
+        max-height: none;
+        max-width: 140px;
+    }
+}
