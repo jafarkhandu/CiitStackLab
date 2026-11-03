@@ -698,36 +698,6 @@ namespace CIITStackLab.Infrastructure.Migrations
                         .HasDefaultValue(true)
                         .HasColumnName("waiting_room_enabled");
 
-                    b.Property<bool>("RecordingEnabled")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("bit")
-                        .HasDefaultValue(false)
-                        .HasColumnName("recording_enabled");
-
-                    b.Property<string>("RecordingStatus")
-                        .IsRequired()
-                        .ValueGeneratedOnAdd()
-                        .HasMaxLength(20)
-                        .HasColumnType("nvarchar(20)")
-                        .HasDefaultValue("Disabled")
-                        .HasColumnName("recording_status");
-
-                    b.Property<DateTime?>("RecordingStartedAtUtc")
-                        .HasColumnType("datetime2")
-                        .HasColumnName("recording_started_at_utc");
-
-                    b.Property<DateTime?>("RecordingEndedAtUtc")
-                        .HasColumnType("datetime2")
-                        .HasColumnName("recording_ended_at_utc");
-
-                    b.Property<DateTime?>("RecordingRetentionUntilUtc")
-                        .HasColumnType("datetime2")
-                        .HasColumnName("recording_retention_until_utc");
-
-                    b.Property<DateTime?>("RecordingDeletedAtUtc")
-                        .HasColumnType("datetime2")
-                        .HasColumnName("recording_deleted_at_utc");
-
                     b.Property<DateTime?>("ReminderSentAtUtc")
                         .HasColumnType("datetime2")
                         .HasColumnName("reminder_sent_at_utc");
