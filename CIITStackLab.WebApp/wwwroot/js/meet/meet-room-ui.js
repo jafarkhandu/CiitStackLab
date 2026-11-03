@@ -418,6 +418,18 @@ document.addEventListener("DOMContentLoaded", () => {
         setText("[data-meet-status-text]", state.status);
         setText("[data-meet-waiting-room-state]", state.waitingRoomEnabled ? "On" : "Off");
         setText("[data-meet-recording-status]", state.recordingStatus);
+        if (isHost) {
+            if (state.recordingStatus === "Recording") {
+                window.ciitMeetStartRecording?.().catch(error => {
+                    console.error("Meet recording start failed:", error);
+                    showMeetToast({ title: "Recording failed to start", message: error.message || "Audio/video capture could not start.", type: "error" });
+                });
+            } else {
+                window.ciitMeetStopRecording?.();
+            }
+        }
+        const downloadLink = document.querySelector("[data-meet-recording-download]");
+        if (downloadLink) downloadLink.hidden = state.recordingStatus !== "Stopped";
         const waitingRoomForm = document.querySelector("[data-meet-waiting-room-form]");
         if (waitingRoomForm) {
             const enabledInput = waitingRoomForm.querySelector('input[name="enabled"]');
