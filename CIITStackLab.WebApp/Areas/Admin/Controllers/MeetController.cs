@@ -1,4 +1,5 @@
 using System.Security.Cryptography;
+using Microsoft.AspNetCore.Hosting;
 using CIITStackLab.Domain.Entities;
 using CIITStackLab.Infrastructure.Identity;
 using CIITStackLab.Infrastructure.Persistence;
@@ -18,12 +19,14 @@ public sealed class MeetController : Controller
     private readonly ApplicationDbContext _dbContext;
     private readonly MeetRealtimeService _meetRealtime;
     private readonly MeetNotificationService _notifications;
+    private readonly IWebHostEnvironment _environment;
 
-    public MeetController(ApplicationDbContext dbContext, MeetRealtimeService meetRealtime, MeetNotificationService notifications)
+    public MeetController(ApplicationDbContext dbContext, MeetRealtimeService meetRealtime, MeetNotificationService notifications, IWebHostEnvironment environment)
     {
         _dbContext = dbContext;
         _meetRealtime = meetRealtime;
         _notifications = notifications;
+        _environment = environment;
     }
 
     [HttpGet]
@@ -488,6 +491,9 @@ public sealed class MeetController : Controller
                 session.RecordingDeletedAtUtc = now;
                 session.RecordingRetentionUntilUtc = null;
                 session.RecordingEnabled = false;
+                var recordingPath = Path.Combine(_environment.WebRootPath, "meet-recordings", $"meeting-{id}.webm");
+                if (System.IO.File.Exists(recordingPath))
+                    System.IO.File.Delete(recordingPath);
                 break;
             default:
                 const string invalidActionMessage = "Recording action is not valid for the current meeting state.";
@@ -509,6 +515,42 @@ public sealed class MeetController : Controller
                 recordingRetentionUntilUtc = session.RecordingRetentionUntilUtc
             })
             : RedirectToAction(nameof(Room), new { id });
+    }
+
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    [RequestSizeLimit(524288000)]
+    public async Task<IActionResult> UploadRecording(int id, IFormFile recording, CancellationToken cancellationToken)
+    {
+        var session = await _dbContext.MeetSessions.SingleOrDefaultAsync(item => item.Id == id, cancellationToken);
+        if (session is null) return NotFound();
+        if (session.RecordingStatus != "Stopped" || recording is null || recording.Length == 0)
+            return BadRequest(new { success = false, message = "The meeting recording is not ready to be saved." });
+        if (recording.Length > 524288000 || !string.Equals(recording.ContentType, "video/webm", StringComparison.OrdinalIgnoreCase))
+            return BadRequest(new { success = false, message = "Only WebM recordings up to 500 MB are accepted." });
+
+        var directory = Path.Combine(_environment.WebRootPath, "meet-recordings");
+        Directory.CreateDirectory(directory);
+        var filePath = Path.Combine(directory, $"meeting-{id}.webm");
+        await using (var stream = new FileStream(filePath, FileMode.Create, FileAccess.Write, FileShare.None, 81920, true))
+        {
+            await recording.CopyToAsync(stream, cancellationToken);
+        }
+
+        return Json(new { success = true, sessionId = id, fileName = Path.GetFileName(filePath) });
+    }
+
+    [HttpGet]
+    public async Task<IActionResult> DownloadRecording(int id, CancellationToken cancellationToken)
+    {
+        var session = await _dbContext.MeetSessions.AsNoTracking()
+            .SingleOrDefaultAsync(item => item.Id == id, cancellationToken);
+        if (session is null) return NotFound();
+        if (session.RecordingStatus != "Stopped") return BadRequest("The recording is not available.");
+
+        var filePath = Path.Combine(_environment.WebRootPath, "meet-recordings", $"meeting-{id}.webm");
+        if (!System.IO.File.Exists(filePath)) return NotFound("Recording file has not been uploaded yet.");
+        return PhysicalFile(filePath, "video/webm", $"meeting-{id}.webm");
     }
 
     private async Task CompleteExpiredSessionsAsync(CancellationToken cancellationToken)
