@@ -126,26 +126,44 @@ public sealed class MeetHub : Hub
             throw new HubException("Meeting not found.");
 
         var isAdmin = Context.User!.IsInRole("Admin") || Context.User.IsInRole("Super User");
+        var studentId = Context.UserIdentifier
+            ?? Context.User.FindFirstValue(ClaimTypes.NameIdentifier)
+            ?? Context.User.FindFirstValue("sub");
+
         if (!isAdmin)
         {
-            var studentId = Context.UserIdentifier;
-            if (string.IsNullOrWhiteSpace(studentId)
-                || !Context.User.IsInRole("Student")
-                || session.Status != "Live"
+            if (string.IsNullOrWhiteSpace(studentId))
+                throw new HubException("Your account identity could not be verified. Please sign in again.");
+
+            if (!Context.User.IsInRole("Student"))
+                throw new HubException("Your account does not have the Student role. Please contact the administrator.");
+
+            var now = DateTime.UtcNow;
+            if (session.Status != "Live"
                 || !session.StartedAtUtc.HasValue
-                || session.StartedAtUtc.Value.AddMinutes(session.DurationMinutes) <= DateTime.UtcNow
-                || !await _dbContext.MeetBatchMembers.AsNoTracking().AnyAsync(
-                    member => member.MeetBatchId == session.MeetBatchId
-                        && member.StudentUserId == studentId,
-                    Context.ConnectionAborted)
-                || !await _dbContext.MeetSessionParticipants.AsNoTracking().AnyAsync(
-                    participant => participant.MeetSessionId == sessionId
-                        && participant.StudentUserId == studentId
-                        && (participant.Status == "Pending" || participant.Status == "Admitted"),
-                    Context.ConnectionAborted))
-            {
-                throw new HubException("You are not allowed to join this meeting.");
-            }
+                || session.StartedAtUtc.Value > now
+                || session.StartedAtUtc.Value.AddMinutes(session.DurationMinutes) <= now)
+                throw new HubException("This meeting is not currently live.");
+
+            var isBatchMember = await _dbContext.MeetBatchMembers.AsNoTracking().AnyAsync(
+                member => member.MeetBatchId == session.MeetBatchId
+                    && member.StudentUserId == studentId,
+                Context.ConnectionAborted);
+
+            if (!isBatchMember)
+                throw new HubException("You are not enrolled in this meeting's batch.");
+
+            var participantStatus = await _dbContext.MeetSessionParticipants.AsNoTracking()
+                .Where(participant => participant.MeetSessionId == sessionId
+                    && participant.StudentUserId == studentId)
+                .Select(participant => participant.Status)
+                .SingleOrDefaultAsync(Context.ConnectionAborted);
+
+            if (participantStatus is null)
+                throw new HubException("Your join request was not found. Please use the Join button on the student meeting page.");
+
+            if (participantStatus is not ("Pending" or "Admitted"))
+                throw new HubException($"Your meeting request is {participantStatus}. Please contact the host if you believe this is incorrect.");
         }
 
         if (isAdmin)
@@ -231,7 +249,7 @@ public sealed class MeetHub : Hub
         var participantAccess = isAdmin ? null : await _dbContext.MeetSessionParticipants
             .AsNoTracking()
             .Where(participant => participant.MeetSessionId == sessionId
-                && participant.StudentUserId == Context.UserIdentifier
+                && participant.StudentUserId == studentId
                 && (participant.Status == "Pending" || participant.Status == "Admitted"))
             .Select(participant => new
             {
@@ -265,7 +283,7 @@ public sealed class MeetHub : Hub
             var displayName = isAdmin
                 ? "Host"
                 : await _dbContext.Users.AsNoTracking()
-                    .Where(user => user.Id == Context.UserIdentifier)
+                    .Where(user => user.Id == studentId)
                     .Select(user => user.UserName ?? user.Email ?? "Student")
                     .SingleOrDefaultAsync(Context.ConnectionAborted) ?? "Student";
             PeerDisplayNames[Context.ConnectionId] = displayName;
