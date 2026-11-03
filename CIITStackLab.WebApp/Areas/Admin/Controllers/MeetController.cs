@@ -548,7 +548,7 @@ public sealed class MeetController : Controller
         if (session is null) return NotFound();
         if (session.RecordingStatus != "Stopped") return BadRequest("The recording is not available.");
 
-        var filePath = Path.Combine(_environment.WebRootPath, "meet-recordings", $"meeting-{id}.webm");
+        var filePath = Path.Combine(_environment.ContentRootPath, "App_Data", "MeetRecordings", $"meeting-{id}.webm");
         if (!System.IO.File.Exists(filePath)) return NotFound("Recording file has not been uploaded yet.");
         return PhysicalFile(filePath, "video/webm", $"meeting-{id}.webm");
     }
