@@ -1167,11 +1167,11 @@ html,body{width:100%;min-height:100%;margin:0}
 .ciit-meet-chat-status.is-disabled i{color:#fb7185}
 .ciit-meet-chat-messages{display:flex;min-height:0;flex:1;flex-direction:column;gap:12px;overflow-y:auto;padding:12px 14px 16px;scrollbar-width:thin;scrollbar-color:rgba(143,174,224,.35) transparent}
 .ciit-meet-chat-empty{display:grid;min-height:150px;place-items:center;padding:20px;color:#8396b2;font-size:11px;text-align:center}
-.ciit-meet-chat-message{max-width:90%;align-self:flex-start}
+.ciit-meet-chat-message{display:flex;max-width:90%;flex-direction:column;align-self:flex-start;align-items:flex-start}
 .ciit-meet-chat-message.is-own{align-self:flex-end}
 .ciit-meet-chat-message-meta{display:flex;align-items:center;gap:8px;margin:0 4px 5px;color:#9db1ce;font-size:9px;font-weight:700}
 .ciit-meet-chat-message-meta time{color:#70829d;font-size:8px;font-weight:500}
-.ciit-meet-chat-bubble{overflow-wrap:anywhere;border:1px solid rgba(178,203,238,.12);border-radius:5px 15px 15px 15px;padding:10px 12px;background:linear-gradient(135deg,rgba(66,87,119,.48),rgba(35,49,69,.56));color:#e9f1ff;font-size:11px;line-height:1.55;white-space:pre-wrap}
+ .ciit-meet-chat-bubble{display:inline-block;width:fit-content;max-width:100%;box-sizing:border-box;overflow-wrap:anywhere;border:1px solid rgba(178,203,238,.12);border-radius:5px 15px 15px 15px;padding:10px 12px;background:linear-gradient(135deg,rgba(66,87,119,.48),rgba(35,49,69,.56));color:#e9f1ff;font-size:11px;line-height:1.55;white-space:pre-wrap}
 .ciit-meet-chat-message.is-own .ciit-meet-chat-bubble{border-color:rgba(116,169,255,.25);border-radius:15px 5px 15px 15px;background:linear-gradient(135deg,rgba(49,105,179,.48),rgba(41,70,115,.55))}
 .ciit-meet-chat-compose{display:flex;align-items:flex-end;gap:8px;margin:0 14px;border:1px solid rgba(174,201,239,.19);border-radius:15px;padding:7px;background:rgba(6,12,22,.38);box-shadow:inset 0 1px 0 rgba(255,255,255,.035)}
 .ciit-meet-chat-compose textarea{width:100%;max-height:100px;resize:none;border:0;outline:0;background:transparent;padding:8px 6px;color:#f1f6ff;font:500 11px/1.5 "Plus Jakarta Sans",sans-serif}
@@ -1179,6 +1179,10 @@ html,body{width:100%;min-height:100%;margin:0}
 .ciit-meet-chat-compose button{display:grid;width:34px;height:34px;flex:0 0 34px;place-items:center;border:1px solid rgba(133,180,255,.3);border-radius:11px;background:linear-gradient(135deg,rgba(65,126,209,.82),rgba(47,91,157,.78));color:white;box-shadow:0 4px 14px rgba(40,95,170,.25)}
 .ciit-meet-chat-compose button:disabled{opacity:.35;cursor:not-allowed}
 .ciit-meet-chat-footnote{margin:9px 14px 12px;color:#7386a1;font-size:8px;text-align:center}
+.ciit-meet-control[data-meet-chat-toggle]{position:relative}
+.ciit-meet-chat-unread{position:absolute;top:-5px;right:-5px;display:grid;min-width:17px;height:17px;place-items:center;border:1px solid rgba(255,255,255,.45);border-radius:999px;padding:0 4px;background:linear-gradient(145deg,#fb7185,#be123c);color:#fff;font-size:9px;font-weight:800;line-height:1;box-shadow:0 4px 12px rgba(190,18,60,.35)}
+.ciit-meet-raised-hand{position:absolute;top:14px;left:14px;display:grid;width:34px;height:34px;place-items:center;border:1px solid rgba(255,216,135,.45);border-radius:10px;padding:0;background:linear-gradient(145deg,rgba(168,117,36,.9),rgba(103,68,24,.84));color:#fff2cb;font-size:16px;box-shadow:0 8px 22px rgba(0,0,0,.28);backdrop-filter:blur(14px);z-index:4}
+.ciit-meet-raised-hand[hidden],.ciit-meet-chat-unread[hidden]{display:none!important}
 .ciit-meet-control[data-meet-chat-toggle].is-active{border-color:rgba(127,177,255,.8);background:linear-gradient(145deg,rgba(79,126,190,.72),rgba(43,70,108,.75));box-shadow:0 0 0 1px rgba(106,166,255,.14),0 8px 24px rgba(27,83,151,.18)}
 .ciit-meet-control[data-meet-raise-hand][aria-pressed="true"]{border-color:rgba(245,191,91,.8);background:linear-gradient(145deg,rgba(148,104,42,.72),rgba(91,62,30,.75));color:#fff4d8;box-shadow:0 0 0 1px rgba(245,191,91,.14)}
 .ciit-meet-host-settings form[data-meet-chat-enabled-form]{display:flex;align-items:center;gap:10px}
