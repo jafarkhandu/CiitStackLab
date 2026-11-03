@@ -135,6 +135,11 @@ document.addEventListener("DOMContentLoaded", () => {
                         const targetForm = targetRecording.querySelector('[data-recording-action="' + action + '"]');
                         if (targetForm) targetForm.hidden = !visible;
                     });
+                    if (result.recordingStatus === "Recording") {
+                        window.ciitMeetStartRecording?.().catch(error => console.error("Recording capture start failed:", error));
+                    } else {
+                        window.ciitMeetStopRecording?.();
+                    }
                 }
             }
 
