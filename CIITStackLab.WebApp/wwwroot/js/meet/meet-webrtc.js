@@ -254,6 +254,12 @@ document.addEventListener("DOMContentLoaded", () => {
         pin.innerHTML = '<i class="bi bi-pin-angle"></i>';
         pin.addEventListener("click", () => togglePinnedTile(tile, pin));
 
+        const shareBadge = document.createElement("span");
+        shareBadge.className = "ciit-meet-screen-share-badge";
+        shareBadge.dataset.peerScreenShareState = "true";
+        shareBadge.hidden = true;
+        shareBadge.innerHTML = '<i class="bi bi-display"></i> Sharing screen';
+
         const nameBadge = document.createElement("span");
         nameBadge.className = "ciit-meet-video-name";
         const micState = document.createElement("i");
@@ -261,7 +267,7 @@ document.addEventListener("DOMContentLoaded", () => {
         micState.dataset.peerMicState = "true";
         nameBadge.append(document.createTextNode(displayName + " "), micState);
 
-        tile.append(video, placeholder, nameBadge, pin);
+        tile.append(video, placeholder, shareBadge, nameBadge, pin);
         grid.append(tile);
         if (waitingTile) waitingTile.hidden = true;
         return { tile, video, placeholder, pin };
@@ -668,9 +674,17 @@ document.addEventListener("DOMContentLoaded", () => {
             applyParticipantStreamState(peer);
             if (!peer.cameraEnabled) {
                 peer.tile.video.pause();
+                peer.tile.video.srcObject = null;
+                peer.tile.video.hidden = true;
+                peer.tile.placeholder.hidden = false;
+                const detail = peer.tile.placeholder.querySelector("small");
+                if (detail) detail.textContent = "Camera is off";
+            } else {
                 peer.tile.video.srcObject = peer.remoteStream || null;
-            } else if (peer.tile.video.srcObject) {
-                peer.tile.video.play().catch(() => {});
+                applyParticipantStreamState(peer);
+                if (peer.tile.video.srcObject) {
+                    peer.tile.video.play().catch(() => {});
+                }
             }
         } else if (state.mediaKind === "mic") {
             peer.micEnabled = state.enabled === true;
@@ -681,6 +695,8 @@ document.addEventListener("DOMContentLoaded", () => {
         } else if (state.mediaKind === "share") {
             peer.screenSharing = state.enabled === true;
             peer.tile.tile.classList.toggle("ciit-meet-screen-sharing", peer.screenSharing);
+            const badge = peer.tile.tile.querySelector("[data-peer-screen-share-state]");
+            if (badge) badge.hidden = !peer.screenSharing;
             applyParticipantStreamState(peer);
         }
     });
