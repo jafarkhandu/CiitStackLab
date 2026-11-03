@@ -325,11 +325,18 @@ public sealed class MeetController : Controller
         if (participant is null)
             return NotFound();
 
-        if (participant.Status != "Pending"
-            || participant.MeetSession.Status != "Live"
+        if (participant.Status != "Pending")
+            return Request.Headers.XRequestedWith == "XMLHttpRequest"
+                ? BadRequest("This join request is no longer pending.")
+                : RedirectToAction(nameof(Room), new { id = participant.MeetSessionId });
+
+        var now = DateTime.UtcNow;
+        if (participant.MeetSession.Status != "Live"
             || !participant.MeetSession.StartedAtUtc.HasValue
-            || participant.MeetSession.StartedAtUtc.Value.AddMinutes(participant.MeetSession.DurationMinutes) <= DateTime.UtcNow)
-            return RedirectToAction(nameof(Room), new { id = participant.MeetSessionId });
+            || participant.MeetSession.StartedAtUtc.Value.AddMinutes(participant.MeetSession.DurationMinutes) <= now)
+            return Request.Headers.XRequestedWith == "XMLHttpRequest"
+                ? BadRequest("The meeting is no longer active. You cannot admit or reject this request.")
+                : RedirectToAction(nameof(Room), new { id = participant.MeetSessionId });
 
         if (string.Equals(decision, "admit", StringComparison.OrdinalIgnoreCase))
         {
@@ -355,7 +362,9 @@ public sealed class MeetController : Controller
         await _notifications.NotifySessionAdminsAsync(participant.MeetSessionId,
             admitted ? "Participant admitted" : "Participant rejected",
             admitted ? "A student was admitted to the meeting." : "A join request was rejected.", "info", cancellationToken);
-        return RedirectToAction(nameof(Room), new { id = participant.MeetSessionId });
+        return Request.Headers.XRequestedWith == "XMLHttpRequest"
+            ? Json(new { success = true, participantId = participant.Id, status = participant.Status })
+            : RedirectToAction(nameof(Room), new { id = participant.MeetSessionId });
     }
 
     [HttpPost]
