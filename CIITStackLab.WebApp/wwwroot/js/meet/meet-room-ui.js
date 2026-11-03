@@ -55,12 +55,25 @@ document.addEventListener("DOMContentLoaded", () => {
                     const detail = await response.text().catch(() => "");
                     throw new Error(detail || "Unable to update the meeting.");
                 }
+                const endingMeeting = submit?.hasAttribute("data-meet-end-button") === true;
                 if (room.dataset.isHost === "true"
                     && window.ciitMeetSignalRConnection?.state === "Connected") {
                     await window.ciitMeetSignalRConnection.invoke("JoinMeetingRoom", Number(room.dataset.sessionId));
                 }
-                if (submit && !submit.hasAttribute("data-meet-end-button")) submit.disabled = false;
-                window.showMeetToast?.({ title: "Meeting updated", message: "The change was saved successfully.", type: "success" });
+
+                if (endingMeeting) {
+                    // Close the settings dialog immediately after the server confirms
+                    // the end action; don't leave a stale controls card over the ended screen.
+                    settingsPopup?.hide();
+                    participantsPopup?.hide();
+                    const endedScreen = room.querySelector("[data-meet-ended-screen]");
+                    const stage = room.querySelector("[data-meet-room-stage]");
+                    if (stage) stage.hidden = true;
+                    if (endedScreen) endedScreen.hidden = false;
+                } else {
+                    if (submit) submit.disabled = false;
+                    window.showMeetToast?.({ title: "Meeting updated", message: "The change was saved successfully.", type: "success" });
+                }
             } catch (error) {
                 console.error(error);
                 window.showMeetToast?.({ title: "Action failed", message: error.message || "Unable to update the meeting.", type: "error" });
