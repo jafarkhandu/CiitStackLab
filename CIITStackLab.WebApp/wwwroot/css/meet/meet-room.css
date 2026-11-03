@@ -833,3 +833,102 @@ html,body{width:100%;min-height:100%;margin:0}
         height: 96px !important;
     }
 }
+
+/* Compact premium frosted-glass dock for meeting controls. */
+.ciit-meet-controls-glass {
+    display:flex;
+    width:fit-content;
+    max-width:calc(100% - 24px);
+    align-items:center;
+    justify-content:center;
+    margin:12px auto 4px;
+    border:1px solid rgba(206,225,255,.19);
+    border-radius:20px;
+    padding:7px;
+    background:linear-gradient(135deg,rgba(205,225,255,.105),rgba(100,125,165,.055));
+    box-shadow:0 14px 38px rgba(0,0,0,.25),inset 0 1px 0 rgba(255,255,255,.09);
+    backdrop-filter:blur(24px) saturate(150%);
+    -webkit-backdrop-filter:blur(24px) saturate(150%);
+}
+.ciit-meet-controls-glass .ciit-meet-room-controls {
+    gap:7px;
+    padding:0;
+}
+.ciit-meet-controls-glass .ciit-meet-control {
+    min-width:58px;
+    min-height:48px;
+    gap:3px;
+    border-color:rgba(203,220,245,.18);
+    border-radius:12px;
+    padding:5px 8px;
+    background:linear-gradient(145deg,rgba(190,210,240,.13),rgba(100,125,160,.08));
+    box-shadow:inset 0 1px 0 rgba(255,255,255,.07);
+    backdrop-filter:blur(14px);
+    -webkit-backdrop-filter:blur(14px);
+}
+.ciit-meet-controls-glass .ciit-meet-control i { font-size:15px; }
+.ciit-meet-controls-glass .ciit-meet-control span { font-size:8px;white-space:nowrap; }
+.ciit-meet-controls-glass .ciit-meet-control:hover,
+.ciit-meet-controls-glass .ciit-meet-control.is-active {
+    border-color:rgba(155,195,255,.5);
+    background:linear-gradient(145deg,rgba(110,155,220,.25),rgba(80,115,165,.16));
+}
+.ciit-meet-controls-glass .ciit-meet-leave-button {
+    min-width:82px;
+    min-height:48px;
+    gap:3px;
+    border-color:rgba(255,140,155,.28);
+    border-radius:12px;
+    padding:5px 9px;
+    background:linear-gradient(145deg,rgba(215,65,85,.88),rgba(150,40,60,.84));
+    box-shadow:inset 0 1px 0 rgba(255,255,255,.12),0 5px 15px rgba(130,20,40,.16);
+}
+.ciit-meet-controls-glass .ciit-meet-leave-button i { font-size:15px; }
+.ciit-meet-controls-glass .ciit-meet-leave-button span { font-size:8px;white-space:nowrap; }
+.ciit-meet-controls-glass .ciit-meet-host-end-toggle {
+    width:30px;
+    min-width:30px;
+    height:48px;
+    border-radius:11px;
+    border-color:rgba(255,140,155,.25);
+    background:linear-gradient(145deg,rgba(215,65,85,.78),rgba(150,40,60,.76));
+    backdrop-filter:blur(14px);
+}
+.ciit-meet-controls-glass .ciit-meet-host-end-menu { gap:5px; }
+.ciit-meet-controls-glass .ciit-meet-host-end-menu form { margin:0; }
+.ciit-meet-room-stage > .ciit-meet-room-footnote { margin-top:3px; }
+
+/* Keep active-speaker focus within the same equal-size participant grid. */
+.ciit-meet-room-video-grid:has(.ciit-meet-video-active-speaker) {
+    grid-template-columns:repeat(auto-fit,minmax(min(100%,320px),1fr)) !important;
+    grid-template-rows:repeat(auto-fit,minmax(220px,1fr)) !important;
+    grid-auto-rows:minmax(220px,1fr) !important;
+    grid-auto-flow:row !important;
+    align-content:center !important;
+}
+.ciit-meet-room-video-grid .ciit-meet-video-active-speaker:not(.ciit-meet-video-pinned) {
+    grid-column:auto !important;
+    grid-row:auto !important;
+    min-height:220px !important;
+    max-height:none !important;
+    width:100% !important;
+    aspect-ratio:1 / 1;
+    border-color:rgba(115,165,245,.62) !important;
+    box-shadow:0 0 0 1px rgba(115,165,245,.22),0 12px 32px rgba(0,0,0,.2) !important;
+}
+@media(max-width:700px) {
+    .ciit-meet-controls-glass { max-width:100%;padding:6px;border-radius:16px; }
+    .ciit-meet-controls-glass .ciit-meet-room-controls { gap:5px; }
+    .ciit-meet-controls-glass .ciit-meet-control { min-width:48px;min-height:44px;padding:4px 5px; }
+    .ciit-meet-controls-glass .ciit-meet-leave-button { min-width:68px;min-height:44px;padding:4px 6px; }
+    .ciit-meet-controls-glass .ciit-meet-host-end-toggle { height:44px; }
+    .ciit-meet-room-video-grid:has(.ciit-meet-video-active-speaker) {
+        grid-template-columns:repeat(auto-fit,minmax(min(100%,260px),1fr)) !important;
+        grid-template-rows:auto !important;
+        grid-auto-rows:minmax(220px,1fr) !important;
+    }
+    .ciit-meet-room-video-grid .ciit-meet-video-active-speaker:not(.ciit-meet-video-pinned) {
+        min-height:220px !important;
+        aspect-ratio:1 / 1;
+    }
+}
