@@ -65,7 +65,7 @@ document.addEventListener("DOMContentLoaded", () => {
                 if (endingMeeting) {
                     // Close the settings dialog immediately after the server confirms
                     // the end action; don't leave a stale controls card over the ended screen.
-                    settingsPopup?.hide();
+                    participantsPopup?.hide();
                     participantsPopup?.hide();
                     const endedScreen = room.querySelector("[data-meet-ended-screen]");
                     const stage = room.querySelector("[data-meet-room-stage]");
