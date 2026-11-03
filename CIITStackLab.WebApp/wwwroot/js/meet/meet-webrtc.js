@@ -707,9 +707,25 @@ document.addEventListener("DOMContentLoaded", () => {
     });
 
 
+    let mediaCleanupCompleted = false;
     window.ciitMeetWebRtcCleanup = () => {
+        if (mediaCleanupCompleted) return;
+        mediaCleanupCompleted = true;
+
+        // Stop every capture track immediately so the browser releases the
+        // microphone/camera indicators when the meeting ends or the page closes.
         screenStream?.getTracks().forEach(track => track.stop());
+        screenStream = null;
         localStream.getTracks().forEach(track => track.stop());
+        localStream.getTracks().forEach(track => localStream.removeTrack(track));
+
+        if (localVideo) {
+            localVideo.pause();
+            localVideo.srcObject = null;
+            localVideo.hidden = true;
+        }
+        if (localPlaceholder) localPlaceholder.hidden = false;
+
         localAudioMeter?.source.disconnect();
         localAudioMeter = null;
         peers.forEach((peer, peerId) => removePeer(peerId));
@@ -717,6 +733,25 @@ document.addEventListener("DOMContentLoaded", () => {
         audioContext = null;
         connection.invoke("LeavePeerRoom", sessionId).catch(() => {});
     };
+
+    // The ended screen is shown by both the host's successful End action and
+    // the live session-status update received by participants. Observe that
+    // single lifecycle signal so media is released in either path.
+    const endedScreen = room.querySelector("[data-meet-ended-screen]");
+    if (endedScreen) {
+        const endedScreenObserver = new MutationObserver(() => {
+            if (!endedScreen.hidden) {
+                window.ciitMeetWebRtcCleanup();
+                endedScreenObserver.disconnect();
+            }
+        });
+        endedScreenObserver.observe(endedScreen, { attributes: true, attributeFilter: ["hidden"] });
+        if (!endedScreen.hidden) {
+            window.ciitMeetWebRtcCleanup();
+            endedScreenObserver.disconnect();
+        }
+    }
+
     window.addEventListener("pagehide", window.ciitMeetWebRtcCleanup);
 
     window.ciitMeetSignalRReady?.then(async () => {
