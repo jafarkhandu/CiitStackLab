@@ -1091,3 +1091,62 @@ html,body{width:100%;min-height:100%;margin:0}
         height:32px !important;
     }
 }
+
+
+/* Active speaker stage: talking participant stays at the left, with others in a right-side filmstrip. */
+.ciit-meet-room-video-grid:has(.ciit-meet-video-active-speaker):not(.has-pinned-tile) {
+    grid-template-columns: minmax(0, 1fr) clamp(160px, 23%, 270px) !important;
+    grid-template-rows: repeat(auto-fit, minmax(100px, 1fr)) !important;
+    grid-auto-flow: row !important;
+    grid-auto-rows: minmax(100px, 1fr) !important;
+    align-content: stretch !important;
+    overflow: hidden !important;
+}
+.ciit-meet-room-video-grid:has(.ciit-meet-video-active-speaker):not(.has-pinned-tile)
+    .ciit-meet-video-active-speaker:not(.ciit-meet-video-pinned) {
+    grid-column: 1 !important;
+    grid-row: 1 / -1 !important;
+    width: 100% !important;
+    height: 100% !important;
+    min-height: 0 !important;
+    max-height: none !important;
+    border-radius: 16px !important;
+    border-color: rgba(91, 158, 255, .95) !important;
+    box-shadow: 0 0 0 2px rgba(65, 137, 255, .38), 0 0 18px rgba(65, 137, 255, .22) !important;
+}
+.ciit-meet-room-video-grid:has(.ciit-meet-video-active-speaker):not(.has-pinned-tile)
+    .ciit-meet-video-tile:not(.ciit-meet-video-active-speaker) {
+    grid-column: 2 !important;
+    grid-row: auto !important;
+    width: 100% !important;
+    min-width: 0 !important;
+    min-height: 100px !important;
+    max-height: 150px !important;
+    aspect-ratio: 1.35 / 1 !important;
+    border-radius: 13px !important;
+}
+@media (max-width: 700px) {
+    .ciit-meet-room-video-grid:has(.ciit-meet-video-active-speaker):not(.has-pinned-tile) {
+        grid-template-columns: minmax(0, 1fr) !important;
+        grid-template-rows: minmax(0, 1fr) auto !important;
+        grid-auto-flow: column !important;
+        grid-auto-columns: minmax(90px, 120px) !important;
+        grid-auto-rows: auto !important;
+        overflow-x: auto !important;
+        overflow-y: hidden !important;
+    }
+    .ciit-meet-room-video-grid:has(.ciit-meet-video-active-speaker):not(.has-pinned-tile)
+        .ciit-meet-video-active-speaker:not(.ciit-meet-video-pinned) {
+        grid-column: 1 / -1 !important;
+        grid-row: 1 !important;
+        min-height: 48vh !important;
+    }
+    .ciit-meet-room-video-grid:has(.ciit-meet-video-active-speaker):not(.has-pinned-tile)
+        .ciit-meet-video-tile:not(.ciit-meet-video-active-speaker) {
+        grid-column: auto !important;
+        grid-row: 2 !important;
+        min-height: 90px !important;
+        max-height: 108px !important;
+        aspect-ratio: 1 / 1 !important;
+    }
+}
