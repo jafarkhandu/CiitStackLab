@@ -59,7 +59,13 @@ document.addEventListener("DOMContentLoaded", () => {
                 if (form.matches("[data-meet-chat-enabled-form]")) {
                     const result = await response.json();
                     if (result?.success && typeof result.chatEnabled === "boolean") {
+                        // Apply the server-confirmed state to the host UI immediately,
+                        // then rejoin chat to retrieve its authoritative state snapshot.
                         window.ciitMeetSetChatEnabled?.(result.chatEnabled);
+                        const liveConnection = window.ciitMeetSignalRConnection;
+                        if (liveConnection?.state === "Connected") {
+                            await liveConnection.invoke("JoinChatRoom", Number(room.dataset.sessionId));
+                        }
                     }
                 }
 
@@ -868,15 +874,31 @@ document.addEventListener("DOMContentLoaded", () => {
     });
 
     connection.on("MeetHandSnapshot", snapshot => {
-        if (snapshot?.sessionId !== sessionId || !handButton || !Array.isArray(snapshot.raisedHands)) return;
+        if (snapshot?.sessionId !== sessionId || !Array.isArray(snapshot.raisedHands)) return;
+
         handRaised = snapshot.raisedHands.some(hand => hand.userId === room.dataset.userId);
-        handButton.setAttribute("aria-pressed", String(handRaised));
-        handButton.classList.toggle("is-active", handRaised);
+        if (handButton) {
+            handButton.setAttribute("aria-pressed", String(handRaised));
+            handButton.classList.toggle("is-active", handRaised);
+            const label = handButton.querySelector("span");
+            const icon = handButton.querySelector("i");
+            if (label) label.textContent = handRaised ? "Lower hand" : "Raise hand";
+            if (icon) icon.className = handRaised ? "bi bi-hand-index" : "bi bi-hand";
+        }
         if (selfRaisedHand) selfRaisedHand.hidden = !handRaised;
-        const label = handButton.querySelector("span");
-        const icon = handButton.querySelector("i");
-        if (label) label.textContent = handRaised ? "Lower hand" : "Raise hand";
-        if (icon) icon.className = handRaised ? "bi bi-hand-index" : "bi bi-hand";
+
+        // Rebuild remote hand indicators from the server snapshot after refresh.
+        room.querySelectorAll("[data-peer-display-name]").forEach(tile => {
+            const badge = tile.querySelector(".ciit-meet-raised-hand-remote");
+            if (badge) badge.hidden = true;
+        });
+        snapshot.raisedHands.forEach(hand => {
+            room.querySelectorAll("[data-peer-display-name]").forEach(tile => {
+                if (tile.dataset.peerDisplayName !== hand.displayName) return;
+                const badge = tile.querySelector(".ciit-meet-raised-hand-remote");
+                if (badge) badge.hidden = false;
+            });
+        });
     });
 
     connection.on("MeetMyParticipantStatus", state => {
