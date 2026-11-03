@@ -236,17 +236,6 @@ public sealed class MeetHub : Hub
                 participants = adminParticipants
             }, Context.ConnectionAborted);
 
-            var pendingCount = adminParticipants.Count(item => item.Status == "Pending");
-            if (pendingCount > 0 && adminSession.Status == "Live")
-            {
-                await Clients.Caller.SendAsync("MeetToast", new
-                {
-                    title = "Join requests waiting",
-                    message = $"{pendingCount} student(s) are waiting for your approval.",
-                    type = "info",
-                    createdAtUtc = DateTime.UtcNow
-                }, Context.ConnectionAborted);
-            }
         }
         else
         {
