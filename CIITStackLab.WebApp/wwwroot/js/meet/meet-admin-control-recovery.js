@@ -22,34 +22,6 @@ document.addEventListener("DOMContentLoaded", () => {
             if (sourceButton && targetButton) targetButton.textContent = sourceButton.textContent;
         }
 
-        const sourceRecording = sourceRoom.querySelector("[data-meet-recording-controls]");
-        const targetRecording = document.querySelector("[data-meet-recording-controls]");
-        if (sourceRecording && targetRecording) {
-            const sourceStatus = sourceRecording.querySelector("[data-meet-recording-status]");
-            const targetStatus = targetRecording.querySelector("[data-meet-recording-status]");
-            const recordingStatus = sourceStatus?.textContent.trim() || "";
-            const recordingEnabled = sourceRecording.dataset.recordingEnabled === "true";
-
-            if (sourceStatus && targetStatus) targetStatus.textContent = recordingStatus;
-            targetRecording.dataset.recordingEnabled = String(recordingEnabled);
-
-            const actions = {
-                enable: !recordingEnabled,
-                stop: recordingStatus === "Recording",
-                start: recordingEnabled
-                    && sourceRoom.querySelector("[data-meet-status-text]")?.textContent.trim() === "Live"
-                    && (recordingStatus === "Ready" || recordingStatus === "Stopped"),
-                disable: recordingEnabled && recordingStatus !== "Recording",
-                delete: recordingStatus === "Stopped"
-            };
-
-            Object.entries(actions).forEach(([action, visible]) => {
-                const targetForm = targetRecording.querySelector('[data-recording-action="' + action + '"]');
-                if (targetForm) targetForm.hidden = !visible;
-            });
-            const targetDownload = targetRecording.querySelector("[data-meet-recording-download]");
-            if (targetDownload && recordingStatus !== "Stopped") targetDownload.hidden = true;
-        }
 
         const sourceStatusText = sourceRoom.querySelector("[data-meet-status-text]");
         const targetStatusText = room.querySelector("[data-meet-status-text]");
@@ -76,12 +48,6 @@ document.addEventListener("DOMContentLoaded", () => {
         if (!form || form.querySelector("[data-meet-end-button]")
             || event.defaultPrevented) return;
 
-        if (form.dataset.recordingAction === "delete"
-            && !window.confirm("Mark this recording as deleted?")) {
-            event.preventDefault();
-            event.stopImmediatePropagation();
-            return;
-        }
 
         event.preventDefault();
         event.stopImmediatePropagation();
@@ -111,37 +77,6 @@ document.addEventListener("DOMContentLoaded", () => {
                 throw new Error(message || "Meeting control update failed (" + response.status + ").");
             }
 
-            // Apply the persisted recording state returned by the controller immediately.
-            const recordingActionJson = form.dataset.recordingAction;
-            if (recordingActionJson && response.headers.get("content-type")?.includes("application/json")) {
-                const result = await response.json();
-                if (result.success === false) throw new Error(result.message || "Recording setting was rejected.");
-                const targetRecording = document.querySelector("[data-meet-recording-controls]");
-                if (targetRecording) {
-                    targetRecording.dataset.recordingEnabled = String(result.recordingEnabled);
-                    const targetStatus = targetRecording.querySelector("[data-meet-recording-status]");
-                    if (targetStatus) targetStatus.textContent = result.recordingStatus || "";
-                    const enabled = Boolean(result.recordingEnabled);
-                    const status = result.recordingStatus || "";
-                    const isLive = room.querySelector("[data-meet-status-text]")?.textContent.trim() === "Live";
-                    const actions = {
-                        enable: !enabled,
-                        stop: status === "Recording",
-                        start: enabled && isLive && (status === "Ready" || status === "Stopped"),
-                        disable: enabled && status !== "Recording",
-                        delete: status === "Stopped"
-                    };
-                    Object.entries(actions).forEach(([action, visible]) => {
-                        const targetForm = targetRecording.querySelector('[data-recording-action="' + action + '"]');
-                        if (targetForm) targetForm.hidden = !visible;
-                    });
-                    if (result.recordingStatus === "Recording") {
-                        window.ciitMeetStartRecording?.().catch(error => console.error("Recording capture start failed:", error));
-                    } else {
-                        window.ciitMeetStopRecording?.();
-                    }
-                }
-            }
 
             // Refresh the server-rendered snapshot when available; retain the
             // just-applied JSON state if this secondary refresh transiently fails.
@@ -157,19 +92,10 @@ document.addEventListener("DOMContentLoaded", () => {
                 await window.ciitMeetSignalRConnection.invoke("JoinMeetingRoom", Number(room.dataset.sessionId));
             }
 
-            const recordingAction = form.dataset.recordingAction;
             const waitingRoomEnabled = form.querySelector('input[name="enabled"]')?.value === "true";
-            const successMessage = recordingAction
-                ? ({
-                    enable: "Recording has been enabled.",
-                    start: "Recording status is now Recording.",
-                    stop: "Recording status is now Stopped.",
-                    disable: "Recording has been disabled.",
-                    delete: "Recording metadata has been marked deleted."
-                }[recordingAction] || "Recording setting updated.")
-                : form.matches("[data-meet-waiting-room-form]")
-                    ? (waitingRoomEnabled ? "Waiting room is now on." : "Waiting room is now off.")
-                    : "Meeting setting updated.";
+            const successMessage = form.matches("[data-meet-waiting-room-form]")
+                ? (waitingRoomEnabled ? "Waiting room is now on." : "Waiting room is now off.")
+                : "Meeting setting updated.";
 
             if (typeof window.showMeetToast === "function") {
                 window.showMeetToast({
