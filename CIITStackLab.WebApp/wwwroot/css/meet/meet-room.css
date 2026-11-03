@@ -214,3 +214,67 @@ html,body{width:100%;min-height:100%;margin:0}
 .ciit-meet-video-tile.ciit-meet-video-pinned{position:relative;z-index:1;border-color:#78a9f5;box-shadow:0 0 0 2px rgba(120,169,245,.2),0 20px 48px rgba(0,0,0,.28)}
 .ciit-meet-video-pin{transition:background .16s ease,border-color .16s ease,transform .16s ease}
 .ciit-meet-video-pin:hover{transform:translateY(-1px)}
+
+/* Focus-stage layout: speaker and pinned content stay dominant while the filmstrip remains usable. */
+.ciit-meet-room-video-grid:has(.ciit-meet-video-active-speaker),
+.ciit-meet-room-video-grid.has-pinned-tile {
+    grid-template-columns: minmax(0, 1fr);
+    grid-template-rows: minmax(0, 1fr) auto;
+    grid-auto-rows: auto;
+    align-content: stretch;
+}
+.ciit-meet-room-video-grid .ciit-meet-video-active-speaker:not(.ciit-meet-video-pinned),
+.ciit-meet-room-video-grid.has-pinned-tile .ciit-meet-video-pinned {
+    grid-column: 1;
+    grid-row: 1;
+    width: 100%;
+    min-height: clamp(260px, 56vh, 680px);
+    max-height: 100%;
+    border-radius: 16px;
+}
+.ciit-meet-room-video-grid:has(.ciit-meet-video-active-speaker) .ciit-meet-video-tile:not(.ciit-meet-video-active-speaker),
+.ciit-meet-room-video-grid.has-pinned-tile .ciit-meet-video-tile:not(.ciit-meet-video-pinned) {
+    grid-row: 2;
+    grid-column: auto;
+    min-width: 150px;
+    min-height: 100px;
+    max-height: 126px;
+    width: 100%;
+    border-radius: 12px;
+}
+.ciit-meet-room-video-grid:has(.ciit-meet-video-active-speaker) {
+    grid-auto-flow: column;
+}
+.ciit-meet-screen-share-badge {
+    position: absolute;
+    top: 14px;
+    left: 14px;
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+    border: 1px solid rgba(125, 177, 255, .45);
+    border-radius: 8px;
+    padding: 7px 10px;
+    background: rgba(17, 35, 59, .82);
+    color: #dbeafe;
+    font-size: 10px;
+    font-weight: 700;
+    backdrop-filter: blur(12px);
+}
+.ciit-meet-screen-share-badge[hidden] { display: none; }
+.ciit-meet-video-screen-sharing { border-color: #78a9f5; }
+@media (max-width: 700px) {
+    .ciit-meet-room-video-grid:has(.ciit-meet-video-active-speaker),
+    .ciit-meet-room-video-grid.has-pinned-tile {
+        grid-template-rows: minmax(0, 1fr) auto;
+    }
+    .ciit-meet-room-video-grid .ciit-meet-video-active-speaker:not(.ciit-meet-video-pinned),
+    .ciit-meet-room-video-grid.has-pinned-tile .ciit-meet-video-pinned {
+        min-height: 48vh;
+    }
+    .ciit-meet-room-video-grid:has(.ciit-meet-video-active-speaker) .ciit-meet-video-tile:not(.ciit-meet-video-active-speaker),
+    .ciit-meet-room-video-grid.has-pinned-tile .ciit-meet-video-tile:not(.ciit-meet-video-pinned) {
+        min-height: 90px;
+        max-height: 108px;
+    }
+}
