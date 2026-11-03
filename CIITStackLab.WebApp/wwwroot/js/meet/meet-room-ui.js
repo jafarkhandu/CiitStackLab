@@ -116,29 +116,26 @@ document.addEventListener("DOMContentLoaded", () => {
         return { backdrop, content, hide };
     };
 
-    let settingsPopup;
-    let participantsPopup;
+        let participantsPopup;
     let pendingRequestsList;
     if (isHost && hostPanel) {
-        const settingsButton = room.querySelector("[data-open-settings]");
-        const participantsButton = room.querySelector("[data-open-participants]");
+                const participantsButton = room.querySelector("[data-open-participants]");
         const settings = hostPanel.querySelector(".ciit-meet-host-settings");
         const participants = hostPanel.querySelector("[data-meet-participants-list]");
         const panelHeading = hostPanel.querySelector(".ciit-meet-host-panel-heading");
 
-        settingsPopup = createPopup("ciit-meet-settings-backdrop", "Meeting settings", "bi-gear");
-        participantsPopup = createPopup("ciit-meet-participants-backdrop", "Participants", "bi-people");
+                participantsPopup = createPopup("ciit-meet-participants-backdrop", "Participants", "bi-people");
         if (panelHeading) {
             panelHeading.querySelector("[data-meet-controls-toggle]")?.remove();
-            settingsPopup.content.append(panelHeading);
+            panelHeading.remove();
         }
-        if (settings) settingsPopup.content.append(settings);
+        
         if (participants) {
             participantsPopup.content.append(participants);
             pendingRequestsList = document.createElement("section");
             pendingRequestsList.className = "ciit-meet-pending-requests";
             pendingRequestsList.innerHTML = '<h3>Join requests <span data-meet-pending-total>0</span></h3><div data-meet-pending-list></div>';
-            settingsPopup.content.append(pendingRequestsList);
+            participantsPopup.content.append(pendingRequestsList);
 
             const admittedRoster = document.createElement("section");
             admittedRoster.className = "ciit-meet-admitted-roster";
@@ -166,11 +163,9 @@ document.addEventListener("DOMContentLoaded", () => {
             participants.append(admittedRoster);
         }
         hostPanel.hidden = true;
-        settingsButton?.addEventListener("click", () => { settingsPopup.backdrop.hidden = false; });
-        participantsButton?.addEventListener("click", () => { participantsPopup.backdrop.hidden = false; });
+                participantsButton?.addEventListener("click", () => { participantsPopup.backdrop.hidden = false; });
         document.addEventListener("keydown", event => {
             if (event.key === "Escape") {
-                settingsPopup.backdrop.hidden = true;
                 participantsPopup.backdrop.hidden = true;
             }
         });
@@ -180,6 +175,15 @@ document.addEventListener("DOMContentLoaded", () => {
         console.error("SignalR client library could not be loaded.");
         return;
     }
+
+    const endMenuToggle = room.querySelector("[data-meet-end-toggle]");
+    const endMenuForm = room.querySelector("[data-meet-end-form]");
+    endMenuToggle?.addEventListener("click", () => {
+        const isExpanded = endMenuToggle.getAttribute("aria-expanded") === "true";
+        endMenuToggle.setAttribute("aria-expanded", String(!isExpanded));
+        if (endMenuForm) endMenuForm.hidden = isExpanded;
+        endMenuToggle.setAttribute("aria-label", isExpanded ? "Show end meeting option" : "Hide end meeting option");
+    });
 
     const sessionId = Number(room.dataset.sessionId);
     const hubUrl = room.dataset.hubUrl;
