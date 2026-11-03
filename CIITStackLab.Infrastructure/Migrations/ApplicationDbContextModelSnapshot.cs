@@ -698,6 +698,12 @@ namespace CIITStackLab.Infrastructure.Migrations
                         .HasDefaultValue(true)
                         .HasColumnName("waiting_room_enabled");
 
+                    b.Property<bool>("ChatEnabled")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("bit")
+                        .HasDefaultValue(true)
+                        .HasColumnName("chat_enabled");
+
                     b.Property<DateTime?>("ReminderSentAtUtc")
                         .HasColumnType("datetime2")
                         .HasColumnName("reminder_sent_at_utc");
