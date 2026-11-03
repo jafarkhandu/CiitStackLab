@@ -386,15 +386,20 @@ public sealed class MeetHub : Hub
 
         if (raised)
         {
+            RaisedHandConnections[Context.ConnectionId] = (sessionId, userId, displayName);
             if (!RaisedHands.TryAdd(handKey, 0))
                 return;
-
-            RaisedHandConnections[Context.ConnectionId] = (sessionId, userId, displayName);
         }
         else
         {
             RaisedHands.TryRemove(handKey, out _);
-            RaisedHandConnections.TryRemove(Context.ConnectionId, out _);
+            foreach (var connection in RaisedHandConnections
+                .Where(pair => pair.Value.SessionId == sessionId && pair.Value.UserId == userId)
+                .Select(pair => pair.Key)
+                .ToArray())
+            {
+                RaisedHandConnections.TryRemove(connection, out _);
+            }
         }
 
         await Clients.Group(ChatGroup(sessionId)).SendAsync("MeetHandRaised", new
@@ -534,16 +539,22 @@ public sealed class MeetHub : Hub
     {
         if (RaisedHandConnections.TryRemove(Context.ConnectionId, out var hand))
         {
-            var handKey = $"{hand.SessionId}:{hand.UserId}";
-            if (RaisedHands.TryRemove(handKey, out _))
+            var stillRaisedFromAnotherConnection = RaisedHandConnections.Values.Any(
+                item => item.SessionId == hand.SessionId && item.UserId == hand.UserId);
+
+            if (!stillRaisedFromAnotherConnection)
             {
-                await Clients.Group(ChatGroup(hand.SessionId)).SendAsync("MeetHandRaised", new
+                var handKey = $"{hand.SessionId}:{hand.UserId}";
+                if (RaisedHands.TryRemove(handKey, out _))
                 {
-                    sessionId = hand.SessionId,
-                    userId = hand.UserId,
-                    displayName = hand.DisplayName,
-                    raised = false
-                });
+                    await Clients.Group(ChatGroup(hand.SessionId)).SendAsync("MeetHandRaised", new
+                    {
+                        sessionId = hand.SessionId,
+                        userId = hand.UserId,
+                        displayName = hand.DisplayName,
+                        raised = false
+                    });
+                }
             }
         }
 
