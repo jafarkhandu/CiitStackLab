@@ -810,6 +810,7 @@ document.addEventListener("DOMContentLoaded", () => {
                 });
                 if (!response.ok) throw new Error((await response.text().catch(() => "")) || "Recording upload failed (" + response.status + ").");
                 toast("Recording saved", "The meeting recording is saved and ready to download.", "success");
+                document.dispatchEvent(new CustomEvent("ciitMeetRecordingSaved", { detail: { sessionId } }));
             } catch (error) {
                 console.error("Meeting recording upload failed:", error);
                 toast("Recording save failed", error.message || "The recording could not be uploaded.", "error");
