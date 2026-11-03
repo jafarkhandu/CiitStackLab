@@ -145,4 +145,13 @@ public sealed class MeetRealtimeService
                 session.Id);
         }
     }
+
+    public Task PublishChatEnabledAsync(
+        int sessionId,
+        bool enabled,
+        CancellationToken cancellationToken = default)
+    {
+        return _hub.Clients.Group(MeetHub.ChatGroup(sessionId))
+            .SendAsync("MeetChatEnabledState", new { sessionId, enabled }, cancellationToken);
+    }
 }

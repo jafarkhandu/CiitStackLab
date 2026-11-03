@@ -12,6 +12,7 @@ public sealed class MeetRoomViewModel
     public string Status { get; init; } = string.Empty;
     public bool IsHost { get; init; }
     public bool WaitingRoomEnabled { get; init; }
+    public bool ChatEnabled { get; init; } = true;
     public string ParticipantStatus { get; init; } = string.Empty;
     public int ParticipantCount { get; init; }
     public IReadOnlyList<MeetRoomParticipantViewModel> Participants { get; init; } = [];

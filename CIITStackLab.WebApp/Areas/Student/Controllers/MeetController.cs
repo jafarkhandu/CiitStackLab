@@ -154,6 +154,7 @@ public sealed class MeetController : Controller
                 item.DurationMinutes,
                 item.Status,
                 item.WaitingRoomEnabled,
+                item.ChatEnabled,
             })
             .SingleOrDefaultAsync(cancellationToken);
 
@@ -178,6 +179,7 @@ public sealed class MeetController : Controller
             Status = session.Status,
             IsHost = false,
             WaitingRoomEnabled = session.WaitingRoomEnabled,
+            ChatEnabled = session.ChatEnabled,
             ParticipantStatus = participant.Status,
         });
     }
