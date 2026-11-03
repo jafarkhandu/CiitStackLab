@@ -378,3 +378,14 @@ html,body{width:100%;min-height:100%;margin:0}
         flex-wrap: wrap;
     }
 }
+
+/* Compact horizontal permissions row, including narrow glass-popup viewports. */
+.ciit-meet-glass-popup .ciit-meet-host-participant { align-items:center; }
+.ciit-meet-glass-popup .ciit-meet-permission-form { width:100%; display:flex; flex-direction:row; flex-wrap:nowrap; align-items:center; justify-content:flex-start; gap:clamp(6px,2vw,14px); }
+.ciit-meet-glass-popup .ciit-meet-permission-form label { display:inline-flex; flex:0 0 auto; align-items:center; gap:4px; margin:0; white-space:nowrap; }
+.ciit-meet-glass-popup .ciit-meet-permission-form button { margin-left:auto; }
+@media(max-width:650px) {
+ .ciit-meet-glass-popup .ciit-meet-host-participant { align-items:flex-start; }
+ .ciit-meet-glass-popup .ciit-meet-permission-form { flex-wrap:wrap; }
+ .ciit-meet-glass-popup .ciit-meet-permission-form button { flex-basis:100%; margin-left:0; }
+}
