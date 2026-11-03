@@ -23,6 +23,107 @@ public static class TopicCategoryAnalyzer
         ("Business & Productivity", ["excel", "power bi", "tableau", "accounting", "marketing", "project management", "business analysis", "communication skills", "powerpoint", "word", "numPy"])
     ];
 
+    // Technology aliases and Devicon slugs live in one place so topic cards do not
+    // need their own icon switches. The generated fallback below covers new simple
+    // technology names when Devicon follows its normal naming convention.
+    private static readonly (string[] Aliases, string Slug)[] TechnologyIcons =
+    [
+        (["html", "html5"], "html5"),
+        (["css", "css3"], "css3"),
+        (["javascript", "js"], "javascript"),
+        (["jquery"], "jquery"),
+        (["bootstrap"], "bootstrap"),
+        (["react"], "react"),
+        (["typescript"], "typescript"),
+        (["angular", "angularjs"], "angularjs"),
+        (["vue", "vue.js", "vuejs"], "vuejs"),
+        (["svelte"], "svelte"),
+        (["node", "node.js", "nodejs"], "nodejs"),
+        (["python"], "python"),
+        (["ruby"], "ruby"),
+        (["php"], "php"),
+        (["java", "jdbc", "jsp", "servlet"], "java"),
+        (["c#", "c sharp"], "csharp"),
+        (["c++", "cplusplus"], "cplusplus"),
+        (["kotlin"], "kotlin"),
+        (["swift"], "swift"),
+        (["rust"], "rust"),
+        (["golang", "go language"], "go"),
+        (["oracle", "pl/sql"], "oracle"),
+        (["mysql"], "mysql"),
+        (["mongodb", "mongo db"], "mongodb"),
+        (["sql server", "mssql", "microsoft sql server"], "microsoftsqlserver"),
+        (["postgres", "postgresql"], "postgresql"),
+        (["redis"], "redis"),
+        (["sqlite"], "sqlite"),
+        (["cassandra"], "cassandra"),
+        (["dynamodb", "dynamo db"], "dynamodb"),
+        (["hibernate"], "hibernate"),
+        (["spring", "spring framework", "spring boot", "spring mvc"], "spring"),
+        (["maven"], "maven"),
+        (["gradle"], "gradle"),
+        (["django"], "django"),
+        (["flask"], "flask"),
+        (["fastapi", "fast api"], "fastapi"),
+        (["express", "express.js", "expressjs"], "express"),
+        (["jenkins"], "jenkins"),
+        (["azure"], "azure"),
+        (["aws", "amazon web services"], "amazonwebservices"),
+        (["docker"], "docker"),
+        (["kubernetes", "k8s"], "kubernetes"),
+        (["terraform"], "terraform"),
+        (["ansible"], "ansible"),
+        (["linux"], "linux"),
+        (["github"], "github"),
+        (["gitlab"], "gitlab"),
+        (["git"], "git"),
+        (["selenium"], "selenium"),
+        (["playwright"], "playwright"),
+        (["cypress"], "cypress"),
+        (["junit"], "junit"),
+        (["xunit"], "dotnet"),
+        (["pandas"], "pandas"),
+        (["numpy", "numPy"], "numpy"),
+        (["matplotlib"], "matplotlib"),
+        (["dotnet", ".net", ".net core", "asp.net", "asp.net core"], "dotnetcore")
+    ];
+
+    private static readonly HashSet<string> NonTechnologyTopics = new(StringComparer.Ordinal)
+    {
+        "frontend",
+        "front-end",
+        "backend",
+        "back-end",
+        "api",
+        "rest",
+        "graphql",
+        "programming fundamentals",
+        "data structures",
+        "algorithms",
+        "oop",
+        "database",
+        "sql",
+        "nosql",
+        "testing",
+        "qa",
+        "quality assurance",
+        "devops",
+        "cloud computing",
+        "deployment",
+        "monitoring",
+        "security",
+        "networking",
+        "cybersecurity",
+        "machine learning",
+        "deep learning",
+        "artificial intelligence",
+        "data science",
+        "data analytics",
+        "statistics",
+        "generative ai",
+        "llm"
+    };
+
     public static string GetCategory(string? topicTitle)
     {
         var title = Normalize(topicTitle);
@@ -58,35 +159,48 @@ public static class TopicCategoryAnalyzer
             return "bi bi-code-slash";
         }
 
-        return title switch
+        foreach (var (aliases, slug) in TechnologyIcons)
         {
-            var value when value.Contains("html") => "devicon-html5-plain colored",
-            var value when value.Contains("css") => "devicon-css3-plain colored",
-            var value when value.Contains("javascript") || value == "js" => "devicon-javascript-plain colored",
-            var value when value.Contains("jquery") => "devicon-jquery-plain colored",
-            var value when value.Contains("bootstrap") => "devicon-bootstrap-plain colored",
-            var value when value.Contains("react") => "devicon-react-original colored",
-            var value when value.Contains("typescript") => "devicon-typescript-plain colored",
-            var value when value.Contains("angular") => "devicon-angularjs-plain colored",
-            var value when value.Contains("node") => "devicon-nodejs-plain colored",
-            var value when value.Contains("python") => "devicon-python-plain colored",
-            var value when value.Contains("oracle") || value.Contains("pl/sql") => "devicon-oracle-original colored",
-            var value when value.Contains("mysql") => "devicon-mysql-original colored",
-            var value when value.Contains("mongodb") || value.Contains("mongo db") => "devicon-mongodb-plain colored",
-            var value when value.Contains("sql server") || value.Contains("mssql") => "devicon-microsoftsqlserver-plain colored",
-            var value when value.Contains("hibernate") => "devicon-hibernate-plain colored",
-            var value when value.Contains("spring") => "devicon-spring-original colored",
-            var value when value.Contains("java") || value.Contains("jdbc") || value.Contains("jsp") || value.Contains("servlet") => "devicon-java-plain colored",
-            var value when value.Contains("jenkins") => "devicon-jenkins-plain colored",
-            var value when value.Contains("azure") => "devicon-azure-plain colored",
-            var value when value.Contains("aws") || value.Contains("amazon web services") => "devicon-amazonwebservices-plain-wordmark colored",
-            var value when value.Contains("docker") => "devicon-docker-plain colored",
-            var value when value.Contains("github") => "devicon-github-original colored",
-            var value when value.Contains("git") => "devicon-git-plain colored",
-            var value when value.Contains("c#") || value.Contains(".net") => "devicon-dotnetcore-plain colored",
-            var value when value.Contains("sql") || value.Contains("database") => "bi bi-database",
-            _ => "bi bi-code-slash"
-        };
+            if (aliases.Any(alias => ContainsPhrase(title, Normalize(alias))))
+            {
+                return BuildDeviconClass(slug);
+            }
+        }
+
+        // For a new, simple technology title such as "Ruby", "Rust" or another
+        // Devicon-supported technology, derive the standard Devicon slug instead of
+        // immediately falling back to the generic </> icon. Explicit aliases above
+        // handle names whose Devicon slug differs from their display name.
+        if (!NonTechnologyTopics.Contains(title) && IsSimpleTechnologyTitle(title))
+        {
+            var generatedSlug = ToDeviconSlug(title);
+            if (generatedSlug.Length > 0)
+            {
+                return BuildDeviconClass(generatedSlug);
+            }
+        }
+
+        return "bi bi-code-slash";
+    }
+
+    private static string BuildDeviconClass(string slug)
+        => $"devicon-{slug}-plain colored";
+
+    private static bool IsSimpleTechnologyTitle(string title)
+        => title.Length <= 40
+           && Regex.IsMatch(title, @"^[a-z0-9][a-z0-9 .+#/-]*$")
+           && title.Any(char.IsLetter);
+
+    private static string ToDeviconSlug(string title)
+    {
+        var slug = title
+            .Replace(".js", "js", StringComparison.Ordinal)
+            .Replace(".net", "net", StringComparison.Ordinal)
+            .Replace("#", "sharp", StringComparison.Ordinal)
+            .Replace("+", "plus", StringComparison.Ordinal);
+
+        slug = Regex.Replace(slug, @"[^a-z0-9]+", "-").Trim('-');
+        return slug;
     }
 
     private static bool ContainsPhrase(string title, string keyword)
