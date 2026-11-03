@@ -437,6 +437,7 @@ document.addEventListener("DOMContentLoaded", () => {
     };
 
     requestMedia = async kind => {
+        if (mediaCleanupCompleted) throw new Error("The meeting has ended.");
         const hasTrack = localStream.getTracks().some(track => track.kind === kind && track.readyState === "live");
         if (hasTrack) return;
         if (!navigator.mediaDevices?.getUserMedia) {
@@ -448,6 +449,10 @@ document.addEventListener("DOMContentLoaded", () => {
             audio: kind === "audio",
             video: kind === "video"
         });
+        if (mediaCleanupCompleted) {
+            stream.getTracks().forEach(track => track.stop());
+            throw new Error("The meeting has ended.");
+        }
         stream.getTracks().forEach(track => {
             localStream.addTrack(track);
             if (track.kind === "audio") localAudioMeter = createAudioMeter(localStream);
@@ -469,6 +474,7 @@ document.addEventListener("DOMContentLoaded", () => {
     };
 
     const setTrackEnabled = async (kind, enabled) => {
+        if (mediaCleanupCompleted) return;
         const mediaKind = kind === "mic" ? "audio" : "video";
         if (enabled && !mediaPermissions[kind]) {
             throw new Error("The host has disabled this device for you.");
@@ -477,6 +483,7 @@ document.addEventListener("DOMContentLoaded", () => {
         const track = localStream.getTracks().find(item => item.kind === mediaKind && item.readyState === "live");
         if (enabled) {
             await requestMedia(mediaKind);
+            if (mediaCleanupCompleted) return;
             const restoredTrack = localStream.getTracks().find(item => item.kind === mediaKind && item.readyState === "live");
             if (restoredTrack) {
                 restoredTrack.enabled = true;
@@ -566,8 +573,14 @@ document.addEventListener("DOMContentLoaded", () => {
         }
 
         try {
+            if (mediaCleanupCompleted) return;
             if (!navigator.mediaDevices?.getDisplayMedia) throw new Error("Screen sharing is not supported in this browser.");
             screenStream = await navigator.mediaDevices.getDisplayMedia({ video: true, audio: false });
+            if (mediaCleanupCompleted) {
+                screenStream.getTracks().forEach(track => track.stop());
+                screenStream = null;
+                return;
+            }
             const screenTrack = screenStream.getVideoTracks()[0];
             publishPeerMediaState("share", true);
             peers.forEach(peer => {
