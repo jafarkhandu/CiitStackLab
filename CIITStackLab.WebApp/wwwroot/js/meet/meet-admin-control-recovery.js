@@ -110,8 +110,8 @@ document.addEventListener("DOMContentLoaded", () => {
             }
 
             // Apply the persisted recording state returned by the controller immediately.
-            const recordingAction = form.dataset.recordingAction;
-            if (recordingAction && response.headers.get("content-type")?.includes("application/json")) {
+            const recordingActionJson = form.dataset.recordingAction;
+            if (recordingActionJson && response.headers.get("content-type")?.includes("application/json")) {
                 const result = await response.json();
                 if (result.success === false) throw new Error(result.message || "Recording setting was rejected.");
                 const targetRecording = document.querySelector("[data-meet-recording-controls]");
