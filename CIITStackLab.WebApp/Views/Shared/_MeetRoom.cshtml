@@ -14,7 +14,7 @@
     <link rel="stylesheet" href="~/css/meet/meet-room.css" asp-append-version="true" />
 </head>
 <body class="ciit-meet-body">
-    <div class="ciit-meet-room-page" data-meet-room data-session-id="@Model.Id" data-is-host="@Model.IsHost.ToString().ToLowerInvariant()" data-participant-status="@Model.ParticipantStatus" data-hub-url="/hubs/meet" data-room-url="@Url.Action("Room", "Meet", new { area = Model.IsHost ? "Admin" : "Student", id = Model.Id })">
+    <div class="ciit-meet-room-page" data-meet-room data-session-id="@Model.Id" data-is-host="@Model.IsHost.ToString().ToLowerInvariant()" data-participant-status="@Model.ParticipantStatus" data-chat-enabled="@Model.ChatEnabled.ToString().ToLowerInvariant()" data-hub-url="/hubs/meet" data-room-url="@Url.Action("Room", "Meet", new { area = Model.IsHost ? "Admin" : "Student", id = Model.Id })">
         <header class="ciit-meet-room-header">
             <div class="ciit-meet-room-heading">
                 <span class="ciit-meet-room-eyebrow">CIIT MEET <span class="ciit-meet-preview-tag">LIVE</span></span>
@@ -73,6 +73,13 @@
                         <input type="hidden" name="enabled" value="@(!Model.WaitingRoomEnabled)" />
                         <span>Waiting room <strong data-meet-waiting-room-state>@(Model.WaitingRoomEnabled ? "On" : "Off")</strong></span>
                         <button type="submit" class="ciit-meet-host-secondary">Turn @(Model.WaitingRoomEnabled ? "off" : "on")</button>
+                    </form>
+                    <form data-meet-ajax asp-area="Admin" asp-controller="Meet" asp-action="SetChatEnabled" method="post" data-meet-chat-enabled-form>
+                        @Html.AntiForgeryToken()
+                        <input type="hidden" name="id" value="@Model.Id" />
+                        <input type="hidden" name="enabled" value="@(!Model.ChatEnabled)" />
+                        <span>Meeting chat <strong data-meet-chat-state>@(Model.ChatEnabled ? "On" : "Off")</strong></span>
+                        <button type="submit" class="ciit-meet-host-secondary" data-meet-chat-toggle-submit>@(Model.ChatEnabled ? "Disable chat" : "Enable chat")</button>
                     </form>
                 </div>
 
@@ -177,6 +184,19 @@
                 </article>
             </div>
 
+            <section class="ciit-meet-chat-panel" data-meet-chat-panel hidden aria-label="Meeting group chat">
+                <header class="ciit-meet-chat-heading">
+                    <div><span class="ciit-meet-chat-kicker">LIVE CONVERSATION</span><h2><i class="bi bi-chat-dots"></i> Group chat</h2></div>
+                    <button type="button" data-meet-chat-close aria-label="Close chat"><i class="bi bi-x-lg"></i></button>
+                </header>
+                <div class="ciit-meet-chat-status" data-meet-chat-status><i class="bi bi-shield-check"></i> Everyone in this meeting can see messages</div>
+                <div class="ciit-meet-chat-messages" data-meet-chat-messages aria-live="polite" aria-relevant="additions"></div>
+                <form class="ciit-meet-chat-compose" data-meet-chat-compose>
+                    <textarea data-meet-chat-input rows="1" maxlength="1000" placeholder="Message everyone…" aria-label="Message everyone"></textarea>
+                    <button type="submit" data-meet-chat-send aria-label="Send message"><i class="bi bi-send-fill"></i></button>
+                </form>
+                <p class="ciit-meet-chat-footnote">Messages are shared with all meeting participants</p>
+            </section>
             <div class="ciit-meet-controls-glass">
             <div class="ciit-meet-room-controls" aria-label="Meeting controls">
                 <button type="button" class="ciit-meet-control" data-room-toggle="mic" aria-pressed="false">
@@ -185,6 +205,15 @@
                 <button type="button" class="ciit-meet-control" data-room-toggle="camera" aria-pressed="false">
                     <i class="bi bi-camera-video-off"></i><span>Start video</span>
                 </button>
+                <button type="button" class="ciit-meet-control" data-meet-chat-toggle aria-pressed="false" aria-label="Open group chat">
+                    <i class="bi bi-chat-dots"></i><span>Chat</span>
+                </button>
+                @if (!Model.IsHost)
+                {
+                    <button type="button" class="ciit-meet-control" data-meet-raise-hand aria-pressed="false">
+                        <i class="bi bi-hand"></i><span>Raise hand</span>
+                    </button>
+                }
                 <button type="button" class="ciit-meet-control" data-room-toggle="share" aria-pressed="false">
                     <i class="bi bi-display"></i><span>Share screen</span>
                 </button>
