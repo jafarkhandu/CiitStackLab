@@ -192,9 +192,19 @@
                 </button>
                 @if (Model.IsHost)
                 {
-                    <a class="ciit-meet-leave-button" href="@Url.Action("Index", "Meet", new { area = "Admin" })">
-                        <i class="bi bi-telephone-x-fill"></i><span>Leave room</span>
-                    </a>
+                    <div class="ciit-meet-host-end-menu" data-meet-end-menu>
+                        <a class="ciit-meet-leave-button ciit-meet-host-leave-link" href="@Url.Action("Index", "Meet", new { area = "Admin" })">
+                            <i class="bi bi-telephone-x-fill"></i><span>Leave meeting</span>
+                        </a>
+                        <button type="button" class="ciit-meet-host-end-toggle" data-meet-end-toggle aria-expanded="false" aria-label="Show end meeting option">
+                            <i class="bi bi-chevron-down"></i>
+                        </button>
+                        <form data-meet-ajax asp-area="Admin" asp-controller="Meet" asp-action="End" method="post" data-meet-end-form hidden onsubmit="return confirm('End this meeting for everyone?');">
+                            @Html.AntiForgeryToken()
+                            <input type="hidden" name="id" value="@Model.Id" />
+                            <button type="submit" class="ciit-meet-host-danger" data-meet-end-button @(Model.Status != "Live" ? "disabled" : null)>End meeting</button>
+                        </form>
+                    </div>
                 }
                 else
                 {
