@@ -112,9 +112,6 @@ public sealed class MeetController : Controller
             Status = session.Status,
             IsHost = true,
             WaitingRoomEnabled = session.WaitingRoomEnabled,
-            RecordingEnabled = session.RecordingEnabled,
-            RecordingStatus = session.RecordingStatus,
-            RecordingRetentionUntilUtc = session.RecordingRetentionUntilUtc,
             ParticipantCount = participants.Count(x => x.Status == "Admitted"),
             Participants = participants
         });
@@ -246,12 +243,6 @@ public sealed class MeetController : Controller
             var now = DateTime.UtcNow;
             session.Status = "Completed";
             session.EndedAtUtc = now;
-            if (session.RecordingStatus == "Recording")
-            {
-                session.RecordingStatus = "Stopped";
-                session.RecordingEndedAtUtc = session.EndedAtUtc;
-                session.RecordingRetentionUntilUtc = now.AddDays(90);
-            }
 
             foreach (var participant in session.Participants.Where(x => x.Status is "Admitted" or "Pending"))
             {
