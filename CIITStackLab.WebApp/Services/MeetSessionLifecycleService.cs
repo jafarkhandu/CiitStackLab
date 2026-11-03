@@ -83,12 +83,6 @@ public sealed class MeetSessionLifecycleService : BackgroundService
             session.Status = "Completed";
             session.EndedAtUtc = endedAt;
 
-            if (session.RecordingStatus == "Recording")
-            {
-                session.RecordingStatus = "Stopped";
-                session.RecordingEndedAtUtc = endedAt;
-                session.RecordingRetentionUntilUtc = endedAt.AddDays(90);
-            }
 
             foreach (var participant in session.Participants.Where(
                 participant => participant.Status is "Pending" or "Admitted"))
