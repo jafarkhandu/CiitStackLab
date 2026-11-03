@@ -614,3 +614,14 @@ html,body{width:100%;min-height:100%;margin:0}
         max-height: 96px !important;
     }
 }
+
+/* Keep the host's End meeting action above the meeting toolbar. */
+.ciit-meet-room-controls .ciit-meet-host-end-menu {
+    align-items: stretch;
+}
+.ciit-meet-room-controls .ciit-meet-host-end-menu form {
+    position: absolute;
+    top: auto;
+    right: 0;
+    bottom: calc(100% + 10px);
+}
