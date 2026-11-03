@@ -1,5 +1,6 @@
 using CIITStackLab.Application.Interfaces;
 using CIITStackLab.WebApp.Models;
+using CIITStackLab.WebApp.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
@@ -33,6 +34,22 @@ public class TopicsController : Controller
         return View(new AdminTopicIndexViewModel { ActiveTopics = activeTopics, ArchivedTopics = archivedTopics, EditTopic = editTopic });
     }
 
+    [HttpGet]
+    public IActionResult PreviewLogo(string? topicName)
+    {
+        var name = topicName?.Trim() ?? string.Empty;
+        if (name.Length == 0)
+            return Json(new { success = false });
+
+        return Json(new
+        {
+            success = true,
+            topicName = name,
+            iconClass = TopicCategoryAnalyzer.GetIconClass(name),
+            category = TopicCategoryAnalyzer.GetCategory(name)
+        });
+    }
+
     [HttpPost]
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> Save(AdminTopicFormModel model, CancellationToken cancellationToken)
@@ -42,6 +59,15 @@ public class TopicsController : Controller
 
         if (!ModelState.IsValid)
             return Fail("Please check the topic details.", model.Id);
+
+        if (model.Id == 0)
+        {
+            var expectedLogoClass = TopicCategoryAnalyzer.GetIconClass(model.TopicName);
+            var confirmedLogoClass = model.ConfirmedLogoClass?.Trim();
+
+            if (!model.LogoConfirmed || !string.Equals(confirmedLogoClass, expectedLogoClass, StringComparison.Ordinal))
+                return Fail("Please confirm the detected topic logo before saving.");
+        }
 
         if (await _topicService.TopicNameExistsAsync(model.TopicName, model.Id == 0 ? null : model.Id, cancellationToken))
             return Fail("A topic with this name already exists.", model.Id);
@@ -62,12 +88,12 @@ public class TopicsController : Controller
 
     [HttpPost]
     [ValidateAntiForgeryToken]
-    public async Task<IActionResult> Delete(int id, CancellationToken cancellationToken)
+    public async Task<IActionResult> Delete(int id, CancellationToken cancellationToken = default)
         => Result(await _topicService.DeleteAsync(id, cancellationToken), "Topic moved to archive.", "Unable to archive the topic.");
 
     [HttpPost]
     [ValidateAntiForgeryToken]
-    public async Task<IActionResult> Restore(int id, CancellationToken cancellationToken)
+    public async Task<IActionResult> Restore(int id, CancellationToken cancellationToken = default)
         => Result(await _topicService.RestoreAsync(id, cancellationToken), "Topic restored successfully.", "Unable to restore the topic.");
 
     private IActionResult Success(string message, int? editId = null)
