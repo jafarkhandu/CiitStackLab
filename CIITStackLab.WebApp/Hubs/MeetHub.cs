@@ -139,11 +139,19 @@ public sealed class MeetHub : Hub
                 throw new HubException("Your account does not have the Student role. Please contact the administrator.");
 
             var now = DateTime.UtcNow;
+            var sessionEndUtc = session.StartedAtUtc?.AddMinutes(session.DurationMinutes);
             if (session.Status != "Live"
                 || !session.StartedAtUtc.HasValue
                 || session.StartedAtUtc.Value > now
-                || session.StartedAtUtc.Value.AddMinutes(session.DurationMinutes) <= now)
-                throw new HubException("This meeting is not currently live.");
+                || sessionEndUtc <= now)
+            {
+                var startedAt = session.StartedAtUtc?.ToString("O") ?? "null";
+                var endsAt = sessionEndUtc?.ToString("O") ?? "null";
+                throw new HubException(
+                    $"Meeting access rejected. Status={session.Status}; StartedAtUtc={startedAt}; " +
+                    $"DurationMinutes={session.DurationMinutes}; EndsAtUtc={endsAt}; UtcNow={now:O}. " +
+                    "The session state or time window is inconsistent.");
+            }
 
             var isBatchMember = await _dbContext.MeetBatchMembers.AsNoTracking().AnyAsync(
                 member => member.MeetBatchId == session.MeetBatchId
