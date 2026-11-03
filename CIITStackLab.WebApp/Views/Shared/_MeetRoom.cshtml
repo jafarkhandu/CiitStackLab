@@ -14,7 +14,7 @@
     <link rel="stylesheet" href="~/css/meet/meet-room.css" asp-append-version="true" />
 </head>
 <body class="ciit-meet-body">
-    <div class="ciit-meet-room-page" data-meet-room data-session-id="@Model.Id" data-is-host="@Model.IsHost.ToString().ToLowerInvariant()" data-participant-status="@Model.ParticipantStatus" data-chat-enabled="@Model.ChatEnabled.ToString().ToLowerInvariant()" data-hub-url="/hubs/meet" data-room-url="@Url.Action("Room", "Meet", new { area = Model.IsHost ? "Admin" : "Student", id = Model.Id })">
+    <div class="ciit-meet-room-page" data-meet-room data-session-id="@Model.Id" data-is-host="@Model.IsHost.ToString().ToLowerInvariant()" data-participant-status="@Model.ParticipantStatus" data-chat-enabled="@Model.ChatEnabled.ToString().ToLowerInvariant()" data-user-id="@User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value" data-hub-url="/hubs/meet" data-room-url="@Url.Action("Room", "Meet", new { area = Model.IsHost ? "Admin" : "Student", id = Model.Id })">
         <header class="ciit-meet-room-header">
             <div class="ciit-meet-room-heading">
                 <span class="ciit-meet-room-eyebrow">CIIT MEET <span class="ciit-meet-preview-tag">LIVE</span></span>
