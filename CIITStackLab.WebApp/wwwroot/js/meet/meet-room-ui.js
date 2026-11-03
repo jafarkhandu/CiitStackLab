@@ -63,6 +63,9 @@ document.addEventListener("DOMContentLoaded", () => {
                 }
 
                 if (endingMeeting) {
+                    // Release camera, microphone, and screen capture as soon as the
+                    // server confirms the meeting-end action.
+                    window.ciitMeetWebRtcCleanup?.();
                     // Close the settings dialog immediately after the server confirms
                     // the end action; don't leave a stale controls card over the ended screen.
                     participantsPopup?.hide();
@@ -411,6 +414,9 @@ document.addEventListener("DOMContentLoaded", () => {
 
     const updateRoom = (state) => {
         if (state.sessionId !== sessionId) return;
+        if (state.status !== "Live" && state.status !== "Scheduled") {
+            window.ciitMeetWebRtcCleanup?.();
+        }
 
         const previousPendingCount = lastPendingCount;
         const nextPendingCount = Number(state.pendingCount || 0);
