@@ -112,6 +112,7 @@ public sealed class MeetController : Controller
             Status = session.Status,
             IsHost = true,
             WaitingRoomEnabled = session.WaitingRoomEnabled,
+            ChatEnabled = session.ChatEnabled,
             ParticipantCount = participants.Count(x => x.Status == "Admitted"),
             Participants = participants
         });
@@ -306,6 +307,32 @@ public sealed class MeetController : Controller
         await _dbContext.SaveChangesAsync(cancellationToken);
         await _meetRealtime.PublishSessionUpdateAsync(id, cancellationToken);
         return RedirectToAction(nameof(Room), new { id });
+    }
+
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> SetChatEnabled(int id, bool enabled, CancellationToken cancellationToken)
+    {
+        var session = await _dbContext.MeetSessions
+            .SingleOrDefaultAsync(item => item.Id == id, cancellationToken);
+
+        if (session is null)
+            return NotFound();
+
+        if (session.Status != "Live"
+            || !session.StartedAtUtc.HasValue
+            || session.StartedAtUtc.Value.AddMinutes(session.DurationMinutes) <= DateTime.UtcNow)
+        {
+            return BadRequest("Chat can only be changed during an active meeting.");
+        }
+
+        session.ChatEnabled = enabled;
+        await _dbContext.SaveChangesAsync(cancellationToken);
+        await _meetRealtime.PublishChatEnabledAsync(id, enabled, cancellationToken);
+
+        return Request.Headers.XRequestedWith == "XMLHttpRequest"
+            ? Json(new { success = true, chatEnabled = enabled })
+            : RedirectToAction(nameof(Room), new { id });
     }
 
     [HttpPost]
