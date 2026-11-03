@@ -653,8 +653,8 @@ document.addEventListener("DOMContentLoaded", () => {
     const setChatEnabled = enabled => {
         chatEnabled = Boolean(enabled);
         room.dataset.chatEnabled = String(chatEnabled);
-        chatInput.disabled = !chatEnabled;
-        chatSend.disabled = !chatEnabled;
+        chatInput.disabled = !chatEnabled || !chatJoined;
+        chatSend.disabled = !chatEnabled || !chatJoined;
         if (chatStatus) {
             chatStatus.classList.toggle("is-disabled", !chatEnabled);
             chatStatus.innerHTML = chatEnabled
@@ -737,6 +737,8 @@ document.addEventListener("DOMContentLoaded", () => {
         try {
             await connection.invoke("JoinChatRoom", sessionId);
             chatJoined = true;
+            chatInput.disabled = !chatEnabled;
+            chatSend.disabled = !chatEnabled || !chatJoined;
         } catch (error) {
             console.warn("Meet group chat join failed:", error);
         }
@@ -852,6 +854,8 @@ document.addEventListener("DOMContentLoaded", () => {
 
     connection.onreconnected(() => {
         chatJoined = false;
+        chatInput.disabled = true;
+        chatSend.disabled = true;
         joinChat();
     });
 
