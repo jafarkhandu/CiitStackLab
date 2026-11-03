@@ -24,6 +24,11 @@ public sealed class MeetHub : Hub
     public static string BatchGroup(int batchId) => $"meet-batch-{batchId}";
     public const string AdminGroup = "meet-admins";
     public static string PeerGroup(int sessionId) => $"meet-session-peers-{sessionId}";
+    public static string ChatGroup(int sessionId) => $"meet-session-chat-{sessionId}";
+
+    private static readonly ConcurrentDictionary<int, ConcurrentQueue<object>> ChatHistory = new();
+    private static readonly ConcurrentDictionary<string, byte> RaisedHands = new();
+    private static readonly ConcurrentDictionary<string, (int SessionId, string UserId, string DisplayName)> RaisedHandConnections = new();
 
     public async Task JoinAdminUpdates()
     {
@@ -306,6 +311,111 @@ public sealed class MeetHub : Hub
         }
     } 
 
+    public async Task JoinChatRoom(int sessionId)
+    {
+        if (!await EnsurePeerAccessAsync(sessionId))
+            throw new HubException("You are not admitted to this meeting.");
+
+        await Groups.AddToGroupAsync(Context.ConnectionId, ChatGroup(sessionId), Context.ConnectionAborted);
+
+        var chatEnabled = await _dbContext.MeetSessions.AsNoTracking()
+            .Where(item => item.Id == sessionId)
+            .Select(item => item.ChatEnabled)
+            .SingleAsync(Context.ConnectionAborted);
+
+        await Clients.Caller.SendAsync("MeetChatEnabledState", new { sessionId, enabled = chatEnabled }, Context.ConnectionAborted);
+
+        if (ChatHistory.TryGetValue(sessionId, out var history))
+            await Clients.Caller.SendAsync("MeetChatHistory", history.ToArray(), Context.ConnectionAborted);
+    }
+
+    public async Task SendChatMessage(int sessionId, string message)
+    {
+        var text = message?.Trim();
+        if (string.IsNullOrWhiteSpace(text) || text.Length > 1000)
+            throw new HubException("Chat messages must contain 1–1000 characters.");
+
+        if (!await EnsurePeerAccessAsync(sessionId))
+            throw new HubException("You are not admitted to this meeting.");
+
+        var chatEnabled = await _dbContext.MeetSessions.AsNoTracking()
+            .Where(item => item.Id == sessionId)
+            .Select(item => item.ChatEnabled)
+            .SingleAsync(Context.ConnectionAborted);
+
+        if (!chatEnabled)
+            throw new HubException("The host has disabled meeting chat.");
+
+        var displayName = await GetMeetDisplayNameAsync();
+        var payload = new
+        {
+            sessionId,
+            userId = Context.UserIdentifier,
+            displayName,
+            message = text,
+            sentAtUtc = DateTime.UtcNow
+        };
+
+        var history = ChatHistory.GetOrAdd(sessionId, _ => new ConcurrentQueue<object>());
+        history.Enqueue(payload);
+        while (history.Count > 100 && history.TryDequeue(out _)) { }
+
+        await Clients.Group(ChatGroup(sessionId)).SendAsync("MeetChatMessage", payload, Context.ConnectionAborted);
+    }
+
+    public async Task RaiseHand(int sessionId, bool raised)
+    {
+        if (!await EnsurePeerAccessAsync(sessionId))
+            throw new HubException("You are not admitted to this meeting.");
+
+        var userId = Context.UserIdentifier
+            ?? Context.User!.FindFirstValue(ClaimTypes.NameIdentifier)
+            ?? Context.User.FindFirstValue("sub");
+        if (string.IsNullOrWhiteSpace(userId))
+            throw new HubException("Your account identity could not be verified.");
+
+        var displayName = await GetMeetDisplayNameAsync();
+        var handKey = $"{sessionId}:{userId}";
+
+        if (raised)
+        {
+            if (!RaisedHands.TryAdd(handKey, 0))
+                return;
+
+            RaisedHandConnections[Context.ConnectionId] = (sessionId, userId, displayName);
+        }
+        else
+        {
+            RaisedHands.TryRemove(handKey, out _);
+            RaisedHandConnections.TryRemove(Context.ConnectionId, out _);
+        }
+
+        await Clients.Group(ChatGroup(sessionId)).SendAsync("MeetHandRaised", new
+        {
+            sessionId,
+            userId,
+            displayName,
+            raised
+        }, Context.ConnectionAborted);
+    }
+
+    private async Task<string> GetMeetDisplayNameAsync()
+    {
+        if (Context.User!.IsInRole("Admin") || Context.User.IsInRole("Super User"))
+            return "Host";
+
+        var userId = Context.UserIdentifier
+            ?? Context.User.FindFirstValue(ClaimTypes.NameIdentifier)
+            ?? Context.User.FindFirstValue("sub");
+        if (string.IsNullOrWhiteSpace(userId))
+            return "Student";
+
+        return await _dbContext.Users.AsNoTracking()
+            .Where(user => user.Id == userId)
+            .Select(user => user.UserName ?? user.Email ?? "Student")
+            .SingleOrDefaultAsync(Context.ConnectionAborted) ?? "Student";
+    }
+
     public async Task RelayWebRtcSignal(int sessionId, string targetConnectionId, string signalType, object signalData)
     {
         if (string.IsNullOrWhiteSpace(targetConnectionId)
@@ -415,7 +525,22 @@ public sealed class MeetHub : Hub
 
     public override async Task OnDisconnectedAsync(Exception? exception)
     {
-        if (PeerSessions.TryRemove(Context.ConnectionId, out var sessionId))
+        if (RaisedHandConnections.TryRemove(Context.ConnectionId, out var hand))
+        {
+            var handKey = $"{hand.SessionId}:{hand.UserId}";
+            if (RaisedHands.TryRemove(handKey, out _))
+            {
+                await Clients.Group(ChatGroup(hand.SessionId)).SendAsync("MeetHandRaised", new
+                {
+                    sessionId = hand.SessionId,
+                    userId = hand.UserId,
+                    displayName = hand.DisplayName,
+                    raised = false
+                });
+            }
+        }
+
+        if (PeerSessions.TryRemove(Context.ConnectionId, out var sessionId))(Context.ConnectionId, out var sessionId))
         {
             PeerDisplayNames.TryRemove(Context.ConnectionId, out _);
             await Clients.Group(PeerGroup(sessionId)).SendAsync("MeetPeerLeft", Context.ConnectionId);
