@@ -45,7 +45,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
             try {
                 const formData = new FormData(form);
-                const response = await fetch(form.action, {
+                const response = await fetch(form.getAttribute('action') || location.href, {
                     method: "POST",
                     body: formData,
                     credentials: "same-origin",
