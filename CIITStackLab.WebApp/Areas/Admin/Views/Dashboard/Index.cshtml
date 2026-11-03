@@ -237,14 +237,6 @@
             </div>
         </article>
 
-        <article class="ciit-admin-stat-card" tabindex="0" role="button" data-dashboard-modal="mcqs" aria-label="View active MCQs">
-            <div class="ciit-admin-stat-icon"><i class="bi bi-ui-checks"></i></div>
-            <div class="ciit-admin-stat-copy">
-                <span>Active MCQs</span>
-                <strong data-count="@Model.McqCount">@Model.McqCount</strong>
-            </div>
-        </article>
-
         <article class="ciit-admin-stat-card" tabindex="0" role="button" data-dashboard-modal="students" aria-label="View students">
             <div class="ciit-admin-stat-icon"><i class="bi bi-people"></i></div>
             <div class="ciit-admin-stat-copy">
@@ -429,7 +421,6 @@
 
             var list = document.createElement('div');
             list.className = 'ciit-dashboard-modal-list';
-
             selected.items.forEach(function (item) {
                 var row = document.createElement('div');
                 row.className = 'ciit-dashboard-modal-item';
