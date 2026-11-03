@@ -491,7 +491,7 @@ public sealed class MeetController : Controller
                 session.RecordingDeletedAtUtc = now;
                 session.RecordingRetentionUntilUtc = null;
                 session.RecordingEnabled = false;
-                var recordingPath = Path.Combine(_environment.WebRootPath, "meet-recordings", $"meeting-{id}.webm");
+                var recordingPath = Path.Combine(_environment.ContentRootPath, "App_Data", "MeetRecordings", $"meeting-{id}.webm");
                 if (System.IO.File.Exists(recordingPath))
                     System.IO.File.Delete(recordingPath);
                 break;
@@ -529,7 +529,7 @@ public sealed class MeetController : Controller
         if (recording.Length > 524288000 || !string.Equals(recording.ContentType, "video/webm", StringComparison.OrdinalIgnoreCase))
             return BadRequest(new { success = false, message = "Only WebM recordings up to 500 MB are accepted." });
 
-        var directory = Path.Combine(_environment.WebRootPath, "meet-recordings");
+        var directory = Path.Combine(_environment.ContentRootPath, "App_Data", "MeetRecordings");
         Directory.CreateDirectory(directory);
         var filePath = Path.Combine(directory, $"meeting-{id}.webm");
         await using (var stream = new FileStream(filePath, FileMode.Create, FileAccess.Write, FileShare.None, 81920, true))
