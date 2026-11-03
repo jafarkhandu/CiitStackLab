@@ -27,7 +27,7 @@ public sealed class MeetHub : Hub
     public static string ChatGroup(int sessionId) => $"meet-session-chat-{sessionId}";
 
     private static readonly ConcurrentDictionary<int, ConcurrentQueue<object>> ChatHistory = new();
-    private static readonly ConcurrentDictionary<string, byte> RaisedHands = new();
+    private static readonly ConcurrentDictionary<string, (int SessionId, string UserId, string DisplayName)> RaisedHands = new();
     private static readonly ConcurrentDictionary<string, (int SessionId, string UserId, string DisplayName)> RaisedHandConnections = new();
 
     public async Task JoinAdminUpdates()
@@ -328,7 +328,7 @@ public sealed class MeetHub : Hub
         if (ChatHistory.TryGetValue(sessionId, out var history))
             await Clients.Caller.SendAsync("MeetChatHistory", history.ToArray(), Context.ConnectionAborted);
 
-        var raisedHands = RaisedHandConnections.Values
+        var raisedHands = RaisedHands.Values
             .Where(hand => hand.SessionId == sessionId)
             .Select(hand => new { userId = hand.UserId, displayName = hand.DisplayName })
             .DistinctBy(hand => hand.userId)
@@ -386,9 +386,10 @@ public sealed class MeetHub : Hub
 
         if (raised)
         {
+            // Raised-hand state belongs to the participant/session, not a transient
+            // SignalR connection. Keep it across refreshes and reconnects.
+            RaisedHands[handKey] = (sessionId, userId, displayName);
             RaisedHandConnections[Context.ConnectionId] = (sessionId, userId, displayName);
-            if (!RaisedHands.TryAdd(handKey, 0))
-                return;
         }
         else
         {
@@ -537,26 +538,9 @@ public sealed class MeetHub : Hub
 
     public override async Task OnDisconnectedAsync(Exception? exception)
     {
-        if (RaisedHandConnections.TryRemove(Context.ConnectionId, out var hand))
-        {
-            var stillRaisedFromAnotherConnection = RaisedHandConnections.Values.Any(
-                item => item.SessionId == hand.SessionId && item.UserId == hand.UserId);
-
-            if (!stillRaisedFromAnotherConnection)
-            {
-                var handKey = $"{hand.SessionId}:{hand.UserId}";
-                if (RaisedHands.TryRemove(handKey, out _))
-                {
-                    await Clients.Group(ChatGroup(hand.SessionId)).SendAsync("MeetHandRaised", new
-                    {
-                        sessionId = hand.SessionId,
-                        userId = hand.UserId,
-                        displayName = hand.DisplayName,
-                        raised = false
-                    });
-                }
-            }
-        }
+        // A participant refresh/reconnect must not lower their hand. The hand is
+        // cleared only when RaiseHand(sessionId, false) is explicitly invoked.
+        RaisedHandConnections.TryRemove(Context.ConnectionId, out _);
 
         if (PeerSessions.TryRemove(Context.ConnectionId, out var sessionId))
         {
