@@ -932,3 +932,99 @@ html,body{width:100%;min-height:100%;margin:0}
         min-height:220px !important;
     }
 }
+
+
+/* Final polish: retain the default equal participant cards during active speech.
+   Manual pin mode remains an intentional focus layout. */
+.ciit-meet-room-video-grid:has(.ciit-meet-video-active-speaker):not(.has-pinned-tile) {
+    grid-template-columns:repeat(auto-fit,minmax(min(100%,320px),1fr)) !important;
+    grid-template-rows:none !important;
+    grid-auto-rows:minmax(220px,1fr) !important;
+    grid-auto-flow:row !important;
+    align-content:center !important;
+    justify-items:stretch !important;
+    overflow:visible !important;
+    gap:12px !important;
+}
+.ciit-meet-room-video-grid:has(.ciit-meet-video-active-speaker):not(.has-pinned-tile) .ciit-meet-video-tile,
+.ciit-meet-room-video-grid:has(.ciit-meet-video-active-speaker):not(.has-pinned-tile) .ciit-meet-video-active-speaker:not(.ciit-meet-video-pinned) {
+    grid-column:auto !important;
+    grid-row:auto !important;
+    width:100% !important;
+    min-width:0 !important;
+    min-height:220px !important;
+    height:auto !important;
+    max-height:none !important;
+    aspect-ratio:auto !important;
+    justify-self:stretch !important;
+    border-radius:16px !important;
+}
+.ciit-meet-room-video-grid:has(.ciit-meet-video-active-speaker):not(.has-pinned-tile) .ciit-meet-video-active-speaker:not(.ciit-meet-video-pinned) {
+    border-color:rgba(145,190,255,.28) !important;
+    box-shadow:inset 0 1px 0 rgba(255,255,255,.08),0 10px 28px rgba(0,0,0,.18) !important;
+}
+@media(max-width:700px) {
+    .ciit-meet-room-video-grid:has(.ciit-meet-video-active-speaker):not(.has-pinned-tile) {
+        grid-template-columns:1fr !important;
+        grid-template-rows:none !important;
+        grid-auto-rows:minmax(230px,auto) !important;
+    }
+}
+
+/* More compact, richer multilayer frosted-glass control dock. */
+.ciit-meet-controls-glass {
+    border:1px solid rgba(218,233,255,.27) !important;
+    border-radius:17px !important;
+    padding:5px !important;
+    background:linear-gradient(145deg,rgba(210,229,255,.19),rgba(112,145,190,.105) 48%,rgba(32,48,75,.22)) !important;
+    box-shadow:0 18px 42px rgba(0,0,0,.34),inset 0 1px 0 rgba(255,255,255,.2),inset 0 -1px 0 rgba(150,190,255,.08) !important;
+    backdrop-filter:blur(32px) saturate(190%) brightness(1.08) !important;
+    -webkit-backdrop-filter:blur(32px) saturate(190%) brightness(1.08) !important;
+}
+.ciit-meet-controls-glass .ciit-meet-room-controls { gap:5px !important; }
+.ciit-meet-controls-glass .ciit-meet-control {
+    min-width:49px !important;
+    min-height:42px !important;
+    padding:4px 6px !important;
+    gap:2px !important;
+    border-radius:10px !important;
+    border-color:rgba(220,235,255,.24) !important;
+    background:linear-gradient(150deg,rgba(215,232,255,.2),rgba(105,135,180,.11)) !important;
+    box-shadow:inset 0 1px 0 rgba(255,255,255,.16),0 4px 12px rgba(0,0,0,.12) !important;
+    backdrop-filter:blur(20px) saturate(175%) !important;
+    -webkit-backdrop-filter:blur(20px) saturate(175%) !important;
+}
+.ciit-meet-controls-glass .ciit-meet-control i { font-size:13px !important; }
+.ciit-meet-controls-glass .ciit-meet-control span { font-size:7px !important; }
+.ciit-meet-controls-glass .ciit-meet-leave-button {
+    min-width:68px !important;
+    min-height:42px !important;
+    padding:4px 7px !important;
+    gap:2px !important;
+    border-radius:10px !important;
+    background:linear-gradient(145deg,rgba(224,76,98,.88),rgba(157,39,61,.82)) !important;
+    box-shadow:inset 0 1px 0 rgba(255,255,255,.2),0 5px 14px rgba(150,25,45,.2) !important;
+}
+.ciit-meet-controls-glass .ciit-meet-leave-button i { font-size:13px !important; }
+.ciit-meet-controls-glass .ciit-meet-leave-button span { font-size:7px !important; }
+.ciit-meet-controls-glass .ciit-meet-host-end-toggle {
+    width:22px !important;
+    min-width:22px !important;
+    height:34px !important;
+    padding:0 !important;
+    display:grid !important;
+    place-items:center !important;
+    border-radius:8px !important;
+    border-color:rgba(255,180,195,.28) !important;
+    background:linear-gradient(145deg,rgba(220,75,95,.78),rgba(145,35,55,.76)) !important;
+    box-shadow:inset 0 1px 0 rgba(255,255,255,.16),0 4px 10px rgba(120,20,35,.18) !important;
+    backdrop-filter:blur(22px) saturate(180%) !important;
+    -webkit-backdrop-filter:blur(22px) saturate(180%) !important;
+}
+.ciit-meet-controls-glass .ciit-meet-host-end-toggle i { font-size:9px !important; }
+@media(max-width:700px) {
+    .ciit-meet-controls-glass { padding:4px !important; border-radius:14px !important; }
+    .ciit-meet-controls-glass .ciit-meet-control { min-width:44px !important; min-height:40px !important; }
+    .ciit-meet-controls-glass .ciit-meet-leave-button { min-width:62px !important; min-height:40px !important; }
+    .ciit-meet-controls-glass .ciit-meet-host-end-toggle { width:20px !important; min-width:20px !important; height:32px !important; }
+}
