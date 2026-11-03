@@ -92,6 +92,10 @@ document.addEventListener("DOMContentLoaded", () => {
                     throw new Error(result.message || "Unable to create this meeting.");
                 }
 
+                if (modeInput.value === "instant" && result.sessionId) {
+                    window.location.assign("/Admin/Meet/Room/" + encodeURIComponent(result.sessionId));
+                    return;
+                }
                 closeModal();
             } catch (error) {
                 if (feedback) {
