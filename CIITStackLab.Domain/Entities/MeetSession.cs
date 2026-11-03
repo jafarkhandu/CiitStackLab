@@ -16,12 +16,6 @@ public sealed class MeetSession
     public DateTime? EndedAtUtc { get; set; }
     public DateTime? CancelledAtUtc { get; set; }
     public bool WaitingRoomEnabled { get; set; } = true;
-    public bool RecordingEnabled { get; set; }
-    public string RecordingStatus { get; set; } = "Disabled";
-    public DateTime? RecordingStartedAtUtc { get; set; }
-    public DateTime? RecordingEndedAtUtc { get; set; }
-    public DateTime? RecordingRetentionUntilUtc { get; set; }
-    public DateTime? RecordingDeletedAtUtc { get; set; }
     public DateTime? ReminderSentAtUtc { get; set; }
 
     public MeetBatch MeetBatch { get; set; } = null!;
