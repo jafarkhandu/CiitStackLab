@@ -901,18 +901,19 @@ html,body{width:100%;min-height:100%;margin:0}
 /* Keep active-speaker focus within the same equal-size participant grid. */
 .ciit-meet-room-video-grid:has(.ciit-meet-video-active-speaker) {
     grid-template-columns:repeat(auto-fit,minmax(min(100%,320px),1fr)) !important;
-    grid-template-rows:repeat(auto-fit,minmax(220px,1fr)) !important;
+    grid-template-rows:auto !important;
     grid-auto-rows:minmax(220px,1fr) !important;
     grid-auto-flow:row !important;
     align-content:center !important;
 }
-.ciit-meet-room-video-grid .ciit-meet-video-active-speaker:not(.ciit-meet-video-pinned) {
+.ciit-meet-room-video-grid:has(.ciit-meet-video-active-speaker) .ciit-meet-video-tile {
     grid-column:auto !important;
     grid-row:auto !important;
     min-height:220px !important;
     max-height:none !important;
     width:100% !important;
-    aspect-ratio:1 / 1;
+}
+.ciit-meet-room-video-grid .ciit-meet-video-active-speaker:not(.ciit-meet-video-pinned) {
     border-color:rgba(115,165,245,.62) !important;
     box-shadow:0 0 0 1px rgba(115,165,245,.22),0 12px 32px rgba(0,0,0,.2) !important;
 }
@@ -927,8 +928,7 @@ html,body{width:100%;min-height:100%;margin:0}
         grid-template-rows:auto !important;
         grid-auto-rows:minmax(220px,1fr) !important;
     }
-    .ciit-meet-room-video-grid .ciit-meet-video-active-speaker:not(.ciit-meet-video-pinned) {
+    .ciit-meet-room-video-grid:has(.ciit-meet-video-active-speaker) .ciit-meet-video-tile {
         min-height:220px !important;
-        aspect-ratio:1 / 1;
     }
 }
