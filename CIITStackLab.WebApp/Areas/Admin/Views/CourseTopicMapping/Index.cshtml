@@ -6,6 +6,10 @@
     var messageType = TempData["AdminMappingMessageType"] as string;
 }
 
+@section Styles {
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/devicon@2.17.0/devicon.min.css" />
+}
+
 <section class="ciit-admin-page ciit-mapping-page">
     <div class="ciit-mapping-header">
         <div>
@@ -123,7 +127,7 @@
                                                    @(topic.IsAssigned ? "checked" : "")
                                                    />
                                             <span class="ciit-mapping-check"><i class="bi bi-check-lg"></i></span>
-                                            <span class="ciit-mapping-topic-icon"><i class="bi bi-diagram-3"></i></span>
+                                            <span class="ciit-mapping-topic-icon"><i class="@CIITStackLab.WebApp.Services.TopicCategoryAnalyzer.GetIconClass(topic.Title)"></i></span>
                                             <span class="ciit-mapping-topic-copy">
                                                 <strong>@topic.Title</strong>
                                                 <small>Topic #@topic.Id</small>
