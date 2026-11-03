@@ -429,7 +429,7 @@ document.addEventListener("DOMContentLoaded", () => {
             }
         }
         const downloadLink = document.querySelector("[data-meet-recording-download]");
-        if (downloadLink) downloadLink.hidden = state.recordingStatus !== "Stopped";
+        if (downloadLink && state.recordingStatus !== "Stopped") downloadLink.hidden = true;
         const waitingRoomForm = document.querySelector("[data-meet-waiting-room-form]");
         if (waitingRoomForm) {
             const enabledInput = waitingRoomForm.querySelector('input[name="enabled"]');
@@ -541,6 +541,12 @@ document.addEventListener("DOMContentLoaded", () => {
             window.setTimeout(() => toast.remove(), 220);
         }, 5000);
     };
+
+    document.addEventListener("ciitMeetRecordingSaved", event => {
+        if (Number(event.detail?.sessionId) !== sessionId) return;
+        const downloadLink = document.querySelector("[data-meet-recording-download]");
+        if (downloadLink) downloadLink.hidden = false;
+    });
 
     connection.on("MeetToast", showMeetToast);
 
