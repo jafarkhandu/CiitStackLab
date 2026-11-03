@@ -326,9 +326,11 @@ public sealed class MeetController : Controller
             return NotFound();
 
         if (participant.Status != "Pending")
+        {
             return Request.Headers.XRequestedWith == "XMLHttpRequest"
-                ? BadRequest("This join request is no longer pending.")
+                ? Json(new { success = true, participantId = participant.Id, status = participant.Status, message = "This request has already been processed." })
                 : RedirectToAction(nameof(Room), new { id = participant.MeetSessionId });
+        }
 
         var now = DateTime.UtcNow;
         var sessionEndUtc = participant.MeetSession.StartedAtUtc?.AddMinutes(participant.MeetSession.DurationMinutes);
