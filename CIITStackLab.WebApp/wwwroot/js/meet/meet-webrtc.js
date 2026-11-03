@@ -227,6 +227,7 @@ document.addEventListener("DOMContentLoaded", () => {
         const tile = document.createElement("article");
         tile.className = "ciit-meet-video-tile ciit-meet-video-remote";
         tile.dataset.peerConnectionId = peerId;
+        tile.dataset.peerDisplayName = displayName;
 
         const video = document.createElement("video");
         video.autoplay = true;
@@ -254,6 +255,12 @@ document.addEventListener("DOMContentLoaded", () => {
         pin.innerHTML = '<i class="bi bi-pin-angle"></i>';
         pin.addEventListener("click", () => togglePinnedTile(tile, pin));
 
+        const raisedHandBadge = document.createElement("span");
+        raisedHandBadge.className = "ciit-meet-raised-hand ciit-meet-raised-hand-remote";
+        raisedHandBadge.hidden = true;
+        raisedHandBadge.setAttribute("aria-label", displayName + " has raised the hand");
+        raisedHandBadge.innerHTML = '<i class="bi bi-hand-index-thumb-fill"></i>';
+
         const shareBadge = document.createElement("span");
         shareBadge.className = "ciit-meet-screen-share-badge";
         shareBadge.dataset.peerScreenShareState = "true";
@@ -267,7 +274,7 @@ document.addEventListener("DOMContentLoaded", () => {
         micState.dataset.peerMicState = "true";
         nameBadge.append(document.createTextNode(displayName + " "), micState);
 
-        tile.append(video, placeholder, shareBadge, nameBadge, pin);
+        tile.append(video, placeholder, shareBadge, raisedHandBadge, nameBadge, pin);
         grid.append(tile);
         if (waitingTile) waitingTile.hidden = true;
         return { tile, video, placeholder, pin };
