@@ -55,6 +55,9 @@ document.addEventListener("DOMContentLoaded", () => {
                     const detail = await response.text().catch(() => "");
                     throw new Error(detail || "Unable to update the meeting.");
                 }
+                if (isHost && window.ciitMeetSignalRConnection?.state === signalR.HubConnectionState.Connected) {
+                    await window.ciitMeetSignalRConnection.invoke("JoinMeetingRoom", sessionId);
+                }
                 if (submit && !submit.hasAttribute("data-meet-end-button")) submit.disabled = false;
                 window.showMeetToast?.({ title: "Meeting updated", message: "The change was saved successfully.", type: "success" });
             } catch (error) {
@@ -533,6 +536,18 @@ document.addEventListener("DOMContentLoaded", () => {
     connection.onreconnected(async () => {
         await connection.invoke("JoinMeetingRoom", sessionId);
         lastRoomJoinAt = Date.now();
+        if (isHost) {
+            const pendingCount = Number(room.querySelector("[data-meet-pending-count]")?.textContent || 0);
+            if (pendingCount > 0) {
+                showMeetToast({
+                    title: pendingCount === 1 ? "Pending join request" : "Pending join requests",
+                    message: pendingCount === 1
+                        ? "A student is waiting for admission. Review the Participants panel."
+                        : pendingCount + " students are waiting for admission. Review the Participants panel.",
+                    type: "info"
+                });
+            }
+        }
     });
     window.addEventListener("pageshow", rejoinRoomForFreshState);
     document.addEventListener("visibilitychange", () => {
