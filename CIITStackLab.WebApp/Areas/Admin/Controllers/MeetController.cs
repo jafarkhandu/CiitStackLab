@@ -451,108 +451,6 @@ public sealed class MeetController : Controller
         return RedirectToAction(nameof(Room), new { id = participant.MeetSessionId });
     }
 
-    [HttpPost]
-    [ValidateAntiForgeryToken]
-    public async Task<IActionResult> SetRecording(int id, string action, CancellationToken cancellationToken)
-    {
-        var session = await _dbContext.MeetSessions
-            .SingleOrDefaultAsync(x => x.Id == id, cancellationToken);
-
-        if (session is null)
-            return NotFound();
-
-        var now = DateTime.UtcNow;
-        switch (action?.ToLowerInvariant())
-        {
-            case "enable" when session.Status is "Scheduled" or "Live":
-                session.RecordingEnabled = true;
-                if (session.RecordingStatus is "Disabled" or "Deleted")
-                    session.RecordingStatus = "Ready";
-                break;
-            case "disable" when session.RecordingStatus != "Recording":
-                session.RecordingEnabled = false;
-                session.RecordingStatus = "Disabled";
-                break;
-            case "start" when session.Status == "Live" && session.RecordingEnabled
-                && session.RecordingStatus is "Ready" or "Stopped":
-                session.RecordingStatus = "Recording";
-                session.RecordingStartedAtUtc = now;
-                session.RecordingEndedAtUtc = null;
-                session.RecordingRetentionUntilUtc = null;
-                session.RecordingDeletedAtUtc = null;
-                break;
-            case "stop" when session.RecordingStatus == "Recording":
-                session.RecordingStatus = "Stopped";
-                session.RecordingEndedAtUtc = now;
-                session.RecordingRetentionUntilUtc = now.AddDays(90);
-                break;
-            case "delete" when session.RecordingStatus == "Stopped":
-                session.RecordingStatus = "Deleted";
-                session.RecordingDeletedAtUtc = now;
-                session.RecordingRetentionUntilUtc = null;
-                session.RecordingEnabled = false;
-                var recordingPath = Path.Combine(_environment.ContentRootPath, "App_Data", "MeetRecordings", $"meeting-{id}.webm");
-                if (System.IO.File.Exists(recordingPath))
-                    System.IO.File.Delete(recordingPath);
-                break;
-            default:
-                const string invalidActionMessage = "Recording action is not valid for the current meeting state.";
-                return Request.Headers.XRequestedWith == "XMLHttpRequest"
-                    ? BadRequest(new { success = false, message = invalidActionMessage })
-                    : RedirectWithMessage(invalidActionMessage, false);
-        }
-
-        await _dbContext.SaveChangesAsync(cancellationToken);
-        await _meetRealtime.PublishSessionUpdateAsync(id, cancellationToken);
-
-        return Request.Headers.XRequestedWith == "XMLHttpRequest"
-            ? Json(new
-            {
-                success = true,
-                sessionId = session.Id,
-                recordingEnabled = session.RecordingEnabled,
-                recordingStatus = session.RecordingStatus,
-                recordingRetentionUntilUtc = session.RecordingRetentionUntilUtc
-            })
-            : RedirectToAction(nameof(Room), new { id });
-    }
-
-    [HttpPost]
-    [ValidateAntiForgeryToken]
-    [RequestSizeLimit(524288000)]
-    public async Task<IActionResult> UploadRecording(int id, IFormFile recording, CancellationToken cancellationToken)
-    {
-        var session = await _dbContext.MeetSessions.SingleOrDefaultAsync(item => item.Id == id, cancellationToken);
-        if (session is null) return NotFound();
-        if (session.RecordingStatus != "Stopped" || recording is null || recording.Length == 0)
-            return BadRequest(new { success = false, message = "The meeting recording is not ready to be saved." });
-        if (recording.Length > 524288000 || !string.Equals(recording.ContentType, "video/webm", StringComparison.OrdinalIgnoreCase))
-            return BadRequest(new { success = false, message = "Only WebM recordings up to 500 MB are accepted." });
-
-        var directory = Path.Combine(_environment.ContentRootPath, "App_Data", "MeetRecordings");
-        Directory.CreateDirectory(directory);
-        var filePath = Path.Combine(directory, $"meeting-{id}.webm");
-        await using (var stream = new FileStream(filePath, FileMode.Create, FileAccess.Write, FileShare.None, 81920, true))
-        {
-            await recording.CopyToAsync(stream, cancellationToken);
-        }
-
-        return Json(new { success = true, sessionId = id, fileName = Path.GetFileName(filePath) });
-    }
-
-    [HttpGet]
-    public async Task<IActionResult> DownloadRecording(int id, CancellationToken cancellationToken)
-    {
-        var session = await _dbContext.MeetSessions.AsNoTracking()
-            .SingleOrDefaultAsync(item => item.Id == id, cancellationToken);
-        if (session is null) return NotFound();
-        if (session.RecordingStatus != "Stopped") return BadRequest("The recording is not available.");
-
-        var filePath = Path.Combine(_environment.ContentRootPath, "App_Data", "MeetRecordings", $"meeting-{id}.webm");
-        if (!System.IO.File.Exists(filePath)) return NotFound("Recording file has not been uploaded yet.");
-        return PhysicalFile(filePath, "video/webm", $"meeting-{id}.webm");
-    }
-
     private async Task CompleteExpiredSessionsAsync(CancellationToken cancellationToken)
     {
         var now = DateTime.UtcNow;
@@ -568,12 +466,6 @@ public sealed class MeetController : Controller
             session.Status = "Completed";
             var endedAt = session.StartedAtUtc!.Value.AddMinutes(session.DurationMinutes);
             session.EndedAtUtc = endedAt;
-            if (session.RecordingStatus == "Recording")
-            {
-                session.RecordingStatus = "Stopped";
-                session.RecordingEndedAtUtc = endedAt;
-                session.RecordingRetentionUntilUtc = endedAt.AddDays(90);
-            }
 
             foreach (var participant in session.Participants.Where(x => x.Status is "Admitted" or "Pending"))
             {
@@ -670,8 +562,6 @@ public sealed class MeetController : Controller
             Status = isInstant ? "Live" : "Scheduled",
             StartedAtUtc = isInstant ? DateTime.UtcNow : null,
             WaitingRoomEnabled = true,
-            RecordingEnabled = false,
-            RecordingStatus = "Disabled",
             CreatedByUserId = creatorId,
             CreatedAtUtc = DateTime.UtcNow
         };
