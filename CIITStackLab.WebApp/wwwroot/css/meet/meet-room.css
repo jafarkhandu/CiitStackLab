@@ -1028,3 +1028,66 @@ html,body{width:100%;min-height:100%;margin:0}
     .ciit-meet-controls-glass .ciit-meet-leave-button { min-width:62px !important; min-height:40px !important; }
     .ciit-meet-controls-glass .ciit-meet-host-end-toggle { width:20px !important; min-width:20px !important; height:32px !important; }
 }
+
+
+/* Fine tune control sizing and make the active talker clearly identifiable. */
+.ciit-meet-controls-glass .ciit-meet-control {
+    min-width:56px !important;
+    min-height:46px !important;
+    padding:5px 7px !important;
+    gap:3px !important;
+    border-radius:11px !important;
+}
+.ciit-meet-controls-glass .ciit-meet-control i {
+    font-size:14px !important;
+}
+.ciit-meet-controls-glass .ciit-meet-control span {
+    font-size:7.5px !important;
+}
+.ciit-meet-controls-glass .ciit-meet-leave-button {
+    min-width:76px !important;
+    min-height:46px !important;
+    padding:5px 8px !important;
+    gap:3px !important;
+    border-radius:11px !important;
+}
+.ciit-meet-controls-glass .ciit-meet-leave-button i {
+    font-size:14px !important;
+}
+.ciit-meet-controls-glass .ciit-meet-leave-button span {
+    font-size:7.5px !important;
+}
+
+/* Keep the dropdown/arrow button at its already compact dimensions. */
+.ciit-meet-controls-glass .ciit-meet-host-end-toggle {
+    width:22px !important;
+    min-width:22px !important;
+    height:34px !important;
+}
+
+/* Blue active-speaker outline while speech detection moves the focus tile. */
+.ciit-meet-room-video-grid .ciit-meet-video-active-speaker:not(.ciit-meet-video-pinned) {
+    border:1px solid rgba(91,158,255,.95) !important;
+    box-shadow:
+        0 0 0 2px rgba(65,137,255,.38),
+        0 0 18px rgba(65,137,255,.22),
+        inset 0 1px 0 rgba(255,255,255,.09),
+        0 12px 32px rgba(0,0,0,.2) !important;
+}
+@media(max-width:700px) {
+    .ciit-meet-controls-glass .ciit-meet-control {
+        min-width:48px !important;
+        min-height:43px !important;
+        padding:4px 5px !important;
+    }
+    .ciit-meet-controls-glass .ciit-meet-leave-button {
+        min-width:66px !important;
+        min-height:43px !important;
+        padding:4px 6px !important;
+    }
+    .ciit-meet-controls-glass .ciit-meet-host-end-toggle {
+        width:20px !important;
+        min-width:20px !important;
+        height:32px !important;
+    }
+}
