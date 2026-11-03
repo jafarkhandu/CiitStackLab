@@ -13,9 +13,6 @@ public sealed class MeetRoomViewModel
     public bool IsHost { get; init; }
     public bool WaitingRoomEnabled { get; init; }
     public string ParticipantStatus { get; init; } = string.Empty;
-    public bool RecordingEnabled { get; init; }
-    public string RecordingStatus { get; init; } = string.Empty;
-    public DateTime? RecordingRetentionUntilUtc { get; init; }
     public int ParticipantCount { get; init; }
     public IReadOnlyList<MeetRoomParticipantViewModel> Participants { get; init; } = [];
 }
