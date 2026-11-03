@@ -48,7 +48,7 @@ document.addEventListener("DOMContentLoaded", () => {
                 if (targetForm) targetForm.hidden = !visible;
             });
             const targetDownload = targetRecording.querySelector("[data-meet-recording-download]");
-            if (targetDownload) targetDownload.hidden = recordingStatus !== "Stopped";
+            if (targetDownload && recordingStatus !== "Stopped") targetDownload.hidden = true;
         }
 
         const sourceStatusText = sourceRoom.querySelector("[data-meet-status-text]");
