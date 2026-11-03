@@ -138,21 +138,6 @@ public sealed class MeetHub : Hub
             if (!Context.User.IsInRole("Student"))
                 throw new HubException("Your account does not have the Student role. Please contact the administrator.");
 
-            var now = DateTime.UtcNow;
-            var sessionEndUtc = session.StartedAtUtc?.AddMinutes(session.DurationMinutes);
-            if (session.Status != "Live"
-                || !session.StartedAtUtc.HasValue
-                || session.StartedAtUtc.Value > now
-                || sessionEndUtc <= now)
-            {
-                var startedAt = session.StartedAtUtc?.ToString("O") ?? "null";
-                var endsAt = sessionEndUtc?.ToString("O") ?? "null";
-                throw new HubException(
-                    $"Meeting access rejected. Status={session.Status}; StartedAtUtc={startedAt}; " +
-                    $"DurationMinutes={session.DurationMinutes}; EndsAtUtc={endsAt}; UtcNow={now:O}. " +
-                    "The session state or time window is inconsistent.");
-            }
-
             var isBatchMember = await _dbContext.MeetBatchMembers.AsNoTracking().AnyAsync(
                 member => member.MeetBatchId == session.MeetBatchId
                     && member.StudentUserId == studentId,
@@ -166,6 +151,29 @@ public sealed class MeetHub : Hub
                     && participant.StudentUserId == studentId)
                 .Select(participant => participant.Status)
                 .SingleOrDefaultAsync(Context.ConnectionAborted);
+
+            var now = DateTime.UtcNow;
+            var sessionEndUtc = session.StartedAtUtc?.AddMinutes(session.DurationMinutes);
+            var isSessionActive = session.Status == "Live"
+                && session.StartedAtUtc.HasValue
+                && session.StartedAtUtc.Value <= now
+                && sessionEndUtc > now;
+
+            // A completed/expired meeting is a normal lifecycle state, not a
+            // SignalR access exception. Notify the student UI and stop joining.
+            if (!isSessionActive)
+            {
+                await Clients.Caller.SendAsync("MeetMyParticipantStatus", new
+                {
+                    sessionId,
+                    status = participantStatus ?? "Left",
+                    sessionStatus = session.Status,
+                    canUseMicrophone = false,
+                    canUseCamera = false,
+                    canShareScreen = false
+                }, Context.ConnectionAborted);
+                return;
+            }
 
             if (participantStatus is null)
                 throw new HubException("Your join request was not found. Please use the Join button on the student meeting page.");
