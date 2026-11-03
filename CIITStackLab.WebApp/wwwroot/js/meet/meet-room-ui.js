@@ -55,8 +55,9 @@ document.addEventListener("DOMContentLoaded", () => {
                     const detail = await response.text().catch(() => "");
                     throw new Error(detail || "Unable to update the meeting.");
                 }
-                if (isHost && window.ciitMeetSignalRConnection?.state === signalR.HubConnectionState.Connected) {
-                    await window.ciitMeetSignalRConnection.invoke("JoinMeetingRoom", sessionId);
+                if (room.dataset.isHost === "true"
+                    && window.ciitMeetSignalRConnection?.state === "Connected") {
+                    await window.ciitMeetSignalRConnection.invoke("JoinMeetingRoom", Number(room.dataset.sessionId));
                 }
                 if (submit && !submit.hasAttribute("data-meet-end-button")) submit.disabled = false;
                 window.showMeetToast?.({ title: "Meeting updated", message: "The change was saved successfully.", type: "success" });
