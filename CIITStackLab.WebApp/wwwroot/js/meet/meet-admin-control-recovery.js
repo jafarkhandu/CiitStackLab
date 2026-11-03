@@ -92,7 +92,7 @@ document.addEventListener("DOMContentLoaded", () => {
         if (button) button.disabled = true;
 
         try {
-            const response = await fetch(form.action, {
+            const response = await fetch(form.getAttribute('action') || location.href, {
                 method: "POST",
                 body: new FormData(form),
                 credentials: "same-origin",
