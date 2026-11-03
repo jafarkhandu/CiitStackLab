@@ -252,14 +252,13 @@ document.addEventListener("DOMContentLoaded", () => {
             button.disabled = true;
             try {
                 await action();
-                if (label === "Admit" || label === "Reject" || label === "Remove") {
+                // Admit/reject already produce one authoritative server-side
+                // notification through MeetNotificationService. Avoid a second
+                // local success toast for the same action.
+                if (label === "Remove") {
                     showMeetToast({
-                        title: label === "Admit" ? "Participant admitted"
-                            : label === "Reject" ? "Join request rejected"
-                                : "Participant removed",
-                        message: label === "Admit" ? "The student has been admitted to the meeting."
-                            : label === "Reject" ? "The join request was rejected."
-                                : "The participant was removed from the meeting.",
+                        title: "Participant removed",
+                        message: "The participant was removed from the meeting.",
                         type: "success"
                     });
                 }
