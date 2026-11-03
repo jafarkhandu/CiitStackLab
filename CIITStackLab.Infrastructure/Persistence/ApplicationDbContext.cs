@@ -483,6 +483,7 @@ public class ApplicationDbContext : IdentityDbContext<ApplicationUser>
             entity.Property(x => x.EndedAtUtc).HasColumnName("ended_at_utc").HasColumnType("datetime2");
             entity.Property(x => x.CancelledAtUtc).HasColumnName("cancelled_at_utc").HasColumnType("datetime2");
             entity.Property(x => x.WaitingRoomEnabled).HasColumnName("waiting_room_enabled").HasDefaultValue(true).IsRequired();
+            entity.Property(x => x.ChatEnabled).HasColumnName("chat_enabled").HasDefaultValue(true).IsRequired();
             entity.Property(x => x.ReminderSentAtUtc).HasColumnName("reminder_sent_at_utc").HasColumnType("datetime2");
             entity.HasIndex(x => x.CreatedByUserId).HasDatabaseName("IX_meet_sessions_created_by");
             entity.HasIndex(x => x.RoomName).IsUnique().HasDatabaseName("UX_meet_sessions_room_name");
