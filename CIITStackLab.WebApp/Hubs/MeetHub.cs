@@ -327,6 +327,13 @@ public sealed class MeetHub : Hub
 
         if (ChatHistory.TryGetValue(sessionId, out var history))
             await Clients.Caller.SendAsync("MeetChatHistory", history.ToArray(), Context.ConnectionAborted);
+
+        var raisedHands = RaisedHandConnections.Values
+            .Where(hand => hand.SessionId == sessionId)
+            .Select(hand => new { userId = hand.UserId, displayName = hand.DisplayName })
+            .DistinctBy(hand => hand.userId)
+            .ToArray();
+        await Clients.Caller.SendAsync("MeetHandSnapshot", new { sessionId, raisedHands }, Context.ConnectionAborted);
     }
 
     public async Task SendChatMessage(int sessionId, string message)
