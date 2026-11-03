@@ -362,8 +362,7 @@ document.addEventListener("DOMContentLoaded", () => {
                 peer.remoteStream.addTrack(event.track);
             }
             peer.tile.video.srcObject = peer.remoteStream;
-            connectRecordingAudioStream(peer.remoteStream);
-            peer.tile.video.play().catch(() => {});
+                peer.tile.video.play().catch(() => {});
             if (event.track.kind === "audio" && !audioMeters.has(peerId)) {
                 audioMeters.set(peerId, createAudioMeter(stream));
             }
@@ -449,7 +448,6 @@ document.addEventListener("DOMContentLoaded", () => {
             audio: kind === "audio",
             video: kind === "video"
         });
-        connectRecordingAudioStream(stream);
         stream.getTracks().forEach(track => {
             localStream.addTrack(track);
             if (track.kind === "audio") localAudioMeter = createAudioMeter(localStream);
@@ -708,131 +706,6 @@ document.addEventListener("DOMContentLoaded", () => {
         peers.forEach((peer, peerId) => removePeer(peerId));
     });
 
-    let meetingRecorder = null;
-    let recordingCanvasStream = null;
-    let recordingAudioContext = null;
-    let recordingAudioDestination = null;
-    const recordingAudioSources = new Set();
-    let recordingUploadPending = false;
-
-    const connectRecordingAudioStream = stream => {
-        if (!recordingAudioContext || !recordingAudioDestination || !stream) return;
-        const audioTracks = stream.getAudioTracks().filter(track => track.readyState === "live");
-        if (!audioTracks.length) return;
-        const key = audioTracks.map(track => track.id).join("|");
-        if (recordingAudioSources.has(key)) return;
-        try {
-            const audioStream = new MediaStream(audioTracks);
-            const source = recordingAudioContext.createMediaStreamSource(audioStream);
-            source.connect(recordingAudioDestination);
-            recordingAudioSources.add(key);
-        } catch (error) {
-            console.warn("Could not mix participant audio into recording:", error);
-        }
-    };
-
-    const getRecordingToken = () => Array.from(document.querySelectorAll('input[name="__RequestVerificationToken"]'))
-        .find(input => input.value?.trim())?.value.trim() || "";
-
-    window.ciitMeetStartRecording = async () => {
-        if (!isHost || meetingRecorder?.state === "recording" || recordingUploadPending) return;
-        if (!window.MediaRecorder || !grid.querySelector("video")) {
-            toast("Recording unavailable", "This browser does not support meeting recording.");
-            return;
-        }
-
-        const canvas = document.createElement("canvas");
-        canvas.width = 1280;
-        canvas.height = 720;
-        const context = canvas.getContext("2d");
-        if (!context) throw new Error("Recording canvas could not be initialized.");
-
-        recordingCanvasStream = canvas.captureStream(24);
-        recordingAudioContext = new (window.AudioContext || window.webkitAudioContext)();
-        recordingAudioDestination = recordingAudioContext.createMediaStreamDestination();
-        connectRecordingAudioStream(localStream);
-        if (screenStream) connectRecordingAudioStream(screenStream);
-        peers.forEach(peer => connectRecordingAudioStream(peer.remoteStream));
-
-        const drawFrame = () => {
-            if (meetingRecorder?.state !== "recording") return;
-            context.fillStyle = "#111827";
-            context.fillRect(0, 0, canvas.width, canvas.height);
-            const tiles = Array.from(grid.querySelectorAll(".ciit-meet-video-tile"));
-            const columns = tiles.length > 1 ? 2 : 1;
-            const rows = Math.max(1, Math.ceil(tiles.length / columns));
-            const tileWidth = canvas.width / columns;
-            const tileHeight = canvas.height / rows;
-            tiles.forEach((tile, index) => {
-                const video = tile.querySelector("video");
-                if (!video || video.readyState < 2 || video.videoWidth === 0) return;
-                const x = (index % columns) * tileWidth;
-                const y = Math.floor(index / columns) * tileHeight;
-                const scale = Math.min(tileWidth / video.videoWidth, tileHeight / video.videoHeight);
-                const width = video.videoWidth * scale;
-                const height = video.videoHeight * scale;
-                context.drawImage(video, x + (tileWidth - width) / 2, y + (tileHeight - height) / 2, width, height);
-                context.fillStyle = "rgba(0,0,0,.55)";
-                context.fillRect(x + 12, y + tileHeight - 38, Math.min(tileWidth - 24, 240), 26);
-                context.fillStyle = "#fff";
-                context.font = "16px sans-serif";
-                context.fillText(tile.querySelector(".ciit-meet-video-name")?.textContent.trim() || "Participant",
-                    x + 20, y + tileHeight - 20, tileWidth - 40);
-            });
-            requestAnimationFrame(drawFrame);
-        };
-
-        const audioTracks = recordingAudioDestination.stream.getAudioTracks();
-        audioTracks.forEach(track => recordingCanvasStream.addTrack(track));
-        const mimeType = MediaRecorder.isTypeSupported("video/webm;codecs=vp8,opus")
-            ? "video/webm;codecs=vp8,opus" : "video/webm";
-        const chunks = [];
-        meetingRecorder = new MediaRecorder(recordingCanvasStream, { mimeType });
-        meetingRecorder.ondataavailable = event => {
-            if (event.data?.size) chunks.push(event.data);
-        };
-        meetingRecorder.onstop = async () => {
-            recordingUploadPending = true;
-            try {
-                const blob = new Blob(chunks, { type: "video/webm" });
-                if (!blob.size) throw new Error("The recording produced an empty file.");
-                const token = getRecordingToken();
-                if (!token) throw new Error("Security token missing. Reload the meeting page.");
-                const form = new FormData();
-                form.append("id", String(sessionId));
-                form.append("recording", blob, "meeting-" + sessionId + ".webm");
-                form.append("__RequestVerificationToken", token);
-                const response = await fetch("/Admin/Meet/UploadRecording", {
-                    method: "POST",
-                    body: form,
-                    credentials: "same-origin",
-                    headers: { "RequestVerificationToken": token, "X-Requested-With": "XMLHttpRequest" }
-                });
-                if (!response.ok) throw new Error((await response.text().catch(() => "")) || "Recording upload failed (" + response.status + ").");
-                toast("Recording saved", "The meeting recording is saved and ready to download.", "success");
-                document.dispatchEvent(new CustomEvent("ciitMeetRecordingSaved", { detail: { sessionId } }));
-            } catch (error) {
-                console.error("Meeting recording upload failed:", error);
-                toast("Recording save failed", error.message || "The recording could not be uploaded.", "error");
-            } finally {
-                recordingUploadPending = false;
-                recordingCanvasStream?.getTracks().forEach(track => track.stop());
-                recordingAudioContext?.close().catch(() => {});
-                recordingCanvasStream = null;
-                recordingAudioContext = null;
-                recordingAudioDestination = null;
-                recordingAudioSources.clear();
-                meetingRecorder = null;
-            }
-        };
-        meetingRecorder.start(1000);
-        drawFrame();
-        toast("Recording started", "Meeting audio and video are being captured.", "info");
-    };
-
-    window.ciitMeetStopRecording = () => {
-        if (meetingRecorder?.state === "recording") meetingRecorder.stop();
-    };
 
     window.ciitMeetWebRtcCleanup = () => {
         screenStream?.getTracks().forEach(track => track.stop());
