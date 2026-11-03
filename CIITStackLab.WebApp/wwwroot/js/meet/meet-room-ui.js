@@ -55,38 +55,7 @@ document.addEventListener("DOMContentLoaded", () => {
                     const detail = await response.text().catch(() => "");
                     throw new Error(detail || "Unable to update the meeting.");
                 }
-                const recordingAction = form.dataset.recordingAction;
-                if (recordingAction && response.headers.get("content-type")?.includes("application/json")) {
-                    const result = await response.json();
-                    if (!result.success) throw new Error(result.message || "Recording control update failed.");
-                    const recordingControls = room.querySelector("[data-meet-recording-controls]");
-                    if (recordingControls) {
-                        recordingControls.dataset.recordingEnabled = String(result.recordingEnabled);
-                        const statusNode = recordingControls.querySelector("[data-meet-recording-status]");
-                        if (statusNode) statusNode.textContent = result.recordingStatus || "";
-                        const enabled = Boolean(result.recordingEnabled);
-                        const status = result.recordingStatus || "";
-                        const isLive = room.querySelector("[data-meet-status-text]")?.textContent.trim() === "Live";
-                        const actions = {
-                            enable: !enabled,
-                            stop: status === "Recording",
-                            start: enabled && isLive && (status === "Ready" || status === "Stopped"),
-                            disable: enabled && status !== "Recording",
-                            delete: status === "Stopped"
-                        };
-                        Object.entries(actions).forEach(([action, visible]) => {
-                            const actionForm = recordingControls.querySelector('[data-recording-action="' + action + '"]');
-                            if (actionForm) actionForm.hidden = !visible;
-                        });
-                        const download = recordingControls.querySelector("[data-meet-recording-download]");
-                        if (download && status !== "Stopped") download.hidden = true;
-                    }
-                    if (status === "Recording") {
-                        await window.ciitMeetStartRecording?.();
-                    } else {
-                        window.ciitMeetStopRecording?.();
-                    }
-                }
+
                 const endingMeeting = submit?.hasAttribute("data-meet-end-button") === true;
                 if (room.dataset.isHost === "true"
                     && window.ciitMeetSignalRConnection?.state === "Connected") {
@@ -449,19 +418,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
         setText("[data-meet-status-text]", state.status);
         setText("[data-meet-waiting-room-state]", state.waitingRoomEnabled ? "On" : "Off");
-        setText("[data-meet-recording-status]", state.recordingStatus);
-        if (isHost) {
-            if (state.recordingStatus === "Recording") {
-                window.ciitMeetStartRecording?.().catch(error => {
-                    console.error("Meet recording start failed:", error);
-                    showMeetToast({ title: "Recording failed to start", message: error.message || "Audio/video capture could not start.", type: "error" });
-                });
-            } else {
-                window.ciitMeetStopRecording?.();
-            }
-        }
-        const downloadLink = document.querySelector("[data-meet-recording-download]");
-        if (downloadLink && state.recordingStatus !== "Stopped") downloadLink.hidden = true;
+
         const waitingRoomForm = document.querySelector("[data-meet-waiting-room-form]");
         if (waitingRoomForm) {
             const enabledInput = waitingRoomForm.querySelector('input[name="enabled"]');
@@ -469,22 +426,7 @@ document.addEventListener("DOMContentLoaded", () => {
             if (enabledInput) enabledInput.value = String(!state.waitingRoomEnabled);
             if (button) button.textContent = state.waitingRoomEnabled ? "Turn off" : "Turn on";
         }
-        const recordingControls = document.querySelector("[data-meet-recording-controls]");
-        if (recordingControls) {
-            recordingControls.dataset.recordingEnabled = String(state.recordingEnabled);
-            const actions = {
-                enable: !state.recordingEnabled,
-                stop: state.recordingStatus === "Recording",
-                start: state.recordingEnabled && state.status === "Live"
-                    && (state.recordingStatus === "Ready" || state.recordingStatus === "Stopped"),
-                disable: state.recordingEnabled && state.recordingStatus !== "Recording",
-                delete: state.recordingStatus === "Stopped"
-            };
-            Object.entries(actions).forEach(([action, visible]) => {
-                const form = recordingControls.querySelector('[data-recording-action="' + action + '"]');
-                if (form) form.hidden = !visible;
-            });
-        }
+
         setText("[data-meet-pending-count]", state.pendingCount);
         setText("[data-meet-admitted-count]", state.participantCount + (isHost && state.status === "Live" ? 1 : 0));
 
@@ -574,11 +516,6 @@ document.addEventListener("DOMContentLoaded", () => {
         }, 5000);
     };
 
-    document.addEventListener("ciitMeetRecordingSaved", event => {
-        if (Number(event.detail?.sessionId) !== sessionId) return;
-        const downloadLink = document.querySelector("[data-meet-recording-download]");
-        if (downloadLink) downloadLink.hidden = false;
-    });
 
     connection.on("MeetToast", showMeetToast);
 
