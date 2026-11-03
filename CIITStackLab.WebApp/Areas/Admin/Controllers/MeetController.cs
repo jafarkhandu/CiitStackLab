@@ -490,12 +490,25 @@ public sealed class MeetController : Controller
                 session.RecordingEnabled = false;
                 break;
             default:
-                return RedirectWithMessage("Recording action is not valid for the current meeting state.", false);
+                const string invalidActionMessage = "Recording action is not valid for the current meeting state.";
+                return Request.Headers.XRequestedWith == "XMLHttpRequest"
+                    ? BadRequest(new { success = false, message = invalidActionMessage })
+                    : RedirectWithMessage(invalidActionMessage, false);
         }
 
         await _dbContext.SaveChangesAsync(cancellationToken);
         await _meetRealtime.PublishSessionUpdateAsync(id, cancellationToken);
-        return RedirectToAction(nameof(Room), new { id });
+
+        return Request.Headers.XRequestedWith == "XMLHttpRequest"
+            ? Json(new
+            {
+                success = true,
+                sessionId = session.Id,
+                recordingEnabled = session.RecordingEnabled,
+                recordingStatus = session.RecordingStatus,
+                recordingRetentionUntilUtc = session.RecordingRetentionUntilUtc
+            })
+            : RedirectToAction(nameof(Room), new { id });
     }
 
     private async Task CompleteExpiredSessionsAsync(CancellationToken cancellationToken)
