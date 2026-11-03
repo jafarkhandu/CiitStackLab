@@ -293,8 +293,8 @@ html,body{width:100%;min-height:100%;margin:0}
 .ciit-meet-room-video-grid.has-pinned-tile .ciit-meet-video-pinned {
     grid-column: 1 / -1;
     grid-row: 1;
-    width: min(68vh, 100%);
-    max-width: min(68vh, 100%);
+    width: min(82vh, 100%);
+    max-width: min(82vh, 100%);
     height: auto;
     min-height: 0;
     aspect-ratio: 1 / 1;
