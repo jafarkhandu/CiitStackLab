@@ -178,6 +178,7 @@ public sealed class MeetController : Controller
             Status = session.Status,
             IsHost = false,
             WaitingRoomEnabled = session.WaitingRoomEnabled,
+            ChatEnabled = session.ChatEnabled,
             ParticipantStatus = participant.Status,
         });
     }
