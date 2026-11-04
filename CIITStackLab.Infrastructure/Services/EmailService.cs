@@ -154,7 +154,7 @@ public sealed partial class EmailService(IConfiguration configuration) : IEmailS
         string subtitle,
         string content)
     {
-        return $"""
+        return $$"""
         <!doctype html>
         <html lang="en">
         <head>
@@ -164,13 +164,13 @@ public sealed partial class EmailService(IConfiguration configuration) : IEmailS
             <meta name="supported-color-schemes" content="dark light" />
             <title>{{HtmlEncode(title)}}</title>
             <style>
-                @media only screen and (max-width:600px) {{
+                @media only screen and (max-width:600px) {
                     .email-shell { width:100% !important; }
                     .email-header { padding:26px 22px !important; }
                     .email-content { padding:28px 22px !important; }
                     .email-footer { padding:18px 22px !important; }
                     .email-title { font-size:24px !important; }
-                }}
+                }
             </style>
         </head>
         <body style="margin:0;padding:0;background-color:#edf3fb;font-family:Arial,Helvetica,sans-serif;color:#ffffff;">
@@ -187,8 +187,8 @@ public sealed partial class EmailService(IConfiguration configuration) : IEmailS
                                             <td valign="middle" style="padding-left:12px;color:#ffffff;font-size:18px;font-weight:800;letter-spacing:1.2px;">STACK LAB</td>
                                         </tr>
                                     </table>
-                                    <div class="email-title" style="margin-top:27px;font-size:28px;font-weight:800;line-height:1.25;color:#ffffff;">{HtmlEncode(title)}</div>
-                                    <div style="margin-top:9px;font-size:14px;line-height:1.6;color:#effaff;">{HtmlEncode(subtitle)}</div>
+                                    <div class="email-title" style="margin-top:27px;font-size:28px;font-weight:800;line-height:1.25;color:#ffffff;">{{HtmlEncode(title)}}</div>
+                                    <div style="margin-top:9px;font-size:14px;line-height:1.6;color:#effaff;">{{HtmlEncode(subtitle)}}</div>
                                 </td>
                             </tr>
                             <tr>
@@ -213,7 +213,6 @@ public sealed partial class EmailService(IConfiguration configuration) : IEmailS
         </html>
         """;
     }
-
     private static string RenderCampaignMessage(string message)
     {
         var normalizedMessage = (message ?? string.Empty)
