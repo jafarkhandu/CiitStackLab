@@ -40,7 +40,7 @@ public sealed class EmailSenderController : Controller
         {
             ModelState.AddModelError(
                 nameof(model.ConfirmRecipientEligibility),
-                "Confirm that the selected recipients are eligible to receive this email.");
+                "Confirm that the selected recipients have permission to receive this communication.");
         }
 
         if (!ModelState.IsValid)
