@@ -65,6 +65,9 @@ document.addEventListener("DOMContentLoaded", () => {
         if (!form || form.querySelector("[data-meet-end-button]")
             || event.defaultPrevented) return;
 
+        // Chat toggle is handled by the form-level room-ui.js listener.
+        // Do not intercept it here; two submit owners caused stale UI/state races.
+        if (form.matches("[data-meet-chat-enabled-form]")) return;
 
         event.preventDefault();
         event.stopImmediatePropagation();
@@ -95,19 +98,6 @@ document.addEventListener("DOMContentLoaded", () => {
             }
 
 
-            // Apply the authoritative JSON result immediately for the chat toggle.
-            // The recovery handler runs in capture phase and prevents the normal
-            // room-ui.js submit handler from processing this form.
-            if (form.matches("[data-meet-chat-enabled-form]")) {
-                const result = await response.clone().json().catch(() => null);
-                if (result?.success && typeof result.chatEnabled === "boolean") {
-                    window.ciitMeetSetChatEnabled?.(result.chatEnabled);
-                    const liveConnection = window.ciitMeetSignalRConnection;
-                    if (liveConnection?.state === "Connected") {
-                        await liveConnection.invoke("JoinChatRoom", Number(room.dataset.sessionId));
-                    }
-                }
-            }
 
             // Refresh the server-rendered snapshot when available; retain the
             // just-applied JSON state if this secondary refresh transiently fails.
