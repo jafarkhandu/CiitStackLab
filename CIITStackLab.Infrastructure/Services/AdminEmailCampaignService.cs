@@ -51,8 +51,10 @@ public sealed class AdminEmailCampaignService
             snapshot.Students.Count(user => snapshot.PurchaseCounts.GetValueOrDefault(user.Id) == 0),
             snapshot.Students.Count(user =>
                 snapshot.PurchaseCounts.GetValueOrDefault(user.Id) == 1
-                && (!snapshot.LastAccessedAt.TryGetValue(user.Id, out var lastAccessedAt)
-                    || lastAccessedAt <= snapshot.InactivityCutoff)));
+                && (snapshot.LastAccessedAt.TryGetValue(user.Id, out var lastAccessedAt)
+                    ? lastAccessedAt <= snapshot.InactivityCutoff
+                    : snapshot.LastPurchasedAt.TryGetValue(user.Id, out var lastPurchasedAt)
+                        && lastPurchasedAt <= snapshot.InactivityCutoff)));
     }
 
     public async Task<AdminEmailCampaignResult> SendAsync(
@@ -77,8 +79,10 @@ public sealed class AdminEmailCampaignService
             OnePurchaseInactiveAudience => snapshot.Students
                 .Where(user =>
                     snapshot.PurchaseCounts.GetValueOrDefault(user.Id) == 1
-                    && (!snapshot.LastAccessedAt.TryGetValue(user.Id, out var lastAccessedAt)
-                        || lastAccessedAt <= snapshot.InactivityCutoff))
+                    && (snapshot.LastAccessedAt.TryGetValue(user.Id, out var lastAccessedAt)
+                    ? lastAccessedAt <= snapshot.InactivityCutoff
+                    : snapshot.LastPurchasedAt.TryGetValue(user.Id, out var lastPurchasedAt)
+                        && lastPurchasedAt <= snapshot.InactivityCutoff))
                 .ToList(),
             _ => throw new ArgumentException("Select a valid email audience.", nameof(audience))
         };
@@ -143,22 +147,24 @@ public sealed class AdminEmailCampaignService
                 students,
                 new Dictionary<string, int>(),
                 new Dictionary<string, DateTime>(),
+                new Dictionary<string, DateTime>(),
                 DateTime.UtcNow.AddDays(-inactivityDays));
         }
 
-        var purchaseCounts = await _dbContext.StudentCoursePurchases
+        var purchaseRows = await _dbContext.StudentCoursePurchases
             .AsNoTracking()
             .Where(purchase => studentIds.Contains(purchase.UserId))
             .GroupBy(purchase => purchase.UserId)
             .Select(group => new
             {
                 UserId = group.Key,
-                Count = group.Count()
+                Count = group.Count(),
+                LatestPurchasedAt = group.Max(purchase => purchase.PurchasedAt)
             })
-            .ToDictionaryAsync(
-                item => item.UserId,
-                item => item.Count,
-                cancellationToken);
+            .ToListAsync(cancellationToken);
+
+        var purchaseCounts = purchaseRows.ToDictionary(item => item.UserId, item => item.Count);
+        var lastPurchasedAt = purchaseRows.ToDictionary(item => item.UserId, item => item.LatestPurchasedAt);
 
         var lastAccessedAt = await _dbContext.StudentLessonProgress
             .AsNoTracking()
@@ -181,6 +187,7 @@ public sealed class AdminEmailCampaignService
             students,
             purchaseCounts,
             lastAccessedAt,
+            lastPurchasedAt,
             DateTime.UtcNow.AddDays(-inactivityDays));
     }
 
@@ -188,5 +195,6 @@ public sealed class AdminEmailCampaignService
         List<ApplicationUser> Students,
         Dictionary<string, int> PurchaseCounts,
         Dictionary<string, DateTime> LastAccessedAt,
+        Dictionary<string, DateTime> LastPurchasedAt,
         DateTime InactivityCutoff);
 }
