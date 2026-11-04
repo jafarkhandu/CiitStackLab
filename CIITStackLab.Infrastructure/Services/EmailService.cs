@@ -1,4 +1,5 @@
 using System.Text;
+using System.Text.RegularExpressions;
 using CIITStackLab.Application.Interfaces;
 using MailKit.Net.Smtp;
 using MailKit.Security;
@@ -7,18 +8,11 @@ using MimeKit;
 
 namespace CIITStackLab.Infrastructure.Services;
 
-public sealed class EmailService : IEmailService
+public sealed partial class EmailService(IConfiguration configuration) : IEmailService
 {
     private const string PrimaryBlue = "#1769ff";
     private const string DarkText = "#172033";
     private const string MutedText = "#64748b";
-
-    private readonly IConfiguration _configuration;
-
-    public EmailService(IConfiguration configuration)
-    {
-        _configuration = configuration;
-    }
 
     public Task SendRegistrationEmailAsync(
         string toEmail,
@@ -168,19 +162,19 @@ public sealed class EmailService : IEmailService
             <meta name="viewport" content="width=device-width, initial-scale=1.0" />
             <meta name="color-scheme" content="dark light" />
             <meta name="supported-color-schemes" content="dark light" />
-            <title>{HtmlEncode(title)}</title>
+            <title>{{HtmlEncode(title)}}</title>
             <style>
                 @media only screen and (max-width:600px) {{
-                    .email-shell {{ width:100% !important; }}
-                    .email-header {{ padding:26px 22px !important; }}
-                    .email-content {{ padding:28px 22px !important; }}
-                    .email-footer {{ padding:18px 22px !important; }}
-                    .email-title {{ font-size:24px !important; }}
+                    .email-shell { width:100% !important; }
+                    .email-header { padding:26px 22px !important; }
+                    .email-content { padding:28px 22px !important; }
+                    .email-footer { padding:18px 22px !important; }
+                    .email-title { font-size:24px !important; }
                 }}
             </style>
         </head>
         <body style="margin:0;padding:0;background-color:#edf3fb;font-family:Arial,Helvetica,sans-serif;color:#ffffff;">
-            <div style="display:none;max-height:0;overflow:hidden;opacity:0;">{HtmlEncode(subtitle)}</div>
+            <div style="display:none;max-height:0;overflow:hidden;opacity:0;">{{HtmlEncode(subtitle)}}</div>
             <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="width:100%;padding:28px 10px;background-color:#edf3fb;">
                 <tr>
                     <td align="center">
@@ -199,7 +193,7 @@ public sealed class EmailService : IEmailService
                             </tr>
                             <tr>
                                 <td class="email-content" style="padding:34px 38px;background-color:#20212a;color:#ffffff;font-size:16px;line-height:1.8;">
-                                    {content}
+                                    {{content}}
                                 </td>
                             </tr>
                             <tr>
@@ -207,7 +201,7 @@ public sealed class EmailService : IEmailService
                                     <strong style="color:#67b8ff;">CIIT Stack Lab</strong><br />
                                     Learn. Build. Grow.<br />
                                     You are receiving this message because you have a CIIT Stack Lab student account.<br />
-                                    &copy; {DateTime.UtcNow.Year} CIIT Stack Lab. All rights reserved.
+                                    &copy; {{DateTime.UtcNow.Year}} CIIT Stack Lab. All rights reserved.
                                 </td>
                             </tr>
                         </table>
@@ -227,11 +221,7 @@ public sealed class EmailService : IEmailService
             .Replace('\r', '\n')
             .Trim();
 
-        normalizedMessage = System.Text.RegularExpressions.Regex.Replace(
-            normalizedMessage,
-            @"^(?:hello|hi)\s+student\s*,?\s*(?:\n+|$)",
-            string.Empty,
-            System.Text.RegularExpressions.RegexOptions.IgnoreCase);
+        normalizedMessage = StudentGreetingRegex().Replace(normalizedMessage, string.Empty);
 
         var lines = normalizedMessage.Split('\n');
         var html = new StringBuilder();
@@ -318,22 +308,21 @@ public sealed class EmailService : IEmailService
             .Replace('\r', '\n')
             .Trim();
 
-        plainText = System.Text.RegularExpressions.Regex.Replace(
-            plainText,
-            @"^(?:hello|hi)\s+student\s*,?\s*(?:\n+|$)",
-            string.Empty,
-            System.Text.RegularExpressions.RegexOptions.IgnoreCase);
+        plainText = StudentGreetingRegex().Replace(plainText, string.Empty);
 
         return plainText.Replace("**", string.Empty, StringComparison.Ordinal);
     }
 
+    [GeneratedRegex(@"^(?:hello|hi)\s+student\s*,?\s*(?:\n+|$)", RegexOptions.IgnoreCase)]
+    private static partial Regex StudentGreetingRegex();
+
+    [GeneratedRegex(@"\*\*(.+?)\*\*")]
+    private static partial Regex BoldMarkdownRegex();
+
     private static string RenderInlineMarkdown(string value)
     {
         var encoded = HtmlEncode(value);
-        return System.Text.RegularExpressions.Regex.Replace(
-            encoded,
-            @"\*\*(.+?)\*\*",
-            "<strong style=\"color:#ffffff;font-weight:800;\">$1</strong>");
+        return BoldMarkdownRegex().Replace(encoded, "<strong style=\"color:#ffffff;font-weight:800;\">$1</strong>");
     }
 
     private async Task SendEmailAsync(
@@ -361,9 +350,9 @@ public sealed class EmailService : IEmailService
             throw new InvalidOperationException("EmailSettings:Port must be a valid TCP port.");
         }
 
-        var senderName = _configuration["EmailSettings:Name"] ?? string.Empty;
+        var senderName = configuration["EmailSettings:Name"] ?? string.Empty;
         var useSsl = bool.TryParse(
-            _configuration["EmailSettings:UseSSL"],
+            configuration["EmailSettings:UseSSL"],
             out var configuredUseSsl)
             ? configuredUseSsl
             : port == 465;
@@ -530,7 +519,7 @@ public sealed class EmailService : IEmailService
 
     private string GetRequiredSetting(string key)
     {
-        var value = _configuration[key];
+        var value = configuration[key];
 
         if (string.IsNullOrWhiteSpace(value))
         {
