@@ -16,6 +16,13 @@ public interface IEmailService
         DateTime purchasedAt,
         CancellationToken cancellationToken = default);
 
+    Task SendCampaignEmailAsync(
+        string toEmail,
+        string userName,
+        string subject,
+        string message,
+        CancellationToken cancellationToken = default);
+
     Task SendPasswordResetOtpAsync(
         string toEmail,
         string otp,
