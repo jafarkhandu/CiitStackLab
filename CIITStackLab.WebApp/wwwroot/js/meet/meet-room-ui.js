@@ -56,21 +56,26 @@ document.addEventListener("DOMContentLoaded", () => {
                     throw new Error(detail || "Unable to update the meeting.");
                 }
 
-                if (form.matches("[data-meet-chat-enabled-form]")) {
+                const isChatToggle = form.matches("[data-meet-chat-enabled-form]");
+                if (isChatToggle) {
                     const result = await response.json();
-                    if (result?.success && typeof result.chatEnabled === "boolean") {
-                        // Apply the server-confirmed state to the host UI immediately,
-                        // then rejoin chat to retrieve its authoritative state snapshot.
+                    const expectedSessionId = Number(room.dataset.sessionId);
+                    if (result?.success
+                        && typeof result.chatEnabled === "boolean"
+                        && (result.sessionId == null || Number(result.sessionId) === expectedSessionId)) {
+                        // The persisted controller response is authoritative. The hub
+                        // broadcasts the same state to all meeting participants.
                         window.ciitMeetSetChatEnabled?.(result.chatEnabled);
-                        const liveConnection = window.ciitMeetSignalRConnection;
-                        if (liveConnection?.state === "Connected") {
-                            await liveConnection.invoke("JoinChatRoom", Number(room.dataset.sessionId));
-                        }
+                    } else {
+                        throw new Error("The server did not confirm the meeting chat state.");
                     }
                 }
 
                 const endingMeeting = submit?.hasAttribute("data-meet-end-button") === true;
-                if (room.dataset.isHost === "true"
+                // Chat state changes do not require rejoining either hub room:
+                // doing so can reannounce peers and create duplicate signaling.
+                if (!isChatToggle
+                    && room.dataset.isHost === "true"
                     && window.ciitMeetSignalRConnection?.state === "Connected") {
                     await window.ciitMeetSignalRConnection.invoke("JoinMeetingRoom", Number(room.dataset.sessionId));
                 }
