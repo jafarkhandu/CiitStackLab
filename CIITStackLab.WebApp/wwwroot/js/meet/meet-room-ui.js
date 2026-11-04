@@ -846,6 +846,22 @@ document.addEventListener("DOMContentLoaded", () => {
         }
     });
 
+    chatInput.addEventListener("keydown", event => {
+        // Enter sends the message; Shift+Enter inserts a newline.
+        // Ignore IME composition so Enter can confirm composed text.
+        if (event.key !== "Enter"
+            || event.shiftKey
+            || event.isComposing
+            || event.keyCode === 229) {
+            return;
+        }
+
+        event.preventDefault();
+        if (!chatSend.disabled && chatEnabled && chatJoined) {
+            chatForm.requestSubmit();
+        }
+    });
+
     chatInput.addEventListener("input", () => {
         chatInput.style.height = "auto";
         chatInput.style.height = Math.min(chatInput.scrollHeight, 100) + "px";
