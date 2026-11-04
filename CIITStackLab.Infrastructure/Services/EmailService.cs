@@ -136,8 +136,8 @@ public sealed class EmailService : IEmailService
     {
         var safeUserName = HtmlEncode(userName);
         var safeMessage = HtmlEncode(message)
-            .Replace("\\r\\n", "\\n", StringComparison.Ordinal)
-            .Replace("\\n", "<br />", StringComparison.Ordinal);
+            .Replace("\r\n", "\n", StringComparison.Ordinal)
+            .Replace("\n", "<br />", StringComparison.Ordinal);
         var safeSubject = string.IsNullOrWhiteSpace(subject)
             ? "An update from CIIT Stack Lab"
             : subject.Trim();
