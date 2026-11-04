@@ -136,6 +136,7 @@ public sealed class EmailService : IEmailService
             ? "An update from CIIT Stack Lab"
             : subject.Trim();
         var campaignContent = RenderCampaignMessage(message);
+        var plainTextBody = RenderCampaignPlainText(message);
 
         var html = BuildCampaignEmailTemplate(
             safeSubject,
@@ -149,7 +150,7 @@ public sealed class EmailService : IEmailService
         return SendEmailAsync(
             toEmail,
             safeSubject,
-            message,
+            plainTextBody,
             html,
             cancellationToken);
     }
@@ -308,6 +309,22 @@ public sealed class EmailService : IEmailService
         CloseList();
 
         return html.ToString();
+    }
+
+    private static string RenderCampaignPlainText(string message)
+    {
+        var plainText = (message ?? string.Empty)
+            .Replace("\r\n", "\n", StringComparison.Ordinal)
+            .Replace('\r', '\n')
+            .Trim();
+
+        plainText = System.Text.RegularExpressions.Regex.Replace(
+            plainText,
+            @"^(?:hello|hi)\s+student\s*,?\s*(?:\n+|$)",
+            string.Empty,
+            System.Text.RegularExpressions.RegexOptions.IgnoreCase);
+
+        return plainText.Replace("**", string.Empty, StringComparison.Ordinal);
     }
 
     private static string RenderInlineMarkdown(string value)
