@@ -17,29 +17,16 @@ public sealed record AdminEmailCampaignResult(
     int Sent,
     int Failed);
 
-public sealed class AdminEmailCampaignService
+public sealed class AdminEmailCampaignService(
+    ApplicationDbContext dbContext,
+    UserManager<ApplicationUser> userManager,
+    IEmailService emailService,
+    ILogger<AdminEmailCampaignService> logger)
 {
     private const string AllAudience = "all";
     private const string NoPurchaseAudience = "no-purchase";
     private const string OnePurchaseInactiveAudience = "one-purchase-inactive";
     private const string DisplayNameClaimType = "ciit:display_name";
-
-    private readonly ApplicationDbContext _dbContext;
-    private readonly UserManager<ApplicationUser> _userManager;
-    private readonly IEmailService _emailService;
-    private readonly ILogger<AdminEmailCampaignService> _logger;
-
-    public AdminEmailCampaignService(
-        ApplicationDbContext dbContext,
-        UserManager<ApplicationUser> userManager,
-        IEmailService emailService,
-        ILogger<AdminEmailCampaignService> logger)
-    {
-        _dbContext = dbContext;
-        _userManager = userManager;
-        _emailService = emailService;
-        _logger = logger;
-    }
 
     public async Task<AdminEmailAudienceCounts> GetAudienceCountsAsync(
         int inactivityDays = 14,
@@ -97,7 +84,7 @@ public sealed class AdminEmailCampaignService
 
             try
             {
-                await _emailService.SendCampaignEmailAsync(
+                await emailService.SendCampaignEmailAsync(
                     recipient.Email!,
                     GetRecipientDisplayName(recipient, snapshot.DisplayNames),
                     subject.Trim(),
@@ -113,7 +100,7 @@ public sealed class AdminEmailCampaignService
             catch (Exception exception)
             {
                 failed++;
-                _logger.LogWarning(
+                logger.LogWarning(
                     exception,
                     "Email campaign delivery failed for student account {UserId}.",
                     recipient.Id);
@@ -132,7 +119,7 @@ public sealed class AdminEmailCampaignService
             throw new ArgumentOutOfRangeException(nameof(inactivityDays));
         }
 
-        var roleStudents = await _userManager.GetUsersInRoleAsync("Student");
+        var roleStudents = await userManager.GetUsersInRoleAsync("Student");
         var students = roleStudents
             .Where(user =>
                 user.IsActive
@@ -153,7 +140,7 @@ public sealed class AdminEmailCampaignService
                 DateTime.UtcNow.AddDays(-inactivityDays));
         }
 
-        var displayNames = await _dbContext.UserClaims
+        var displayNames = await dbContext.UserClaims
             .AsNoTracking()
             .Where(claim => studentIds.Contains(claim.UserId)
                 && claim.ClaimType == DisplayNameClaimType
@@ -169,7 +156,7 @@ public sealed class AdminEmailCampaignService
                 item => item.DisplayName,
                 cancellationToken);
 
-        var purchaseRows = await _dbContext.StudentCoursePurchases
+        var purchaseRows = await dbContext.StudentCoursePurchases
             .AsNoTracking()
             .Where(purchase => studentIds.Contains(purchase.UserId))
             .GroupBy(purchase => purchase.UserId)
@@ -184,10 +171,10 @@ public sealed class AdminEmailCampaignService
         var purchaseCounts = purchaseRows.ToDictionary(item => item.UserId, item => item.Count);
         var lastPurchasedAt = purchaseRows.ToDictionary(item => item.UserId, item => item.LatestPurchasedAt);
 
-        var lastAccessedAt = await _dbContext.StudentLessonProgress
+        var lastAccessedAt = await dbContext.StudentLessonProgress
             .AsNoTracking()
             .Where(progress => studentIds.Contains(progress.UserId)
-                && _dbContext.StudentCoursePurchases.AsNoTracking().Any(purchase =>
+                && dbContext.StudentCoursePurchases.AsNoTracking().Any(purchase =>
                     purchase.UserId == progress.UserId
                     && purchase.CourseId == progress.CourseId))
             .GroupBy(progress => progress.UserId)
