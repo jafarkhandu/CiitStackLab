@@ -169,13 +169,13 @@ public sealed class EmailService : IEmailService
             <meta name="supported-color-schemes" content="dark light" />
             <title>{HtmlEncode(title)}</title>
             <style>
-                @media only screen and (max-width:600px) {
-                    .email-shell { width:100% !important; }
-                    .email-header { padding:26px 22px !important; }
-                    .email-content { padding:28px 22px !important; }
-                    .email-footer { padding:18px 22px !important; }
-                    .email-title { font-size:24px !important; }
-                }
+                @media only screen and (max-width:600px) {{
+                    .email-shell {{ width:100% !important; }}
+                    .email-header {{ padding:26px 22px !important; }}
+                    .email-content {{ padding:28px 22px !important; }}
+                    .email-footer {{ padding:18px 22px !important; }}
+                    .email-title {{ font-size:24px !important; }}
+                }}
             </style>
         </head>
         <body style="margin:0;padding:0;background-color:#edf3fb;font-family:Arial,Helvetica,sans-serif;color:#ffffff;">
