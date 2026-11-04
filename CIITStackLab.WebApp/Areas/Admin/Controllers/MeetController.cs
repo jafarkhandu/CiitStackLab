@@ -326,12 +326,32 @@ public sealed class MeetController : Controller
             return BadRequest("Chat can only be changed during an active meeting.");
         }
 
+        // Persist first, then read the committed value back without tracking.
+        // Returning the stored value (rather than the posted parameter) makes the
+        // browser response an explicit confirmation of the database state.
         session.ChatEnabled = enabled;
         await _dbContext.SaveChangesAsync(cancellationToken);
-        await _meetRealtime.PublishChatEnabledAsync(id, enabled, cancellationToken);
 
-        return Request.Headers.XRequestedWith == "XMLHttpRequest"
-            ? Json(new { success = true, sessionId = id, chatEnabled = session.ChatEnabled })
+        var persistedChatEnabled = await _dbContext.MeetSessions
+            .AsNoTracking()
+            .Where(item => item.Id == id)
+            .Select(item => item.ChatEnabled)
+            .SingleAsync(cancellationToken);
+
+        await _meetRealtime.PublishChatEnabledAsync(id, persistedChatEnabled, cancellationToken);
+
+        var isAjaxRequest = string.Equals(
+            Request.Headers.XRequestedWith.ToString(),
+            "XMLHttpRequest",
+            StringComparison.OrdinalIgnoreCase);
+
+        return isAjaxRequest
+            ? Json(new
+            {
+                success = true,
+                sessionId = id,
+                chatEnabled = persistedChatEnabled
+            })
             : RedirectToAction(nameof(Room), new { id });
     }
 

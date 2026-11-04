@@ -58,16 +58,28 @@ document.addEventListener("DOMContentLoaded", () => {
 
                 const isChatToggle = form.matches("[data-meet-chat-enabled-form]");
                 if (isChatToggle) {
+                    const contentType = response.headers.get("content-type") || "";
+                    if (!contentType.toLowerCase().includes("application/json")) {
+                        throw new Error("The server did not return the saved chat state. Refresh the meeting and try again.");
+                    }
+
                     const result = await response.json();
                     const expectedSessionId = Number(room.dataset.sessionId);
-                    if (result?.success
-                        && typeof result.chatEnabled === "boolean"
-                        && (result.sessionId == null || Number(result.sessionId) === expectedSessionId)) {
-                        // The persisted controller response is authoritative. The hub
-                        // broadcasts the same state to all meeting participants.
-                        window.ciitMeetSetChatEnabled?.(result.chatEnabled);
-                    } else {
-                        throw new Error("The server did not confirm the meeting chat state.");
+                    if (!result?.success
+                        || typeof result.chatEnabled !== "boolean"
+                        || Number(result.sessionId) !== expectedSessionId) {
+                        throw new Error("The database did not confirm the requested chat state.");
+                    }
+
+                    // Do not report success until the server has read the committed
+                    // value back from the database and returned it for this session.
+                    window.ciitMeetSetChatEnabled?.(result.chatEnabled);
+                } else {
+                    // Other meeting forms may return JSON or HTML depending on their
+                    // existing controller action. Consume JSON only when supplied.
+                    const contentType = response.headers.get("content-type") || "";
+                    if (contentType.toLowerCase().includes("application/json")) {
+                        await response.json();
                     }
                 }
 
