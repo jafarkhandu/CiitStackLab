@@ -110,4 +110,5 @@ public sealed class MeetSessionLifecycleService : BackgroundService
                     session.Participants.Select(participant => participant.StudentUserId), cancellationToken);
             }
         }
-    }}
+    }
+}
