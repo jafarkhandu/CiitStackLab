@@ -1,0 +1,189 @@
+@model CIITStackLab.WebApp.Models.AdminEmailSenderViewModel
+
+@{
+    ViewData["Title"] = "Email Sender";
+    var message = TempData["AdminEmailSenderMessage"] as string;
+    var messageType = TempData["AdminEmailSenderMessageType"] as string;
+}
+
+@section Styles {
+    <link rel="stylesheet" href="~/css/admin/admin-email-sender.css" asp-append-version="true" />
+}
+
+<section class="ciit-admin-page ciit-email-sender-page">
+    <div class="email-sender-heading">
+        <div>
+            <span class="ciit-admin-eyebrow">Management / Communication</span>
+            <h1>Email Sender</h1>
+            <p>Create branded CIIT Stack Lab campaigns and reach the right student group.</p>
+        </div>
+        <div class="email-sender-brand-mark" aria-hidden="true">
+            <span>CIIT</span>
+            <small>STACK LAB</small>
+        </div>
+    </div>
+
+    @if (!string.IsNullOrWhiteSpace(message))
+    {
+        <div class="email-sender-alert @(messageType == "success" ? "is-success" : "is-warning")" role="status">
+            <i class="bi @(messageType == "success" ? "bi-check-circle-fill" : "bi-exclamation-triangle-fill")"></i>
+            <span>@message</span>
+        </div>
+    }
+
+    <div class="email-audience-grid">
+        <article class="email-audience-card">
+            <span class="email-audience-icon"><i class="bi bi-people"></i></span>
+            <div><strong>@Model.AllStudentsCount</strong><span>Active verified students</span></div>
+        </article>
+        <article class="email-audience-card">
+            <span class="email-audience-icon is-cyan"><i class="bi bi-mortarboard"></i></span>
+            <div><strong>@Model.NoPurchaseCount</strong><span>No course purchases</span></div>
+        </article>
+        <article class="email-audience-card">
+            <span class="email-audience-icon is-violet"><i class="bi bi-hourglass-split"></i></span>
+            <div><strong>@Model.OnePurchaseInactiveCount</strong><span>One purchase · inactive</span></div>
+        </article>
+    </div>
+
+    <div class="email-sender-layout">
+        <section class="email-composer-card">
+            <div class="email-card-heading">
+                <div>
+                    <span class="email-card-kicker">CAMPAIGN COMPOSER</span>
+                    <h2>Compose your message</h2>
+                    <p>Write a clear, helpful message. The CIIT branded email design is applied automatically.</p>
+                </div>
+                <span class="email-card-heading-icon"><i class="bi bi-envelope-paper"></i></span>
+            </div>
+
+            <form asp-area="Admin" asp-controller="EmailSender" asp-action="Send" method="post" class="email-campaign-form" id="emailCampaignForm">
+                @Html.AntiForgeryToken()
+                <div asp-validation-summary="ModelOnly" class="email-validation-summary"></div>
+
+                <div class="email-form-field">
+                    <label asp-for="Audience">Recipient group</label>
+                    <select asp-for="Audience" id="emailAudience" class="form-select">
+                        <option value="all">All active, verified students (@Model.AllStudentsCount)</option>
+                        <option value="no-purchase">Students with no course purchases (@Model.NoPurchaseCount)</option>
+                        <option value="one-purchase-inactive">Exactly one purchase and inactive (@Model.OnePurchaseInactiveCount)</option>
+                    </select>
+                    <small>Only active Student accounts with confirmed email addresses are included.</small>
+                    <span asp-validation-for="Audience" class="email-field-error"></span>
+                </div>
+
+                <div class="email-form-field" id="inactivityDaysField">
+                    <label asp-for="InactivityDays">Inactive for at least</label>
+                    <div class="email-days-input">
+                        <input asp-for="InactivityDays" type="number" min="1" max="90" class="form-control" />
+                        <span>days</span>
+                    </div>
+                    <small>For the one-purchase group, students with no lesson activity or no activity within this period are included.</small>
+                    <span asp-validation-for="InactivityDays" class="email-field-error"></span>
+                </div>
+
+                <div class="email-form-field">
+                    <label asp-for="Subject">Email subject</label>
+                    <input asp-for="Subject" class="form-control" maxlength="160" placeholder="e.g. Your next learning opportunity is here" />
+                    <span asp-validation-for="Subject" class="email-field-error"></span>
+                </div>
+
+                <div class="email-form-field">
+                    <label asp-for="Message">Message content</label>
+                    <textarea asp-for="Message" class="form-control email-message-input" rows="8" maxlength="10000" placeholder="Hello! We have an update to help you continue your learning journey..."></textarea>
+                    <small>Plain text is supported. Line breaks will be preserved in the email.</small>
+                    <span asp-validation-for="Message" class="email-field-error"></span>
+                </div>
+
+                <label class="email-eligibility-check">
+                    <input asp-for="ConfirmRecipientEligibility" type="checkbox" />
+                    <span>I confirm that the selected recipients are eligible to receive this email.</span>
+                </label>
+                <span asp-validation-for="ConfirmRecipientEligibility" class="email-field-error"></span>
+
+                <div class="email-send-footer">
+                    <div class="email-send-note"><i class="bi bi-shield-check"></i><span>Emails are sent individually. Recipient addresses are not exposed to other students.</span></div>
+                    <button type="submit" class="email-send-button" id="sendCampaignButton">
+                        <i class="bi bi-send-fill"></i>
+                        <span>Send campaign</span>
+                    </button>
+                </div>
+            </form>
+        </section>
+
+        <aside class="email-preview-column">
+            <div class="email-preview-card">
+                <span class="email-card-kicker">EMAIL EXPERIENCE</span>
+                <h2>Professional by design</h2>
+                <p>Every campaign uses the CIIT Stack Lab branded layout.</p>
+                <div class="email-preview-mock">
+                    <div class="email-preview-top">
+                        <strong>CIIT</strong>
+                        <span>STACK LAB</span>
+                        <h3 id="emailPreviewSubject">Your learning journey starts here</h3>
+                        <small>A message from your CIIT Stack Lab learning team</small>
+                    </div>
+                    <div class="email-preview-body">
+                        <p>Hello <strong>Student</strong>,</p>
+                        <div id="emailPreviewMessage">Your message will appear here. Write useful, friendly content that gives students a clear next step.</div>
+                        <div class="email-preview-signoff">Keep learning. Keep building. Keep growing.</div>
+                    </div>
+                    <div class="email-preview-bottom">CIIT Stack Lab · Official communication</div>
+                </div>
+                <div class="email-preview-points">
+                    <span><i class="bi bi-check2-circle"></i> Blue and cyan brand theme</span>
+                    <span><i class="bi bi-check2-circle"></i> Mobile-friendly email layout</span>
+                    <span><i class="bi bi-check2-circle"></i> Glass-inspired panels with email-safe fallbacks</span>
+                </div>
+            </div>
+
+            <div class="email-audience-note">
+                <i class="bi bi-info-circle-fill"></i>
+                <div>
+                    <strong>About audience accuracy</strong>
+                    <p>The current Identity login flow does not store a reliable last-login timestamp. Therefore, the no-purchase group means all eligible students with zero purchases, not only students confirmed to have logged in.</p>
+                </div>
+            </div>
+        </aside>
+    </div>
+</section>
+
+@section Scripts {
+    <script>
+        (() => {
+            const form = document.getElementById("emailCampaignForm");
+            const audience = document.getElementById("emailAudience");
+            const daysField = document.getElementById("inactivityDaysField");
+            const subject = document.getElementById("Subject");
+            const messageInput = document.getElementById("Message");
+            const previewSubject = document.getElementById("emailPreviewSubject");
+            const previewMessage = document.getElementById("emailPreviewMessage");
+            const sendButton = document.getElementById("sendCampaignButton");
+
+            const updateAudienceHelp = () => {
+                daysField.hidden = audience.value !== "one-purchase-inactive";
+            };
+
+            const updatePreview = () => {
+                previewSubject.textContent = subject.value.trim() || "Your learning journey starts here";
+                previewMessage.textContent = messageInput.value.trim() || "Your message will appear here. Write useful, friendly content that gives students a clear next step.";
+            };
+
+            audience.addEventListener("change", updateAudienceHelp);
+            subject.addEventListener("input", updatePreview);
+            messageInput.addEventListener("input", updatePreview);
+            form.addEventListener("submit", event => {
+                if (!window.confirm("Send this email campaign to the selected student group?")) {
+                    event.preventDefault();
+                    return;
+                }
+
+                sendButton.disabled = true;
+                sendButton.querySelector("span").textContent = "Sending...";
+            });
+
+            updateAudienceHelp();
+            updatePreview();
+        })();
+    </script>
+}
