@@ -104,6 +104,10 @@ public sealed class MeetSessionLifecycleService : BackgroundService
             }
 
             await dbContext.SaveChangesAsync(cancellationToken);
+            foreach (var session in expiredSessions)
+            {
+                await realtime.PublishDashboardRefreshAsync(
+                    session.Participants.Select(participant => participant.StudentUserId), cancellationToken);
+            }
         }
-    }
-}
+    }}

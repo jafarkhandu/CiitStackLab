@@ -270,6 +270,14 @@ document.addEventListener("DOMContentLoaded", () => {
 
     connection.on("MeetAdminUpdated", handleUpdate);
     connection.on("MeetBatchUpdated", handleUpdate);
+    let dashboardRefreshScheduled = false;
+    connection.on("MeetDashboardRefresh", () => {
+        // Membership/archive changes can alter the full server-rendered dashboard.
+        // Coalesce simultaneous notices to avoid repeated page reloads.
+        if (dashboardRefreshScheduled) return;
+        dashboardRefreshScheduled = true;
+        window.setTimeout(() => window.location.reload(), 150);
+    });
 
     const joinGroup = () => connection.invoke(adminRoot ? "JoinAdminUpdates" : "JoinMyBatchUpdates");
     connection.onreconnected(joinGroup);

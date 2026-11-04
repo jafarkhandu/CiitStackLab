@@ -182,6 +182,7 @@ public sealed class MeetController : Controller
         _dbContext.MeetSessionParticipants.RemoveRange(participants);
         _dbContext.MeetSessions.Remove(session);
         await _dbContext.SaveChangesAsync(cancellationToken);
+        await _meetRealtime.PublishDashboardRefreshAsync([], cancellationToken);
 
         return Request.Headers.XRequestedWith == "XMLHttpRequest"
             ? Json(new { success = true, sessionId = id })
@@ -526,9 +527,13 @@ public sealed class MeetController : Controller
         if (session.Status != "Completed")
             return;
 
+        var affectedStudentIds = session.Participants
+            .Select(participant => participant.StudentUserId)
+            .ToArray();
         _dbContext.MeetSessionParticipants.RemoveRange(session.Participants);
         _dbContext.MeetSessions.Remove(session);
         await _dbContext.SaveChangesAsync(cancellationToken);
+        await _meetRealtime.PublishDashboardRefreshAsync(affectedStudentIds, cancellationToken);
     }
 
     [HttpPost]
@@ -675,6 +680,7 @@ public sealed class MeetController : Controller
 
         _dbContext.MeetBatches.Add(batch);
         await _dbContext.SaveChangesAsync(cancellationToken);
+        await _meetRealtime.PublishDashboardRefreshAsync(validStudentIds, cancellationToken);
 
         return CreateResponse("Meet batch created successfully.", true);
     }
@@ -722,6 +728,10 @@ public sealed class MeetController : Controller
 
         if (batch is null)
             return NotFound();
+
+        var previousMemberIds = batch.Members
+            .Select(member => member.StudentUserId)
+            .ToHashSet(StringComparer.Ordinal);
 
         model.Name = model.Name?.Trim() ?? string.Empty;
         model.Description = string.IsNullOrWhiteSpace(model.Description)
@@ -771,6 +781,8 @@ public sealed class MeetController : Controller
             _dbContext.MeetBatchMembers.AddRange(newMembers);
 
         await _dbContext.SaveChangesAsync(cancellationToken);
+        await _meetRealtime.PublishDashboardRefreshAsync(
+            previousMemberIds.Concat(validStudentIds), cancellationToken);
         return UpdateResponse("Batch details and members updated successfully.", true, batch.Id);
     }
 
@@ -779,6 +791,7 @@ public sealed class MeetController : Controller
     public async Task<IActionResult> Archive(int id, CancellationToken cancellationToken)
     {
         var batch = await _dbContext.MeetBatches
+            .Include(x => x.Members)
             .SingleOrDefaultAsync(x => x.Id == id, cancellationToken);
 
         if (batch is null)
@@ -789,6 +802,8 @@ public sealed class MeetController : Controller
             batch.IsArchived = true;
             batch.UpdatedAtUtc = DateTime.UtcNow;
             await _dbContext.SaveChangesAsync(cancellationToken);
+            await _meetRealtime.PublishDashboardRefreshAsync(
+                batch.Members.Select(member => member.StudentUserId), cancellationToken);
         }
 
         return RedirectWithMessage("Batch moved to archive.", true);

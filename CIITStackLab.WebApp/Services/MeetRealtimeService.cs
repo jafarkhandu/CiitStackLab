@@ -176,4 +176,29 @@ public sealed class MeetRealtimeService
             _hub.Clients.Group(MeetHub.ChatGroup(sessionId))
                 .SendAsync("MeetChatEnabledState", new { sessionId, enabled }, cancellationToken));
     }
+
+    public Task PublishDashboardRefreshAsync(
+        IEnumerable<string> affectedStudentUserIds,
+        CancellationToken cancellationToken = default)
+    {
+        var refresh = new
+        {
+            createdAtUtc = DateTime.UtcNow,
+            reason = "Meet batch or session data changed"
+        };
+
+        var deliveries = new List<Task>
+        {
+            _hub.Clients.Group(MeetHub.AdminGroup)
+                .SendAsync("MeetDashboardRefresh", refresh, cancellationToken)
+        };
+
+        deliveries.AddRange(affectedStudentUserIds
+            .Where(userId => !string.IsNullOrWhiteSpace(userId))
+            .Distinct(StringComparer.Ordinal)
+            .Select(userId => _hub.Clients.User(userId)
+                .SendAsync("MeetDashboardRefresh", refresh, cancellationToken)));
+
+        return Task.WhenAll(deliveries);
+    }
 }
