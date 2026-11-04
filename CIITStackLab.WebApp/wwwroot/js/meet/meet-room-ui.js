@@ -74,6 +74,13 @@ document.addEventListener("DOMContentLoaded", () => {
                     // Do not report success until the server has read the committed
                     // value back from the database and returned it for this session.
                     window.ciitMeetSetChatEnabled?.(result.chatEnabled);
+                } else {
+                    // Other meeting forms may return JSON or HTML depending on their
+                    // existing controller action. Consume JSON only when supplied.
+                    const contentType = response.headers.get("content-type") || "";
+                    if (contentType.toLowerCase().includes("application/json")) {
+                        await response.json();
+                    }
                 }
 
                 const endingMeeting = submit?.hasAttribute("data-meet-end-button") === true;
