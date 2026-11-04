@@ -222,7 +222,7 @@ public sealed class AdminEmailCampaignService
 
         var userName = user.UserName?.Trim();
         return !string.IsNullOrWhiteSpace(userName)
-            && !userName.Contains('@', StringComparison.Ordinal)
+            && !userName.Contains('@')
                 ? userName
                 : "Student";
     }
