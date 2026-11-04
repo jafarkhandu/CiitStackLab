@@ -75,6 +75,7 @@ public static class DependencyInjection
         services.AddHostedService<TopicExamExpiryWorker>();
         services.AddScoped<CoursePurchaseService>();
         services.AddScoped<IEmailService, EmailService>();
+        services.AddScoped<AdminEmailCampaignService>();
         services.AddScoped<PaymentNotificationService>();
         services.AddScoped<IAdminStudentService, AdminStudentService>();
         services.AddScoped<IAdminSettingsService, AdminSettingsService>();
