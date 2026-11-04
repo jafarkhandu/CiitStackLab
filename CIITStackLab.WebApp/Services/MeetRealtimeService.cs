@@ -157,6 +157,8 @@ public sealed class MeetRealtimeService
             _hub.Clients.Group(MeetHub.SessionGroup(sessionId))
                 .SendAsync("MeetChatEnabledState", new { sessionId, enabled }, cancellationToken),
             _hub.Clients.Group(MeetHub.AdminSessionGroup(sessionId))
+                .SendAsync("MeetChatEnabledState", new { sessionId, enabled }, cancellationToken),
+            _hub.Clients.Group(MeetHub.ChatGroup(sessionId))
                 .SendAsync("MeetChatEnabledState", new { sessionId, enabled }, cancellationToken));
     }
 }
