@@ -127,6 +127,91 @@ public sealed class EmailService : IEmailService
             cancellationToken);
     }
 
+    public Task SendCampaignEmailAsync(
+        string toEmail,
+        string userName,
+        string subject,
+        string message,
+        CancellationToken cancellationToken = default)
+    {
+        var safeUserName = HtmlEncode(userName);
+        var safeMessage = HtmlEncode(message)
+            .Replace("\\r\\n", "\\n", StringComparison.Ordinal)
+            .Replace("\\n", "<br />", StringComparison.Ordinal);
+        var safeSubject = string.IsNullOrWhiteSpace(subject)
+            ? "An update from CIIT Stack Lab"
+            : subject.Trim();
+
+        var html = BuildCampaignEmailTemplate(
+            safeSubject,
+            "A message from your CIIT Stack Lab learning team",
+            $"""
+            <p style="margin:0 0 18px;">Hello <strong>{safeUserName}</strong>,</p>
+            <div style="padding:20px;border:1px solid #dbeafe;border-radius:18px;background-color:#f8fbff;background:rgba(255,255,255,.76);box-shadow:0 10px 28px rgba(23,105,255,.08);font-size:15px;line-height:1.8;color:{DarkText};">
+                {safeMessage}
+            </div>
+            <p style="margin:22px 0 0;color:{MutedText};font-size:14px;line-height:1.7;">Keep learning, keep building, and take your next step with CIIT Stack Lab.</p>
+            """);
+
+        return SendEmailAsync(
+            toEmail,
+            safeSubject,
+            message,
+            html,
+            cancellationToken);
+    }
+
+    private static string BuildCampaignEmailTemplate(
+        string title,
+        string subtitle,
+        string content)
+    {
+        return $"""
+        <!doctype html>
+        <html lang="en">
+        <head>
+            <meta charset="utf-8" />
+            <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+            <meta name="color-scheme" content="light" />
+            <title>{HtmlEncode(title)}</title>
+        </head>
+        <body style="margin:0;padding:0;background-color:#edf5ff;background-image:linear-gradient(135deg,#edf5ff 0%,#effcff 50%,#f4f7ff 100%);font-family:Arial,Helvetica,sans-serif;color:{DarkText};">
+            <div style="display:none;max-height:0;overflow:hidden;opacity:0;">{HtmlEncode(subtitle)}</div>
+            <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="padding:34px 12px;background-color:#edf5ff;background-image:linear-gradient(135deg,#edf5ff,#effcff);">
+                <tr>
+                    <td align="center">
+                        <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="max-width:640px;border:1px solid #dbeafe;border-radius:24px;overflow:hidden;background-color:#ffffff;background:rgba(255,255,255,.88);box-shadow:0 20px 55px rgba(23,105,255,.14);">
+                            <tr>
+                                <td style="padding:30px 32px;background-color:#1769ff;background-image:linear-gradient(125deg,#1769ff 0%,#2788ff 52%,#06b6d4 100%);color:#ffffff;">
+                                    <div style="display:inline-block;padding:8px 12px;border:1px solid rgba(255,255,255,.55);border-radius:12px;background-color:rgba(255,255,255,.18);font-size:23px;font-weight:800;letter-spacing:-1px;">CIIT</div>
+                                    <div style="margin-top:8px;font-size:11px;font-weight:700;letter-spacing:3px;color:#eaf6ff;">STACK LAB</div>
+                                    <div style="margin-top:26px;font-size:27px;font-weight:800;line-height:1.25;color:#ffffff;">{HtmlEncode(title)}</div>
+                                    <div style="margin-top:8px;font-size:14px;line-height:1.6;color:#effaff;">{HtmlEncode(subtitle)}</div>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td style="padding:30px 32px;background-color:#ffffff;background:rgba(255,255,255,.94);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);font-size:15px;line-height:1.7;color:{DarkText};">
+                                    {content}
+                                </td>
+                            </tr>
+                            <tr>
+                                <td style="padding:20px 32px;border-top:1px solid #e3edf9;background-color:#f7faff;background:rgba(239,246,255,.9);font-size:12px;line-height:1.7;color:{MutedText};">
+                                    <strong style="color:#1769ff;">CIIT Stack Lab</strong><br />
+                                    Learn. Build. Grow.<br />
+                                    You are receiving this message because you have a CIIT Stack Lab student account.<br />
+                                    &copy; {DateTime.UtcNow.Year} CIIT Stack Lab. All rights reserved.
+                                </td>
+                            </tr>
+                        </table>
+                        <div style="padding:16px 10px 0;font-size:11px;line-height:1.6;color:#8292a8;">An official communication from CIIT Stack Lab.</div>
+                    </td>
+                </tr>
+            </table>
+        </body>
+        </html>
+        """;
+    }
+
     private async Task SendEmailAsync(
         string toEmail,
         string subject,
