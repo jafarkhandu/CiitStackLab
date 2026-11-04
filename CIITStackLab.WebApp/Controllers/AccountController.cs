@@ -192,9 +192,30 @@ public class AccountController : Controller
 
         try
         {
+            var displayNameClaimResult = await _userManager.AddClaimAsync(
+                user,
+                new Claim("ciit:display_name", model.FullName.Trim()));
+
+            if (!displayNameClaimResult.Succeeded)
+            {
+                _logger.LogWarning(
+                    "Student display name could not be stored for user {UserId}.",
+                    user.Id);
+            }
+        }
+        catch (Exception ex)
+        {
+            _logger.LogWarning(
+                ex,
+                "Student display name could not be stored for user {UserId}.",
+                user.Id);
+        }
+
+        try
+        {
             await _emailService.SendRegistrationEmailAsync(
                 email,
-                userName,
+                model.FullName.Trim(),
                 HttpContext.RequestAborted);
         }
         catch (Exception ex)
