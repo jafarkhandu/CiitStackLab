@@ -22,6 +22,7 @@ public sealed class AdminEmailCampaignService
     private const string AllAudience = "all";
     private const string NoPurchaseAudience = "no-purchase";
     private const string OnePurchaseInactiveAudience = "one-purchase-inactive";
+    private const string DisplayNameClaimType = "ciit:display_name";
 
     private readonly ApplicationDbContext _dbContext;
     private readonly UserManager<ApplicationUser> _userManager;
@@ -98,7 +99,7 @@ public sealed class AdminEmailCampaignService
             {
                 await _emailService.SendCampaignEmailAsync(
                     recipient.Email!,
-                    recipient.UserName ?? recipient.Email!,
+                    GetRecipientDisplayName(recipient, snapshot.DisplayNames),
                     subject.Trim(),
                     message,
                     cancellationToken);
@@ -148,8 +149,25 @@ public sealed class AdminEmailCampaignService
                 new Dictionary<string, int>(),
                 new Dictionary<string, DateTime>(),
                 new Dictionary<string, DateTime>(),
+                new Dictionary<string, string>(),
                 DateTime.UtcNow.AddDays(-inactivityDays));
         }
+
+        var displayNames = await _dbContext.UserClaims
+            .AsNoTracking()
+            .Where(claim => studentIds.Contains(claim.UserId)
+                && claim.ClaimType == DisplayNameClaimType
+                && claim.ClaimValue != null)
+            .GroupBy(claim => claim.UserId)
+            .Select(group => new
+            {
+                UserId = group.Key,
+                DisplayName = group.Select(claim => claim.ClaimValue).FirstOrDefault()!
+            })
+            .ToDictionaryAsync(
+                item => item.UserId,
+                item => item.DisplayName,
+                cancellationToken);
 
         var purchaseRows = await _dbContext.StudentCoursePurchases
             .AsNoTracking()
@@ -188,7 +206,25 @@ public sealed class AdminEmailCampaignService
             purchaseCounts,
             lastAccessedAt,
             lastPurchasedAt,
+            displayNames,
             DateTime.UtcNow.AddDays(-inactivityDays));
+    }
+
+    private static string GetRecipientDisplayName(
+        ApplicationUser user,
+        IReadOnlyDictionary<string, string> displayNames)
+    {
+        if (displayNames.TryGetValue(user.Id, out var displayName)
+            && !string.IsNullOrWhiteSpace(displayName))
+        {
+            return displayName.Trim();
+        }
+
+        var userName = user.UserName?.Trim();
+        return !string.IsNullOrWhiteSpace(userName)
+            && !userName.Contains('@', StringComparison.Ordinal)
+                ? userName
+                : "Student";
     }
 
     private sealed record AudienceSnapshot(
@@ -196,5 +232,6 @@ public sealed class AdminEmailCampaignService
         Dictionary<string, int> PurchaseCounts,
         Dictionary<string, DateTime> LastAccessedAt,
         Dictionary<string, DateTime> LastPurchasedAt,
+        Dictionary<string, string> DisplayNames,
         DateTime InactivityCutoff);
 }
