@@ -139,14 +139,17 @@ public sealed partial class EmailService(IConfiguration configuration) : IEmailS
             <p style="margin:0 0 22px;font-size:18px;line-height:1.5;color:#ffffff;">Hello <strong>{safeUserName}</strong>,</p>
             {campaignContent}
             <p style="margin:26px 0 0;color:#cbd5e1;font-size:14px;line-height:1.7;">Keep learning, keep building, and take your next step with CIIT Stack Lab.</p>
-            <div style="margin:30px 0 8px;text-align:center;">
-                <a href="https://updated.ciitstacklab.com"
-                   target="_blank"
-                   rel="noopener noreferrer"
-                   style="display:inline-block;padding:15px 34px;background-color:#1769ff;color:#ffffff;text-decoration:none;font-size:16px;font-weight:800;border-radius:10px;">
-                    ENROLL NOW
-                </a>
-            </div>
+            <table role="presentation" cellpadding="0" cellspacing="0" border="0" align="center" style="margin:30px auto 8px;border-collapse:separate;">
+                <tr>
+                    <td align="center" bgcolor="#1769ff" style="background-color:#1769ff;border-radius:10px;mso-padding-alt:15px 34px;">
+                        <a href="https://updated.ciitstacklab.com"
+                           target="_blank"
+                           style="display:inline-block;padding:15px 34px;border:1px solid #1769ff;border-radius:10px;background-color:#1769ff;color:#ffffff;font-family:Arial,Helvetica,sans-serif;font-size:16px;font-weight:800;line-height:20px;text-align:center;text-decoration:none;">
+                            ENROLL NOW
+                        </a>
+                    </td>
+                </tr>
+            </table>
             """);
 
         var campaignTextWithEnrollmentLink =
