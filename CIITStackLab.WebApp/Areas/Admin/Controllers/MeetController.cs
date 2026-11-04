@@ -331,7 +331,7 @@ public sealed class MeetController : Controller
         await _meetRealtime.PublishChatEnabledAsync(id, enabled, cancellationToken);
 
         return Request.Headers.XRequestedWith == "XMLHttpRequest"
-            ? Json(new { success = true, chatEnabled = enabled })
+            ? Json(new { success = true, sessionId = id, chatEnabled = session.ChatEnabled })
             : RedirectToAction(nameof(Room), new { id });
     }
 
