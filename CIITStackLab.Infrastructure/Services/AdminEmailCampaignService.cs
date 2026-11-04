@@ -162,7 +162,10 @@ public sealed class AdminEmailCampaignService
 
         var lastAccessedAt = await _dbContext.StudentLessonProgress
             .AsNoTracking()
-            .Where(progress => studentIds.Contains(progress.UserId))
+            .Where(progress => studentIds.Contains(progress.UserId)
+                && _dbContext.StudentCoursePurchases.AsNoTracking().Any(purchase =>
+                    purchase.UserId == progress.UserId
+                    && purchase.CourseId == progress.CourseId))
             .GroupBy(progress => progress.UserId)
             .Select(group => new
             {
