@@ -36,7 +36,7 @@
     }
     @await RenderSectionAsync("Styles", required: false)
 </head>
-<body class="ciit-admin-body">
+<body class="ciit-admin-body" data-meet-notification-role="admin">
 @{ var currentAdminController = ViewContext.RouteData.Values["controller"]?.ToString(); }
     <div class="ciit-admin-shell" id="ciitAdminShell">
         <aside class="ciit-admin-sidebar" id="ciitAdminSidebar">
@@ -122,6 +122,10 @@
     <script src="~/js/admin/admin-students.js" asp-append-version="true"></script>
     <script src="~/js/admin/admin-settings.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/&#64;microsoft/signalr&#64;8.0.7/dist/browser/signalr.min.js"></script>
+    @if (!string.Equals(ViewContext.RouteData.Values["controller"]?.ToString(), "Meet", StringComparison.OrdinalIgnoreCase))
+    {
+        <script src="~/js/global/meet-notifications.js" asp-append-version="true"></script>
+    }
     <script src="~/js/admin/admin-exam-notifications.js" asp-append-version="true"></script>
     <script src="~/js/global/global-alerts.js" asp-append-version="true"></script>
     <form id="ciitExamNotificationAntiforgeryForm" method="post" hidden>
