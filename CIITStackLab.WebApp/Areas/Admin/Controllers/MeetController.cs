@@ -253,6 +253,7 @@ public sealed class MeetController : Controller
 
             await _dbContext.SaveChangesAsync(cancellationToken);
             await _meetRealtime.PublishSessionUpdateAsync(id, cancellationToken);
+            await DeleteCompletedSessionAsync(session, CancellationToken.None);
             await _notifications.NotifyBatchAsync(session.MeetBatchId, "Meeting ended", $"{session.Title} has ended.", "info", cancellationToken);
             await _notifications.NotifySessionAdminsAsync(id, "Meeting ended", $"{session.Title} has ended.", "info", cancellationToken);
         }
@@ -311,7 +312,7 @@ public sealed class MeetController : Controller
 
     [HttpPost]
     [ValidateAntiForgeryToken]
-    public async Task<IActionResult> SetChatEnabled(int id, bool enabled, CancellationToken cancellationToken)
+    public async Task<IActionResult> SetChatEnabled(int id, CancellationToken cancellationToken)
     {
         var session = await _dbContext.MeetSessions
             .SingleOrDefaultAsync(item => item.Id == id, cancellationToken);
@@ -326,10 +327,7 @@ public sealed class MeetController : Controller
             return BadRequest("Chat can only be changed during an active meeting.");
         }
 
-        // Persist first, then read the committed value back without tracking.
-        // Returning the stored value (rather than the posted parameter) makes the
-        // browser response an explicit confirmation of the database state.
-        session.ChatEnabled = enabled;
+        session.ChatEnabled = !session.ChatEnabled;
         await _dbContext.SaveChangesAsync(cancellationToken);
 
         var persistedChatEnabled = await _dbContext.MeetSessions
@@ -338,7 +336,7 @@ public sealed class MeetController : Controller
             .Select(item => item.ChatEnabled)
             .SingleAsync(cancellationToken);
 
-        await _meetRealtime.PublishChatEnabledAsync(id, persistedChatEnabled, cancellationToken);
+        await _meetRealtime.PublishChatEnabledAsync(id, cancellationToken);
 
         var isAjaxRequest = string.Equals(
             Request.Headers.XRequestedWith.ToString(),
@@ -516,8 +514,21 @@ public sealed class MeetController : Controller
         {
             await _dbContext.SaveChangesAsync(cancellationToken);
             foreach (var session in expired)
+            {
                 await _meetRealtime.PublishSessionUpdateAsync(session.Id, cancellationToken);
+                await DeleteCompletedSessionAsync(session, CancellationToken.None);
+            }
         }
+    }
+
+    private async Task DeleteCompletedSessionAsync(MeetSession session, CancellationToken cancellationToken)
+    {
+        if (session.Status != "Completed")
+            return;
+
+        _dbContext.MeetSessionParticipants.RemoveRange(session.Participants);
+        _dbContext.MeetSessions.Remove(session);
+        await _dbContext.SaveChangesAsync(cancellationToken);
     }
 
     [HttpPost]

@@ -38,6 +38,7 @@ public sealed class MeetRealtimeService
                 item.CancelledAtUtc,
                 item.DurationMinutes,
                 item.WaitingRoomEnabled,
+                item.ChatEnabled,
             })
             .SingleOrDefaultAsync(cancellationToken);
 
@@ -73,6 +74,7 @@ public sealed class MeetRealtimeService
             cancelledAtUtc = session.CancelledAtUtc,
             session.DurationMinutes,
             session.WaitingRoomEnabled,
+            session.ChatEnabled,
             pendingCount = participants.Count(item => item.Status == "Pending"),
             participantCount = participants.Count(item => item.Status == "Admitted"),
             participants = participants.Select(item => new
@@ -100,6 +102,7 @@ public sealed class MeetRealtimeService
             adminSnapshot.cancelledAtUtc,
             adminSnapshot.DurationMinutes,
             adminSnapshot.WaitingRoomEnabled,
+            adminSnapshot.ChatEnabled,
             adminSnapshot.pendingCount,
             adminSnapshot.participantCount,
             participants = Array.Empty<object>()
@@ -109,16 +112,23 @@ public sealed class MeetRealtimeService
         {
             foreach (var participant in participants)
             {
-                await _hub.Clients.User(participant.StudentUserId)
-                    .SendAsync("MeetMyParticipantStatus", new
-                    {
-                        sessionId = session.Id,
-                        status = participant.Status,
-                        sessionStatus = session.Status,
-                        canUseMicrophone = participant.CanUseMicrophone,
-                        canUseCamera = participant.CanUseCamera,
-                        canShareScreen = participant.CanShareScreen
-                    }, cancellationToken);
+                var status = new
+                {
+                    sessionId = session.Id,
+                    status = participant.Status,
+                    sessionStatus = session.Status,
+                    canUseMicrophone = participant.CanUseMicrophone,
+                    canUseCamera = participant.CanUseCamera,
+                    canShareScreen = participant.CanShareScreen
+                };
+
+                // The per-student room group also covers waiting-room tabs and
+                // avoids relying on a single UserIdentifier claim mapping.
+                await Task.WhenAll(
+                    _hub.Clients.User(participant.StudentUserId)
+                        .SendAsync("MeetMyParticipantStatus", status, cancellationToken),
+                    _hub.Clients.Group(MeetHub.StudentSessionGroup(session.Id, participant.StudentUserId))
+                        .SendAsync("MeetMyParticipantStatus", status, cancellationToken));
             }
 
             await _hub.Clients.Group(MeetHub.SessionGroup(session.Id))
@@ -146,14 +156,19 @@ public sealed class MeetRealtimeService
         }
     }
 
-    public Task PublishChatEnabledAsync(
+    public async Task PublishChatEnabledAsync(
         int sessionId,
-        bool enabled,
         CancellationToken cancellationToken = default)
     {
+        var enabled = await _dbContext.MeetSessions
+            .AsNoTracking()
+            .Where(item => item.Id == sessionId)
+            .Select(item => item.ChatEnabled)
+            .SingleAsync(cancellationToken);
+
         // Broadcast chat availability to every active meeting connection, including
         // students still in the waiting room who have not joined the chat group.
-        return Task.WhenAll(
+        await Task.WhenAll(
             _hub.Clients.Group(MeetHub.SessionGroup(sessionId))
                 .SendAsync("MeetChatEnabledState", new { sessionId, enabled }, cancellationToken),
             _hub.Clients.Group(MeetHub.AdminSessionGroup(sessionId))

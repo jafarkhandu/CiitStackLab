@@ -35,7 +35,7 @@ public sealed class DynamicCourseService : ICourseService
         var chapterCounts = await _dbContext.Lessons
             .AsNoTracking()
             .Where(note => note.TopicId.HasValue && detailTopicIds.Contains(note.TopicId.Value) && note.Flag == 0)
-            .GroupBy(note => note.TopicId)
+            .GroupBy(note => note.TopicId!.Value)
             .Select(group => new { TopicId = group.Key, Count = group.Count() })
             .ToDictionaryAsync(item => item.TopicId, item => item.Count, cancellationToken);
 

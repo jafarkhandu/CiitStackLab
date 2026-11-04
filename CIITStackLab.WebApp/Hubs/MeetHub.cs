@@ -25,6 +25,8 @@ public sealed class MeetHub : Hub
     public const string AdminGroup = "meet-admins";
     public static string PeerGroup(int sessionId) => $"meet-session-peers-{sessionId}";
     public static string ChatGroup(int sessionId) => $"meet-session-chat-{sessionId}";
+    public static string StudentSessionGroup(int sessionId, string studentId) =>
+        $"meet-session-student-{sessionId}-{studentId}";
 
     private static readonly ConcurrentDictionary<int, ConcurrentQueue<object>> ChatHistory = new();
     private static readonly ConcurrentDictionary<string, (int SessionId, string UserId, string DisplayName)> RaisedHands = new();
@@ -123,12 +125,25 @@ public sealed class MeetHub : Hub
                 item.MeetBatchId,
                 item.Status,
                 item.StartedAtUtc,
-                item.DurationMinutes
+                item.DurationMinutes,
+                item.ChatEnabled
             })
             .SingleOrDefaultAsync(Context.ConnectionAborted);
 
+            // Keep waiting-room connections subscribed so admission, removal,
+            // permissions, chat, and lifecycle changes arrive without a refresh.
         if (session is null)
-            throw new HubException("Meeting not found.");
+        {
+            // A stale room can remain open while the lifecycle worker or the
+            // host completes and removes the session. Treat that as a normal
+            // room shutdown instead of surfacing a SignalR invocation error.
+            await Clients.Caller.SendAsync("MeetRoomUnavailable", new
+            {
+                sessionId,
+                message = "This meeting is no longer available."
+            }, Context.ConnectionAborted);
+            return;
+        }
 
         var isAdmin = Context.User!.IsInRole("Admin") || Context.User.IsInRole("Super User");
         var studentId = Context.UserIdentifier
@@ -157,6 +172,15 @@ public sealed class MeetHub : Hub
                 .Select(participant => participant.Status)
                 .SingleOrDefaultAsync(Context.ConnectionAborted);
 
+            await Groups.AddToGroupAsync(
+                Context.ConnectionId,
+                StudentSessionGroup(sessionId, studentId),
+                Context.ConnectionAborted);
+            await Groups.AddToGroupAsync(
+                Context.ConnectionId,
+                SessionGroup(sessionId),
+                Context.ConnectionAborted);
+
             var now = DateTime.UtcNow;
             var sessionEndUtc = session.StartedAtUtc?.AddMinutes(session.DurationMinutes);
             var isSessionActive = session.Status == "Live"
@@ -184,7 +208,18 @@ public sealed class MeetHub : Hub
                 throw new HubException("Your join request was not found. Please use the Join button on the student meeting page.");
 
             if (participantStatus is not ("Pending" or "Admitted"))
-                throw new HubException($"Your meeting request is {participantStatus}. Please contact the host if you believe this is incorrect.");
+            {
+                await Clients.Caller.SendAsync("MeetMyParticipantStatus", new
+                {
+                    sessionId,
+                    status = participantStatus,
+                    sessionStatus = session.Status,
+                    canUseMicrophone = false,
+                    canUseCamera = false,
+                    canShareScreen = false
+                }, Context.ConnectionAborted);
+                return;
+            }
         }
 
         if (isAdmin)
@@ -206,6 +241,7 @@ public sealed class MeetHub : Hub
                     item.CancelledAtUtc,
                     item.DurationMinutes,
                     item.WaitingRoomEnabled,
+                    item.ChatEnabled,
                 })
                 .SingleAsync(Context.ConnectionAborted);
 
@@ -236,6 +272,7 @@ public sealed class MeetHub : Hub
                 cancelledAtUtc = adminSession.CancelledAtUtc,
                 adminSession.DurationMinutes,
                 adminSession.WaitingRoomEnabled,
+                adminSession.ChatEnabled,
                 pendingCount = adminParticipants.Count(item => item.Status == "Pending"),
                 participantCount = adminParticipants.Count(item => item.Status == "Admitted"),
                 participants = adminParticipants
@@ -376,8 +413,8 @@ public sealed class MeetHub : Hub
             throw new HubException("You are not admitted to this meeting.");
 
         var userId = Context.UserIdentifier
-            ?? Context.User!.FindFirstValue(ClaimTypes.NameIdentifier)
-            ?? Context.User.FindFirstValue("sub");
+            ?? Context.User?.FindFirstValue(ClaimTypes.NameIdentifier)
+            ?? Context.User?.FindFirstValue("sub");
         if (string.IsNullOrWhiteSpace(userId))
             throw new HubException("Your account identity could not be verified.");
 

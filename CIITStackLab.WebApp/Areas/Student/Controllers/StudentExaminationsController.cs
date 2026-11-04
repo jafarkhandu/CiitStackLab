@@ -169,7 +169,8 @@ public sealed class StudentExaminationsController : Controller
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> PayForReExam(int courseId, int topicId, CancellationToken cancellationToken)
     {
-        var wantsJsonResponse = Request.Headers.Accept.Any(value => value.Contains("application/json", StringComparison.OrdinalIgnoreCase));
+        var wantsJsonResponse = Request.Headers.Accept.Any(value =>
+            value?.Contains("application/json", StringComparison.OrdinalIgnoreCase) == true);
         var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
         if (string.IsNullOrWhiteSpace(userId)) return Unauthorized();
         if (courseId <= 0 || topicId <= 0)

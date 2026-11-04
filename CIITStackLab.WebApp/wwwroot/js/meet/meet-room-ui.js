@@ -86,7 +86,8 @@ document.addEventListener("DOMContentLoaded", () => {
                 const endingMeeting = submit?.hasAttribute("data-meet-end-button") === true;
                 // Chat state changes do not require rejoining either hub room:
                 // doing so can reannounce peers and create duplicate signaling.
-                if (!isChatToggle
+                if (!endingMeeting
+                    && !isChatToggle
                     && room.dataset.isHost === "true"
                     && window.ciitMeetSignalRConnection?.state === "Connected") {
                     await window.ciitMeetSignalRConnection.invoke("JoinMeetingRoom", Number(room.dataset.sessionId));
@@ -462,6 +463,9 @@ document.addEventListener("DOMContentLoaded", () => {
         }
 
         setText("[data-meet-status-text]", state.status);
+        if (typeof state.chatEnabled === "boolean") {
+            window.ciitMeetSetChatEnabled?.(state.chatEnabled);
+        }
         setText("[data-meet-waiting-room-state]", state.waitingRoomEnabled ? "On" : "Off");
 
         const waitingRoomForm = document.querySelector("[data-meet-waiting-room-form]");
@@ -916,6 +920,21 @@ document.addEventListener("DOMContentLoaded", () => {
                 if (badge) badge.hidden = false;
             });
         });
+    });
+
+    connection.on("MeetRoomUnavailable", state => {
+        if (Number(state?.sessionId) !== sessionId) return;
+
+        window.ciitMeetWebRtcCleanup?.();
+        window.showMeetToast?.({
+            title: "Meeting unavailable",
+            message: state.message || "This meeting is no longer available.",
+            type: "warning"
+        });
+
+        window.setTimeout(() => {
+            window.location.href = isHost ? "/Admin/Meet" : "/Student/Meet";
+        }, 1200);
     });
 
     connection.on("MeetMyParticipantStatus", state => {

@@ -323,9 +323,9 @@ else if (currentContent is null && currentTopic is not null)
                     <div class="ciit-learning-lesson-header">
                         <div class="ciit-learning-lesson-heading">
                             <span class="ciit-learning-eyebrow">
-                                TOPIC @(Math.Max(0, Model.Topics.ToList().FindIndex(topic => topic.Id == currentTopic.Id)) + 1) OF @Math.Max(Model.Topics.Count, 1)
+                                TOPIC @(Math.Max(0, Model.Topics.ToList().FindIndex(topic => topic.Id == currentTopic?.Id)) + 1) OF @Math.Max(Model.Topics.Count, 1)
                             </span>
-                            <h2 class="ciit-learning-chapter-title">@CIITStackLab.WebApp.Helpers.LearningPagePresentation.FormatLearningTitle(currentChapter?.Title ?? currentTopic.Title)</h2>
+                            <h2 class="ciit-learning-chapter-title">@CIITStackLab.WebApp.Helpers.LearningPagePresentation.FormatLearningTitle(currentChapter?.Title ?? currentTopic?.Title)</h2>
                         </div>
                     </div>
 
@@ -371,9 +371,9 @@ else if (currentContent is null && currentTopic is not null)
                         @{
                             var displayedContent = Model.CurrentChapterId.HasValue && currentChapter is not null
                                 ? currentChapter.Contents
-                                : currentTopic.Contents;
+                                : currentTopic?.Contents;
                         }
-                        @if (displayedContent.Count > 0)
+                        @if (displayedContent is { Count: > 0 })
                         {
                             @foreach (var content in displayedContent)
                             {
@@ -648,7 +648,7 @@ else
                 <div class="modal-header">
                     <div>
                         <span class="text-uppercase text-primary small fw-bold">Exam application</span>
-                        <h2 class="modal-title fs-5 mt-1" id="topicExamApplicationTitle">Apply for @(currentTopic.Title) examination</h2>
+                            <h2 class="modal-title fs-5 mt-1" id="topicExamApplicationTitle">Apply for @(currentTopic?.Title) examination</h2>
                     </div>
                 </div>
                 <div class="modal-body">
@@ -713,7 +713,7 @@ else
                         <form asp-controller="StudentExaminations" asp-action="Schedule" method="post">
                             @Html.AntiForgeryToken()
                             <input type="hidden" name="CourseId" value="@Model.Id" />
-                            <input type="hidden" name="TopicId" value="@currentTopic.Id" />
+                            <input type="hidden" name="TopicId" value="@currentTopic?.Id" />
                             <input type="hidden" name="TimezoneOffsetMinutes" class="exam-timezone-offset" />
                             <label class="form-label" for="topicExamScheduledAt">Exam date and time</label>
                             <input class="form-control" type="datetime-local" id="topicExamScheduledAt" name="ScheduledAtLocal" required />
@@ -730,7 +730,7 @@ else
                         <form asp-controller="StudentExaminations" asp-action="PayForReExam" method="post" class="ciit-exam-retake-payment-form">
                             @Html.AntiForgeryToken()
                             <input type="hidden" name="courseId" value="@Model.Id" />
-                            <input type="hidden" name="topicId" value="@currentTopic.Id" />
+                            <input type="hidden" name="topicId" value="@currentTopic?.Id" />
                             <button type="submit" class="btn btn-danger w-100">Pay ₹@modalFee.ToString("0.00") and continue with Razorpay</button>
                         </form>
                     }

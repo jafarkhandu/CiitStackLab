@@ -117,7 +117,12 @@ public sealed class NotesController : Controller
         }
 
         var notes = await _notesService.GetReaderAsync(topicId, chapterId, ct);
-        var media = notes?.CurrentChapter?.Media.FirstOrDefault(x => x.ContentId == contentId);
+        if (notes is null)
+        {
+            return NotFound();
+        }
+
+        var media = notes.CurrentChapter?.Media.FirstOrDefault(x => x.ContentId == contentId);
 
         if (media is null || string.IsNullOrWhiteSpace(media.Slides))
         {

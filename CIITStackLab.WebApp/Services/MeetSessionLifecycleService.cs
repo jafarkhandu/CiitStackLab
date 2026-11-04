@@ -97,7 +97,13 @@ public sealed class MeetSessionLifecycleService : BackgroundService
             await dbContext.SaveChangesAsync(cancellationToken);
             var realtime = scope.ServiceProvider.GetRequiredService<MeetRealtimeService>();
             foreach (var session in expiredSessions)
+            {
                 await realtime.PublishSessionUpdateAsync(session.Id, cancellationToken);
+                dbContext.MeetSessionParticipants.RemoveRange(session.Participants);
+                dbContext.MeetSessions.Remove(session);
+            }
+
+            await dbContext.SaveChangesAsync(cancellationToken);
         }
     }
 }

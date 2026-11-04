@@ -82,7 +82,8 @@ public class CoursesController : Controller
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> DemoPayment(int id, CancellationToken cancellationToken)
     {
-        var wantsJsonResponse = Request.Headers.Accept.Any(value => value.Contains("application/json", StringComparison.OrdinalIgnoreCase));
+        var wantsJsonResponse = Request.Headers.Accept.Any(value =>
+            value?.Contains("application/json", StringComparison.OrdinalIgnoreCase) == true);
         if (id <= 0) return NotFound();
         var course = await _courseService.GetByIdAsync(id, cancellationToken);
         if (course is null) return NotFound();
@@ -188,7 +189,8 @@ public class CoursesController : Controller
         CancellationToken cancellationToken,
         string? returnUrl = null)
     {
-        var wantsJsonResponse = Request.Headers.Accept.Any(value => value.Contains("application/json", StringComparison.OrdinalIgnoreCase));
+        var wantsJsonResponse = Request.Headers.Accept.Any(value =>
+            value?.Contains("application/json", StringComparison.OrdinalIgnoreCase) == true);
         if (string.IsNullOrWhiteSpace(merchantOrderId))
         {
             if (wantsJsonResponse) return BadRequest(new { message = "Payment order ID is required." });
