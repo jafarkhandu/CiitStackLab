@@ -71,9 +71,28 @@ document.addEventListener("DOMContentLoaded", () => {
                         throw new Error("The database did not confirm the requested chat state.");
                     }
 
-                    // Do not report success until the server has read the committed
-                    // value back from the database and returned it for this session.
-                    window.ciitMeetSetChatEnabled?.(result.chatEnabled);
+                    // Update the host's status and toggle immediately from the
+                    // persisted response. The chat-panel initializer may not have
+                    // registered its optional global setter in every host-room state.
+                    const chatEnabled = result.chatEnabled;
+                    room.dataset.chatEnabled = String(chatEnabled);
+
+                    const chatStateLabel = form.querySelector("[data-meet-chat-state]");
+                    const chatToggleButton = form.querySelector("[data-meet-chat-toggle-submit]");
+                    const chatEnabledInput = form.querySelector('input[name="enabled"]');
+
+                    if (chatStateLabel) {
+                        chatStateLabel.textContent = chatEnabled ? "On" : "Off";
+                    }
+                    if (chatToggleButton) {
+                        chatToggleButton.textContent = chatEnabled ? "Disable chat" : "Enable chat";
+                    }
+                    if (chatEnabledInput) {
+                        chatEnabledInput.value = String(!chatEnabled);
+                    }
+
+                    // Keep the full chat panel synchronized when its setter exists.
+                    window.ciitMeetSetChatEnabled?.(chatEnabled);
                 } else {
                     // Other meeting forms may return JSON or HTML depending on their
                     // existing controller action. Consume JSON only when supplied.
