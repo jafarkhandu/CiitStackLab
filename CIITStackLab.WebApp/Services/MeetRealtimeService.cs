@@ -151,7 +151,12 @@ public sealed class MeetRealtimeService
         bool enabled,
         CancellationToken cancellationToken = default)
     {
-        return _hub.Clients.Group(MeetHub.ChatGroup(sessionId))
-            .SendAsync("MeetChatEnabledState", new { sessionId, enabled }, cancellationToken);
+        // Broadcast chat availability to every active meeting connection, including
+        // students still in the waiting room who have not joined the chat group.
+        return Task.WhenAll(
+            _hub.Clients.Group(MeetHub.SessionGroup(sessionId))
+                .SendAsync("MeetChatEnabledState", new { sessionId, enabled }, cancellationToken),
+            _hub.Clients.Group(MeetHub.AdminSessionGroup(sessionId))
+                .SendAsync("MeetChatEnabledState", new { sessionId, enabled }, cancellationToken));
     }
 }

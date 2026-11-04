@@ -62,7 +62,7 @@
     </style>
     @await RenderSectionAsync("Styles", required: false)
 </head>
-<body>
+<body data-meet-notification-role="@(User.IsInRole("Student") ? "student" : (User.IsInRole("Admin") || User.IsInRole("Super User")) ? "admin" : "none")">
     @{
         var hasLearningHubPurchase = false;
         if (User.IsInRole("Student"))
@@ -245,6 +245,11 @@
     <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
     <script src="~/js/global/site.js" asp-append-version="true"></script>
     <script src="~/js/global/global-alerts.js" asp-append-version="true"></script>
+    @if (User.Identity?.IsAuthenticated == true && (User.IsInRole("Student") || User.IsInRole("Admin") || User.IsInRole("Super User")))
+    {
+        <script src="https://cdn.jsdelivr.net/npm/@@microsoft/signalr@10.0.0/dist/browser/signalr.min.js"></script>
+        <script src="~/js/global/meet-notifications.js" asp-append-version="true"></script>
+    }
     @await RenderSectionAsync("Scripts", required: false)
 </body>
 </html>

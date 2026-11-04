@@ -13,7 +13,7 @@
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
     <link rel="stylesheet" href="~/css/meet/meet-room.css" asp-append-version="true" />
 </head>
-<body class="ciit-meet-body">
+<body class="ciit-meet-body" data-meet-notification-role="@(User.IsInRole("Student") ? "student" : (User.IsInRole("Admin") || User.IsInRole("Super User")) ? "admin" : "none")">
     <div class="ciit-meet-room-page" data-meet-room data-session-id="@Model.Id" data-is-host="@Model.IsHost.ToString().ToLowerInvariant()" data-participant-status="@Model.ParticipantStatus" data-chat-enabled="@Model.ChatEnabled.ToString().ToLowerInvariant()" data-user-id="@User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value" data-hub-url="/hubs/meet" data-room-url="@Url.Action("Room", "Meet", new { area = Model.IsHost ? "Admin" : "Student", id = Model.Id })">
         <header class="ciit-meet-room-header">
             <div class="ciit-meet-room-heading">
@@ -247,6 +247,7 @@
         </main>
     </div>
     <script src="https://cdn.jsdelivr.net/npm/@@microsoft/signalr@10.0.0/dist/browser/signalr.min.js"></script>
+    <script src="~/js/global/meet-notifications.js" asp-append-version="true"></script>
     <script src="~/js/meet/meet-room-ui.js" asp-append-version="true"></script>
     <script src="~/js/meet/meet-webrtc.js" asp-append-version="true"></script>
 </body>

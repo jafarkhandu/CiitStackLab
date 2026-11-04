@@ -122,7 +122,6 @@ public sealed class MeetController : Controller
 
         await _dbContext.SaveChangesAsync(cancellationToken);
         await _meetRealtime.PublishSessionUpdateAsync(id, cancellationToken);
-        await _notifications.NotifySessionAdminsAsync(id, "Join request received", "A student has requested to join the meeting.", "info", cancellationToken);
         return RedirectToAction(nameof(Room), new { id });
     }
 
