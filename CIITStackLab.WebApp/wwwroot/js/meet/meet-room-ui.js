@@ -648,7 +648,15 @@ document.addEventListener("DOMContentLoaded", () => {
     };
 
     connection.onreconnected(async () => {
-        await connection.invoke("JoinMeetingRoom", sessionId);
+        try {
+            window.ciitMeetIceServers = await connection.invoke("GetIceServers", sessionId);
+        } catch (error) {
+            console.warn("Meet ICE configuration refresh failed:", error);
+        }
+        if (window.ciitMeetReconcilePeers)
+            await window.ciitMeetReconcilePeers();
+        else
+            await connection.invoke("JoinMeetingRoom", sessionId);
         lastRoomJoinAt = Date.now();
         if (isHost) {
             const pendingCount = Number(room.querySelector("[data-meet-pending-count]")?.textContent || 0);
@@ -671,6 +679,11 @@ document.addEventListener("DOMContentLoaded", () => {
     window.ciitMeetSignalRConnection = connection;
     window.ciitMeetSignalRReady = connection.start()
         .then(async () => {
+            try {
+                window.ciitMeetIceServers = await connection.invoke("GetIceServers", sessionId);
+            } catch (error) {
+                console.warn("Meet ICE configuration unavailable; direct ICE only:", error);
+            }
             await connection.invoke("JoinMeetingRoom", sessionId);
             lastRoomJoinAt = Date.now();
         })

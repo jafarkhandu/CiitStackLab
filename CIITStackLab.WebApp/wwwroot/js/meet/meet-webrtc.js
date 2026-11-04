@@ -13,6 +13,7 @@ document.addEventListener("DOMContentLoaded", () => {
     }
 
     const peers = new Map();
+    let iceServers = [{ urls: "stun:stun.l.google.com:19302" }];
     const audioMeters = new Map();
     let audioContext = null;
     let localAudioMeter = null;
@@ -33,6 +34,18 @@ document.addEventListener("DOMContentLoaded", () => {
         share: true
     };
     let requestMedia;
+
+    const playRemoteMedia = video => {
+        const playPromise = video.play();
+        if (!playPromise || typeof playPromise.catch !== "function") return;
+        playPromise.catch(error => {
+            if (error?.name !== "NotAllowedError")
+                console.warn("Remote media playback failed:", error);
+            video.controls = true;
+            video.title = "Click to play meeting audio/video";
+            video.addEventListener("click", () => playRemoteMedia(video), { once: true });
+        });
+    };
 
     const applyMediaPermissions = update => {
         if (!update || Number(update.sessionId) !== sessionId) return;
@@ -68,7 +81,16 @@ document.addEventListener("DOMContentLoaded", () => {
     };
     window.ciitMeetApplyMediaPermissions = applyMediaPermissions;
 
-    connection.on("MeetMyParticipantStatus", applyMediaPermissions);
+    connection.on("MeetMyParticipantStatus", state => {
+        applyMediaPermissions(state);
+        if (state?.status === "Admitted" && connection.state === "Connected") {
+            connection.invoke("GetIceServers", sessionId)
+                .then(servers => {
+                    if (Array.isArray(servers) && servers.length) iceServers = servers;
+                })
+                .catch(error => console.warn("Meet ICE configuration refresh failed:", error));
+        }
+    });
     const preferenceKey = "ciit-meet-media-" + sessionId;
 
     const setToggleVisual = (button, type, active) => {
@@ -221,6 +243,8 @@ document.addEventListener("DOMContentLoaded", () => {
                 peer.senders[kind] = peer.connection.addTrack(track, localStream);
             }
         });
+        if (screenStream?.getVideoTracks()[0] && !peer.screenSender)
+            peer.screenSender = peer.connection.addTrack(screenStream.getVideoTracks()[0], screenStream);
     };
 
     const createRemoteTile = (peerId, displayName = "Participant") => {
@@ -234,7 +258,7 @@ document.addEventListener("DOMContentLoaded", () => {
         video.playsInline = true;
         video.muted = false;
         video.setAttribute("aria-label", "Meeting participant video");
-        video.addEventListener("loadedmetadata", () => video.play().catch(() => {}));
+        video.addEventListener("loadedmetadata", () => playRemoteMedia(video));
 
         const placeholder = document.createElement("div");
         placeholder.className = "ciit-meet-video-placeholder";
@@ -278,6 +302,24 @@ document.addEventListener("DOMContentLoaded", () => {
         grid.append(tile);
         if (waitingTile) waitingTile.hidden = true;
         return { tile, video, placeholder, pin };
+    };
+
+    const createRemoteScreenTile = (peerId, displayName) => {
+        const tile = document.createElement("article");
+        tile.className = "ciit-meet-video-tile ciit-meet-video-remote ciit-meet-screen-sharing";
+        tile.dataset.peerConnectionId = peerId + "-screen";
+        tile.dataset.peerDisplayName = displayName;
+        const video = document.createElement("video");
+        video.autoplay = true;
+        video.playsInline = true;
+        video.setAttribute("aria-label", displayName + " screen share");
+        const label = document.createElement("span");
+        label.className = "ciit-meet-video-name";
+        label.textContent = displayName + " screen";
+        tile.append(video, label);
+        grid.append(tile);
+        if (waitingTile) waitingTile.hidden = true;
+        return { tile, video };
     };
 
     let pinnedTile = null;
@@ -337,9 +379,7 @@ document.addEventListener("DOMContentLoaded", () => {
             return existing;
         }
 
-        const pc = new RTCPeerConnection({
-            iceServers: []
-        });
+        const pc = new RTCPeerConnection({ iceServers });
         const peer = {
             connection: pc,
             tile: createRemoteTile(peerId, displayName),
@@ -351,7 +391,11 @@ document.addEventListener("DOMContentLoaded", () => {
             polite: String(connection.connectionId) > String(peerId),
             makingOffer: false,
             ignoreOffer: false,
-            isSettingRemoteAnswerPending: false
+            isSettingRemoteAnswerPending: false,
+            pendingCandidates: [],
+            remoteVideoTrackIds: [],
+            screenSender: null,
+            screenTile: null
         };
         peers.set(peerId, peer);
 
@@ -364,16 +408,29 @@ document.addEventListener("DOMContentLoaded", () => {
 
         pc.ontrack = event => {
             const stream = event.streams[0] || new MediaStream([event.track]);
-            if (!peer.remoteStream) peer.remoteStream = new MediaStream();
-            if (!peer.remoteStream.getTracks().some(track => track.id === event.track.id)) {
+            if (event.track.kind === "audio") {
+                if (!peer.remoteStream) peer.remoteStream = new MediaStream();
                 peer.remoteStream.addTrack(event.track);
-            }
-            peer.tile.video.srcObject = peer.remoteStream;
-                peer.tile.video.play().catch(() => {});
-            if (event.track.kind === "audio" && !audioMeters.has(peerId)) {
-                audioMeters.set(peerId, createAudioMeter(stream));
+                peer.tile.video.srcObject = peer.remoteStream;
+                playRemoteMedia(peer.tile.video);
+                if (!audioMeters.has(peerId)) audioMeters.set(peerId, createAudioMeter(peer.remoteStream));
             }
             if (event.track.kind === "video") {
+                peer.remoteVideoTrackIds.push(event.track.id);
+                if (peer.remoteVideoTrackIds.length > 1) {
+                    peer.screenTile ??= createRemoteScreenTile(peerId, peer.tile.tile.dataset.peerDisplayName);
+                    peer.screenTile.video.srcObject = new MediaStream([event.track]);
+                    playRemoteMedia(peer.screenTile.video);
+                    event.track.onended = () => {
+                        peer.screenTile?.tile.remove();
+                        peer.screenTile = null;
+                    };
+                    return;
+                }
+                if (!peer.remoteStream) peer.remoteStream = new MediaStream();
+                peer.remoteStream.addTrack(event.track);
+                peer.tile.video.srcObject = peer.remoteStream;
+                playRemoteMedia(peer.tile.video);
                 const refreshRemoteVideoState = () => applyParticipantStreamState(peer);
                 event.track.onmute = refreshRemoteVideoState;
                 event.track.onunmute = refreshRemoteVideoState;
@@ -394,8 +451,17 @@ document.addEventListener("DOMContentLoaded", () => {
             }
         };
 
-        pc.onconnectionstatechange = () => {
-            if (pc.connectionState === "failed" || pc.connectionState === "closed") {
+        pc.onconnectionstatechange = async () => {
+            if (pc.connectionState === "failed") {
+                try {
+                    await pc.restartIce();
+                    await pc.setLocalDescription();
+                    await sendSignal(peerId, "Offer", pc.localDescription);
+                } catch (error) {
+                    console.warn("ICE recovery failed:", error);
+                    removePeer(peerId);
+                }
+            } else if (pc.connectionState === "closed") {
                 removePeer(peerId);
             }
         };
@@ -413,7 +479,11 @@ document.addEventListener("DOMContentLoaded", () => {
         try {
             if (message.signalType === "IceCandidate") {
                 if (message.signalData && !peer.ignoreOffer) {
-                    await pc.addIceCandidate(message.signalData);
+                    if (pc.remoteDescription) {
+                        await pc.addIceCandidate(message.signalData);
+                    } else {
+                        peer.pendingCandidates.push(message.signalData);
+                    }
                 }
                 return;
             }
@@ -432,6 +502,9 @@ document.addEventListener("DOMContentLoaded", () => {
             peer.isSettingRemoteAnswerPending = description.type === "answer";
             await pc.setRemoteDescription(description);
             peer.isSettingRemoteAnswerPending = false;
+
+            for (const candidate of peer.pendingCandidates.splice(0))
+                await pc.addIceCandidate(candidate);
 
             if (description.type === "offer") {
                 await pc.setLocalDescription();
@@ -563,10 +636,9 @@ document.addEventListener("DOMContentLoaded", () => {
             screenStream?.getTracks().forEach(track => track.stop());
             screenStream = null;
             publishPeerMediaState("share", false);
-            const cameraTrack = localStream.getVideoTracks().find(track => track.readyState === "live");
             peers.forEach(peer => {
-                const sender = peer.senders.video;
-                if (sender) sender.replaceTrack(cameraTrack || null).catch(error => console.error(error));
+                peer.screenSender?.replaceTrack(null).catch(error => console.error(error));
+                peer.screenSender = null;
             });
             setToggleVisual(shareButton, "share", false);
             updateLocalPreview();
@@ -591,9 +663,7 @@ document.addEventListener("DOMContentLoaded", () => {
             const screenTrack = screenStream.getVideoTracks()[0];
             publishPeerMediaState("share", true);
             peers.forEach(peer => {
-                const sender = peer.senders.video;
-                if (sender) sender.replaceTrack(screenTrack).catch(error => console.error(error));
-                else peer.senders.video = peer.connection.addTrack(screenTrack, screenStream);
+                peer.screenSender = peer.connection.addTrack(screenTrack, screenStream);
             });
             if (localVideo) {
                 localVideo.srcObject = screenStream;
@@ -613,10 +683,9 @@ document.addEventListener("DOMContentLoaded", () => {
                 if (shareIcon) shareIcon.className = "bi bi-display";
                 screenStream = null;
                 publishPeerMediaState("share", false);
-                const cameraTrack = localStream.getVideoTracks().find(track => track.readyState === "live");
                 peers.forEach(peer => {
-                    const sender = peer.senders.video;
-                    if (sender) sender.replaceTrack(cameraTrack || null).catch(error => console.error(error));
+                    peer.screenSender?.replaceTrack(null).catch(error => console.error(error));
+                    peer.screenSender = null;
                 });
                 updateLocalPreview();
             };
@@ -654,10 +723,9 @@ document.addEventListener("DOMContentLoaded", () => {
                 screenStream.getTracks().forEach(track => track.stop());
                 screenStream = null;
                 setToggleVisual(shareButton, "share", false);
-                const cameraTrack = localStream.getVideoTracks().find(track => track.readyState === "live");
                 peers.forEach(peer => {
-                    const sender = peer.senders.video;
-                    if (sender) sender.replaceTrack(cameraTrack || null).catch(error => console.error(error));
+                    peer.screenSender?.replaceTrack(null).catch(error => console.error(error));
+                    peer.screenSender = null;
                 });
                 updateLocalPreview();
             }
@@ -703,7 +771,7 @@ document.addEventListener("DOMContentLoaded", () => {
                 peer.tile.video.srcObject = peer.remoteStream || null;
                 applyParticipantStreamState(peer);
                 if (peer.tile.video.srcObject) {
-                    peer.tile.video.play().catch(() => {});
+                    playRemoteMedia(peer.tile.video);
                 }
             }
         } else if (state.mediaKind === "mic") {
@@ -722,9 +790,14 @@ document.addEventListener("DOMContentLoaded", () => {
     });
     connection.on("MeetWebRtcSignal", handleSignal);
 
-    connection.onreconnected(() => {
-        peers.forEach((peer, peerId) => removePeer(peerId));
-    });
+    window.ciitMeetReconcilePeers = async () => {
+        [...peers.keys()].forEach(removePeer);
+        if (connection.state === "Connected")
+            await connection.invoke("JoinMeetingRoom", sessionId);
+        publishPeerMediaState("mic", localStream.getAudioTracks().some(track => track.enabled));
+        publishPeerMediaState("camera", localStream.getVideoTracks().some(track => track.enabled));
+        publishPeerMediaState("share", Boolean(screenStream));
+    };
 
 
     let mediaCleanupCompleted = false;
@@ -775,6 +848,8 @@ document.addEventListener("DOMContentLoaded", () => {
     window.addEventListener("pagehide", window.ciitMeetWebRtcCleanup);
 
     window.ciitMeetSignalRReady?.then(async () => {
+        if (Array.isArray(window.ciitMeetIceServers) && window.ciitMeetIceServers.length)
+            iceServers = window.ciitMeetIceServers;
         if (stage.hidden) return;
         if (isHost || room.dataset.participantStatus === "Admitted") {
             // Peer membership is authenticated server-side by JoinMeetingRoom.

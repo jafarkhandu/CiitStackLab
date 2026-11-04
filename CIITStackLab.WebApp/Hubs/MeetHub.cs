@@ -11,12 +11,14 @@ namespace CIITStackLab.WebApp.Hubs;
 public sealed class MeetHub : Hub
 {
     private readonly ApplicationDbContext _dbContext;
+    private readonly IConfiguration _configuration;
     private static readonly ConcurrentDictionary<string, int> PeerSessions = new();
     private static readonly ConcurrentDictionary<string, string> PeerDisplayNames = new();
 
-    public MeetHub(ApplicationDbContext dbContext)
+    public MeetHub(ApplicationDbContext dbContext, IConfiguration configuration)
     {
         _dbContext = dbContext;
+        _configuration = configuration;
     }
 
     public static string SessionGroup(int sessionId) => $"meet-session-{sessionId}";
@@ -346,7 +348,38 @@ public sealed class MeetHub : Hub
                     displayName
                 }, Context.ConnectionAborted);
         }
-    } 
+    }
+
+    public async Task<IReadOnlyList<object>> GetIceServers(int sessionId)
+    {
+        if (!await EnsurePeerAccessAsync(sessionId))
+            throw new HubException("You are not admitted to this meeting.");
+
+        var configuredServers = _configuration.GetSection("WebRtc:IceServers")
+            .GetChildren()
+            .Select(server => new
+            {
+                urls = server["Urls"]?.Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
+                    ?? Array.Empty<string>(),
+                username = server["Username"],
+                credential = server["Credential"]
+            })
+            .Where(server => server.urls.Length > 0)
+            .Cast<object>()
+            .ToList();
+
+        if (configuredServers.Count == 0)
+        {
+            configuredServers.Add(new
+            {
+                urls = new[] { "stun:stun.l.google.com:19302" },
+                username = (string?)null,
+                credential = (string?)null
+            });
+        }
+
+        return configuredServers;
+    }
 
     public async Task JoinChatRoom(int sessionId)
     {
