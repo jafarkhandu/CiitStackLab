@@ -26,16 +26,13 @@ public sealed class EmailService : IEmailService
         CancellationToken cancellationToken = default)
     {
         var safeUserName = HtmlEncode(userName);
-        var html = BuildEmailTemplate(
+        var html = BuildCampaignEmailTemplate(
             "Welcome to CIIT Stack Lab",
             "Your learning journey starts here.",
             $"""
-            <p style="margin:0 0 18px;">Hello <strong>{safeUserName}</strong>,</p>
-            <p style="margin:0 0 18px;">Your CIIT Stack Lab account has been created successfully.</p>
-            <div style="margin:24px 0;padding:18px 20px;border:1px solid #dbeafe;border-radius:16px;background:#f8fbff;">
-                <div style="font-size:13px;font-weight:700;color:{PrimaryBlue};text-transform:uppercase;letter-spacing:.08em;">You are all set</div>
-                <div style="margin-top:7px;color:{DarkText};font-size:15px;line-height:1.6;">Sign in to explore courses, learning resources, and your student dashboard.</div>
-            </div>
+            <p style="margin:0 0 18px;color:#ffffff;">Hello <strong>{safeUserName}</strong>,</p>
+            <p style="margin:0 0 18px;color:#f8fafc;">Your CIIT Stack Lab account has been created successfully.</p>
+            <p style="margin:0;color:#f8fafc;">Sign in to explore courses, learning resources, and your student dashboard. We are glad to have you with us.</p>
             """);
 
         return SendEmailAsync(
@@ -135,22 +132,18 @@ public sealed class EmailService : IEmailService
         CancellationToken cancellationToken = default)
     {
         var safeUserName = HtmlEncode(userName);
-        var safeMessage = HtmlEncode(message)
-            .Replace("\r\n", "\n", StringComparison.Ordinal)
-            .Replace("\n", "<br />", StringComparison.Ordinal);
         var safeSubject = string.IsNullOrWhiteSpace(subject)
             ? "An update from CIIT Stack Lab"
             : subject.Trim();
+        var campaignContent = RenderCampaignMessage(message);
 
         var html = BuildCampaignEmailTemplate(
             safeSubject,
             "A message from your CIIT Stack Lab learning team",
             $"""
-            <p style="margin:0 0 18px;">Hello <strong>{safeUserName}</strong>,</p>
-            <div style="padding:20px;border:1px solid #dbeafe;border-radius:18px;background-color:#f8fbff;background:rgba(255,255,255,.76);box-shadow:0 10px 28px rgba(23,105,255,.08);font-size:15px;line-height:1.8;color:{DarkText};">
-                {safeMessage}
-            </div>
-            <p style="margin:22px 0 0;color:{MutedText};font-size:14px;line-height:1.7;">Keep learning, keep building, and take your next step with CIIT Stack Lab.</p>
+            <p style="margin:0 0 22px;font-size:18px;line-height:1.5;color:#ffffff;">Hello <strong>{safeUserName}</strong>,</p>
+            {campaignContent}
+            <p style="margin:26px 0 0;color:#cbd5e1;font-size:14px;line-height:1.7;">Keep learning, keep building, and take your next step with CIIT Stack Lab.</p>
             """);
 
         return SendEmailAsync(
@@ -172,44 +165,158 @@ public sealed class EmailService : IEmailService
         <head>
             <meta charset="utf-8" />
             <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-            <meta name="color-scheme" content="light" />
+            <meta name="color-scheme" content="dark light" />
+            <meta name="supported-color-schemes" content="dark light" />
             <title>{HtmlEncode(title)}</title>
+            <style>
+                @media only screen and (max-width:600px) {
+                    .email-shell { width:100% !important; }
+                    .email-header { padding:26px 22px !important; }
+                    .email-content { padding:28px 22px !important; }
+                    .email-footer { padding:18px 22px !important; }
+                    .email-title { font-size:24px !important; }
+                }
+            </style>
         </head>
-        <body style="margin:0;padding:0;background-color:#edf5ff;background-image:linear-gradient(135deg,#edf5ff 0%,#effcff 50%,#f4f7ff 100%);font-family:Arial,Helvetica,sans-serif;color:{DarkText};">
+        <body style="margin:0;padding:0;background-color:#edf3fb;font-family:Arial,Helvetica,sans-serif;color:#ffffff;">
             <div style="display:none;max-height:0;overflow:hidden;opacity:0;">{HtmlEncode(subtitle)}</div>
-            <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="padding:34px 12px;background-color:#edf5ff;background-image:linear-gradient(135deg,#edf5ff,#effcff);">
+            <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="width:100%;padding:28px 10px;background-color:#edf3fb;">
                 <tr>
                     <td align="center">
-                        <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="max-width:640px;border:1px solid #dbeafe;border-radius:24px;overflow:hidden;background-color:#ffffff;background:rgba(255,255,255,.88);box-shadow:0 20px 55px rgba(23,105,255,.14);">
+                        <table class="email-shell" role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="width:100%;max-width:680px;border:1px solid #d7e3f3;border-radius:22px;overflow:hidden;background-color:#20212a;">
                             <tr>
-                                <td style="padding:30px 32px;background-color:#1769ff;background-image:linear-gradient(125deg,#1769ff 0%,#2788ff 52%,#06b6d4 100%);color:#ffffff;">
-                                    <div style="display:inline-block;padding:8px 12px;border:1px solid rgba(255,255,255,.55);border-radius:12px;background-color:rgba(255,255,255,.18);font-size:23px;font-weight:800;letter-spacing:-1px;">CIIT</div>
-                                    <div style="margin-top:8px;font-size:11px;font-weight:700;letter-spacing:3px;color:#eaf6ff;">STACK LAB</div>
-                                    <div style="margin-top:26px;font-size:27px;font-weight:800;line-height:1.25;color:#ffffff;">{HtmlEncode(title)}</div>
-                                    <div style="margin-top:8px;font-size:14px;line-height:1.6;color:#effaff;">{HtmlEncode(subtitle)}</div>
+                                <td class="email-header" style="padding:30px 34px;background-color:#1769ff;background-image:linear-gradient(125deg,#1769ff 0%,#2788ff 52%,#06b6d4 100%);color:#ffffff;">
+                                    <table role="presentation" cellpadding="0" cellspacing="0" border="0">
+                                        <tr>
+                                            <td valign="middle" style="padding:8px 11px;border:1px solid rgba(255,255,255,.62);border-radius:11px;background-color:#3188ff;color:#ffffff;font-size:22px;font-weight:800;letter-spacing:-1px;">CIIT</td>
+                                            <td valign="middle" style="padding-left:12px;color:#ffffff;font-size:18px;font-weight:800;letter-spacing:1.2px;">STACK LAB</td>
+                                        </tr>
+                                    </table>
+                                    <div class="email-title" style="margin-top:27px;font-size:28px;font-weight:800;line-height:1.25;color:#ffffff;">{HtmlEncode(title)}</div>
+                                    <div style="margin-top:9px;font-size:14px;line-height:1.6;color:#effaff;">{HtmlEncode(subtitle)}</div>
                                 </td>
                             </tr>
                             <tr>
-                                <td style="padding:30px 32px;background-color:#ffffff;background:rgba(255,255,255,.94);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);font-size:15px;line-height:1.7;color:{DarkText};">
+                                <td class="email-content" style="padding:34px 38px;background-color:#20212a;color:#ffffff;font-size:16px;line-height:1.8;">
                                     {content}
                                 </td>
                             </tr>
                             <tr>
-                                <td style="padding:20px 32px;border-top:1px solid #e3edf9;background-color:#f7faff;background:rgba(239,246,255,.9);font-size:12px;line-height:1.7;color:{MutedText};">
-                                    <strong style="color:#1769ff;">CIIT Stack Lab</strong><br />
+                                <td class="email-footer" style="padding:20px 34px;border-top:1px solid #3a3d49;background-color:#191a22;color:#aeb8c8;font-size:12px;line-height:1.7;">
+                                    <strong style="color:#67b8ff;">CIIT Stack Lab</strong><br />
                                     Learn. Build. Grow.<br />
                                     You are receiving this message because you have a CIIT Stack Lab student account.<br />
                                     &copy; {DateTime.UtcNow.Year} CIIT Stack Lab. All rights reserved.
                                 </td>
                             </tr>
                         </table>
-                        <div style="padding:16px 10px 0;font-size:11px;line-height:1.6;color:#8292a8;">An official communication from CIIT Stack Lab.</div>
+                        <div style="padding:14px 10px 0;font-size:11px;line-height:1.6;color:#8292a8;">An official communication from CIIT Stack Lab.</div>
                     </td>
                 </tr>
             </table>
         </body>
         </html>
         """;
+    }
+
+    private static string RenderCampaignMessage(string message)
+    {
+        var normalizedMessage = (message ?? string.Empty)
+            .Replace("\r\n", "\n", StringComparison.Ordinal)
+            .Replace('\r', '\n')
+            .Trim();
+
+        normalizedMessage = System.Text.RegularExpressions.Regex.Replace(
+            normalizedMessage,
+            @"^(?:hello|hi)\s+student\s*,?\s*(?:\n+|$)",
+            string.Empty,
+            System.Text.RegularExpressions.RegexOptions.IgnoreCase);
+
+        var lines = normalizedMessage.Split('\n');
+        var html = new StringBuilder();
+        var paragraphLines = new List<string>();
+        var inList = false;
+
+        void FlushParagraph()
+        {
+            if (paragraphLines.Count == 0)
+            {
+                return;
+            }
+
+            var paragraph = string.Join("<br />", paragraphLines.Select(RenderInlineMarkdown));
+            html.Append("<p style=\"margin:0 0 20px;color:#f8fafc;font-size:16px;line-height:1.85;\">");
+            html.Append(paragraph);
+            html.Append("</p>");
+            paragraphLines.Clear();
+        }
+
+        void CloseList()
+        {
+            if (!inList)
+            {
+                return;
+            }
+
+            html.Append("</ul>");
+            inList = false;
+        }
+
+        foreach (var rawLine in lines)
+        {
+            var line = rawLine.Trim();
+
+            if (string.IsNullOrWhiteSpace(line))
+            {
+                FlushParagraph();
+                CloseList();
+                continue;
+            }
+
+            if (line.StartsWith("- ", StringComparison.Ordinal)
+                || line.StartsWith("* ", StringComparison.Ordinal))
+            {
+                FlushParagraph();
+
+                if (!inList)
+                {
+                    html.Append("<ul style=\"margin:0 0 22px;padding-left:24px;color:#f8fafc;\">");
+                    inList = true;
+                }
+
+                html.Append("<li style=\"padding:0 0 8px 4px;color:#f8fafc;line-height:1.75;\">");
+                html.Append(RenderInlineMarkdown(line[2..]));
+                html.Append("</li>");
+                continue;
+            }
+
+            CloseList();
+
+            if (line.StartsWith("### ", StringComparison.Ordinal))
+            {
+                FlushParagraph();
+                html.Append("<h3 style=\"margin:24px 0 12px;color:#ffffff;font-size:18px;line-height:1.4;\">");
+                html.Append(RenderInlineMarkdown(line[4..]));
+                html.Append("</h3>");
+                continue;
+            }
+
+            paragraphLines.Add(line);
+        }
+
+        FlushParagraph();
+        CloseList();
+
+        return html.ToString();
+    }
+
+    private static string RenderInlineMarkdown(string value)
+    {
+        var encoded = HtmlEncode(value);
+        return System.Text.RegularExpressions.Regex.Replace(
+            encoded,
+            @"\*\*(.+?)\*\*",
+            "<strong style=\"color:#ffffff;font-weight:800;\">$1</strong>");
     }
 
     private async Task SendEmailAsync(
