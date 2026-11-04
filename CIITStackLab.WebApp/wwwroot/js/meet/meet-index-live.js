@@ -146,6 +146,11 @@ document.addEventListener("DOMContentLoaded", () => {
             list.prepend(card);
         }
 
+        const sessionCount = adminRoot.querySelector(".meet-session-list-section .meet-count-pill");
+        if (sessionCount && list) {
+            sessionCount.textContent = list.querySelectorAll("[data-meet-session-id]").length + " sessions";
+        }
+
         const status = card.querySelector("[data-meet-session-status]");
         if (status) status.textContent = state.status;
 
