@@ -21,11 +21,11 @@
         </div>
         <div class="col-lg-6">
             <div class="ciit-hero-slider" id="ciitHeroSlider">
-                <div class="ciit-hero-slide active"><img src="https://images.unsplash.com/photo-1498050108023-c5249f4df085?auto=format&fit=crop&w=1200&q=80" alt="Web Development" /><div class="ciit-hero-overlay"></div><div class="ciit-slide-content"><span class="ciit-slide-category">WEB DEVELOPMENT</span><h2>HTML</h2><p>Build the foundation of modern websites.</p></div></div>
-                <div class="ciit-hero-slide"><img src="https://images.unsplash.com/photo-1555066931-4365d14bab8c?auto=format&fit=crop&w=1200&q=80" alt="JavaScript" /><div class="ciit-hero-overlay"></div><div class="ciit-slide-content"><span class="ciit-slide-category">PROGRAMMING</span><h2>JavaScript</h2><p>Create interactive web applications.</p></div></div>
-                <div class="ciit-hero-slide"><img src="https://images.unsplash.com/photo-1526379095098-d400fd0bf935?auto=format&fit=crop&w=1200&q=80" alt="Python Programming" /><div class="ciit-hero-overlay"></div><div class="ciit-slide-content"><span class="ciit-slide-category">DATA &amp; AI</span><h2>Python</h2><p>Learn programming, automation and data science.</p></div></div>
-                <div class="ciit-hero-slide"><img src="https://images.unsplash.com/photo-1516116216624-53e697fedbea?auto=format&fit=crop&w=1200&q=80" alt="C Sharp .NET" /><div class="ciit-hero-overlay"></div><div class="ciit-slide-content"><span class="ciit-slide-category">SOFTWARE DEVELOPMENT</span><h2>C# .NET</h2><p>Build modern enterprise applications.</p></div></div>
-                <div class="ciit-hero-slide"><img src="https://images.unsplash.com/photo-1515879218367-8466d910aaa4?auto=format&fit=crop&w=1200&q=80" alt="Full Stack Development" /><div class="ciit-hero-overlay"></div><div class="ciit-slide-content"><span class="ciit-slide-category">FULL STACK</span><h2>Full Stack Development</h2><p>Learn frontend, backend and modern development tools.</p></div></div>
+                <div class="ciit-hero-slide active"><img src="https://images.unsplash.com/photo-1498050108023-c5249f4df085?auto=format&fit=crop&w=1200&q=80" fetchpriority="high" alt="Web Development" /><div class="ciit-hero-overlay"></div><div class="ciit-slide-content"><span class="ciit-slide-category">WEB DEVELOPMENT</span><h2>HTML</h2><p>Build the foundation of modern websites.</p></div></div>
+                <div class="ciit-hero-slide"><img data-src="https://images.unsplash.com/photo-1555066931-4365d14bab8c?auto=format&fit=crop&w=1200&q=80" fetchpriority="low" decoding="async" alt="JavaScript" /><div class="ciit-hero-overlay"></div><div class="ciit-slide-content"><span class="ciit-slide-category">PROGRAMMING</span><h2>JavaScript</h2><p>Create interactive web applications.</p></div></div>
+                <div class="ciit-hero-slide"><img data-src="https://images.unsplash.com/photo-1526379095098-d400fd0bf935?auto=format&fit=crop&w=1200&q=80" fetchpriority="low" decoding="async" alt="Python Programming" /><div class="ciit-hero-overlay"></div><div class="ciit-slide-content"><span class="ciit-slide-category">DATA &amp; AI</span><h2>Python</h2><p>Learn programming, automation and data science.</p></div></div>
+                <div class="ciit-hero-slide"><img data-src="https://images.unsplash.com/photo-1516116216624-53e697fedbea?auto=format&fit=crop&w=1200&q=80" fetchpriority="low" decoding="async" alt="C Sharp .NET" /><div class="ciit-hero-overlay"></div><div class="ciit-slide-content"><span class="ciit-slide-category">SOFTWARE DEVELOPMENT</span><h2>C# .NET</h2><p>Build modern enterprise applications.</p></div></div>
+                <div class="ciit-hero-slide"><img data-src="https://images.unsplash.com/photo-1515879218367-8466d910aaa4?auto=format&fit=crop&w=1200&q=80" fetchpriority="low" decoding="async" alt="Full Stack Development" /><div class="ciit-hero-overlay"></div><div class="ciit-slide-content"><span class="ciit-slide-category">FULL STACK</span><h2>Full Stack Development</h2><p>Learn frontend, backend and modern development tools.</p></div></div>
                 <div class="ciit-slider-dots">
                     <button type="button" class="ciit-slider-dot active" data-slide="0" aria-label="Slide 1"></button>
                     <button type="button" class="ciit-slider-dot" data-slide="1" aria-label="Slide 2"></button>
@@ -55,7 +55,7 @@ else
         <div class="col-12 col-sm-6 col-lg-3">
             <div class="ciit-course-card">
                 <div class="ciit-course-image">
-                    <img src="@course.ImageUrl" alt="@course.Title" />
+                    <img src="@course.ImageUrl" alt="@course.Title" loading="lazy" decoding="async" />
                 </div>
                 <h4>@course.Title</h4>
                 <p>@course.ShortDescription</p>

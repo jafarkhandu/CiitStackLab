@@ -74,6 +74,7 @@ document.addEventListener("DOMContentLoaded", () => {
         if (form.dataset.submitting === "true") return;
 
         const button = form.querySelector('[type="submit"]');
+        const waitingRoomEnabled = form.querySelector('input[name="enabled"]')?.value.toLowerCase() === "true";
         form.dataset.submitting = "true";
         if (button) button.disabled = true;
 
@@ -99,21 +100,12 @@ document.addEventListener("DOMContentLoaded", () => {
 
 
 
-            // Refresh the server-rendered snapshot when available; retain the
-            // just-applied JSON state if this secondary refresh transiently fails.
             try {
-                await refreshControls();
+                if (!await window.ciitMeetRefreshRoom?.()) await refreshControls();
             } catch (refreshError) {
-                console.warn("Meeting controls HTML refresh failed after successful save:", refreshError);
+                console.warn("Meeting controls refresh failed after successful save:", refreshError);
             }
 
-            // Review/admit/reject/remove and permission actions must also refresh
-            // the server-authoritative participant snapshot in the live popup.
-            if (window.ciitMeetSignalRConnection?.state === "Connected") {
-                await window.ciitMeetSignalRConnection.invoke("JoinMeetingRoom", Number(room.dataset.sessionId));
-            }
-
-            const waitingRoomEnabled = form.querySelector('input[name="enabled"]')?.value === "true";
             const successMessage = form.matches("[data-meet-waiting-room-form]")
                 ? (waitingRoomEnabled ? "Waiting room is now on." : "Waiting room is now off.")
                 : "Meeting setting updated.";

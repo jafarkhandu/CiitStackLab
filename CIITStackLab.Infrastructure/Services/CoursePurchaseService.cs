@@ -120,22 +120,7 @@ public sealed class CoursePurchaseService
             return false;
         }
 
-        var userIsActive = await _dbContext.Users
-            .AsNoTracking()
-            .AnyAsync(user => user.Id == userId && user.IsActive, cancellationToken);
-
-        if (!userIsActive)
-        {
-            return false;
-        }
-
-        return await _dbContext.StudentCoursePurchases
-            .AsNoTracking()
-            .AnyAsync(
-                purchase => purchase.UserId == userId
-                    && _dbContext.Courses.Any(course =>
-                        course.Id == purchase.CourseId && course.Flag == 0),
-                cancellationToken);
+        return await QueryActivePurchases(userId).AnyAsync(cancellationToken);
     }
 
     public async Task<IReadOnlyList<int>> GetAccessibleCourseIdsAsync(
@@ -147,32 +132,21 @@ public sealed class CoursePurchaseService
             return Array.Empty<int>();
         }
 
-        var userIsActive = await _dbContext.Users
-            .AsNoTracking()
-            .AnyAsync(user => user.Id == userId && user.IsActive, cancellationToken);
-
-        if (!userIsActive)
-        {
-            return Array.Empty<int>();
-        }
-
-        var publishedCourseIds = await _dbContext.Courses
-            .AsNoTracking()
-            .Where(course => course.Flag == 0)
-            .Select(course => course.Id)
-            .ToListAsync(cancellationToken);
-
-        var purchasedCourseIds = await _dbContext.StudentCoursePurchases
-            .AsNoTracking()
-            .Where(purchase => purchase.UserId == userId)
+        return await QueryActivePurchases(userId)
             .Select(purchase => purchase.CourseId)
-            .ToListAsync(cancellationToken);
-
-        return purchasedCourseIds
-            .Where(publishedCourseIds.Contains)
             .Distinct()
             .OrderBy(courseId => courseId)
-            .ToArray();
+            .ToArrayAsync(cancellationToken);
+    }
+
+    private IQueryable<StudentCoursePurchase> QueryActivePurchases(string userId)
+    {
+        return _dbContext.StudentCoursePurchases
+            .AsNoTracking()
+            .Where(purchase => purchase.UserId == userId
+                && _dbContext.Users.Any(user => user.Id == userId && user.IsActive)
+                && _dbContext.Courses.Any(course =>
+                    course.Id == purchase.CourseId && course.Flag == 0));
     }
 
     public async Task<IReadOnlyList<CourseDto>> GetCourseSwitcherItemsAsync(

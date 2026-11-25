@@ -14,7 +14,7 @@
     <link rel="stylesheet" href="~/css/meet/meet-room.css" asp-append-version="true" />
 </head>
 <body class="ciit-meet-body" data-meet-notification-role="@(User.IsInRole("Student") ? "student" : (User.IsInRole("Admin") || User.IsInRole("Super User")) ? "admin" : "none")">
-    <div class="ciit-meet-room-page" data-meet-room data-session-id="@Model.Id" data-is-host="@Model.IsHost.ToString().ToLowerInvariant()" data-participant-status="@Model.ParticipantStatus" data-chat-enabled="@Model.ChatEnabled.ToString().ToLowerInvariant()" data-user-id="@User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value" data-hub-url="/hubs/meet" data-room-url="@Url.Action("Room", "Meet", new { area = Model.IsHost ? "Admin" : "Student", id = Model.Id })">
+    <div class="ciit-meet-room-page" data-meet-room data-session-id="@Model.Id" data-is-host="@Model.IsHost.ToString().ToLowerInvariant()" data-participant-status="@Model.ParticipantStatus" data-meeting-status="@Model.Status" data-chat-enabled="@Model.ChatEnabled.ToString().ToLowerInvariant()" data-user-id="@User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value" data-hub-url="@Url.Content("~/hubs/meet")" data-room-url="@Url.Action("Room", "Meet", new { area = Model.IsHost ? "Admin" : "Student", id = Model.Id })">
         <header class="ciit-meet-room-header">
             <div class="ciit-meet-room-heading">
                 <span class="ciit-meet-room-eyebrow">CIIT MEET <span class="ciit-meet-preview-tag">LIVE</span></span>
@@ -26,16 +26,17 @@
                 <span class="ciit-meet-room-duration"><i class="bi bi-clock"></i> @Model.DurationMinutes min</span>
                 @if (Model.IsHost)
                 {
-                    <button type="button" class="ciit-meet-header-action" data-open-participants aria-label="Open participants">
-                        <i class="bi bi-people-fill"></i><span data-meet-admitted-count>@(Model.ParticipantCount + (Model.Status == "Live" ? 1 : 0))</span>
+                    <button type="button" class="ciit-meet-header-action" data-open-participants aria-label="Open participants" title="Participants online">
+                        <i class="bi bi-people-fill"></i><span data-meet-online-count>—</span>
                     </button>
                 }
                 else
                 {
-                    <span class="ciit-meet-participant-count"><i class="bi bi-people-fill"></i> <span data-meet-admitted-count>@(Model.ParticipantCount + (Model.ParticipantStatus == "Admitted" ? 1 : 0))</span></span>
+                    <span class="ciit-meet-participant-count" title="Participants online"><i class="bi bi-people-fill"></i> <span data-meet-online-count>—</span></span>
                 }
             </div>
         </header>
+        <p class="ciit-meet-connection-status" data-meet-connection-status role="status" hidden></p>
 
         @if (Model.IsHost)
         {
@@ -200,10 +201,13 @@
             </section>
             <div class="ciit-meet-controls-glass">
             <div class="ciit-meet-room-controls" aria-label="Meeting controls">
-                <button type="button" class="ciit-meet-control" data-room-toggle="mic" aria-pressed="false">
+                <button type="button" class="ciit-meet-control" data-meet-enable-audio hidden>
+                    <i class="bi bi-volume-up"></i><span>Enable audio</span>
+                </button>
+                <button type="button" class="ciit-meet-control" data-room-toggle="mic" aria-pressed="false" disabled="@(!Model.IsHost)">
                     <i class="bi bi-mic-mute"></i><span>Unmute</span>
                 </button>
-                <button type="button" class="ciit-meet-control" data-room-toggle="camera" aria-pressed="false">
+                <button type="button" class="ciit-meet-control" data-room-toggle="camera" aria-pressed="false" disabled="@(!Model.IsHost)">
                     <i class="bi bi-camera-video-off"></i><span>Start video</span>
                 </button>
                 <button type="button" class="ciit-meet-control" data-meet-chat-toggle aria-pressed="false" aria-label="Open group chat">
@@ -215,7 +219,7 @@
                         <i class="bi bi-hand"></i><span>Raise hand</span>
                     </button>
                 }
-                <button type="button" class="ciit-meet-control" data-room-toggle="share" aria-pressed="false">
+                <button type="button" class="ciit-meet-control" data-room-toggle="share" aria-pressed="false" disabled="@(!Model.IsHost)">
                     <i class="bi bi-display"></i><span>Share screen</span>
                 </button>
                 @if (Model.IsHost)
@@ -243,7 +247,6 @@
                 }
             </div>
             </div>
-            <p class="ciit-meet-room-footnote"><i class="bi bi-info-circle"></i> Audio and video connect peer-to-peer using WebRTC. SignalR handles meeting signaling. </p>
         </main>
     </div>
     <script src="https://cdn.jsdelivr.net/npm/@@microsoft/signalr@10.0.0/dist/browser/signalr.min.js"></script>

@@ -24,6 +24,14 @@ builder.Services.Configure<Microsoft.AspNetCore.Mvc.Razor.RazorViewEngineOptions
 builder.Services.AddSignalR();
 builder.Services.AddScoped<ExamApplicationNotificationService>();
 builder.Services.AddScoped<MeetRealtimeService>();
+builder.Services.AddHttpClient<MeetIceServerService>(client =>
+{
+    client.BaseAddress = new Uri("https://rtc.live.cloudflare.com/");
+    client.Timeout = TimeSpan.FromSeconds(3);
+    client.MaxResponseContentBufferSize = 16 * 1024;
+})
+    .ConfigurePrimaryHttpMessageHandler(() => new HttpClientHandler { AllowAutoRedirect = false })
+    .RemoveAllLoggers();
 builder.Services.AddSingleton<MeetNotificationService>();
 builder.Services.AddHostedService<MeetSessionLifecycleService>();
 builder.Services.AddInfrastructure(builder.Configuration);

@@ -109,16 +109,15 @@ document.addEventListener("DOMContentLoaded", () => {
                     && !isChatToggle
                     && room.dataset.isHost === "true"
                     && window.ciitMeetSignalRConnection?.state === "Connected") {
-                    await window.ciitMeetSignalRConnection.invoke("JoinMeetingRoom", Number(room.dataset.sessionId));
+                    await refreshRoom();
                 }
 
                 if (endingMeeting) {
                     // Release camera, microphone, and screen capture as soon as the
                     // server confirms the meeting-end action.
-                    window.ciitMeetWebRtcCleanup?.();
+                    finishRoom();
                     // Close the settings dialog immediately after the server confirms
                     // the end action; don't leave a stale controls card over the ended screen.
-                    participantsPopup?.hide();
                     participantsPopup?.hide();
                     const endedScreen = room.querySelector("[data-meet-ended-screen]");
                     const stage = room.querySelector("[data-meet-room-stage]");
@@ -250,6 +249,59 @@ document.addEventListener("DOMContentLoaded", () => {
         .withUrl(hubUrl)
         .withAutomaticReconnect()
         .build();
+    const connectionStatus = room.querySelector("[data-meet-connection-status]");
+    const onlinePeers = new Set();
+    let peerUpdatesDuringJoin;
+    let localPeerJoined = false;
+    let roomFinished = false;
+    let lastRoomJoinAt = 0;
+    let roomJoin = Promise.resolve();
+
+    const renderOnlineCount = () => {
+        setText("[data-meet-online-count]", localPeerJoined ? onlinePeers.size + 1 : "—");
+    };
+
+    const finishRoom = () => {
+        roomFinished = true;
+        if (connectionStatus) connectionStatus.hidden = true;
+        localPeerJoined = false;
+        onlinePeers.clear();
+        renderOnlineCount();
+        window.ciitMeetWebRtcCleanup?.();
+    };
+
+    const joinRoom = ({ refreshIce = false, resetPeers = false, publishMedia = false } = {}) => {
+        // An admission update can arrive while the initial waiting-room join is in progress.
+        roomJoin = roomJoin.catch(() => {}).then(async () => {
+            if (roomFinished || connection.state !== signalR.HubConnectionState.Connected) return;
+            if (resetPeers) {
+                window.ciitMeetResetPeers?.();
+                localPeerJoined = false;
+                onlinePeers.clear();
+                renderOnlineCount();
+            }
+            const canJoinMedia = room.dataset.meetingStatus === "Live"
+                && (isHost || room.dataset.participantStatus === "Admitted");
+            if (canJoinMedia) await window.ciitMeetPrepareIce?.(refreshIce);
+            if (roomFinished || connection.state !== signalR.HubConnectionState.Connected) return;
+            window.ciitMeetBeginPeerSync?.();
+            peerUpdatesDuringJoin = new Map();
+            try {
+                await connection.invoke("JoinMeetingRoom", sessionId);
+            } finally {
+                peerUpdatesDuringJoin = undefined;
+            }
+            lastRoomJoinAt = Date.now();
+            if (canJoinMedia && publishMedia) await window.ciitMeetPublishMediaState?.();
+            return true;
+        });
+        return roomJoin;
+    };
+
+    const refreshRoom = () => joinRoom().catch(error => {
+        console.warn("Meet room state refresh failed:", error);
+    });
+    window.ciitMeetRefreshRoom = refreshRoom;
 
     const setText = (selector, value) => {
         const element = document.querySelector(selector);
@@ -299,7 +351,7 @@ document.addEventListener("DOMContentLoaded", () => {
         // This keeps the admitted list, pending requests, counts and permissions
         // in sync even when a redirected MVC response contains no JSON payload.
         if (connection.state === signalR.HubConnectionState.Connected) {
-            await connection.invoke("JoinMeetingRoom", sessionId);
+            await refreshRoom();
         }
     };
 
@@ -331,13 +383,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
                 // An action can race with meeting completion. Refresh the
                 // authoritative participant roster to clear stale requests.
-                if (connection.state === signalR.HubConnectionState.Connected) {
-                    try {
-                        await connection.invoke("JoinMeetingRoom", sessionId);
-                    } catch (refreshError) {
-                        console.warn("Participant roster refresh failed:", refreshError);
-                    }
-                }
+                await refreshRoom();
 
                 showMeetToast({
                     title: "Participant action failed",
@@ -464,8 +510,9 @@ document.addEventListener("DOMContentLoaded", () => {
 
     const updateRoom = (state) => {
         if (state.sessionId !== sessionId) return;
+        room.dataset.meetingStatus = state.status;
         if (state.status !== "Live" && state.status !== "Scheduled") {
-            window.ciitMeetWebRtcCleanup?.();
+            finishRoom();
         }
 
         const previousPendingCount = lastPendingCount;
@@ -497,7 +544,6 @@ document.addEventListener("DOMContentLoaded", () => {
 
         lastPendingCount = nextPendingCount;
         setText("[data-meet-pending-count]", state.pendingCount);
-        setText("[data-meet-admitted-count]", state.participantCount + (isHost && state.status === "Live" ? 1 : 0));
 
         const badge = room.querySelector("[data-meet-pending-count]");
         if (badge) badge.classList.toggle("has-pending", state.pendingCount > 0);
@@ -522,19 +568,21 @@ document.addEventListener("DOMContentLoaded", () => {
                 if (stage) stage.hidden = false;
                 if (waitingScreen) waitingScreen.hidden = true;
                 if (rejectedScreen) rejectedScreen.hidden = true;
-            } else if (selfStatus === "Rejected" || selfStatus === "Removed") {
+            } else if (["Rejected", "Removed", "Left"].includes(selfStatus)) {
                 if (stage) stage.hidden = true;
                 if (waitingScreen) waitingScreen.hidden = false;
                 if (waitingTitle) waitingTitle.textContent = selfStatus === "Removed"
                     ? "You were removed from this meeting"
-                    : "Join request was declined";
+                    : selfStatus === "Left" ? "You left this meeting" : "Join request was declined";
                 if (waitingMessage) waitingMessage.textContent = "Please contact your admin if you need access.";
             } else if (selfStatus === "Pending") {
                 if (stage) stage.hidden = true;
                 if (waitingScreen) waitingScreen.hidden = false;
             }
-        } else if (state.status !== "Live" && endedScreen) {
-            endedScreen.hidden = false;
+        } else if (state.status === "Live") {
+            if (stage) stage.hidden = false;
+        } else {
+            if (endedScreen && state.status !== "Scheduled") endedScreen.hidden = false;
             if (stage) stage.hidden = true;
         }
 
@@ -586,19 +634,57 @@ document.addEventListener("DOMContentLoaded", () => {
     };
 
 
+    window.showMeetToast = showMeetToast;
     connection.on("MeetToast", showMeetToast);
 
     connection.on("MeetRoomUpdated", updateRoom);
+    connection.on("MeetRoomUnavailable", state => {
+        if (Number(state?.sessionId) === sessionId) finishRoom();
+    });
+
+    connection.on("MeetExistingPeers", peers => {
+        if (roomFinished || !Array.isArray(peers)) return;
+        onlinePeers.clear();
+        peers.forEach(peer => onlinePeers.add(peer.connectionId || peer));
+        peerUpdatesDuringJoin?.forEach((joined, id) => {
+            if (joined) onlinePeers.add(id);
+            else onlinePeers.delete(id);
+        });
+        localPeerJoined = true;
+        renderOnlineCount();
+    });
+    connection.on("MeetPeerJoined", peer => {
+        if (roomFinished) return;
+        const id = peer.connectionId || peer;
+        peerUpdatesDuringJoin?.set(id, true);
+        onlinePeers.add(id);
+        renderOnlineCount();
+    });
+    connection.on("MeetPeerLeft", id => {
+        peerUpdatesDuringJoin?.set(id, false);
+        onlinePeers.delete(id);
+        renderOnlineCount();
+    });
+
     connection.on("MeetMyParticipantStatus", update => {
         if (update.sessionId !== sessionId) return;
         const previousStatus = room.dataset.participantStatus;
         room.dataset.participantStatus = update.status;
+        room.dataset.meetingStatus = update.sessionStatus;
         window.ciitMeetApplyMediaPermissions?.(update);
-        if (update.status === "Admitted" && previousStatus !== "Admitted") {
-            connection.invoke("JoinMeetingRoom", sessionId)
-                .catch(error => console.error("Meet peer room admission failed:", error));
-        } else if (update.status === "Rejected" || update.status === "Removed"
-            || (update.sessionStatus !== "Live" && update.sessionStatus !== "Scheduled")) {
+        if (update.sessionStatus !== "Live" && update.sessionStatus !== "Scheduled") {
+            finishRoom();
+        } else if (update.status === "Admitted" && previousStatus !== "Admitted") {
+            // Begin ICE preparation even if the server is about to send the peer snapshot.
+            window.ciitMeetPrepareIce?.().catch(error => console.warn("Meet ICE preparation failed:", error));
+            joinRoom({ publishMedia: true }).catch(error => {
+                console.warn("Meet peer room admission failed:", error);
+                scheduleRoomRetry(false);
+            });
+        } else if (["Rejected", "Removed", "Left"].includes(update.status) && localPeerJoined) {
+            localPeerJoined = false;
+            onlinePeers.clear();
+            renderOnlineCount();
             window.ciitMeetWebRtcCleanup?.();
         }
         if (previousStatus !== update.status) {
@@ -623,74 +709,79 @@ document.addEventListener("DOMContentLoaded", () => {
             if (stage) stage.hidden = false;
             if (waiting) waiting.hidden = true;
             if (rejected) rejected.hidden = true;
-        } else if (update.status === "Rejected" || update.status === "Removed") {
+        } else if (["Rejected", "Removed", "Left"].includes(update.status)) {
             const stage = room.querySelector("[data-meet-room-stage]");
             const waiting = room.querySelector("[data-meet-waiting-screen]");
             const title = room.querySelector("[data-meet-waiting-title]");
             const message = room.querySelector("[data-meet-waiting-message]");
             if (stage) stage.hidden = true;
             if (waiting) waiting.hidden = false;
-            if (title) title.textContent = update.status === "Removed" ? "You were removed from this meeting" : "Join request was declined";
+            if (title) title.textContent = update.status === "Removed"
+                ? "You were removed from this meeting"
+                : update.status === "Left" ? "You left this meeting" : "Join request was declined";
             if (message) message.textContent = "Please contact your admin if you need access.";
         }
     });
-    let lastRoomJoinAt = 0;
     const rejoinRoomForFreshState = () => {
-        if (connection.state !== signalR.HubConnectionState.Connected
-            || Date.now() - lastRoomJoinAt < 2000) return;
-
-        lastRoomJoinAt = Date.now();
-        connection.invoke("JoinMeetingRoom", sessionId)
-            .catch(error => {
-                lastRoomJoinAt = 0;
-                console.warn("Meet room state refresh failed:", error);
-            });
+        if (Date.now() - lastRoomJoinAt >= 2000) refreshRoom();
     };
 
-    connection.onreconnected(async () => {
+    window.ciitMeetSignalRConnection = connection;
+    let resolveRoomReady;
+    window.ciitMeetSignalRReady = new Promise(resolve => { resolveRoomReady = resolve; });
+
+    let retryTimer;
+    let retryDelay = 1000;
+    const showConnectionStatus = message => {
+        if (!connectionStatus || roomFinished) return;
+        connectionStatus.textContent = message;
+        connectionStatus.hidden = !message;
+    };
+
+    const scheduleRoomRetry = resetPeers => {
+        if (roomFinished || retryTimer !== undefined) return;
+        retryTimer = window.setTimeout(() => {
+            retryTimer = undefined;
+            void openRoomConnection(resetPeers);
+        }, retryDelay);
+        retryDelay = Math.min(retryDelay * 2, 15000);
+    };
+
+    const openRoomConnection = async resetPeers => {
+        if (roomFinished) return;
         try {
-            window.ciitMeetIceServers = await connection.invoke("GetIceServers", sessionId);
+            if (connection.state === signalR.HubConnectionState.Disconnected) await connection.start();
+            if (connection.state !== signalR.HubConnectionState.Connected) return;
+            if (!await joinRoom({ refreshIce: resetPeers, resetPeers, publishMedia: resetPeers })) return;
+            retryDelay = 1000;
+            showConnectionStatus("");
+            resolveRoomReady();
+            if (!roomFinished) room.dispatchEvent(new Event("meetroomconnected"));
         } catch (error) {
-            console.warn("Meet ICE configuration refresh failed:", error);
+            console.warn("Meet connection failed:", error);
+            showConnectionStatus("Connection lost. Retrying…");
+            scheduleRoomRetry(resetPeers);
         }
-        if (window.ciitMeetReconcilePeers)
-            await window.ciitMeetReconcilePeers();
-        else
-            await connection.invoke("JoinMeetingRoom", sessionId);
-        lastRoomJoinAt = Date.now();
-        if (isHost) {
-            const pendingCount = Number(room.querySelector("[data-meet-pending-count]")?.textContent || 0);
-            if (pendingCount > 0) {
-                showMeetToast({
-                    title: pendingCount === 1 ? "Pending join request" : "Pending join requests",
-                    message: pendingCount === 1
-                        ? "A student is waiting for admission. Review the Participants panel."
-                        : pendingCount + " students are waiting for admission. Review the Participants panel.",
-                    type: "info"
-                });
-            }
-        }
+    };
+
+    connection.onreconnecting(() => showConnectionStatus("Reconnecting to the meeting…"));
+    connection.onreconnected(() => {
+        window.clearTimeout(retryTimer);
+        retryTimer = undefined;
+        void openRoomConnection(true);
     });
-    window.addEventListener("pageshow", rejoinRoomForFreshState);
+    connection.onclose(() => {
+        showConnectionStatus("Connection lost. Retrying…");
+        scheduleRoomRetry(true);
+    });
+    window.addEventListener("pageshow", event => {
+        if (event.persisted) rejoinRoomForFreshState();
+    });
     document.addEventListener("visibilitychange", () => {
         if (!document.hidden) rejoinRoomForFreshState();
     });
 
-    window.ciitMeetSignalRConnection = connection;
-    window.ciitMeetSignalRReady = connection.start()
-        .then(async () => {
-            try {
-                window.ciitMeetIceServers = await connection.invoke("GetIceServers", sessionId);
-            } catch (error) {
-                console.warn("Meet ICE configuration unavailable; direct ICE only:", error);
-            }
-            await connection.invoke("JoinMeetingRoom", sessionId);
-            lastRoomJoinAt = Date.now();
-        })
-        .catch(error => {
-            console.error("Meet live connection failed:", error);
-            throw error;
-        });
+    void openRoomConnection(false);
 });
 
 
@@ -714,6 +805,7 @@ document.addEventListener("DOMContentLoaded", () => {
     let handRaised = false;
     let unreadChatCount = 0;
     let chatJoined = false;
+    let chatJoinConnectionId;
     const unreadBadge = room.querySelector("[data-meet-chat-unread]");
     const selfRaisedHand = room.querySelector("[data-meet-self-raised-hand]");
 
@@ -815,13 +907,20 @@ document.addEventListener("DOMContentLoaded", () => {
     const joinChat = async () => {
         if (chatJoined || connection.state !== "Connected") return;
         if (!isHost && room.dataset.participantStatus !== "Admitted") return;
+        if (room.dataset.meetingStatus !== "Live") return;
+        const connectionId = connection.connectionId;
+        if (chatJoinConnectionId === connectionId) return;
+        chatJoinConnectionId = connectionId;
         try {
             await connection.invoke("JoinChatRoom", sessionId);
+            if (chatJoinConnectionId !== connectionId || connection.state !== "Connected") return;
             chatJoined = true;
             chatInput.disabled = !chatEnabled;
             chatSend.disabled = !chatEnabled || !chatJoined;
         } catch (error) {
             console.warn("Meet group chat join failed:", error);
+        } finally {
+            if (chatJoinConnectionId === connectionId) chatJoinConnectionId = undefined;
         }
     };
 
@@ -987,18 +1086,19 @@ document.addEventListener("DOMContentLoaded", () => {
 
     connection.on("MeetMyParticipantStatus", state => {
         if (state?.sessionId !== sessionId) return;
-        if (state.status === "Admitted") joinChat();
+        if (state.status === "Admitted" && state.sessionStatus === "Live") joinChat();
+        else resetChatConnection();
     });
 
-    connection.onreconnected(() => {
+    const resetChatConnection = () => {
         chatJoined = false;
+        chatJoinConnectionId = undefined;
         chatInput.disabled = true;
         chatSend.disabled = true;
-        joinChat();
-    });
+    };
+    connection.onreconnecting(resetChatConnection);
+    connection.onclose(resetChatConnection);
+    room.addEventListener("meetroomconnected", joinChat);
 
     setChatEnabled(chatEnabled);
-    if (isHost || room.dataset.participantStatus === "Admitted") {
-        window.ciitMeetSignalRReady?.then(joinChat).catch(error => console.warn("Meet chat readiness failed:", error));
-    }
 });

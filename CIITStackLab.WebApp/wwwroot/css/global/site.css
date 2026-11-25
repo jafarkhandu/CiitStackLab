@@ -1437,6 +1437,8 @@ main{min-height:calc(100vh - 120px)}.ciit-footer{background:#0b0f19;color:#94a3b
     align-items: center;
     flex-direction: column;
     text-align: center;
+}
+.ciit-hub-transition.is-active .ciit-hub-transition-content {
     animation: ciitHubContentIn .55s cubic-bezier(.2,.8,.2,1) both;
 }
 .ciit-hub-transition-icon {
@@ -1451,6 +1453,8 @@ main{min-height:calc(100vh - 120px)}.ciit-footer{background:#0b0f19;color:#94a3b
     color: #fff;
     font-size: 1.8rem;
     box-shadow: 0 16px 38px rgba(37, 99, 235, .27), inset 0 1px 0 rgba(255,255,255,.35);
+}
+.ciit-hub-transition.is-active .ciit-hub-transition-icon {
     animation: ciitHubIconPulse 1.6s ease-in-out infinite;
 }
 .ciit-hub-transition-eyebrow {
@@ -1473,20 +1477,24 @@ main{min-height:calc(100vh - 120px)}.ciit-footer{background:#0b0f19;color:#94a3b
 }
 .ciit-hub-transition-progress {
     display: block;
-    width: 190px;
-    height: 4px;
+    width: 220px;
+    height: 6px;
     margin-top: 27px;
     overflow: hidden;
     border-radius: 999px;
-    background: rgba(37, 99, 235, .12);
+    background: rgba(37, 99, 235, .13);
+    box-shadow: inset 0 1px 2px rgba(15, 23, 42, .05);
 }
 .ciit-hub-transition-progress span {
     display: block;
     width: 42%;
     height: 100%;
     border-radius: inherit;
-    background: linear-gradient(90deg, #2563eb, #60a5fa);
-    animation: ciitHubProgress .72s ease-in-out forwards;
+    background: linear-gradient(90deg, #2563eb, #60a5fa, #818cf8);
+    box-shadow: 0 0 14px rgba(59, 130, 246, .35);
+}
+.ciit-hub-transition.is-active .ciit-hub-transition-progress span {
+    animation: ciitHubProgress 1.2s ease-in-out infinite;
 }
 .ciit-hub-transition-orbit {
     position: absolute;
@@ -1494,12 +1502,17 @@ main{min-height:calc(100vh - 120px)}.ciit-footer{background:#0b0f19;color:#94a3b
     aspect-ratio: 1;
     border: 1px solid rgba(59, 130, 246, .13);
     border-radius: 50%;
+    box-shadow: 0 0 70px rgba(59, 130, 246, .035);
+}
+.ciit-hub-transition.is-active .ciit-hub-transition-orbit {
     animation: ciitHubOrbit 13s linear infinite;
 }
 .ciit-hub-transition-orbit-one { transform: translate(-28%, 14%) scale(.72); }
 .ciit-hub-transition-orbit-two {
     width: min(105vw, 900px);
     border-color: rgba(99, 102, 241, .09);
+}
+.ciit-hub-transition.is-active .ciit-hub-transition-orbit-two {
     animation-direction: reverse;
 }
 body.ciit-hub-transitioning { overflow: hidden; }
@@ -1534,35 +1547,6 @@ body.ciit-hub-transitioning { overflow: hidden; }
     }
 }
 
-/* Smooth, determinate Learning Hub loading progress */
-.ciit-hub-transition-progress {
-    height: 6px;
-    width: 220px;
-    background: rgba(37, 99, 235, .13);
-    box-shadow: inset 0 1px 2px rgba(15, 23, 42, .05);
-}
-.ciit-hub-transition-progress span {
-    width: 0%;
-    transition: width 1.5s cubic-bezier(.22, 1, .36, 1);
-    animation: none;
-    background: linear-gradient(90deg, #2563eb, #60a5fa, #818cf8);
-    box-shadow: 0 0 14px rgba(59, 130, 246, .35);
-}
-.ciit-hub-transition.is-complete .ciit-hub-transition-icon {
-    background: linear-gradient(145deg, #10b981, #047857);
-    animation: ciitHubComplete .35s ease both;
-}
-.ciit-hub-transition.is-complete .ciit-hub-transition-progress span {
-    background: linear-gradient(90deg, #10b981, #34d399);
-}
-.ciit-hub-transition-orbit {
-    box-shadow: 0 0 70px rgba(59, 130, 246, .035);
-}
-@keyframes ciitHubComplete {
-    0% { transform: scale(.92); }
-    65% { transform: scale(1.08); }
-    100% { transform: scale(1); }
-}
 
 
 /* Accessible password visibility control. */

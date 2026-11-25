@@ -65,12 +65,12 @@
 <body data-meet-notification-role="@(User.IsInRole("Student") ? "student" : (User.IsInRole("Admin") || User.IsInRole("Super User")) ? "admin" : "none")">
     @{
         var hasLearningHubPurchase = false;
-        if (User.IsInRole("Student"))
+        if (ViewBag.ShowLearningHub == true && User.IsInRole("Student"))
         {
             var currentStudentId = User.FindFirstValue(ClaimTypes.NameIdentifier);
             if (!string.IsNullOrWhiteSpace(currentStudentId))
             {
-                hasLearningHubPurchase = await CoursePurchaseService.HasAnyActivePurchaseAsync(currentStudentId);
+                hasLearningHubPurchase = await CoursePurchaseService.HasAnyActivePurchaseAsync(currentStudentId, Context.RequestAborted);
             }
         }
     }

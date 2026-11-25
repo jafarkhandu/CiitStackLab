@@ -1,6 +1,7 @@
 using System.Collections.Concurrent;
 using System.Security.Claims;
 using CIITStackLab.Infrastructure.Persistence;
+using CIITStackLab.WebApp.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.SignalR;
 using Microsoft.EntityFrameworkCore;
@@ -11,14 +12,16 @@ namespace CIITStackLab.WebApp.Hubs;
 public sealed class MeetHub : Hub
 {
     private readonly ApplicationDbContext _dbContext;
-    private readonly IConfiguration _configuration;
-    private static readonly ConcurrentDictionary<string, int> PeerSessions = new();
-    private static readonly ConcurrentDictionary<string, string> PeerDisplayNames = new();
+    private readonly MeetIceServerService _iceServers;
+    private static readonly object PeerJoinLock = new();
+    private static readonly ConcurrentDictionary<string, PeerMembership> PeerSessions = new();
 
-    public MeetHub(ApplicationDbContext dbContext, IConfiguration configuration)
+    private sealed record PeerMembership(int SessionId, string DisplayName);
+
+    public MeetHub(ApplicationDbContext dbContext, MeetIceServerService iceServers)
     {
         _dbContext = dbContext;
-        _configuration = configuration;
+        _iceServers = iceServers;
     }
 
     public static string SessionGroup(int sessionId) => $"meet-session-{sessionId}";
@@ -118,6 +121,7 @@ public sealed class MeetHub : Hub
         if (sessionId <= 0)
             throw new HubException("Invalid meeting.");
 
+        var isAdmin = Context.User!.IsInRole("Admin") || Context.User.IsInRole("Super User");
         var session = await _dbContext.MeetSessions
             .AsNoTracking()
             .Where(item => item.Id == sessionId && !item.MeetBatch.IsArchived)
@@ -125,15 +129,20 @@ public sealed class MeetHub : Hub
             {
                 item.Id,
                 item.MeetBatchId,
+                item.Title,
                 item.Status,
+                item.StartsAtUtc,
                 item.StartedAtUtc,
+                item.EndedAtUtc,
+                item.CancelledAtUtc,
                 item.DurationMinutes,
-                item.ChatEnabled
+                item.WaitingRoomEnabled,
+                item.ChatEnabled,
+                pendingCount = isAdmin ? 0 : item.Participants.Count(participant => participant.Status == "Pending"),
+                participantCount = isAdmin ? 0 : item.Participants.Count(participant => participant.Status == "Admitted")
             })
             .SingleOrDefaultAsync(Context.ConnectionAborted);
 
-            // Keep waiting-room connections subscribed so admission, removal,
-            // permissions, chat, and lifecycle changes arrive without a refresh.
         if (session is null)
         {
             // A stale room can remain open while the lifecycle worker or the
@@ -147,7 +156,11 @@ public sealed class MeetHub : Hub
             return;
         }
 
-        var isAdmin = Context.User!.IsInRole("Admin") || Context.User.IsInRole("Super User");
+        var now = DateTime.UtcNow;
+        var isActive = session.Status == "Live"
+            && session.StartedAtUtc is { } startedAtUtc
+            && startedAtUtc <= now
+            && startedAtUtc.AddMinutes(session.DurationMinutes) > now;
         var studentId = Context.UserIdentifier
             ?? Context.User.FindFirstValue(ClaimTypes.NameIdentifier)
             ?? Context.User.FindFirstValue("sub");
@@ -168,12 +181,7 @@ public sealed class MeetHub : Hub
             if (!isBatchMember)
                 throw new HubException("You are not enrolled in this meeting's batch.");
 
-            var participantStatus = await _dbContext.MeetSessionParticipants.AsNoTracking()
-                .Where(participant => participant.MeetSessionId == sessionId
-                    && participant.StudentUserId == studentId)
-                .Select(participant => participant.Status)
-                .SingleOrDefaultAsync(Context.ConnectionAborted);
-
+            // Subscribe before reading participant status so admission changes during the join can reach this tab.
             await Groups.AddToGroupAsync(
                 Context.ConnectionId,
                 StudentSessionGroup(sessionId, studentId),
@@ -183,43 +191,39 @@ public sealed class MeetHub : Hub
                 SessionGroup(sessionId),
                 Context.ConnectionAborted);
 
-            var now = DateTime.UtcNow;
-            var sessionEndUtc = session.StartedAtUtc?.AddMinutes(session.DurationMinutes);
-            var isSessionActive = session.Status == "Live"
-                && session.StartedAtUtc.HasValue
-                && session.StartedAtUtc.Value <= now
-                && sessionEndUtc > now;
+            var participant = await _dbContext.MeetSessionParticipants.AsNoTracking()
+                .Where(item => item.MeetSessionId == sessionId && item.StudentUserId == studentId)
+                .Select(item => new { item.Status, item.CanUseMicrophone, item.CanUseCamera, item.CanShareScreen })
+                .SingleOrDefaultAsync(Context.ConnectionAborted);
 
-            // A completed/expired meeting is a normal lifecycle state, not a
-            // SignalR access exception. Notify the student UI and stop joining.
-            if (!isSessionActive)
-            {
-                await Clients.Caller.SendAsync("MeetMyParticipantStatus", new
-                {
-                    sessionId,
-                    status = participantStatus ?? "Left",
-                    sessionStatus = session.Status,
-                    canUseMicrophone = false,
-                    canUseCamera = false,
-                    canShareScreen = false
-                }, Context.ConnectionAborted);
-                return;
-            }
-
-            if (participantStatus is null)
+            if (isActive && participant is null)
                 throw new HubException("Your join request was not found. Please use the Join button on the student meeting page.");
 
-            if (participantStatus is not ("Pending" or "Admitted"))
+            var canUseMedia = isActive && participant?.Status == "Admitted";
+            var canReadPermissions = isActive && participant?.Status is "Pending" or "Admitted";
+            await Clients.Caller.SendAsync("MeetMyParticipantStatus", new
             {
-                await Clients.Caller.SendAsync("MeetMyParticipantStatus", new
-                {
-                    sessionId,
-                    status = participantStatus,
-                    sessionStatus = session.Status,
-                    canUseMicrophone = false,
-                    canUseCamera = false,
-                    canShareScreen = false
-                }, Context.ConnectionAborted);
+                sessionId,
+                status = participant?.Status ?? "Left",
+                sessionStatus = session.Status,
+                canUseMicrophone = canReadPermissions && participant!.CanUseMicrophone,
+                canUseCamera = canReadPermissions && participant!.CanUseCamera,
+                canShareScreen = canReadPermissions && participant!.CanShareScreen
+            }, Context.ConnectionAborted);
+
+            await Clients.Caller.SendAsync("MeetRoomUpdated", new
+            {
+                sessionId,
+                session.Status,
+                session.WaitingRoomEnabled,
+                session.ChatEnabled,
+                session.pendingCount,
+                session.participantCount
+            }, Context.ConnectionAborted);
+
+            if (!canUseMedia)
+            {
+                await LeavePeerRoom(sessionId);
                 return;
             }
         }
@@ -227,25 +231,6 @@ public sealed class MeetHub : Hub
         if (isAdmin)
         {
             await Groups.AddToGroupAsync(Context.ConnectionId, AdminSessionGroup(sessionId), Context.ConnectionAborted);
-
-            var adminSession = await _dbContext.MeetSessions
-                .AsNoTracking()
-                .Where(item => item.Id == sessionId)
-                .Select(item => new
-                {
-                    item.Id,
-                    item.MeetBatchId,
-                    item.Title,
-                    item.Status,
-                    item.StartsAtUtc,
-                    item.StartedAtUtc,
-                    item.EndedAtUtc,
-                    item.CancelledAtUtc,
-                    item.DurationMinutes,
-                    item.WaitingRoomEnabled,
-                    item.ChatEnabled,
-                })
-                .SingleAsync(Context.ConnectionAborted);
 
             var adminParticipants = await (
                 from participant in _dbContext.MeetSessionParticipants.AsNoTracking()
@@ -264,121 +249,73 @@ public sealed class MeetHub : Hub
 
             await Clients.Caller.SendAsync("MeetRoomUpdated", new
             {
-                sessionId = adminSession.Id,
-                batchId = adminSession.MeetBatchId,
-                adminSession.Title,
-                adminSession.Status,
-                startsAtUtc = adminSession.StartsAtUtc,
-                startedAtUtc = adminSession.StartedAtUtc,
-                endedAtUtc = adminSession.EndedAtUtc,
-                cancelledAtUtc = adminSession.CancelledAtUtc,
-                adminSession.DurationMinutes,
-                adminSession.WaitingRoomEnabled,
-                adminSession.ChatEnabled,
+                sessionId = session.Id,
+                batchId = session.MeetBatchId,
+                session.Title,
+                session.Status,
+                startsAtUtc = session.StartsAtUtc,
+                startedAtUtc = session.StartedAtUtc,
+                endedAtUtc = session.EndedAtUtc,
+                cancelledAtUtc = session.CancelledAtUtc,
+                session.DurationMinutes,
+                session.WaitingRoomEnabled,
+                session.ChatEnabled,
                 pendingCount = adminParticipants.Count(item => item.Status == "Pending"),
                 participantCount = adminParticipants.Count(item => item.Status == "Admitted"),
                 participants = adminParticipants
             }, Context.ConnectionAborted);
-
-        }
-        else
-        {
-            await Groups.AddToGroupAsync(Context.ConnectionId, SessionGroup(sessionId), Context.ConnectionAborted);
         }
 
-        var isActive = session.Status == "Live"
-            && session.StartedAtUtc.HasValue
-            && session.StartedAtUtc.Value.AddMinutes(session.DurationMinutes) > DateTime.UtcNow;
-        var participantAccess = isAdmin ? null : await _dbContext.MeetSessionParticipants
-            .AsNoTracking()
-            .Where(participant => participant.MeetSessionId == sessionId
-                && participant.StudentUserId == studentId
-                && (participant.Status == "Pending" || participant.Status == "Admitted"))
-            .Select(participant => new
-            {
-                participant.Status,
-                participant.CanUseMicrophone,
-                participant.CanUseCamera,
-                participant.CanShareScreen
-            })
-            .SingleOrDefaultAsync(Context.ConnectionAborted);
-        var isAdmittedStudent = isAdmin || (isActive && participantAccess?.Status == "Admitted");
-
-        if (!isAdmin && participantAccess is not null)
+        if (!isActive || !await EnsurePeerAccessAsync(sessionId))
         {
-            await Clients.Caller.SendAsync("MeetMyParticipantStatus", new
-            {
-                sessionId,
-                status = participantAccess.Status,
-                sessionStatus = session.Status,
-                canUseMicrophone = participantAccess.CanUseMicrophone,
-                canUseCamera = participantAccess.CanUseCamera,
-                canShareScreen = participantAccess.CanShareScreen
-            }, Context.ConnectionAborted);
+            await LeavePeerRoom(sessionId);
+            return;
         }
 
-        if (isActive && isAdmittedStudent)
+        var joined = false;
+        if (!PeerSessions.TryGetValue(Context.ConnectionId, out var membership) || membership.SessionId != sessionId)
         {
-            if (!await EnsurePeerAccessAsync(sessionId)) return;
+            if (membership is not null) await LeavePeerRoom(membership.SessionId);
+
+            membership = new PeerMembership(sessionId, await GetMeetDisplayNameAsync());
             await Groups.AddToGroupAsync(Context.ConnectionId, PeerGroup(sessionId), Context.ConnectionAborted);
-            PeerSessions[Context.ConnectionId] = sessionId;
+            joined = true;
+        }
 
-            var displayName = isAdmin
-                ? "Host"
-                : await _dbContext.Users.AsNoTracking()
-                    .Where(user => user.Id == studentId)
-                    .Select(user => user.UserName ?? user.Email ?? "Student")
-                    .SingleOrDefaultAsync(Context.ConnectionAborted) ?? "Student";
-            PeerDisplayNames[Context.ConnectionId] = displayName;
-
-            var existingPeers = PeerSessions
-                .Where(pair => pair.Value == sessionId && pair.Key != Context.ConnectionId)
-                .Select(pair => new
-                {
-                    connectionId = pair.Key,
-                    displayName = PeerDisplayNames.TryGetValue(pair.Key, out var name) ? name : "Participant"
-                })
+        // Only the later of two simultaneous arrivals includes the other in its
+        // initial snapshot and starts their WebRTC negotiation.
+        object[] existingPeers;
+        lock (PeerJoinLock)
+        {
+            existingPeers = PeerSessions
+                .Where(pair => pair.Value.SessionId == sessionId && pair.Key != Context.ConnectionId)
+                .Select(pair => new { connectionId = pair.Key, displayName = pair.Value.DisplayName })
                 .ToArray();
+            if (joined) PeerSessions[Context.ConnectionId] = membership;
+        }
 
-            await Clients.Caller.SendAsync("MeetExistingPeers", existingPeers, Context.ConnectionAborted);
+        await Clients.Caller.SendAsync("MeetExistingPeers", existingPeers, Context.ConnectionAborted);
+        if (joined)
+        {
             await Clients.GroupExcept(PeerGroup(sessionId), new[] { Context.ConnectionId })
                 .SendAsync("MeetPeerJoined", new
                 {
                     connectionId = Context.ConnectionId,
-                    displayName
+                    displayName = membership.DisplayName
                 }, Context.ConnectionAborted);
         }
     }
 
-    public async Task<IReadOnlyList<object>> GetIceServers(int sessionId)
+    public async Task<IReadOnlyList<MeetIceServer>> GetIceServers(int sessionId)
     {
-        if (!await EnsurePeerAccessAsync(sessionId))
+        var endsAtUtc = await GetPeerAccessEndAsync(sessionId);
+        if (!endsAtUtc.HasValue)
             throw new HubException("You are not admitted to this meeting.");
 
-        var configuredServers = _configuration.GetSection("WebRtc:IceServers")
-            .GetChildren()
-            .Select(server => new
-            {
-                urls = server["Urls"]?.Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
-                    ?? Array.Empty<string>(),
-                username = server["Username"],
-                credential = server["Credential"]
-            })
-            .Where(server => server.urls.Length > 0)
-            .Cast<object>()
-            .ToList();
-
-        if (configuredServers.Count == 0)
-        {
-            configuredServers.Add(new
-            {
-                urls = new[] { "stun:stun.l.google.com:19302" },
-                username = (string?)null,
-                credential = (string?)null
-            });
-        }
-
-        return configuredServers;
+        var userId = Context.UserIdentifier
+            ?? Context.User?.FindFirstValue(ClaimTypes.NameIdentifier)
+            ?? Context.User?.FindFirstValue("sub");
+        return await _iceServers.GetAsync(sessionId, userId, endsAtUtc.Value, Context.ConnectionAborted);
     }
 
     public async Task JoinChatRoom(int sessionId)
@@ -512,10 +449,10 @@ public sealed class MeetHub : Hub
 
         // Reconnects and peer teardown can race with in-flight SDP/ICE messages.
         // A stale connection ID is not a meeting access failure; safely drop that signal.
-        if (!PeerSessions.TryGetValue(Context.ConnectionId, out var senderSessionId)
-            || senderSessionId != sessionId
-            || !PeerSessions.TryGetValue(targetConnectionId, out var targetSessionId)
-            || targetSessionId != sessionId)
+        if (!PeerSessions.TryGetValue(Context.ConnectionId, out var sender)
+            || sender.SessionId != sessionId
+            || !PeerSessions.TryGetValue(targetConnectionId, out var target)
+            || target.SessionId != sessionId)
         {
             return;
         }
@@ -535,8 +472,8 @@ public sealed class MeetHub : Hub
             throw new HubException("Invalid media state.");
 
         if (!await EnsurePeerAccessAsync(sessionId)) return;
-        if (!PeerSessions.TryGetValue(Context.ConnectionId, out var mappedSessionId)
-            || mappedSessionId != sessionId)
+        if (!PeerSessions.TryGetValue(Context.ConnectionId, out var membership)
+            || membership.SessionId != sessionId)
             return;
 
         await Clients.GroupExcept(PeerGroup(sessionId), new[] { Context.ConnectionId })
@@ -551,59 +488,51 @@ public sealed class MeetHub : Hub
 
     public async Task LeavePeerRoom(int sessionId)
     {
-        if (PeerSessions.TryGetValue(Context.ConnectionId, out var mappedSessionId)
-            && mappedSessionId == sessionId)
+        if (PeerSessions.TryGetValue(Context.ConnectionId, out var membership)
+            && membership.SessionId == sessionId
+            && PeerSessions.TryRemove(Context.ConnectionId, out _))
         {
-            PeerSessions.TryRemove(Context.ConnectionId, out _);
-            PeerDisplayNames.TryRemove(Context.ConnectionId, out _);
             await Groups.RemoveFromGroupAsync(Context.ConnectionId, PeerGroup(sessionId), Context.ConnectionAborted);
             await Clients.Group(PeerGroup(sessionId)).SendAsync("MeetPeerLeft", Context.ConnectionId, Context.ConnectionAborted);
         }
     }
 
-    private async Task<bool> EnsurePeerAccessAsync(int sessionId)
+    private async Task<bool> EnsurePeerAccessAsync(int sessionId) =>
+        (await GetPeerAccessEndAsync(sessionId)).HasValue;
+
+    private async Task<DateTime?> GetPeerAccessEndAsync(int sessionId)
     {
         var now = DateTime.UtcNow;
+        var user = Context.User!;
+        var isAdmin = user.IsInRole("Admin") || user.IsInRole("Super User");
+        var studentId = Context.UserIdentifier;
+        var isStudent = !string.IsNullOrWhiteSpace(studentId) && user.IsInRole("Student");
         var session = await _dbContext.MeetSessions
             .AsNoTracking()
             .Where(item => item.Id == sessionId && !item.MeetBatch.IsArchived)
             .Select(item => new
             {
-                item.MeetBatchId,
                 item.Status,
                 item.StartedAtUtc,
-                item.DurationMinutes
+                item.DurationMinutes,
+                HasAccess = isAdmin || (isStudent
+                    && item.MeetBatch.Members.Any(member => member.StudentUserId == studentId)
+                    && item.Participants.Any(participant => participant.StudentUserId == studentId
+                        && participant.Status == "Admitted"))
             })
             .SingleOrDefaultAsync(Context.ConnectionAborted);
 
-        if (session is null
-            || session.Status != "Live"
-            || !session.StartedAtUtc.HasValue
-            || session.StartedAtUtc.Value.AddMinutes(session.DurationMinutes) <= now)
-        {
-            return false;
-        }
+        if (session is null || session.Status != "Live" || !session.StartedAtUtc.HasValue)
+            return null;
 
-        if (Context.User!.IsInRole("Admin") || Context.User.IsInRole("Super User"))
-            return true;
+        var endsAtUtc = session.StartedAtUtc.Value.AddMinutes(session.DurationMinutes);
+        if (endsAtUtc <= now)
+            return null;
 
-        var studentId = Context.UserIdentifier;
-        if (string.IsNullOrWhiteSpace(studentId)
-            || !Context.User.IsInRole("Student")
-            || !await _dbContext.MeetBatchMembers.AsNoTracking().AnyAsync(
-                member => member.MeetBatchId == session.MeetBatchId
-                    && member.StudentUserId == studentId,
-                Context.ConnectionAborted)
-            || !await _dbContext.MeetSessionParticipants.AsNoTracking().AnyAsync(
-                participant => participant.MeetSessionId == sessionId
-                    && participant.StudentUserId == studentId
-                    && participant.Status == "Admitted",
-                Context.ConnectionAborted))
-        {
+        if (!session.HasAccess)
             throw new HubException("You are not admitted to this meeting.");
-        }
 
-        return true;
+        return endsAtUtc;
     }
 
     public override async Task OnDisconnectedAsync(Exception? exception)
@@ -612,11 +541,8 @@ public sealed class MeetHub : Hub
         // cleared only when RaiseHand(sessionId, false) is explicitly invoked.
         RaisedHandConnections.TryRemove(Context.ConnectionId, out _);
 
-        if (PeerSessions.TryRemove(Context.ConnectionId, out var sessionId))
-        {
-            PeerDisplayNames.TryRemove(Context.ConnectionId, out _);
-            await Clients.Group(PeerGroup(sessionId)).SendAsync("MeetPeerLeft", Context.ConnectionId);
-        }
+        if (PeerSessions.TryRemove(Context.ConnectionId, out var membership))
+            await Clients.Group(PeerGroup(membership.SessionId)).SendAsync("MeetPeerLeft", Context.ConnectionId);
 
         await base.OnDisconnectedAsync(exception);
     }

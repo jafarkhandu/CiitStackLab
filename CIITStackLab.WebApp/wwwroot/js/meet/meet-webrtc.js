@@ -13,84 +13,103 @@ document.addEventListener("DOMContentLoaded", () => {
     }
 
     const peers = new Map();
+    const departedPeers = new Set();
+    let peersBeforeSync = null;
+    let peerGeneration = 0;
     let iceServers = [{ urls: "stun:stun.l.google.com:19302" }];
+    let iceRequest = null;
+    let iceRequestConnectionId = null;
+    let lastIceRequestAt = 0;
+    const prepareIce = (refresh = false) => {
+        if (connection.state !== "Connected" || mediaCleanupCompleted) return Promise.resolve();
+        const connectionId = connection.connectionId;
+        if (iceRequest && iceRequestConnectionId === connectionId) return iceRequest;
+        if (!refresh && iceRequestConnectionId === connectionId && Date.now() - lastIceRequestAt < 10000) return Promise.resolve();
+
+        lastIceRequestAt = Date.now();
+        iceRequestConnectionId = connectionId;
+        const request = connection.invoke("GetIceServers", sessionId)
+            .then(servers => {
+                if (mediaCleanupCompleted || connectionId !== connection.connectionId) return;
+                if (!Array.isArray(servers) || !servers.length || JSON.stringify(servers) === JSON.stringify(iceServers)) return;
+                iceServers = servers;
+                peers.forEach(peer => {
+                    const pc = peer.connection;
+                    pc.setConfiguration({ ...pc.getConfiguration(), iceServers });
+                });
+            })
+            .catch(error => console.warn("Meet ICE configuration unavailable:", error))
+            .finally(() => {
+                if (iceRequest === request) iceRequest = null;
+            });
+        iceRequest = request;
+        return request;
+    };
+    window.ciitMeetPrepareIce = prepareIce;
+
     const audioMeters = new Map();
+    const pendingAudio = new Set();
     let audioContext = null;
     let localAudioMeter = null;
     let activeSpeakerTile = null;
-    let localStream = new MediaStream();
+    const localStream = new MediaStream();
     let screenStream = null;
     let localVideo = grid.querySelector(".ciit-meet-video-self video");
     const selfTile = grid.querySelector(".ciit-meet-video-self");
     const waitingTile = grid.querySelector(".ciit-meet-video-empty");
     const localPlaceholder = selfTile?.querySelector(".ciit-meet-video-placeholder");
-    const localName = selfTile?.querySelector(".ciit-meet-video-name");
     const micButton = room.querySelector('[data-room-toggle="mic"]');
     const cameraButton = room.querySelector('[data-room-toggle="camera"]');
     const shareButton = room.querySelector('[data-room-toggle="share"]');
+    const enableAudioButton = room.querySelector("[data-meet-enable-audio]");
     const mediaPermissions = {
         mic: true,
         camera: true,
         share: true
     };
-    let requestMedia;
+    const deviceRequests = { mic: 0, camera: 0, share: 0 };
 
-    const playRemoteMedia = video => {
-        const playPromise = video.play();
-        if (!playPromise || typeof playPromise.catch !== "function") return;
-        playPromise.catch(error => {
-            if (error?.name !== "NotAllowedError")
-                console.warn("Remote media playback failed:", error);
-            video.controls = true;
-            video.title = "Click to play meeting audio/video";
-            video.addEventListener("click", () => playRemoteMedia(video), { once: true });
+    const updateAudioButton = () => {
+        if (enableAudioButton) enableAudioButton.hidden = pendingAudio.size === 0;
+    };
+
+    const playRemoteAudio = audio => {
+        if (!audio.srcObject) return;
+        audio.play()?.then(() => {
+            pendingAudio.delete(audio);
+            updateAudioButton();
+        }).catch(error => {
+            if (error?.name === "NotAllowedError" && audio.srcObject) {
+                pendingAudio.add(audio);
+                updateAudioButton();
+            } else if (error?.name !== "AbortError") {
+                console.warn("Remote audio playback failed:", error);
+            }
         });
     };
 
     const applyMediaPermissions = update => {
-        if (!update || Number(update.sessionId) !== sessionId) return;
-        const next = {
-            mic: update.canUseMicrophone !== false,
-            camera: update.canUseCamera !== false,
-            share: update.canShareScreen !== false
-        };
-        Object.assign(mediaPermissions, next);
+        if (!update || isHost || Number(update.sessionId) !== sessionId) return;
         const controls = [
-            ["mic", micButton],
-            ["camera", cameraButton],
-            ["share", shareButton]
+            ["mic", micButton, update.canUseMicrophone],
+            ["camera", cameraButton, update.canUseCamera],
+            ["share", shareButton, update.canShareScreen]
         ];
-        controls.forEach(([kind, button]) => {
+        controls.forEach(([kind, button, allowed]) => {
+            if (typeof allowed !== "boolean") return;
+            const changed = mediaPermissions[kind] !== allowed;
+            mediaPermissions[kind] = allowed;
             if (button) {
-                button.disabled = !mediaPermissions[kind];
-                button.title = mediaPermissions[kind] ? "" : "The host disabled this control.";
+                button.disabled = !allowed;
+                button.title = allowed ? "" : "The host disabled this control.";
             }
+            if (allowed || !changed) return;
+            if (kind === "share") stopScreenShare();
+            else setTrackEnabled(kind, false).catch(error => console.warn("Device permission cleanup failed:", error));
         });
-        ["mic", "camera"].forEach(kind => {
-            if (!mediaPermissions[kind]) {
-                setTrackEnabled(kind, false).catch(error => console.warn("Device permission cleanup failed:", error));
-                setToggleVisual(kind === "mic" ? micButton : cameraButton, kind, false);
-                saveMediaPreference(kind, false);
-            }
-        });
-        if (!mediaPermissions.share && screenStream) {
-            screenStream.getTracks().forEach(track => track.stop());
-            screenStream = null;
-            setToggleVisual(shareButton, "share", false);
-        }
     };
     window.ciitMeetApplyMediaPermissions = applyMediaPermissions;
 
-    connection.on("MeetMyParticipantStatus", state => {
-        applyMediaPermissions(state);
-        if (state?.status === "Admitted" && connection.state === "Connected") {
-            connection.invoke("GetIceServers", sessionId)
-                .then(servers => {
-                    if (Array.isArray(servers) && servers.length) iceServers = servers;
-                })
-                .catch(error => console.warn("Meet ICE configuration refresh failed:", error));
-        }
-    });
     const preferenceKey = "ciit-meet-media-" + sessionId;
 
     const setToggleVisual = (button, type, active) => {
@@ -113,10 +132,11 @@ document.addEventListener("DOMContentLoaded", () => {
             const saved = JSON.parse(sessionStorage.getItem(preferenceKey) || "{}");
             return {
                 mic: saved.mic === true,
-                camera: saved.camera === true
+                camera: saved.camera === true,
+                share: saved.share === true
             };
         } catch {
-            return { mic: false, camera: false };
+            return { mic: false, camera: false, share: false };
         }
     };
 
@@ -149,8 +169,9 @@ document.addEventListener("DOMContentLoaded", () => {
 
     const updateLocalPreview = () => {
         if (!localVideo) return;
-        const hasVideo = localStream.getVideoTracks().some(track => track.readyState === "live" && track.enabled);
-        localVideo.srcObject = hasVideo ? localStream : null;
+        const preview = screenStream ?? localStream;
+        const hasVideo = preview.getVideoTracks().some(track => track.readyState === "live" && track.enabled);
+        localVideo.srcObject = hasVideo ? preview : null;
         localVideo.hidden = !hasVideo;
         if (localPlaceholder) localPlaceholder.hidden = hasVideo;
     };
@@ -163,6 +184,11 @@ document.addEventListener("DOMContentLoaded", () => {
         if (audioContext?.state === "suspended") audioContext.resume().catch(() => {});
         return audioContext;
     };
+
+    enableAudioButton?.addEventListener("click", () => {
+        ensureAudioContext();
+        pendingAudio.forEach(playRemoteAudio);
+    });
 
     const createAudioMeter = stream => {
         const context = ensureAudioContext();
@@ -186,7 +212,7 @@ document.addEventListener("DOMContentLoaded", () => {
     };
 
     const updateActiveSpeaker = () => {
-        if (pinnedTile) return;
+        if (document.hidden || pinnedTile || audioContext?.state !== "running") return;
         let loudestTile = null;
         let loudestLevel = 0.035;
         const localLevel = readAudioLevel(localAudioMeter);
@@ -207,7 +233,7 @@ document.addEventListener("DOMContentLoaded", () => {
         activeSpeakerTile?.classList.add("ciit-meet-video-active-speaker");
     };
 
-    window.setInterval(updateActiveSpeaker, 180);
+    const activeSpeakerTimer = window.setInterval(updateActiveSpeaker, 180);
 
     if (selfTile && !selfTile.querySelector(".ciit-meet-video-pin")) {
         const selfPin = document.createElement("button");
@@ -220,31 +246,108 @@ document.addEventListener("DOMContentLoaded", () => {
         selfTile.append(selfPin);
     }
 
-    const applyParticipantStreamState = peer => {
-        const videoTrack = peer.remoteStream?.getVideoTracks().find(track => track.readyState === "live");
-        const cameraActive = (peer.screenSharing === true || peer.cameraEnabled !== false)
-            && Boolean(videoTrack && videoTrack.enabled && !videoTrack.muted);
-        peer.tile.video.hidden = !cameraActive;
-        peer.tile.placeholder.hidden = cameraActive;
-        const detail = peer.tile.placeholder.querySelector("small");
-        if (detail) detail.textContent = cameraActive ? "" : "Camera is off";
-        peer.tile.tile.classList.toggle("ciit-meet-camera-off", !cameraActive);
+    const setVideoTrack = (video, track) => {
+        if (video.srcObject?.getVideoTracks()[0] !== track) {
+            video.srcObject = track ? new MediaStream([track]) : null;
+        }
     };
 
-    const addLocalTracksToPeer = (peer) => {
-        localStream.getTracks().forEach(track => {
-            const kind = track.kind;
-            const existing = peer.senders[kind];
-            if (existing?.track?.id === track.id) return;
+    const removeScreenTile = peer => {
+        if (!peer.screenTile) return;
+        peer.screenTile.video.srcObject = null;
+        peer.screenTile.tile.remove();
+        peer.screenTile = null;
+    };
 
-            if (existing && existing.track === null) {
-                existing.replaceTrack(track).catch(error => console.warn("Local track attach failed:", error));
-            } else {
-                peer.senders[kind] = peer.connection.addTrack(track, localStream);
+    const applyParticipantStreamState = peer => {
+        const active = track => track.readyState === "live" && track.enabled && !track.muted;
+        const tracks = [...peer.remoteVideoTracks.values()].filter(entry => active(entry.track));
+        let screenTrack = tracks.find(entry => entry.isScreen && (peer.remoteScreenMid !== null
+            ? peer.screenSharing !== false && entry.mid === peer.remoteScreenMid
+            : entry.streamIds.includes(peer.remoteScreenStreamId)))?.track;
+        if (!peer.hasScreenMetadata && peer.screenSharing) {
+            // Older room scripts sent two video tracks without marking their streams.
+            screenTrack = tracks[1]?.track ?? (peer.cameraEnabled === false ? tracks[0]?.track : undefined);
+        }
+        const cameraTrack = tracks.find(entry => !entry.isScreen && entry.track !== screenTrack)?.track;
+        const cameraActive = peer.cameraEnabled !== false && Boolean(cameraTrack);
+        setVideoTrack(peer.tile.video, cameraTrack);
+        peer.tile.video.hidden = !cameraActive;
+        peer.tile.placeholder.hidden = cameraActive;
+        peer.tile.tile.classList.toggle("ciit-meet-camera-off", !cameraActive);
+
+        if (screenTrack) {
+            peer.screenTile ??= createRemoteScreenTile(peer.id, peer.tile.tile.dataset.peerDisplayName);
+            setVideoTrack(peer.screenTile.video, screenTrack);
+        } else {
+            removeScreenTile(peer);
+        }
+        const badge = peer.tile.tile.querySelector("[data-peer-screen-share-state]");
+        if (badge) badge.hidden = !screenTrack;
+    };
+
+    const addLocalTrackToPeer = (peer, track) => {
+        if (!peer.localTracksReady) return;
+        const sender = peer.senders[track.kind];
+        if (sender) {
+            if (sender.track !== track) {
+                return sender.replaceTrack(track).catch(error => console.warn("Local track attach failed:", error));
             }
-        });
-        if (screenStream?.getVideoTracks()[0] && !peer.screenSender)
-            peer.screenSender = peer.connection.addTrack(screenStream.getVideoTracks()[0], screenStream);
+        } else {
+            peer.senders[track.kind] = peer.connection.addTrack(track, localStream);
+        }
+    };
+
+    const addScreenTrackToPeer = peer => {
+        const track = screenStream?.getVideoTracks()[0];
+        if (!peer.localTracksReady || !track) return;
+        if (peer.screenTransceiver) {
+            if (peer.screenSender.track !== track) {
+                return peer.screenSender.replaceTrack(track).catch(error => console.warn("Screen track attach failed:", error));
+            }
+        } else if (!peer.screenSender) {
+            peer.screenSender = peer.connection.addTrack(track, screenStream);
+        }
+    };
+
+    const attachLocalTracks = peer => {
+        if (peer.localTracksReady) return;
+        peer.localTracksReady = true;
+        return Promise.all([
+            ...localStream.getTracks().filter(track => track.readyState === "live").map(track => addLocalTrackToPeer(peer, track)),
+            addScreenTrackToPeer(peer)
+        ]);
+    };
+
+    const useMediaTransceivers = (peer, audio, camera, screen) => {
+        peer.senders.audio = audio.sender;
+        peer.senders.video = camera.sender;
+        peer.screenSender = screen.sender;
+        peer.screenTransceiver = screen;
+    };
+
+    const createMediaTransceivers = peer => {
+        // Reserve a slot per source so capture can start or stop without a new offer.
+        const add = (kind, stream) => {
+            const track = stream?.getTracks().find(item => item.kind === kind && item.readyState === "live");
+            return peer.connection.addTransceiver(track ?? kind, {
+                direction: "sendrecv",
+                streams: track ? [stream] : []
+            });
+        };
+        useMediaTransceivers(peer, add("audio", localStream), add("video", localStream), add("video", screenStream));
+        peer.localTracksReady = true;
+    };
+
+    const matchMediaTransceivers = peer => {
+        if (peer.remoteScreenMid === null) return;
+        const transceivers = peer.connection.getTransceivers();
+        const audio = transceivers.find(item => item.receiver.track.kind === "audio");
+        const screen = transceivers.find(item => item.receiver.track.kind === "video" && item.mid === peer.remoteScreenMid);
+        const camera = transceivers.find(item => item.receiver.track.kind === "video" && item !== screen);
+        if (!audio || !screen || !camera) return;
+        audio.direction = camera.direction = screen.direction = "sendrecv";
+        useMediaTransceivers(peer, audio, camera, screen);
     };
 
     const createRemoteTile = (peerId, displayName = "Participant") => {
@@ -256,9 +359,13 @@ document.addEventListener("DOMContentLoaded", () => {
         const video = document.createElement("video");
         video.autoplay = true;
         video.playsInline = true;
-        video.muted = false;
+        video.muted = true;
+        video.hidden = true;
         video.setAttribute("aria-label", "Meeting participant video");
-        video.addEventListener("loadedmetadata", () => playRemoteMedia(video));
+
+        const audio = document.createElement("audio");
+        audio.autoplay = true;
+        audio.hidden = true;
 
         const placeholder = document.createElement("div");
         placeholder.className = "ciit-meet-video-placeholder";
@@ -298,10 +405,10 @@ document.addEventListener("DOMContentLoaded", () => {
         micState.dataset.peerMicState = "true";
         nameBadge.append(document.createTextNode(displayName + " "), micState);
 
-        tile.append(video, placeholder, shareBadge, raisedHandBadge, nameBadge, pin);
+        tile.append(video, audio, placeholder, shareBadge, raisedHandBadge, nameBadge, pin);
         grid.append(tile);
         if (waitingTile) waitingTile.hidden = true;
-        return { tile, video, placeholder, pin };
+        return { tile, video, audio, placeholder };
     };
 
     const createRemoteScreenTile = (peerId, displayName) => {
@@ -312,6 +419,7 @@ document.addEventListener("DOMContentLoaded", () => {
         const video = document.createElement("video");
         video.autoplay = true;
         video.playsInline = true;
+        video.muted = true;
         video.setAttribute("aria-label", displayName + " screen share");
         const label = document.createElement("span");
         label.className = "ciit-meet-video-name";
@@ -347,257 +455,325 @@ document.addEventListener("DOMContentLoaded", () => {
     const removePeer = peerId => {
         const peer = peers.get(peerId);
         if (!peer) return;
+        peers.delete(peerId);
         if (pinnedTile === peer.tile.tile) {
             pinnedTile = null;
             grid.classList.remove("has-pinned-tile");
         }
+        window.clearTimeout(peer.recoveryTimer);
         peer.connection.ontrack = null;
         peer.connection.onicecandidate = null;
         peer.connection.onnegotiationneeded = null;
+        peer.connection.oniceconnectionstatechange = null;
         peer.connection.close();
-        const meter = audioMeters.get(peerId);
-        meter?.source.disconnect();
+        audioMeters.get(peerId)?.source.disconnect();
         audioMeters.delete(peerId);
+        peer.tile.audio.srcObject = null;
+        peer.tile.video.srcObject = null;
+        pendingAudio.delete(peer.tile.audio);
+        updateAudioButton();
+        removeScreenTile(peer);
         peer.tile.tile.remove();
-        peers.delete(peerId);
-        if (grid.querySelectorAll(".ciit-meet-video-remote").length === 0 && waitingTile) {
-            waitingTile.hidden = false;
-        }
+        if (waitingTile && !peers.size) waitingTile.hidden = false;
     };
 
     const sendSignal = (peerId, signalType, signalData) =>
         connection.invoke("RelayWebRtcSignal", sessionId, peerId, signalType, signalData);
 
+    const isCurrentPeer = peer => !mediaCleanupCompleted && peers.get(peer.id) === peer;
+
+    // A description and its queued candidates must be applied before handling
+    // the next offer, answer, or negotiationneeded event for this peer.
+    const enqueuePeerSignal = (peer, operation) => {
+        peer.signalQueue = peer.signalQueue.then(() => {
+            if (isCurrentPeer(peer)) return operation();
+        }).catch(error => {
+            if (isCurrentPeer(peer) && connection.state === "Connected")
+                console.warn("WebRTC signaling failed:", error);
+        });
+    };
+
+    const sendLocalDescription = async peer => {
+        const pc = peer.connection;
+        const screenStreamId = screenStream?.id ?? null;
+        await pc.setLocalDescription();
+        if (!isCurrentPeer(peer) || connection.state !== "Connected") return;
+        const { type, sdp } = pc.localDescription;
+        const screenMid = peer.screenTransceiver?.mid;
+        await sendSignal(peer.id, type === "offer" ? "Offer" : "Answer", screenMid == null
+            ? { type, sdp, screenStreamId }
+            : { type, sdp, screenMid });
+    };
+
+    const scheduleIceRecovery = (peer, delay) => {
+        if (peer.recoveryTimer || peer.restartAttempts >= 3 || connection.state !== "Connected") return;
+        peer.recoveryTimer = window.setTimeout(async () => {
+            peer.recoveryTimer = null;
+            const pc = peer.connection;
+            if (!isCurrentPeer(peer) || connection.state !== "Connected"
+                || ["connected", "completed", "closed"].includes(pc.iceConnectionState)) return;
+
+            peer.restartAttempts += 1;
+            await prepareIce();
+            if (!isCurrentPeer(peer) || connection.state !== "Connected"
+                || ["connected", "completed", "closed"].includes(pc.iceConnectionState)) return;
+
+            // restartIce schedules negotiationneeded. That event is the sole
+            // offer path, including when another local change is queued.
+            try {
+                pc.restartIce();
+            } catch (error) {
+                console.warn("Meet ICE restart failed:", error);
+            }
+            scheduleIceRecovery(peer, 8000 * peer.restartAttempts);
+        }, delay);
+    };
+
     const createPeer = (peerId, displayName = "Participant") => {
-        if (!peerId || peerId === connection.connectionId) return null;
-        if (peers.has(peerId)) {
-            const existing = peers.get(peerId);
-            if (displayName && displayName !== "Participant") {
+        if (!peerId || peerId === connection.connectionId || departedPeers.has(peerId) || mediaCleanupCompleted) return null;
+        const existing = peers.get(peerId);
+        if (existing) {
+            if (displayName !== "Participant" && existing.tile.tile.dataset.peerDisplayName !== displayName) {
+                existing.tile.tile.dataset.peerDisplayName = displayName;
                 const label = existing.tile.tile.querySelector(".ciit-meet-video-name");
-                if (label) label.textContent = displayName;
+                if (label?.firstChild) label.firstChild.textContent = displayName + " ";
+                const placeholder = existing.tile.placeholder;
+                placeholder.querySelector("strong").textContent = displayName;
+                placeholder.querySelector("span").textContent = displayName.trim().charAt(0).toUpperCase();
+                removeScreenTile(existing);
+                applyParticipantStreamState(existing);
             }
             return existing;
         }
 
         const pc = new RTCPeerConnection({ iceServers });
         const peer = {
+            id: peerId,
             connection: pc,
             tile: createRemoteTile(peerId, displayName),
+            localTracksReady: false,
             senders: { audio: null, video: null },
             cameraEnabled: true,
-            micEnabled: true,
-            screenSharing: false,
-            initDataChannelCreated: false,
+            screenSharing: null,
             polite: String(connection.connectionId) > String(peerId),
-            makingOffer: false,
+            signalQueue: Promise.resolve(),
             ignoreOffer: false,
-            isSettingRemoteAnswerPending: false,
             pendingCandidates: [],
-            remoteVideoTrackIds: [],
+            remoteIceFragments: new Set(),
+            ignoredIceFragments: new Set(),
+            remoteVideoTracks: new Map(),
+            remoteScreenMid: null,
+            remoteScreenStreamId: null,
+            hasScreenMetadata: false,
             screenSender: null,
-            screenTile: null
+            screenTransceiver: null,
+            screenTile: null,
+            recoveryTimer: null,
+            restartAttempts: 0
         };
         peers.set(peerId, peer);
 
         pc.onicecandidate = event => {
-            if (event.candidate) {
+            if (event.candidate && connection.state === "Connected") {
                 sendSignal(peerId, "IceCandidate", event.candidate.toJSON())
-                    .catch(error => console.warn("ICE relay failed:", error));
+                    .catch(error => {
+                        if (isCurrentPeer(peer) && connection.state === "Connected")
+                            console.warn("ICE relay failed:", error);
+                    });
             }
         };
 
         pc.ontrack = event => {
-            const stream = event.streams[0] || new MediaStream([event.track]);
-            if (event.track.kind === "audio") {
-                if (!peer.remoteStream) peer.remoteStream = new MediaStream();
-                peer.remoteStream.addTrack(event.track);
-                peer.tile.video.srcObject = peer.remoteStream;
-                playRemoteMedia(peer.tile.video);
-                if (!audioMeters.has(peerId)) audioMeters.set(peerId, createAudioMeter(peer.remoteStream));
-            }
-            if (event.track.kind === "video") {
-                peer.remoteVideoTrackIds.push(event.track.id);
-                if (peer.remoteVideoTrackIds.length > 1) {
-                    peer.screenTile ??= createRemoteScreenTile(peerId, peer.tile.tile.dataset.peerDisplayName);
-                    peer.screenTile.video.srcObject = new MediaStream([event.track]);
-                    playRemoteMedia(peer.screenTile.video);
-                    event.track.onended = () => {
-                        peer.screenTile?.tile.remove();
-                        peer.screenTile = null;
-                    };
-                    return;
-                }
-                if (!peer.remoteStream) peer.remoteStream = new MediaStream();
-                peer.remoteStream.addTrack(event.track);
-                peer.tile.video.srcObject = peer.remoteStream;
-                playRemoteMedia(peer.tile.video);
-                const refreshRemoteVideoState = () => applyParticipantStreamState(peer);
-                event.track.onmute = refreshRemoteVideoState;
-                event.track.onunmute = refreshRemoteVideoState;
-                event.track.onended = refreshRemoteVideoState;
-                refreshRemoteVideoState();
-            }
-        };
-
-        pc.onnegotiationneeded = async () => {
-            try {
-                peer.makingOffer = true;
-                await pc.setLocalDescription();
-                await sendSignal(peerId, pc.localDescription.type === "offer" ? "Offer" : "Answer", pc.localDescription);
-            } catch (error) {
-                console.error("WebRTC negotiation failed:", error);
-            } finally {
-                peer.makingOffer = false;
+            const track = event.track;
+            if (track.kind === "audio") {
+                const audio = peer.tile.audio;
+                const stream = new MediaStream([track]);
+                audio.srcObject = stream;
+                audioMeters.get(peerId)?.source.disconnect();
+                audioMeters.set(peerId, createAudioMeter(stream));
+                const play = () => {
+                    if (audio.srcObject === stream) playRemoteAudio(audio);
+                };
+                track.onunmute = play;
+                track.onended = () => {
+                    if (audio.srcObject !== stream) return;
+                    audio.srcObject = null;
+                    audioMeters.get(peerId)?.source.disconnect();
+                    audioMeters.delete(peerId);
+                    pendingAudio.delete(audio);
+                    updateAudioButton();
+                };
+                if (!track.muted) play();
+            } else if (track.kind === "video") {
+                const streamIds = event.streams.map(stream => stream.id);
+                const mid = event.transceiver.mid;
+                const isScreen = (mid !== null && mid === peer.remoteScreenMid) || streamIds.includes(peer.remoteScreenStreamId);
+                peer.remoteVideoTracks.set(track.id, { track, mid, streamIds, isScreen });
+                const updateVideo = () => {
+                    if (isCurrentPeer(peer)) applyParticipantStreamState(peer);
+                };
+                track.onmute = updateVideo;
+                track.onunmute = updateVideo;
+                track.onended = () => {
+                    peer.remoteVideoTracks.delete(track.id);
+                    updateVideo();
+                };
+                updateVideo();
             }
         };
 
-        pc.onconnectionstatechange = async () => {
-            if (pc.connectionState === "failed") {
-                try {
-                    await pc.restartIce();
-                    await pc.setLocalDescription();
-                    await sendSignal(peerId, "Offer", pc.localDescription);
-                } catch (error) {
-                    console.warn("ICE recovery failed:", error);
-                    removePeer(peerId);
-                }
-            } else if (pc.connectionState === "closed") {
-                removePeer(peerId);
+        pc.onnegotiationneeded = () => enqueuePeerSignal(peer, () => {
+            if (pc.signalingState === "stable" && connection.state === "Connected") return sendLocalDescription(peer);
+        });
+
+        pc.oniceconnectionstatechange = () => {
+            const state = pc.iceConnectionState;
+            if (state === "connected" || state === "completed") {
+                window.clearTimeout(peer.recoveryTimer);
+                peer.recoveryTimer = null;
+                peer.restartAttempts = 0;
+            } else if (state === "failed") {
+                window.clearTimeout(peer.recoveryTimer);
+                peer.recoveryTimer = null;
+                scheduleIceRecovery(peer, peer.restartAttempts === 0 ? 0 : 8000 * peer.restartAttempts);
+            } else if (state === "disconnected") {
+                scheduleIceRecovery(peer, 3500);
             }
         };
 
-        addLocalTracksToPeer(peer);
         return peer;
     };
 
-    const handleSignal = async message => {
-        if (!message || message.sessionId !== sessionId || message.senderConnectionId === connection.connectionId) return;
+    const iceFragments = sdp => new Set([...sdp.matchAll(/^a=ice-ufrag:([^\s]+)/gm)].map(match => match[1]));
+
+    const candidateFragment = candidate =>
+        candidate.usernameFragment ?? candidate.candidate?.match(/(?:^|\s)ufrag (\S+)/)?.[1];
+
+    const addRemoteCandidate = async (peer, candidate) => {
+        const fragment = candidateFragment(candidate);
+        const matchesDescription = fragment && peer.remoteIceFragments.has(fragment);
+        if (!matchesDescription && (fragment ? peer.ignoredIceFragments.has(fragment) : peer.ignoreOffer)) return;
+        if (!peer.connection.remoteDescription || (fragment && !matchesDescription)) {
+            // A candidate for an ICE restart can precede its description even
+            // when the previous generation already has a remote description.
+            if (peer.pendingCandidates.length >= 128) peer.pendingCandidates.shift();
+            peer.pendingCandidates.push(candidate);
+            return;
+        }
+        try {
+            await peer.connection.addIceCandidate(candidate);
+        } catch (error) {
+            console.warn("Remote ICE candidate could not be applied:", error);
+        }
+    };
+
+    const handleSignal = message => {
+        if (!message || Number(message.sessionId) !== sessionId) return;
         const peer = createPeer(message.senderConnectionId);
         if (!peer) return;
         const pc = peer.connection;
+        const data = message.signalData;
+        if (!data) return;
 
-        try {
+        enqueuePeerSignal(peer, async () => {
             if (message.signalType === "IceCandidate") {
-                if (message.signalData && !peer.ignoreOffer) {
-                    if (pc.remoteDescription) {
-                        await pc.addIceCandidate(message.signalData);
-                    } else {
-                        peer.pendingCandidates.push(message.signalData);
-                    }
-                }
+                await addRemoteCandidate(peer, data);
                 return;
             }
 
-            const description = message.signalData;
-            const readyForOffer = !peer.makingOffer
-                && (pc.signalingState === "stable" || peer.isSettingRemoteAnswerPending);
-            const offerCollision = description.type === "offer" && !readyForOffer;
-            peer.ignoreOffer = !peer.polite && offerCollision;
-            if (peer.ignoreOffer) return;
+            if (typeof data.sdp !== "string" || (data.type !== "offer" && data.type !== "answer")) return;
+            const offerCollision = data.type === "offer" && pc.signalingState !== "stable";
+            const fragments = iceFragments(data.sdp);
+            peer.ignoreOffer = offerCollision && !peer.polite;
+            if (peer.ignoreOffer) {
+                peer.ignoredIceFragments = fragments;
+                return;
+            }
+            if (data.type === "answer" && pc.signalingState !== "have-local-offer") return;
 
-            if (offerCollision && peer.polite) {
-                await pc.setLocalDescription({ type: "rollback" });
+            if (offerCollision) await pc.setLocalDescription({ type: "rollback" });
+            peer.remoteScreenMid = typeof data.screenMid === "string" ? data.screenMid : null;
+            peer.hasScreenMetadata = peer.remoteScreenMid !== null || Object.hasOwn(data, "screenStreamId");
+            peer.remoteScreenStreamId = data.screenStreamId ?? null;
+            await pc.setRemoteDescription({ type: data.type, sdp: data.sdp });
+            if (!isCurrentPeer(peer)) return;
+            peer.remoteIceFragments = fragments;
+            applyParticipantStreamState(peer);
+            for (const candidate of peer.pendingCandidates.splice(0)) {
+                await addRemoteCandidate(peer, candidate);
             }
 
-            peer.isSettingRemoteAnswerPending = description.type === "answer";
-            await pc.setRemoteDescription(description);
-            peer.isSettingRemoteAnswerPending = false;
-
-            for (const candidate of peer.pendingCandidates.splice(0))
-                await pc.addIceCandidate(candidate);
-
-            if (description.type === "offer") {
-                await pc.setLocalDescription();
-                await sendSignal(message.senderConnectionId, "Answer", pc.localDescription);
+            if (data.type === "offer") {
+                if (!peer.localTracksReady) matchMediaTransceivers(peer);
+                await attachLocalTracks(peer);
+                await sendLocalDescription(peer);
             }
-        } catch (error) {
-            peer.isSettingRemoteAnswerPending = false;
-            if (!peer.ignoreOffer) console.error("WebRTC signal handling failed:", error);
-        }
-    };
-
-    requestMedia = async kind => {
-        if (mediaCleanupCompleted) throw new Error("The meeting has ended.");
-        const hasTrack = localStream.getTracks().some(track => track.kind === kind && track.readyState === "live");
-        if (hasTrack) return;
-        if (!navigator.mediaDevices?.getUserMedia) {
-            toast("Device unavailable", "Camera and microphone access require a supported browser and HTTPS.");
-            throw new Error("getUserMedia unavailable.");
-        }
-
-        const stream = await navigator.mediaDevices.getUserMedia({
-            audio: kind === "audio",
-            video: kind === "video"
         });
-        if (mediaCleanupCompleted) {
-            stream.getTracks().forEach(track => track.stop());
-            throw new Error("The meeting has ended.");
-        }
-        stream.getTracks().forEach(track => {
-            localStream.addTrack(track);
-            if (track.kind === "audio") localAudioMeter = createAudioMeter(localStream);
-            peers.forEach(peer => {
-                const sender = peer.senders[kind];
-                if (sender && sender.track === null) {
-                    sender.replaceTrack(track).catch(error => console.warn("Device track attach failed:", error));
-                } else {
-                    peer.senders[kind] = peer.connection.addTrack(track, localStream);
-                }
-            });
-        });
-        updateLocalPreview();
     };
 
     const publishPeerMediaState = (mediaKind, enabled) => {
-        connection.invoke("BroadcastPeerMediaState", sessionId, mediaKind, enabled)
+        if (connection.state !== "Connected" || mediaCleanupCompleted) return;
+        return connection.invoke("BroadcastPeerMediaState", sessionId, mediaKind, enabled)
             .catch(error => console.warn("Meet media state notification failed:", error));
     };
 
     const setTrackEnabled = async (kind, enabled) => {
         if (mediaCleanupCompleted) return;
         const mediaKind = kind === "mic" ? "audio" : "video";
-        if (enabled && !mediaPermissions[kind]) {
-            throw new Error("The host has disabled this device for you.");
-        }
-
-        const track = localStream.getTracks().find(item => item.kind === mediaKind && item.readyState === "live");
+        const requestId = ++deviceRequests[kind];
+        const existingTrack = localStream.getTracks().find(track => track.kind === mediaKind);
         if (enabled) {
-            await requestMedia(mediaKind);
-            if (mediaCleanupCompleted) return;
-            const restoredTrack = localStream.getTracks().find(item => item.kind === mediaKind && item.readyState === "live");
-            if (restoredTrack) {
-                restoredTrack.enabled = true;
-                if (mediaKind === "video") {
-                    peers.forEach(peer => {
-                        const sender = peer.senders.video;
-                        if (sender && sender.track !== restoredTrack) {
-                            sender.replaceTrack(restoredTrack).catch(error => console.warn("Camera track restore failed:", error));
-                        }
-                        applyParticipantStreamState(peer);
+            if (!mediaPermissions[kind]) throw new Error("The host has disabled this device for you.");
+            if (existingTrack?.readyState !== "live") {
+                if (!navigator.mediaDevices?.getUserMedia)
+                    throw new Error("Camera and microphone access require a supported browser and HTTPS.");
+                let stream;
+                try {
+                    stream = await navigator.mediaDevices.getUserMedia({
+                        audio: mediaKind === "audio",
+                        video: mediaKind === "video"
                     });
+                } catch (error) {
+                    if (mediaCleanupCompleted || requestId !== deviceRequests[kind]) return;
+                    throw error;
                 }
+                if (mediaCleanupCompleted || requestId !== deviceRequests[kind] || !mediaPermissions[kind]) {
+                    stream.getTracks().forEach(track => track.stop());
+                    return;
+                }
+                if (existingTrack) localStream.removeTrack(existingTrack);
+                const track = stream.getTracks().find(item => item.kind === mediaKind);
+                if (!track) throw new Error("The selected device did not return a media track.");
+                localStream.addTrack(track);
+                if (mediaKind === "audio") {
+                    localAudioMeter?.source.disconnect();
+                    localAudioMeter = createAudioMeter(localStream);
+                }
+                peers.forEach(peer => addLocalTrackToPeer(peer, track));
+                track.onended = () => {
+                    if (localStream.getTracks().includes(track)) {
+                        setTrackEnabled(kind, false).catch(error => console.warn("Device cleanup failed:", error));
+                    }
+                };
             }
-        } else if (track) {
-            // Detach and stop the capture track. Replacing with a black frame would
-            // falsely imply camera is still active; the remote video element receives track mute/end.
+        } else if (existingTrack) {
             peers.forEach(peer => {
                 const sender = peer.senders[mediaKind];
-                if (sender?.track?.id === track.id) {
-                    sender.replaceTrack(null).catch(error => console.warn("Device track detach failed:", error));
-                }
+                if (sender) sender.replaceTrack(null).catch(error => console.warn("Device track detach failed:", error));
             });
-            localStream.removeTrack(track);
-            track.stop();
-            if (mediaKind === "audio" && localAudioMeter) {
-                localAudioMeter.source.disconnect();
+            localStream.removeTrack(existingTrack);
+            existingTrack.stop();
+            if (mediaKind === "audio") {
+                localAudioMeter?.source.disconnect();
                 localAudioMeter = null;
             }
         }
 
+        setToggleVisual(kind === "mic" ? micButton : cameraButton, kind, enabled);
         saveMediaPreference(kind, enabled);
         updateLocalPreview();
         updateSelfMicIndicator();
-        publishPeerMediaState(kind === "mic" ? "mic" : "camera", enabled);
+        publishPeerMediaState(kind, enabled);
     };
 
     const updateSelfMicIndicator = () => {
@@ -630,129 +806,115 @@ document.addEventListener("DOMContentLoaded", () => {
         }
     });
 
+    const stopScreenShare = () => {
+        deviceRequests.share += 1;
+        const previousScreen = screenStream;
+        screenStream = null;
+        if (previousScreen) {
+            previousScreen.getTracks().forEach(track => track.stop());
+            peers.forEach(peer => {
+                if (!peer.screenSender) return;
+                if (peer.screenTransceiver) {
+                    peer.screenSender.replaceTrack(null).catch(error => console.warn("Screen track detach failed:", error));
+                } else {
+                    peer.connection.removeTrack(peer.screenSender);
+                    peer.screenSender = null;
+                }
+            });
+            publishPeerMediaState("share", false);
+        }
+        saveMediaPreference("share", false);
+        setToggleVisual(shareButton, "share", false);
+        updateLocalPreview();
+    };
+
     shareButton?.addEventListener("click", async () => {
         const sharing = shareButton.getAttribute("aria-pressed") === "true";
         if (!sharing) {
-            screenStream?.getTracks().forEach(track => track.stop());
-            screenStream = null;
-            publishPeerMediaState("share", false);
-            peers.forEach(peer => {
-                peer.screenSender?.replaceTrack(null).catch(error => console.error(error));
-                peer.screenSender = null;
-            });
-            setToggleVisual(shareButton, "share", false);
-            updateLocalPreview();
+            stopScreenShare();
             return;
         }
 
         if (!mediaPermissions.share) {
-            setToggleVisual(shareButton, "share", false);
+            stopScreenShare();
             toast("Screen sharing disabled", "The host has disabled screen sharing for you.");
             return;
         }
 
+        const requestId = ++deviceRequests.share;
         try {
             if (mediaCleanupCompleted) return;
-            if (!navigator.mediaDevices?.getDisplayMedia) throw new Error("Screen sharing is not supported in this browser.");
-            screenStream = await navigator.mediaDevices.getDisplayMedia({ video: true, audio: false });
-            if (mediaCleanupCompleted) {
-                screenStream.getTracks().forEach(track => track.stop());
-                screenStream = null;
+            if (!navigator.mediaDevices?.getDisplayMedia)
+                throw new Error("Screen sharing is not supported in this browser.");
+            const stream = await navigator.mediaDevices.getDisplayMedia({ video: true, audio: false });
+            if (mediaCleanupCompleted || requestId !== deviceRequests.share || !mediaPermissions.share) {
+                stream.getTracks().forEach(track => track.stop());
                 return;
             }
-            const screenTrack = screenStream.getVideoTracks()[0];
-            publishPeerMediaState("share", true);
-            peers.forEach(peer => {
-                peer.screenSender = peer.connection.addTrack(screenTrack, screenStream);
-            });
-            if (localVideo) {
-                localVideo.srcObject = screenStream;
-                localVideo.hidden = false;
-                if (localPlaceholder) localPlaceholder.hidden = true;
-            }
-            const shareLabel = shareButton.querySelector("span");
-            const shareIcon = shareButton.querySelector("i");
-            if (shareLabel) shareLabel.textContent = "Sharing screen";
-            if (shareIcon) shareIcon.className = "bi bi-display-fill";
+            const screenTrack = stream.getVideoTracks()[0];
+            if (!screenTrack) throw new Error("The selected screen did not return a video track.");
+            screenStream = stream;
             screenTrack.onended = () => {
-                shareButton.setAttribute("aria-pressed", "false");
-                shareButton.classList.remove("is-active");
-                const shareLabel = shareButton.querySelector("span");
-                const shareIcon = shareButton.querySelector("i");
-                if (shareLabel) shareLabel.textContent = "Share screen";
-                if (shareIcon) shareIcon.className = "bi bi-display";
-                screenStream = null;
-                publishPeerMediaState("share", false);
-                peers.forEach(peer => {
-                    peer.screenSender?.replaceTrack(null).catch(error => console.error(error));
-                    peer.screenSender = null;
-                });
-                updateLocalPreview();
+                if (screenStream === stream) stopScreenShare();
             };
-        } catch (error) {
-            setToggleVisual(shareButton, "share", false);
-            screenStream?.getTracks().forEach(track => track.stop());
-            screenStream = null;
+            peers.forEach(addScreenTrackToPeer);
+            publishPeerMediaState("share", true);
+            saveMediaPreference("share", true);
+            setToggleVisual(shareButton, "share", true);
             updateLocalPreview();
+        } catch (error) {
+            if (requestId !== deviceRequests.share) return;
+            stopScreenShare();
             toast("Screen share failed", error.message || "Screen sharing permission was not granted.");
         }
     });
 
-    window.ciitMeetApplyMediaPermissions = update => {
-        if (!update || room.dataset.isHost === "true") return;
-
-        ["mic", "camera", "share"].forEach(type => {
-            const property = type === "mic" ? "canUseMicrophone"
-                : type === "camera" ? "canUseCamera"
-                    : "canShareScreen";
-            if (typeof update[property] !== "boolean") return;
-            mediaPermissions[type] = update[property];
-
-            const button = type === "mic" ? micButton
-                : type === "camera" ? cameraButton
-                    : shareButton;
-            if (button) button.disabled = !mediaPermissions[type];
-
-            if (!mediaPermissions[type] && type !== "share") {
-                const mediaKind = type === "mic" ? "audio" : "video";
-                setToggleVisual(button, type, false);
-                setTrackEnabled(type, false).catch(error => console.warn("Host device permission cleanup failed:", error));
-            }
-
-            if (!mediaPermissions.share && screenStream) {
-                screenStream.getTracks().forEach(track => track.stop());
-                screenStream = null;
-                setToggleVisual(shareButton, "share", false);
-                peers.forEach(peer => {
-                    peer.screenSender?.replaceTrack(null).catch(error => console.error(error));
-                    peer.screenSender = null;
-                });
-                updateLocalPreview();
-            }
-        });
+    const runPeerEvent = operation => {
+        if (mediaCleanupCompleted) return;
+        if (!iceRequest) {
+            operation();
+            return;
+        }
+        const generation = peerGeneration;
+        const connectionId = connection.connectionId;
+        iceRequest.then(() => {
+            if (!mediaCleanupCompleted && generation === peerGeneration && connectionId === connection.connectionId)
+                operation();
+        }).catch(error => console.warn("Meet peer update failed:", error));
     };
 
-    connection.on("MeetExistingPeers", peerInfos => {
-        (peerInfos || []).forEach(peerInfo => {
-            const peerId = typeof peerInfo === "string" ? peerInfo : peerInfo?.connectionId;
-            const displayName = typeof peerInfo === "string" ? "Participant" : peerInfo?.displayName || "Participant";
-            const peer = createPeer(peerId, displayName);
-            if (peer) {
-                addLocalTracksToPeer(peer);
-                if (localStream.getTracks().length === 0 && !peer.initDataChannelCreated) {
-                    peer.connection.createDataChannel("ciit-meet-peer-init");
-                    peer.initDataChannelCreated = true;
-                }
+    const peerInfoId = peerInfo => typeof peerInfo === "string" ? peerInfo : peerInfo?.connectionId;
+    const peerInfoName = peerInfo => typeof peerInfo === "string" ? "Participant" : peerInfo?.displayName || "Participant";
+
+    window.ciitMeetBeginPeerSync = () => { peersBeforeSync = new Set(peers.keys()); };
+    connection.on("MeetExistingPeers", peerInfos => runPeerEvent(() => {
+        const snapshot = Array.isArray(peerInfos) ? peerInfos : [];
+        const snapshotIds = new Set(snapshot.map(peerInfoId));
+        peersBeforeSync?.forEach(peerId => {
+            if (!snapshotIds.has(peerId)) {
+                departedPeers.add(peerId);
+                removePeer(peerId);
             }
         });
-    });
-    connection.on("MeetPeerJoined", peerInfo => {
-        const peerId = typeof peerInfo === "string" ? peerInfo : peerInfo?.connectionId;
-        const displayName = typeof peerInfo === "string" ? "Participant" : peerInfo?.displayName || "Participant";
-        createPeer(peerId, displayName);
-    });
-    connection.on("MeetPeerLeft", removePeer);
-    connection.on("MeetPeerMediaState", state => {
+        peersBeforeSync = null;
+        snapshot.forEach(peerInfo => {
+            const peer = createPeer(peerInfoId(peerInfo), peerInfoName(peerInfo));
+            if (!peer || peer.localTracksReady) return;
+            // Joining browsers offer first. Incumbents match the offered slots.
+            createMediaTransceivers(peer);
+        });
+    }));
+    connection.on("MeetPeerJoined", peerInfo => runPeerEvent(() => {
+        const peerId = peerInfoId(peerInfo);
+        peersBeforeSync?.delete(peerId);
+        departedPeers.delete(peerId);
+        createPeer(peerId, peerInfoName(peerInfo));
+    }));
+    connection.on("MeetPeerLeft", peerId => runPeerEvent(() => {
+        departedPeers.add(peerId);
+        removePeer(peerId);
+    }));
+    connection.on("MeetPeerMediaState", state => runPeerEvent(() => {
         if (!state || Number(state.sessionId) !== sessionId || !state.connectionId) return;
         const peer = peers.get(state.connectionId);
         if (!peer) return;
@@ -760,50 +922,35 @@ document.addEventListener("DOMContentLoaded", () => {
         if (state.mediaKind === "camera") {
             peer.cameraEnabled = state.enabled === true;
             applyParticipantStreamState(peer);
-            if (!peer.cameraEnabled) {
-                peer.tile.video.pause();
-                peer.tile.video.srcObject = null;
-                peer.tile.video.hidden = true;
-                peer.tile.placeholder.hidden = false;
-                const detail = peer.tile.placeholder.querySelector("small");
-                if (detail) detail.textContent = "Camera is off";
-            } else {
-                peer.tile.video.srcObject = peer.remoteStream || null;
-                applyParticipantStreamState(peer);
-                if (peer.tile.video.srcObject) {
-                    playRemoteMedia(peer.tile.video);
-                }
-            }
         } else if (state.mediaKind === "mic") {
-            peer.micEnabled = state.enabled === true;
             const indicator = peer.tile.tile.querySelector("[data-peer-mic-state]");
-            if (indicator) {
-                indicator.className = "bi " + (peer.micEnabled ? "bi-mic-fill" : "bi-mic-mute");
-            }
-        } else if (state.mediaKind === "share") {
+            if (indicator) indicator.className = "bi " + (state.enabled === true ? "bi-mic-fill" : "bi-mic-mute");
+        } else if (state.mediaKind === "share" && (peer.remoteScreenMid !== null || !peer.hasScreenMetadata)) {
             peer.screenSharing = state.enabled === true;
-            peer.tile.tile.classList.toggle("ciit-meet-screen-sharing", peer.screenSharing);
-            const badge = peer.tile.tile.querySelector("[data-peer-screen-share-state]");
-            if (badge) badge.hidden = !peer.screenSharing;
             applyParticipantStreamState(peer);
         }
-    });
-    connection.on("MeetWebRtcSignal", handleSignal);
+    }));
+    connection.on("MeetWebRtcSignal", signal => runPeerEvent(() => handleSignal(signal)));
 
-    window.ciitMeetReconcilePeers = async () => {
-        [...peers.keys()].forEach(removePeer);
-        if (connection.state === "Connected")
-            await connection.invoke("JoinMeetingRoom", sessionId);
-        publishPeerMediaState("mic", localStream.getAudioTracks().some(track => track.enabled));
-        publishPeerMediaState("camera", localStream.getVideoTracks().some(track => track.enabled));
-        publishPeerMediaState("share", Boolean(screenStream));
+    window.ciitMeetResetPeers = () => {
+        peerGeneration += 1;
+        peersBeforeSync = null;
+        departedPeers.clear();
+        peers.forEach((_, peerId) => removePeer(peerId));
     };
 
+    window.ciitMeetPublishMediaState = () => Promise.all([
+        publishPeerMediaState("mic", localStream.getAudioTracks().some(track => track.readyState === "live" && track.enabled)),
+        publishPeerMediaState("camera", localStream.getVideoTracks().some(track => track.readyState === "live" && track.enabled)),
+        publishPeerMediaState("share", Boolean(screenStream))
+    ]);
 
     let mediaCleanupCompleted = false;
-    window.ciitMeetWebRtcCleanup = () => {
+    const cleanUpMedia = (preserveSharePreference = false) => {
         if (mediaCleanupCompleted) return;
         mediaCleanupCompleted = true;
+        window.clearInterval(activeSpeakerTimer);
+        if (!preserveSharePreference) saveMediaPreference("share", false);
 
         // Stop every capture track immediately so the browser releases the
         // microphone/camera indicators when the meeting ends or the page closes.
@@ -821,11 +968,12 @@ document.addEventListener("DOMContentLoaded", () => {
 
         localAudioMeter?.source.disconnect();
         localAudioMeter = null;
-        peers.forEach((peer, peerId) => removePeer(peerId));
+        window.ciitMeetResetPeers();
         audioContext?.close().catch(() => {});
         audioContext = null;
-        connection.invoke("LeavePeerRoom", sessionId).catch(() => {});
+        if (connection.state === "Connected") connection.invoke("LeavePeerRoom", sessionId).catch(() => {});
     };
+    window.ciitMeetWebRtcCleanup = cleanUpMedia;
 
     // The ended screen is shown by both the host's successful End action and
     // the live session-status update received by participants. Observe that
@@ -845,16 +993,20 @@ document.addEventListener("DOMContentLoaded", () => {
         }
     }
 
-    window.addEventListener("pagehide", window.ciitMeetWebRtcCleanup);
+    window.addEventListener("pagehide", event => {
+        if (!event.persisted) cleanUpMedia(true);
+    });
 
     window.ciitMeetSignalRReady?.then(async () => {
-        if (Array.isArray(window.ciitMeetIceServers) && window.ciitMeetIceServers.length)
-            iceServers = window.ciitMeetIceServers;
-        if (stage.hidden) return;
+        if (stage.hidden || mediaCleanupCompleted) return;
         if (isHost || room.dataset.participantStatus === "Admitted") {
             // Peer membership is authenticated server-side by JoinMeetingRoom.
             updateLocalPreview();
             const saved = readMediaPreferences();
+            if (saved.share && mediaPermissions.share) {
+                saveMediaPreference("share", false);
+                toast("Screen sharing paused", "Click Share screen to pick a screen again.", "info");
+            }
             for (const type of ["mic", "camera"]) {
                 if (!saved[type] || !mediaPermissions[type]) continue;
                 const button = type === "mic" ? micButton : cameraButton;
