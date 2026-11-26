@@ -18,9 +18,10 @@
     var courseTitle = ViewData["CourseTitle"]?.ToString();
     var notesTopicId = ViewData["NotesTopicId"]?.ToString();
     var notesChapterId = ViewData["NotesChapterId"]?.ToString();
+    var notesLearningPath = isNotesPage ? ViewData["LearningPathModel"] as CourseLearningDto : null;
     var purchasedCourses = Array.Empty<CourseDto>();
 
-    if (User.IsInRole("Student"))
+    if (!string.IsNullOrWhiteSpace(courseId) && notesLearningPath is null && User.IsInRole("Student"))
     {
         var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
 
@@ -32,7 +33,8 @@
 
             purchasedCourses = (await CoursePurchaseService.GetCourseSwitcherItemsAsync(
                 userId,
-                currentCourseId)).ToArray();
+                currentCourseId,
+                Context.RequestAborted)).ToArray();
         }
     }
 
@@ -51,12 +53,9 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>@ViewData["Title"] - CIIT Stack Lab</title>
-    <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" />
-    <link rel="preconnect" href="https://fonts.googleapis.com" />
-    <link rel="preconnect" href="https://fonts.gstatic.com" />
-    <link href="https://fonts.googleapis.com/css2?family=Fira+Code:wght@400;500;600;700;800&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
-    <link rel="stylesheet" href="~/css/global/site.css" />
+    <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" asp-append-version="true" />
+    <partial name="~/Views/Shared/_SiteFonts.cshtml" />
+    <link rel="stylesheet" href="~/css/global/site.css" asp-append-version="true" />
     <link rel="stylesheet" href="~/css/student/course-environment.css" asp-append-version="true" />
     <link rel="stylesheet" href="~/css/student/course-switcher.css" asp-append-version="true" />
     @await RenderSectionAsync("Styles", required: false)
@@ -123,7 +122,7 @@
             </button>
         }
 
-        @if (isNotesPage && ViewData["LearningPathModel"] is CourseLearningDto notesLearningPath)
+        @if (notesLearningPath is not null)
         {
             <aside class="ciit-course-global-sidebar ciit-learning-path-sidebar ciit-notes-learning-path" aria-label="Learning path">
                 <div class="ciit-notes-path-heading">
@@ -300,10 +299,10 @@
         </div>
     </footer>
 
-    <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
-    <script src="~/js/global/site.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/@@microsoft/signalr@10.0.0/dist/browser/signalr.min.js"></script>
-    <script src="~/js/global/meet-notifications.js" asp-append-version="true"></script>
+    <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js" asp-append-version="true"></script>
+    <script defer src="~/js/global/site.js" asp-append-version="true"></script>
+    <script async src="https://cdn.jsdelivr.net/npm/@@microsoft/signalr@10.0.0/dist/browser/signalr.min.js" data-meet-notification-signalr></script>
+    <script defer src="~/js/global/meet-notifications.js" asp-append-version="true"></script>
     @if (!string.IsNullOrWhiteSpace(courseId))
     {
         <script>

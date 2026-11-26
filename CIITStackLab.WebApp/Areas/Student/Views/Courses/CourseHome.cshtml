@@ -8,25 +8,15 @@
 
     var progress = Model.Progress;
     var completedContentIds = progress?.CompletedContentIds?.ToHashSet() ?? new HashSet<int>();
-    var topicProgress = Model.Topics.Select(topic =>
+    var completedByTopic = Model.Topics.Select(topic =>
     {
-        var topicContentIds = topic.Contents
-            .Concat(topic.Chapters.SelectMany(chapter => chapter.Contents))
-            .Select(content => content.Id)
-            .Distinct()
-            .ToList();
+        var contents = topic.Contents.Concat(topic.Chapters.SelectMany(chapter => chapter.Contents));
 
-        return new
-        {
-            TopicId = topic.Id,
-            HasResources = topicContentIds.Count > 0,
-            IsCompleted = topicContentIds.Count > 0
-                && topicContentIds.All(completedContentIds.Contains)
-        };
+        return contents.Any() && contents.All(content => completedContentIds.Contains(content.Id));
     }).ToList();
 
     var totalTopics = Model.Topics.Count;
-    var completedTopics = topicProgress.Count(topic => topic.IsCompleted);
+    var completedTopics = completedByTopic.Count(isComplete => isComplete);
     var percentage = totalTopics == 0
         ? 0
         : (int)Math.Round(completedTopics * 100d / totalTopics, MidpointRounding.AwayFromZero);
@@ -61,7 +51,8 @@
 @section Styles {
     <link rel="stylesheet" href="~/css/student/course-experience.css" asp-append-version="true" />
     <link rel="stylesheet" href="~/css/student/course-home-modern.css" asp-append-version="true" />
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/devicon@2.17.0/devicon.min.css" />
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/devicon@2.17.0/devicon.min.css" media="print" onload="this.media='all'" />
+    <noscript><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/devicon@2.17.0/devicon.min.css" /></noscript>
 }
 
 <section class="ciit-course-experience ciit-course-home-modern">
@@ -92,7 +83,6 @@
                         @for (var index = 0; index < Model.Topics.Count; index++)
                         {
                             var topic = Model.Topics[index];
-                            var topicState = topicProgress.First(progressState => progressState.TopicId == topic.Id);
                             var topicLogoClass = CIITStackLab.WebApp.Services.TopicCategoryAnalyzer.GetIconClass(topic.Title);
                             <a class="ciit-course-topic-card"
                                asp-controller="Courses"
@@ -104,7 +94,7 @@
                                     <span class="ciit-course-topic-logo" aria-hidden="true">
                                         <i class="@topicLogoClass"></i>
                                     </span>
-                                    @if (topicState.IsCompleted)
+                                    @if (completedByTopic[index])
                                     {
                                         <span class="ciit-course-topic-completed badge rounded-pill text-bg-success">Completed</span>
                                     }
@@ -172,7 +162,8 @@
                     <img class="ciit-course-hero-image"
                          src="@Model.ImageUrl"
                          alt="@Model.Title course cover"
-                         loading="eager" />
+                         loading="lazy"
+                         decoding="async" />
                 }
                 <div class="ciit-course-hero-overlay" aria-hidden="true"></div>
 

@@ -33,14 +33,14 @@
     
                     <div class="mb-3">
                         <label asp-for="UserName" class="form-label fw-semibold"></label>
-                        <input asp-for="UserName" class="form-control" autocomplete="username" autofocus />
+                        <input asp-for="UserName" class="form-control" autocomplete="username" autofocus required />
                         <span asp-validation-for="UserName" class="text-danger small"></span>
                     </div>
     
                     <div class="mb-3">
                         <label asp-for="Password" class="form-label fw-semibold"></label>
                         <div class="ciit-password-field">
-                            <input asp-for="Password" class="form-control" autocomplete="current-password" />
+                            <input asp-for="Password" class="form-control" autocomplete="current-password" required />
                             <button type="button" class="ciit-password-toggle" aria-label="Show password" aria-pressed="false" data-password-toggle>
                                 <i class="bi bi-eye" aria-hidden="true"></i>
                             </button>
@@ -70,7 +70,6 @@
 </section>
 
 @section Scripts {
-    <partial name="_ValidationScriptsPartial" />
     <script>
         document.querySelectorAll("[data-password-toggle]").forEach(function (button) {
             button.addEventListener("click", function () {

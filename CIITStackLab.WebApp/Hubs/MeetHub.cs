@@ -39,10 +39,7 @@ public sealed class MeetHub : Hub
 
     public async Task JoinAdminUpdates()
     {
-        if (!Context.User!.IsInRole("Admin") && !Context.User.IsInRole("Super User"))
-            throw new HubException("Access denied.");
-
-        await Groups.AddToGroupAsync(Context.ConnectionId, AdminGroup, Context.ConnectionAborted);
+        await JoinAdminGroupAsync();
 
         var currentSessions = await _dbContext.MeetSessions
             .AsNoTracking()
@@ -65,18 +62,7 @@ public sealed class MeetHub : Hub
 
     public async Task JoinMyBatchUpdates()
     {
-        var studentId = Context.UserIdentifier;
-        if (string.IsNullOrWhiteSpace(studentId) || !Context.User!.IsInRole("Student"))
-            throw new HubException("Access denied.");
-
-        var batchIds = await _dbContext.MeetBatchMembers
-            .AsNoTracking()
-            .Where(member => member.StudentUserId == studentId && !member.MeetBatch.IsArchived)
-            .Select(member => member.MeetBatchId)
-            .ToListAsync(Context.ConnectionAborted);
-
-        foreach (var batchId in batchIds)
-            await Groups.AddToGroupAsync(Context.ConnectionId, BatchGroup(batchId), Context.ConnectionAborted);
+        var batchIds = await JoinMyBatchGroupsAsync();
 
         var now = DateTime.UtcNow;
         var currentSessions = await _dbContext.MeetSessions
@@ -114,6 +100,47 @@ public sealed class MeetHub : Hub
 
         foreach (var session in preferredSessions)
             await Clients.Caller.SendAsync("MeetBatchUpdated", session, Context.ConnectionAborted);
+    }
+
+    public async Task JoinMeetNotifications(string role)
+    {
+        switch (role)
+        {
+            case "admin":
+                await JoinAdminGroupAsync();
+                break;
+            case "student":
+                await JoinMyBatchGroupsAsync();
+                break;
+            default:
+                throw new HubException("Access denied.");
+        }
+    }
+
+    private Task JoinAdminGroupAsync()
+    {
+        if (Context.User is not { } user || (!user.IsInRole("Admin") && !user.IsInRole("Super User")))
+            throw new HubException("Access denied.");
+
+        return Groups.AddToGroupAsync(Context.ConnectionId, AdminGroup, Context.ConnectionAborted);
+    }
+
+    private async Task<List<int>> JoinMyBatchGroupsAsync()
+    {
+        var studentId = Context.UserIdentifier;
+        if (string.IsNullOrWhiteSpace(studentId) || Context.User?.IsInRole("Student") != true)
+            throw new HubException("Access denied.");
+
+        var batchIds = await _dbContext.MeetBatchMembers
+            .AsNoTracking()
+            .Where(member => member.StudentUserId == studentId && !member.MeetBatch.IsArchived)
+            .Select(member => member.MeetBatchId)
+            .ToListAsync(Context.ConnectionAborted);
+
+        foreach (var batchId in batchIds)
+            await Groups.AddToGroupAsync(Context.ConnectionId, BatchGroup(batchId), Context.ConnectionAborted);
+
+        return batchIds;
     }
 
     public async Task JoinMeetingRoom(int sessionId)

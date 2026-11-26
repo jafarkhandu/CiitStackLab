@@ -79,42 +79,6 @@ document.addEventListener("DOMContentLoaded", function () {
     playerScript.dataset.ciitMuxPlayer = "true";
     document.body.appendChild(playerScript);
 });
-document.addEventListener("DOMContentLoaded", function () {
-    const hubLink = document.querySelector("[data-learning-hub-transition]");
-    const transition = document.getElementById("ciitHubTransition");
-
-    if (!hubLink || !transition) {
-        return;
-    }
-
-    hubLink.addEventListener("click", function (event) {
-        if (event.button !== 0 || event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) {
-            return;
-        }
-
-        event.preventDefault();
-
-        if (hubLink.dataset.transitioning === "true") {
-            return;
-        }
-
-        hubLink.dataset.transitioning = "true";
-        hubLink.setAttribute("aria-disabled", "true");
-        transition.classList.add("is-active");
-        transition.setAttribute("aria-hidden", "false");
-        document.body.classList.add("ciit-hub-transitioning");
-
-        window.location.assign(hubLink.href);
-    });
-
-    window.addEventListener("pageshow", function () {
-        transition.classList.remove("is-active");
-        transition.setAttribute("aria-hidden", "true");
-        document.body.classList.remove("ciit-hub-transitioning");
-        hubLink.dataset.transitioning = "false";
-        hubLink.removeAttribute("aria-disabled");
-    });
-});
 
 document.addEventListener("DOMContentLoaded", function () {
     const paymentForm = document.getElementById("ciit-demo-payment-form");
@@ -550,16 +514,6 @@ document.addEventListener("DOMContentLoaded", function () {
             window.history.scrollRestoration = "manual";
         }
 
-        let scrollSaveFrame = 0;
-        window.addEventListener("scroll", function () {
-            if (scrollSaveFrame) return;
-            scrollSaveFrame = window.requestAnimationFrame(function () {
-                scrollSaveFrame = 0;
-                savedLearningState.scrollY = window.scrollY;
-                saveLearningState();
-            });
-        }, { passive: true });
-
         window.addEventListener("pagehide", function () {
             savedLearningState.scrollY = window.scrollY;
             saveLearningState();
@@ -672,7 +626,9 @@ document.addEventListener("DOMContentLoaded", function () {
             function getLastReadIndex() {
                 if (!supportsReadProgress) return -1;
                 try {
-                    const storedIndex = Number(window.localStorage.getItem(readProgressKey));
+                    const storedValue = window.localStorage.getItem(readProgressKey);
+                    if (storedValue === null) return -1;
+                    const storedIndex = Number(storedValue);
                     return Number.isInteger(storedIndex) && storedIndex >= 0
                         ? storedIndex
                         : -1;
@@ -747,6 +703,12 @@ document.addEventListener("DOMContentLoaded", function () {
 
         function showLearningPanel(name, options) {
             const settings = options || {};
+            const initializePagination = pendingPagination.get(name);
+            if (initializePagination) {
+                pendingPagination.delete(name);
+                initializePagination();
+            }
+
             panelContents.forEach(function (panel) {
                 panel.hidden = panel.dataset.learningPanelContent !== name;
             });
@@ -863,45 +825,37 @@ document.addEventListener("DOMContentLoaded", function () {
             else contentContainer.insertBefore(contentPager, contentContainer.firstChild);
         }
 
-        // Long notes are paginated by their existing semantic blocks, preserving
-        // their original HTML, code samples, tables, links and images.
-        document.querySelectorAll(".ciit-learning-notes-content").forEach(function (notes) {
-            let contentContainer = notes;
-            let contentBlocks = Array.from(contentContainer.children);
+        const pendingPagination = new Map([
+            ["notes", function () {
+                document.querySelectorAll(".ciit-learning-notes-content").forEach(function (notes) {
+                    let contentContainer = notes;
+                    let contentBlocks = Array.from(contentContainer.children);
 
-            // Notes imported inside one wrapper still paginate by their inner
-            // paragraphs, headings, lists, tables and code blocks.
-            while (contentBlocks.length <= 20) {
-                const nestedContainer = contentBlocks.find(function (block) {
-                    return block.children.length > 20
-                        && !block.matches("pre, table, ul, ol, figure, blockquote");
+                    // Paginate imported wrapper content by its original semantic blocks.
+                    while (contentBlocks.length <= 20) {
+                        const nestedContainer = contentBlocks.find(function (block) {
+                            return block.children.length > 20
+                                && !block.matches("pre, table, ul, ol, figure, blockquote");
+                        });
+                        if (!nestedContainer) break;
+                        contentContainer = nestedContainer;
+                        contentBlocks = Array.from(contentContainer.children);
+                    }
+
+                    paginateItems(contentContainer, contentBlocks, 40, "Notes pages", { markRead: true });
                 });
-                if (!nestedContainer) break;
-                contentContainer = nestedContainer;
-                contentBlocks = Array.from(contentContainer.children);
-            }
-
-            paginateItems(
-                contentContainer,
-                contentBlocks,
-                40,
-                "Notes pages",
-                { markRead: true }
-            );
-        });
-
-        // Interview answers and practice programs each get their own short pages
-        // while remaining inside the same chapter assessment card.
-        document.querySelectorAll(".ciit-learning-chapter-assessment").forEach(function (assessment) {
-            assessment.querySelectorAll(".ciit-learning-assessment-subsection").forEach(function (subsection) {
-                paginateItems(
-                    subsection,
-                    Array.from(subsection.querySelectorAll(":scope > .ciit-learning-assessment-question")),
-                    5,
-                    subsection.querySelector("h5")?.textContent?.trim() + " pages"
-                );
-            });
-        });
+            }],
+            ["assessment", function () {
+                document.querySelectorAll(".ciit-learning-chapter-assessment .ciit-learning-assessment-subsection").forEach(function (subsection) {
+                    paginateItems(
+                        subsection,
+                        Array.from(subsection.querySelectorAll(":scope > .ciit-learning-assessment-question")),
+                        5,
+                        subsection.querySelector("h5")?.textContent?.trim() + " pages"
+                    );
+                });
+            }]
+        ]);
 
         document.querySelectorAll("[data-video-src]").forEach(function (button) {
             button.addEventListener("click", function () {
@@ -925,31 +879,13 @@ document.addEventListener("DOMContentLoaded", function () {
             : "notes";
         showLearningPanel(initialPanel);
 
-        if (Number.isFinite(savedLearningState.scrollY)) {
-            const restoreScrollPosition = function () {
-                window.scrollTo({ top: savedLearningState.scrollY, left: 0, behavior: "auto" });
-            };
+        const savedScrollY = savedLearningState.scrollY;
+        if (Number.isFinite(savedScrollY) && savedScrollY > 0) {
             window.requestAnimationFrame(function () {
-                restoreScrollPosition();
-                window.requestAnimationFrame(restoreScrollPosition);
+                if (window.scrollY === 0) {
+                    window.scrollTo({ top: savedScrollY, left: 0, behavior: "instant" });
+                }
             });
-            window.setTimeout(restoreScrollPosition, 120);
-            window.setTimeout(restoreScrollPosition, 360);
         }
-    }
-
-    const switchHub = document.querySelector("[data-course-hub-switch]");
-    if (switchHub) {
-        switchHub.addEventListener("click", function (event) {
-            if (event.button !== 0 || event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) return;
-            event.preventDefault();
-            if (switchHub.dataset.transitioning === "true") return;
-            switchHub.dataset.transitioning = "true";
-            switchHub.classList.add("is-switching");
-            document.body.classList.add("ciit-hub-switching");
-            window.setTimeout(function () {
-                window.location.assign(switchHub.href);
-            }, window.matchMedia("(prefers-reduced-motion: reduce)").matches ? 0 : 420);
-        });
     }
 });

@@ -78,31 +78,28 @@ public class AccountController : Controller
             return View(model);
         }
 
+        var roles = await _userManager.GetRolesAsync(user);
+        var isAdmin = roles.Contains(AdminRole, StringComparer.OrdinalIgnoreCase)
+            || roles.Contains(SuperUserRole, StringComparer.OrdinalIgnoreCase);
+        if (!isAdmin && !roles.Contains("Student", StringComparer.OrdinalIgnoreCase))
+        {
+            await _signInManager.SignOutAsync();
+            ModelState.AddModelError(
+                string.Empty,
+                "Your account does not have an assigned application role.");
+
+            return View(model);
+        }
+
         await _signInManager.SignInAsync(user, isPersistent: model.RememberMe);
 
-        if (await _userManager.IsInRoleAsync(user, AdminRole) ||
-            await _userManager.IsInRoleAsync(user, SuperUserRole))
-        {
+        if (isAdmin)
             return RedirectToAction("Index", "Dashboard", new { area = "Admin" });
-        }
 
-        if (await _userManager.IsInRoleAsync(user, "Student"))
-        {
-            if (!string.IsNullOrWhiteSpace(model.ReturnUrl)
-                && Url.IsLocalUrl(model.ReturnUrl))
-            {
-                return LocalRedirect(model.ReturnUrl);
-            }
+        if (!string.IsNullOrWhiteSpace(model.ReturnUrl) && Url.IsLocalUrl(model.ReturnUrl))
+            return LocalRedirect(model.ReturnUrl);
 
-            return RedirectToAction("Index", "Home");
-        }
-
-        await _signInManager.SignOutAsync();
-        ModelState.AddModelError(
-            string.Empty,
-            "Your account does not have an assigned application role.");
-
-        return View(model);
+        return RedirectToAction("Index", "Home");
     }
 
     [HttpGet]

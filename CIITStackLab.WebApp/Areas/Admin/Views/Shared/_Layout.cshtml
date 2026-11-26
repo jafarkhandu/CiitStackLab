@@ -4,25 +4,22 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>@ViewData["Title"] - CIIT Stack Lab Admin</title>
-    <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" />
-    <link rel="preconnect" href="https://fonts.googleapis.com" />
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="anonymous" />
-    <link href="https://fonts.googleapis.com/css2?family=Fira+Code:wght@400;500;600;700;800&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
-    <link rel="stylesheet" href="~/css/admin/admin-dashboard.css" />
-    <link rel="stylesheet" href="~/css/admin/admin-courses.css" />
+    <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" asp-append-version="true" />
+    <partial name="~/Views/Shared/_SiteFonts.cshtml" />
+    <link rel="stylesheet" href="~/css/admin/admin-dashboard.css" asp-append-version="true" />
+    <link rel="stylesheet" href="~/css/admin/admin-courses.css" asp-append-version="true" />
     @if (string.Equals(ViewContext.RouteData.Values["controller"]?.ToString(), "Topics", StringComparison.OrdinalIgnoreCase))
     {
         <link rel="stylesheet" href="~/css/admin/admin-topics.css" asp-append-version="true" />
     }
-    <link rel="stylesheet" href="~/css/admin/admin-mapping.css" />
-    <link rel="stylesheet" href="~/css/admin/admin-students.css" />
-    <link rel="stylesheet" href="~/css/admin/admin-settings.css" />
-    <link rel="stylesheet" href="~/css/admin/admin-sidebar.css" />
-    <link rel="stylesheet" href="~/css/admin/admin-notes.css" />
-    <link rel="stylesheet" href="~/css/admin/admin-assessments.css" />
-    <link rel="stylesheet" href="~/css/admin/admin-reports.css" />
-    <link rel="stylesheet" href="~/css/admin/admin-report-sections.css" />
+    <link rel="stylesheet" href="~/css/admin/admin-mapping.css" asp-append-version="true" />
+    <link rel="stylesheet" href="~/css/admin/admin-students.css" asp-append-version="true" />
+    <link rel="stylesheet" href="~/css/admin/admin-settings.css" asp-append-version="true" />
+    <link rel="stylesheet" href="~/css/admin/admin-sidebar.css" asp-append-version="true" />
+    <link rel="stylesheet" href="~/css/admin/admin-notes.css" asp-append-version="true" />
+    <link rel="stylesheet" href="~/css/admin/admin-assessments.css" asp-append-version="true" />
+    <link rel="stylesheet" href="~/css/admin/admin-reports.css" asp-append-version="true" />
+    <link rel="stylesheet" href="~/css/admin/admin-report-sections.css" asp-append-version="true" />
     <link rel="stylesheet" href="~/css/admin/admin-exam-notifications.css" asp-append-version="true" />
     <link rel="stylesheet" href="~/css/global/global-alerts.css" asp-append-version="true" />
     @if (string.Equals(ViewContext.RouteData.Values["controller"]?.ToString(), "Assessments", StringComparison.OrdinalIgnoreCase))
@@ -116,10 +113,10 @@
         </div>
     </div>
     <div class="ciit-admin-overlay" id="ciitAdminOverlay"></div>
-    <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
-    <script src="~/js/admin/admin-dashboard.js"></script>
-    <script src="~/js/admin/admin-courses.js"></script>
-    <script src="~/js/admin/admin-mapping.js"></script>
+    <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js" asp-append-version="true"></script>
+    <script src="~/js/admin/admin-dashboard.js" asp-append-version="true"></script>
+    <script src="~/js/admin/admin-courses.js" asp-append-version="true"></script>
+    <script src="~/js/admin/admin-mapping.js" asp-append-version="true"></script>
     <script src="~/js/admin/admin-students.js" asp-append-version="true"></script>
     <script src="~/js/admin/admin-settings.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/&#64;microsoft/signalr&#64;8.0.7/dist/browser/signalr.min.js"></script>

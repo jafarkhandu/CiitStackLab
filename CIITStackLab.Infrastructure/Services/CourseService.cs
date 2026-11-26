@@ -137,19 +137,49 @@ public sealed class CourseService
                 : 0m);
     }
 
+    public async Task<IReadOnlyList<CourseDto>> GetPurchasedAsync(
+        string userId,
+        CancellationToken cancellationToken = default)
+    {
+        if (string.IsNullOrWhiteSpace(userId))
+        {
+            return Array.Empty<CourseDto>();
+        }
+
+        var courses = await CoursePurchaseService.QueryPurchasedCourses(_dbContext, userId)
+            .Select(course => new
+            {
+                course.Id,
+                course.Title,
+                course.ImagePath,
+                course.Flag,
+                DurationMinutes = (
+                    from module in _dbContext.CourseModules
+                    join topic in _dbContext.Topics on module.TopicId equals topic.Id
+                    where module.CourseId == course.Id && module.Flag == 0 && topic.Flag == 0
+                    select topic.DurationMinutes)
+                    .Sum() ?? 0
+            })
+            .ToListAsync(cancellationToken);
+
+        return courses.OrderBy(course => course.Title)
+            .Select(course => Map(course.Id, course.Title, course.ImagePath, course.Flag, course.DurationMinutes / 60m))
+            .ToList();
+    }
+
     public async Task<CourseDto?> GetLearningHeaderAsync(
         int id,
         CancellationToken cancellationToken = default)
     {
         var course = await _dbContext.Courses
             .AsNoTracking()
-            .SingleOrDefaultAsync(
-                x => x.Id == id && x.Flag == 0,
-                cancellationToken);
+            .Where(course => course.Id == id && course.Flag == 0)
+            .Select(course => new { course.Id, course.Title, course.ImagePath, course.Flag })
+            .SingleOrDefaultAsync(cancellationToken);
 
         // DynamicCourseService calculates duration from the topic rows it already loads.
         // Avoid the additional duration aggregate used by the general course details flow.
-        return course is null ? null : Map(course, 0m);
+        return course is null ? null : Map(course.Id, course.Title, course.ImagePath, course.Flag, 0m);
     }
 
     public async Task<CourseDetailsDto?> GetDetailsAsync(
@@ -468,27 +498,33 @@ public sealed class CourseService
             item => item.TotalMinutes / 60m);
     }
 
+    private static CourseDto Map(Course course, decimal durationHours)
+        => Map(course.Id, course.Title, course.ImagePath, course.Flag, durationHours);
+
     private static CourseDto Map(
-        CIITStackLab.Domain.Entities.Course course,
+        int id,
+        string title,
+        string? imagePath,
+        int? flag,
         decimal durationHours)
     {
-        var presentation = Presentations.TryGetValue(course.Title, out var known)
+        var presentation = Presentations.TryGetValue(title, out var known)
             ? known
             : CoursePresentation.Default;
 
         return new CourseDto
         {
-            Id = course.Id,
-            Title = course.Title,
+            Id = id,
+            Title = title,
             ShortDescription = presentation.ShortDescription,
             Description = presentation.Description,
-            ImageUrl = !string.IsNullOrWhiteSpace(course.ImagePath)
-                ? course.ImagePath
+            ImageUrl = !string.IsNullOrWhiteSpace(imagePath)
+                ? imagePath
                 : presentation.ImageUrl,
             Category = presentation.Category,
             Level = presentation.Level,
             DurationHours = durationHours,
-            IsPublished = course.Flag == 0
+            IsPublished = flag == 0
         };
     }
 

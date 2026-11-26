@@ -120,7 +120,7 @@ public sealed class CoursePurchaseService
             return false;
         }
 
-        return await QueryActivePurchases(userId).AnyAsync(cancellationToken);
+        return await QueryPurchasedCourses(_dbContext, userId).AnyAsync(cancellationToken);
     }
 
     public async Task<IReadOnlyList<int>> GetAccessibleCourseIdsAsync(
@@ -132,21 +132,20 @@ public sealed class CoursePurchaseService
             return Array.Empty<int>();
         }
 
-        return await QueryActivePurchases(userId)
-            .Select(purchase => purchase.CourseId)
-            .Distinct()
+        return await QueryPurchasedCourses(_dbContext, userId)
+            .Select(course => course.Id)
             .OrderBy(courseId => courseId)
             .ToArrayAsync(cancellationToken);
     }
 
-    private IQueryable<StudentCoursePurchase> QueryActivePurchases(string userId)
+    internal static IQueryable<Course> QueryPurchasedCourses(ApplicationDbContext dbContext, string userId)
     {
-        return _dbContext.StudentCoursePurchases
+        return dbContext.Courses
             .AsNoTracking()
-            .Where(purchase => purchase.UserId == userId
-                && _dbContext.Users.Any(user => user.Id == userId && user.IsActive)
-                && _dbContext.Courses.Any(course =>
-                    course.Id == purchase.CourseId && course.Flag == 0));
+            .Where(course => course.Flag == 0
+                && dbContext.Users.Any(user => user.Id == userId && user.IsActive)
+                && dbContext.StudentCoursePurchases.Any(purchase =>
+                    purchase.UserId == userId && purchase.CourseId == course.Id));
     }
 
     public async Task<IReadOnlyList<CourseDto>> GetCourseSwitcherItemsAsync(
@@ -181,17 +180,22 @@ public sealed class CoursePurchaseService
     public async Task<decimal> GetCoursePriceAsync(
         int courseId,
         CancellationToken cancellationToken = default)
+        => await GetPublishedCoursePriceAsync(courseId, cancellationToken) ?? 0m;
+
+    private async Task<decimal?> GetPublishedCoursePriceAsync(
+        int courseId,
+        CancellationToken cancellationToken)
     {
         if (courseId <= 0)
         {
-            return 0m;
+            return null;
         }
 
         var courseDiscount = await _dbContext.Courses.AsNoTracking()
             .Where(course => course.Id == courseId && course.Flag == 0)
             .Select(course => new { course.DiscountMode, course.DiscountValue })
             .SingleOrDefaultAsync(cancellationToken);
-        if (courseDiscount is null) return 0m;
+        if (courseDiscount is null) return null;
 
         var activeTopicPrices = await (
             from course in _dbContext.Courses.AsNoTracking()
@@ -233,18 +237,8 @@ public sealed class CoursePurchaseService
             return false;
         }
 
-        return await (
-            from purchase in _dbContext.StudentCoursePurchases.AsNoTracking()
-            join user in _dbContext.Users.AsNoTracking()
-                on purchase.UserId equals user.Id
-            join course in _dbContext.Courses.AsNoTracking()
-                on purchase.CourseId equals course.Id
-            where purchase.UserId == userId
-                  && purchase.CourseId == courseId
-                  && user.IsActive
-                  && course.Flag == 0
-            select purchase.Id)
-            .AnyAsync(cancellationToken);
+        return await QueryPurchasedCourses(_dbContext, userId)
+            .AnyAsync(course => course.Id == courseId, cancellationToken);
     }
 
     public async Task<bool> CanAccessCourseAsync(
@@ -257,28 +251,13 @@ public sealed class CoursePurchaseService
             return false;
         }
 
-        var isPublished = await _dbContext.Courses
-            .AsNoTracking()
-            .AnyAsync(course => course.Id == courseId && course.Flag == 0, cancellationToken);
-
-        if (!isPublished)
-        {
-            return false;
-        }
-
-        var price = await GetCoursePriceAsync(courseId, cancellationToken);
-
-        if (price <= 0m)
+        if (!string.IsNullOrWhiteSpace(userId)
+            && await HasPurchasedCourseAsync(userId, courseId, cancellationToken))
         {
             return true;
         }
 
-        if (string.IsNullOrWhiteSpace(userId))
-        {
-            return false;
-        }
-
-        return await HasPurchasedCourseAsync(userId, courseId, cancellationToken);
+        return await GetPublishedCoursePriceAsync(courseId, cancellationToken) is <= 0m;
     }
 
     public async Task<bool> CanAccessTopicAsync(

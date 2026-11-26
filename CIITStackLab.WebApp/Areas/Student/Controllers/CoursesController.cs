@@ -529,17 +529,7 @@ public class CoursesController : Controller
             return Challenge();
         }
 
-        var activeCourseIds = await _coursePurchaseService.GetAccessibleCourseIdsAsync(
-            userId,
-            cancellationToken);
-        var publishedCourses = await _courseService.GetPublishedAsync(cancellationToken);
-        var activeCourseIdSet = activeCourseIds.ToHashSet();
-
-        var courses = publishedCourses
-            .Where(course => activeCourseIdSet.Contains(course.Id))
-            .OrderBy(course => course.Title)
-            .ToList();
-
+        var courses = await _courseService.GetPurchasedAsync(userId, cancellationToken);
         return View("MyCourses", courses);
     }
 
@@ -621,7 +611,7 @@ public class CoursesController : Controller
 
         try
         {
-            course = await _courseService.GetLearningAsync(id, null, cancellationToken);
+            course = await _courseService.GetLearningOverviewAsync(id, cancellationToken);
         }
         catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
         {
@@ -780,24 +770,12 @@ public class CoursesController : Controller
                 return NotFound();
             }
 
-            var directTopicContentIds = await _dbContext.Lessons
+            var topicContentIds = await _dbContext.Lessons
                 .AsNoTracking()
                 .Where(lesson => lesson.TopicId == topicId.Value && lesson.Flag == 0)
                 .OrderBy(lesson => lesson.Id)
                 .Select(lesson => lesson.Id)
                 .ToListAsync(cancellationToken);
-
-            var chapterContentIds = await _dbContext.Lessons
-                .AsNoTracking()
-                .Where(lesson => lesson.TopicId == topicId.Value && lesson.Flag == 0)
-                .OrderBy(lesson => lesson.Id)
-                .Select(lesson => lesson.Id)
-                .ToListAsync(cancellationToken);
-
-            var topicContentIds = directTopicContentIds
-                .Concat(chapterContentIds)
-                .Distinct()
-                .ToList();
 
             if (topicContentIds.Count > 0)
             {

@@ -56,7 +56,6 @@
     background: #65a9ff;
     box-shadow: 9px 7px 0 rgba(101, 169, 255, .45);
     content: "";
-    animation: ciit-sidebar-art-dots 2.8s ease-in-out infinite;
 }
 
 .ciit-course-sidebar-art-visual {
@@ -66,38 +65,6 @@
     left: 0;
     width: 100%;
     height: 154px;
-    animation: ciit-sidebar-art-float 4.8s ease-in-out infinite;
-    transform-origin: 50% 100%;
-}
-
-.ciit-course-sidebar-art-visual .ciit-art-leaf {
-    transform-origin: 50% 100%;
-    animation: ciit-sidebar-art-leaf 3.2s ease-in-out infinite;
-}
-
-.ciit-course-sidebar-art-visual .ciit-art-laptop {
-    transform-origin: 50% 70%;
-    animation: ciit-sidebar-art-laptop 4.2s ease-in-out infinite;
-}
-
-@keyframes ciit-sidebar-art-float {
-    0%, 100% { transform: translateY(2px); }
-    50% { transform: translateY(-3px); }
-}
-
-@keyframes ciit-sidebar-art-leaf {
-    0%, 100% { transform: rotate(-1deg); }
-    50% { transform: rotate(5deg); }
-}
-
-@keyframes ciit-sidebar-art-laptop {
-    0%, 100% { transform: rotate(0deg); }
-    50% { transform: rotate(-1.5deg); }
-}
-
-@keyframes ciit-sidebar-art-dots {
-    0%, 100% { transform: translateY(0); opacity: .72; }
-    50% { transform: translateY(-5px); opacity: 1; }
 }
 
 .ciit-course-global-sidebar > .ciit-course-switcher,
@@ -123,15 +90,6 @@
     }
 }
 
-@media (prefers-reduced-motion: reduce) {
-    .ciit-course-sidebar-art-visual,
-    .ciit-course-sidebar-art-visual .ciit-art-leaf,
-    .ciit-course-sidebar-art-visual .ciit-art-laptop,
-    .ciit-course-sidebar-art-copy::after {
-        animation: none !important;
-    }
-}
-
 /* Keep the student sidebar fixed to the viewport with no internal scrollbar. */
 .ciit-course-global-sidebar {
     box-sizing: border-box;
@@ -143,7 +101,6 @@
     display: none;
 }
 
-/* Make the learning artwork feel alive without distracting from navigation. */
 .ciit-course-sidebar-art::before {
     position: absolute;
     top: 10px;
@@ -154,32 +111,10 @@
     background: rgba(120, 180, 255, .18);
     filter: blur(18px);
     content: "";
-    animation: ciit-sidebar-art-glow 4.2s ease-in-out infinite;
-}
-
-.ciit-course-sidebar-art-copy {
-    animation: ciit-sidebar-art-copy 3.6s ease-in-out infinite;
 }
 
 .ciit-course-sidebar-art-visual {
     filter: drop-shadow(0 8px 10px rgba(44, 99, 173, .10));
-}
-
-@keyframes ciit-sidebar-art-glow {
-    0%, 100% { transform: scale(.88); opacity: .55; }
-    50% { transform: scale(1.08); opacity: .9; }
-}
-
-@keyframes ciit-sidebar-art-copy {
-    0%, 100% { transform: translateY(0); opacity: .82; }
-    50% { transform: translateY(-3px); opacity: 1; }
-}
-
-@media (prefers-reduced-motion: reduce) {
-    .ciit-course-sidebar-art::before,
-    .ciit-course-sidebar-art-copy {
-        animation: none !important;
-    }
 }
 
 /* Learning notes should size to their real content instead of reserving viewport height. */

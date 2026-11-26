@@ -20,6 +20,9 @@ public sealed class DynamicCourseService : ICourseService
     public Task<IReadOnlyList<CourseDto>> GetPublishedAsync(CancellationToken cancellationToken = default)
         => _inner.GetPublishedAsync(cancellationToken);
 
+    public Task<IReadOnlyList<CourseDto>> GetPurchasedAsync(string userId, CancellationToken cancellationToken = default)
+        => _inner.GetPurchasedAsync(userId, cancellationToken);
+
     public Task<CourseDto?> GetByIdAsync(int id, CancellationToken cancellationToken = default)
         => _inner.GetByIdAsync(id, cancellationToken);
 
@@ -70,6 +73,81 @@ public sealed class DynamicCourseService : ICourseService
         };
     }
 
+    public async Task<CourseLearningDto?> GetLearningOverviewAsync(
+        int id, CancellationToken cancellationToken = default)
+    {
+        var course = await _inner.GetLearningHeaderAsync(id, cancellationToken);
+        if (course is null)
+        {
+            return null;
+        }
+
+        var rows = await (
+            from topic in QueryLearningTopics(id)
+            join lesson in _dbContext.Lessons.AsNoTracking().Where(lesson => lesson.Flag == 0)
+                on (int?)topic.TopicId equals lesson.TopicId into topicLessons
+            from lesson in topicLessons.DefaultIfEmpty()
+            select new { Topic = topic, LessonId = lesson == null ? (int?)null : lesson.Id })
+            .OrderBy(row => row.Topic.CourseTopicId)
+            .ThenBy(row => row.LessonId)
+            .ToListAsync(cancellationToken);
+
+        var topics = rows.GroupBy(row => row.Topic.CourseTopicId)
+            .Select(group =>
+            {
+                var topic = group.First().Topic;
+                var lessonIds = group.Where(row => row.LessonId.HasValue)
+                    .Select(row => row.LessonId!.Value)
+                    .ToList();
+
+                return new CourseLearningTopicDto
+                {
+                    Id = topic.TopicId,
+                    Title = topic.TopicTitle,
+                    Price = topic.TopicPrice,
+                    DurationMinutes = topic.TopicDurationMinutes,
+                    Contents = lessonIds.Select(lessonId => new CourseLearningContentDto { Id = lessonId }).ToList(),
+                    Chapters = lessonIds.Select(lessonId => new CourseLearningChapterDto { Id = lessonId }).ToList()
+                };
+            })
+            .ToList();
+
+        return new CourseLearningDto
+        {
+            Id = course.Id,
+            Title = course.Title,
+            ShortDescription = course.ShortDescription,
+            Description = course.Description,
+            ImageUrl = course.ImageUrl,
+            Category = course.Category,
+            Level = course.Level,
+            DurationHours = topics.Sum(topic => topic.DurationMinutes ?? 0) / 60m,
+            TotalPrice = topics.Sum(topic => Math.Max(0m, topic.Price)),
+            TopicCount = topics.Count,
+            ContentCount = topics.Sum(topic => topic.Contents.Count),
+            Topics = topics
+        };
+    }
+
+    private IQueryable<CourseLearningTopicRow> QueryLearningTopics(int courseId)
+    {
+        return
+            from courseTopic in _dbContext.CourseModules.AsNoTracking()
+            join topic in _dbContext.Topics.AsNoTracking()
+                on courseTopic.TopicId equals topic.Id
+            where courseTopic.CourseId == courseId
+                  && courseTopic.Flag == 0
+                  && topic.Flag == 0
+            select new CourseLearningTopicRow
+            {
+                CourseTopicId = courseTopic.Id,
+                TopicId = topic.Id,
+                TopicTitle = topic.Title,
+                TopicPrice = topic.Price,
+                TopicDurationMinutes = topic.DurationMinutes
+            };
+    }
+
     public async Task<CourseLearningDto?> GetLearningAsync(
         int id,
         int? contentId = null,
@@ -84,22 +162,7 @@ public sealed class DynamicCourseService : ICourseService
             return null;
         }
 
-        var topicRows = await (
-            from courseTopic in _dbContext.CourseModules.AsNoTracking()
-            join topic in _dbContext.Topics.AsNoTracking()
-                on courseTopic.TopicId equals topic.Id
-            where courseTopic.CourseId == id
-                  && courseTopic.Flag == 0
-                  && topic.Flag == 0
-            select new
-            {
-                CourseTopicId = courseTopic.Id,
-                TopicId = topic.Id,
-                TopicTitle = topic.Title,
-                TopicPrice = topic.Price,
-                TopicDurationMinutes = topic.DurationMinutes
-            })
-            .ToListAsync(cancellationToken);
+        var topicRows = await QueryLearningTopics(id).ToListAsync(cancellationToken);
 
         var topicData = topicRows
             .GroupBy(x => new
@@ -856,6 +919,15 @@ public sealed class DynamicCourseService : ICourseService
             CurrentChapterId = chapterId,
             CurrentContent = currentContent
         };
+    }
+
+    private sealed class CourseLearningTopicRow
+    {
+        public int CourseTopicId { get; init; }
+        public int TopicId { get; init; }
+        public string TopicTitle { get; init; } = string.Empty;
+        public decimal TopicPrice { get; init; }
+        public int? TopicDurationMinutes { get; init; }
     }
 
     private sealed record LearningQuestionReferenceRow(

@@ -3,6 +3,7 @@ using CIITStackLab.Infrastructure.Identity;
 using CIITStackLab.Infrastructure.Persistence;
 using CIITStackLab.WebApp.Hubs;
 using CIITStackLab.WebApp.Services;
+using Microsoft.AspNetCore.Mvc.ViewFeatures;
 using Microsoft.AspNetCore.StaticFiles;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -82,7 +83,23 @@ contentTypeProvider.Mappings[".tflite"] = "application/octet-stream";
 
 app.UseStaticFiles(new StaticFileOptions
 {
-    ContentTypeProvider = contentTypeProvider
+    ContentTypeProvider = contentTypeProvider,
+    OnPrepareResponse = static asset =>
+    {
+        var request = asset.Context.Request;
+        if (!request.Path.StartsWithSegments("/css")
+            && !request.Path.StartsWithSegments("/js")
+            && !request.Path.StartsWithSegments("/lib"))
+            return;
+
+        if (!request.Query.TryGetValue("v", out var versions) || versions.Count != 1 || versions[0]?.Length != 43)
+            return;
+
+        var versionProvider = asset.Context.RequestServices.GetRequiredService<IFileVersionProvider>();
+        var versionedPath = versionProvider.AddFileVersionToPath(request.PathBase, request.Path);
+        if (versionedPath.EndsWith($"?v={versions[0]}", StringComparison.Ordinal))
+            asset.Context.Response.Headers.CacheControl = "public,max-age=31536000,immutable";
+    }
 });
 
 app.UseRouting();

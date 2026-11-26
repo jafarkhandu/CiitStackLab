@@ -1,15 +1,22 @@
-document.addEventListener("DOMContentLoaded", () => {
+(function startWhenReady() {
+    if (document.readyState === "loading") {
+        document.addEventListener("DOMContentLoaded", startWhenReady, { once: true });
+        return;
+    }
+
     const role = document.body.dataset.meetNotificationRole;
     if (role !== "student" && role !== "admin") return;
 
     // Meet index pages already own a live connection and notification renderer.
     if (document.querySelector("[data-meet-student-index], [data-meet-admin-index]")) return;
     if (!window.signalR) {
-        console.error("SignalR client library could not be loaded for Meet notifications.");
+        const library = document.querySelector("script[data-meet-notification-signalr]");
+        if (library) library.addEventListener("load", startWhenReady, { once: true });
+        else console.error("SignalR client library could not be loaded for Meet notifications.");
         return;
     }
 
-    const connection = new signalR.HubConnectionBuilder()
+    const connection = new window.signalR.HubConnectionBuilder()
         .withUrl("/hubs/meet")
         .withAutomaticReconnect()
         .build();
@@ -64,9 +71,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
     connection.on("MeetToast", showNotification);
 
-    const joinNotificationGroups = () => connection.invoke(
-        role === "student" ? "JoinMyBatchUpdates" : "JoinAdminUpdates"
-    );
+    const joinNotificationGroups = () => connection.invoke("JoinMeetNotifications", role);
 
     connection.onreconnected(() => {
         joinNotificationGroups().catch(error =>
@@ -76,4 +81,4 @@ document.addEventListener("DOMContentLoaded", () => {
     connection.start()
         .then(joinNotificationGroups)
         .catch(error => console.error("Meet notification connection failed:", error));
-});
+})();
