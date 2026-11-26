@@ -1,8 +1,10 @@
 using System.Collections.Concurrent;
+using CIITStackLab.Domain.Entities;
 using CIITStackLab.Infrastructure.Persistence;
 using CIITStackLab.WebApp.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.SignalR;
+using Microsoft.Data.SqlClient;
 using Microsoft.EntityFrameworkCore;
 
 namespace CIITStackLab.WebApp.Hubs;
@@ -40,15 +42,32 @@ public sealed class ExamApplicationNotificationHub : Hub
             OnlineAdmins.AddOrUpdate(adminUserId, 1, (_, count) => count + 1);
             await Groups.AddToGroupAsync(Context.ConnectionId, AdminGroup, Context.ConnectionAborted);
 
-            var pending = await _db.ExamApplicationNotifications
-                .AsNoTracking()
-                .Where(notification =>
-                    notification.AdminUserId == adminUserId
-                    && !notification.IsDelivered
-                    && !notification.IsRead)
-                .OrderBy(notification => notification.CreatedAtUtc)
-                .Take(100)
-                .ToListAsync(Context.ConnectionAborted);
+            List<ExamApplicationNotification> pending;
+            try
+            {
+                pending = await _db.ExamApplicationNotifications
+                    .AsNoTracking()
+                    .Where(notification =>
+                        notification.AdminUserId == adminUserId
+                        && !notification.IsDelivered
+                        && !notification.IsRead)
+                    .OrderBy(notification => notification.CreatedAtUtc)
+                    .Take(100)
+                    .ToListAsync(Context.ConnectionAborted);
+            }
+            catch (Exception exception) when (
+                exception is SqlException
+                || exception is InvalidOperationException { InnerException: SqlException })
+            {
+                // Leave persisted notifications untouched so a later connection can replay them.
+                _logger.LogWarning(
+                    exception,
+                    "Database unavailable while replaying pending exam notifications for administrator {AdminUserId}.",
+                    adminUserId);
+
+                Context.Abort();
+                return;
+            }
 
             if (pending.Count > 0)
             {
