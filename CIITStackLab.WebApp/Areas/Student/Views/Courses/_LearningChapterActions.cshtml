@@ -39,20 +39,11 @@
         && topicChapters is not null
         && topicChapters.Count > 0
         && topicChapters[^1].Id == currentChapter.Id;
-    var allowedTopicId = ViewBag.AllowedTopicId as int?;
-    var previousIsLocked = User.IsInRole("Student")
-        && allowedTopicId.HasValue
-        && previousEntry is not null
-        && previousEntry.Topic.Id != allowedTopicId.Value;
-    var nextIsLocked = User.IsInRole("Student")
-        && allowedTopicId.HasValue
-        && nextEntry is not null
-        && nextEntry.Topic.Id != allowedTopicId.Value;
 }
 
 <nav class="ciit-learning-bottom-actions" aria-label="Chapter navigation">
     <div class="ciit-learning-bottom-actions-start">
-        @if (previousEntry is not null && !previousIsLocked)
+        @if (previousEntry is not null)
         {
             <a class="ciit-learning-bottom-button ciit-learning-bottom-button-secondary"
                asp-controller="Courses"
@@ -117,7 +108,7 @@
             }
         }
 
-        @if (!isFinalChapter && nextEntry is not null && !nextIsLocked)
+        @if (nextEntry is not null)
         {
             <a class="ciit-learning-bottom-button ciit-learning-bottom-button-primary"
                asp-controller="Courses"

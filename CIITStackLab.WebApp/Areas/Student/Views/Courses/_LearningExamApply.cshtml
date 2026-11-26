@@ -21,13 +21,17 @@
 
     var isFinalChapter = currentChapter is not null
         && (topicChapters.Count <= 1 || topicChapters[^1].Id == currentChapter.Id);
+    var completedContentIds = Model.Progress?.CompletedContentIds.ToHashSet();
+    var canApplyHere = isFinalChapter
+        ? currentChapter?.IsCompleted == false
+        : currentTopic is not null && completedContentIds is not null
+            && currentTopic.Contents.Concat(topicChapters.SelectMany(chapter => chapter.Contents))
+                .All(content => completedContentIds.Contains(content.Id));
 
     var shouldShowExamApply = User.IsInRole("Student")
         && Model.Progress is not null
         && currentTopic is not null
-        && currentChapter is not null
-        && !currentChapter.IsCompleted
-        && isFinalChapter;
+        && canApplyHere;
 }
 
 @if (shouldShowExamApply)

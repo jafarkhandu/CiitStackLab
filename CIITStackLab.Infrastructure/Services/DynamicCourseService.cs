@@ -87,7 +87,12 @@ public sealed class DynamicCourseService : ICourseService
             join lesson in _dbContext.Lessons.AsNoTracking().Where(lesson => lesson.Flag == 0)
                 on (int?)topic.TopicId equals lesson.TopicId into topicLessons
             from lesson in topicLessons.DefaultIfEmpty()
-            select new { Topic = topic, LessonId = lesson == null ? (int?)null : lesson.Id })
+            select new
+            {
+                Topic = topic,
+                LessonId = lesson == null ? (int?)null : lesson.Id,
+                LessonTitle = lesson == null ? null : lesson.Title
+            })
             .OrderBy(row => row.Topic.CourseTopicId)
             .ThenBy(row => row.LessonId)
             .ToListAsync(cancellationToken);
@@ -96,9 +101,7 @@ public sealed class DynamicCourseService : ICourseService
             .Select(group =>
             {
                 var topic = group.First().Topic;
-                var lessonIds = group.Where(row => row.LessonId.HasValue)
-                    .Select(row => row.LessonId!.Value)
-                    .ToList();
+                var lessons = group.Where(row => row.LessonId.HasValue).ToList();
 
                 return new CourseLearningTopicDto
                 {
@@ -106,8 +109,14 @@ public sealed class DynamicCourseService : ICourseService
                     Title = topic.TopicTitle,
                     Price = topic.TopicPrice,
                     DurationMinutes = topic.TopicDurationMinutes,
-                    Contents = lessonIds.Select(lessonId => new CourseLearningContentDto { Id = lessonId }).ToList(),
-                    Chapters = lessonIds.Select(lessonId => new CourseLearningChapterDto { Id = lessonId }).ToList()
+                    Contents = lessons.Select(lesson => new CourseLearningContentDto { Id = lesson.LessonId!.Value }).ToList(),
+                    Chapters = lessons.Select(lesson => new CourseLearningChapterDto
+                    {
+                        Id = lesson.LessonId!.Value,
+                        ChapterId = lesson.LessonId.Value.ToString(),
+                        Title = lesson.LessonTitle ?? string.Empty,
+                        SortOrder = lesson.LessonId.Value
+                    }).ToList()
                 };
             })
             .ToList();
@@ -889,12 +898,15 @@ public sealed class DynamicCourseService : ICourseService
         var allContents = topics
             .SelectMany(topic => topic.Contents)
             .ToList();
+        var selectedContents = topicId.HasValue
+            ? topics.FirstOrDefault(topic => topic.Id == topicId.Value)?.Contents
+            : allContents;
 
         var currentContent = contentId.HasValue
             ? allContents.FirstOrDefault(content => content.Id == contentId.Value)
             : chapterId.HasValue
                 ? null
-                : allContents.FirstOrDefault();
+                : selectedContents?.FirstOrDefault();
 
         if (contentId.HasValue && currentContent is null)
         {

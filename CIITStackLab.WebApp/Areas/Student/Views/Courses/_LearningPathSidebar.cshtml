@@ -13,11 +13,6 @@
             .FirstOrDefault(chapter => chapter.Contents.Any(content => content.Id == currentContentId.Value))?.Id
         : (int?)null;
     var selectedChapterId = Model.CurrentChapterId ?? currentContentChapterId;
-    var allowedTopicId = ViewBag.AllowedTopicId as int?;
-    var isCurrentTopicLocked = User.IsInRole("Student")
-        && allowedTopicId.HasValue
-        && currentTopic is not null
-        && currentTopic.Id != allowedTopicId.Value;
     var currentTopicContentIds = currentTopic is null
         ? new List<int>()
         : currentTopic.Contents
@@ -49,16 +44,33 @@
     </div>
 
     <div class="ciit-learning-sidebar-scroll">
+        @if (topics.Count > 1)
+        {
+            <details class="ciit-course-switcher">
+                <summary>
+                    <strong>Switch topic</strong>
+                    <i class="bi bi-chevron-down" aria-hidden="true"></i>
+                </summary>
+                <nav class="ciit-course-switcher-menu" aria-label="Course topics">
+                    @foreach (var topic in topics.DistinctBy(topic => topic.Id))
+                    {
+                        var isCurrent = topic.Id == currentTopic?.Id;
+                        <a class="@(isCurrent ? "active" : "")"
+                           asp-controller="Courses"
+                           asp-action="Learn"
+                           asp-route-id="@Model.Id"
+                           asp-route-topicId="@topic.Id"
+                           aria-current="@(isCurrent ? "page" : null)">
+                            <span>@topic.Title</span>
+                        </a>
+                    }
+                </nav>
+            </details>
+        }
+
         @if (currentTopic is null)
         {
             <p class="ciit-learning-current-topic-message">No active topic is available.</p>
-        }
-        else if (isCurrentTopicLocked)
-        {
-            <p class="ciit-learning-current-topic-message">
-                <i class="bi bi-lock-fill" aria-hidden="true"></i>
-                This topic is locked until you pass the current topic examination.
-            </p>
         }
         else if (currentTopic.Chapters.Count == 0)
         {

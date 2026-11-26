@@ -89,27 +89,11 @@ public sealed class CourseService
         _dbContext = dbContext;
     }
 
-    public async Task<IReadOnlyList<CourseDto>> GetPublishedAsync(
+    public Task<IReadOnlyList<CourseDto>> GetPublishedAsync(
         CancellationToken cancellationToken = default)
-    {
-        var courses = await _dbContext.Courses
-            .AsNoTracking()
-            .Where(x => x.Flag == 0)
-            .OrderBy(x => x.Title)
-            .ToListAsync(cancellationToken);
-
-        var durationHoursByCourseId = await GetDurationHoursByCourseIdsAsync(
-            courses.Select(course => course.Id).ToList(),
-            cancellationToken);
-
-        return courses
-            .Select(course => Map(
-                course,
-                durationHoursByCourseId.TryGetValue(course.Id, out var durationHours)
-                    ? durationHours
-                    : 0m))
-            .ToList();
-    }
+        => GetCourseCardsAsync(_dbContext.Courses.AsNoTracking()
+            .Where(course => course.Flag == 0)
+            .OrderBy(course => course.Title), cancellationToken);
 
     public async Task<CourseDto?> GetByIdAsync(
         int id,
@@ -146,7 +130,16 @@ public sealed class CourseService
             return Array.Empty<CourseDto>();
         }
 
-        var courses = await CoursePurchaseService.QueryPurchasedCourses(_dbContext, userId)
+        var courses = await GetCourseCardsAsync(
+            CoursePurchaseService.QueryPurchasedCourses(_dbContext, userId), cancellationToken);
+        return courses.OrderBy(course => course.Title).ToList();
+    }
+
+    private async Task<IReadOnlyList<CourseDto>> GetCourseCardsAsync(
+        IQueryable<Course> courses,
+        CancellationToken cancellationToken)
+    {
+        var rows = await courses
             .Select(course => new
             {
                 course.Id,
@@ -162,8 +155,7 @@ public sealed class CourseService
             })
             .ToListAsync(cancellationToken);
 
-        return courses.OrderBy(course => course.Title)
-            .Select(course => Map(course.Id, course.Title, course.ImagePath, course.Flag, course.DurationMinutes / 60m))
+        return rows.Select(course => Map(course.Id, course.Title, course.ImagePath, course.Flag, course.DurationMinutes / 60m))
             .ToList();
     }
 

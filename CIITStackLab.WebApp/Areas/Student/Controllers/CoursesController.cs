@@ -809,33 +809,11 @@ public class CoursesController : Controller
             return NotFound();
         }
 
-        if (!string.IsNullOrWhiteSpace(studentUserId))
-        {
-            var allowedTopicId = await _topicExaminationService.GetCurrentTopicIdAsync(
-                studentUserId, id, cancellationToken);
-            ViewBag.AllowedTopicId = allowedTopicId;
-            var requestedTopicId = topicId ?? course.CurrentTopicId;
-            if (requestedTopicId is null && contentId.HasValue)
-            {
-                requestedTopicId = course.Topics.FirstOrDefault(topic =>
-                    topic.Contents.Any(content => content.Id == contentId.Value)
-                    || topic.Chapters.Any(chapter => chapter.Contents.Any(content => content.Id == contentId.Value)))?.Id;
-            }
-
-            if (allowedTopicId.HasValue && requestedTopicId.HasValue)
-            {
-                if (requestedTopicId.Value != allowedTopicId.Value)
-                {
-                    TempData["LearningProgressMessage"] = "This topic is locked until you pass the current topic examination.";
-                    return RedirectToAction(nameof(Learn), new { id, topicId = allowedTopicId.Value });
-                }
-            }
-        }
-
         if (topicId.HasValue)
         {
             var selectedTopic = course.Topics.FirstOrDefault(topic => topic.Id == topicId.Value);
-            if (selectedTopic is null)
+            if (selectedTopic is null
+                || (contentId.HasValue && selectedTopic.Contents.All(content => content.Id != contentId.Value)))
             {
                 return NotFound();
             }
@@ -1099,18 +1077,6 @@ public class CoursesController : Controller
             return RedirectToAction(nameof(Details), new { id });
         }
 
-        var allowedTopicId = await _topicExaminationService.GetCurrentTopicIdAsync(userId, id, cancellationToken);
-        var contentTopicId = await (
-            from lesson in _dbContext.Lessons.AsNoTracking()
-            where lesson.Id == contentId && lesson.Flag == 0
-            select lesson.TopicId)
-            .SingleOrDefaultAsync(cancellationToken);
-
-        if (allowedTopicId.HasValue && contentTopicId.HasValue && allowedTopicId.Value != contentTopicId.Value)
-        {
-            return Forbid();
-        }
-
         var markedCompleted = await _studentProgressService.MarkCompletedAsync(
             userId,
             id,
@@ -1155,7 +1121,7 @@ public class CoursesController : Controller
         // Use the same chapter sequence as the learning page so the completion
         // endpoint and the UI cannot disagree about which chapter comes next.
         var learningCourse = await _courseService.GetLearningAsync(
-            id, null, cancellationToken, topicId, chapterId);
+            id, null, cancellationToken, topicId, chapterId, includeAssessmentData: false);
         var learningTopic = learningCourse?.Topics.FirstOrDefault(topic => topic.Id == topicId);
         if (learningTopic is null)
             return NotFound();
@@ -1173,15 +1139,6 @@ public class CoursesController : Controller
             TempData["LearningProgressMessage"] =
                 "This is the final chapter. Use Apply for Examination to continue.";
             return RedirectToAction(nameof(Learn), new { id, topicId, chapterId });
-        }
-
-        var allowedTopicId = await _topicExaminationService.GetCurrentTopicIdAsync(
-            userId, id, cancellationToken);
-        if (allowedTopicId.HasValue && allowedTopicId.Value != topicId)
-        {
-            TempData["LearningProgressMessage"] =
-                "Complete the current topic examination before continuing to another topic.";
-            return RedirectToAction(nameof(Learn), new { id, topicId = allowedTopicId.Value });
         }
 
         var contentIds = orderedChapters[currentIndex].Contents
@@ -1243,7 +1200,8 @@ public class CoursesController : Controller
         }
 
         var topicBelongsToCourse = await _dbContext.CourseModules.AsNoTracking()
-            .AnyAsync(x => x.CourseId == id && x.TopicId == topicId && x.Flag == 0, cancellationToken);
+            .AnyAsync(x => x.CourseId == id && x.TopicId == topicId && x.Flag == 0
+                && x.Topic.Flag == 0 && x.Course.Flag == 0, cancellationToken);
         if (!topicBelongsToCourse)
             return NotFound();
 
@@ -1283,17 +1241,6 @@ public class CoursesController : Controller
             TempData["ExamMessage"] =
                 "An examination record already exists for this topic. Open it to continue or review your result.";
             return RedirectToAction("Index", "StudentExaminations");
-        }
-
-        var allowedTopicId = await _topicExaminationService.GetCurrentTopicIdAsync(
-            userId,
-            id,
-            cancellationToken);
-        if (allowedTopicId.HasValue && allowedTopicId.Value != topicId)
-        {
-            TempData["LearningProgressMessage"] =
-                "Complete the current topic examination before applying for a different topic.";
-            return RedirectToAction(nameof(Learn), new { id, topicId = allowedTopicId.Value });
         }
 
         var contentIds = await _dbContext.Lessons.AsNoTracking()

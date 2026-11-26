@@ -67,7 +67,7 @@ public sealed class NotesController : Controller
 
         if (courseId is > 0)
         {
-            var course = await _courseService.GetLearningAsync(courseId.Value, null, ct);
+            var course = await _courseService.GetLearningOverviewAsync(courseId.Value, ct);
 
             if (course is not null && course.Topics.Any(topic => topic.Id == topicId))
             {
@@ -131,7 +131,7 @@ public sealed class NotesController : Controller
 
         if (courseId is > 0)
         {
-            var course = await _courseService.GetLearningAsync(courseId.Value, null, ct);
+            var course = await _courseService.GetLearningOverviewAsync(courseId.Value, ct);
 
             if (course is null || !course.Topics.Any(topic => topic.Id == topicId))
             {

@@ -55,14 +55,8 @@ public sealed class TopicExaminationService : ITopicExaminationService
         if (startNow)
             scheduledAtUtc = now;
 
-        var topicExists = await (
-            from cm in _db.CourseModules.AsNoTracking()
-            join course in _db.Courses.AsNoTracking() on cm.CourseId equals course.Id
-            join topic in _db.Topics.AsNoTracking() on cm.TopicId equals topic.Id
-            where cm.CourseId == courseId && cm.TopicId == topicId
-                && cm.Flag == 0 && course.Flag == 0 && topic.Flag == 0
-            select topic.Id).AnyAsync(cancellationToken);
-        if (!topicExists) return (false, "The selected topic is not active in this course.", null);
+        if (!await IsActiveCourseTopicAsync(courseId, topicId, cancellationToken))
+            return (false, "The selected topic is not available in this course.", null);
 
         // Use the same access rule as the learning and payment flows.
         // Topic-based pricing is authoritative; the legacy Courses.FeesAmount field
@@ -204,6 +198,9 @@ public sealed class TopicExaminationService : ITopicExaminationService
             return (false, 0, "Invalid exam request.");
         }
 
+        if (!await IsActiveCourseTopicAsync(courseId, topicId, cancellationToken))
+            return (false, 0, "The selected topic is not available in this course.");
+
         var availability = await GetQuestionAvailabilityDataAsync(
             userId,
             courseId,
@@ -215,6 +212,11 @@ public sealed class TopicExaminationService : ITopicExaminationService
             availability.EligibleIds.Count,
             availability.Error);
     }
+
+    private Task<bool> IsActiveCourseTopicAsync(int courseId, int topicId, CancellationToken cancellationToken) =>
+        _db.CourseModules.AsNoTracking().AnyAsync(module =>
+            module.CourseId == courseId && module.TopicId == topicId && module.Flag == 0
+            && module.Course.Flag == 0 && module.Topic.Flag == 0, cancellationToken);
 
     public async Task<(bool Succeeded, string? Error, TopicExamSessionDto? Session)> OpenPreExamAsync(
         string userId, long attemptId, string deviceToken, CancellationToken cancellationToken = default)
@@ -431,43 +433,6 @@ public sealed class TopicExaminationService : ITopicExaminationService
         return await _db.TopicExamAttempts.AsNoTracking().AnyAsync(x =>
             x.UserId == userId && x.CourseId == courseId && x.TopicId == topicId
             && x.Passed && x.Status == "Passed", cancellationToken);
-    }
-
-    public async Task<int?> GetCurrentTopicIdAsync(string userId, int courseId, CancellationToken cancellationToken = default)
-    {
-        var topicIds = await _db.CourseModules.AsNoTracking()
-            .Where(cm => cm.CourseId == courseId && cm.Flag == 0 && cm.Topic.Flag == 0 && cm.Course.Flag == 0)
-            // Keep exam progression aligned with the course-topic mapping order shown in the learning path.
-            .OrderBy(cm => cm.Id)
-            .Select(cm => cm.TopicId)
-            .Distinct()
-            .ToListAsync(cancellationToken);
-
-        if (topicIds.Count == 0)
-        {
-            return null;
-        }
-
-        var passedTopicIds = await _db.TopicExamAttempts
-            .AsNoTracking()
-            .Where(attempt => attempt.UserId == userId
-                && attempt.CourseId == courseId
-                && attempt.Passed
-                && attempt.Status == "Passed"
-                && topicIds.Contains(attempt.TopicId))
-            .Select(attempt => attempt.TopicId)
-            .Distinct()
-            .ToListAsync(cancellationToken);
-
-        var passedTopicIdSet = passedTopicIds.ToHashSet();
-        var firstUnpassedTopicId = topicIds.FirstOrDefault(topicId => !passedTopicIdSet.Contains(topicId));
-
-        if (firstUnpassedTopicId > 0)
-        {
-            return firstUnpassedTopicId;
-        }
-
-        return topicIds.LastOrDefault() is var last && last > 0 ? last : null;
     }
 
     private async Task FinalizeAsync(TopicExamAttempt attempt, string finalStatus, DateTime submittedAtUtc, CancellationToken cancellationToken)

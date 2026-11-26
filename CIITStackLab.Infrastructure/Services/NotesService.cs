@@ -125,15 +125,22 @@ public sealed class NotesService : INotesService
 
     public async Task<TopicNotesDto?> GetReaderAsync(int topicId, string? chapterId, CancellationToken cancellationToken = default)
     {
-        var topic = await _dbContext.Topics.AsNoTracking()
-            .Where(x => x.Id == topicId && x.Flag == 0)
-            .Select(x => new { x.Id, x.Title })
-            .FirstOrDefaultAsync(cancellationToken);
-        if (topic is null) return null;
+        var chapterRows = await (
+            from lesson in _dbContext.Lessons.AsNoTracking()
+            join topic in _dbContext.Topics.AsNoTracking() on lesson.TopicId equals (int?)topic.Id
+            where topic.Id == topicId && topic.Flag == 0 && lesson.Flag == 0
+            orderby lesson.Id
+            select new { lesson.Id, lesson.Title, TopicTitle = topic.Title })
+            .ToListAsync(cancellationToken);
+        if (chapterRows.Count == 0) return null;
 
-        var chapters = await _dbContext.Lessons.AsNoTracking()
-            .Where(x => x.TopicId == topicId && x.Flag == 0)
-            .OrderBy(x => x.Id)
+        var selectedId = int.TryParse(chapterId, out var contentId)
+            && chapterRows.Any(chapter => chapter.Id == contentId)
+            ? contentId
+            : chapterRows[0].Id;
+
+        var current = await _dbContext.Lessons.AsNoTracking()
+            .Where(x => x.Id == selectedId && x.TopicId == topicId && x.Flag == 0)
             .Select(x => new NoteChapterDto
             {
                 Id = x.Id,
@@ -152,19 +159,21 @@ public sealed class NotesService : INotesService
                     }
                 }
             })
-            .ToListAsync(cancellationToken);
-        if (chapters.Count == 0) return null;
-
-        var current = int.TryParse(chapterId, out var contentId)
-            ? chapters.FirstOrDefault(x => x.Id == contentId) ?? chapters[0]
-            : chapters[0];
+            .SingleOrDefaultAsync(cancellationToken);
+        if (current is null) return null;
 
         return new TopicNotesDto
         {
-            TopicId = topic.Id,
-            TopicTitle = topic.Title,
-            Chapters = chapters,
-            CurrentChapterId = current.Id.ToString(),
+            TopicId = topicId,
+            TopicTitle = chapterRows[0].TopicTitle,
+            Chapters = chapterRows.Select(chapter => chapter.Id == selectedId ? current : new NoteChapterDto
+            {
+                Id = chapter.Id,
+                ChapterId = chapter.Id.ToString(),
+                Title = chapter.Title,
+                SortOrder = chapter.Id
+            }).ToList(),
+            CurrentChapterId = current.ChapterId,
             CurrentChapter = current
         };
     }

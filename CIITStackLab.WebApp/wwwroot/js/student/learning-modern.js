@@ -261,17 +261,21 @@
         const href = link.href;
         if (!href || link.target === '_blank' || link.hasAttribute('download')) return;
         if (chapterNavigationController) chapterNavigationController.abort();
-        chapterNavigationController = new AbortController();
+        const controller = new AbortController();
+        chapterNavigationController = controller;
 
         document.documentElement.classList.add('ciit-learning-navigating');
         try {
             const response = await fetch(href, {
                 method: 'GET',
-                headers: { 'X-Requested-With': 'XMLHttpRequest' },
+                headers: { 'X-Ciit-Learning-Fragment': '1' },
                 credentials: 'same-origin',
-                signal: chapterNavigationController.signal
+                redirect: 'manual',
+                signal: controller.signal
             });
-            if (!response.ok) throw new Error(`Chapter request failed: ${response.status}`);
+            if (!response.ok || response.headers.get('X-Ciit-Learning-Fragment') === 'full') {
+                throw new Error(`Chapter request needs a full navigation: ${response.status}`);
+            }
 
             const html = await response.text();
             const parser = new DOMParser();
@@ -292,7 +296,10 @@
                 window.location.assign(href);
             }
         } finally {
-            document.documentElement.classList.remove('ciit-learning-navigating');
+            if (chapterNavigationController === controller) {
+                chapterNavigationController = null;
+                document.documentElement.classList.remove('ciit-learning-navigating');
+            }
         }
     }
 
@@ -309,9 +316,8 @@
         });
 
         window.addEventListener('popstate', function () {
-            const currentUrl = window.location.href;
-            const link = document.querySelector(`.ciit-learning-current-chapter-link[href="${CSS.escape(currentUrl)}"]`);
-            if (link) return;
+            const displayedChapter = document.querySelector('.ciit-learning-current-chapter-link.is-current');
+            if (displayedChapter?.href === window.location.href) return;
             window.location.reload();
         });
     }
