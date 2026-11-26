@@ -1,3 +1,18 @@
+@using System.Security.Claims
+@inject CIITStackLab.Infrastructure.Services.CoursePurchaseService CoursePurchaseService
+@{
+    var hasLearningHubPurchase = false;
+    if (ViewBag.ShowLearningHub == true && User.IsInRole("Student"))
+    {
+        var studentId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+        if (!string.IsNullOrWhiteSpace(studentId))
+        {
+            hasLearningHubPurchase = await CoursePurchaseService.HasAnyActivePurchaseAsync(studentId, Context.RequestAborted);
+        }
+    }
+
+    var showLearningHubTransition = hasLearningHubPurchase || ViewData["ShowLearningHubTransition"] is true;
+}
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -72,7 +87,8 @@
                         <li class="nav-item">
                             <a asp-controller="Home"
                                asp-action="Dashboard"
-                               class="ciit-learning-hub-switch">
+                               class="ciit-learning-hub-switch"
+                               data-learning-hub-transition="@(hasLearningHubPurchase ? "true" : null)">
                                 <i class="bi bi-stars" aria-hidden="true"></i>
                                 <span>Switch to Learning Hub</span>
                                 <i class="bi bi-arrow-up-right" aria-hidden="true"></i>
@@ -130,6 +146,21 @@
         </div>
         <button type="button" class="ciit-topic-arrow" id="topicsNext" aria-label="Next topics"><i class="bi bi-chevron-right"></i></button>
     </nav>
+
+    @if (showLearningHubTransition)
+    {
+        <div class="ciit-hub-transition" id="ciitHubTransition" aria-hidden="true">
+            <div class="ciit-hub-transition-orbit ciit-hub-transition-orbit-one"></div>
+            <div class="ciit-hub-transition-orbit ciit-hub-transition-orbit-two"></div>
+            <div class="ciit-hub-transition-content" role="status" aria-live="polite">
+                <span class="ciit-hub-transition-icon"><i class="bi bi-mortarboard-fill"></i></span>
+                <span class="ciit-hub-transition-eyebrow">CIIT STACK LAB</span>
+                <strong>Preparing your learning space</strong>
+                <span class="ciit-hub-transition-caption">Getting your courses ready…</span>
+                <span class="ciit-hub-transition-progress"><span></span></span>
+            </div>
+        </div>
+    }
 
     <main>
         @if (TempData["CoursePaymentMessage"] is string coursePaymentMessage)

@@ -81,6 +81,40 @@ document.addEventListener("DOMContentLoaded", function () {
 });
 
 document.addEventListener("DOMContentLoaded", function () {
+    const transition = document.getElementById("ciitHubTransition");
+    if (!transition) return;
+
+    let activeLink = null;
+    document.querySelectorAll('a[data-learning-hub-transition="true"]').forEach(function (link) {
+        link.addEventListener("click", function (event) {
+            if (event.defaultPrevented || event.button !== 0 || event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) {
+                return;
+            }
+
+            if (activeLink) {
+                event.preventDefault();
+                return;
+            }
+
+            activeLink = link;
+            link.setAttribute("aria-disabled", "true");
+            transition.classList.add("is-active");
+            transition.setAttribute("aria-hidden", "false");
+            document.body.classList.add("ciit-hub-transitioning");
+        });
+    });
+
+    window.addEventListener("pageshow", function () {
+        if (!activeLink) return;
+        activeLink.removeAttribute("aria-disabled");
+        activeLink = null;
+        transition.classList.remove("is-active");
+        transition.setAttribute("aria-hidden", "true");
+        document.body.classList.remove("ciit-hub-transitioning");
+    });
+});
+
+document.addEventListener("DOMContentLoaded", function () {
     const paymentForm = document.getElementById("ciit-demo-payment-form");
     const paymentTrigger = document.querySelector("[data-ciit-pay-now]");
 

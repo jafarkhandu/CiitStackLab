@@ -2,6 +2,7 @@
 
 @{
     ViewData["Title"] = Model.Title;
+    ViewData["ShowLearningHubTransition"] = Model.IsStudent && Model.HasAccess;
     var totalTopicDurationMinutes = Model.Topics.Sum(topic => topic.DurationMinutes ?? 0);
     var totalDurationHours = totalTopicDurationMinutes / 60m;
     var originalCoursePrice = Model.Topics.Sum(topic => Math.Max(0m, topic.Price));
@@ -122,7 +123,8 @@
                         {
                             <a asp-controller="Home"
                                asp-action="Dashboard"
-                               class="ciit-learning-hub-switch">
+                               class="ciit-learning-hub-switch"
+                               data-learning-hub-transition="true">
                                 <i class="bi bi-stars me-2" aria-hidden="true"></i>Switch Hub
                             </a>
                         }
