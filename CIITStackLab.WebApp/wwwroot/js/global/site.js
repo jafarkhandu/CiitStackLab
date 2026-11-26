@@ -85,9 +85,11 @@ document.addEventListener("DOMContentLoaded", function () {
     if (!transition) return;
 
     let activeLink = null;
+    let navigationTimer;
     document.querySelectorAll('a[data-learning-hub-transition="true"]').forEach(function (link) {
         link.addEventListener("click", function (event) {
-            if (event.defaultPrevented || event.button !== 0 || event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) {
+            if (event.defaultPrevented || event.button !== 0 || event.metaKey || event.ctrlKey || event.shiftKey || event.altKey
+                || (link.target && link.target !== "_self") || link.hasAttribute("download")) {
                 return;
             }
 
@@ -101,11 +103,23 @@ document.addEventListener("DOMContentLoaded", function () {
             transition.classList.add("is-active");
             transition.setAttribute("aria-hidden", "false");
             document.body.classList.add("ciit-hub-transitioning");
+
+            if (!window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
+                event.preventDefault();
+                const destination = link.href;
+                navigationTimer = window.setTimeout(function () {
+                    window.location.assign(destination);
+                }, 600);
+            }
         });
     });
 
-    window.addEventListener("pageshow", function () {
-        if (!activeLink) return;
+    window.addEventListener("pagehide", function () {
+        window.clearTimeout(navigationTimer);
+    });
+
+    window.addEventListener("pageshow", function (event) {
+        if (!event.persisted || !activeLink) return;
         activeLink.removeAttribute("aria-disabled");
         activeLink = null;
         transition.classList.remove("is-active");
